@@ -6,10 +6,10 @@ view and `AGENTS.md` for the rules. Status: `[ ]` todo · `[~]` in progress · `
 
 ## Current milestone: M0 — Test & verification infrastructure
 
-- [ ] Install GdUnit4 into `addons/`; confirm headless CLI runs with exit codes.
+- [x] Install GdUnit4 into `addons/`; confirm headless CLI runs with exit codes.
 - [ ] Add a seedable RNG/dice abstraction; refactor `CombatCalculator` to accept it (remove
       global `randi()` from pure logic). Preserve all math.
-- [ ] Author `tools/run_all_tests.ps1` (import → smoke → `tools/` validation → GdUnit4; nonzero
+- [x] Author `tools/run_all_tests.ps1` (import → smoke → `tools/` validation → GdUnit4; nonzero
       on any failure).
 - [ ] Add first golden combat test (fixed seed) matched to
       `TaiwanInvasionViewer/tests/python/unit/test_hex_combat_phase4.py`.
@@ -35,6 +35,22 @@ including seeded golden combat and movement-reachability tests).
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-23 — GdUnit4 version & layout:** pinned **v6.1.3** (latest; runs on Godot 4.7),
+  installed at `addons/gdUnit4/` with the framework's own `test/` self-tests stripped (AssetLib
+  package layout, keeps the repo lean). Plugin enabled in `project.godot` `[editor_plugins]`.
+  Headless CLI requires `--ignoreHeadlessMode`; exit codes verified (0 pass / 100 fail). `/reports/`
+  git-ignored.
+- **2026-06-23 — Canonical gate:** `tools/run_all_tests.ps1` resolves the Godot binary from
+  `-GodotBin` → `$env:GODOT_BIN` → `C:\Godot_v4.7-stable_win64.exe`. The smoke phase asserts on the
+  startup log markers (455 hexes / 111 brigades / 455 cells) + absence of `SCRIPT ERROR`; tracked in
+  `docs/REFACTOR_NOTES.md` to replace with a machine-readable startup summary later.
+- **2026-06-23 — Golden-test strategy (settled, for M0 item 4):** numpy PCG64 cannot be reproduced
+  bit-for-bit in Godot, so golden combat tests inject a **scripted roll sequence** through the new
+  RNG abstraction and assert the *formulas* (loss-rate, FEBA, casualty selection) match the source
+  `boots_calculator.resolve_map_attack` exactly — decoupled from the PRNG bitstream. Also noted:
+  the current GDScript `_select_casualties` **diverges** from source (it makes artillery casualties
+  in deterministic order; source selects only non-artillery, randomly, never artillery) — to be
+  corrected under M0 item 2 to preserve ported math.
 - **2026-06-23 — Testing:** GdUnit4 adopted *additively* alongside the existing `tools/`
   validation scripts (not a replacement). GdUnit4 for unit/scene/input/UI/integration; custom
   scripts for data-contract/smoke/port-equivalence. Seed/inject RNG before golden tests.

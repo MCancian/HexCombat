@@ -8,3 +8,6 @@ data_*/
 # Exported builds
 /build/
 /export/
+
+# GdUnit4 generated test reports
+/reports/
