@@ -17,6 +17,7 @@ const ORG_RECOVERY_PER_TURN := 10.0     # +10% per turn when neither moving nor 
 @export var composition: Array[Battalion] = []
 
 @export var hex_id: String = ""
+@export var entry_bearing: float = 0.0
 @export var moved_this_turn: bool = false
 @export var fought_this_turn: bool = false
 @export var destroyed: bool = false

@@ -39,6 +39,23 @@ Scoped 2026-06-23 (sources located; see Decisions). Two independent sub-units; d
       `scenes/SymbolPreview.tscn`; pi rendered it and confirmed all 11 symbols display.
 - [x] Acceptance: symbols render in a test scene (pi visual check). **MA COMPLETE 2026-06-23.**
 
+## Current milestone: M1 — Unit placement + rendering
+
+**M1a — Scenario authoring + loading** ✓ *(complete 2026-06-23)*
+- [x] `data/scenario_default.json`: 4 PLA amphibious brigades on beach hexes 1-4 + 4 ROC brigades on
+      the adjacent inland neighbors, each with an `offset_bearing`. Beach→hex by nearest center;
+      inland = real HexMath neighbor matching the beach's advance bearing.
+- [x] `Brigade.entry_bearing`; `GameData.load_scenario()` places the 8 brigades at startup (fail-loud).
+- [x] `tools/validate_scenario_data.gd` (counts, brigade/team/hex integrity, beach adjacency) +
+      `tests/scenario_loader_test.gd`. Gate green.
+
+**M1b — Brigade marker rendering** *(next up)*
+- [ ] In `HexMap`, render a marker for each placed brigade using `SymbolLibrary` (symbol by
+      `nato_type`), tinted by team (Red/Green), positioned at the hex center nudged toward
+      `entry_bearing` (Red seaward, Green toward the beach). Only the 8 placed brigades render.
+- [ ] Acceptance: windowed run shows the scenario brigades on the correct hexes/sides (pi visual
+      check via MCP). **Completes M1 → push.**
+
 ## Upcoming (detail when reached — see ROADMAP for acceptance criteria)
 
 - [ ] M1 — Unit placement + rendering (`data/scenario_default.json`, brigade markers)
@@ -58,6 +75,16 @@ including seeded golden combat and movement-reachability tests).
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-23 — M1 starter scenario placement (resolved a gap):** beaches 1-4 (TIV
+  `defaults/beaches.json`, all TO 3 Northern) map by nearest hex center to hex_44_16/44_15/43_14/43_13;
+  each Green inland hex = the real HexMath neighbor of the beach hex whose bearing best matches the
+  beach's `Advance_Direction` → hex_43_17/43_15/42_15/42_14 (all unique, all adjacent). **Green
+  defenders:** only **3 Marine brigades exist** (BDE-66/77/99, all southern), so beaches 1-3 get the
+  marines and **beach 4 gets BDE-269 (269th Mechanized Infantry)** — the nearest northern green
+  maneuver brigade. Scenario placement overrides each brigade's OOB garrison location (a contrived
+  starter beachhead). **Red:** PLA-71-2 / 72-5 / 73-14 / 74-1 Amphibious (one per group army).
+  `offset_bearing`: Red = seaward (advance+180), Green = bearing toward its beach hex. Not a blocking
+  question — resolved in-spirit of the settled design.
 - **2026-06-23 — MA-2 / symbols done:** copied all 185 NATO SVGs → `assets/symbols/`; mapped the 11
   OOB nato_types in `data/nato_symbol_map.json` (air-defense→air_defence, amphibious→amphibious_infantry,
   area-command→headquarters, armor→armour, artillery→artillery, aviation→helicopters, infantry→infantry,

@@ -108,3 +108,30 @@ in-scope suggestions are applied immediately; the rest are deferred with a one-l
   texture_load_ok, texture_size) so symbol coverage is inspectable without a screenshot. — _Deferred:
   nice agent-observability tool; `validate_symbol_map.gd` already gates load-correctness. Revisit if
   symbol coverage needs reporting (e.g. when more force types / phases are added)._
+
+---
+
+## 2026-06-23 — M1a: scenario authoring + loader + placement (data orchestrator-generated, code pi)
+
+**(a) What shipped** (orchestrator-verified: full gate green, 5 validators + 6 GdUnit4 tests)
+- `data/scenario_default.json` — authored by the orchestrator: 4 PLA amphibious brigades on beach
+  hexes 1-4 (hex_44_16/44_15/43_14/43_13) + 4 ROC brigades on the adjacent inland neighbors
+  (hex_43_17/43_15/42_15/42_14), with `offset_bearing` per brigade. Beach→hex by nearest center;
+  inland neighbor = the real HexMath neighbor whose bearing best matches the beach's advance
+  direction. (Caught + fixed an em-dash encoding corruption in the name.)
+- `Brigade.entry_bearing: float` added (entry-side compass bearing for the render offset; data, not
+  pixels — per the PLAN "Entry-side tracking" decision).
+- `GameData.load_scenario()` (called from `load_all()`): places the 8 brigades on their hexes, sets
+  `entry_bearing`, stores scenario meta (name, turn_length_days, stacking_soft_cap); fail-loud on
+  malformed file / unknown brigade / team-vs-OOB mismatch.
+- `tools/validate_scenario_data.gd` — counts, brigade existence + team match vs OOB, hex existence +
+  uniqueness, 4 Red / 4 Green, and Green-inland-adjacent-to-Red-beach via `HexMath.neighbor_coords`.
+- `tests/scenario_loader_test.gd` — 8 brigades placed, spot-checks (PLA-71-2→hex_44_16 bearing 315,
+  BDE-66→hex_43_17), meta loaded.
+
+**(b) pi's machine-readability suggestion**
+- Typed `Scenario`/`ScenarioPlacement` Resources + a pure `ScenarioLoader`/`ScenarioValidator`, with
+  GameData consuming a typed `Scenario` (not a raw Dictionary) and structured validation errors
+  (`{code, brigade_id, path}`). — _Deferred: aligns with the typed-model architecture; revisit when
+  scenarios multiply / become user-authored (Track C). The Dictionary path is fine for the single
+  slice scenario and the validator already gates integrity._

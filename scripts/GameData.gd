@@ -6,6 +6,11 @@ const BrigadeResource = preload("res://scripts/model/Brigade.gd")
 const BattalionResource = preload("res://scripts/model/Battalion.gd")
 
 const OOB_PATHS := ["res://data/pla_ground_forces.json", "res://data/roc_ground_forces.json"]
+const DEFAULT_SCENARIO_PATH := "res://data/scenario_default.json"
+
+var scenario_name: String = ""
+var turn_length_days: int = 0
+var stacking_soft_cap: int = 0
 
 var hexes: Array[Hex] = []
 var hex_lookup: Dictionary = {}  # hex_id -> Hex
@@ -25,6 +30,7 @@ func load_all() -> void:
 	load_hex_grid()
 	build_neighbor_lookup()
 	load_brigades()
+	load_scenario(DEFAULT_SCENARIO_PATH)
 	print_debug("GameData ready: %d hexes, %d brigades" % [hexes.size(), brigades.size()])
 
 
@@ -132,6 +138,44 @@ func _load_oob_file(path: String) -> void:
 			_add_brigade_to_hex(brigade.id, brigade.hex_id)
 
 
+func load_scenario(path: String) -> void:
+	var json = _read_json(path)
+	if json == null:
+		push_error("Could not load scenario %s" % path)
+		return
+	if not (json is Dictionary):
+		push_error("%s format not recognized: expected Dictionary with placements array" % path)
+		return
+
+	var scenario: Dictionary = json
+	var placements = scenario.get("placements", null)
+	if not (placements is Array):
+		push_error("%s format not recognized: expected Dictionary with placements array" % path)
+		return
+
+	scenario_name = String(scenario.get("name", ""))
+	turn_length_days = int(scenario.get("turn_length_days", 0))
+	stacking_soft_cap = int(scenario.get("stacking_soft_cap", 0))
+
+	var count := 0
+	for placement in placements:
+		var brigade_id := String(placement.get("brigade_id", ""))
+		var brigade: Brigade = get_brigade(brigade_id)
+		if brigade == null:
+			push_error("Scenario placement references unknown brigade_id: %s" % brigade_id)
+			continue
+
+		var placement_team := _parse_team(String(placement.get("team", "")))
+		if placement_team != brigade.team:
+			push_error("Scenario placement team mismatch for %s: placement=%s OOB=%s" % [brigade_id, String(placement.get("team", "")), _team_to_string(brigade.team)])
+
+		set_brigade_hex(brigade_id, String(placement.get("hex", "")))
+		brigade.entry_bearing = float(placement.get("offset_bearing", 0.0))
+		count += 1
+
+	print_debug("Loaded scenario '%s': %d placements" % [scenario_name, count])
+
+
 func get_hex(hex_id: String) -> Hex:
 	return hex_lookup.get(hex_id, null)
 
@@ -213,6 +257,14 @@ func _parse_team(team_value: String) -> Brigade.Team:
 			return Brigade.Team.GREEN
 		_:
 			return Brigade.Team.RED
+
+
+func _team_to_string(team: Brigade.Team) -> String:
+	match team:
+		Brigade.Team.GREEN:
+			return "Green"
+		_:
+			return "Red"
 
 
 func _read_json(path: String):
