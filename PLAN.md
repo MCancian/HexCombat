@@ -4,7 +4,7 @@ The orchestrator works this file top-down each loop iteration. See `ROADMAP.md` 
 view and `AGENTS.md` for the rules. Status: `[ ]` todo · `[~]` in progress · `[x]` done ·
 `[!]` blocked (see Open Questions).
 
-## Current milestone: MA — Assets & data import  *(M0 complete 2026-06-23)*
+## M0 — Test & verification infrastructure  ✓ *(complete 2026-06-23)*
 
 - [x] Install GdUnit4 into `addons/`; confirm headless CLI runs with exit codes.
 - [x] Add a seedable RNG/dice abstraction; refactor `CombatCalculator` to accept it (remove
@@ -15,9 +15,36 @@ view and `AGENTS.md` for the rules. Status: `[ ]` todo · `[~]` in progress · `
       (`TaiwanInvasionViewer` `boots_calculator.resolve_map_attack`).
 - [x] Acceptance: `run_all_tests.ps1` green; combat reproducible under a fixed seed. **M0 DONE.**
 
+## Current milestone: MA — Assets & data import
+
+Scoped 2026-06-23 (sources located; see Decisions). Two independent sub-units; do the OOB first
+(headless-testable), then symbols (needs pi's visual check).
+
+**MA-1 — Green (ROC) OOB import** *(next up)*
+- [ ] Normalize the **32 Green ROC brigades** from TIV `defaults/unit_hierarchy.json` (brigades
+      with no `team` or `team:"Green"`) into HexCombat's `Brigade` schema → `data/roc_ground_forces.json`
+      (same shape as `data/pla_ground_forces.json`: `brigade_id,name,team:"Green",number,to_number,
+      lat,lon,nato_type,composition[{type,qty}]`). Includes the 3 Marine brigades BDE-66/99/77
+      (`nato_type:"amphibious"`) needed for M1's Green defender.
+- [ ] Extend `UnitStats.TYPE_DEFS` so all 12 green battalion types resolve **without** fallback
+      warnings — the 3 missing ones are `Armor Battalion`, `Tank Battalion`, `Infantry Battalion
+      (Reserve)` (the other 9 already exist). Strengths consistent with the existing scale
+      (Armor/Tank = 2.0 like existing `Armor`/`Tank` fallbacks; reserve infantry below light infantry).
+- [ ] Extend `GameData` to load BOTH OOBs (PLA + ROC) into typed `Brigade`s.
+- [ ] Validation script `tools/validate_oob_data.gd`: both OOBs parse into typed `Brigade`s, all
+      battalion types resolve to a known (non-default) `UnitStats` entry, green count == 32.
+
+**MA-2 — Unit symbols import**
+- [ ] Import the 185 NATO SVGs from TIV `symbols/` → `assets/symbols/`.
+- [ ] Establish a `nato_type` → symbol-filename mapping covering every nato_type used by both OOBs
+      (green: mech-infantry, armor, artillery, area-command, infantry, special-forces, aviation,
+      amphibious, reserve; + PLA types). Store as data (e.g. `data/nato_symbol_map.json`) — adding
+      content stays a data change.
+- [ ] Acceptance: symbols import & render in a test scene (pi visual check via MCP); a validation
+      script asserts every OOB `nato_type` has a resolvable symbol file.
+
 ## Upcoming (detail when reached — see ROADMAP for acceptance criteria)
 
-- [ ] MA — Assets & data import (unit symbols + green/Taiwan OOB)
 - [ ] M1 — Unit placement + rendering (`data/scenario_default.json`, brigade markers)
 - [ ] M2 — Selection + event bus + info panel
 - [ ] M3 — Turn/phase state machine (`GameState` autoload)
@@ -35,6 +62,20 @@ including seeded golden combat and movement-reachability tests).
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-23 — MA green-OOB source (resolved a gap):** the Taiwan *OOB* file
+  (`docs/reference/Taiwan_2028.oob.json`) holds only **aggregate battalion counts per theater** and
+  has no discrete brigades/marines — so it is NOT the import source. The real structured green
+  brigades live in TIV `defaults/unit_hierarchy.json`: **32 ROC brigades** (untagged team ⇒ Green per
+  TIV's `defaults_builder._load_hierarchy_data`), same schema as `pla_ground_forces.json`, including
+  3 Marine brigades (BDE-66/99/77, `nato_type:"amphibious"`) and full lat/lon. MA-1 normalizes those.
+  No brigade synthesis and **no user pause needed**. (`config/taiwan_TOs.json` is just theater
+  polygons — not used for the OOB.)
+- **2026-06-23 — New green battalion types:** of the 12 distinct green battalion types, 9 already
+  exist in `UnitStats.TYPE_DEFS`; MA-1 adds `Armor Battalion` and `Tank Battalion` (strength 2.0,
+  `armor` tag — matching the existing `Armor`/`Tank` fallback scale and PLA heavy armor) and
+  `Infantry Battalion (Reserve)` (reserve infantry, strength below light infantry; source
+  `reserve_structure.combat_power` ≈ 0.5). Keeps `UnitStats` the single source of truth (no separate
+  green strength table).
 - **2026-06-23 — RNG abstraction (M0 item 2):** introduced `Dice` (abstract, `scripts/Dice.gd`)
   with `roll_d100()` + `choose_indices(n,k)`; `SeededDice` (production, seeded Godot RNG,
   deterministic Fisher-Yates — never `Array.shuffle()`); `ScriptedDice` (test double,
