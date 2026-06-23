@@ -1,39 +1,6 @@
 extends RefCounted
 class_name CombatCalculator
 
-const UNIT_COMBAT_STRENGTH = {
-	"Light": 1.0,
-	"Light Infantry": 1.0,
-	"Medium": 1.5,
-	"Heavy": 2.0,
-	"Mechanized": 1.5,
-	"Mechanized Infantry": 1.5,
-	"Armor": 2.0,
-	"Tank": 2.0,
-	"Amphib": 1.2,
-	"Amphibious": 1.2,
-	"SOF": 1.8,
-	"Recon": 0.7,
-	"Towed": 0.8,
-	"Towed Artillery": 0.8,
-	"SP": 1.3,
-	"SP Artillery": 1.3,
-	"Mechanized Artillery": 1.3,
-	"C2": 0.5,
-	"HQ": 0.5,
-	"SHORAD": 0.9,
-	"Air Defense": 0.9,
-	"Cargo": 0.3,
-	"Support": 0.3,
-	"Engineer": 1.1,
-	"Airborne": 1.3,
-	"Air Assault": 1.4,
-	"Rotary Wing": 0.5,
-	"Helicopter": 0.5,
-	"DOS": 0.2,
-	"Logistics": 0.2
-}
-
 const TERRAIN_MODIFIERS = {
 	"Clear": 1.0,
 	"Suburban": 2.0,
@@ -61,8 +28,8 @@ static func resolve_map_attack(
 	defender_terrain_modifier: float = 1.0,
 	feba_base_km: float = 2.0
 ) -> CombatResult:
-	attacker_support = _normalize_support(attacker_support)
-	defender_support = _normalize_support(defender_support)
+	attacker_support = normalize_support(attacker_support)
+	defender_support = normalize_support(defender_support)
 	defender_terrain_modifier = max(1.0, defender_terrain_modifier)
 
 	var attacker_maneuver := _sum_unit_strength(attacker_units)
@@ -111,8 +78,8 @@ static func resolve_map_attack(
 	var attacker_casualties := _select_casualties(attacker_units, attacker_losses)
 	var defender_casualties := _select_casualties(defender_units, defender_losses)
 
-	var denominator = max(attacker_strength + defender_strength, 0.1)
-	var balance := (attacker_strength - defender_strength) / denominator
+	var denominator: float = max(attacker_strength + defender_strength, 0.1)
+	var balance: float = (attacker_strength - defender_strength) / denominator
 	var feba_roll_factor := 0.75 + (feba_roll / 100.0) * 0.5
 	var feba_shift_km := feba_base_km * clampf(balance * 2.0, -2.0, 2.0) * feba_roll_factor
 
@@ -182,21 +149,31 @@ static func resolve_map_attack(
 	return result
 
 
-static func _normalize_support(raw_support: Dictionary) -> Dictionary:
+static func normalize_support(raw_support: Dictionary) -> Dictionary:
 	return {
-		"artillery": max(0, int(raw_support.get("artillery", 0) or 0)),
-		"rocket_artillery": max(0, int(raw_support.get("rocket_artillery", 0) or 0)),
-		"cas": max(0, int(raw_support.get("cas", 0) or 0)),
-		"crbm": max(0, int(raw_support.get("crbm", 0) or 0)),
-		"rotary_wing": max(0, int(raw_support.get("rotary_wing", 0) or 0))
+		"artillery": _to_count(raw_support.get("artillery")),
+		"rocket_artillery": _to_count(raw_support.get("rocket_artillery")),
+		"cas": _to_count(raw_support.get("cas")),
+		"crbm": _to_count(raw_support.get("crbm")),
+		"rotary_wing": _to_count(raw_support.get("rotary_wing"))
 	}
+
+
+static func _normalize_support(raw_support: Dictionary) -> Dictionary:
+	return normalize_support(raw_support)
+
+
+static func _to_count(value) -> int:
+	if value == null:
+		return 0
+	return max(0, int(value))
 
 
 static func _sum_unit_strength(units: Array) -> float:
 	var total := 0.0
 	for unit in units:
 		var unit_type := _unit_type(unit)
-		var strength := float(UNIT_COMBAT_STRENGTH.get(unit_type, 1.0))
+		var strength := UnitStats.strength_for_type(unit_type)
 		var supply_eff := _unit_supply_effectiveness(unit)
 		total += strength * supply_eff
 	return total
@@ -229,7 +206,7 @@ static func _select_casualties(units: Array, loss_count: int) -> Array:
 
 	for unit in units:
 		var unit_type := _unit_type(unit)
-		if "artillery" in unit_type.to_lower() or "rocket" in unit_type.to_lower():
+		if UnitStats.has_tag(unit_type, "artillery"):
 			artillery.append(unit)
 		else:
 			non_artillery.append(unit)
