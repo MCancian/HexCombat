@@ -33,6 +33,32 @@ Randomness must flow through an **injectable, seedable RNG** rather than global 
 `randf()`. This makes combat and every future phase reproducible for golden tests, CI, and
 debugging. (Refactor tracked in `ROADMAP.md` M0.)
 
+## Control & actions (headless-drivable)
+
+The brigade is the **atomic on-map unit**; battalions are brigade attributes (strength,
+casualties), never separately positioned. Gameplay runs through a **view-independent
+action/resolution layer** on top of `GameState`: discrete commands such as
+`MoveBrigade(brigade, to_hex)` and `ResolveCombat(target_hex, attacker_composition,
+defender_composition)`.
+
+- The **view** translates clicks into these commands; it owns no game state.
+- **AI agents** and the future **B2 auto-resolve** mode emit the *same* commands.
+- This is what makes **headless AI-vs-AI** play, deterministic golden tests, and the autonomous
+  orchestrator possible.
+
+Under the **WeGo** turn model the layer first *collects* both sides' orders for the turn, then a
+single deterministic **resolver** applies them together (the one place simultaneous move/combat
+conflicts are sequenced). Hex ownership is by **occupancy** — both sides present → contested; one
+side → that side; empty → last owner — with FEBA driving post-combat retreat. The resolver order
+is **move-then-fight**: movement applies first, then every hex with both sides present fights.
+Combat is **continuous** — a contested hex resolves a round each turn (a day), FEBA accumulating
+across turns, so reinforcements arriving later join the unfolding engagement.
+
+In manual mode, declaring an attack opens a **combat-composition menu**: both sides may add
+eligible supporting forces and other available maneuver units (target hex contributes all units;
+adjacent hexes contribute maneuver/artillery; support assets feed `resolve_map_attack`'s support
+dicts) — i.e. a manual front-end over the same collection logic the source automated.
+
 ## Per-phase template
 
 Each TaiwanInvasionViewer phase becomes a self-contained module that reuses `GameData`/

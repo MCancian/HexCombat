@@ -72,8 +72,10 @@ work done. The `.godot/` cache is git-ignored; `.gd.uid` files are committed wit
 - Typed GDScript throughout (`var x: Type`, typed params/returns, `class_name`).
 - **Single source of truth** — no duplicated tables/constants (e.g. unit strengths live only in
   `UnitStats`).
-- **Fail loud, not silent** — unknown/missing data → `push_warning`/`push_error`, never a silent
-  default fallback.
+- **Fail loud, not silent.** This is a **solo-developer tool**: a loud crash you fix at the root
+  beats defensive error-handling that hides bugs. Don't wrap things in try/guards for hypothetical
+  inputs — let it break visibly (`push_error`/assert) and fix the cause. Unknown/missing data →
+  `push_warning`/`push_error`, never a silent default fallback.
 - Pure logic = `static func` in `RefCounted` libs; runtime state = autoloads; visuals = view
   layer. Don't leak screen/pixel concerns into the model.
 
