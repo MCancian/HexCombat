@@ -1,0 +1,23 @@
+{
+  "settings": {
+    "toolPrefix": "mcp",
+    "requestTimeoutMs": 30000,
+    "maxRetries": 5
+  },
+  "mcpServers": {
+    "godot": {
+      "transport": "stdio",
+      "command": "npx.cmd",
+      "args": [
+        "-y",
+        "@coding-solo/godot-mcp"
+      ],
+      "env": {
+        "GODOT_PATH": "C:\\Godot_v4.7-stable_win64.exe",
+        "DEBUG": "true"
+      },
+      "lifecycle": "lazy",
+      "requestTimeoutMs": 30000
+    }
+  }
+}
