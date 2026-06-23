@@ -39,7 +39,7 @@ Scoped 2026-06-23 (sources located; see Decisions). Two independent sub-units; d
       `scenes/SymbolPreview.tscn`; pi rendered it and confirmed all 11 symbols display.
 - [x] Acceptance: symbols render in a test scene (pi visual check). **MA COMPLETE 2026-06-23.**
 
-## Current milestone: M1 — Unit placement + rendering
+## M1 — Unit placement + rendering  ✓ *(complete 2026-06-23)*
 
 **M1a — Scenario authoring + loading** ✓ *(complete 2026-06-23)*
 - [x] `data/scenario_default.json`: 4 PLA amphibious brigades on beach hexes 1-4 + 4 ROC brigades on
@@ -49,12 +49,13 @@ Scoped 2026-06-23 (sources located; see Decisions). Two independent sub-units; d
 - [x] `tools/validate_scenario_data.gd` (counts, brigade/team/hex integrity, beach adjacency) +
       `tests/scenario_loader_test.gd`. Gate green.
 
-**M1b — Brigade marker rendering** *(next up)*
-- [ ] In `HexMap`, render a marker for each placed brigade using `SymbolLibrary` (symbol by
-      `nato_type`), tinted by team (Red/Green), positioned at the hex center nudged toward
-      `entry_bearing` (Red seaward, Green toward the beach). Only the 8 placed brigades render.
-- [ ] Acceptance: windowed run shows the scenario brigades on the correct hexes/sides (pi visual
-      check via MCP). **Completes M1 → push.**
+**M1b — Brigade marker rendering** ✓ *(complete 2026-06-23)*
+- [x] `HexMap.render_brigade_markers()` draws the 8 placed brigades: team-colored backing + NATO
+      symbol (by `nato_type`), nudged toward `entry_bearing`. Unplaced brigades don't render.
+      Redraw-capable for M4. Headless guard "Rendered 8 brigade markers" added to the gate.
+- [x] Acceptance: pi visually confirmed 8 markers on the correct hexes/sides, team-distinguishable.
+      **M1 COMPLETE 2026-06-23.** (Known cosmetic: topmost markers clip at the viewport edge —
+      camera fit deferred to Track C.)
 
 ## Upcoming (detail when reached — see ROADMAP for acceptance criteria)
 

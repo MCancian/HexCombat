@@ -135,3 +135,29 @@ in-scope suggestions are applied immediately; the rest are deferred with a one-l
   (`{code, brigade_id, path}`). — _Deferred: aligns with the typed-model architecture; revisit when
   scenarios multiply / become user-authored (Track C). The Dictionary path is fine for the single
   slice scenario and the validator already gates integrity._
+
+---
+
+## 2026-06-23 — M1b: brigade marker rendering (pi-implemented; M1 complete)
+
+**(a) What shipped** (orchestrator-verified: full gate green incl. a new headless marker guard)
+- `HexMap.render_brigade_markers()` (called from `_ready()`, redraw-capable for M4): for each placed
+  brigade (hex_id != "") it projects the hex center, nudges by `0.4*radius` toward `entry_bearing`
+  (north=-y, east=+x), and builds a marker = team-colored Polygon2D backing + Sprite2D NATO symbol
+  (~48 px tall). Unplaced brigades don't render. Fail-loud on unknown hex / missing symbol / unknown
+  team. `brigade_markers` dict keyed by brigade_id.
+- Added smoke guard "Rendered 8 brigade markers" to `tools/run_all_tests.ps1` — headless regression
+  evidence of the marker count (complements pi's visual check).
+- **Visual check (pi):** 8 markers; 4 Red on the beach hexes nudged seaward, 4 Green on the inland
+  hexes nudged toward the beach; correct NATO symbols; team obvious from the backing color.
+- **Known cosmetic:** the northern beach markers sit near the top viewport edge and the topmost are
+  slightly clipped — a camera-fit issue, deferred to **Track C** (Camera fit/zoom/pan). Does not
+  affect the slice DoD (markers are on the correct hexes/sides).
+
+**(b) pi's machine-readability suggestion**
+- Extract a pure `BrigadeMarkerLayout.compute(brigade, hex, vertices, projection)` returning a
+  record (brigade/hex id, screen center, radius, offset, final pos, team color, symbol) + a
+  `HexMap.export_marker_snapshot()` for visual-regression tooling, and a test asserting the 8
+  expected layout records. — _Deferred: good agent-observability; the new headless "Rendered 8
+  brigade markers" guard + the scenario validators already cover placement/count. Revisit when
+  marker layout gains complexity (stacking/counts at M5)._
