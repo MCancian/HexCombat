@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "godot": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@godotengine/mcp-godot"
+      ],
+      "description": "Godot MCP server for executing code and interacting with Godot projects"
+    }
+  }
+}

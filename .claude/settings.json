@@ -1,0 +1,12 @@
+{
+  "enableAllProjectMcpServers": true,
+  "permissions": {
+    "allow": [
+      "Bash(godot *)",
+      "Read",
+      "Edit",
+      "Write",
+      "Glob"
+    ]
+  }
+}
