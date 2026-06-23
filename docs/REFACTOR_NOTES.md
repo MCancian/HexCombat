@@ -85,3 +85,26 @@ in-scope suggestions are applied immediately; the rest are deferred with a one-l
   `validate_oob_data.gd` instead of duplicating literals (111/32/143, "Red"/"Green", paths). —
   _Deferred: the pinned literals in the validator are intentional regression guards and the counts
   are stable through the slice; revisit if OOB content becomes dynamic/scenario-driven (Track C)._
+
+---
+
+## 2026-06-23 — MA-2b: SymbolLibrary + preview scene + render check (pi-implemented)
+
+**(a) What shipped** (orchestrator-verified: full gate green, 5 GdUnit4 tests)
+- `scripts/SymbolLibrary.gd` (RefCounted): loads `nato_symbol_map.json`, `texture_for_nato_type()`
+  returns a cached `Texture2D`, fail-loud (`push_error`+null) on unmapped/unloadable type. This is
+  the resolver M1 brigade rendering will use.
+- `scenes/SymbolPreview.tscn` + `scripts/SymbolPreview.gd`: lays out every distinct OOB nato_type
+  (symbol + "nato_type — N brigades", counted from both OOBs). Main scene unchanged.
+- `tests/symbol_library_test.gd`: all 11 nato_types resolve to non-null Texture2D; unmapped type
+  hits the fail-loud path (`assert_error`).
+- **Visual check:** pi reported the MCP tools weren't exposed in its harness, so it ran the preview
+  scene windowed directly and observed all 11 rows rendering with symbols (no blank boxes; the
+  area-command/HQ glyph is visually minimal but present). The headless `validate_symbol_map.gd` +
+  the GdUnit4 texture-load test independently corroborate every symbol loads as a Texture2D.
+
+**(b) pi's machine-readability suggestion**
+- `tools/dump_symbol_catalog.gd` emitting JSON per nato_type (filename, brigade_count,
+  texture_load_ok, texture_size) so symbol coverage is inspectable without a screenshot. — _Deferred:
+  nice agent-observability tool; `validate_symbol_map.gd` already gates load-correctness. Revisit if
+  symbol coverage needs reporting (e.g. when more force types / phases are added)._
