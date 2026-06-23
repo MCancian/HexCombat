@@ -4,16 +4,16 @@ The orchestrator works this file top-down each loop iteration. See `ROADMAP.md` 
 view and `AGENTS.md` for the rules. Status: `[ ]` todo · `[~]` in progress · `[x]` done ·
 `[!]` blocked (see Open Questions).
 
-## Current milestone: M0 — Test & verification infrastructure
+## Current milestone: MA — Assets & data import  *(M0 complete 2026-06-23)*
 
 - [x] Install GdUnit4 into `addons/`; confirm headless CLI runs with exit codes.
-- [ ] Add a seedable RNG/dice abstraction; refactor `CombatCalculator` to accept it (remove
+- [x] Add a seedable RNG/dice abstraction; refactor `CombatCalculator` to accept it (remove
       global `randi()` from pure logic). Preserve all math.
 - [x] Author `tools/run_all_tests.ps1` (import → smoke → `tools/` validation → GdUnit4; nonzero
       on any failure).
-- [ ] Add first golden combat test (fixed seed) matched to
-      `TaiwanInvasionViewer/tests/python/unit/test_hex_combat_phase4.py`.
-- [ ] Acceptance: `run_all_tests.ps1` green; combat reproducible under a fixed seed.
+- [x] Add first golden combat test (fixed seed) matched to the source combat oracle
+      (`TaiwanInvasionViewer` `boots_calculator.resolve_map_attack`).
+- [x] Acceptance: `run_all_tests.ps1` green; combat reproducible under a fixed seed. **M0 DONE.**
 
 ## Upcoming (detail when reached — see ROADMAP for acceptance criteria)
 
@@ -35,6 +35,29 @@ including seeded golden combat and movement-reachability tests).
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-23 — RNG abstraction (M0 item 2):** introduced `Dice` (abstract, `scripts/Dice.gd`)
+  with `roll_d100()` + `choose_indices(n,k)`; `SeededDice` (production, seeded Godot RNG,
+  deterministic Fisher-Yates — never `Array.shuffle()`); `ScriptedDice` (test double,
+  `tests/helpers/`). `CombatCalculator.resolve_map_attack` and the `BOOTSCalculator` wrapper now
+  take a **required** `dice: Dice` first arg (no default → fail loud). Combat consumes RNG in a
+  fixed order: 3× `roll_d100()` (attacker/defender/feba), then attacker then defender casualty
+  selection.
+- **2026-06-23 — Casualty-selection port fix:** corrected a divergence from the source — casualties
+  are now drawn **only from non-artillery** units, at random; **artillery is never a casualty**
+  (zero casualties if no non-artillery eligible, even when a loss was computed). Old GDScript wrongly
+  filled with artillery in deterministic order. Also aligned `combat_detail.rolls` key
+  `feba_roll` → `feba_movement_roll` to match the source `combat_detail` shape.
+- **2026-06-23 — Golden test (M0 item 4):** `tests/combat_golden_test.gd` cross-validates against
+  the **live Python oracle** (`boots_calculator.resolve_map_attack`). Types that score identically
+  in both strength tables (`Special Forces Battalion`=1.8, `Field Artillery Battalion`=0.8) let the
+  GDScript port be asserted against numbers pulled from the Python source for the same scripted
+  rolls. (numpy PCG64 isn't reproducible in Godot, so the test injects rolls and verifies the
+  *formula*, per the M0 strategy decision.)
+- **2026-06-23 — RNG guardrail enforced:** added `tools/validate_no_global_rng.gd` (in the gate) —
+  fails if any `scripts/` file calls global `randi/randf/randi_range/randf_range/randomize`
+  (instance calls like `_rng.randi_range` allowed). Negative-tested. From pi's machine-readability
+  report; other suggestions (unit fixtures, JSON golden format, typed `combat_detail`) deferred in
+  `docs/REFACTOR_NOTES.md`.
 - **2026-06-23 — GdUnit4 version & layout:** pinned **v6.1.3** (latest; runs on Godot 4.7),
   installed at `addons/gdUnit4/` with the framework's own `test/` self-tests stripped (AssetLib
   package layout, keeps the repo lean). Plugin enabled in `project.godot` `[editor_plugins]`.

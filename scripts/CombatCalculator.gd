@@ -21,6 +21,7 @@ const SUPPORT_MULTIPLIERS = {
 
 
 static func resolve_map_attack(
+	dice: Dice,
 	attacker_units: Array,
 	defender_units: Array,
 	attacker_support: Dictionary = {},
@@ -52,9 +53,9 @@ static func resolve_map_attack(
 	var unmodified_ratio := attacker_unmodified / defender_unmodified
 	var ratio := attacker_strength / defender_strength
 
-	var attacker_loss_roll := randi() % 100 + 1
-	var defender_loss_roll := randi() % 100 + 1
-	var feba_roll := randi() % 100 + 1
+	var attacker_loss_roll := dice.roll_d100()
+	var defender_loss_roll := dice.roll_d100()
+	var feba_roll := dice.roll_d100()
 
 	var attacker_loss_rate := clampf(
 		0.20 - (ratio - 1.0) * 0.08 + (attacker_loss_roll - 50) / 1000.0,
@@ -75,8 +76,8 @@ static func resolve_map_attack(
 			else:
 				attacker_losses = 1
 
-	var attacker_casualties := _select_casualties(attacker_units, attacker_losses)
-	var defender_casualties := _select_casualties(defender_units, defender_losses)
+	var attacker_casualties := _select_casualties(attacker_units, attacker_losses, dice)
+	var defender_casualties := _select_casualties(defender_units, defender_losses, dice)
 
 	var denominator: float = max(attacker_strength + defender_strength, 0.1)
 	var balance: float = (attacker_strength - defender_strength) / denominator
@@ -131,7 +132,7 @@ static func resolve_map_attack(
 		"rolls": {
 			"attacker_loss_roll": attacker_loss_roll,
 			"defender_loss_roll": defender_loss_roll,
-			"feba_roll": feba_roll
+			"feba_movement_roll": feba_roll
 		},
 		"losses": {
 			"attacker": attacker_casualties.size(),
@@ -197,30 +198,21 @@ static func _support_power_breakdown(support_counts: Dictionary) -> Dictionary:
 	return breakdown
 
 
-static func _select_casualties(units: Array, loss_count: int) -> Array:
-	if loss_count <= 0:
-		return []
-
-	var non_artillery := []
-	var artillery := []
-
+static func _select_casualties(units: Array, loss_count: int, dice: Dice) -> Array:
+	var eligible := []
 	for unit in units:
 		var unit_type := _unit_type(unit)
-		if UnitStats.has_tag(unit_type, "artillery"):
-			artillery.append(unit)
-		else:
-			non_artillery.append(unit)
+		if not UnitStats.has_tag(unit_type, "artillery"):
+			eligible.append(unit)
 
+	if loss_count <= 0 or eligible.is_empty():
+		return []
+
+	var select_count: int = min(loss_count, eligible.size())
+	var selected_indices := dice.choose_indices(eligible.size(), select_count)
 	var casualties := []
-	var remaining_loss := loss_count
-
-	for i in range(min(remaining_loss, non_artillery.size())):
-		casualties.append(non_artillery[i])
-	remaining_loss -= casualties.size()
-
-	for i in range(min(remaining_loss, artillery.size())):
-		casualties.append(artillery[i])
-
+	for index in selected_indices:
+		casualties.append(eligible[index])
 	return casualties
 
 

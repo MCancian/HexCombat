@@ -3,6 +3,7 @@ class_name BOOTSCalculator
 
 
 func resolve_map_attack(
+	dice: Dice,
 	attacker_units: Array,
 	defender_units: Array,
 	attacker_support: Dictionary = {},
@@ -11,6 +12,7 @@ func resolve_map_attack(
 	feba_base_km: float = 2.0
 ) -> CombatResult:
 	return CombatCalculator.resolve_map_attack(
+		dice,
 		attacker_units,
 		defender_units,
 		attacker_support,
