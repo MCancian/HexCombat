@@ -5,21 +5,15 @@
 
 config_version=5
 
-_global_script_classes=[{
-"base": "Node",
-"class": "&quot;HexGrid&quot;",
-"language": "&quot;GDScript&quot;",
-"path": "res://scripts/HexGrid.gd"
-}]
-_global_script_class_icons={
-"HexGrid": ""
-}
-
 [application]
 
 config/name="HexCombat"
 config/version="0.1.0"
 run/main_scene="res://scenes/Main.tscn"
+
+[autoload]
+
+GameData="*res://scripts/GameData.gd"
 
 [display]
 
