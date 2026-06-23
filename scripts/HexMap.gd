@@ -30,8 +30,14 @@ func spawn_hex_cells() -> void:
 		poly.polygon = vertices
 		poly.color = get_hex_color(hex.id)
 		poly.z_index = 0
-		poly.outline_width = 2
-		poly.outline_color = Color.BLACK
+
+		# Polygon2D has no outline in Godot 4; draw a closed border with Line2D.
+		var outline := Line2D.new()
+		outline.points = vertices
+		outline.closed = true
+		outline.width = 2.0
+		outline.default_color = Color.BLACK
+		poly.add_child(outline)
 
 		add_child(poly)
 		hex_cells[hex.id] = poly

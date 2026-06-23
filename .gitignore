@@ -1,0 +1,10 @@
+# Godot 4+ engine cache and import artifacts
+.godot/
+
+# Mono/.NET (unused, but safe to ignore)
+.mono/
+data_*/
+
+# Exported builds
+/build/
+/export/

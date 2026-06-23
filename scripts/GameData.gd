@@ -52,7 +52,7 @@ func load_hex_grid() -> void:
 		hex.col = int(hex_data.get("col", 0))
 		hex.coord = Vector2i(hex.row, hex.col)
 
-		var center_data := hex_data.get("center", {})
+		var center_data: Dictionary = hex_data.get("center", {})
 		hex.center = Vector2(float(center_data.get("lat", 0.0)), float(center_data.get("lon", 0.0)))
 
 		var vertices := PackedVector2Array()
