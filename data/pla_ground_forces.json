@@ -1,0 +1,3795 @@
+{
+  "brigades": [
+    {
+      "brigade_id": "PLA-71-2-Amphibious",
+      "name": "2nd Amphibious Brigade (71st Group Army)",
+      "team": "Red",
+      "number": 2,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "amphibious",
+      "composition": [
+        {
+          "type": "Amphibious Infantry Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-71-35-Heavy-Armored",
+      "name": "35th Heavy Armored Brigade (71st Group Army)",
+      "team": "Red",
+      "number": 35,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "armor",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-71-160-Light-Mechanized",
+      "name": "160th Light Mechanized Brigade (71st Group Army)",
+      "team": "Red",
+      "number": 160,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "motorized-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-71-235-Mechanized-Infantry",
+      "name": "235th Mechanized Infantry Brigade (71st Group Army)",
+      "team": "Red",
+      "number": 235,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-71-71-Special-Operations",
+      "name": "71th Special Operations Brigade (71st Group Army)",
+      "team": "Red",
+      "number": 71,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "special-forces",
+      "composition": [
+        {
+          "type": "Special Forces Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-71-71-Artillery",
+      "name": "71th Artillery Brigade (71st Group Army)",
+      "team": "Red",
+      "number": 71,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "artillery",
+      "composition": [
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Rocket Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-71-71-Air-Defense",
+      "name": "71th Air Defense Brigade (71st Group Army)",
+      "team": "Red",
+      "number": 71,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "air-defense",
+      "composition": [
+        {
+          "type": "Air Defense Battalion",
+          "qty": 6
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-71-71-Aviation",
+      "name": "71th Aviation Brigade (71st Group Army)",
+      "team": "Red",
+      "number": 71,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "aviation",
+      "composition": [
+        {
+          "type": "Attack Helicopter Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Utility Helicopter Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-72-5-Amphibious",
+      "name": "5th Amphibious Combined Arms Brigade (72nd Group Army)",
+      "team": "Red",
+      "number": 5,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "amphibious",
+      "composition": [
+        {
+          "type": "Amphibious Infantry Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-72-10-Light-Mechanized",
+      "name": "10th Light Mechanized Brigade (72nd Group Army)",
+      "team": "Red",
+      "number": 10,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "motorized-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-72-5-Heavy-Armored",
+      "name": "5th Heavy Armored Brigade (72nd Group Army)",
+      "team": "Red",
+      "number": 5,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "armor",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-72-124-Amphibious",
+      "name": "124th Amphibious Combined Arms Brigade (72nd Group Army)",
+      "team": "Red",
+      "number": 124,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "amphibious",
+      "composition": [
+        {
+          "type": "Amphibious Infantry Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-72-72-Special-Operations",
+      "name": "72th Special Operations Brigade (72nd Group Army)",
+      "team": "Red",
+      "number": 72,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "special-forces",
+      "composition": [
+        {
+          "type": "Special Forces Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-72-72-Artillery",
+      "name": "72th Artillery Brigade (72nd Group Army)",
+      "team": "Red",
+      "number": 72,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "artillery",
+      "composition": [
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Rocket Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-72-72-Air-Defense",
+      "name": "72th Air Defense Brigade (72nd Group Army)",
+      "team": "Red",
+      "number": 72,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "air-defense",
+      "composition": [
+        {
+          "type": "Air Defense Battalion",
+          "qty": 6
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-72-72-Aviation",
+      "name": "72th Aviation Brigade (72nd Group Army)",
+      "team": "Red",
+      "number": 72,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "aviation",
+      "composition": [
+        {
+          "type": "Attack Helicopter Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Utility Helicopter Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-73-14-Amphibious",
+      "name": "14th Amphibious Combined Arms Brigade (73rd Group Army)",
+      "team": "Red",
+      "number": 14,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "amphibious",
+      "composition": [
+        {
+          "type": "Amphibious Infantry Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-73-14-Heavy-Armored",
+      "name": "14th Heavy Armored Brigade (73rd Group Army)",
+      "team": "Red",
+      "number": 14,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "armor",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-73-91-Amphibious",
+      "name": "91st Amphibious Combined Arms Brigade (73rd Group Army)",
+      "team": "Red",
+      "number": 91,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "amphibious",
+      "composition": [
+        {
+          "type": "Amphibious Infantry Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-73-92-Light-Mechanized",
+      "name": "92th Light Mechanized Brigade (73rd Group Army)",
+      "team": "Red",
+      "number": 92,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "motorized-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-73-73-Special-Operations",
+      "name": "73th Special Operations Brigade (73rd Group Army)",
+      "team": "Red",
+      "number": 73,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "special-forces",
+      "composition": [
+        {
+          "type": "Special Forces Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-73-73-Artillery",
+      "name": "73th Artillery Brigade (73rd Group Army)",
+      "team": "Red",
+      "number": 73,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "artillery",
+      "composition": [
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Rocket Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-73-73-Air-Defense",
+      "name": "73th Air Defense Brigade (73rd Group Army)",
+      "team": "Red",
+      "number": 73,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "air-defense",
+      "composition": [
+        {
+          "type": "Air Defense Battalion",
+          "qty": 6
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-73-73-Aviation",
+      "name": "73th Aviation Brigade (73rd Group Army)",
+      "team": "Red",
+      "number": 73,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "aviation",
+      "composition": [
+        {
+          "type": "Attack Helicopter Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Utility Helicopter Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-74-1-Amphibious",
+      "name": "1st Amphibious Combined Arms Brigade (74th Group Army)",
+      "team": "Red",
+      "number": 1,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "amphibious",
+      "composition": [
+        {
+          "type": "Amphibious Infantry Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-74-6-Heavy-Armored",
+      "name": "6th Heavy Armored Brigade (74th Group Army)",
+      "team": "Red",
+      "number": 6,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "armor",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-74-154-Light-Mechanized",
+      "name": "154th Light Mechanized Brigade (74th Group Army)",
+      "team": "Red",
+      "number": 154,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "motorized-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-74-163-Mechanized-Infantry",
+      "name": "163th Mechanized Infantry Brigade (74th Group Army)",
+      "team": "Red",
+      "number": 163,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-74-74-Special-Operations",
+      "name": "74th Special Operations Brigade (74th Group Army)",
+      "team": "Red",
+      "number": 74,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "special-forces",
+      "composition": [
+        {
+          "type": "Special Forces Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-74-74-Artillery",
+      "name": "74th Artillery Brigade (74th Group Army)",
+      "team": "Red",
+      "number": 74,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "artillery",
+      "composition": [
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Rocket Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-74-74-Air-Defense",
+      "name": "74th Air Defense Brigade (74th Group Army)",
+      "team": "Red",
+      "number": 74,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "air-defense",
+      "composition": [
+        {
+          "type": "Air Defense Battalion",
+          "qty": 6
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-74-74-Aviation",
+      "name": "74th Aviation Brigade (74th Group Army)",
+      "team": "Red",
+      "number": 74,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "aviation",
+      "composition": [
+        {
+          "type": "Attack Helicopter Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Utility Helicopter Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-74-125-Amphibious",
+      "name": "125th Amphibious Combined Arms Brigade (74th Group Army)",
+      "team": "Red",
+      "number": 125,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "amphibious",
+      "composition": [
+        {
+          "type": "Amphibious Infantry Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-75-42-Light-Mechanized",
+      "name": "42th Light Mechanized Brigade (75th Group Army)",
+      "team": "Red",
+      "number": 42,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "motorized-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-75-121-Mechanized-Infantry",
+      "name": "121th Mechanized Infantry Brigade (75th Group Army)",
+      "team": "Red",
+      "number": 121,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-75-122-Mechanized-Infantry",
+      "name": "122th Mechanized Infantry Brigade (75th Group Army)",
+      "team": "Red",
+      "number": 122,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-75-75-Special-Operations",
+      "name": "75th Special Operations Brigade (75th Group Army)",
+      "team": "Red",
+      "number": 75,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "special-forces",
+      "composition": [
+        {
+          "type": "Special Forces Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-75-75-Artillery",
+      "name": "75th Artillery Brigade (75th Group Army)",
+      "team": "Red",
+      "number": 75,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "artillery",
+      "composition": [
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Rocket Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-75-75-Air-Defense",
+      "name": "75th Air Defense Brigade (75th Group Army)",
+      "team": "Red",
+      "number": 75,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "air-defense",
+      "composition": [
+        {
+          "type": "Air Defense Battalion",
+          "qty": 6
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-75-75-Aviation",
+      "name": "75th Aviation Brigade (75th Group Army)",
+      "team": "Red",
+      "number": 75,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "aviation",
+      "composition": [
+        {
+          "type": "Attack Helicopter Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Utility Helicopter Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-76-12-Heavy-Armored",
+      "name": "12th Heavy Armored Brigade (76th Group Army)",
+      "team": "Red",
+      "number": 12,
+      "origin_theater": "Western",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "armor",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-76-56-Light-Mechanized",
+      "name": "56th Light Mechanized Brigade (76th Group Army)",
+      "team": "Red",
+      "number": 56,
+      "origin_theater": "Western",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "motorized-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-76-149-Mechanized-Infantry",
+      "name": "149th Mechanized Infantry Brigade (76th Group Army)",
+      "team": "Red",
+      "number": 149,
+      "origin_theater": "Western",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-76-182-Mechanized-Infantry",
+      "name": "182th Mechanized Infantry Brigade (76th Group Army)",
+      "team": "Red",
+      "number": 182,
+      "origin_theater": "Western",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-76-76-Special-Operations",
+      "name": "76th Special Operations Brigade (76th Group Army)",
+      "team": "Red",
+      "number": 76,
+      "origin_theater": "Western",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "special-forces",
+      "composition": [
+        {
+          "type": "Special Forces Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-76-76-Artillery",
+      "name": "76th Artillery Brigade (76th Group Army)",
+      "team": "Red",
+      "number": 76,
+      "origin_theater": "Western",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "artillery",
+      "composition": [
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Rocket Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-76-76-Air-Defense",
+      "name": "76th Air Defense Brigade (76th Group Army)",
+      "team": "Red",
+      "number": 76,
+      "origin_theater": "Western",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "air-defense",
+      "composition": [
+        {
+          "type": "Air Defense Battalion",
+          "qty": 6
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-76-76-Aviation",
+      "name": "76th Aviation Brigade (76th Group Army)",
+      "team": "Red",
+      "number": 76,
+      "origin_theater": "Western",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "aviation",
+      "composition": [
+        {
+          "type": "Attack Helicopter Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Utility Helicopter Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-77-13-Heavy-Armored",
+      "name": "13th Heavy Armored Brigade (77th Group Army)",
+      "team": "Red",
+      "number": 13,
+      "origin_theater": "Western",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "armor",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-77-37-Light-Mechanized",
+      "name": "37th Light Mechanized Brigade (77th Group Army)",
+      "team": "Red",
+      "number": 37,
+      "origin_theater": "Western",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "motorized-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-77-139-Mechanized-Infantry",
+      "name": "139th Mechanized Infantry Brigade (77th Group Army)",
+      "team": "Red",
+      "number": 139,
+      "origin_theater": "Western",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-77-150-Mechanized-Infantry",
+      "name": "150th Mechanized Infantry Brigade (77th Group Army)",
+      "team": "Red",
+      "number": 150,
+      "origin_theater": "Western",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-77-77-Special-Operations",
+      "name": "77th Special Operations Brigade (77th Group Army)",
+      "team": "Red",
+      "number": 77,
+      "origin_theater": "Western",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "special-forces",
+      "composition": [
+        {
+          "type": "Special Forces Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-77-77-Artillery",
+      "name": "77th Artillery Brigade (77th Group Army)",
+      "team": "Red",
+      "number": 77,
+      "origin_theater": "Western",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "artillery",
+      "composition": [
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Rocket Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-77-77-Air-Defense",
+      "name": "77th Air Defense Brigade (77th Group Army)",
+      "team": "Red",
+      "number": 77,
+      "origin_theater": "Western",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "air-defense",
+      "composition": [
+        {
+          "type": "Air Defense Battalion",
+          "qty": 6
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-77-77-Aviation",
+      "name": "77th Aviation Brigade (77th Group Army)",
+      "team": "Red",
+      "number": 77,
+      "origin_theater": "Western",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "aviation",
+      "composition": [
+        {
+          "type": "Attack Helicopter Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Utility Helicopter Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-78-8-Heavy-Armored",
+      "name": "8th Heavy Armored Brigade (78th Group Army)",
+      "team": "Red",
+      "number": 8,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "armor",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-78-48-Light-Mechanized",
+      "name": "48th Light Mechanized Brigade (78th Group Army)",
+      "team": "Red",
+      "number": 48,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "motorized-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-78-115-Mechanized-Infantry",
+      "name": "115th Mechanized Infantry Brigade (78th Group Army)",
+      "team": "Red",
+      "number": 115,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-78-204-Mechanized-Infantry",
+      "name": "204th Mechanized Infantry Brigade (78th Group Army)",
+      "team": "Red",
+      "number": 204,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-78-78-Special-Operations",
+      "name": "78th Special Operations Brigade (78th Group Army)",
+      "team": "Red",
+      "number": 78,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "special-forces",
+      "composition": [
+        {
+          "type": "Special Forces Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-78-78-Artillery",
+      "name": "78th Artillery Brigade (78th Group Army)",
+      "team": "Red",
+      "number": 78,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "artillery",
+      "composition": [
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Rocket Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-78-78-Air-Defense",
+      "name": "78th Air Defense Brigade (78th Group Army)",
+      "team": "Red",
+      "number": 78,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "air-defense",
+      "composition": [
+        {
+          "type": "Air Defense Battalion",
+          "qty": 6
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-78-78-Aviation",
+      "name": "78th Aviation Brigade (78th Group Army)",
+      "team": "Red",
+      "number": 78,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "aviation",
+      "composition": [
+        {
+          "type": "Attack Helicopter Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Utility Helicopter Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-79-4-Heavy-Armored",
+      "name": "4th Heavy Armored Brigade (79th Group Army)",
+      "team": "Red",
+      "number": 4,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "armor",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-79-46-Light-Mechanized",
+      "name": "46th Light Mechanized Brigade (79th Group Army)",
+      "team": "Red",
+      "number": 46,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "motorized-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-79-116-Mechanized-Infantry",
+      "name": "116th Mechanized Infantry Brigade (79th Group Army)",
+      "team": "Red",
+      "number": 116,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-79-190-Mechanized-Infantry",
+      "name": "190th Mechanized Infantry Brigade (79th Group Army)",
+      "team": "Red",
+      "number": 190,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-79-79-Special-Operations",
+      "name": "79th Special Operations Brigade (79th Group Army)",
+      "team": "Red",
+      "number": 79,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "special-forces",
+      "composition": [
+        {
+          "type": "Special Forces Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-79-79-Artillery",
+      "name": "79th Artillery Brigade (79th Group Army)",
+      "team": "Red",
+      "number": 79,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "artillery",
+      "composition": [
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Rocket Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-79-79-Air-Defense",
+      "name": "79th Air Defense Brigade (79th Group Army)",
+      "team": "Red",
+      "number": 79,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "air-defense",
+      "composition": [
+        {
+          "type": "Air Defense Battalion",
+          "qty": 6
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-79-79-Aviation",
+      "name": "79th Aviation Brigade (79th Group Army)",
+      "team": "Red",
+      "number": 79,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "aviation",
+      "composition": [
+        {
+          "type": "Attack Helicopter Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Utility Helicopter Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-80-7-Heavy-Armored",
+      "name": "7th Heavy Armored Brigade (80th Group Army)",
+      "team": "Red",
+      "number": 7,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "armor",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-80-67-Light-Mechanized",
+      "name": "67th Light Mechanized Brigade (80th Group Army)",
+      "team": "Red",
+      "number": 67,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "motorized-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-80-118-Mechanized-Infantry",
+      "name": "118th Mechanized Infantry Brigade (80th Group Army)",
+      "team": "Red",
+      "number": 118,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-80-203-Mechanized-Infantry",
+      "name": "203th Mechanized Infantry Brigade (80th Group Army)",
+      "team": "Red",
+      "number": 203,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-80-80-Special-Operations",
+      "name": "80th Special Operations Brigade (80th Group Army)",
+      "team": "Red",
+      "number": 80,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "special-forces",
+      "composition": [
+        {
+          "type": "Special Forces Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-80-80-Artillery",
+      "name": "80th Artillery Brigade (80th Group Army)",
+      "team": "Red",
+      "number": 80,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "artillery",
+      "composition": [
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Rocket Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-80-80-Air-Defense",
+      "name": "80th Air Defense Brigade (80th Group Army)",
+      "team": "Red",
+      "number": 80,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "air-defense",
+      "composition": [
+        {
+          "type": "Air Defense Battalion",
+          "qty": 6
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-80-80-Aviation",
+      "name": "80th Aviation Brigade (80th Group Army)",
+      "team": "Red",
+      "number": 80,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "aviation",
+      "composition": [
+        {
+          "type": "Attack Helicopter Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Utility Helicopter Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-81-7-Heavy-Armored",
+      "name": "7th Heavy Armored Brigade (81st Group Army)",
+      "team": "Red",
+      "number": 7,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "armor",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-81-162-Mechanized-Infantry",
+      "name": "162th Mechanized Infantry Brigade (81st Group Army)",
+      "team": "Red",
+      "number": 162,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-81-189-Mechanized-Infantry",
+      "name": "189th Mechanized Infantry Brigade (81st Group Army)",
+      "team": "Red",
+      "number": 189,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-81-81-Special-Operations",
+      "name": "81th Special Operations Brigade (81st Group Army)",
+      "team": "Red",
+      "number": 81,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "special-forces",
+      "composition": [
+        {
+          "type": "Special Forces Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-81-81-Artillery",
+      "name": "81th Artillery Brigade (81st Group Army)",
+      "team": "Red",
+      "number": 81,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "artillery",
+      "composition": [
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Rocket Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-81-81-Air-Defense",
+      "name": "81th Air Defense Brigade (81st Group Army)",
+      "team": "Red",
+      "number": 81,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "air-defense",
+      "composition": [
+        {
+          "type": "Air Defense Battalion",
+          "qty": 6
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-81-81-Aviation",
+      "name": "81th Aviation Brigade (81st Group Army)",
+      "team": "Red",
+      "number": 81,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "aviation",
+      "composition": [
+        {
+          "type": "Attack Helicopter Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Utility Helicopter Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-82-3-Heavy-Armored",
+      "name": "3th Heavy Armored Brigade (82nd Group Army)",
+      "team": "Red",
+      "number": 3,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "armor",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-82-80-Light-Mechanized",
+      "name": "80th Light Mechanized Brigade (82nd Group Army)",
+      "team": "Red",
+      "number": 80,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "motorized-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-82-112-Mechanized-Infantry",
+      "name": "112th Mechanized Infantry Brigade (82nd Group Army)",
+      "team": "Red",
+      "number": 112,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-82-188-Mechanized-Infantry",
+      "name": "188th Mechanized Infantry Brigade (82nd Group Army)",
+      "team": "Red",
+      "number": 188,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-82-82-Special-Operations",
+      "name": "82th Special Operations Brigade (82nd Group Army)",
+      "team": "Red",
+      "number": 82,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "special-forces",
+      "composition": [
+        {
+          "type": "Special Forces Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-82-82-Artillery",
+      "name": "82th Artillery Brigade (82nd Group Army)",
+      "team": "Red",
+      "number": 82,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "artillery",
+      "composition": [
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Rocket Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-82-82-Air-Defense",
+      "name": "82th Air Defense Brigade (82nd Group Army)",
+      "team": "Red",
+      "number": 82,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "air-defense",
+      "composition": [
+        {
+          "type": "Air Defense Battalion",
+          "qty": 6
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-82-82-Aviation",
+      "name": "82th Aviation Brigade (82nd Group Army)",
+      "team": "Red",
+      "number": 82,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "aviation",
+      "composition": [
+        {
+          "type": "Attack Helicopter Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Utility Helicopter Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-83-11-Heavy-Armored",
+      "name": "11th Heavy Armored Brigade (83rd Group Army)",
+      "team": "Red",
+      "number": 11,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "armor",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-83-54-Light-Mechanized",
+      "name": "54th Light Mechanized Brigade (83rd Group Army)",
+      "team": "Red",
+      "number": 54,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "motorized-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-83-113-Mechanized-Infantry",
+      "name": "113th Mechanized Infantry Brigade (83rd Group Army)",
+      "team": "Red",
+      "number": 113,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-83-193-Mechanized-Infantry",
+      "name": "193th Mechanized Infantry Brigade (83rd Group Army)",
+      "team": "Red",
+      "number": 193,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-83-83-Special-Operations",
+      "name": "83th Special Operations Brigade (83rd Group Army)",
+      "team": "Red",
+      "number": 83,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "special-forces",
+      "composition": [
+        {
+          "type": "Special Forces Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-83-83-Artillery",
+      "name": "83th Artillery Brigade (83rd Group Army)",
+      "team": "Red",
+      "number": 83,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "artillery",
+      "composition": [
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Rocket Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-83-83-Air-Defense",
+      "name": "83th Air Defense Brigade (83rd Group Army)",
+      "team": "Red",
+      "number": 83,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "air-defense",
+      "composition": [
+        {
+          "type": "Air Defense Battalion",
+          "qty": 6
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLA-83-83-Aviation",
+      "name": "83th Aviation Brigade (83rd Group Army)",
+      "team": "Red",
+      "number": 83,
+      "origin_theater": "Central",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "aviation",
+      "composition": [
+        {
+          "type": "Attack Helicopter Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Utility Helicopter Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLANMC-S-1-Amphibious",
+      "name": "1st Marine Brigade (Southern TC)",
+      "team": "Red",
+      "number": 1,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "amphibious",
+      "composition": [
+        {
+          "type": "Amphibious Infantry Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Mechanized Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Assault Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLANMC-S-2-Amphibious",
+      "name": "2nd Marine Brigade (Southern TC)",
+      "team": "Red",
+      "number": 2,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "amphibious",
+      "composition": [
+        {
+          "type": "Amphibious Infantry Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Mechanized Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Assault Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLANMC-S-SO-Amphibious",
+      "name": "Special Operations Brigade (Southern TC)",
+      "team": "Red",
+      "number": 1001,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "amphibious",
+      "composition": [
+        {
+          "type": "Amphibious Infantry Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Mechanized Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Assault Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLANMC-E-3-Amphibious",
+      "name": "3rd Marine Brigade (Eastern TC)",
+      "team": "Red",
+      "number": 3,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "amphibious",
+      "composition": [
+        {
+          "type": "Amphibious Infantry Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Mechanized Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Assault Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLANMC-E-4-Amphibious",
+      "name": "4th Marine Brigade (Eastern TC)",
+      "team": "Red",
+      "number": 4,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "amphibious",
+      "composition": [
+        {
+          "type": "Amphibious Infantry Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Mechanized Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Assault Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLANMC-N-5-Amphibious",
+      "name": "5th Marine Brigade (Northern TC)",
+      "team": "Red",
+      "number": 5,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "amphibious",
+      "composition": [
+        {
+          "type": "Amphibious Infantry Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Mechanized Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Assault Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLANMC-N-6-Amphibious",
+      "name": "6th Marine Brigade (Northern TC)",
+      "team": "Red",
+      "number": 6,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "amphibious",
+      "composition": [
+        {
+          "type": "Amphibious Infantry Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Mechanized Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Assault Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Reconnaissance Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLANMC-N-AVA-Aviation",
+      "name": "Naval Shipborne Aviation Brigade (Northern TC)",
+      "team": "Red",
+      "number": 1002,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "aviation",
+      "composition": [
+        {
+          "type": "Attack Helicopter Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    }
+  ]
+}

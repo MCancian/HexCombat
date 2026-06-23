@@ -1,0 +1,31 @@
+;Engine configuration file.
+;It's best edited using the editor UI and not directly,
+;since the parameters that go into it are too many and would
+;make the file unrecognizable to the human eye.
+
+config_version=5
+
+_global_script_classes=[{
+"base": "Node",
+"class": "&quot;HexGrid&quot;",
+"language": "&quot;GDScript&quot;",
+"path": "res://scripts/HexGrid.gd"
+}]
+_global_script_class_icons={
+"HexGrid": ""
+}
+
+[application]
+
+config/name="HexCombat"
+config/version="0.1.0"
+run/main_scene="res://scenes/Main.tscn"
+
+[display]
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+
+[debug]
+
+gdscript/warnings/unused_variable=1
