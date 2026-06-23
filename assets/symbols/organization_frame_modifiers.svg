@@ -1,0 +1,702 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+<path d="M 5,5 h 3995 v 8995 h -3995 z" style="fill:none;stroke:#000000;stroke-width:10;stroke-linejoin:miter;stroke-miterlimit:4"/>
+<g transform="translate(0,300)">
+			<switch>
+				<text systemLanguage="en" style="font-size:120px;text-align:start;text-anchor:start" x="125" y="200">
+					<tspan x="125">Standing Organizations</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:120px;text-align:start;text-anchor:start" x="125" y="200">
+					<tspan x="125">Organisations permanentes</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:120px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="125" y="200">
+					<tspan x="125">常設組織</tspan>
+				</text>
+				<text style="font-size:120px;text-align:start;text-anchor:start" x="125" y="200">
+					<tspan x="125">Standing Organizations</tspan>
+				</text>
+			</switch>
+			<g transform="translate(100,400)">
+				<path d="m 88,-105 54,90 m -54,0 54,-90 m 20,0 54,90 m -54,0 54,-90 m 20,0 54,90 m -54,0 54,-90 m 20,0 54,90 m -54,0 54,-90 m 20,0 54,90 m -54,0 54,-90 m 20,0 54,90 m -54,0 54,-90" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="125">
+						<tspan x="610" dy="0">combatant command</tspan>
+						<tspan x="610" dy="100">theatre</tspan>
+						<tspan x="610" dy="100">region</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="125">
+						<tspan x="610" dy="0">commandement combattant</tspan>
+						<tspan x="610" dy="100">théâtre</tspan>
+						<tspan x="610" dy="100">région</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="125">
+						<tspan x="610" dy="100">総軍</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="125">
+						<tspan x="610" dy="0">combatant command</tspan>
+						<tspan x="610" dy="100">theatre</tspan>
+						<tspan x="610" dy="100">region</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(100,1000)">
+				<path d="m 125,-105 54,90 m -54,0 54,-90 m 20,0 54,90 m -54,0 54,-90 m 20,0 54,90 m -54,0 54,-90 m 20,0 54,90 m -54,0 54,-90 m 20,0 54,90 m -54,0 54,-90" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">major command</tspan>
+						<tspan x="610" dy="100">front</tspan>
+						<tspan x="610" dy="100">navy</tspan>
+						<tspan x="610" dy="100">army group</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">grand commandement</tspan>
+						<tspan x="610" dy="100">front</tspan>
+						<tspan x="610" dy="100">marine</tspan>
+						<tspan x="610" dy="100">groupe d'armées</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="125">
+						<tspan x="610" dy="100">軍集団</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">major command</tspan>
+						<tspan x="610" dy="100">front</tspan>
+						<tspan x="610" dy="100">navy</tspan>
+						<tspan x="610" dy="100">army group</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(100,1600)">
+				<path d="m 162,-105 54,90 m -54,0 54,-90 m 20,0 54,90 m -54,0 54,-90 m 20,0 54,90 m -54,0 54,-90 m 20,0 54,90 m -54,0 54,-90" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">command</tspan>
+						<tspan x="610" dy="100">fleet</tspan>
+						<tspan x="610" dy="100">army</tspan>
+						<tspan x="610" dy="100">air force</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">commandement</tspan>
+						<tspan x="610" dy="100">flotte</tspan>
+						<tspan x="610" dy="100">armée</tspan>
+						<tspan x="610" dy="100">force aérienne</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="125">
+						<tspan x="610" dy="100">軍</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">command</tspan>
+						<tspan x="610" dy="100">fleet</tspan>
+						<tspan x="610" dy="100">army</tspan>
+						<tspan x="610" dy="100">air force</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(100,2200)">
+				<path d="m 199,-105 54,90 m -54,0 54,-90 m 20,0 54,90 m -54,0 54,-90 m 20,0 54,90 m -54,0 54,-90" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="175">
+						<tspan x="610" dy="0">command (minor)</tspan>
+						<tspan x="610" dy="100">corps</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="175">
+						<tspan x="610" dy="0">commandement (mineur)</tspan>
+						<tspan x="610" dy="100">corps</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="125">
+						<tspan x="610" dy="100">軍団</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="175">
+						<tspan x="610" dy="0">command (minor)</tspan>
+						<tspan x="610" dy="100">corps</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(100,2800)">
+				<path d="m 236,-105 54,90 m -54,0 54,-90 m 20,0 54,90 m -54,0 54,-90" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="225">
+						<tspan x="610" dy="0">division</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="225">
+						<tspan x="610" dy="0">division</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="225">
+						<tspan x="610" dy="0">師団</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="225">
+						<tspan x="610" dy="0">division</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(100,3400)">
+				<path d="m 273,-105 54,90 m -54,0 54,-90" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">formation</tspan>
+						<tspan x="610" dy="100">squadron (navy)</tspan>
+						<tspan x="610" dy="100">brigade</tspan>
+						<tspan x="610" dy="100">wing</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="125">
+						<tspan x="610" dy="0">formation</tspan>
+						<tspan x="610" dy="100">escadre</tspan>
+						<tspan x="610" dy="100">brigade</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="125">
+						<tspan x="610" dy="100">旅団</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">formation</tspan>
+						<tspan x="610" dy="100">squadron (navy)</tspan>
+						<tspan x="610" dy="100">brigade</tspan>
+						<tspan x="610" dy="100">wing</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(100,4000)">
+				<path style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round" d="m 226,-105 v 90 m 74,-90 v 90 m 74,-90 v 90"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="0">
+						<tspan x="610" dy="0">formation (minor)</tspan>
+						<tspan x="610" dy="100">flotilla</tspan>
+						<tspan x="610" dy="100">group</tspan>
+						<tspan x="610" dy="100">unit (major)</tspan>
+						<tspan x="610" dy="100">ship (major)</tspan>
+						<tspan x="610" dy="100">regiment</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="0">
+						<tspan x="610" dy="0">formation(mineur)</tspan>
+						<tspan x="610" dy="100">flottile</tspan>
+						<tspan x="610" dy="100">groupe</tspan>
+						<tspan x="610" dy="100">unité (majeure)</tspan>
+						<tspan x="610" dy="100">navire (vaisseau)</tspan>
+						<tspan x="610" dy="100">régiment</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="125">
+						<tspan x="610" dy="100">連隊</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="0">
+						<tspan x="610" dy="0">formation (minor)</tspan>
+						<tspan x="610" dy="100">flotilla</tspan>
+						<tspan x="610" dy="100">group</tspan>
+						<tspan x="610" dy="100">unit (major)</tspan>
+						<tspan x="610" dy="100">ship (major)</tspan>
+						<tspan x="610" dy="100">regiment</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(100,4600)">
+				<path style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round" d="m 263,-105 v 90 m 74,-90 v 90"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">unit</tspan>
+						<tspan x="610" dy="100">ship</tspan>
+						<tspan x="610" dy="100">battalion</tspan>
+						<tspan x="610" dy="100">squadron (major)</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">unité</tspan>
+						<tspan x="610" dy="100">navire (frégate)</tspan>
+						<tspan x="610" dy="100">bataillon</tspan>
+						<tspan x="610" dy="100">escadron</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="125">
+						<tspan x="610" dy="100">大隊</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">unit</tspan>
+						<tspan x="610" dy="100">ship</tspan>
+						<tspan x="610" dy="100">battalion</tspan>
+						<tspan x="610" dy="100">squadron (major)</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(100,5200)">
+				<path d="m 300,-105 v 90" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="0">
+						<tspan x="610" dy="0">unit (minor)</tspan>
+						<tspan x="610" dy="100">ship (minor)</tspan>
+						<tspan x="610" dy="100">company</tspan>
+						<tspan x="610" dy="100">battery</tspan>
+						<tspan x="610" dy="100">squadron (minor)</tspan>
+						<tspan x="610" dy="100">flight</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="0">
+						<tspan x="610" dy="0">unité (mineur)</tspan>
+						<tspan x="610" dy="100">navire (corvette)</tspan>
+						<tspan x="610" dy="100">compagnie</tspan>
+						<tspan x="610" dy="100">batterie</tspan>
+						<tspan x="610" dy="100">escadrille</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="125">
+						<tspan x="610" dy="100">中隊</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="0">
+						<tspan x="610" dy="0">unit (minor)</tspan>
+						<tspan x="610" dy="100">ship (minor)</tspan>
+						<tspan x="610" dy="100">company</tspan>
+						<tspan x="610" dy="100">battery</tspan>
+						<tspan x="610" dy="100">squadron (minor)</tspan>
+						<tspan x="610" dy="100">flight</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(100,5800)">
+				<g style="fill:#000000;stroke:none">
+					<circle r="32" cy="-60" cx="189"/>
+					<circle r="32" cy="-60" cx="263"/>
+					<circle r="32" cy="-60" cx="337"/>
+					<circle r="32" cy="-60" cx="411"/>
+				</g>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">echelon</tspan>
+						<tspan x="610" dy="100">half-squadron</tspan>
+						<tspan x="610" dy="100">troop (major)</tspan>
+						<tspan x="610" dy="100">department</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">échelon</tspan>
+						<tspan x="610" dy="100">demi-escadrille</tspan>
+						<tspan x="610" dy="100">troupe (majeure)</tspan>
+						<tspan x="610" dy="100">départment</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="125">
+						<tspan x="610" dy="100">echelon</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">echelon</tspan>
+						<tspan x="610" dy="100">half-squadron</tspan>
+						<tspan x="610" dy="100">troop (major)</tspan>
+						<tspan x="610" dy="100">department</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(100,6400)">
+				<g style="fill:#000000;stroke:none">
+					<circle r="32" cy="-60" cx="226"/>
+					<circle r="32" cy="-60" cx="300"/>
+					<circle r="32" cy="-60" cx="374"/>
+				</g>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="175">
+						<tspan x="610" dy="0">platoon</tspan>
+						<tspan x="610" dy="100">troop</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="175">
+						<tspan x="610" dy="0">peloton</tspan>
+						<tspan x="610" dy="100">troupe</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="125">
+						<tspan x="610" dy="100">小隊</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="175">
+						<tspan x="610" dy="0">platoon</tspan>
+						<tspan x="610" dy="100">troop</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(100,7000)">
+				<g style="fill:#000000;stroke:none">
+					<circle r="32" cy="-60" cx="263"/>
+					<circle r="32" cy="-60" cx="337"/>
+				</g>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="175">
+						<tspan x="610" dy="0">section</tspan>
+						<tspan x="610" dy="100">crew</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="175">
+						<tspan x="610" dy="0">section</tspan>
+						<tspan x="610" dy="100">équipage</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="125">
+						<tspan x="610" dy="100">分隊(section)</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="175">
+						<tspan x="610" dy="0">section</tspan>
+						<tspan x="610" dy="100">crew</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(100,7600)">
+				<circle r="32" cy="-60" cx="300" style="fill:#000000;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="125">
+						<tspan x="610" dy="0">squad</tspan>
+						<tspan x="610" dy="100">sub-section</tspan>
+						<tspan x="610" dy="100">crew</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="125">
+						<tspan x="610" dy="0">escouade</tspan>
+						<tspan x="610" dy="100">sous-section</tspan>
+						<tspan x="610" dy="100">équipage</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="125">
+						<tspan x="610" dy="100">分隊(squad)</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="125">
+						<tspan x="610" dy="0">squad</tspan>
+						<tspan x="610" dy="100">sub-section</tspan>
+						<tspan x="610" dy="100">crew</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(100,8200)">
+				<ellipse ry="44" rx="32" style="fill:none;stroke:#000000;stroke-width:10" cx="300" cy="-60"/>
+				<path style="stroke:#000000;stroke-width:10;stroke-linecap:round" d="m 327,-105 -54,90"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="175">
+						<tspan x="610" dy="0">team</tspan>
+						<tspan x="610" dy="100">fireteam</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="175">
+						<tspan x="610" dy="0">équipe</tspan>
+						<tspan x="610" dy="100">équipe de tir</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="125">
+						<tspan x="610" dy="100">班</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="175">
+						<tspan x="610" dy="0">team</tspan>
+						<tspan x="610" dy="100">fireteam</tspan>
+					</text>
+				</switch>
+			</g>
+			<switch>
+				<text systemLanguage="en" style="font-size:120px;text-align:start;text-anchor:start" x="2125" y="200">
+					<tspan x="2125">Headquarters and Installations</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:120px;text-align:start;text-anchor:start" x="2125" y="200">
+					<tspan x="2125">Quartiers générals</tspan>
+					<tspan x="2125" dy="120">et installations</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:120px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="2125" y="200">
+					<tspan x="2125">司令部及び軍事施設</tspan>
+				</text>
+				<text style="font-size:120px;text-align:start;text-anchor:start" x="2125" y="200">
+					<tspan x="2125">Headquarters and Installations</tspan>
+				</text>
+			</switch>
+			<g transform="translate(2100,400)">
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<path d="m 5,5 v 790" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linecap:round"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="225">
+						<tspan x="610" dy="0">headquarters</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="225">
+						<tspan x="610" dy="0">quartier général</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="225">
+						<tspan x="610" dy="0">司令部</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="225">
+						<tspan x="610" dy="0">headquarters</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(2100,1350)">
+				<path d="M 179,0 V -75 H 421 V 0 Z" style="stroke:none;fill:#000000"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="40">
+						<tspan x="610" dy="0">base</tspan>
+						<tspan x="610" dy="100">station</tspan>
+						<tspan x="610" dy="100">centre</tspan>
+						<tspan x="610" dy="100">depot</tspan>
+						<tspan x="610" dy="100">facility</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="0">
+						<tspan x="610" dy="0">base</tspan>
+						<tspan x="610" dy="100">station</tspan>
+						<tspan x="610" dy="100">centre</tspan>
+						<tspan x="610" dy="100">dépôt</tspan>
+						<tspan x="610" dy="100">installation</tspan>
+						<tspan x="610" dy="100">atelier</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="40">
+						<tspan x="610" dy="0">基地</tspan>
+						<tspan x="610" dy="100">駐屯地</tspan>
+						<tspan x="610" dy="100">本隊</tspan>
+						<tspan x="610" dy="100">兵站部</tspan>
+						<tspan x="610" dy="100">施設</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="40">
+						<tspan x="610" dy="0">base</tspan>
+						<tspan x="610" dy="100">station</tspan>
+						<tspan x="610" dy="100">centre</tspan>
+						<tspan x="610" dy="100">depot</tspan>
+						<tspan x="610" dy="100">facility</tspan>
+					</text>
+				</switch>
+			</g>
+			<switch>
+				<text systemLanguage="en" style="font-size:120px;text-align:start;text-anchor:start" x="2125" y="2000">
+					<tspan x="2125">Task Force Organizations</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:120px;text-align:start;text-anchor:start" x="2125" y="2000">
+					<tspan x="2125">Organisations des FO</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:120px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="2125" y="2000">
+					<tspan x="2125">任務部隊組織</tspan>
+				</text>
+				<text style="font-size:120px;text-align:start;text-anchor:start" x="2125" y="2000">
+					<tspan x="2125">Task Force Organizations</tspan>
+				</text>
+			</switch>
+			<g transform="translate(2100,2200)">
+				<path d="m 199,-105 54,90 m -54,0 54,-90 m 20,0 54,90 m -54,0 54,-90 m 20,0 54,90 m -54,0 54,-90" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round"/>
+				<path d="m 179,-30 v -95 h 242 v 95" style="fill:none;stroke:#000000;stroke-width:10;stroke-linejoin:miter;stroke-miterlimit:4;stroke-linecap:round"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="175">
+						<tspan x="610" dy="0">expeditionary force</tspan>
+						<tspan x="610" dy="100">expeditionary corps</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="175">
+						<tspan x="610" dy="0">force expéditionnaire</tspan>
+						<tspan x="610" dy="100">corps expéditionnaire</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="225">
+						<tspan x="610" dy="0">遠征軍</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="175">
+						<tspan x="610" dy="0">expeditionary force</tspan>
+						<tspan x="610" dy="100">expeditionary corps</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(2100,2800)">
+				<path d="m 236,-105 54,90 m -54,0 54,-90 m 20,0 54,90 m -54,0 54,-90" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round"/>
+				<path d="m 179,-30 v -95 h 242 v 95" style="fill:none;stroke:#000000;stroke-width:10;stroke-linejoin:miter;stroke-miterlimit:4;stroke-linecap:round"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="225">
+						<tspan x="610" dy="0">division task force</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="225">
+						<tspan x="610" dy="0">FO divisionnaire</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="225">
+						<tspan x="610" dy="0">任務師団</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="225">
+						<tspan x="610" dy="0">division task force</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(2100,3400)">
+				<path d="m 273,-105 54,90 m -54,0 54,-90" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round"/>
+				<path d="m 179,-30 v -95 h 242 v 95" style="fill:none;stroke:#000000;stroke-width:10;stroke-linejoin:miter;stroke-miterlimit:4;stroke-linecap:round"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">squadron task force</tspan>
+						<tspan x="610" dy="100">(naval) battle group</tspan>
+						<tspan x="610" dy="100">brigade task force</tspan>
+						<tspan x="610" dy="100">brigade group</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">FO d'escadre</tspan>
+						<tspan x="610" dy="100">groupement tactique (naval)</tspan>
+						<tspan x="610" dy="100">FO de la brigade</tspan>
+						<tspan x="610" dy="100">groupe-brigade</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="225">
+						<tspan x="610" dy="0">任務旅団</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">squadron task force</tspan>
+						<tspan x="610" dy="100">(naval) battle group</tspan>
+						<tspan x="610" dy="100">brigade task force</tspan>
+						<tspan x="610" dy="100">brigade group</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(2100,4000)">
+				<path style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round" d="m 226,-105 v 90 m 74,-90 v 90 m 74,-90 v 90"/>
+				<path d="m 179,-30 v -95 h 242 v 95" style="fill:none;stroke:#000000;stroke-width:10;stroke-linejoin:miter;stroke-miterlimit:4;stroke-linecap:round"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="125">
+						<tspan x="610" dy="0">task group</tspan>
+						<tspan x="610" dy="100">combat group</tspan>
+						<tspan x="610" dy="100">regimental group</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="125">
+						<tspan x="610" dy="0">groupe opérationnelle</tspan>
+						<tspan x="610" dy="100">groupement de combat</tspan>
+						<tspan x="610" dy="100">groupe régimentaire</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="225">
+						<tspan x="610" dy="0">任務連隊</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="125">
+						<tspan x="610" dy="0">task group</tspan>
+						<tspan x="610" dy="100">combat group</tspan>
+						<tspan x="610" dy="100">regimental group</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(2100,4600)">
+				<path style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round" d="m 263,-105 v 90 m 74,-90 v 90"/>
+				<path d="m 179,-30 v -95 h 242 v 95" style="fill:none;stroke:#000000;stroke-width:10;stroke-linejoin:miter;stroke-miterlimit:4;stroke-linecap:round"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">task unit</tspan>
+						<tspan x="610" dy="100">battlegroup</tspan>
+						<tspan x="610" dy="100">battalion group</tspan>
+						<tspan x="610" dy="100">squadron group (major)</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">unité opérationnelle</tspan>
+						<tspan x="610" dy="100">groupement tactique</tspan>
+						<tspan x="610" dy="100">groupe-bataillon</tspan>
+						<tspan x="610" dy="100">groupe-escadron</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="225">
+						<tspan x="610" dy="0">任務大隊</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">task unit</tspan>
+						<tspan x="610" dy="100">battlegroup</tspan>
+						<tspan x="610" dy="100">battalion group</tspan>
+						<tspan x="610" dy="100">squadron group (major)</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(2100,5200)">
+				<path d="m 300,-105 v 90" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round"/>
+				<path d="m 179,-30 v -95 h 242 v 95" style="fill:none;stroke:#000000;stroke-width:10;stroke-linejoin:miter;stroke-miterlimit:4;stroke-linecap:round"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">task unit (minor)</tspan>
+						<tspan x="610" dy="100">combat team</tspan>
+						<tspan x="610" dy="100">company group</tspan>
+						<tspan x="610" dy="100">squadron group (minor)</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">unité opérationnelle (mineur)</tspan>
+						<tspan x="610" dy="100">compagnie</tspan>
+						<tspan x="610" dy="100">groupe-compagnie</tspan>
+						<tspan x="610" dy="100">groupe-escadrille</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="225">
+						<tspan x="610" dy="0">任務中隊</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="80">
+						<tspan x="610" dy="0">task unit (minor)</tspan>
+						<tspan x="610" dy="100">combat team</tspan>
+						<tspan x="610" dy="100">company group</tspan>
+						<tspan x="610" dy="100">squadron group (minor)</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(2100,5800)">
+				<g style="fill:#000000;stroke:none">
+					<circle r="32" cy="-60" cx="189"/>
+					<circle r="32" cy="-60" cx="263"/>
+					<circle r="32" cy="-60" cx="337"/>
+					<circle r="32" cy="-60" cx="411"/>
+				</g>
+				<path d="m 145,-30 v -95 h 310 v 95" style="fill:none;stroke:#000000;stroke-width:10;stroke-linejoin:miter;stroke-miterlimit:4;stroke-linecap:round"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="175">
+						<tspan x="610" dy="0">echelon group</tspan>
+						<tspan x="610" dy="100">troop group</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="175">
+						<tspan x="610" dy="0">groupe-échelon</tspan>
+						<tspan x="610" dy="100">groupe-troupe</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="225">
+						<tspan x="610" dy="0">echelon group</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="175">
+						<tspan x="610" dy="0">echelon group</tspan>
+						<tspan x="610" dy="100">troop group</tspan>
+					</text>
+				</switch>
+			</g>
+			<g transform="translate(2100,6400)">
+				<g style="fill:#000000;stroke:none">
+					<circle r="32" cy="-60" cx="226"/>
+					<circle r="32" cy="-60" cx="300"/>
+					<circle r="32" cy="-60" cx="374"/>
+				</g>
+				<path d="m 179,-30 v -95 h 242 v 95" style="fill:none;stroke:#000000;stroke-width:10;stroke-linejoin:miter;stroke-miterlimit:4;stroke-linecap:round"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+				<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+				<switch>
+					<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="225">
+						<tspan x="610" dy="0">platoon group</tspan>
+					</text>
+					<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="610" y="225">
+						<tspan x="610" dy="0">groupe-peloton</tspan>
+					</text>
+					<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start;font-family:TakaoGothic" x="610" y="225">
+						<tspan x="610" dy="0">任務小隊</tspan>
+					</text>
+					<text style="font-size:100px;text-align:start;text-anchor:start" x="610" y="225">
+						<tspan x="610" dy="0">platoon group</tspan>
+					</text>
+				</switch>
+			</g>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:start;text-anchor:start" x="2100" y="7100">
+					<tspan x="610" dy="0"> </tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:start;text-anchor:start" x="2100" y="7100">
+					<tspan x="610" dy="0">** FO = force opérationnelle</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:start;text-anchor:start" x="2100" y="7100">
+					<tspan x="610" dy="0"> </tspan>
+				</text>
+				<text style="font-size:100px;text-align:start;text-anchor:start" x="2100" y="7100">
+					<tspan x="610" dy="0"> </tspan>
+				</text>
+			</switch>
+		</g>
+</svg>

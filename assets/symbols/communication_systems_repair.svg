@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+<path style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt" d="M 595,395 300,160 v 80 L 5,5"/>
+<g style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4">
+				<path d="M 239.57574,55.11873 H 361.43195"/>
+				<path d="m 206.89204,86.79476 c 17.49418,0 31.67602,-14.18184 31.67602,-31.67603 0,-17.49418 -14.18184,-31.67602 -31.67602,-31.67602"/>
+				<path d="m 393.10797,86.79476 c -17.49419,0 -31.67602,-14.18184 -31.67602,-31.67603 0,-17.49418 14.18183,-31.67602 31.67602,-31.67602"/>
+			</g>
+<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+</svg>

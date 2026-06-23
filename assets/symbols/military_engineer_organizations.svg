@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+<g transform="translate(200,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 300,281 v -150 m -150,150 v -150 h 300 v 150" style="fill:none;stroke:#000000;stroke-width:24;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">engineers</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">génie</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">工兵</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">engineers</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(1100,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 300,281 v -150 m -150,150 v -150 h 300 v 150" style="fill:none;stroke:#000000;stroke-width:24;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<text style="font-size:100px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="93" x="300">CBT</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">combat</tspan>
+					<tspan x="300" dy="99">engineers</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">génie</tspan>
+					<tspan x="300" dy="99">de combat</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">戦闘工兵</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">combat</tspan>
+					<tspan x="300" dy="99">engineers</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(2000,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 300,281 v -150 m -150,150 v -150 h 300 v 150" style="fill:none;stroke:#000000;stroke-width:24;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<text style="font-size:100px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="93" x="300">CBT</text>
+			<path d="m 381.07148,313.51307 c 17.32251,0 31.36345,14.04593 31.35726,31.36845 0.006,17.32252 -14.03475,31.36845 -31.35726,31.36845 l -162.14296,0.01 c -17.32632,0 -31.36883,-14.05187 -31.35725,-31.3782 -0.0116,-17.32633 14.03093,-31.3782 31.35725,-31.3782 z" style="fill:none;stroke:#000000;stroke-width:10"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">combat</tspan>
+					<tspan x="300" dy="99">engineers</tspan>
+					<tspan x="300" dy="99">(tracked)</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">génie</tspan>
+					<tspan x="300" dy="99">de combat</tspan>
+					<tspan x="300" dy="99">(chenillée)</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">戦闘工兵</tspan>
+					<tspan x="300" dy="99">(装軌式)</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">combat</tspan>
+					<tspan x="300" dy="99">engineers</tspan>
+					<tspan x="300" dy="99">(tracked)</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(2900,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 300,281 v -150 m -150,150 v -150 h 300 v 150" style="fill:none;stroke:#000000;stroke-width:24;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<text style="font-size:100px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="93" x="300">CBT</text>
+			<path d="m 185,340 a 31.5,31.5 0 1 1 63,0 31.5,31.5 0 1 1 -63,0 z m 83.5,0 a 31.5,31.5 0 1 1 63,0 31.5,31.5 0 1 1 -63,0 z m 83.5,0 a 31.5,31.5 0 1 1 63,0 31.5,31.5 0 1 1 -63,0 z" style="fill:none;stroke:#000000;stroke-width:10"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">combat</tspan>
+					<tspan x="300" dy="99">engineers</tspan>
+					<tspan x="300" dy="99">(wheeled)</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">génie</tspan>
+					<tspan x="300" dy="99">de combat</tspan>
+					<tspan x="300" dy="99">(à roues)</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">戦闘工兵</tspan>
+					<tspan x="300" dy="99">(装輪式)</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">combat</tspan>
+					<tspan x="300" dy="99">engineers</tspan>
+					<tspan x="300" dy="99">(wheeled)</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(3800,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 300,281 v -150 m -150,150 v -150 h 300 v 150" style="fill:none;stroke:#000000;stroke-width:24;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<path d="M 300,5 V 395" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">motorized</tspan>
+					<tspan x="300" dy="99">engineers</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">génie</tspan>
+					<tspan x="300" dy="99">motorisée</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">自動車化</tspan>
+					<tspan x="300" dy="99">工兵</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">motorized</tspan>
+					<tspan x="300" dy="99">engineers</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(4700,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path style="fill:none;stroke:#000000;stroke-width:10" d="m 215,107.5 a 92.5,92.5 0 1 0 0,185 h 170 a 92.5,92.5 0 1 0 0,-185 z"/>
+			<path d="m 300,260.75 v -112.5 m -112.5,112.5 v -112.5 h 225 v 112.5" style="fill:none;stroke:#000000;stroke-width:18;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">armoured</tspan>
+					<tspan x="300" dy="99">engineers</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">génie</tspan>
+					<tspan x="300" dy="99">blindé</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">機甲工兵</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">armoured</tspan>
+					<tspan x="300" dy="99">engineers</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(5600,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 300,281 v -150 m -150,150 v -150 h 300 v 150" style="fill:none;stroke:#000000;stroke-width:24;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<text style="font-size:100px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="93" x="300">SPT</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">engineer</tspan>
+					<tspan x="300" dy="99">support</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">génie</tspan>
+					<tspan x="300" dy="99">d'appui</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">工兵</tspan>
+					<tspan x="300" dy="99">支援部隊</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">engineer</tspan>
+					<tspan x="300" dy="99">support</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(6500,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 300,281 v -150 m -150,150 v -150 h 300 v 150" style="fill:none;stroke:#000000;stroke-width:24;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<text style="font-size:100px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="93" x="300">EOD</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">EOD</tspan>
+					<tspan x="300" dy="99">engineers</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">génie</tspan>
+					<tspan x="300" dy="99">de NEM</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">爆発物処理</tspan>
+					<tspan x="300" dy="99">工兵</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">EOD</tspan>
+					<tspan x="300" dy="99">engineers</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(7400,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 300,281 v -150 m -150,150 v -150 h 300 v 150" style="fill:none;stroke:#000000;stroke-width:24;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<path d="M 5,304 H 595" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">engineer</tspan>
+					<tspan x="300" dy="99">resources</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">ressources</tspan>
+					<tspan x="300" dy="99">du génie</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">工兵物資</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">engineer</tspan>
+					<tspan x="300" dy="99">resources</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(8300,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 300,281 v -150 m -150,150 v -150 h 300 v 150" style="fill:none;stroke:#000000;stroke-width:24;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<path d="M 595,5 5,395" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">engineer</tspan>
+					<tspan x="300" dy="99">reconnaissance</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">reconnaissance</tspan>
+					<tspan x="300" dy="99">du génie</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">偵察工兵</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">engineer</tspan>
+					<tspan x="300" dy="99">reconnaissance</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(9200,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 300,281 v -150 m -150,150 v -150 h 300 v 150" style="fill:none;stroke:#000000;stroke-width:24;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<text style="font-size:100px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="93" x="300">CONST</text>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">construction</tspan>
+					<tspan x="300" dy="99">engineers</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">génie</tspan>
+					<tspan x="300" dy="99">construction</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">建設工兵</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">construction</tspan>
+					<tspan x="300" dy="99">engineers</tspan>
+				</text>
+			</switch>
+		</g>
+</svg>

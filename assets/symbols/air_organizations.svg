@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+<g transform="translate(200,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<g style="fill:#000000;stroke:#000000;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4">
+				<path d="m 331.2321,293.29708 h -63.74012 l 31.87006,-93.30465 -31.87006,-93.28951 H 331.2321 L 299.36204,200 Z"/>
+				<path d="m 350.3,169.9 c 18.1,-10.8 43.2,13.5 43.2,30.1 0,16.6 -25,41 -43.2,30.1 L 249.7,169.9 c -18.1,-10.8 -43.2,13.5 -43.2,30.1 0,16.6 25,41 43.2,30.1 z"/>
+			</g>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">air force</tspan>
+					<tspan x="300" dy="99">- or -</tspan>
+					<tspan x="300" dy="99">aviation</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">force aérienne </tspan>
+					<tspan x="300" dy="99">- ou -</tspan>
+					<tspan x="300" dy="99">aviation</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">空軍</tspan>
+					<tspan x="300" dy="99">または</tspan>
+					<tspan x="300" dy="99">軍用機</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">air force</tspan>
+					<tspan x="300" dy="99">- or -</tspan>
+					<tspan x="300" dy="99">aviation</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(1100,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path style="fill:#000000;stroke:#000000;stroke-width:6;stroke-linejoin:miter;stroke-miterlimit:4" d="m 394.5,143.5 c 34,-20.3 81,25.3 81,56.5 0,31.2 -47.1,76.8 -81,56.5 L 205.5,143.5 c -34,-20.3 -81,25.3 -81,56.5 0,31.2 47.1,76.8 81,56.5 z"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">fixed wing</tspan>
+					<tspan x="300" dy="99">aircraft</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">aéronef</tspan>
+					<tspan x="300" dy="99">à voilure fixe</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">固定翼機</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">fixed wing</tspan>
+					<tspan x="300" dy="99">aircraft</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(2000,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path style="fill:#000000;stroke:#000000;stroke-width:6;stroke-linejoin:miter;stroke-miterlimit:4" d="m 394.5,143.5 c 34,-20.3 81,25.3 81,56.5 0,31.2 -47.1,76.8 -81,56.5 L 205.5,143.5 c -34,-20.3 -81,25.3 -81,56.5 0,31.2 47.1,76.8 81,56.5 z"/>
+			<text style="font-size:100px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="93" x="300">F/A</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">fighter/attack</tspan>
+					<tspan x="300" dy="99">aircraft</tspan>
+					<tspan x="300" dy="99">(fixed wing)</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">avion de</tspan>
+					<tspan x="300" dy="99">chasse/d'attaque</tspan>
+					<tspan x="300" dy="99">(à voilure fixe)</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">戦闘/</tspan>
+					<tspan x="300" dy="99">攻撃機</tspan>
+					<tspan x="300" dy="99">(固定翼)</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">fighter/attack</tspan>
+					<tspan x="300" dy="99">aircraft</tspan>
+					<tspan x="300" dy="99">(fixed wing)</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(2900,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path style="fill:#000000;stroke:#000000;stroke-width:6;stroke-linejoin:miter;stroke-miterlimit:4" d="m 394.5,143.5 c 34,-20.3 81,25.3 81,56.5 0,31.2 -47.1,76.8 -81,56.5 L 205.5,143.5 c -34,-20.3 -81,25.3 -81,56.5 0,31.2 47.1,76.8 81,56.5 z"/>
+			<text style="font-size:100px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="93" x="300">C</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">cargo</tspan>
+					<tspan x="300" dy="99">aircraft</tspan>
+					<tspan x="300" dy="99">(fixed wing)</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">aéronef cargo</tspan>
+					<tspan x="300" dy="99">(à voilure fixe)</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">輸送機</tspan>
+					<tspan x="300" dy="99">(固定翼)</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">cargo</tspan>
+					<tspan x="300" dy="99">aircraft</tspan>
+					<tspan x="300" dy="99">(fixed wing)</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(3800,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path style="fill:#000000;stroke:#000000;stroke-width:6;stroke-linejoin:miter;stroke-miterlimit:4" d="m 394.5,143.5 c 34,-20.3 81,25.3 81,56.5 0,31.2 -47.1,76.8 -81,56.5 L 205.5,143.5 c -34,-20.3 -81,25.3 -81,56.5 0,31.2 47.1,76.8 81,56.5 z"/>
+			<text style="font-size:100px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="93" x="300">P</text>
+			<text style="font-size:100px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="378" x="300">LR</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">long range</tspan>
+					<tspan x="300" dy="99">patrol aircraft</tspan>
+					<tspan x="300" dy="99">(fixed wing)</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">aéronef de patrouille</tspan>
+					<tspan x="300" dy="99">à long rayon</tspan>
+					<tspan x="300" dy="99">d'action</tspan>
+					<tspan x="300" dy="99">(à voilure fixe)</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">長距離哨戒機</tspan>
+					<tspan x="300" dy="99">(固定翼)</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">long range</tspan>
+					<tspan x="300" dy="99">patrol aircraft</tspan>
+					<tspan x="300" dy="99">(fixed wing)</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(4700,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 460,125 v 150 l -320,-150 v 150 z" style="fill:#000000;stroke:#000000;stroke-width:10;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">helicopters</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">hélicoptères</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">回転翼機</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">helicopters</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(5600,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 460,125 v 150 l -320,-150 v 150 z" style="fill:#000000;stroke:#000000;stroke-width:10;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<text style="font-size:100px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="93" x="300">A</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">attack</tspan>
+					<tspan x="300" dy="99">helicopters</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">hélicoptères</tspan>
+					<tspan x="300" dy="99">d'attaque</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">攻撃</tspan>
+					<tspan x="300" dy="99">ヘリコプター</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">attack</tspan>
+					<tspan x="300" dy="99">helicopters</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(6500,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 460,125 v 150 l -320,-150 v 150 z" style="fill:#000000;stroke:#000000;stroke-width:10;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<text style="font-size:100px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="93" x="300">U</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">utility</tspan>
+					<tspan x="300" dy="99">helicopters</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">hélicoptères</tspan>
+					<tspan x="300" dy="99">utilitaires</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">汎用</tspan>
+					<tspan x="300" dy="99">ヘリコプター</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">utility</tspan>
+					<tspan x="300" dy="99">helicopters</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(7400,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 460,125 v 150 l -320,-150 v 150 z" style="fill:#000000;stroke:#000000;stroke-width:10;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<text style="font-size:100px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="93" x="300">R</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">reconnaissance</tspan>
+					<tspan x="300" dy="99">helicopters</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">hélicoptères</tspan>
+					<tspan x="300" dy="99">d'reconnaissance</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">偵察</tspan>
+					<tspan x="300" dy="99">ヘリコプター</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">reconnaissance</tspan>
+					<tspan x="300" dy="99">helicopters</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(8300,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 460,125 v 150 l -320,-150 v 150 z" style="fill:#000000;stroke:#000000;stroke-width:10;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<text style="font-size:100px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="93" x="300">ASLT</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">air assault</tspan>
+					<tspan x="300" dy="99">lift</tspan>
+					<tspan x="300" dy="99">(helicopters)</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">transporteur</tspan>
+					<tspan x="300" dy="99">d'assaut aérien</tspan>
+					<tspan x="300" dy="99">(hélicoptères)</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">空中強襲</tspan>
+					<tspan x="300" dy="99">輸送</tspan>
+					<tspan x="300" dy="99">(回転翼機)</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">air assault</tspan>
+					<tspan x="300" dy="99">lift</tspan>
+					<tspan x="300" dy="99">(helicopters)</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(9200,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path style="fill:#000000;stroke:#000000;stroke-width:1;stroke-linejoin:miter" d="M 300,276 115,140 v -16 l 185,60 185,-60 v 16 z"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">UAV</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">UAV</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">無人航空機</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">UAV</tspan>
+				</text>
+			</switch>
+		</g>
+</svg>

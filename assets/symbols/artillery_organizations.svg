@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+<g transform="translate(200,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 385,200 a 85,85 0 1 1 -170,0 85,85 0 1 1 170,0 z" style="fill:#000000;stroke:none"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">artillery</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">artillerie</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">砲兵</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">artillery</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(1100,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path style="fill:none;stroke:#000000;stroke-width:10" d="m 215,107.5 a 92.5,92.5 0 1 0 0,185 h 170 a 92.5,92.5 0 1 0 0,-185 z"/>
+			<path d="m 360,200 a 60,60 0 1 1 -120,0 60,60 0 1 1 120,0 z" style="fill:#000000;stroke:none"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">mechanized</tspan>
+					<tspan x="300" dy="99">artillery</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">artillerie</tspan>
+					<tspan x="300" dy="99">mécanisée</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">機械化砲兵</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">mechanized</tspan>
+					<tspan x="300" dy="99">artillery</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(2000,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 385,200 a 85,85 0 1 1 -170,0 85,85 0 1 1 170,0 z" style="fill:#000000;stroke:none"/>
+			<path d="m 381.07148,313.51307 c 17.32251,0 31.36345,14.04593 31.35726,31.36845 0.006,17.32252 -14.03475,31.36845 -31.35726,31.36845 l -162.14296,0.01 c -17.32632,0 -31.36883,-14.05187 -31.35725,-31.3782 -0.0116,-17.32633 14.03093,-31.3782 31.35725,-31.3782 z" style="fill:none;stroke:#000000;stroke-width:10"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">self-propelled</tspan>
+					<tspan x="300" dy="99">artillery</tspan>
+					<tspan x="300" dy="99">(tracked)</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">artillerie</tspan>
+					<tspan x="300" dy="99">automotrice</tspan>
+					<tspan x="300" dy="99">(chenillée)</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">自走砲</tspan>
+					<tspan x="300" dy="99">(装軌式)</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">self-propelled</tspan>
+					<tspan x="300" dy="99">artillery</tspan>
+					<tspan x="300" dy="99">(tracked)</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(2900,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 385,200 a 85,85 0 1 1 -170,0 85,85 0 1 1 170,0 z" style="fill:#000000;stroke:none"/>
+			<path d="m 185,340 a 31.5,31.5 0 1 1 63,0 31.5,31.5 0 1 1 -63,0 z m 83.5,0 a 31.5,31.5 0 1 1 63,0 31.5,31.5 0 1 1 -63,0 z m 83.5,0 a 31.5,31.5 0 1 1 63,0 31.5,31.5 0 1 1 -63,0 z" style="fill:none;stroke:#000000;stroke-width:10"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">self-propelled</tspan>
+					<tspan x="300" dy="99">artillery</tspan>
+					<tspan x="300" dy="99">(wheeled)</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">artillerie</tspan>
+					<tspan x="300" dy="99">automotrice</tspan>
+					<tspan x="300" dy="99">(à roues)</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">自走砲</tspan>
+					<tspan x="300" dy="99">(装輪式)</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">self-propelled</tspan>
+					<tspan x="300" dy="99">artillery</tspan>
+					<tspan x="300" dy="99">(wheeled)</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(3800,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 385,200 a 85,85 0 1 1 -170,0 85,85 0 1 1 170,0 z" style="fill:#000000;stroke:none"/>
+			<g style="fill:none;stroke:#000000;stroke-width:10">
+				<path d="m 224,295 a 31.5,31.5 0 1 1 -63,0 31.5,31.5 0 1 1 63,0 z"/>
+				<path d="m 439,295 a 31.5,31.5 0 1 1 -63,0 31.5,31.5 0 1 1 63,0 z"/>
+				<path d="m 376,295 H 224"/>
+			</g>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">towed</tspan>
+					<tspan x="300" dy="99">artillery</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">artillerie</tspan>
+					<tspan x="300" dy="99">tractée</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">牽引砲</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">towed</tspan>
+					<tspan x="300" dy="99">artillery</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(4700,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 365,200 a 65,65 0 1 1 -130,0 65,65 0 1 1 130,0 z" style="fill:#000000;stroke:none"/>
+			<g style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4">
+				<path d="M 208,150 300,80 392,150"/>
+				<path d="M 208,110 300,40 392,110"/>
+			</g>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">rocket</tspan>
+					<tspan x="300" dy="99">artillery</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">artillerie</tspan>
+					<tspan x="300" dy="99">de roquettes</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">ロケット砲</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">rocket</tspan>
+					<tspan x="300" dy="99">artillery</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(5600,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 300,332 a 33.5,33.5 0 1 1 0,-67 a 33.5,33.5 0 1 1 0,67 z m 0,-67 v -194 m -36,35 36,-36 36, 36" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">mortars</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">mortiers</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">迫撃砲</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">mortars</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(6500,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 300,275 a 21,21 0 1 1 0,-42 a 21,21 0 1 1 0,42 z m 0,-42 v -109 m -23,21 23,-21 23, 21" style="fill:none;stroke:#000000;stroke-width:10.00000095;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<g style="fill:none;stroke:#000000;stroke-width:10">
+				<path d="m 215,107.5 a 92.5,92.5 0 1 0 0,185 h 170 a 92.5,92.5 0 1 0 0,-185 z"/>
+				<path d="m 185,340 a 31.5,31.5 0 1 1 63,0 31.5,31.5 0 1 1 -63,0 z m 83.5,0 a 31.5,31.5 0 1 1 63,0 31.5,31.5 0 1 1 -63,0 z m 83.5,0 a 31.5,31.5 0 1 1 63,0 31.5,31.5 0 1 1 -63,0 z"/>
+			</g>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">mechanized</tspan>
+					<tspan x="300" dy="99">mortars</tspan>
+					<tspan x="300" dy="99">(wheeled)</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">mortiers</tspan>
+					<tspan x="300" dy="99">mécanisées</tspan>
+					<tspan x="300" dy="99">(à roues)</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">機械化迫撃砲</tspan>
+					<tspan x="300" dy="99">(装輪式)</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">mechanized</tspan>
+					<tspan x="300" dy="99">mortars</tspan>
+					<tspan x="300" dy="99">(wheeled)</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(7400,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="M 595,5 5,395" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt"/>
+			<path d="m 385,200 a 85,85 0 1 1 -170,0 85,85 0 1 1 170,0 z" style="fill:#000000;stroke:none"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">artillery</tspan>
+					<tspan x="300" dy="99">forward observers</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">observateurs</tspan>
+					<tspan x="300" dy="99">avancés</tspan>
+					<tspan x="300" dy="99">d'artillerie</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">射弾観測</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">artillery</tspan>
+					<tspan x="300" dy="99">forward observers</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(8300,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 385,200 a 85,85 0 1 1 -170,0 85,85 0 1 1 170,0 z" style="fill:#000000;stroke:none"/>
+			<text style="font-size:100px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="93" x="300">TA</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">target aquisition</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">acquisition</tspan>
+					<tspan x="300" dy="99">de cible</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">目標補足</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">target aquisition</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(9200,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path style="fill:#000000;stroke:none" d="M 300,336 115,210 V 188.4 L 300,248 485,188.4 V 210 Z"/>
+			<path d="m 365,134 a 65,65 0 1 1 -130,0 65,65 0 1 1 130,0 z" style="fill:#000000;stroke:none"/>
+			<g transform="rotate(-40,110.25002,106.5)" style="fill:none;stroke:#000000;stroke-width:10;stroke-linejoin:miter;stroke-miterlimit:4">
+				<path d="m 145,179 h -35 a 72.5,72.5 0 1 1 0,-145 h 22"/>
+				<path d="m 38,93.5 h 93 l -26,26 h 83"/>
+			</g>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">target aquisition</tspan>
+					<tspan x="300" dy="99">(radar &amp; UAV)</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">acquisition</tspan>
+					<tspan x="300" dy="99">de cible</tspan>
+					<tspan x="300" dy="99">(radar et UAV)</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">目標補足</tspan>
+					<tspan x="300" dy="99">(レーダー及びUAV)</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">target aquisition</tspan>
+					<tspan x="300" dy="99">(radar &amp; UAV)</tspan>
+				</text>
+			</switch>
+		</g>
+</svg>

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+<path d="m 5,5 h 3995 v 2000 h -3995 z" style="fill:none;stroke:#000000;stroke-width:10;stroke-linejoin:miter;stroke-miterlimit:4"/>
+<g transform="translate(550,300)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300">unit</tspan>
+					<tspan x="300" dy="99">- or -</tspan>
+					<tspan x="300" dy="99">installation</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300">unité</tspan>
+					<tspan x="300" dy="99">- ou -</tspan>
+					<tspan x="300" dy="99">installation</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300">部隊</tspan>
+					<tspan x="300" dy="99">または</tspan>
+					<tspan x="300" dy="99">施設</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300">unit</tspan>
+					<tspan x="300" dy="99">- or -</tspan>
+					<tspan x="300" dy="99">installation</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(1450,300)">
+			<path d="m 300,5 l 215,91 0,248 -215,91 -215,-91 0,-248 z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 300,5 l 215,91 0,248 -215,91 -215,-91 0,-248 z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="580">
+					<tspan x="300">person</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="580">
+					<tspan x="300">personne</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="580">
+					<tspan x="300">人</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="580">
+					<tspan x="300">person</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(2350,300)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 5,5 h 45 v 45 h -45 z m 545,0 h 45 v 45 h -45 z m -545,345 h 45 v 45 h -45 z m 545,0 h 45 v 45 h -45 z" style="fill:#0000ff;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300">activity</tspan>
+					<tspan x="300" dy="99">- or -</tspan>
+					<tspan x="300" dy="99">event</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300">activité</tspan>
+					<tspan x="300" dy="99">- ou -</tspan>
+					<tspan x="300" dy="99">événement</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300">活動</tspan>
+					<tspan x="300" dy="99">または</tspan>
+					<tspan x="300" dy="99">事象</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300">activity</tspan>
+					<tspan x="300" dy="99">- or -</tspan>
+					<tspan x="300" dy="99">event</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(100,1200)">
+			<path d="m 535,240 a 235,235 0 1 1 -470,0 235,235  0 1 1 470,0 z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 535,240 a 235,235 0 1 1 -470,0 235,235  0 1 1 470,0 z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="580">
+					<tspan x="300">surface</tspan>
+					<tspan x="300" dy="99">entity</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="580">
+					<tspan x="300">entité</tspan>
+					<tspan x="300" dy="99">à la surface</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="580">
+					<tspan x="300">地表の</tspan>
+					<tspan x="300" dy="99">エンティティ</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="580">
+					<tspan x="300">surface</tspan>
+					<tspan x="300" dy="99">entity</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(1000,1200)">
+			<path d="m 515,480 a 215,475 0 1 0 -430,0" style="fill:#ffffff;stroke:none"/>
+			<path d="m 515,480 a 215,475 0 1 0 -430,0" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="580">
+					<tspan x="300">aerial</tspan>
+					<tspan x="300" dy="99">entity</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="580">
+					<tspan x="300">entité</tspan>
+					<tspan x="300" dy="99">aérienne</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="580">
+					<tspan x="300">空中の</tspan>
+					<tspan x="300" dy="99">エンティティ</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="580">
+					<tspan x="300">aerial</tspan>
+					<tspan x="300" dy="99">entity</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(1900,1200)">
+			<path d="m 515,0 a 215,475 0 1 1 -430,0" style="fill:#ffffff;stroke:none"/>
+			<path d="m 515,0 a 215,475 0 1 1 -430,0" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="580">
+					<tspan x="300">sub-surface</tspan>
+					<tspan x="300" dy="99">entity</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="580">
+					<tspan x="300">entité</tspan>
+					<tspan x="300" dy="99">sous la surface</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="580">
+					<tspan x="300">表面下の</tspan>
+					<tspan x="300" dy="99">エンティティ</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="580">
+					<tspan x="300">sub-surface</tspan>
+					<tspan x="300" dy="99">entity</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(2800,1200)">
+			<path d="m 515,480 a 215,475 0 1 0 -430,0" style="fill:#ffffff;stroke:none"/>
+			<path d="M 300,5 C 261,8 217,34 184.5,80 h 231 C 379,29 343,8 300,5 Z" style="fill:#000000;stroke:#000000;stroke-width:10;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<path d="m 515,480 a 215,475 0 1 0 -430,0" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="580">
+					<tspan x="300">space</tspan>
+					<tspan x="300" dy="99">entity</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="580">
+					<tspan x="300">entité</tspan>
+					<tspan x="300" dy="99">spatiale</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="580">
+					<tspan x="300">宇宙の</tspan>
+					<tspan x="300" dy="99">エンティティ</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="580">
+					<tspan x="300">space</tspan>
+					<tspan x="300" dy="99">entity</tspan>
+				</text>
+			</switch>
+		</g>
+</svg>

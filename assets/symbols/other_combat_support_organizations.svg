@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+<g transform="translate(200,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<text style="font-size:175px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="263" x="300">CS</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">combat support</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">appui au combat</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">戦闘支援部隊</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">combat support</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(1100,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<g style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-linejoin:round">
+				<path d="m 234.42955,170.35285 c 5,-6 0,-33 -22,-48 -23,-15 -49,-17 -56,-5 -10,12 0,33 22,48 23,15 51,11 56,5 z m -41,-57 c 86,34 175,177 175,177"/>
+				<path d="m 365.57045,170.35285 c -5,-6 0,-33 22,-48 23,-15 49,-17 56,-5 10,12 0,33 -22,48 -23,15 -51,11 -56,5 z m 41,-57 c -86,34 -175,177 -175,177"/>
+				<g style="fill:#000000;stroke:none">
+					<path d="m 234.42955,170.35285 c 5,-6 0,-33 -22,-48 -23,-15 -49,-17 -56,-5 -10,12 0,33 22,48 23,15 51,11 56,5 z"/>
+					<path d="m 365.57045,170.35285 c -5,-6 0,-33 22,-48 23,-15 49,-17 56,-5 10,12 0,33 -22,48 -23,15 -51,11 -56,5 z"/>
+				</g>
+			</g>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">CBRN</tspan>
+					<tspan x="300" dy="99">defence</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">défense</tspan>
+					<tspan x="300" dy="99">CBRN</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">CBRN</tspan>
+					<tspan x="300" dy="99">防護部隊</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">CBRN</tspan>
+					<tspan x="300" dy="99">defence</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(2000,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<text style="font-size:175px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="263" x="300">MI</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">military</tspan>
+					<tspan x="300" dy="99">intelligence</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">renseignement</tspan>
+					<tspan x="300" dy="99">militaire</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">軍事諜報部隊</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">military</tspan>
+					<tspan x="300" dy="99">intelligence</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(2900,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt" d="M 595,395 300,160 v 80 L 5,5"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">communications &amp;</tspan>
+					<tspan x="300" dy="99">information systems</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">transmissions et</tspan>
+					<tspan x="300" dy="99">systèmes</tspan>
+					<tspan x="300" dy="99">d'information</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">通信及び情報</tspan>
+					<tspan x="300" dy="99">システム部隊</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">communications &amp;</tspan>
+					<tspan x="300" dy="99">information systems</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(3800,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<text style="font-size:175px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="263" x="300">EW</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">electronic</tspan>
+					<tspan x="300" dy="99">warfare</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">guere</tspan>
+					<tspan x="300" dy="99">électronique</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">電子戦部隊</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">electronic</tspan>
+					<tspan x="300" dy="99">warfare</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(4700,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt" d="M 595,395 300,160 v 80 L 5,5"/>
+			<g style="fill:#000000;stroke:#000000;stroke-width:10;stroke-linejoin:miter;stroke-miterlimit:4;stroke-linecap:square">
+				<path d="M 387,106 V 23 L 213,106 V 23 Z" style="stroke-width:5"/>
+				<path d="m 300,37 v 68"/>
+				<path d="m 315,35 a 15,15 0 0 1 -30,0 15,15 0 0 1 30,0 z"/>
+			</g>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">air</tspan>
+					<tspan x="300" dy="99">communications</tspan>
+					<tspan x="300" dy="99">&amp; control</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">transmissions</tspan>
+					<tspan x="300" dy="99">et contrôle</tspan>
+					<tspan x="300" dy="99">aériens</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">航空通信</tspan>
+					<tspan x="300" dy="99">管制部隊</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">air</tspan>
+					<tspan x="300" dy="99">communications</tspan>
+					<tspan x="300" dy="99">&amp; control</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(5600,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt" d="M 595,395 300,160 v 80 L 5,5"/>
+			<g style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4">
+				<path d="M 239.57574,55.11873 H 361.43195"/>
+				<path d="m 206.89204,86.79476 c 17.49418,0 31.67602,-14.18184 31.67602,-31.67603 0,-17.49418 -14.18184,-31.67602 -31.67602,-31.67602"/>
+				<path d="m 393.10797,86.79476 c -17.49419,0 -31.67602,-14.18184 -31.67602,-31.67603 0,-17.49418 14.18183,-31.67602 31.67602,-31.67602"/>
+			</g>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">communication</tspan>
+					<tspan x="300" dy="99">systems</tspan>
+					<tspan x="300" dy="99">repair</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">réparation de</tspan>
+					<tspan x="300" dy="99">systèmes de</tspan>
+					<tspan x="300" dy="99">communication</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">通信システム</tspan>
+					<tspan x="300" dy="99">復旧部隊</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">communication</tspan>
+					<tspan x="300" dy="99">systems</tspan>
+					<tspan x="300" dy="99">repair</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(6500,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<text style="font-size:175px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="263" x="300">CYBR</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">cyber</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">opérations</tspan>
+					<tspan x="300" dy="99">cybernétiques</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">サイバー部隊</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">cyber</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(7400,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<text style="font-size:175px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="263" x="300">MP</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">military</tspan>
+					<tspan x="300" dy="99">police</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">police</tspan>
+					<tspan x="300" dy="99">militaire</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">憲兵</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">military</tspan>
+					<tspan x="300" dy="99">police</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(8300,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<text style="font-size:175px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="263" x="300">SEC</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">security</tspan>
+					<tspan x="300" dy="99">force</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">force</tspan>
+					<tspan x="300" dy="99">de sécurité</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">治安部隊</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">security</tspan>
+					<tspan x="300" dy="99">force</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(9200,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<text style="font-size:175px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="263" x="300">RGR</text>
+			<path d="m 219,315 a 31,31 0 1 0 0,62 h 162 a 31,31 0 1 0 0,-62" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">Canadian</tspan>
+					<tspan x="300" dy="99">Rangers</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">Rangers</tspan>
+					<tspan x="300" dy="99">canadiens</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">カナディアン</tspan>
+					<tspan x="300" dy="99">レンジャー</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">Canadian</tspan>
+					<tspan x="300" dy="99">Rangers</tspan>
+				</text>
+			</switch>
+		</g>
+</svg>

@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+<g transform="translate(200,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="M 5,395 300,11 595,395" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<path style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt" d="m 5,395 a 295,93 0 1 1 590,0"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">air defence</tspan>
+					<tspan x="300" dy="99">&amp;</tspan>
+					<tspan x="300" dy="99">anti-tank</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">défense antichar</tspan>
+					<tspan x="300" dy="99">et</tspan>
+					<tspan x="300" dy="99">antiaérienne</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">対空及び</tspan>
+					<tspan x="300" dy="99">対戦車砲部隊</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">air defence</tspan>
+					<tspan x="300" dy="99">&amp;</tspan>
+					<tspan x="300" dy="99">anti-tank</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(1100,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt" d="m 5,395 a 295,93 0 1 1 590,0"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">air defence</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">défense</tspan>
+					<tspan x="300" dy="99">aérienne</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">対空砲部隊</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">air defence</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(2000,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 261,302 v -148 c 0,-23 25,-56 39,-56 14,0 39,33 39,56 v 148 m -39,0 v -204 " style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt"/>
+			<path style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt" d="m 5,395 a 295,93 0 1 1 590,0"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">air defence</tspan>
+					<tspan x="300" dy="99">(missile equiped)</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">défense</tspan>
+					<tspan x="300" dy="99">aérienne</tspan>
+					<tspan x="300" dy="99">(équipé</tspan>
+					<tspan x="300" dy="99">de missiles)</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">対空砲部隊</tspan>
+					<tspan x="300" dy="99">(ミサイル装備)</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">air defence</tspan>
+					<tspan x="300" dy="99">(missile equiped)</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(2900,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt" d="m 5,395 a 295,93 0 1 1 590,0"/>
+			<g transform="translate(0,-78.5)" style="fill:none;stroke:#000000;stroke-width:10">
+				<path d="m 215,107.5 a 92.5,92.5 0 1 0 0,185 h 170 a 92.5,92.5 0 1 0 0,-185 z"/>
+				<path d="m 185,338.5 a 31.5,31.5 0 1 1 63,0 31.5,31.5 0 1 1 -63,0 z m 83.5,0 a 31.5,31.5 0 1 1 63,0 31.5,31.5 0 1 1 -63,0 z m 83.5,0 a 31.5,31.5 0 1 1 63,0 31.5,31.5 0 1 1 -63,0 z"/>
+			</g>
+			<text style="font-size:100px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="382" x="300">SR</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">short range</tspan>
+					<tspan x="300" dy="99">air defence</tspan>
+					<tspan x="300" dy="99">(mechanized)</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">défense aérienne</tspan>
+					<tspan x="300" dy="99">à courte portée</tspan>
+					<tspan x="300" dy="99">(mécanisé à roues)</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">短距離</tspan>
+					<tspan x="300" dy="99">対空砲部隊</tspan>
+					<tspan x="300" dy="99">(機械化)</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">short range</tspan>
+					<tspan x="300" dy="99">air defence</tspan>
+					<tspan x="300" dy="99">(mechanized)</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(3800,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="M 5,395 300,11 595,395" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">anti-tank</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">antichar</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">対戦車砲部隊</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">anti-tank</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(4700,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="M 5,395 300,11 595,395" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<path d="M 300,5 V 395" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">motorized</tspan>
+					<tspan x="300" dy="99">anti-tank</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">antichar</tspan>
+					<tspan x="300" dy="99">motorisée</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">自動車化</tspan>
+					<tspan x="300" dy="99">対戦車砲部隊</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">motorized</tspan>
+					<tspan x="300" dy="99">anti-tank</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(5600,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<g style="fill:none;stroke:#000000;stroke-width:10">
+				<path d="m 215,107.5 a 92.5,92.5 0 1 0 0,185 h 170 a 92.5,92.5 0 1 0 0,-185 z"/>
+				<path d="m 185,340 a 31.5,31.5 0 1 1 63,0 31.5,31.5 0 1 1 -63,0 z m 83.5,0 a 31.5,31.5 0 1 1 63,0 31.5,31.5 0 1 1 -63,0 z m 83.5,0 a 31.5,31.5 0 1 1 63,0 31.5,31.5 0 1 1 -63,0 z"/>
+			</g>
+			<path d="M 5,395 300,11 595,395" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">mechanized</tspan>
+					<tspan x="300" dy="99">anti-tank</tspan>
+					<tspan x="300" dy="99">(wheeled)</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">antichar</tspan>
+					<tspan x="300" dy="99">mécanisé</tspan>
+					<tspan x="300" dy="99">(à roues)</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">機械化</tspan>
+					<tspan x="300" dy="99">対戦車砲部隊</tspan>
+					<tspan x="300" dy="99">(装輪式)</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">mechanized</tspan>
+					<tspan x="300" dy="99">anti-tank</tspan>
+					<tspan x="300" dy="99">(wheeled)</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(6500,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 261,395 v -251 c 0,-23 25,-56 39,-56 14,0 39,33 39,56 v 251 m -39,0 v -305 " style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt"/>
+			<path d="M 5,395 300,11 595,395" style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">anti-tank</tspan>
+					<tspan x="300" dy="99">(missile equiped)</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">antichar</tspan>
+					<tspan x="300" dy="99">(équipé de missiles)</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">対戦車砲部隊</tspan>
+					<tspan x="300" dy="99">(ミサイル装備)</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">anti-tank</tspan>
+					<tspan x="300" dy="99">(missile equiped)</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(7400,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 261,395 v -251 c 0,-23 25,-56 39,-56 14,0 39,33 39,56 v 251 m -39,0 v -305 " style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt"/>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">surface-to-surface</tspan>
+					<tspan x="300" dy="99">missiles</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">missile</tspan>
+					<tspan x="300" dy="99">surface-surface</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">地対地</tspan>
+					<tspan x="300" dy="99">ミサイル部隊</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">surface-to-surface</tspan>
+					<tspan x="300" dy="99">missiles</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(8300,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<path d="m 261,395 v -240 c 0,-23 25,-56 39,-56 14,0 39,33 39,56 v 240 m -39,0 v -294 " style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt"/>
+			<text style="font-size:100px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="93" x="300">SUW</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">coastal</tspan>
+					<tspan x="300" dy="99">anti-ship</tspan>
+					<tspan x="300" dy="99">missiles</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">missile</tspan>
+					<tspan x="300" dy="99">anti-navires</tspan>
+					<tspan x="300" dy="99">sur la côte</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">沿岸対艦</tspan>
+					<tspan x="300" dy="99">ミサイル部隊</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">coastal</tspan>
+					<tspan x="300" dy="99">anti-ship</tspan>
+					<tspan x="300" dy="99">missiles</tspan>
+				</text>
+			</switch>
+		</g>
+<g transform="translate(9200,200)">
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:#ffffff;stroke:none"/>
+			<text style="font-size:175px;text-align:center;text-anchor:middle;fill:#000000;stroke:none" y="263" x="300">TACP</text>
+			<path d="M 5,5 H 595 V 395 H 5 Z" style="fill:none;stroke:#0000ff;stroke-width:12;stroke-linejoin:miter;stroke-miterlimit:4"/>
+			<switch>
+				<text systemLanguage="en" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">tactical</tspan>
+					<tspan x="300" dy="99">air control</tspan>
+					<tspan x="300" dy="99">party</tspan>
+				</text>
+				<text systemLanguage="fr" style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">élément</tspan>
+					<tspan x="300" dy="99">de contrôle aérien</tspan>
+					<tspan x="300" dy="99">tactique</tspan>
+				</text>
+				<text systemLanguage="ja" style="font-size:100px;text-align:center;text-anchor:middle;font-family:TakaoGothic" x="300" y="500">
+					<tspan x="300" dy="0">戦術</tspan>
+					<tspan x="300" dy="99">航空管制部隊</tspan>
+				</text>
+				<text style="font-size:100px;text-align:center;text-anchor:middle" x="300" y="500">
+					<tspan x="300" dy="0">tactical</tspan>
+					<tspan x="300" dy="99">air control</tspan>
+					<tspan x="300" dy="99">party</tspan>
+				</text>
+			</switch>
+		</g>
+</svg>
