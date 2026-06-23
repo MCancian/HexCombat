@@ -54,25 +54,30 @@ func load_hex_grid() -> void:
 
 
 func build_neighbor_lookup() -> void:
-	# Build adjacency from hex vertices: two hexes are neighbors if they share an edge
-	# For now, use simple distance-based neighbor detection: hexes whose centers are close
+	# Build adjacency by checking row/col offsets (simpler and more reliable)
+	# Odd-r hex grid neighbor offsets
+	var neighbor_offsets = [
+		[0, -1],  # N
+		[1, -1],  # NE
+		[1, 0],   # SE
+		[0, 1],   # S
+		[-1, 1],  # SW
+		[-1, 0]   # NW
+	]
+
 	for hex_id in hex_lookup:
 		var neighbors: Array = []
-		var hex_pos = position_lookup[hex_id]
 		var hex_data = hex_lookup[hex_id]
+		var row = hex_data.get("row", 0)
+		var col = hex_data.get("col", 0)
 
-		# Average hex radius in screen pixels (rough estimate based on grid)
-		var hex_radius_px = 50.0
+		for offset in neighbor_offsets:
+			var n_row = row + offset[0]
+			var n_col = col + offset[1]
+			var neighbor_id = "hex_%d_%d" % [n_row, n_col]
 
-		for other_id in hex_lookup:
-			if other_id == hex_id:
-				continue
-			var other_pos = position_lookup[other_id]
-			var dist = hex_pos.distance_to(other_pos)
-
-			# Neighbors are approximately 2x hex_radius apart (center to center)
-			if dist < hex_radius_px * 2.2:
-				neighbors.append(other_id)
+			if neighbor_id in hex_lookup:
+				neighbors.append(neighbor_id)
 
 		neighbor_lookup[hex_id] = neighbors
 
