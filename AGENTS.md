@@ -41,7 +41,7 @@ Godot binary: `C:\Godot_v4.7-stable_win64.exe`.
 ```bash
 # build the class cache (after adding scripts / fresh checkout)
 "C:\Godot_v4.7-stable_win64.exe" --headless --path "C:\Users\mdogg\Desktop\HexCombat" --import
-# headless smoke test (expect 455 hexes / 111 brigades / 455 cells, zero errors)
+# headless smoke test (expect 455 hexes / 143 brigades / 455 cells, zero errors)
 "C:\Godot_v4.7-stable_win64.exe" --headless --path "C:\Users\mdogg\Desktop\HexCombat" --quit-after 30
 # one validation/test script
 "C:\Godot_v4.7-stable_win64.exe" --headless --path "C:\Users\mdogg\Desktop\HexCombat" -s "res://tools/<script>.gd"

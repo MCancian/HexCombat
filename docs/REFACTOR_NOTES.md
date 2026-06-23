@@ -61,3 +61,27 @@ in-scope suggestions are applied immediately; the rest are deferred with a one-l
 4. Make `combat_detail` a typed Resource / centralize its string keys as constants to stop
    Python↔GDScript↔test key drift. — _Deferred (worthwhile; revisit when `combat_detail` is
    consumed by the view/action layer at M5)._
+
+---
+
+## 2026-06-23 — MA-1: Green ROC OOB import (pi-implemented; data file orchestrator-generated)
+
+**(a) What shipped** (orchestrator-verified: full gate green, 143 brigades, 0 offending types)
+- `data/roc_ground_forces.json` — 32 Green ROC brigades (incl. 3 Marine brigades BDE-66/77/99),
+  generated deterministically by the orchestrator from TIV `defaults/unit_hierarchy.json` (more
+  reliable than LLM transcription of 32 brigades).
+- `UnitStats.TYPE_DEFS` += `Armor Battalion` (2.0), `Tank Battalion` (2.0), `Infantry Battalion
+  (Reserve)` (0.5) — the 3 green battalion types not already present; all now resolve without
+  fallback warnings.
+- `GameData.load_brigades` refactored to load BOTH OOBs via `OOB_PATHS` + `_load_oob_file` helper
+  (fail-loud `push_error` on malformed files); total count print (143).
+- `tools/validate_oob_data.gd` — asserts counts (111/32/143), teams (Red/Green), brigade contracts
+  (id + composition), and that every battalion type is a known `UnitStats.TYPE_DEFS` entry.
+- Smoke marker 111→143 updated in `tools/run_all_tests.ps1` and `AGENTS.md`.
+
+**(b) pi's machine-readability suggestion**
+- Single machine-readable OOB contract file (`data/schema/oob_contract.json`) holding expected
+  counts, allowed teams, required fields, and OOB paths, read by both `GameData` and
+  `validate_oob_data.gd` instead of duplicating literals (111/32/143, "Red"/"Green", paths). —
+  _Deferred: the pinned literals in the validator are intentional regression guards and the counts
+  are stable through the slice; revisit if OOB content becomes dynamic/scenario-driven (Track C)._

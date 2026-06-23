@@ -5,6 +5,8 @@ const HexResource = preload("res://scripts/model/Hex.gd")
 const BrigadeResource = preload("res://scripts/model/Brigade.gd")
 const BattalionResource = preload("res://scripts/model/Battalion.gd")
 
+const OOB_PATHS := ["res://data/pla_ground_forces.json", "res://data/roc_ground_forces.json"]
+
 var hexes: Array[Hex] = []
 var hex_lookup: Dictionary = {}  # hex_id -> Hex
 var coord_lookup: Dictionary = {}  # Vector2i -> hex_id
@@ -88,11 +90,24 @@ func load_brigades() -> void:
 	brigades.clear()
 	brigades_by_hex.clear()
 
-	var json = _read_json("res://data/pla_ground_forces.json")
+	for path in OOB_PATHS:
+		_load_oob_file(path)
+
+	print_debug("Loaded %d brigades" % brigades.size())
+
+
+func _load_oob_file(path: String) -> void:
+	var json = _read_json(path)
 	if json == null or not (json is Dictionary):
+		push_error("%s format not recognized: expected Dictionary with brigades array" % path)
 		return
 
-	for brigade_data in json.get("brigades", []):
+	var brigades_data = json.get("brigades", null)
+	if not (brigades_data is Array):
+		push_error("%s format not recognized: expected Dictionary with brigades array" % path)
+		return
+
+	for brigade_data in brigades_data:
 		var brigade_id := String(brigade_data.get("brigade_id", ""))
 		if brigade_id == "":
 			push_warning("Skipping brigade with missing brigade_id")
@@ -115,8 +130,6 @@ func load_brigades() -> void:
 		brigades[brigade.id] = brigade
 		if brigade.hex_id != "":
 			_add_brigade_to_hex(brigade.id, brigade.hex_id)
-
-	print_debug("Loaded %d brigades" % brigades.size())
 
 
 func get_hex(hex_id: String) -> Hex:

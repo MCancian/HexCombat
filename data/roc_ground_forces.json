@@ -1,0 +1,657 @@
+{
+  "source": "Normalized from TaiwanInvasionViewer defaults/unit_hierarchy.json (untagged team => Green)",
+  "brigades": [
+    {
+      "brigade_id": "BDE-21",
+      "name": "21st Artillery Command",
+      "team": "Green",
+      "number": 21,
+      "to_number": 3,
+      "lat": 25.1276,
+      "lon": 121.443,
+      "nato_type": "artillery",
+      "composition": [
+        {
+          "type": "Rocket Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-234",
+      "name": "234th Mechanized Infantry Brigade",
+      "team": "Green",
+      "number": 234,
+      "to_number": 5,
+      "lat": 24.1469,
+      "lon": 120.6739,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Mechanized Infantry Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Tank Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-269",
+      "name": "269th Mechanized Infantry Brigade",
+      "team": "Green",
+      "number": 269,
+      "to_number": 3,
+      "lat": 24.9936,
+      "lon": 121.3018,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Mechanized Infantry Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Tank Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-333",
+      "name": "333rd Mechanized Infantry Brigade",
+      "team": "Green",
+      "number": 333,
+      "to_number": 4,
+      "lat": 22.5676,
+      "lon": 120.3493,
+      "nato_type": "mech-infantry",
+      "composition": [
+        {
+          "type": "Mechanized Infantry Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Tank Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-43",
+      "name": "43rd Artillery Command",
+      "team": "Green",
+      "number": 43,
+      "to_number": 4,
+      "lat": 22.6873,
+      "lon": 120.4914,
+      "nato_type": "artillery",
+      "composition": [
+        {
+          "type": "Rocket Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-542",
+      "name": "542nd Armored Brigade",
+      "team": "Green",
+      "number": 542,
+      "to_number": 3,
+      "lat": 24.8138,
+      "lon": 120.9675,
+      "nato_type": "armor",
+      "composition": [
+        {
+          "type": "Tank Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Mechanized Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-564",
+      "name": "564th Armored Brigade",
+      "team": "Green",
+      "number": 564,
+      "to_number": 4,
+      "lat": 22.9998,
+      "lon": 120.2268,
+      "nato_type": "armor",
+      "composition": [
+        {
+          "type": "Tank Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Mechanized Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-58",
+      "name": "58th Artillery Command",
+      "team": "Green",
+      "number": 58,
+      "to_number": 5,
+      "lat": 24.2048,
+      "lon": 120.6209,
+      "nato_type": "artillery",
+      "composition": [
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Rocket Artillery Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-584",
+      "name": "584th Armored Brigade",
+      "team": "Green",
+      "number": 584,
+      "to_number": 3,
+      "lat": 25.0776,
+      "lon": 121.233,
+      "nato_type": "armor",
+      "composition": [
+        {
+          "type": "Tank Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Mechanized Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-586",
+      "name": "586th Armored Brigade",
+      "team": "Green",
+      "number": 586,
+      "to_number": 5,
+      "lat": 24.0847,
+      "lon": 120.5401,
+      "nato_type": "armor",
+      "composition": [
+        {
+          "type": "Tank Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Mechanized Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-601",
+      "name": "601st Aviation Brigade",
+      "team": "Green",
+      "number": 601,
+      "to_number": 3,
+      "lat": 24.8597,
+      "lon": 121.2216,
+      "nato_type": "aviation",
+      "composition": [
+        {
+          "type": "Attack Helicopter Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Utility Helicopter Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-602",
+      "name": "602nd Aviation Brigade",
+      "team": "Green",
+      "number": 602,
+      "to_number": 5,
+      "lat": 24.2048,
+      "lon": 120.6209,
+      "nato_type": "aviation",
+      "composition": [
+        {
+          "type": "Attack Helicopter Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Utility Helicopter Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-621",
+      "name": "621st Artillery Command",
+      "team": "Green",
+      "number": 621,
+      "to_number": 3,
+      "lat": 25.04,
+      "lon": 121.52,
+      "nato_type": "artillery",
+      "composition": [
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 5
+        },
+        {
+          "type": "Rocket Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-66",
+      "name": "66th Marine Brigade",
+      "team": "Green",
+      "number": 66,
+      "to_number": 3,
+      "lat": 22.6719,
+      "lon": 120.2825,
+      "nato_type": "amphibious",
+      "composition": [
+        {
+          "type": "Amphibious Infantry Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Armor Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-77",
+      "name": "77th Marine Brigade",
+      "team": "Green",
+      "number": 77,
+      "to_number": 3,
+      "lat": 22.6819,
+      "lon": 120.2925,
+      "nato_type": "amphibious",
+      "composition": [
+        {
+          "type": "Amphibious Infantry Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Armor Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-862",
+      "name": "862nd Special Warfare Brigade",
+      "team": "Green",
+      "number": 862,
+      "to_number": 3,
+      "lat": 24.8397,
+      "lon": 121.2016,
+      "nato_type": "special-forces",
+      "composition": [
+        {
+          "type": "Special Forces Battalion",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-911",
+      "name": "911th Infantry Brigade",
+      "team": "Green",
+      "number": 911,
+      "to_number": 3,
+      "lat": 25.12843,
+      "lon": 121.78223,
+      "nato_type": "reserve",
+      "composition": [
+        {
+          "type": "Infantry Battalion (Reserve)",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-912",
+      "name": "912th Infantry Brigade",
+      "team": "Green",
+      "number": 912,
+      "to_number": 3,
+      "lat": 25.04345,
+      "lon": 121.5168,
+      "nato_type": "reserve",
+      "composition": [
+        {
+          "type": "Infantry Battalion (Reserve)",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-913",
+      "name": "913th Infantry Brigade",
+      "team": "Green",
+      "number": 913,
+      "to_number": 3,
+      "lat": 24.9679,
+      "lon": 121.4531,
+      "nato_type": "reserve",
+      "composition": [
+        {
+          "type": "Infantry Battalion (Reserve)",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-914",
+      "name": "914th Infantry Brigade",
+      "team": "Green",
+      "number": 914,
+      "to_number": 3,
+      "lat": 24.8037,
+      "lon": 120.9686,
+      "nato_type": "reserve",
+      "composition": [
+        {
+          "type": "Infantry Battalion (Reserve)",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-921",
+      "name": "921th Infantry Brigade",
+      "team": "Green",
+      "number": 921,
+      "to_number": 5,
+      "lat": 24.1866,
+      "lon": 120.6448,
+      "nato_type": "reserve",
+      "composition": [
+        {
+          "type": "Infantry Battalion (Reserve)",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-922",
+      "name": "922th Infantry Brigade",
+      "team": "Green",
+      "number": 922,
+      "to_number": 5,
+      "lat": 24.0705,
+      "lon": 120.5134,
+      "nato_type": "reserve",
+      "composition": [
+        {
+          "type": "Infantry Battalion (Reserve)",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-923",
+      "name": "923th Infantry Brigade",
+      "team": "Green",
+      "number": 923,
+      "to_number": 5,
+      "lat": 23.9182,
+      "lon": 120.68673,
+      "nato_type": "reserve",
+      "composition": [
+        {
+          "type": "Infantry Battalion (Reserve)",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-924",
+      "name": "924th Infantry Brigade",
+      "team": "Green",
+      "number": 924,
+      "to_number": 5,
+      "lat": 23.709,
+      "lon": 120.5435,
+      "nato_type": "reserve",
+      "composition": [
+        {
+          "type": "Infantry Battalion (Reserve)",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-931",
+      "name": "931th Infantry Brigade",
+      "team": "Green",
+      "number": 931,
+      "to_number": 4,
+      "lat": 22.6731,
+      "lon": 120.48395,
+      "nato_type": "reserve",
+      "composition": [
+        {
+          "type": "Infantry Battalion (Reserve)",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-941",
+      "name": "941th Infantry Brigade",
+      "team": "Green",
+      "number": 941,
+      "to_number": 2,
+      "lat": 24.7535,
+      "lon": 121.7389,
+      "nato_type": "reserve",
+      "composition": [
+        {
+          "type": "Infantry Battalion (Reserve)",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-942",
+      "name": "942th Infantry Brigade",
+      "team": "Green",
+      "number": 942,
+      "to_number": 2,
+      "lat": 23.9875,
+      "lon": 121.60138,
+      "nato_type": "reserve",
+      "composition": [
+        {
+          "type": "Infantry Battalion (Reserve)",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-943",
+      "name": "943th Infantry Brigade",
+      "team": "Green",
+      "number": 943,
+      "to_number": 2,
+      "lat": 22.75833,
+      "lon": 121.14428,
+      "nato_type": "reserve",
+      "composition": [
+        {
+          "type": "Infantry Battalion (Reserve)",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-99",
+      "name": "99th Marine Brigade",
+      "team": "Green",
+      "number": 99,
+      "to_number": 4,
+      "lat": 22.6919,
+      "lon": 120.3025,
+      "nato_type": "amphibious",
+      "composition": [
+        {
+          "type": "Amphibious Infantry Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Armor Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-GDU",
+      "name": "Guandu Area Command",
+      "team": "Green",
+      "number": 0,
+      "to_number": 3,
+      "lat": 25.1386,
+      "lon": 121.4269,
+      "nato_type": "area-command",
+      "composition": [
+        {
+          "type": "Mechanized Infantry Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-HD",
+      "name": "Huadong Defense Command",
+      "team": "Green",
+      "number": 0,
+      "to_number": 2,
+      "lat": 23.9871,
+      "lon": 121.6011,
+      "nato_type": "infantry",
+      "composition": [
+        {
+          "type": "Mechanized Infantry Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "BDE-LY",
+      "name": "Lanyang Area Command",
+      "team": "Green",
+      "number": 0,
+      "to_number": 3,
+      "lat": 24.7021,
+      "lon": 121.7377,
+      "nato_type": "area-command",
+      "composition": [
+        {
+          "type": "Mechanized Infantry Battalion",
+          "qty": 2
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 1
+        }
+      ]
+    }
+  ]
+}
