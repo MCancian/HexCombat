@@ -126,6 +126,24 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-24 — D1-E partial-landing / map-token model:** a brigade's GameData map token appears
+  on its `beach_hex` as soon as its FIRST BN lands (Day 1 = its 4 maneuver Amphibious Infantry
+  BNs). `ship_reserve` tracks the per-BN trickle: each offload turn, landed BNs are removed from
+  their entry's `bns`; the entry (brigade) leaves `ship_reserve` only when `bns` is empty (the 5
+  support BNs land on Day 2+, throughput-gated by beach capacity). The brigade fights at its FULL
+  OOB composition from the moment it is on-map — support-BN trickle is offload bookkeeping only;
+  gating combat strength by landed-BN count is a deferred refinement (consistent with "brigade is
+  the atomic unit; full supply assumed for the slice"). Not a blocking design question — the TIV
+  oracle distributes BNs along a front line (no single brigade token), already a settled HexCombat
+  divergence; "token appears when maneuver forces are ashore" is the in-spirit call.
+- **2026-06-24 — D1-E offload hooked at start of RESOLUTION:** `resolve_turn` calls
+  `resolve_offload_turn(dice)` before `_apply_move_orders`, so on Turn 1 Red lands during
+  resolution and is first orderable on Turn 2 (no Red orders possible the turn it lands — Red is at
+  sea during that turn's PLANNING). Turn 1 produces no combat (beach hexes are not co-located with
+  the Green inland hexes). The headless-turn validator provisions Red with a real
+  `resolve_offload_turn` call in setup (Red lands on hex_44_16) then runs the existing
+  single-turn scripted move/combat; offload consumes no RNG so the golden values are unchanged.
+
 - **2026-06-24 — D1-D ship-reserve rosters derived from OOB (single source of truth):** the
   scenario `red_ship_reserve` carries only `{brigade_id, locked_beach, beach_hex, offset_bearing}`;
   it does NOT duplicate battalion rosters (which live only in `pla_ground_forces.json`).
@@ -425,21 +443,32 @@ brigade priority ordering, and the maneuver-first Day 1 landing rule.
         captured `reports/d1d_startup.png` → 4 Green markers, 0 Red, no errors. (pi's Godot MCP
         not exposed this run; orchestrator used `capture_screenshot.gd` instead.)
 
-- [ ] **D1-E** — GameState offload wiring:
-      - `GameState.resolve_offload_turn(dice)`: runs `OffloadCalculator.resolve_offload_day(
-        current_turn, beach_capacity, ship_reserve, priority_order)` → for each brigade in
-        `manifest_landed`, calls `GameData.set_brigade_hex(brigade_id, beach_hex_id)` and
-        removes the brigade from `ship_reserve`; propagates `lost_at_sea` count
-      - Hook offload before move-then-fight in `resolve_turn()` turn order
-      - `tools/validate_headless_offload.gd`: headless Turn 1 offload asserts ≥1 brigade
-        lands on a beach hex AND appears in `GameData.brigades`; Turn 2 asserts support BNs
-        begin landing (throughput-limited)
-      - Update `validate_headless_turn.gd` to run offload first, then the existing
-        move/combat sequence (Red now enters map via offload, not pre-placement)
-      - pi must visually confirm Turn 1: 4 Green + ≥4 Red markers appear after offload resolves
+- [x] **D1-E** *(2026-06-24)* — GameState offload wiring:
+      - `GameState.resolve_offload_turn(dice)` runs `OffloadCalculator.resolve_offload_day(
+        turn_number, beach_capacity, ship_reserve, priority_order)`; lands BNs per the manifest;
+        places each brigade on its `beach_hex` the turn its first BN comes ashore. `ship_reserve`
+        tracks the per-BN trickle (landed BNs removed from the entry; entry leaves the reserve only
+        when fully ashore — support BNs land on later days, throughput-gated). Emits
+        `EventBus.offload_resolved(manifest)`; `recompute_hex_ownership()` after landing.
+      - Hooked at the start of RESOLUTION in `resolve_turn()` (before move-then-fight). Offload
+        consumes no RNG → combat determinism unchanged (golden seed 20260624 → casualties=2,
+        feba=0.76 preserved).
+      - `tools/validate_headless_offload.gd` (in the gate): Turn 1 lands 16 maneuver BNs (4
+        brigades on their exact beach hexes, appear in `GameData.brigades`), 20 waiting; Turn 2
+        support BNs begin landing (throughput-limited).
+      - `validate_headless_turn.gd` / `validate_llm_api.gd` now provision Red via a real
+        `resolve_offload_turn` pass (replaced the D1-D `set_brigade_hex` stub).
+      - `LLMGameAPI.observation` gains a `ship_reserve` block; schema + regenerated `red_turn1`
+        example kept in sync (turn-1 example correctly lists the 4 reserve brigades, 9 BNs each).
+      - Orchestrator visual: `reports/d1e_after_turn1.png` → after Turn 1, 4 Green + 4 Red markers
+        on-map (Red on beach hexes), status "Turn 1 resolved: 0 combat(s)". Gate green (import +
+        smoke + 9 validators + 54 GdUnit4).
 
-- [ ] **D1-F** — Full gate green: all validators + GdUnit4 + smoke (4-marker startup +
-      8-marker post-Turn-1-offload) pass. Push the D1 milestone.
+- [x] **D1-F** *(2026-06-24)* — Full gate green: import + smoke (4-marker startup) + 9
+      `validate_*.gd` + 54 GdUnit4 tests all pass. Post-Turn-1 8-marker outcome (4 Green + 4 Red on
+      beaches) is covered by `validate_headless_offload.gd` (exact-beach-hex asserts) + the
+      `movement_ui` scene_runner test (`Rendered 8 brigade markers`) + the captured screenshot.
+      **D1 (Amphibious Offload) milestone complete — pushed.**
 
 ---
 

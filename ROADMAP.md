@@ -140,7 +140,7 @@ exactly unless a rebalance is explicitly requested.
 
 ---
 
-#### D1 — Amphibious offload / beaches  *(in progress — D1-A/B/C done; D1-D/E blocked on design Q)*
+#### D1 — Amphibious offload / beaches  *(COMPLETE 2026-06-24 — D1-A…F all done)*
 
 **TIV oracle:**
 - `src/services/offload_calculator.py`, `src/services/offload/beach_throughput.py`,
