@@ -20,6 +20,7 @@ const REQUIRED_OBSERVATION_KEYS := [
 	"map_summary",
 	"brigades",
 	"occupied_hexes",
+	"ship_reserve",
 	"legal_moves",
 	"legal_commits",
 	"pending_orders",
@@ -143,8 +144,7 @@ func _validate_examples_parse_and_apply() -> void:
 
 
 func _provision_red_mover_for_validation() -> void:
-	# D1-E will replace this manual placement with a real offload pass.
-	_game_data().set_brigade_hex(RED_MOVER_ID, START_HEX)
+	_game_state().resolve_offload_turn(SeededDice.new(DICE_SEED))
 
 
 func _sample_action_response() -> Dictionary:

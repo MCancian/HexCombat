@@ -28,6 +28,7 @@ static func observation(perspective_team: String = "") -> Dictionary:
 		"map_summary": _map_summary(),
 		"brigades": _brigade_observations(),
 		"occupied_hexes": _occupied_hex_observations(),
+		"ship_reserve": _ship_reserve_observations(),
 		"legal_moves": _legal_move_observations(perspective_team),
 		"legal_commits": _legal_commit_observations(perspective_team),
 		"pending_orders": _pending_orders(),
@@ -200,6 +201,19 @@ static func _occupied_hex_observations() -> Array:
 			"feba_km": float(state.get("feba_km", 0.0)),
 			"brigades": brigade_ids.duplicate(),
 			"neighbors": _game_data().get_neighbors(hex_id)
+		})
+	return result
+
+
+static func _ship_reserve_observations() -> Array:
+	var result: Array = []
+	for reserve_entry_value in _game_state().ship_reserve:
+		var reserve_entry: Dictionary = reserve_entry_value
+		result.append({
+			"brigade_id": String(reserve_entry["brigade_id"]),
+			"locked_beach": int(reserve_entry["locked_beach"]),
+			"beach_hex": String(reserve_entry["beach_hex"]),
+			"bns_remaining": (reserve_entry["bns"] as Array).size()
 		})
 	return result
 
