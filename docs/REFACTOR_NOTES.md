@@ -213,3 +213,26 @@ in-scope suggestions are applied immediately; the rest are deferred with a one-l
   RefCounted so AI/headless sims run isolated from autoload state via the same typed order API. —
   _Deferred: the pure `TurnResolver` is directly relevant to M6 (headless AI-readiness) — revisit
   there; `mode` enum folds into M4; typed snapshot is polish._
+
+---
+
+## 2026-06-23 — M4a: movement logic + allowance/org wiring (pi-implemented)
+
+**(a) What shipped** (orchestrator-verified: full gate green, 16 GdUnit4 tests)
+- `scripts/Movement.gd` (pure RefCounted lib): `FAST_MOBILITY_HINTS = [mechanized, armor, tank]`
+  (mirrors TIV `infer_green_brigade_speed` — fast if nato_type OR any battalion type matches);
+  tactical speed 2/1, administrative 20/10; `move_allowance(brigade, mode)` (fail-loud on unknown mode).
+- `Brigade.moved_admin_this_turn` flag (set on admin move; M5 will bar attacks — inert now).
+- `GameState.add_move_order` now also: rejects unknown mode, blocks a 2nd order for the same brigade
+  (re-move), and rejects targets beyond `find_reachable(start, allowance)`. `_apply_move_orders`
+  applies the org cost (admin −100 / tactical −25 via `adjust_organization`) and sets the admin flag;
+  `begin_next_turn` resets it.
+- `tests/movement_test.gd`: fast/slow speeds + unknown-mode error, reachable/allowance enforcement
+  vs the grid (distance-checked), re-move block, org-cost + admin-flag apply/reset.
+
+**(b) pi's machine-readability suggestion**
+- `MoveOrder.mode` as a typed enum (serialize to the strings at boundaries); a structured
+  `MovementOrderValidationResult` ({valid, code, brigade_id, target_hex, allowance}) alongside the
+  fail-loud push_errors for deterministic machine assertions / future UI diagnostics. — _Deferred:
+  reasonable; the mode-enum folds in cleanly when M4b's UI offers the mode choice; structured
+  validation results are worth it if a UI surfaces rejection reasons (Track C)._

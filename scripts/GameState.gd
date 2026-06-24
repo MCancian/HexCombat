@@ -46,6 +46,21 @@ func add_move_order(team: Brigade.Team, brigade_id: String, target_hex: String, 
 	if target_hex not in GameData.hex_lookup:
 		push_error("Move order references unknown target_hex: %s" % target_hex)
 		return
+	if mode != Movement.MODE_TACTICAL and mode != Movement.MODE_ADMINISTRATIVE:
+		push_error("Unknown movement mode: %s" % mode)
+		return
+
+	for pending_order in orders[team]:
+		var typed_pending_order: MoveOrder = pending_order
+		if typed_pending_order.brigade_id == brigade_id:
+			push_error("Brigade already has a pending move order this turn: %s" % brigade_id)
+			return
+
+	var allowance := Movement.move_allowance(brigade, mode)
+	var reachable := GameData.find_reachable(brigade.hex_id, allowance)
+	if target_hex not in reachable:
+		push_error("Move order target %s beyond %s allowance for %s" % [target_hex, mode, brigade_id])
+		return
 
 	var order: MoveOrder = MoveOrderResource.new()
 	order.brigade_id = brigade_id
@@ -79,6 +94,7 @@ func begin_next_turn() -> void:
 	for brigade in GameData.brigades.values():
 		var typed_brigade: Brigade = brigade
 		typed_brigade.moved_this_turn = false
+		typed_brigade.moved_admin_this_turn = false
 		typed_brigade.fought_this_turn = false
 	orders[Brigade.Team.RED].clear()
 	orders[Brigade.Team.GREEN].clear()
@@ -97,6 +113,11 @@ func _apply_move_orders(team: Brigade.Team) -> void:
 		var brigade: Brigade = GameData.get_brigade(move_order.brigade_id)
 		GameData.set_brigade_hex(move_order.brigade_id, move_order.target_hex)
 		brigade.moved_this_turn = true
+		if move_order.mode == Movement.MODE_ADMINISTRATIVE:
+			brigade.adjust_organization(-Brigade.ADMIN_MOVE_ORG_COST)
+			brigade.moved_admin_this_turn = true
+		else:
+			brigade.adjust_organization(-Brigade.TACTICAL_MOVE_ORG_COST)
 
 
 func _find_contested_hexes() -> Array[String]:
