@@ -98,9 +98,15 @@ Scoped 2026-06-23 (sources located; see Decisions). Two independent sub-units; d
       `tools/run_all_tests.ps1` green (import + smoke + 6 validators + 33 GdUnit4 tests, incl. seeded
       golden combat + movement-reachability + headless full-turn). Interactive DoD loop proven via
       `scene_runner` tests driving the real `Main.tscn` controller; live windowed launch clean (8
-      markers, no errors). **Caveat:** a human-eyes screenshot / manual click-through was not
-      capturable in this agent harness (screenshot API fails) — recommend a final eyeball via the
-      windowed run. Slice DONE.
+      markers, no errors). Slice DONE.
+      - *(2026-06-24 post-slice)* **Screenshot self-verification now works:** `tools/capture_screenshot.gd`
+        renders `Main.tscn` to a PNG under a display/windowed session, so the agent can capture and
+        inspect the live view directly (the old "screenshot API fails" caveat no longer holds).
+      - *(2026-06-24 post-slice)* **Map rendering fix:** `MapProjection` now uses a uniform,
+        `cos(mean_lat)`-corrected scale fit to the viewport with a centered margin (was independent
+        per-axis scaling → ~2.75× horizontal stretch: flat/wide hexes, off-screen northern markers);
+        brigade markers sized from the per-hex radius instead of hardcoded 82×58 px. Verified via a
+        captured screenshot (Taiwan reads as a tall island; 8 hex-sized markers fully on-screen).
 
 ## Definition of done (vertical slice) — ✅ MET 2026-06-24
 
@@ -114,9 +120,9 @@ The interactive loop (select → move → End Turn → combat → casualties →
 advances) is verified by `scene_runner` tests that drive the real `Main.tscn` `GameController`
 (`movement_ui_test`, `selection_test`, `composition_test`, `combat_*`), plus per-feature visual
 confirmation in M1b (markers) and M5b (ownership colors). Live windowed launch is clean (8 markers,
-no errors). **Open caveat (environmental, not an implementation gap):** neither the orchestrator nor
-pi could capture a screenshot or perform manual mouse clicks in this agent harness — a final
-human-eyes pass via `"C:\Godot_v4.7-stable_win64.exe" --path <repo>` is recommended.
+no errors). Screenshot self-verification via `tools/capture_screenshot.gd` now works (display/windowed
+session), so the agent can eyeball the live view directly; the earlier "can't screenshot in-harness"
+caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
