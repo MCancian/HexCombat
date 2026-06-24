@@ -1,0 +1,14 @@
+{
+  "description": "Offload throughput rates by infrastructure type. Ported from TaiwanInvasionViewer defaults/offload_rates.json. Units: short tons/day.",
+  "rates": {
+    "beach_base": 4400,
+    "jackup_barge": 4400,
+    "floating_pier": 2200,
+    "operational_port": 11000,
+    "degraded_port": 2200,
+    "seized_port": 0,
+    "operational_airbridge": 2200,
+    "degraded_airbridge": 1100,
+    "seized_airbridge": 0
+  }
+}

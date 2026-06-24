@@ -126,6 +126,16 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-24 — D1-C OffloadCalculator Day 1 behavior (Day 1 redesign, deliberate scope):**
+  Ported the "Day 1 redesign" behavior from `test_offload_day1_redesign.py` (not the
+  older `test_offload_brigade_priority.py` behavior which tested pre-redesign support-BN
+  blocking). On Day 1: ALL BNs count as "sent"; maneuver BNs bypass throughput and land
+  (brigade-slot limited); support BNs wait. Ship state machine (ready/offloading/returning),
+  civilian vs. military ship type restrictions, port/airbridge infrastructure, JLSF/DOS
+  capacity — all deferred (no ship type model yet; those behaviors flow from anti-ship phase).
+  Brigade slots = `floor(offload_rate / TONS_PER_BN)` per beach (matches TIV test math
+  exactly with flat TONS_PER_BN, no amphib discount needed at this stage).
+
 - **2026-06-24 — D1-A beaches.json normalization:** Rewrote the existing `data/beaches.json`
   (raw TIV PascalCase object dict format) into a clean snake_case array format matching our
   GDScript conventions. Stripped minefield data (deferred to anti-ship phase). Values (rates,
@@ -362,17 +372,19 @@ brigade priority ordering, and the maneuver-first Day 1 landing rule.
       `tools/validate_beaches_data.gd` (asserts 9 beaches, all TO/rate/coord fields present).
       Gate green (import + smoke + 7 validators + 33 GdUnit4 tests all pass).
 
-- [ ] **D1-B** — Offload rates: `data/offload_rates.json` + `scripts/OffloadRates.gd` (loads
-      from JSON, exposes all 9 required keys as typed consts + TONS_PER_BN=2200). Validated by
-      `tools/validate_offload_data.gd`.
+- [x] **D1-B** *(2026-06-24)* — Offload rates: `data/offload_rates.json` (9 keys, exact TIV
+      values), `scripts/OffloadRates.gd` (typed const class: TONS_PER_BN=2200, BEACH_BASE=4400,
+      FLOATING_PIER=2200, JACKUP_BARGE=4400, PORT/AIRBRIDGE rates; REQUIRED_RATE_KEYS list).
+      `tools/validate_offload_data.gd` asserts all 9 keys present in JSON and constants match
+      JSON values. Gate green.
 
-- [ ] **D1-C** — `OffloadCalculator.gd` pure lib — ports the core math from TIV:
-      `calculate_beach_throughput_bns(beaches, infra)` (sum offload_rate / TONS_PER_BN);
-      `admit_brigades(priority_order, beach_slots)` (greedy, locked-beach-first);
-      Day 1 maneuver-bypass rule (maneuver BNs land regardless of throughput);
-      `bns_waiting = bns_sent - bns_landed - lost_at_sea`. GdUnit4 tests in
-      `tests/offload_calculator_test.gd` mirroring `test_offload_day1_redesign.py`:
-      all 36 BNs load; 16 maneuver land Day 1; 20 support waiting; bypass holds even at low rate.
+- [x] **D1-C** *(2026-06-24)* — `scripts/OffloadCalculator.gd` pure RefCounted lib — ports
+      Day 1 redesign behavior from TIV: `beach_capacity_bns()` (rate/TONS_PER_BN per beach);
+      `resolve_offload_day()` with Day 1 assault (maneuver bypass, brigade slots) and Day 2+
+      (throughput-gated, greedy priority). `tests/offload_calculator_test.gd`: 21 tests all
+      passing, mirroring TIV pytests: all 36 BNs sent; 16 maneuver land Day 1; 20 waiting;
+      bypass holds at low throughput; locked-beach respected; brigades don't split beaches;
+      Day 2 support lands up to throughput. Full gate green (8 validators + 54 GdUnit4 tests).
 
 - [ ] **D1-D** — Ship fleet model: `scripts/model/ShipFleet.gd` (typed Resource: ship_type,
       ready, sent, offloading, returning, destroyed, carrying_capacity_bns); add a starter Red
