@@ -126,6 +126,28 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-24 — D2-C/D supply wiring decisions:** (1) **Unit selection:** supply consumption
+  counts the FULL current composition of every Red brigade that is on-map (`hex_id` set) and not
+  destroyed — the HexCombat analogue of TIV's `active_red_battalion_records` (Team=Red,
+  Destroyed=0, Status=landed). The ship_reserve trickle is NOT separately excluded: a brigade
+  consumes (and fights) at full composition the moment it is on-map (consistent with the D1-E
+  decision); casualties already shrink composition, so destroyed BNs stop consuming. (2)
+  **Deduction model:** deduct the FULL `red_dos_consumed_tons` from the single pool each turn,
+  clamped at 0 — HexCombat does NOT model TIV's net-delta-vs-offload-baseline (no separate offload
+  supply deduction in this slice). (3) **Ordering:** `resolve_supply_turn()` runs at the END of
+  `resolve_turn` resolution (after combat/FEBA/ownership, before the flags reset in
+  `begin_next_turn`) so `moved_this_turn`/`fought_this_turn` reflect the turn's activity. (4)
+  **Effectiveness deferred:** supply exhaustion is tracked but does not yet modify combat (the
+  `supply_effectiveness` combat input stays 1.0; wiring deferred to D4 IJFS).
+- **2026-06-24 — D2 supply-turn tests live in a headless validator, not GdUnit:** a GdUnit
+  `supply_turn_test` reliably triggered a Godot 4.7 **teardown heap-corruption** (process exit
+  `-1073740940` / 0xC0000374) ONLY when run alongside the other GdUnit suites — it passed in
+  isolation, and the identical code passes cleanly in `tools/validate_dos_consumption.gd` (its own
+  SceneTree process). Bisected by removing the suite (full `tests/` reliably green 3×). Relocated
+  the multi-turn-drain / clamp-at-zero / full-`resolve_turn`-hook assertions into the validator to
+  keep full coverage with a reliably green gate. (If future GdUnit suites grow, watch for the same
+  shutdown flake; the validator path is the safe home for turn-resolution integration checks.)
+
 - **2026-06-24 — D2 scope = simplified single-pool supply (deliberate divergence from TIV):** TIV's
   supply system is elaborate (`services/supply/`: depots with real-valued `dos_amount`, per-brigade
   pools with organic basic loads `DOS_PER_REGULAR_BN=3` and caps, a ledger, out-of-supply
@@ -490,7 +512,7 @@ brigade priority ordering, and the maneuver-first Day 1 landing rule.
 
 ---
 
-## Track D, Phase 2 — Red DOS Supply (D2)  *(in progress — D2-A/B done 2026-06-24)*
+## Track D, Phase 2 — Red DOS Supply (D2)  *(COMPLETE 2026-06-24 — D2-A…D done)*
 
 **Goal**: Port TIV's activity-aware Red supply consumption into HexCombat. Each turn, landed Red
 battalions consume DOS (Days of Supply) based on mechanization, movement, and combat activity. The
@@ -525,15 +547,21 @@ supply pool decrements; exhaustion degrades combat effectiveness.
       rounding + residual, `by_brigade`). `tests/dos_consumption_test.gd`: 15 cases mirroring
       `test_red_dos_consumption.py`. Gate green (69 GdUnit4 cases; golden combat unchanged).
 
-- [ ] **D2-C** — GameState wiring: `GameState.supply_state` + `resolve_supply_turn()` calls
-      `DosConsumption` on all landed Red BNs (filtered from `GameData`) using `moved_this_turn`
-      / `fought_this_turn` flags; deducts tons from pool; emits `supply_updated` on EventBus.
-      `tools/validate_dos_consumption.gd` headless: land 4 brigades → resolve turn → assert
-      pool decremented (mech vs. non-mech correctly). Gate green.
+- [x] **D2-C** *(2026-06-24, with D2-D)* — GameState wiring: `resolve_supply_turn()` runs
+      `DosConsumption.calculate_consumption` on the full current composition of every on-map,
+      non-destroyed Red brigade (activity from `moved_this_turn`/`fought_this_turn`), deducts the
+      full `red_dos_consumed_tons` from `supply_state.current_dos_tons` (clamped at 0), appends a
+      `day_history` entry, emits `EventBus.supply_updated`. `LLMGameAPI.observation` gains a
+      `supply_state` block (schema + example synced). `tools/validate_dos_consumption.gd`: idle
+      (36 BNs, 20 mech/16 non-mech, 2800 tons, 15000→12200), activity (all moved → 5600),
+      multi-turn drain, clamp-at-zero, full-`resolve_turn` hook.
 
-- [ ] **D2-D** — Hook into turn resolution order (after offload, before move-then-fight or
-      after, matching TIV phase ordering). Verify multi-turn drain reduces pool; assert combat
-      effectiveness modifier (or log it, inert until D4 IJFS wires it). Gate green.
+- [x] **D2-D** *(2026-06-24)* — Hooked `resolve_supply_turn()` into `resolve_turn` at
+      end-of-resolution (after combat/FEBA/ownership, before END) so activity flags are accurate.
+      Multi-turn drain verified in the validator. Combat-effectiveness modifier from supply
+      exhaustion is TRACKED but deferred to D4 (combat `supply_effectiveness` stays 1.0). Gate
+      green (3×): import + smoke + 10 validators + 69 GdUnit4; golden combat unchanged. **D2
+      (Red DOS Supply) complete — pushed.**
 
 ---
 

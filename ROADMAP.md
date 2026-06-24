@@ -169,7 +169,7 @@ exactly unless a rebalance is explicitly requested.
 
 ---
 
-#### D2 — Red DOS supply
+#### D2 — Red DOS supply  *(COMPLETE 2026-06-24 — D2-A…D done)*
 
 **TIV oracle:**
 - `src/services/red_dos_consumption.py` — `calculate_red_dos_consumption()`,
