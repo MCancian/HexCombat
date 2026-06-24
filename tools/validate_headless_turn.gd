@@ -37,6 +37,8 @@ func _run_scripted_turn(label: String) -> Dictionary:
 	print("--- %s deterministic run ---" % label)
 	GameData.load_all()
 	GameState.reset_to_scenario()
+	# D1-E will replace this manual placement with a real offload pass.
+	GameData.set_brigade_hex(RED_MOVER_ID, START_HEX)
 
 	_assert_equal_int("%s initial turn_number" % label, GameState.turn_number, 1)
 	_assert_equal_int("%s initial phase" % label, int(GameState.phase), PHASE_PLANNING)

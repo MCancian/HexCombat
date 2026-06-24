@@ -19,6 +19,7 @@ var hex_lookup: Dictionary = {}  # hex_id -> Hex
 var coord_lookup: Dictionary = {}  # Vector2i -> hex_id
 var neighbor_lookup: Dictionary = {}  # hex_id -> Array[String]
 var hex_states: Dictionary = {}  # hex_id -> {owner, feba_km}
+var red_ship_reserve: Array = []  # raw scenario dicts: {brigade_id, locked_beach, beach_hex, offset_bearing}
 
 var brigades: Dictionary = {}  # brigade_id -> Brigade
 var brigades_by_hex: Dictionary = {}  # hex_id -> Array[String]
@@ -161,6 +162,7 @@ func load_scenario(path: String) -> void:
 	scenario_name = String(scenario.get("name", ""))
 	turn_length_days = int(scenario.get("turn_length_days", 0))
 	stacking_soft_cap = int(scenario.get("stacking_soft_cap", 0))
+	_parse_red_ship_reserve(scenario.get("red_ship_reserve", []))
 
 	var count := 0
 	for placement in placements:
@@ -179,6 +181,40 @@ func load_scenario(path: String) -> void:
 		count += 1
 
 	print_debug("Loaded scenario '%s': %d placements" % [scenario_name, count])
+
+
+func _parse_red_ship_reserve(entries) -> void:
+	red_ship_reserve.clear()
+	if not (entries is Array):
+		push_error("Scenario red_ship_reserve must be an Array")
+		return
+
+	for entry_value in entries:
+		if not (entry_value is Dictionary):
+			push_error("Scenario red_ship_reserve entry must be a Dictionary")
+			continue
+		var entry: Dictionary = entry_value
+		var brigade_id := String(entry.get("brigade_id", ""))
+		if brigade_id == "":
+			push_error("Scenario red_ship_reserve entry missing brigade_id")
+			continue
+		var brigade: Brigade = get_brigade(brigade_id)
+		if brigade == null:
+			push_error("Scenario red_ship_reserve references unknown brigade_id: %s" % brigade_id)
+			continue
+		if brigade.team != Brigade.Team.RED:
+			push_error("Scenario red_ship_reserve references non-Red brigade_id: %s" % brigade_id)
+			continue
+		var beach_hex := String(entry.get("beach_hex", ""))
+		if beach_hex not in hex_lookup:
+			push_error("Scenario red_ship_reserve references unknown beach_hex: %s" % beach_hex)
+			continue
+		red_ship_reserve.append({
+			"brigade_id": brigade_id,
+			"locked_beach": int(entry.get("locked_beach", 0)),
+			"beach_hex": beach_hex,
+			"offset_bearing": float(entry.get("offset_bearing", 0.0))
+		})
 
 
 func get_hex(hex_id: String) -> Hex:

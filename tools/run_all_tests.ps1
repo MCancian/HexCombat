@@ -61,7 +61,7 @@ if ($LastGodotExit -ne 0) {
 Write-Phase "Phase 2/4 — Smoke (boot main scene headless)"
 $out = Invoke-Godot @("--quit-after", "30")
 $smokeOk = $true
-foreach ($marker in @("Loaded 455 hexes", "Loaded 143 brigades", "Spawned 455 hex cells", "Rendered 8 brigade markers")) {
+foreach ($marker in @("Loaded 455 hexes", "Loaded 143 brigades", "Spawned 455 hex cells", "Rendered 4 brigade markers")) {
     if ($out -notmatch [regex]::Escape($marker)) {
         $failures.Add("Smoke: missing expected marker '$marker'")
         $smokeOk = $false

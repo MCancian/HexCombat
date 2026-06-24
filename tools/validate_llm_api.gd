@@ -50,6 +50,7 @@ func _game_state() -> Node:
 func _initialize() -> void:
 	_game_data().load_all()
 	_game_state().reset_to_scenario()
+	_provision_red_mover_for_validation()
 
 	_validate_observation_shape()
 	_validate_action_application()
@@ -88,6 +89,7 @@ func _validate_observation_shape() -> void:
 func _validate_action_application() -> void:
 	_game_data().load_all()
 	_game_state().reset_to_scenario()
+	_provision_red_mover_for_validation()
 	var result := LLMGameAPI.apply_agent_response(_sample_action_response())
 	_assert_true("agent response ok", bool(result["ok"]))
 	_assert_true("turn resolved", bool(result["resolved"]))
@@ -103,6 +105,7 @@ func _validate_action_application() -> void:
 func _validate_missing_seed_rejected() -> void:
 	_game_data().load_all()
 	_game_state().reset_to_scenario()
+	_provision_red_mover_for_validation()
 	var result := LLMGameAPI.apply_agent_response({
 		"protocol_version": LLMGameAPI.PROTOCOL_VERSION,
 		"schema": LLMGameAPI.ACTION_RESPONSE_SCHEMA,
@@ -128,6 +131,7 @@ func _validate_examples_parse_and_apply() -> void:
 		return
 	_game_data().load_all()
 	_game_state().reset_to_scenario()
+	_provision_red_mover_for_validation()
 	var result := LLMGameAPI.apply_agent_response(example_action)
 	_assert_true("action example applies", bool(result["ok"]))
 
@@ -136,6 +140,11 @@ func _validate_examples_parse_and_apply() -> void:
 		for key in REQUIRED_OBSERVATION_KEYS:
 			if not (example_observation as Dictionary).has(key):
 				_fail("observation example missing required key: %s" % key)
+
+
+func _provision_red_mover_for_validation() -> void:
+	# D1-E will replace this manual placement with a real offload pass.
+	_game_data().set_brigade_hex(RED_MOVER_ID, START_HEX)
 
 
 func _sample_action_response() -> Dictionary:

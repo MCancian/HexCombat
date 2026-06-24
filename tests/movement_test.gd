@@ -1,6 +1,7 @@
 extends GdUnitTestSuite
 
 const RED_BRIGADE_ID := "PLA-71-2-Amphibious"
+const RED_START_HEX := "hex_44_16"
 
 
 func before_test() -> void:
@@ -133,3 +134,4 @@ func _distance(hex_id_a: String, hex_id_b: String) -> int:
 func _reset_fixture() -> void:
 	GameData.load_all()
 	GameState.reset_to_scenario()
+	GameData.set_brigade_hex(RED_BRIGADE_ID, RED_START_HEX)

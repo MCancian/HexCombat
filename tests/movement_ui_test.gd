@@ -82,3 +82,4 @@ func _first_reachable_target(controller: GameController, current_hex: String) ->
 func _reset_fixture() -> void:
 	GameData.load_all()
 	GameState.reset_to_scenario()
+	GameData.set_brigade_hex(RED_BRIGADE_ID, RED_START_HEX)

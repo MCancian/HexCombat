@@ -1,10 +1,15 @@
 extends GdUnitTestSuite
 
+const RED_BRIGADE_ID := "PLA-71-2-Amphibious"
+const RED_START_HEX := "hex_44_16"
+
 
 func test_selecting_placed_hex_emits_hex_and_brigade_signals() -> void:
 	var runner := scene_runner("res://scenes/Main.tscn")
 	await await_idle_frame()
 	var controller := runner.scene() as GameController
+	GameData.set_brigade_hex(RED_BRIGADE_ID, RED_START_HEX)
+	controller.hex_map.render_brigade_markers()
 	monitor_signals(EventBus, false)
 
 	controller._on_hex_clicked("hex_44_16")

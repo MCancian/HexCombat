@@ -22,6 +22,18 @@ func test_reset_to_scenario_initializes_turn_phase_days_and_empty_buffers() -> v
 	assert_int(GameState.turn_length_days).is_equal(1)
 	assert_int(GameState.orders_for(Brigade.Team.RED).size()).is_equal(0)
 	assert_int(GameState.orders_for(Brigade.Team.GREEN).size()).is_equal(0)
+	assert_int(GameState.ship_reserve.size()).is_equal(4)
+	assert_array(GameState.ship_reserve_priority_order()).is_equal([
+		"PLA-71-2-Amphibious",
+		"PLA-72-5-Amphibious",
+		"PLA-73-14-Amphibious",
+		"PLA-74-1-Amphibious"
+	])
+	assert_int(GameState.ship_fleet.size()).is_equal(1)
+	var fleet: ShipFleet = GameState.ship_fleet[0]
+	assert_str(fleet.ship_type).is_equal("amphibious_transport")
+	assert_int(fleet.ready).is_equal(4)
+	assert_int(fleet.carrying_capacity_bns).is_equal(_ship_reserve_bn_count())
 
 
 func test_add_move_order_collects_valid_orders_and_rejects_invalid_orders() -> void:
@@ -82,6 +94,15 @@ func test_begin_next_turn_resets_flags_buffers_turn_and_phase() -> void:
 	assert_int(GameState.phase).is_equal(GameStateType.Phase.PLANNING)
 
 
+func _ship_reserve_bn_count() -> int:
+	var total := 0
+	for reserve_entry_value in GameState.ship_reserve:
+		var reserve_entry: Dictionary = reserve_entry_value
+		total += (reserve_entry["bns"] as Array).size()
+	return total
+
+
 func _reset_fixture() -> void:
 	GameData.load_all()
 	GameState.reset_to_scenario()
+	GameData.set_brigade_hex(RED_BRIGADE_ID, RED_START_HEX)

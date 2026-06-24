@@ -3,6 +3,7 @@ class_name GameStateType
 
 const MoveOrderResource = preload("res://scripts/model/MoveOrder.gd")
 const CommitOrderResource = preload("res://scripts/model/CommitOrder.gd")
+const ShipFleetResource = preload("res://scripts/model/ShipFleet.gd")
 const FEBA_RETREAT_THRESHOLD_KM := 10.0
 
 enum Phase { PLANNING, RESOLUTION, END }
@@ -12,6 +13,8 @@ var phase: Phase = Phase.PLANNING
 var turn_length_days: int = 1
 var orders: Dictionary = {}  # Brigade.Team -> Array[MoveOrder]
 var commitments: Dictionary = {}  # Brigade.Team -> Array[CommitOrder]
+var ship_reserve: Array = []  # OffloadCalculator-ready: [{brigade_id, locked_beach, beach_hex, offset_bearing, bns:[{id,type}]}]
+var ship_fleet: Array[ShipFleet] = []  # forward-compat fleet inventory
 var last_contested_hexes: Array[String] = []
 var last_combat_summaries: Array = []
 
@@ -35,6 +38,8 @@ func reset_to_scenario() -> void:
 		Brigade.Team.RED: [],
 		Brigade.Team.GREEN: []
 	}
+	_rebuild_ship_reserve()
+	_rebuild_ship_fleet()
 	last_contested_hexes.clear()
 	last_combat_summaries.clear()
 	EventBus.phase_changed.emit(phase)
@@ -205,6 +210,63 @@ func orders_for(team: Brigade.Team) -> Array:
 
 func commitments_for(team: Brigade.Team) -> Array:
 	return commitments[team]
+
+
+func ship_reserve_priority_order() -> Array[String]:
+	var priority_order: Array[String] = []
+	for reserve_entry_value in ship_reserve:
+		var reserve_entry: Dictionary = reserve_entry_value
+		priority_order.append(String(reserve_entry["brigade_id"]))
+	return priority_order
+
+
+func _rebuild_ship_reserve() -> void:
+	ship_reserve.clear()
+	for reserve_entry_value in GameData.red_ship_reserve:
+		var reserve_entry: Dictionary = reserve_entry_value
+		var brigade_id := String(reserve_entry["brigade_id"])
+		var brigade: Brigade = GameData.get_brigade(brigade_id)
+		if brigade == null:
+			push_error("Ship reserve references unknown brigade_id: %s" % brigade_id)
+			continue
+
+		var bns: Array = []
+		var battalion_index := 1
+		for battalion in brigade.composition:
+			var typed_battalion: Battalion = battalion
+			var type_slug := typed_battalion.type.to_lower().replace(" ", "_")
+			for _qty_index in range(typed_battalion.qty):
+				bns.append({
+					"id": "%s-%s-%d" % [brigade_id, type_slug, battalion_index],
+					"type": typed_battalion.type
+				})
+				battalion_index += 1
+
+		ship_reserve.append({
+			"brigade_id": brigade_id,
+			"locked_beach": int(reserve_entry["locked_beach"]),
+			"beach_hex": String(reserve_entry["beach_hex"]),
+			"offset_bearing": float(reserve_entry["offset_bearing"]),
+			"bns": bns
+		})
+
+
+func _rebuild_ship_fleet() -> void:
+	ship_fleet.clear()
+	var total_bns_at_sea := 0
+	for reserve_entry_value in ship_reserve:
+		var reserve_entry: Dictionary = reserve_entry_value
+		total_bns_at_sea += (reserve_entry["bns"] as Array).size()
+
+	var fleet: ShipFleet = ShipFleetResource.new()
+	fleet.ship_type = "amphibious_transport"
+	fleet.ready = ship_reserve.size()
+	fleet.offloading = 0
+	fleet.returning = 0
+	fleet.destroyed = 0
+	fleet.carrying_capacity_bns = total_bns_at_sea
+	assert(fleet.carrying_capacity_bns >= total_bns_at_sea, "Ship fleet capacity is less than total BNs at sea")
+	ship_fleet.append(fleet)
 
 
 func _apply_move_orders(team: Brigade.Team) -> void:

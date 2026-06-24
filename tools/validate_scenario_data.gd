@@ -6,7 +6,8 @@ const SCENARIO_PATH := "res://data/scenario_default.json"
 const PLA_OOB_PATH := "res://data/pla_ground_forces.json"
 const ROC_OOB_PATH := "res://data/roc_ground_forces.json"
 const HEX_GRID_PATH := "res://data/taiwan_hex_grid.json"
-const EXPECTED_PLACEMENTS := 8
+const EXPECTED_PLACEMENTS := 4
+const EXPECTED_RED_SHIP_RESERVE := 4
 
 var _failures: Array[String] = []
 
@@ -21,10 +22,11 @@ func _initialize() -> void:
 	var brigade_teams := _build_brigade_team_lookup([pla_data, roc_data])
 	var hex_coords := _build_hex_coord_lookup(hex_grid_data)
 	var placements := _placements(scenario_data)
+	var red_ship_reserve := _red_ship_reserve(scenario_data)
 
 	_validate_placement_count(placements)
 	_validate_placements(placements, brigade_teams, hex_coords)
-	_validate_beach_adjacency(placements, hex_coords)
+	_validate_red_ship_reserve(red_ship_reserve, placements, brigade_teams, hex_coords)
 	_finish()
 
 
@@ -68,6 +70,14 @@ func _placements(scenario_data: Dictionary) -> Array:
 	return placements
 
 
+func _red_ship_reserve(scenario_data: Dictionary) -> Array:
+	var reserve = scenario_data.get("red_ship_reserve", null)
+	if not (reserve is Array):
+		_fail("%s missing red_ship_reserve array" % SCENARIO_PATH)
+		return []
+	return reserve
+
+
 func _build_brigade_team_lookup(oobs: Array[Dictionary]) -> Dictionary:
 	var lookup := {}
 	for data in oobs:
@@ -96,7 +106,7 @@ func _validate_placement_count(placements: Array) -> void:
 
 func _validate_placements(placements: Array, brigade_teams: Dictionary, hex_coords: Dictionary) -> void:
 	var seen_hexes := {}
-	var team_counts := {"Red": 0, "Green": 0}
+	var green_count := 0
 
 	for placement in placements:
 		var brigade_id := String(placement.get("brigade_id", ""))
@@ -108,56 +118,50 @@ func _validate_placements(placements: Array, brigade_teams: Dictionary, hex_coor
 		elif team != String(brigade_teams[brigade_id]):
 			_fail("Placement team mismatch for %s: expected %s, got %s" % [brigade_id, String(brigade_teams[brigade_id]), team])
 
+		if team != "Green":
+			_fail("Expected all placements to be Green, got %s for %s" % [team, brigade_id])
+		else:
+			green_count += 1
+
 		if not hex_coords.has(hex_id):
 			_fail("Placement references unknown hex: %s" % hex_id)
 		if seen_hexes.has(hex_id):
 			_fail("Placement hex is not unique: %s" % hex_id)
 		seen_hexes[hex_id] = true
 
-		if team_counts.has(team):
-			team_counts[team] += 1
-		else:
-			_fail("Placement has unexpected team: %s" % team)
-
-	if int(team_counts["Red"]) != 4:
-		_fail("Expected 4 Red placements, got %d" % int(team_counts["Red"]))
-	if int(team_counts["Green"]) != 4:
-		_fail("Expected 4 Green placements, got %d" % int(team_counts["Green"]))
-	print("Team counts: Red=%d Green=%d" % [int(team_counts["Red"]), int(team_counts["Green"])])
+	if green_count != EXPECTED_PLACEMENTS:
+		_fail("Expected %d Green placements, got %d" % [EXPECTED_PLACEMENTS, green_count])
+	print("Team counts: Red=0 Green=%d" % green_count)
 
 
-func _validate_beach_adjacency(placements: Array, hex_coords: Dictionary) -> void:
-	var red_by_beach := {}
-	var green_by_beach := {}
+func _validate_red_ship_reserve(reserve: Array, placements: Array, brigade_teams: Dictionary, hex_coords: Dictionary) -> void:
+	if reserve.size() != EXPECTED_RED_SHIP_RESERVE:
+		_fail("red_ship_reserve count changed: expected %d, got %d" % [EXPECTED_RED_SHIP_RESERVE, reserve.size()])
 
-	for placement in placements:
-		var beach := int(placement.get("beach", 0))
-		var team := String(placement.get("team", ""))
-		if team == "Red":
-			red_by_beach[beach] = placement
-		elif team == "Green":
-			green_by_beach[beach] = placement
+	for index in range(reserve.size()):
+		var entry: Dictionary = reserve[index]
+		var brigade_id := String(entry.get("brigade_id", ""))
+		var locked_beach := int(entry.get("locked_beach", 0))
+		var beach_hex := String(entry.get("beach_hex", ""))
 
-	for beach in red_by_beach.keys():
-		if not green_by_beach.has(beach):
-			_fail("Beach %d has Red placement but no Green placement" % int(beach))
-			continue
+		if not brigade_teams.has(brigade_id):
+			_fail("red_ship_reserve references unknown brigade_id: %s" % brigade_id)
+		elif String(brigade_teams[brigade_id]) != "Red":
+			_fail("red_ship_reserve references non-Red brigade_id: %s" % brigade_id)
+		if locked_beach < 1 or locked_beach > 9:
+			_fail("red_ship_reserve locked_beach out of range for %s: %d" % [brigade_id, locked_beach])
+		if not hex_coords.has(beach_hex):
+			_fail("red_ship_reserve references unknown beach_hex: %s" % beach_hex)
 
-		var red_hex := String(red_by_beach[beach].get("hex", ""))
-		var green_hex := String(green_by_beach[beach].get("hex", ""))
-		if not hex_coords.has(red_hex) or not hex_coords.has(green_hex):
-			continue
+		if index < placements.size() and hex_coords.has(beach_hex):
+			var green_hex := String((placements[index] as Dictionary).get("hex", ""))
+			if hex_coords.has(green_hex):
+				var beach_coord: Vector2i = hex_coords[beach_hex]
+				var green_coord: Vector2i = hex_coords[green_hex]
+				if green_coord not in HexMath.neighbor_coords(beach_coord):
+					_fail("red_ship_reserve entry %d beach_hex %s is not adjacent to Green placement hex %s" % [index, beach_hex, green_hex])
 
-		var red_coord: Vector2i = hex_coords[red_hex]
-		var green_coord: Vector2i = hex_coords[green_hex]
-		if green_coord not in HexMath.neighbor_coords(red_coord):
-			_fail("Beach %d Green hex %s is not adjacent to Red hex %s" % [int(beach), green_hex, red_hex])
-
-	for beach in green_by_beach.keys():
-		if not red_by_beach.has(beach):
-			_fail("Beach %d has Green placement but no Red placement" % int(beach))
-
-	print("Beach adjacency checked: %d beach(es)" % red_by_beach.size())
+	print("Red ship reserve checked: %d brigade(s)" % reserve.size())
 
 
 func _fail(message: String) -> void:

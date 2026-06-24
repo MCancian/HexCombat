@@ -1,37 +1,35 @@
 {
   "name": "BOOTS Starter - Northern Beachhead",
-  "description": "4 PLA amphibious brigades landing on beaches 1-4 (TO 3 Northern) with 4 ROC brigades defending the adjacent inland hexes. offset_bearing is the compass direction (0=N,90=E) to nudge the brigade marker within its hex: Red seaward, Green toward the beach.",
+  "description": "4 PLA amphibious brigades start at sea in the ship reserve for full offload. 4 ROC brigades defend the adjacent inland hexes. red_ship_reserve beach_hex + offset_bearing preserve each PLA brigade's landing target and seaward render offset for offload landing.",
   "turn_length_days": 1,
   "stacking_soft_cap": 6,
-  "placements": [
+  "red_ship_reserve": [
     {
       "brigade_id": "PLA-71-2-Amphibious",
-      "team": "Red",
-      "beach": 1,
-      "hex": "hex_44_16",
+      "locked_beach": 1,
+      "beach_hex": "hex_44_16",
       "offset_bearing": 315
     },
     {
       "brigade_id": "PLA-72-5-Amphibious",
-      "team": "Red",
-      "beach": 2,
-      "hex": "hex_44_15",
+      "locked_beach": 2,
+      "beach_hex": "hex_44_15",
       "offset_bearing": 0
     },
     {
       "brigade_id": "PLA-73-14-Amphibious",
-      "team": "Red",
-      "beach": 3,
-      "hex": "hex_43_14",
+      "locked_beach": 3,
+      "beach_hex": "hex_43_14",
       "offset_bearing": 0
     },
     {
       "brigade_id": "PLA-74-1-Amphibious",
-      "team": "Red",
-      "beach": 4,
-      "hex": "hex_43_13",
+      "locked_beach": 4,
+      "beach_hex": "hex_43_13",
       "offset_bearing": 270
-    },
+    }
+  ],
+  "placements": [
     {
       "brigade_id": "BDE-66",
       "team": "Green",
