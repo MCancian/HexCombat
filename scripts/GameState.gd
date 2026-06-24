@@ -2,6 +2,7 @@ extends Node
 class_name GameStateType
 
 const MoveOrderResource = preload("res://scripts/model/MoveOrder.gd")
+const CommitOrderResource = preload("res://scripts/model/CommitOrder.gd")
 const FEBA_RETREAT_THRESHOLD_KM := 10.0
 
 enum Phase { PLANNING, RESOLUTION, END }
@@ -10,6 +11,7 @@ var turn_number: int = 1
 var phase: Phase = Phase.PLANNING
 var turn_length_days: int = 1
 var orders: Dictionary = {}  # Brigade.Team -> Array[MoveOrder]
+var commitments: Dictionary = {}  # Brigade.Team -> Array[CommitOrder]
 var last_contested_hexes: Array[String] = []
 
 
@@ -25,6 +27,10 @@ func reset_to_scenario() -> void:
 		push_warning("GameData.turn_length_days is 0; falling back to 1 day")
 		turn_length_days = 1
 	orders = {
+		Brigade.Team.RED: [],
+		Brigade.Team.GREEN: []
+	}
+	commitments = {
 		Brigade.Team.RED: [],
 		Brigade.Team.GREEN: []
 	}
@@ -55,6 +61,11 @@ func add_move_order(team: Brigade.Team, brigade_id: String, target_hex: String, 
 		var typed_pending_order: MoveOrder = pending_order
 		if typed_pending_order.brigade_id == brigade_id:
 			push_error("Brigade already has a pending move order this turn: %s" % brigade_id)
+			return
+	for pending_commitment in commitments[team]:
+		var typed_pending_commitment: CommitOrder = pending_commitment
+		if typed_pending_commitment.brigade_id == brigade_id:
+			push_error("Brigade already has a pending commit order this turn: %s" % brigade_id)
 			return
 
 	var allowance := Movement.move_allowance(brigade, mode)
@@ -101,6 +112,71 @@ func resolve_turn(dice: Dice = null) -> void:
 	EventBus.turn_resolved.emit(turn_number)
 
 
+func add_commit_order(team: Brigade.Team, brigade_id: String, target_hex: String) -> void:
+	if phase != Phase.PLANNING:
+		push_error("Cannot add commit order outside PLANNING phase")
+		return
+
+	var brigade: Brigade = GameData.get_brigade(brigade_id)
+	if brigade == null:
+		push_error("Commit order references unknown brigade_id: %s" % brigade_id)
+		return
+	if brigade.team != team:
+		push_error("Commit order team mismatch for %s: order=%s brigade=%s" % [brigade_id, _team_to_string(team), _team_to_string(brigade.team)])
+		return
+	if brigade.destroyed:
+		push_error("Destroyed brigade cannot commit: %s" % brigade_id)
+		return
+	if brigade.moved_admin_this_turn:
+		push_error("Administrative-moved brigade cannot commit: %s" % brigade_id)
+		return
+	if target_hex not in GameData.hex_lookup:
+		push_error("Commit order references unknown target_hex: %s" % target_hex)
+		return
+	if brigade.hex_id == target_hex:
+		push_error("Commit order brigade is already in target hex: %s" % brigade_id)
+		return
+	if brigade.hex_id not in GameData.get_neighbors(target_hex):
+		push_error("Commit order brigade %s is not adjacent to target_hex: %s" % [brigade_id, target_hex])
+		return
+
+	for pending_order in orders[team]:
+		var typed_pending_order: MoveOrder = pending_order
+		if typed_pending_order.brigade_id == brigade_id:
+			push_error("Brigade already has a pending move order this turn: %s" % brigade_id)
+			return
+	for pending_commitment in commitments[team]:
+		var typed_pending_commitment: CommitOrder = pending_commitment
+		if typed_pending_commitment.brigade_id == brigade_id:
+			push_error("Brigade already has a pending commit order this turn: %s" % brigade_id)
+			return
+
+	var order: CommitOrder = CommitOrderResource.new()
+	order.brigade_id = brigade_id
+	order.target_hex = target_hex
+	commitments[team].append(order)
+
+
+func eligible_commit_brigades(team: Brigade.Team, target_hex: String) -> Array:
+	if target_hex not in GameData.hex_lookup:
+		push_error("Commit eligibility requested for unknown target_hex: %s" % target_hex)
+		return []
+
+	var eligible: Array = []
+	for brigade_value in GameData.brigades.values():
+		var brigade: Brigade = brigade_value
+		if brigade.team != team or brigade.destroyed or brigade.moved_admin_this_turn:
+			continue
+		if brigade.hex_id == target_hex:
+			continue
+		if brigade.hex_id not in GameData.get_neighbors(target_hex):
+			continue
+		if _brigade_has_pending_order(team, brigade.id):
+			continue
+		eligible.append(brigade.id)
+	return eligible
+
+
 func begin_next_turn() -> void:
 	if phase != Phase.END:
 		push_error("Cannot begin next turn outside END phase")
@@ -113,6 +189,8 @@ func begin_next_turn() -> void:
 		typed_brigade.fought_this_turn = false
 	orders[Brigade.Team.RED].clear()
 	orders[Brigade.Team.GREEN].clear()
+	commitments[Brigade.Team.RED].clear()
+	commitments[Brigade.Team.GREEN].clear()
 	turn_number += 1
 	phase = Phase.PLANNING
 	EventBus.phase_changed.emit(phase)
@@ -120,6 +198,10 @@ func begin_next_turn() -> void:
 
 func orders_for(team: Brigade.Team) -> Array:
 	return orders[team]
+
+
+func commitments_for(team: Brigade.Team) -> Array:
+	return commitments[team]
 
 
 func _apply_move_orders(team: Brigade.Team) -> void:
@@ -156,17 +238,8 @@ func _find_contested_hexes() -> Array[String]:
 
 
 func _resolve_combat_at(hex_id: String, dice: Dice) -> Dictionary:
-	var attacker_brigades: Array = []
-	var defender_brigades: Array = []
-	for brigade_id_value in GameData.get_brigades_in_hex(hex_id):
-		var brigade: Brigade = GameData.get_brigade(String(brigade_id_value))
-		if brigade == null or brigade.destroyed or brigade.moved_admin_this_turn:
-			continue
-		match brigade.team:
-			Brigade.Team.RED:
-				attacker_brigades.append(brigade)
-			Brigade.Team.GREEN:
-				defender_brigades.append(brigade)
+	var attacker_brigades := _combat_contributors_for(Brigade.Team.RED, hex_id)
+	var defender_brigades := _combat_contributors_for(Brigade.Team.GREEN, hex_id)
 
 	if attacker_brigades.is_empty() or defender_brigades.is_empty():
 		return {}
@@ -200,8 +273,55 @@ func _resolve_combat_at(hex_id: String, dice: Dice) -> Dictionary:
 		"attacker_losses": result.attacker_losses,
 		"defender_losses": result.defender_losses,
 		"feba_movement_km": result.feba_movement_km,
-		"owner_after": String(GameData.hex_states[hex_id]["owner"])
+		"owner_after": String(GameData.hex_states[hex_id]["owner"]),
+		"combat_detail": result.combat_detail,
+		"attacker_brigade_ids": _brigade_ids(attacker_brigades),
+		"defender_brigade_ids": _brigade_ids(defender_brigades)
 	}
+
+
+func _combat_contributors_for(team: Brigade.Team, hex_id: String) -> Array:
+	var contributors: Array = []
+	var seen := {}
+	for brigade_id_value in GameData.get_brigades_in_hex(hex_id):
+		var brigade: Brigade = GameData.get_brigade(String(brigade_id_value))
+		if brigade == null or brigade.destroyed or brigade.moved_admin_this_turn or brigade.team != team:
+			continue
+		contributors.append(brigade)
+		seen[brigade.id] = true
+
+	for commitment_value in commitments[team]:
+		var commitment: CommitOrder = commitment_value
+		if commitment.target_hex != hex_id:
+			continue
+		var brigade: Brigade = GameData.get_brigade(commitment.brigade_id)
+		if brigade == null or brigade.destroyed or brigade.moved_admin_this_turn or brigade.team != team:
+			continue
+		if brigade.id in seen:
+			continue
+		contributors.append(brigade)
+		seen[brigade.id] = true
+	return contributors
+
+
+func _brigade_ids(brigades: Array) -> Array[String]:
+	var ids: Array[String] = []
+	for brigade_value in brigades:
+		var brigade: Brigade = brigade_value
+		ids.append(brigade.id)
+	return ids
+
+
+func _brigade_has_pending_order(team: Brigade.Team, brigade_id: String) -> bool:
+	for pending_order in orders[team]:
+		var typed_pending_order: MoveOrder = pending_order
+		if typed_pending_order.brigade_id == brigade_id:
+			return true
+	for pending_commitment in commitments[team]:
+		var typed_pending_commitment: CommitOrder = pending_commitment
+		if typed_pending_commitment.brigade_id == brigade_id:
+			return true
+	return false
 
 
 func _apply_feba_retreats() -> void:

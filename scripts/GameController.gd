@@ -6,6 +6,7 @@ class_name GameController
 @onready var move_mode_option: OptionButton = $UI/MovementControls/MoveModeOption
 @onready var end_turn_button: Button = $UI/MovementControls/EndTurnButton
 @onready var turn_status_label: Label = $UI/MovementControls/TurnStatusLabel
+@onready var composition_panel: CompositionPanel = $UI/CompositionPanel
 
 var selected_hex: String = ""
 var selected_brigade: String = ""
@@ -22,6 +23,7 @@ func _ready() -> void:
 	move_mode_option.item_selected.connect(_on_move_mode_option_selected)
 	end_turn_button.pressed.connect(end_turn)
 	EventBus.combat_resolved.connect(_on_combat_resolved)
+	composition_panel.commit_requested.connect(commit_brigade)
 	_update_turn_status()
 	debug_label.text = "HexCombat | Loaded %d hexes, %d brigades. Click a hex to select." % [GameData.hex_lookup.size(), GameData.brigades.size()]
 
@@ -43,6 +45,7 @@ func _on_hex_clicked(hex_id: String) -> void:
 	selected_hex = hex_id
 	selected_brigade = ""
 	EventBus.hex_selected.emit(hex_id)
+	_emit_commit_options(hex_id)
 
 	var brigade_ids: Array = GameData.get_brigades_in_hex(hex_id)
 	if not brigade_ids.is_empty():
@@ -78,6 +81,17 @@ func set_move_mode(mode: String) -> void:
 	_update_reachable()
 
 
+func commit_brigade(team: Brigade.Team, brigade_id: String, target_hex: String) -> void:
+	var brigade: Brigade = GameData.get_brigade(brigade_id)
+	assert(brigade != null, "Commit requested for unknown brigade: %s" % brigade_id)
+	var commitment_count_before := GameState.commitments_for(team).size()
+	GameState.add_commit_order(team, brigade_id, target_hex)
+	if GameState.commitments_for(team).size() == commitment_count_before + 1:
+		EventBus.brigade_committed.emit(brigade_id, target_hex)
+		_emit_commit_options(target_hex)
+		debug_label.text = "Commit: %s -> %s" % [brigade.name, target_hex]
+
+
 func end_turn() -> void:
 	GameState.resolve_turn()
 	GameState.begin_next_turn()
@@ -110,6 +124,30 @@ func _on_move_mode_option_selected(index: int) -> void:
 			set_move_mode(Movement.MODE_ADMINISTRATIVE)
 		_:
 			push_error("Unknown movement mode option index: %d" % index)
+
+
+func _emit_commit_options(target_hex: String) -> void:
+	var options: Array = []
+	for team in [Brigade.Team.RED, Brigade.Team.GREEN]:
+		for brigade_id_value in GameState.eligible_commit_brigades(team, target_hex):
+			var brigade_id := String(brigade_id_value)
+			var brigade: Brigade = GameData.get_brigade(brigade_id)
+			assert(brigade != null, "Eligible commit brigade not found: %s" % brigade_id)
+			options.append({
+				"brigade_id": brigade_id,
+				"team": team,
+				"team_string": _team_to_string(team),
+				"name": brigade.name
+			})
+	EventBus.commit_options_changed.emit(target_hex, options)
+
+
+func _team_to_string(team: Brigade.Team) -> String:
+	match team:
+		Brigade.Team.GREEN:
+			return "Green"
+		_:
+			return "Red"
 
 
 func _update_turn_status() -> void:

@@ -318,3 +318,31 @@ in-scope suggestions are applied immediately; the rest are deferred with a one-l
 **M5 status:** acceptance criteria (seeded golden test, occupancy ownership, defeat/retreat,
 headless-reproducible) are MET. **M5c** (the per-turn composition menu — commit adjacent maneuver/
 artillery into a contested hex) remains to complete M5's full designed scope, then push.
+
+---
+
+## 2026-06-24 — M5c: combat composition (commit adjacent forces) (pi-implemented; M5 complete)
+
+**(a) What shipped** (orchestrator-verified: full gate green, 33 GdUnit4 tests)
+- `scripts/model/CommitOrder.gd` (typed). `GameState`: per-team `commitments` buffer;
+  `add_commit_order` (fail-loud: phase / brigade+team / not destroyed / not admin / target exists /
+  not-in-target / adjacent / one-order-per-brigade across move+commit); `eligible_commit_brigades`
+  (UI helper); `_combat_contributors_for` = in-hex + committed-to-this-hex (deduped) feeding the
+  existing CombatForces split; combat still gated on PRESENCE-contested hexes (commitments only add
+  forces). Summaries enriched with combat_detail + brigade ids. `begin_next_turn` clears commitments.
+- `EventBus`: `commit_options_changed`, `brigade_committed`. `GameController.commit_brigade` +
+  emits options on selection. `CompositionPanel` (Main.tscn UI) lists eligible adjacent brigades as
+  commit buttons (emits `commit_requested`, decoupled).
+- `tests/composition_test.gd`: validation + one-order-per-brigade, eligibility filters, committed
+  forces participate (fought + affect combat), commitments cleared next turn.
+- Visual: windowed launch renders; commitment verified via deterministic tests (manual clicking not
+  drivable in pi's harness).
+
+**(b) pi's machine-readability suggestions**
+- Typed `CommitOption`/`CombatSummary` DTOs; `add_move_order`/`add_commit_order` returning a typed
+  result (enum/object) instead of buffer-growth detection; a headless command/test API for
+  UI-equivalent order issuance (select hex / issue order) without scene introspection. — _Deferred:
+  the headless command API + typed order-result are the highest value and align directly with M6
+  (headless AI-readiness) — fold into M6; DTOs are incremental._
+
+**M5 COMPLETE** (M5a resolution + M5b retreat/colors + M5c composition).

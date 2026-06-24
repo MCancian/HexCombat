@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://cqj14n3yblj0qvpx"]
+[gd_scene load_steps=5 format=3 uid="uid://cqj14n3yblj0qvpx"]
 
 [ext_resource type="Script" path="res://scripts/HexMap.gd" id="2_8gx3h"]
 [ext_resource type="Script" path="res://scripts/GameController.gd" id="3_abc12"]
 [ext_resource type="Script" path="res://scripts/InfoPanel.gd" id="4_info"]
+[ext_resource type="Script" path="res://scripts/CompositionPanel.gd" id="5_comp"]
 
 [node name="Main" type="Node"]
 script = ExtResource("3_abc12")
@@ -62,3 +63,23 @@ bbcode_enabled = true
 fit_content = true
 scroll_active = false
 text = "[b]Selection[/b]\nClick a hex to inspect it."
+
+[node name="CompositionPanel" type="PanelContainer" parent="UI"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -380.0
+offset_top = 536.0
+offset_right = -16.0
+offset_bottom = 760.0
+script = ExtResource("5_comp")
+
+[node name="MarginContainer" type="MarginContainer" parent="UI/CompositionPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/CompositionPanel/MarginContainer"]
+layout_mode = 2

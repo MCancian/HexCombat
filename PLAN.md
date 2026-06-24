@@ -76,7 +76,7 @@ Scoped 2026-06-23 (sources located; see Decisions). Two independent sub-units; d
   - [x] **M4b**: select brigade → mode (Tactical/Administrative) → `HexMap` highlights the reachable
         set → click reachable hex issues a `MoveOrder` → **End Turn** resolves + advances + re-renders
         markers. `movement_ui_test.gd`. Gate: 5 validators + 20 GdUnit4 tests. pi visually confirmed.
-- [~] M5 — Combat wiring (apply casualties, FEBA, ownership)
+- [x] M5 — Combat wiring (apply casualties, FEBA, ownership) ✓ *(complete 2026-06-24)*
   - [x] **M5a** *(2026-06-24)*: continuous combat in `GameState.resolve_turn(dice)` — each contested
         hex runs the ported `resolve_map_attack` (Red attacker / Green defender; `CombatForces`
         maneuver/support split; admin-moved & destroyed excluded), applies casualties (battalion
@@ -87,9 +87,10 @@ Scoped 2026-06-23 (sources located; see Decisions). Two independent sub-units; d
         side retreats to a valid adjacent hex, feba resets; encircled holds; advance implicit),
         `HexOwner` constants, `combat_resolved` result summary, `HexMap.refresh_all_hex_colors` on
         `turn_advanced`. `combat_retreat_test.gd` (29 tests total). Gate green. **M5 acceptance met.**
-  - [ ] **M5c**: composition menu — each turn a side commits adjacent brigades' maneuver/artillery
-        into a contested hex's combat (target hex auto-contributes; support feeds the dicts); UI +
-        action-layer commitment + pi visual. **Completes M5's full designed scope → push.**
+  - [x] **M5c** *(2026-06-24)*: composition — `CommitOrder` + `GameState.add_commit_order` /
+        `eligible_commit_brigades` / `_combat_contributors_for` (in-hex + committed adjacent, deduped;
+        combat gated on presence-contested hexes); `CompositionPanel` UI + `commit_brigade`.
+        `composition_test.gd` (33 tests total). Gate green.
 - [ ] M6 — Headless turn check (AI-readiness)
 - [ ] M7 — Slice completion + Definition of done
 
