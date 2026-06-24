@@ -126,6 +126,22 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-24 — D2 scope = simplified single-pool supply (deliberate divergence from TIV):** TIV's
+  supply system is elaborate (`services/supply/`: depots with real-valued `dos_amount`, per-brigade
+  pools with organic basic loads `DOS_PER_REGULAR_BN=3` and caps, a ledger, out-of-supply
+  effectiveness decay, JSON state IO). HexCombat's D2 ports ONLY the **activity-consumption calc**
+  (`red_dos_consumption.py`) against a **single Red DOS pool** (`SupplyState.current_dos_tons`).
+  Depots, per-brigade pools, organic loads, OOS surrender, and the ledger are out of scope for the
+  slice. `red_dos_start` is given in DOS in the scenario (100) and stored as tons (×TONS_PER_DOS).
+- **2026-06-24 — D2-B ports the implementation, not the test docstrings:** `_compute_unit_tons`
+  uses **integer floor division** `base // 3` (300//3=100, 150//3=50). The pytest
+  `TestNonDivisibleBaseRates` docstrings mention `round()` (half-up), but the actual TIV code uses
+  `//`; the asserted values (151→101, 301→201) are identical under floor for these inputs, so the
+  GDScript port uses `@warning_ignore("integer_division") base / 3` (floor) to match the real code.
+  `activity_delta_rounded` uses `ceil` (positive up, negative toward zero) per the source.
+  `by_brigade` `moved`/`in_combat` are per-brigade (all units of a brigade share the flag), so
+  setting them at first-unit time equals the source's OR-accumulate.
+
 - **2026-06-24 — D1-E partial-landing / map-token model:** a brigade's GameData map token appears
   on its `beach_hex` as soon as its FIRST BN lands (Day 1 = its 4 maneuver Amphibious Infantry
   BNs). `ship_reserve` tracks the per-BN trickle: each offload turn, landed BNs are removed from
@@ -474,7 +490,7 @@ brigade priority ordering, and the maneuver-first Day 1 landing rule.
 
 ---
 
-## Track D, Phase 2 — Red DOS Supply (D2)  *(not yet started)*
+## Track D, Phase 2 — Red DOS Supply (D2)  *(in progress — D2-A/B done 2026-06-24)*
 
 **Goal**: Port TIV's activity-aware Red supply consumption into HexCombat. Each turn, landed Red
 battalions consume DOS (Days of Supply) based on mechanization, movement, and combat activity. The
@@ -496,15 +512,18 @@ supply pool decrements; exhaustion degrades combat effectiveness.
 
 **Sub-tasks** (scope from TIV oracle before writing):
 
-- [ ] **D2-A** — Supply data + model: `scripts/model/SupplyState.gd` (typed Resource:
-      `current_dos_tons: float`, `day_history: Array[Dictionary]`); add `red_dos_start` to
-      `data/scenario_default.json`; `GameData` loads initial DOS pool.
+- [x] **D2-A** *(2026-06-24, with D2-B)* — Supply data + model: `scripts/model/SupplyState.gd`
+      (typed Resource: `current_dos_tons: float`, `day_history: Array[Dictionary]`); added
+      `red_dos_start: 100` to `data/scenario_default.json`; `GameData.red_dos_start` parsed
+      (push_warning if ≤0); `GameState.supply_state` rebuilt in `reset_to_scenario` at
+      `red_dos_start * TONS_PER_DOS` (15000 tons). Inert until D2-C deducts.
 
-- [ ] **D2-B** — `scripts/DosConsumption.gd` — pure RefCounted lib: `is_mechanized_bn(type)`,
-      `compute_unit_tons(mechanized, moved, in_combat)`, `calculate_consumption(units,
-      moved_ids, engaged_ids, day)` → summary dict matching TIV's `RedDosConsumptionSummary`.
-      `tests/dos_consumption_test.gd` mirroring `test_red_dos_consumption.py` (whitelist
-      classify, formula, activity delta, empty edge case). Gate green.
+- [x] **D2-B** *(2026-06-24)* — `scripts/DosConsumption.gd` pure RefCounted lib: `is_mechanized_bn`
+      (whitelist-first + substring/brigade-type fallbacks), `compute_unit_tons` (base − base//3 per
+      inactive flag, integer floor division), `calculate_consumption` → summary dict mirroring
+      TIV's `RedDosConsumptionSummary` (counts, tons, dos-equivalent, activity delta with `ceil`
+      rounding + residual, `by_brigade`). `tests/dos_consumption_test.gd`: 15 cases mirroring
+      `test_red_dos_consumption.py`. Gate green (69 GdUnit4 cases; golden combat unchanged).
 
 - [ ] **D2-C** — GameState wiring: `GameState.supply_state` + `resolve_supply_turn()` calls
       `DosConsumption` on all landed Red BNs (filtered from `GameData`) using `moved_this_turn`
