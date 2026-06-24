@@ -94,14 +94,29 @@ Scoped 2026-06-23 (sources located; see Decisions). Two independent sub-units; d
 - [x] M6 — Headless turn check (AI-readiness) ✓ *(complete 2026-06-24)* — `tools/validate_headless_turn.gd`
       drives a full WeGo turn (move → resolve → combat → reset) through the action layer with NO view,
       asserts the end state + two-run determinism (seed 20260624 → casualties=2, feba=0.76). In the gate.
-- [ ] M7 — Slice completion + Definition of done
+- [x] M7 — Slice completion + Definition of done ✓ *(complete 2026-06-24)* — full
+      `tools/run_all_tests.ps1` green (import + smoke + 6 validators + 33 GdUnit4 tests, incl. seeded
+      golden combat + movement-reachability + headless full-turn). Interactive DoD loop proven via
+      `scene_runner` tests driving the real `Main.tscn` controller; live windowed launch clean (8
+      markers, no errors). **Caveat:** a human-eyes screenshot / manual click-through was not
+      capturable in this agent harness (screenshot API fails) — recommend a final eyeball via the
+      windowed run. Slice DONE.
 
-## Definition of done (vertical slice)
+## Definition of done (vertical slice) — ✅ MET 2026-06-24
 
 Windowed run: brigades visible; select one in Movement phase and move within range; switch to
 Combat phase, attack an adjacent enemy hex, see casualties applied and the front/ownership shift;
 ending the turn advances state. `tools/run_all_tests.ps1` green (smoke + validation + GdUnit4,
 including seeded golden combat and movement-reachability tests).
+
+**Status:** `tools/run_all_tests.ps1` GREEN (import + smoke + 6 `validate_*.gd` + 33 GdUnit4 tests).
+The interactive loop (select → move → End Turn → combat → casualties → front/ownership shift → turn
+advances) is verified by `scene_runner` tests that drive the real `Main.tscn` `GameController`
+(`movement_ui_test`, `selection_test`, `composition_test`, `combat_*`), plus per-feature visual
+confirmation in M1b (markers) and M5b (ownership colors). Live windowed launch is clean (8 markers,
+no errors). **Open caveat (environmental, not an implementation gap):** neither the orchestrator nor
+pi could capture a screenshot or perform manual mouse clicks in this agent harness — a final
+human-eyes pass via `"C:\Godot_v4.7-stable_win64.exe" --path <repo>` is recommended.
 
 ## Decisions log (append-only; record every autonomous choice here)
 

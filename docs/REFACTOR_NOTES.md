@@ -369,3 +369,29 @@ artillery into a contested hex) remains to complete M5's full designed scope, th
   golden/AI comparison; non-UI phase predicates (`is_planning_phase()`). — _Deferred to the post-slice
   AI track (Track E): the `play_turn` façade + `snapshot_state` are exactly what AI-vs-AI / B2 will
   want, but they're beyond the slice DoD; the action layer already supports full headless play._
+
+---
+
+## 2026-06-24 — M7: slice completion + Definition of Done
+
+**Verification:** `tools/run_all_tests.ps1` GREEN — import + headless smoke (455 hexes / 143 brigades
+/ 455 cells / 8 markers) + 6 `validate_*.gd` (combat_data, oob_data, scenario_data, symbol_map,
+no_global_rng, headless_turn) + 33 GdUnit4 tests (incl. seeded golden combat, movement reachability,
+selection, movement UI, combat resolution/retreat, composition, headless full turn).
+
+**DoD interactive loop** is covered by `scene_runner` tests driving the real `Main.tscn`
+`GameController` end-to-end, and per-feature visual confirmation landed in M1b (markers) / M5b
+(colors). pi's final windowed launch was clean (8 markers, zero errors).
+
+**Honest limitation (carried across the whole run):** the agent harness could neither capture a
+screenshot nor perform manual mouse clicks in the live Godot window (`CopyFromScreen` fails), so a
+human-eyes click-through of the running game was not performed by an agent. Recommend a final manual
+eyeball. This is environmental, not an implementation gap — the same code paths are exercised
+programmatically and pass.
+
+**Process learnings logged for future tracks:** drive `pi` in the FOREGROUND (background runs
+orphaned twice when launched at end-of-turn); the deferred machine-readability items most worth doing
+next are the per-turn structured event log + a `GameState.play_turn(...) -> TurnResult` headless
+façade + typed `HexState`/`CombatSummary` Resources (Track E / AI-readiness).
+
+**SLICE COMPLETE.** Post-slice tracks (C/D/E) intentionally NOT started.
