@@ -236,3 +236,29 @@ in-scope suggestions are applied immediately; the rest are deferred with a one-l
   fail-loud push_errors for deterministic machine assertions / future UI diagnostics. — _Deferred:
   reasonable; the mode-enum folds in cleanly when M4b's UI offers the mode choice; structured
   validation results are worth it if a UI surfaces rejection reasons (Track C)._
+
+---
+
+## 2026-06-24 — M4b: interactive movement UI (pi-implemented; M4 complete)
+
+**(a) What shipped** (orchestrator-verified: full gate green, 20 GdUnit4 tests)
+- `EventBus`: `reachable_hexes_changed`, `move_mode_changed`, `move_order_issued`, `turn_advanced`.
+- `GameController`: select a brigade → `_update_reachable()` emits the reachable set; clicking a
+  reachable hex (≠ the brigade's hex) issues a `MoveOrder` (success detected via order-buffer growth)
+  and clears the highlight; `set_move_mode()` (Tactical/Administrative) recomputes reachable;
+  `end_turn()` = `resolve_turn()` + `begin_next_turn()` + re-render markers + advance counter.
+- `HexMap`: reachable hexes highlighted light-blue, selected hex yellow (modulate over base colors),
+  via `_refresh_highlights()`.
+- `Main.tscn`: `MovementControls` (turn/mode status label, mode OptionButton, End Turn button).
+- `tests/movement_ui_test.gd`: select→reachable, click→order, admin reachable > tactical, end_turn
+  applies the move + advances the turn.
+- **Visual (pi):** windowed launch renders scenario + 8 markers; the select→mode→highlight→order→
+  end-turn loop verified via `scene_runner` (no manual desktop-click channel in pi's harness).
+
+**(b) pi's machine-readability suggestions**
+- Typed `SelectionState`/`PlanningUiState` resource instead of loose controller fields; move modes as
+  a typed enum surfaced from one UI helper (so OptionButton indices don't encode meaning); a
+  command/result wrapper around `add_move_order` so the UI inspects success/failure directly instead
+  of checking buffer growth. — _Deferred: the command/result wrapper is the most valuable (cleaner
+  than buffer-delta detection) and pairs with the M3/M4a "structured validation result" note —
+  revisit when the UI needs to surface rejection reasons (Track C)._

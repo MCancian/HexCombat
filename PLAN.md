@@ -69,13 +69,13 @@ Scoped 2026-06-23 (sources located; see Decisions). Two independent sub-units; d
       (fail-loud), `resolve_turn` (move-then-fight; combat = M5 hook; detects `last_contested_hexes`),
       `begin_next_turn` (flag/buffer/turn resets). `EventBus.turn_resolved`/`phase_changed`. Gate:
       5 validators + 12 GdUnit4 tests.
-- [~] M4 — Movement (reachable highlight, allowance)
-  - [x] **M4a** *(2026-06-23)*: `Movement.gd` (fast-mobility per TIV oracle; tactical 2/1, admin
-        20/10); `GameState.add_move_order` enforces mode + allowance (`find_reachable`) + blocks
-        re-move; `_apply_move_orders` applies org costs (admin −100 / tactical −25) + admin flag.
-        `movement_test.gd` (16 tests total). Gate green.
-  - [ ] **M4b**: interactive UI — select brigade → choose mode → highlight reachable hexes
-        (`HexMap`) → click a reachable hex issues a `MoveOrder`; pi visual check. **Completes M4 → push.**
+- [x] M4 — Movement (reachable highlight, allowance) ✓ *(complete 2026-06-24)*
+  - [x] **M4a**: `Movement.gd` (fast-mobility per TIV oracle; tactical 2/1, admin 20/10);
+        `GameState.add_move_order` enforces mode + allowance (`find_reachable`) + blocks re-move;
+        `_apply_move_orders` applies org costs (admin −100 / tactical −25) + admin flag.
+  - [x] **M4b**: select brigade → mode (Tactical/Administrative) → `HexMap` highlights the reachable
+        set → click reachable hex issues a `MoveOrder` → **End Turn** resolves + advances + re-renders
+        markers. `movement_ui_test.gd`. Gate: 5 validators + 20 GdUnit4 tests. pi visually confirmed.
 - [ ] M5 — Combat wiring (apply casualties, FEBA, ownership)
 - [ ] M6 — Headless turn check (AI-readiness)
 - [ ] M7 — Slice completion + Definition of done

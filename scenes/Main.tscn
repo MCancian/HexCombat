@@ -22,6 +22,23 @@ anchor_right = 1.0
 anchor_bottom = 0.05
 text = "HexCombat | Click a hex to select it"
 
+[node name="MovementControls" type="HBoxContainer" parent="UI"]
+offset_left = 16.0
+offset_top = 44.0
+offset_right = 520.0
+offset_bottom = 84.0
+
+[node name="TurnStatusLabel" type="Label" parent="UI/MovementControls"]
+layout_mode = 2
+text = "Turn 1 | Mode: Tactical"
+
+[node name="MoveModeOption" type="OptionButton" parent="UI/MovementControls"]
+layout_mode = 2
+
+[node name="EndTurnButton" type="Button" parent="UI/MovementControls"]
+layout_mode = 2
+text = "End Turn"
+
 [node name="InfoPanel" type="PanelContainer" parent="UI"]
 anchors_preset = 1
 anchor_left = 1.0

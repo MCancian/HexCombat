@@ -6,6 +6,8 @@ var symbol_library: SymbolLibrary
 var hex_cells: Dictionary = {}  # hex_id -> Polygon2D
 var projected_vertices: Dictionary = {}  # hex_id -> PackedVector2Array
 var brigade_markers: Dictionary = {}  # brigade_id -> Node2D
+var _selected_hex: String = ""
+var _reachable_hexes: Array = []
 
 var color_none = Color(0.85, 0.85, 0.85)
 var color_red = Color(1.0, 0.3, 0.3)
@@ -21,6 +23,7 @@ func _ready() -> void:
 	projection = MapProjection.new(get_viewport_rect().size)
 	symbol_library = SymbolLibrary.new()
 	EventBus.hex_selected.connect(_on_hex_selected)
+	EventBus.reachable_hexes_changed.connect(_on_reachable_hexes_changed)
 	EventBus.selection_cleared.connect(_on_selection_cleared)
 	spawn_hex_cells()
 	render_brigade_markers()
@@ -56,7 +59,10 @@ func render_brigade_markers() -> void:
 	for brigade_id in brigade_markers:
 		var existing_marker := brigade_markers[brigade_id] as Node
 		if existing_marker != null:
-			existing_marker.queue_free()
+			var marker_parent := existing_marker.get_parent()
+			if marker_parent != null:
+				marker_parent.remove_child(existing_marker)
+			existing_marker.free()
 	brigade_markers.clear()
 
 	for brigade_id in GameData.brigades:
@@ -184,11 +190,18 @@ func _input(event: InputEvent) -> void:
 
 
 func _on_hex_selected(hex_id: String) -> void:
-	clear_highlights()
-	highlight_hexes([hex_id])
+	_selected_hex = hex_id
+	_refresh_highlights()
+
+
+func _on_reachable_hexes_changed(hex_ids: Array) -> void:
+	_reachable_hexes = hex_ids
+	_refresh_highlights()
 
 
 func _on_selection_cleared() -> void:
+	_selected_hex = ""
+	_reachable_hexes = []
 	clear_highlights()
 
 
@@ -208,3 +221,10 @@ func highlight_hexes(hex_ids: Array, highlight_color: Color = Color.YELLOW) -> v
 func clear_highlights() -> void:
 	for hex_id in hex_cells:
 		hex_cells[hex_id].modulate = Color.WHITE
+
+
+func _refresh_highlights() -> void:
+	clear_highlights()
+	highlight_hexes(_reachable_hexes, Color(0.45, 0.85, 1.0))
+	if _selected_hex != "":
+		highlight_hexes([_selected_hex], Color.YELLOW)
