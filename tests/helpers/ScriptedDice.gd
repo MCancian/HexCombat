@@ -25,7 +25,7 @@ func choose_indices(population_size: int, count: int) -> Array[int]:
 		return []
 
 	var raw_choice = _choices.pop_front()
-	if not raw_choice is Array:
+	if not (raw_choice is Array):
 		push_error("ScriptedDice choice entry must be an Array")
 		return []
 

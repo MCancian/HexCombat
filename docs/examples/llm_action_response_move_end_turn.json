@@ -1,0 +1,19 @@
+{
+  "protocol_version": "0.1.0",
+  "schema": "hexcombat.llm_action_response",
+  "perspective_team": "Red",
+  "actions": [
+    {
+      "type": "move",
+      "team": "Red",
+      "brigade_id": "PLA-71-2-Amphibious",
+      "target_hex": "hex_43_17",
+      "mode": "tactical"
+    },
+    {
+      "type": "end_turn",
+      "seed": 20260624
+    }
+  ],
+  "notes": "Example: move one Red amphibious brigade into the adjacent Green defender and resolve the turn."
+}

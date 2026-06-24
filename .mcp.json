@@ -1,12 +1,23 @@
 {
+  "settings": {
+    "toolPrefix": "mcp",
+    "requestTimeoutMs": 30000,
+    "maxRetries": 5
+  },
   "mcpServers": {
     "godot": {
-      "command": "npx",
+      "transport": "stdio",
+      "command": "npx.cmd",
       "args": [
         "-y",
-        "@godotengine/mcp-godot"
+        "@coding-solo/godot-mcp"
       ],
-      "description": "Godot MCP server for executing code and interacting with Godot projects"
+      "env": {
+        "GODOT_PATH": "C:\\Godot_v4.7-stable_win64.exe",
+        "DEBUG": "true"
+      },
+      "lifecycle": "lazy",
+      "requestTimeoutMs": 30000
     }
   }
 }

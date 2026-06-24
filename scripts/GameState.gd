@@ -13,6 +13,7 @@ var turn_length_days: int = 1
 var orders: Dictionary = {}  # Brigade.Team -> Array[MoveOrder]
 var commitments: Dictionary = {}  # Brigade.Team -> Array[CommitOrder]
 var last_contested_hexes: Array[String] = []
+var last_combat_summaries: Array = []
 
 
 func _ready() -> void:
@@ -35,6 +36,7 @@ func reset_to_scenario() -> void:
 		Brigade.Team.GREEN: []
 	}
 	last_contested_hexes.clear()
+	last_combat_summaries.clear()
 	EventBus.phase_changed.emit(phase)
 
 
@@ -105,6 +107,7 @@ func resolve_turn(dice: Dice = null) -> void:
 	for summary in combat_summaries:
 		var typed_summary: Dictionary = summary
 		typed_summary["owner_after"] = String(GameData.hex_states[String(typed_summary["hex_id"])]["owner"])
+	last_combat_summaries = combat_summaries.duplicate(true)
 
 	phase = Phase.END
 	EventBus.phase_changed.emit(phase)

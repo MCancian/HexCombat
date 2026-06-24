@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hexcombat.llm_action_response",
+  "title": "HexCombat LLM Action Response",
+  "type": "object",
+  "required": ["actions"],
+  "properties": {
+    "protocol_version": {"type": "string"},
+    "schema": {"const": "hexcombat.llm_action_response"},
+    "perspective_team": {"type": "string"},
+    "notes": {"type": "string"},
+    "actions": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["type", "team", "brigade_id", "target_hex", "mode"],
+            "properties": {
+              "type": {"const": "move"},
+              "team": {"enum": ["Red", "Green"]},
+              "brigade_id": {"type": "string"},
+              "target_hex": {"type": "string"},
+              "mode": {"enum": ["tactical", "administrative"]}
+            }
+          },
+          {
+            "type": "object",
+            "required": ["type", "team", "brigade_id", "target_hex"],
+            "properties": {
+              "type": {"const": "commit"},
+              "team": {"enum": ["Red", "Green"]},
+              "brigade_id": {"type": "string"},
+              "target_hex": {"type": "string"}
+            }
+          },
+          {
+            "type": "object",
+            "required": ["type", "seed"],
+            "properties": {
+              "type": {"const": "end_turn"},
+              "seed": {"type": "integer"}
+            }
+          }
+        ]
+      }
+    }
+  },
+  "additionalProperties": true
+}

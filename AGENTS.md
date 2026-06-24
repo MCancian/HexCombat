@@ -86,6 +86,8 @@ work done. The `.godot/` cache is git-ignored; `.gd.uid` files are committed wit
 - `ROADMAP.md` — long-term, sequenced milestones with acceptance criteria + forward-compat notes.
 - `PLAN.md` — the active milestone in detail + an append-only **Decisions** log + open questions.
 - `docs/ARCHITECTURE.md` — deeper design / rationale; per-phase notes under `docs/phases/`.
+- `docs/LLM_PLAYTESTING.md` / `docs/LLM_AGENT_PROTOCOL_PLAN.md` — LLM playtesting API,
+  structured observations/actions, screenshots, and benchmark harness planning.
 
 ## Guardrails
 
