@@ -17,6 +17,7 @@ var _last_combat_summary_text: String = ""
 
 func _ready() -> void:
 	hex_map.hex_clicked.connect(_on_hex_clicked)
+	hex_map.selection_cancelled.connect(_on_selection_cancelled)
 	move_mode_option.clear()
 	move_mode_option.add_item("Tactical")
 	move_mode_option.add_item("Administrative")
@@ -60,6 +61,14 @@ func _on_hex_clicked(hex_id: String) -> void:
 
 	debug_label.text = "Selected hex: %s" % hex_id
 	print_debug("Clicked hex: %s" % hex_id)
+
+
+func _on_selection_cancelled() -> void:
+	selected_hex = ""
+	selected_brigade = ""
+	current_reachable = []
+	EventBus.selection_cleared.emit()
+	debug_label.text = "Selection cleared. Click a hex to select."
 
 
 func _update_reachable() -> void:

@@ -41,6 +41,7 @@ layout_mode = 2
 text = "End Turn"
 
 [node name="InfoPanel" type="PanelContainer" parent="UI"]
+clip_contents = true
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -60,11 +61,12 @@ theme_override_constants/margin_bottom = 12
 [node name="DetailsLabel" type="RichTextLabel" parent="UI/InfoPanel/MarginContainer"]
 layout_mode = 2
 bbcode_enabled = true
-fit_content = true
-scroll_active = false
+fit_content = false
+scroll_active = true
 text = "[b]Selection[/b]\nClick a hex to inspect it."
 
 [node name="CompositionPanel" type="PanelContainer" parent="UI"]
+clip_contents = true
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0

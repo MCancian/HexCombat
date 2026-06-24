@@ -6,17 +6,21 @@ var symbol_library: SymbolLibrary
 var hex_cells: Dictionary = {}  # hex_id -> Polygon2D
 var projected_vertices: Dictionary = {}  # hex_id -> PackedVector2Array
 var brigade_markers: Dictionary = {}  # brigade_id -> Node2D
+var _highlight_overlays: Array[Node2D] = []
 var _selected_hex: String = ""
 var _reachable_hexes: Array = []
 
 var color_none = Color(0.85, 0.85, 0.85)
 var color_red = Color(1.0, 0.3, 0.3)
 var color_green = Color(0.3, 1.0, 0.3)
-var color_contested_light = Color(0.9, 1.0, 0.7)
-var color_contested_medium = Color(1.0, 1.0, 0.5)
-var color_contested_heavy = Color(1.0, 0.8, 0.5)
+# Contested hexes use an amber→orange→red-orange ramp that reads clearly against
+# the green/red owner fills (a near-green contested tint was invisible at map scale).
+var color_contested_light = Color(1.0, 0.85, 0.3)
+var color_contested_medium = Color(1.0, 0.6, 0.15)
+var color_contested_heavy = Color(0.95, 0.35, 0.1)
 
 signal hex_clicked(hex_id: String)
+signal selection_cancelled()
 
 
 func _ready() -> void:
@@ -194,10 +198,15 @@ func set_hex_feba(hex_id: String, feba_km: float) -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
-		var hex_id := get_hex_by_point(get_local_mouse_position())
-		if hex_id != "":
-			hex_clicked.emit(hex_id)
+		if event.button_index == MOUSE_BUTTON_RIGHT:
+			selection_cancelled.emit()
 			get_tree().root.set_input_as_handled()
+			return
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			var hex_id := get_hex_by_point(get_local_mouse_position())
+			if hex_id != "":
+				hex_clicked.emit(hex_id)
+				get_tree().root.set_input_as_handled()
 
 
 func _on_hex_selected(hex_id: String) -> void:
@@ -227,19 +236,41 @@ func get_hex_by_point(point: Vector2) -> String:
 	return ""
 
 
-func highlight_hexes(hex_ids: Array, highlight_color: Color = Color.YELLOW) -> void:
+# Draw highlights as translucent overlays ABOVE the hex fill (z 5) but below
+# brigade markers (z 10). Using a tint overlay instead of `modulate` keeps the
+# highlight visible regardless of the underlying owner color (modulate multiplies
+# against the saturated green fill and washes out).
+func highlight_hexes(hex_ids: Array, fill_color: Color, border_color: Color = Color.TRANSPARENT, border_width: float = 0.0) -> void:
 	for hex_id in hex_ids:
-		if hex_id in hex_cells:
-			hex_cells[hex_id].modulate = highlight_color
+		var vertices := projected_vertices.get(hex_id, PackedVector2Array()) as PackedVector2Array
+		if vertices.size() < 3:
+			continue
+
+		var overlay := Polygon2D.new()
+		overlay.polygon = vertices
+		overlay.color = fill_color
+		overlay.z_index = 5
+		add_child(overlay)
+		_highlight_overlays.append(overlay)
+
+		if border_width > 0.0:
+			var border := Line2D.new()
+			border.points = vertices
+			border.closed = true
+			border.width = border_width
+			border.default_color = border_color
+			overlay.add_child(border)
 
 
 func clear_highlights() -> void:
-	for hex_id in hex_cells:
-		hex_cells[hex_id].modulate = Color.WHITE
+	for overlay in _highlight_overlays:
+		if overlay != null:
+			overlay.queue_free()
+	_highlight_overlays.clear()
 
 
 func _refresh_highlights() -> void:
 	clear_highlights()
-	highlight_hexes(_reachable_hexes, Color(0.45, 0.85, 1.0))
+	highlight_hexes(_reachable_hexes, Color(0.1, 0.55, 1.0, 0.5))
 	if _selected_hex != "":
-		highlight_hexes([_selected_hex], Color.YELLOW)
+		highlight_hexes([_selected_hex], Color(1.0, 0.9, 0.1, 0.45), Color(1.0, 0.85, 0.0), 4.0)

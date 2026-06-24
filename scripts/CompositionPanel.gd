@@ -10,6 +10,7 @@ var _target_hex: String = ""
 
 func _ready() -> void:
 	EventBus.commit_options_changed.connect(_on_commit_options_changed)
+	EventBus.selection_cleared.connect(_show_empty)
 	_show_empty()
 
 
@@ -36,6 +37,11 @@ func _on_commit_options_changed(target_hex: String, options: Array) -> void:
 		var brigade_name := String(option["name"])
 		var button := Button.new()
 		button.text = "Commit %s (%s)" % [brigade_name, team_string]
+		# Wrap long brigade names instead of forcing the panel past the viewport.
+		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		button.clip_text = true
+		button.custom_minimum_size = Vector2.ZERO
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.pressed.connect(func() -> void:
 			commit_requested.emit(team, brigade_id, _target_hex)
 		)
