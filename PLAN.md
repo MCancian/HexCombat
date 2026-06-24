@@ -406,6 +406,151 @@ D1-A through D1-C are independent of that decision and can proceed first.
 
 ---
 
+---
+
+## Track D, Phase 2 — Red DOS Supply (D2)  *(not yet started)*
+
+**Goal**: Port TIV's activity-aware Red supply consumption into HexCombat. Each turn, landed Red
+battalions consume DOS (Days of Supply) based on mechanization, movement, and combat activity. The
+supply pool decrements; exhaustion degrades combat effectiveness.
+
+**TIV source oracle**:
+- Logic: `src/services/red_dos_consumption.py` (`calculate_red_dos_consumption`,
+  `is_mechanized_red_unit`, `_compute_unit_tons`), `src/services/red_dos_extraction.py`
+- Supply pool/tracker: `src/services/supply_repo.py` (or `src/services/supply/`)
+- Tests: `tests/python/unit/test_red_dos_consumption.py`, `test_dos_tracker.py`,
+  `test_supply_state.py`, `test_supply_repo.py`, `test_supply_offload_day.py`
+
+**Key constants** (from TIV):
+- BASE_MECHANIZED_TONS = 300, BASE_NON_MECHANIZED_TONS = 150, TONS_PER_DOS = 150
+- Consumption formula: `tons = base - (base//3 if not moved) - (base//3 if not in_combat)`
+- Mechanized whitelist: Combined Arms, Mechanized Infantry, Mechanized Artillery, Tank,
+  Amphibious Infantry battalions
+- `moved_brigade_ids` and `engaged_brigade_ids` come from turn flags already on `GameState`
+
+**Sub-tasks** (scope from TIV oracle before writing):
+
+- [ ] **D2-A** — Supply data + model: `scripts/model/SupplyState.gd` (typed Resource:
+      `current_dos_tons: float`, `day_history: Array[Dictionary]`); add `red_dos_start` to
+      `data/scenario_default.json`; `GameData` loads initial DOS pool.
+
+- [ ] **D2-B** — `scripts/DosConsumption.gd` — pure RefCounted lib: `is_mechanized_bn(type)`,
+      `compute_unit_tons(mechanized, moved, in_combat)`, `calculate_consumption(units,
+      moved_ids, engaged_ids, day)` → summary dict matching TIV's `RedDosConsumptionSummary`.
+      `tests/dos_consumption_test.gd` mirroring `test_red_dos_consumption.py` (whitelist
+      classify, formula, activity delta, empty edge case). Gate green.
+
+- [ ] **D2-C** — GameState wiring: `GameState.supply_state` + `resolve_supply_turn()` calls
+      `DosConsumption` on all landed Red BNs (filtered from `GameData`) using `moved_this_turn`
+      / `fought_this_turn` flags; deducts tons from pool; emits `supply_updated` on EventBus.
+      `tools/validate_dos_consumption.gd` headless: land 4 brigades → resolve turn → assert
+      pool decremented (mech vs. non-mech correctly). Gate green.
+
+- [ ] **D2-D** — Hook into turn resolution order (after offload, before move-then-fight or
+      after, matching TIV phase ordering). Verify multi-turn drain reduces pool; assert combat
+      effectiveness modifier (or log it, inert until D4 IJFS wires it). Gate green.
+
+---
+
+## Track D, Phase 3 — Anti-ship & Mine Warfare (D3)  *(not yet started)*
+
+**Goal**: Port TIV's anti-ship phase — Green missile/weapon systems fire at Red ships crossing
+to beaches; minefields activate; ship losses propagate to BN `lost_at_sea` count in the offload
+manifest.
+
+**TIV source oracle**:
+- `src/services/antiship_calculator.py` — top-level resolver (`AntishipResults`)
+- `src/services/antiship_crossing.py` — `resolve_crossing_damage(crossing_result, rng)`
+- `src/services/antiship_firing_plan.py` — `build_firing_plan(systems, ships, targets)`
+- `src/services/antiship_launch_attrition.py`, `src/services/antiship_inventory_service.py`,
+  `src/services/antiship_suppression_service.py`, `src/services/antiship_magazine_service.py`
+- `src/services/antiship/mine_warfare_service.py`, `src/services/beach_minefield_support.py`
+- `src/contracts/antiship.py` — shared dataclasses (`LaunchAttritionSummaryRow`, etc.)
+- Tests: `test_antiship_calculator.py`, `test_antiship_crossing.py`,
+  `test_antiship_firing_plan.py`, `test_antiship_mine_warfare_service.py`,
+  `test_antiship_magazine_service.py`, `test_antiship_suppression.py`
+
+**Sub-tasks** (scope from TIV oracle before writing):
+
+- [ ] **D3-A** — Data + models: `data/ships.json` (Red ship types with capacity/count from TIV
+      defaults), `data/antiship_systems.json` (Green weapon systems from TIV defaults);
+      `scripts/model/ShipState.gd`, `scripts/model/AntishipSystem.gd`,
+      `scripts/model/Minefield.gd`. `tools/validate_antiship_data.gd`. Gate green.
+
+- [ ] **D3-B** — `scripts/AntishipCalculator.gd` — pure lib: `build_firing_plan()`,
+      `resolve_crossing_damage()`, `apply_magazine_expenditure()`. Mirror TIV unit tests
+      (`tests/antiship_calculator_test.gd`). Gate green.
+
+- [ ] **D3-C** — Mine warfare: `scripts/MineWarfareService.gd` — `resolve_minefield()`,
+      lay/sweep/activate logic. Mirror `test_antiship_mine_warfare_service.py`. Gate green.
+
+- [ ] **D3-D** — GameState wiring: `GameState.resolve_antiship_turn(dice)` runs calculator,
+      applies ship losses, propagates `lost_at_sea` back to the offload reserve (D1-E's
+      manifest). Suppressed systems flag carried into next turn. `tools/validate_headless_antiship.gd`.
+      Gate green.
+
+---
+
+## Track D, Phase 4 — IJFS (D4)  *(not yet started — largest phase)*
+
+**Goal**: Port TIV's Joint/Air-Missile Fires phase. ISR → detection → targeting → fires
+allocation → strike probability → hit/miss. Provides theater CAS/CRBM for combat (currently 0)
+and suppresses anti-ship systems (feeding D3).
+
+**TIV source oracle** — **read all of these before scoping sub-tasks**:
+- `src/ijfs_standalone/` package (self-contained engine):
+  - `detection.py`, `targeting.py`, `engagement.py`, `strike_probability.py`,
+    `strike_resolution.py`, `firing_capacity.py`, `category_groups.py`, `ad_health.py`,
+    `isr_sources.py`, `warmup_profiles.py`, `run_daily_ijfs.py`
+- `src/services/ijfs_*.py` — wrappers / writeback services
+- `src/services/ijfs_air_oob.py` — air OOB (platforms, daily capacity)
+- Tests: `test_ijfs_standalone.py`, `test_ijfs_targets.py`, `test_ijfs_funnel_by_category.py`,
+  `test_ijfs_default_targets.py`, `test_ijfs_grouped_targets.py`,
+  `test_ijfs_timeline_and_profiles.py`, `test_ijfs_payload_summary_totals.py`,
+  `test_ijfs_buried_integration.py`, `test_ijfs_prewarmup_fingerprint.py`
+
+**Pre-scoping note**: Read `src/ijfs_standalone/run_daily_ijfs.py` top-to-bottom first; that is
+the authoritative sequencing of ISR → targeting → allocation → strike. Then scope sub-tasks
+into the PLAN.md pattern. Expect ≥3 sub-tasks (models, strike engine, GameState wiring).
+
+- [ ] **D4-scope** — Read TIV IJFS oracle; write detailed D4 sub-tasks into this section before
+      any coding. Record in Decisions log.
+
+---
+
+## Track D, Phase 5 — Front-line / Cleanup (D5)  *(not yet started)*
+
+**Goal**: Port TIV's front-line distribution and cleanup hex ownership. Player draws a polyline;
+Red maneuver BNs redistribute along it. Cleanup phase normalizes ownership after casualties.
+
+**TIV source oracle**:
+- `src/services/front_line_service.py` — `find_hexes_for_polyline()`,
+  `distribute_battalions_along_line()`, `_interpolate_along_line()`,
+  `_polyline_cumulative_lengths()`. Uses `sample_interval_km = 2.0`
+- `src/services/cleanup_hex_service.py` — `CleanupHexService.update_hex_ownership()`;
+  owner normalization (red/green/contested/none)
+- `src/services/cleanup_application_service.py` — orchestrates Cleanup phase
+- `src/services/cleanup_calculator.py` — residual attrition / isolation check
+- Tests: `test_front_line_service.py`, `test_cleanup_hex_service.py`,
+  `test_cleanup_casualty_lifecycle.py`, `test_cleanup_map_manipulation.py`
+
+**Sub-tasks** (scope from TIV oracle before writing):
+
+- [ ] **D5-A** — `scripts/FrontLineService.gd` — pure lib: `polyline_to_hex_sequence(coords,
+      hex_lookup)` samples at 2 km intervals; `distribute_bns(bns, hex_sequence)` assigns BNs
+      evenly. `tests/frontline_service_test.gd` mirroring `test_front_line_service.py`. Gate green.
+
+- [ ] **D5-B** — UI: HexMap polyline-draw mode — player clicks to add polyline vertices on the
+      map; Confirm button commits → `GameState.resolve_frontline_phase(coords, dice)` applies
+      `FrontLineService` and calls `GameData.set_brigade_hex()` for moved brigades.
+      `tools/validate_frontline.gd` headless scripted polyline test. Gate green.
+
+- [ ] **D5-C** — Cleanup: `GameState.resolve_cleanup_phase()` runs residual attrition + isolated
+      unit check + final `recompute_hex_ownership()`. Hook into end-of-turn after combat.
+      Gate green.
+
+---
+
 ## Open questions (settle at the relevant milestone)
 
 _None blocking the slice — the design is settled. Future-phase questions (supply/organization

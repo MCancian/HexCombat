@@ -89,6 +89,44 @@ work done. The `.godot/` cache is git-ignored; `.gd.uid` files are committed wit
 - `docs/LLM_PLAYTESTING.md` / `docs/LLM_AGENT_PROTOCOL_PLAN.md` — LLM playtesting API,
   structured observations/actions, screenshots, and benchmark harness planning.
 
+## LLM playtesting / headless JSON API
+
+HexCombat has a built-in JSON action API so LLM agents (including the orchestrator's headless
+gates and future AI-vs-AI play) can drive the game without a UI:
+
+**Core tools** (`scripts/LLMGameAPI.gd` autoload):
+- `get_observation(team)` → JSON dict: `turn`, `phase`, `map_cells`, `brigades`, `legal_moves`,
+  `pending_orders`, `last_combat_summary`
+- `apply_action(action_json)` → routes to `GameState`:
+  - `{"type":"move","team":"Red","brigade_id":"…","target_hex":"…","mode":"tactical"}`
+  - `{"type":"commit","team":"Green","brigade_id":"…","target_hex":"…"}`
+  - `{"type":"end_turn","seed":1234}` — seed required for reproducibility
+
+**Validation gate** (`tools/validate_llm_api.gd`): auto-picked up by `run_all_tests.ps1`;
+asserts observation keys, legal moves exposed, examples parse/apply, missing seeds rejected.
+
+**One-shot tools:**
+```powershell
+# Run LLM API validation
+"C:\Godot_v4.7-stable_win64.exe" --headless --path "C:\Users\mdogg\Desktop\HexCombat" -s "res://tools/validate_llm_api.gd"
+
+# Export an observation fixture (Red turn 1)
+"C:\Godot_v4.7-stable_win64.exe" --headless --path "C:\Users\mdogg\Desktop\HexCombat" -s "res://tools/export_llm_observation.gd" -- --team=Red --output="reports/llm_observation_red.json"
+
+# Full headless turn validation (move → combat → reset, seeded)
+"C:\Godot_v4.7-stable_win64.exe" --headless --path "C:\Users\mdogg\Desktop\HexCombat" -s "res://tools/validate_headless_turn.gd"
+
+# Screenshot (windowed session only — not --headless)
+"C:\Godot_v4.7-stable_win64.exe" --path "C:\Users\mdogg\Desktop\HexCombat" -s "res://tools/capture_screenshot.gd" -- --output="reports/current.png"
+```
+
+New phases must not break the JSON observation contract. When a phase adds new state (supply pool,
+ship reserve, anti-ship systems), extend `get_observation()` with that state so LLM agents and
+headless validation scripts can read it.
+
+See `docs/LLM_PLAYTESTING.md`, `docs/LLM_OBSERVATION_SCHEMA.md`, and
+`docs/LLM_AGENT_PROTOCOL_PLAN.md` for the full design.
+
 ## Guardrails
 
 - Preserve ported combat math exactly (formulas, dice, clamps, FEBA, casualty ordering,

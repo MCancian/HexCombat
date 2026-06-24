@@ -129,15 +129,198 @@ validation/golden tests. Every later phase copies that template.
 - Camera fit/zoom/pan; selection/hover/info-panel polish.
 
 ### Track D — Other phases (each: model + pure logic + validation + GdUnit4 + UI, mirroring source pytest)
-- **Amphibious offload / beaches** — `beaches.json`, `offload/`, `setup_prelanding_service`.
-  Natural next phase (lands ground forces). Mirrors offload tests.
-- **Red DOS supply** — `red_dos_consumption`/`extraction`; feeds `supply_effectiveness`.
-- **Anti-ship & mine warfare** — `antiship_*`, `mine_warfare_service`.
-- **Joint/air-missile fires (IJFS)** — largest: targeting, detection, ISR, strike
-  probability/resolution, air OOB.
-- **Front-line / cleanup** — `front_line_service`, `cleanup_hex_service`.
+
+All phases follow the per-phase template (see AGENTS.md): typed Resource model(s) in
+`scripts/model/`, pure RefCounted logic lib, `GameData`/`GameState` wiring, `data/*.json`
+content, `tools/validate_*.gd` headless check, and GdUnit4 tests mirroring the TIV pytests.
+
+Before writing any logic, read the TIV source listed below **and** its `tests/python/unit/`
+counterparts — those are the behavioral oracle. Preserve ported formulas, constants, and ordering
+exactly unless a rebalance is explicitly requested.
+
+---
+
+#### D1 — Amphibious offload / beaches  *(in progress — D1-A/B/C done; D1-D/E blocked on design Q)*
+
+**TIV oracle:**
+- `src/services/offload_calculator.py`, `src/services/offload/beach_throughput.py`,
+  `src/services/offload/_rates.py` (or `src/services/offload/offload_rates.py`)
+- `src/contracts/units.py` (TONS_PER_BN = 2200)
+- `defaults/offload_rates.json`, `defaults/beaches.json`
+- Tests: `test_offload_day1_redesign.py`, `test_offload_brigade_priority.py`,
+  `test_offload_brigade_spacing.py`, `test_offload_calculator_init.py`
+
+**Key behavioral facts (already ported in D1-A/B/C):**
+- Day 1 redesign: ALL BNs counted "sent"; maneuver BNs bypass throughput and land (brigade-slot
+  limited); support BNs wait on ships. `bns_waiting = bns_sent - bns_landed - lost_at_sea`
+- Beach slots = `floor(offload_rate / TONS_PER_BN)` per beach
+- TONS_PER_BN = 2200. Maneuver BN types: Combined Arms, Amphibious Infantry, Mechanized Infantry,
+  Air Assault Infantry, Special Forces
+- `OffloadCalculator.gd` + `OffloadRates.gd` + `BeachDef.gd` + `data/beaches.json` + 
+  `data/offload_rates.json` all green; 8 validators + 54 GdUnit4 tests passing
+
+**Remaining (D1-D/E blocked — see PLAN.md Open Questions):**
+- `scripts/model/ShipFleet.gd` — ship fleet Resource; `GameState.ship_reserve`
+- `GameState.resolve_offload_turn(dice)` — runs OffloadCalculator → `GameData.set_brigade_hex()`
+- `tools/validate_headless_offload.gd` — asserts ≥1 brigade lands in a headless offload turn
+- **BLOCKER**: must decide whether Red starts at sea or initial brigades stay on beaches
+
+**Acceptance:** headless offload turn drives ≥1 brigade to land on a beach hex; gate green.
+
+---
+
+#### D2 — Red DOS supply
+
+**TIV oracle:**
+- `src/services/red_dos_consumption.py` — `calculate_red_dos_consumption()`,
+  `is_mechanized_red_unit()`, `_compute_unit_tons(mechanized, moved, in_combat)`
+- `src/services/red_dos_extraction.py` — `active_red_battalion_records()` (DF → plain list)
+- `src/services/supply/` or `src/services/supply_repo.py` — supply pool / DOS tracker
+- Tests: `test_red_dos_consumption.py`, `test_dos_tracker.py`, `test_supply_state.py`,
+  `test_supply_repo.py`, `test_supply_offload_day.py`
+
+**Key behavioral facts:**
+- BASE_MECHANIZED_TONS = 300, BASE_NON_MECHANIZED_TONS = 150, TONS_PER_DOS = 150
+- Activity formula: `tons = base - (base//3 if not moved) - (base//3 if not in_combat)`
+- Mechanized whitelist: Combined Arms, Mechanized Infantry, Mechanized Artillery, Tank,
+  Amphibious Infantry battalions
+- Net delta vs. offload baseline (1 DOS per BN/day at 150 tons)
+- Supply pool: real number of DOS; game ends / degrades when DOS exhausted
+- `moved_brigade_ids` and `engaged_brigade_ids` come from the turn resolution already tracked
+  in `GameState` (`moved_this_turn`, `fought_this_turn`)
+
+**What to build (per-phase template):**
+- `scripts/model/SupplyState.gd` — typed Resource: current_dos_tons (float), history Array
+- `scripts/DosConsumption.gd` — pure RefCounted lib: `is_mechanized_bn(type)`,
+  `compute_unit_tons(mechanized, moved, in_combat)`, `calculate_consumption(units, moved_ids,
+  engaged_ids, day)` → summary dict
+- `GameState.supply_state` + `resolve_supply_turn()` — calls DosConsumption on all landed Red
+  BNs using moved/fought flags from the just-resolved turn; deducts from supply pool
+- `data/scenario_default.json` — add `red_dos_start` (initial DOS pool, e.g. 100)
+- `tools/validate_dos_consumption.gd` — headless: load scenario + land 4 brigades + resolve
+  supply → assert pool decremented correctly (mech vs. non-mech consumed)
+- `tests/dos_consumption_test.gd` — mirror `test_red_dos_consumption.py` cases (whitelist
+  classify, formula, activity delta, empty-unit edge case)
+
+**Acceptance:** supply pool decremented each turn by activity-aware consumption; `supply_effectiveness` modifier wired to combat (or zeroed pending D4); gate green.
+
+---
+
+#### D3 — Anti-ship & mine warfare
+
+**TIV oracle:**
+- `src/services/antiship_calculator.py` — top-level resolver; `AntishipResults` dataclass
+- `src/services/antiship_crossing.py` — `resolve_crossing_damage(crossing_result, rng)` —
+  damage % → ship losses per type
+- `src/services/antiship_firing_plan.py` — `build_firing_plan(systems, ships, targets)` —
+  assigns weapon systems to targets
+- `src/services/antiship_launch_attrition.py` — launcher attrition/dud rate
+- `src/services/antiship_inventory_service.py` — magazine/ammo tracking
+- `src/services/antiship_suppression_service.py` — suppression of anti-ship systems
+- `src/services/antiship/mine_warfare_service.py` — minefield lay/sweep/activation
+- `src/services/beach_minefield_support.py` — minefield integration with beach state
+- `defaults/` — ship types, weapon systems, mine densities
+- Tests: `test_antiship_calculator.py`, `test_antiship_crossing.py`,
+  `test_antiship_firing_plan.py`, `test_antiship_mine_warfare_service.py`,
+  `test_antiship_magazine_service.py`, `test_antiship_suppression.py`,
+  `test_antiship_inventory_service.py`
+
+**Key behavioral facts:**
+- Anti-ship systems fire at crossing ships; hit probability × ship type → damage
+- Launch attrition: some % of missiles fail at launch
+- Magazine: each anti-ship system has finite ammo; track expended count
+- Suppression: systems hit by IJFS are suppressed (reduced effectiveness) for N turns
+- Minefields: lay by day, sweep by Green navy, activate against ship crossings
+- Ship loss → BN casualty: ships carry BNs; sunk ship → BN `lost_at_sea` (ties into D1)
+- This is the most DB-state-heavy TIV phase; for HexCombat, encode state in `GameState`
+  resources (no SQLite); use `data/ships.json` + `data/antiship_systems.json`
+
+**What to build (per-phase template):**
+- `scripts/model/ShipState.gd`, `scripts/model/AntishipSystem.gd`,
+  `scripts/model/Minefield.gd` — typed Resources
+- `scripts/AntishipCalculator.gd` — pure lib: `build_firing_plan()`, `resolve_crossing()`,
+  `apply_magazine_expenditure()`, `resolve_minefields()`
+- `GameState.resolve_antiship_turn(dice)` — runs calculator, applies ship losses,
+  propagates BN `lost_at_sea` back to offload manifest
+- `tools/validate_antiship_data.gd` — asserts ship/weapon JSON keys present
+- `tests/antiship_calculator_test.gd` — mirror key TIV unit tests
+
+**Acceptance:** anti-ship turn resolves; ship losses propagate to BN count; mine state
+persists across turns; gate green.
+
+---
+
+#### D4 — Joint/air-missile fires (IJFS)  *(largest phase — scope carefully before coding)*
+
+**TIV oracle:**
+- `src/ijfs_standalone/` package — self-contained IJFS engine:
+  - `detection.py` — ISR source → detection probabilities per target category
+  - `targeting.py` — target priority / assignment
+  - `engagement.py` — fires allocation
+  - `strike_probability.py` — Pk per weapon/target pair
+  - `strike_resolution.py` — hit/miss per strike
+  - `firing_capacity.py` — daily fires budget per platform
+  - `category_groups.py` — target category taxonomy
+  - `ad_health.py` — air-defense health / suppression
+  - `isr_sources.py` — ISR platform registry
+  - `warmup_profiles.py` — multi-day capability ramp
+- `src/services/ijfs_*.py` — wrappers/writeback services
+- `src/services/ijfs_air_oob.py` — air OOB (platforms, capacity)
+- `defaults/` — weapon systems, target types, detection tables, firing capacity tables
+- Tests: `test_ijfs_standalone.py`, `test_ijfs_targets.py`, `test_ijfs_funnel_by_category.py`,
+  `test_ijfs_default_targets.py`, `test_ijfs_grouped_targets.py`,
+  `test_ijfs_timeline_and_profiles.py`, `test_ijfs_payload_summary_totals.py`
+
+**Key behavioral facts:**
+- ISR → detection → targeting → fires allocation → strike Pk → hit/miss resolution
+- Multi-day warmup: platform effectiveness ramps over days since deployment
+- Air-defense suppression degrades AD health; suppressed systems excluded from D3 firing
+- Fires budget is per-platform per-day; greedy allocation across target priority list
+- Theater CAS/CRBM (currently 0 in the BOOTS slice) feeds combat support pool
+
+**Scope first, then implement.** Read `ijfs_standalone/run_daily_ijfs.py` top-to-bottom before
+writing any GDScript. This phase has the most moving parts; expect to split into ≥3 sub-tasks.
+
+---
+
+#### D5 — Front-line / cleanup
+
+**TIV oracle:**
+- `src/services/front_line_service.py` — distribute Red maneuver BNs along a drawn polyline;
+  `find_hexes_for_polyline()`, `distribute_battalions_along_line()`,
+  `_interpolate_along_line()`, `_polyline_cumulative_lengths()`
+- `src/services/cleanup_hex_service.py` — `CleanupHexService.update_hex_ownership()`;
+  Owner normalization (red/green/contested/none ↔ DB values)
+- `src/services/cleanup_application_service.py` — orchestrates the Cleanup phase
+- `src/services/cleanup_calculator.py` — cleanup combat resolution (if any)
+- Tests: `test_front_line_service.py`, `test_cleanup_hex_service.py`,
+  `test_cleanup_casualty_lifecycle.py`, `test_cleanup_map_manipulation.py`
+
+**Key behavioral facts:**
+- Front-line phase: player draws a polyline on the map; the service distributes Red maneuver
+  BNs evenly along it (spacing = polyline_length / bn_count km); brigades move to assigned hexes
+- Polyline → hex: sample at `sample_interval_km = 2.0`; each sample point → `point_to_hex()`
+- In Godot: the polyline input replaces Flask's `POST /frontline`; player clicks to add points
+  on the HexMap then confirms; GameState distributes the BNs
+- Cleanup hex ownership: same `red/green/contested/last_owner` logic already in M5 (`HexOwner`
+  constants, `recompute_hex_ownership()`); `cleanup_hex_service` adds explicit player override
+- Cleanup calculator: apply residual combat/attrition; check for isolated units (no supply)
+
+**What to build (per-phase template):**
+- `scripts/FrontLineService.gd` — pure lib: `polyline_to_hex_sequence()`, `distribute_bns()`;
+  no scene deps; testable with scripted hex grids
+- `GameState.resolve_frontline_phase(polyline_coords, dice)` — calls FrontLineService, applies
+  BN moves via `GameData.set_brigade_hex()`
+- UI: `HexMap` polyline-draw mode (player clicks to add vertices; confirm button commits)
+- `tools/validate_frontline.gd` — headless: scripted polyline → assert correct hex sequence
+- `tests/frontline_service_test.gd` — mirror `test_front_line_service.py` cases
+
+**Acceptance:** player can draw a polyline, brigades redistribute; ownership updates; gate green.
+
+---
+
 - **Terrain (ArcGIS)** — per-hex terrain classification sourced via ArcGIS, feeding the combat
-  terrain modifier (TIV has no terrain data of its own).
+  terrain modifier (TIV has no terrain data of its own). Deferred; currently terrain modifier = 1.0.
 
 ### Track E — Modes & AI
 - **B2 intent/auto-resolve mode:** high-level orders; the engine auto-deploys and resolves fronts
