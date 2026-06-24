@@ -126,6 +126,14 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-24 — D1 scenario rework (user decision: full offload start):** Red starts at sea.
+  All 4 PLA amphibious brigades move from beach hex placements to `GameState.ship_reserve` in
+  `scenario_default.json`. Day 1 runs `resolve_offload_day(1, …)` → maneuver BNs land (4×4=16);
+  support BNs wait. Calibrated for 4 beaches × 2 slots = 8 slots → all 4 brigades land Day 1.
+  Smoke marker changes from 8 → 4 brigade markers at startup. Headless full-turn validator needs
+  a turn-0 offload pass before the scripted move/fight sequence. Existing Red-on-beach test
+  fixtures need updating after D1-D is committed.
+
 - **2026-06-24 — D1-C OffloadCalculator Day 1 behavior (Day 1 redesign, deliberate scope):**
   Ported the "Day 1 redesign" behavior from `test_offload_day1_redesign.py` (not the
   older `test_offload_brigade_priority.py` behavior which tested pre-redesign support-BN
@@ -386,23 +394,34 @@ brigade priority ordering, and the maneuver-first Day 1 landing rule.
       bypass holds at low throughput; locked-beach respected; brigades don't split beaches;
       Day 2 support lands up to throughput. Full gate green (8 validators + 54 GdUnit4 tests).
 
-- [ ] **D1-D** — Ship fleet model: `scripts/model/ShipFleet.gd` (typed Resource: ship_type,
-      ready, sent, offloading, returning, destroyed, carrying_capacity_bns); add a starter Red
-      fleet to `data/scenario_default.json` (enough ships to carry the 4 PLA brigades);
-      `GameState.ship_reserve` holds un-landed Red brigades.
+- [ ] **D1-D** — Ship fleet model + scenario rework:
+      - `scripts/model/ShipFleet.gd` typed Resource: `ship_type: String`, `ready: int`,
+        `offloading: int`, `returning: int`, `destroyed: int`, `carrying_capacity_bns: int`
+      - Rework `data/scenario_default.json`: remove the 4 Red brigades from beach hex placements;
+        add `red_ship_reserve` array (4 PLA amphibious brigades with full BN rosters at sea,
+        locked_beach per TIV beach assignments). Green defenders (4 brigades on inland hexes)
+        remain unchanged.
+      - `GameState.ship_reserve: Array` loaded from scenario; `GameData` no longer places Red
+        on-map at startup
+      - Update smoke test marker: "Rendered 4 brigade markers" (only Green on map at start)
+      - Fix any scenario_loader tests and movement fixtures that assumed Red on beach hexes
+      - pi must visually confirm: 4 Green markers on inland hexes, 0 Red, no errors
 
-- [ ] **D1-E** — GameState wiring: `resolve_offload_turn(dice)` runs `OffloadCalculator` on the
-      current ship reserve + active beaches → for each fully-landed brigade calls
-      `GameData.set_brigade_hex()` on the beach's hex. Hook into turn resolution order
-      (offload before move-then-fight). `tools/validate_headless_offload.gd` drives a
-      headless offload turn and asserts ≥1 brigade lands. Gate green.
+- [ ] **D1-E** — GameState offload wiring:
+      - `GameState.resolve_offload_turn(dice)`: runs `OffloadCalculator.resolve_offload_day(
+        current_turn, beach_capacity, ship_reserve, priority_order)` → for each brigade in
+        `manifest_landed`, calls `GameData.set_brigade_hex(brigade_id, beach_hex_id)` and
+        removes the brigade from `ship_reserve`; propagates `lost_at_sea` count
+      - Hook offload before move-then-fight in `resolve_turn()` turn order
+      - `tools/validate_headless_offload.gd`: headless Turn 1 offload asserts ≥1 brigade
+        lands on a beach hex AND appears in `GameData.brigades`; Turn 2 asserts support BNs
+        begin landing (throughput-limited)
+      - Update `validate_headless_turn.gd` to run offload first, then the existing
+        move/combat sequence (Red now enters map via offload, not pre-placement)
+      - pi must visually confirm Turn 1: 4 Green + ≥4 Red markers appear after offload resolves
 
-- [ ] **D1-F** — Gate: `tools/run_all_tests.ps1` updated (validate_beaches_data +
-      validate_offload_data + headless_offload + GdUnit4 offload_calculator_test). Full gate green.
-
-**Note on scenario rework (see Open Questions)**: D1-D/E are gated on resolving whether Red
-starts at sea or whether initial 4 brigades stay on beaches with the offload adding reinforcements.
-D1-A through D1-C are independent of that decision and can proceed first.
+- [ ] **D1-F** — Full gate green: all validators + GdUnit4 + smoke (4-marker startup +
+      8-marker post-Turn-1-offload) pass. Push the D1 milestone.
 
 ---
 
@@ -556,23 +575,31 @@ Red maneuver BNs redistribute along it. Cleanup phase normalizes ownership after
 _None blocking the slice — the design is settled. Future-phase questions (supply/organization
 interactions, fog of war, terrain via ArcGIS, theater fires) are tracked in `ROADMAP.md`._
 
-### D1 — Amphibious Offload open question (blocking D1-D/E)
+### D1 — Amphibious Offload design decision  *(RESOLVED 2026-06-24)*
 
-**Q: Initial placement vs. reinforcement-only offload**
+**Decision: Option 2 — Full offload start.**
 
-The current scenario places 4 Red brigades directly on beach hexes (Day 1, already landed).
-The TIV offload phase models how brigades get FROM ships ONTO beaches.
+Red starts with all 4 PLA amphibious brigades at sea (in `GameState.ship_reserve`); no Red units
+are pre-placed on beach hexes in the scenario. Turn 1 runs the offload phase: the Day 1 redesign
+behavior (already in `OffloadCalculator`) lands all maneuver BNs (4 brigades × 4 maneuver BNs =
+16 BNs) on Turn 1. Support BNs wait and offload on subsequent turns. The scenario is calibrated
+so all 4 brigades get beach slots on Day 1 (4 beaches × `floor(4400/2200)` = 2 slots each = 8
+total slots; 4 brigades fit easily).
 
-Two options:
-1. **Reinforcements-only**: Keep the 4 initial Red brigades on-beach. The offload phase delivers
-   *additional* Red reinforcement brigades from a ship reserve each turn. Scenario stays intact;
-   offload adds depth without reworking what works.
-2. **Full offload start**: Red starts with all brigades at sea (no on-beach units). Day 1 runs
-   the offload phase to land the initial assault brigades. Requires reworking
-   `scenario_default.json` and the starter scenario logic.
-
-**Why this is a genuine design question**: Option 1 is additive and lower-risk for existing tests;
-Option 2 is more faithful to TIV's flow but changes what the user sees when they press Play.
-Neither is answerable from the source repo (TIV always starts from a scripted Day 0).
-
-**Please decide** before D1-D/E begin. D1-A through D1-C are unblocked.
+**Implications for D1-D/E**:
+- `data/scenario_default.json`: remove Red brigades from their current beach hex placements;
+  replace with a `red_ship_reserve` block listing the 4 PLA brigades and their battalion rosters
+  at sea. Green defenders remain on their inland hexes unchanged.
+- `scripts/model/ShipFleet.gd`: ship_type, ready_count, offloading_count, returning_count,
+  destroyed_count, carrying_capacity_bns (enough capacity for the 4 brigades)
+- `GameState.ship_reserve`: Array of brigade dicts (brigade_id, locked_beach, bns) — the same
+  shape `OffloadCalculator.resolve_offload_day()` already expects
+- `GameState.resolve_offload_turn(dice)`: on Turn 1 runs `resolve_offload_day(1, …)`; landed
+  brigades get `GameData.set_brigade_hex()` on the beach hex; subsequent turns run day 2+
+- Smoke test marker will need updating from "Rendered 8 brigade markers" → "Rendered 4 brigade
+  markers" (Red starts at sea; only Green 4 are on map at startup)
+- `validate_headless_turn.gd` scripted move may need adjustment (Red has no unit on-map at
+  start; validate offload lands ≥1 brigade first, then the existing movement/combat scripted
+  sequence)
+- Existing tests that expect Red on beach hexes (scenario_loader_test, movement tests) will need
+  fixture updates — pi should catch these when running the gate after D1-D
