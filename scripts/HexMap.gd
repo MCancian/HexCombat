@@ -20,6 +20,8 @@ signal hex_clicked(hex_id: String)
 func _ready() -> void:
 	projection = MapProjection.new(get_viewport_rect().size)
 	symbol_library = SymbolLibrary.new()
+	EventBus.hex_selected.connect(_on_hex_selected)
+	EventBus.selection_cleared.connect(_on_selection_cleared)
 	spawn_hex_cells()
 	render_brigade_markers()
 
@@ -179,6 +181,15 @@ func _input(event: InputEvent) -> void:
 		if hex_id != "":
 			hex_clicked.emit(hex_id)
 			get_tree().root.set_input_as_handled()
+
+
+func _on_hex_selected(hex_id: String) -> void:
+	clear_highlights()
+	highlight_hexes([hex_id])
+
+
+func _on_selection_cleared() -> void:
+	clear_highlights()
 
 
 func get_hex_by_point(point: Vector2) -> String:

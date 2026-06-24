@@ -14,6 +14,7 @@ run/main_scene="res://scenes/Main.tscn"
 [autoload]
 
 GameData="*res://scripts/GameData.gd"
+EventBus="*res://scripts/EventBus.gd"
 
 [editor_plugins]
 

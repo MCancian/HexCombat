@@ -161,3 +161,29 @@ in-scope suggestions are applied immediately; the rest are deferred with a one-l
   expected layout records. — _Deferred: good agent-observability; the new headless "Rendered 8
   brigade markers" guard + the scenario validators already cover placement/count. Revisit when
   marker layout gains complexity (stacking/counts at M5)._
+
+---
+
+## 2026-06-23 — M2: selection + event bus + info panel (pi-implemented; M2 complete)
+
+**(a) What shipped** (orchestrator-verified: full gate green, 8 GdUnit4 tests)
+- `scripts/EventBus.gd` (`class_name EventBusType`, autoload `EventBus` after GameData): signals
+  `hex_selected`, `brigade_selected`, `selection_cleared`. No logic — pure bus.
+- `GameController._on_hex_clicked`: emits `hex_selected(hex_id)` always, `brigade_selected(first)`
+  only when the hex has a brigade; tracks `selected_hex`/`selected_brigade`.
+- `HexMap` listens to `EventBus.hex_selected` and highlights the hex — no reach-through to UI/controller.
+- `InfoPanel` (PanelContainer + RichTextLabel in Main.tscn UI) listens to the bus and shows hex
+  (owner/FEBA/brigades present) + brigade (id/name/team/nato_type/battalions/composition); fail-loud
+  on unknown brigade_id.
+- `tests/selection_test.gd`: loads Main.tscn via `scene_runner`, drives the click handler, asserts
+  `EventBus` emits the right signals/args + controller state (placed hex → both signals; empty hex →
+  hex only). Headless input doesn't transport reliably, so the test exercises the handler path
+  directly (still the full select→signal→state chain). pi confirmed the windowed map+markers render
+  but could not do reliable manual GUI clicks in its harness.
+
+**(b) pi's machine-readability suggestions**
+- Typed `SelectionState` autoload (selected_hex_id / selected_brigade_id); typed `HexState` Resource
+  replacing the `hex_states` Dictionary; a public `select_hex(hex_id)` command API instead of tests
+  calling `_on_hex_clicked`; InfoPanel rendering from a typed view-model. — _Deferred: all sensible.
+  The typed `HexState` Resource is worth doing when M5 combat wiring starts mutating hex_states
+  (owner/FEBA); the `select_hex()` command + view-model are UI polish (Track C)._

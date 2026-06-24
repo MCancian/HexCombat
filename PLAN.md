@@ -60,7 +60,10 @@ Scoped 2026-06-23 (sources located; see Decisions). Two independent sub-units; d
 ## Upcoming (detail when reached — see ROADMAP for acceptance criteria)
 
 - [ ] M1 — Unit placement + rendering (`data/scenario_default.json`, brigade markers)
-- [ ] M2 — Selection + event bus + info panel
+- [x] M2 — Selection + event bus + info panel ✓ *(complete 2026-06-23)* — `EventBus` autoload
+      (`hex_selected`/`brigade_selected`/`selection_cleared`); `GameController` emits on click;
+      `HexMap` highlights via the bus; `InfoPanel` shows hex+brigade details; `selection_test.gd`
+      covers select→signal. Gate: 5 validators + 8 GdUnit4 tests.
 - [ ] M3 — Turn/phase state machine (`GameState` autoload)
 - [ ] M4 — Movement (reachable highlight, allowance)
 - [ ] M5 — Combat wiring (apply casualties, FEBA, ownership)
