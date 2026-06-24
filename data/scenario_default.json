@@ -2,6 +2,7 @@
   "name": "BOOTS Starter - Northern Beachhead",
   "description": "4 PLA amphibious brigades start at sea in the ship reserve for full offload. 4 ROC brigades defend the adjacent inland hexes. red_ship_reserve beach_hex + offset_bearing preserve each PLA brigade's landing target and seaward render offset for offload landing.",
   "turn_length_days": 1,
+  "red_dos_start": 100,
   "stacking_soft_cap": 6,
   "red_ship_reserve": [
     {

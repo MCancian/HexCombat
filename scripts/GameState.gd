@@ -4,6 +4,7 @@ class_name GameStateType
 const MoveOrderResource = preload("res://scripts/model/MoveOrder.gd")
 const CommitOrderResource = preload("res://scripts/model/CommitOrder.gd")
 const ShipFleetResource = preload("res://scripts/model/ShipFleet.gd")
+const SupplyStateResource = preload("res://scripts/model/SupplyState.gd")
 const FEBA_RETREAT_THRESHOLD_KM := 10.0
 
 enum Phase { PLANNING, RESOLUTION, END }
@@ -15,6 +16,7 @@ var orders: Dictionary = {}  # Brigade.Team -> Array[MoveOrder]
 var commitments: Dictionary = {}  # Brigade.Team -> Array[CommitOrder]
 var ship_reserve: Array = []  # OffloadCalculator-ready: [{brigade_id, locked_beach, beach_hex, offset_bearing, bns:[{id,type}]}]
 var ship_fleet: Array[ShipFleet] = []  # forward-compat fleet inventory
+var supply_state: SupplyState
 var last_contested_hexes: Array[String] = []
 var last_combat_summaries: Array = []
 
@@ -40,6 +42,7 @@ func reset_to_scenario() -> void:
 	}
 	_rebuild_ship_reserve()
 	_rebuild_ship_fleet()
+	_rebuild_supply_state()
 	last_contested_hexes.clear()
 	last_combat_summaries.clear()
 	EventBus.phase_changed.emit(phase)
@@ -325,6 +328,12 @@ func _rebuild_ship_reserve() -> void:
 			"offset_bearing": float(reserve_entry["offset_bearing"]),
 			"bns": bns
 		})
+
+
+func _rebuild_supply_state() -> void:
+	supply_state = SupplyStateResource.new()
+	supply_state.current_dos_tons = float(GameData.red_dos_start) * DosConsumption.TONS_PER_DOS
+	supply_state.day_history = []
 
 
 func _rebuild_ship_fleet() -> void:

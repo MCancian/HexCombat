@@ -12,6 +12,7 @@ const BEACHES_PATH := "res://data/beaches.json"
 
 var scenario_name: String = ""
 var turn_length_days: int = 0
+var red_dos_start: int = 0
 var stacking_soft_cap: int = 0
 
 var hexes: Array[Hex] = []
@@ -161,6 +162,9 @@ func load_scenario(path: String) -> void:
 
 	scenario_name = String(scenario.get("name", ""))
 	turn_length_days = int(scenario.get("turn_length_days", 0))
+	red_dos_start = int(scenario.get("red_dos_start", 0))
+	if red_dos_start <= 0:
+		push_warning("Scenario red_dos_start is <= 0; Red DOS supply pool will start empty")
 	stacking_soft_cap = int(scenario.get("stacking_soft_cap", 0))
 	_parse_red_ship_reserve(scenario.get("red_ship_reserve", []))
 
