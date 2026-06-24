@@ -91,7 +91,9 @@ Scoped 2026-06-23 (sources located; see Decisions). Two independent sub-units; d
         `eligible_commit_brigades` / `_combat_contributors_for` (in-hex + committed adjacent, deduped;
         combat gated on presence-contested hexes); `CompositionPanel` UI + `commit_brigade`.
         `composition_test.gd` (33 tests total). Gate green.
-- [ ] M6 — Headless turn check (AI-readiness)
+- [x] M6 — Headless turn check (AI-readiness) ✓ *(complete 2026-06-24)* — `tools/validate_headless_turn.gd`
+      drives a full WeGo turn (move → resolve → combat → reset) through the action layer with NO view,
+      asserts the end state + two-run determinism (seed 20260624 → casualties=2, feba=0.76). In the gate.
 - [ ] M7 — Slice completion + Definition of done
 
 ## Definition of done (vertical slice)

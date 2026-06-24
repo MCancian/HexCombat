@@ -346,3 +346,26 @@ artillery into a contested hex) remains to complete M5's full designed scope, th
   (headless AI-readiness) — fold into M6; DTOs are incremental._
 
 **M5 COMPLETE** (M5a resolution + M5b retreat/colors + M5c composition).
+
+---
+
+## 2026-06-24 — M6: headless WeGo turn check / AI-readiness (pi-implemented; M6 complete)
+
+**(a) What shipped** (orchestrator-verified: direct run exit 0; full gate green)
+- `tools/validate_headless_turn.gd` (SceneTree, auto-run by the gate): drives a full WeGo turn
+  through the action layer with **no view nodes** — explicit `GameData.load_all()` +
+  `GameState.reset_to_scenario()` (autoload `_ready` runs after a `-s` script's `_initialize`), a Red
+  tactical move onto the adjacent Green hex via `add_move_order`, an optional Green commitment via
+  `eligible_commit_brigades`/`add_commit_order`, `resolve_turn(SeededDice(20260624))`, then asserts
+  movement-before-fight, contested detection, fought flags, a measurable combat effect (FEBA or
+  battalion losses), valid ownership, `begin_next_turn` resets, and **two-run determinism** (identical
+  positions/battalions/feba/owner/contested). Result: casualties=2, feba=0.76, deterministic.
+  (The starter scenario has no Green brigade adjacent to that hex, so the commit path — already
+  unit-tested in M5c — wasn't exercised here; the move+combat+determinism path is.)
+
+**(b) pi's machine-readability suggestions**
+- A `GameState.play_turn(red_orders, green_orders, dice) -> TurnResult` façade for AI/headless
+  callers; typed `TurnResult`/`CombatSummary` Resources; `GameData.snapshot_state()` for exact
+  golden/AI comparison; non-UI phase predicates (`is_planning_phase()`). — _Deferred to the post-slice
+  AI track (Track E): the `play_turn` façade + `snapshot_state` are exactly what AI-vs-AI / B2 will
+  want, but they're beyond the slice DoD; the action layer already supports full headless play._
