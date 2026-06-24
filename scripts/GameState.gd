@@ -117,6 +117,7 @@ func resolve_turn(dice: Dice = null) -> void:
 		var typed_summary: Dictionary = summary
 		typed_summary["owner_after"] = String(GameData.hex_states[String(typed_summary["hex_id"])]["owner"])
 	last_combat_summaries = combat_summaries.duplicate(true)
+	resolve_supply_turn()
 
 	phase = Phase.END
 	EventBus.phase_changed.emit(phase)
@@ -297,6 +298,50 @@ func _empty_offload_manifest() -> Dictionary:
 		"manifest_deferred": [],
 		"landed_brigade_ids": []
 	}
+
+
+func resolve_supply_turn() -> Dictionary:
+	assert(supply_state != null, "resolve_supply_turn requires supply_state")
+	var units := _active_red_battalion_units()
+	var moved_ids: Array[String] = []
+	var engaged_ids: Array[String] = []
+	for brigade_value in GameData.brigades.values():
+		var brigade: Brigade = brigade_value
+		if brigade.team != Brigade.Team.RED or brigade.destroyed or brigade.hex_id.is_empty():
+			continue
+		if brigade.moved_this_turn:
+			moved_ids.append(brigade.id)
+		if brigade.fought_this_turn:
+			engaged_ids.append(brigade.id)
+
+	var summary := DosConsumption.calculate_consumption(units, moved_ids, engaged_ids, turn_number)
+	var pool_before := supply_state.current_dos_tons
+	var consumed := float(summary["red_dos_consumed_tons"])
+	supply_state.current_dos_tons = maxf(0.0, pool_before - consumed)
+	summary["applied"] = true
+	summary["pool_before"] = pool_before
+	summary["pool_after"] = supply_state.current_dos_tons
+	# Combat-effectiveness modifier from supply exhaustion is deferred to D4 IJFS.
+	supply_state.day_history.append(summary)
+	EventBus.supply_updated.emit(summary)
+	return summary
+
+
+func _active_red_battalion_units() -> Array:
+	var units: Array = []
+	for brigade_value in GameData.brigades.values():
+		var brigade: Brigade = brigade_value
+		if brigade.team != Brigade.Team.RED or brigade.destroyed or brigade.hex_id.is_empty():
+			continue
+		for battalion_value in brigade.composition:
+			var battalion: Battalion = battalion_value
+			for _qty_index in range(battalion.qty):
+				units.append({
+					"brigade_id": brigade.id,
+					"type": battalion.type,
+					"brigade_type": brigade.nato_type,
+				})
+	return units
 
 
 func _rebuild_ship_reserve() -> void:

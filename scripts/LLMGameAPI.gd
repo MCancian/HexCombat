@@ -29,6 +29,7 @@ static func observation(perspective_team: String = "") -> Dictionary:
 		"brigades": _brigade_observations(),
 		"occupied_hexes": _occupied_hex_observations(),
 		"ship_reserve": _ship_reserve_observations(),
+		"supply_state": _supply_state_observation(),
 		"legal_moves": _legal_move_observations(perspective_team),
 		"legal_commits": _legal_commit_observations(perspective_team),
 		"pending_orders": _pending_orders(),
@@ -216,6 +217,15 @@ static func _ship_reserve_observations() -> Array:
 			"bns_remaining": (reserve_entry["bns"] as Array).size()
 		})
 	return result
+
+
+static func _supply_state_observation() -> Dictionary:
+	var current_dos_tons: float = _game_state().supply_state.current_dos_tons
+	return {
+		"current_dos_tons": current_dos_tons,
+		"current_dos_equivalent": current_dos_tons / float(DosConsumption.TONS_PER_DOS),
+		"day_count": _game_state().supply_state.day_history.size()
+	}
 
 
 static func _legal_move_observations(perspective_team: String) -> Dictionary:

@@ -21,6 +21,7 @@ const REQUIRED_OBSERVATION_KEYS := [
 	"brigades",
 	"occupied_hexes",
 	"ship_reserve",
+	"supply_state",
 	"legal_moves",
 	"legal_commits",
 	"pending_orders",

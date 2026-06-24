@@ -200,6 +200,11 @@
 			"locked_beach": 4
 		}
 	],
+	"supply_state": {
+		"current_dos_equivalent": 100.0,
+		"current_dos_tons": 15000.0,
+		"day_count": 0
+	},
 	"turn": 1,
 	"turn_length_days": 1
 }
