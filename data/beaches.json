@@ -1,340 +1,122 @@
 {
-  "description": "Default beach definitions with TO mapping and advance vectors Offload_Rate in short tons/day.",
-  "beaches": {
-    "1": {
-      "Target_Selected": false,
-      "Floating_Piers": 0,
-      "Jackup_Barge": 0,
-      "Offload_Rate": 4400,
-      "Capacity_Battalions": 2,
-      "TO": 3,
-      "Category": "Exercise Site",
-      "Name_En": "New Taipei Bali",
-      "Name_Zh": "\u65b0\u5317\u516b\u91cc",
-      "Lat": 25.1671,
-      "Lng": 121.4086,
-      "Advance_Direction": 135,
-      "Description": "New Taipei Bali (Exercise Site)",
-      "Minefield": {
-        "Enabled": true,
-        "Length_Meters": 1000,
-        "Width_Meters": 500,
-        "Num_Mines": 100,
-        "Danger_Radius_Meters": 50,
-        "Entry_Side": "seaward_width_edge",
-        "Entry_Point_Fraction": 0.5,
-        "Path_Incident_Angle_Deg": 90,
-        "Mines_Per_Sweeper_Per_Day": 1,
-        "Default_Lane_Width_Meters": 100
-      }
+  "description": "Beach landing sites ported from TaiwanInvasionViewer defaults/beaches.json. offload_rate in short tons/day. Minefield data deferred to anti-ship phase.",
+  "beaches": [
+    {
+      "id": 1,
+      "name_en": "New Taipei Bali",
+      "category": "Exercise Site",
+      "to_number": 3,
+      "offload_rate": 4400,
+      "capacity_battalions": 2,
+      "floating_piers": 0,
+      "jackup_barge": 0,
+      "advance_direction": 135,
+      "lat": 25.1671,
+      "lng": 121.4086
     },
-    "2": {
-      "Target_Selected": false,
-      "Floating_Piers": 0,
-      "Jackup_Barge": 0,
-      "Offload_Rate": 8800,
-      "Capacity_Battalions": 4,
-      "TO": 3,
-      "Category": "Main Landing Site",
-      "Name_En": "Linkou Baodoucuo",
-      "Name_Zh": "\u6797\u53e3\u5bf6\u6597\u539d",
-      "Lat": 25.1184,
-      "Lng": 121.2887,
-      "Advance_Direction": 180,
-      "Description": "Linkou Baodoucuo (Main Landing Site)",
-      "Minefield": {
-        "Enabled": true,
-        "Length_Meters": 1000,
-        "Width_Meters": 500,
-        "Num_Mines": 100,
-        "Danger_Radius_Meters": 50,
-        "Entry_Side": "seaward_width_edge",
-        "Entry_Point_Fraction": 0.5,
-        "Path_Incident_Angle_Deg": 90,
-        "Mines_Per_Sweeper_Per_Day": 1,
-        "Default_Lane_Width_Meters": 100
-      }
+    {
+      "id": 2,
+      "name_en": "Linkou Baodoucuo",
+      "category": "Main Landing Site",
+      "to_number": 3,
+      "offload_rate": 8800,
+      "capacity_battalions": 4,
+      "floating_piers": 0,
+      "jackup_barge": 0,
+      "advance_direction": 180,
+      "lat": 25.1184,
+      "lng": 121.2887
     },
-    "3": {
-      "Target_Selected": false,
-      "Floating_Piers": 0,
-      "Jackup_Barge": 0,
-      "Offload_Rate": 4400,
-      "Capacity_Battalions": 2,
-      "TO": 3,
-      "Category": "Exercise Site",
-      "Name_En": "Taoyuan Zhuwei",
-      "Name_Zh": "\u6843\u5712\u7af9\u570d",
-      "Lat": 25.1149,
-      "Lng": 121.2372,
-      "Advance_Direction": 180,
-      "Description": "Taoyuan Zhuwei (Exercise Site)",
-      "Minefield": {
-        "Enabled": true,
-        "Length_Meters": 1000,
-        "Width_Meters": 500,
-        "Num_Mines": 100,
-        "Danger_Radius_Meters": 50,
-        "Entry_Side": "seaward_width_edge",
-        "Entry_Point_Fraction": 0.5,
-        "Path_Incident_Angle_Deg": 90,
-        "Mines_Per_Sweeper_Per_Day": 1,
-        "Default_Lane_Width_Meters": 100
-      }
+    {
+      "id": 3,
+      "name_en": "Taoyuan Zhuwei",
+      "category": "Exercise Site",
+      "to_number": 3,
+      "offload_rate": 4400,
+      "capacity_battalions": 2,
+      "floating_piers": 0,
+      "jackup_barge": 0,
+      "advance_direction": 180,
+      "lat": 25.1149,
+      "lng": 121.2372
     },
-    "4": {
-      "Target_Selected": false,
-      "Floating_Piers": 0,
-      "Jackup_Barge": 0,
-      "Offload_Rate": 8800,
-      "Capacity_Battalions": 4,
-      "TO": 3,
-      "Category": "Main Landing Site",
-      "Name_En": "Taoyuan Haihu",
-      "Name_Zh": "\u6843\u5712\u6d77\u6e56",
-      "Lat": 25.061,
-      "Lng": 121.0997,
-      "Advance_Direction": 90,
-      "Description": "Taoyuan Haihu (Main Landing Site)",
-      "Minefield": {
-        "Enabled": true,
-        "Length_Meters": 1000,
-        "Width_Meters": 500,
-        "Num_Mines": 100,
-        "Danger_Radius_Meters": 50,
-        "Entry_Side": "seaward_width_edge",
-        "Entry_Point_Fraction": 0.5,
-        "Path_Incident_Angle_Deg": 90,
-        "Mines_Per_Sweeper_Per_Day": 1,
-        "Default_Lane_Width_Meters": 100
-      }
+    {
+      "id": 4,
+      "name_en": "Taoyuan Haihu",
+      "category": "Main Landing Site",
+      "to_number": 3,
+      "offload_rate": 8800,
+      "capacity_battalions": 4,
+      "floating_piers": 0,
+      "jackup_barge": 0,
+      "advance_direction": 90,
+      "lat": 25.061,
+      "lng": 121.0997
     },
-    "5": {
-      "Target_Selected": false,
-      "Floating_Piers": 0,
-      "Jackup_Barge": 0,
-      "Offload_Rate": 8800,
-      "Capacity_Battalions": 4,
-      "TO": 5,
-      "Category": "Main Landing Site",
-      "Name_En": "Taichung Jianan",
-      "Name_Zh": "\u53f0\u4e2d\u7532\u5357",
-      "Lat": 24.3581,
-      "Lng": 120.5706,
-      "Advance_Direction": 90,
-      "Description": "Taichung Jianan (Main Landing Site)",
-      "Minefield": {
-        "Enabled": true,
-        "Length_Meters": 1000,
-        "Width_Meters": 500,
-        "Num_Mines": 100,
-        "Danger_Radius_Meters": 50,
-        "Entry_Side": "seaward_width_edge",
-        "Entry_Point_Fraction": 0.5,
-        "Path_Incident_Angle_Deg": 90,
-        "Mines_Per_Sweeper_Per_Day": 1,
-        "Default_Lane_Width_Meters": 100
-      }
+    {
+      "id": 5,
+      "name_en": "Taichung Jianan",
+      "category": "Main Landing Site",
+      "to_number": 5,
+      "offload_rate": 8800,
+      "capacity_battalions": 4,
+      "floating_piers": 0,
+      "jackup_barge": 0,
+      "advance_direction": 90,
+      "lat": 24.3581,
+      "lng": 120.5706
     },
-    "6": {
-      "Target_Selected": false,
-      "Floating_Piers": 0,
-      "Jackup_Barge": 0,
-      "Offload_Rate": 8800,
-      "Capacity_Battalions": 4,
-      "TO": 4,
-      "Category": "Main Landing Site",
-      "Name_En": "Tainan Xishu",
-      "Name_Zh": "\u53f0\u5357\u559c\u6a39",
-      "Lat": 22.9535,
-      "Lng": 120.1688,
-      "Advance_Direction": 45,
-      "Description": "Tainan Xishu (Main Landing Site)",
-      "Minefield": {
-        "Enabled": true,
-        "Length_Meters": 1000,
-        "Width_Meters": 500,
-        "Num_Mines": 100,
-        "Danger_Radius_Meters": 50,
-        "Entry_Side": "seaward_width_edge",
-        "Entry_Point_Fraction": 0.5,
-        "Path_Incident_Angle_Deg": 90,
-        "Mines_Per_Sweeper_Per_Day": 1,
-        "Default_Lane_Width_Meters": 100
-      }
+    {
+      "id": 6,
+      "name_en": "Tainan Xishu",
+      "category": "Main Landing Site",
+      "to_number": 4,
+      "offload_rate": 8800,
+      "capacity_battalions": 4,
+      "floating_piers": 0,
+      "jackup_barge": 0,
+      "advance_direction": 45,
+      "lat": 22.9535,
+      "lng": 120.1688
     },
-    "7": {
-      "Target_Selected": false,
-      "Floating_Piers": 0,
-      "Jackup_Barge": 0,
-      "Offload_Rate": 4400,
-      "Capacity_Battalions": 2,
-      "TO": 4,
-      "Category": "Exercise Site",
-      "Name_En": "Pingtung Jialutang",
-      "Name_Zh": "\u5c4f\u6771\u52a0\u797f\u5802",
-      "Lat": 22.357,
-      "Lng": 120.597,
-      "Advance_Direction": 0,
-      "Description": "Pingtung Jialutang (Exercise Site)",
-      "Minefield": {
-        "Enabled": true,
-        "Length_Meters": 1000,
-        "Width_Meters": 500,
-        "Num_Mines": 100,
-        "Danger_Radius_Meters": 50,
-        "Entry_Side": "seaward_width_edge",
-        "Entry_Point_Fraction": 0.5,
-        "Path_Incident_Angle_Deg": 90,
-        "Mines_Per_Sweeper_Per_Day": 1,
-        "Default_Lane_Width_Meters": 100
-      }
+    {
+      "id": 7,
+      "name_en": "Pingtung Jialutang",
+      "category": "Exercise Site",
+      "to_number": 4,
+      "offload_rate": 4400,
+      "capacity_battalions": 2,
+      "floating_piers": 0,
+      "jackup_barge": 0,
+      "advance_direction": 0,
+      "lat": 22.357,
+      "lng": 120.597
     },
-    "8": {
-      "Target_Selected": false,
-      "Floating_Piers": 0,
-      "Jackup_Barge": 0,
-      "Offload_Rate": 4400,
-      "Capacity_Battalions": 2,
-      "TO": 2,
-      "Category": "Exercise Site",
-      "Name_En": "Taitung Zhiben",
-      "Name_Zh": "\u53f0\u6771\u77e5\u672c",
-      "Lat": 22.6778,
-      "Lng": 121.0547,
-      "Advance_Direction": 315,
-      "Description": "Taitung Zhiben (Exercise Site)",
-      "Minefield": {
-        "Enabled": true,
-        "Length_Meters": 1000,
-        "Width_Meters": 500,
-        "Num_Mines": 100,
-        "Danger_Radius_Meters": 50,
-        "Entry_Side": "seaward_width_edge",
-        "Entry_Point_Fraction": 0.5,
-        "Path_Incident_Angle_Deg": 90,
-        "Mines_Per_Sweeper_Per_Day": 1,
-        "Default_Lane_Width_Meters": 100
-      }
+    {
+      "id": 8,
+      "name_en": "Taitung Zhiben",
+      "category": "Exercise Site",
+      "to_number": 2,
+      "offload_rate": 4400,
+      "capacity_battalions": 2,
+      "floating_piers": 0,
+      "jackup_barge": 0,
+      "advance_direction": 315,
+      "lat": 22.6778,
+      "lng": 121.0547
     },
-    "9": {
-      "Target_Selected": false,
-      "Floating_Piers": 0,
-      "Jackup_Barge": 0,
-      "Offload_Rate": 4400,
-      "Capacity_Battalions": 2,
-      "TO": 2,
-      "Category": "Exercise Site",
-      "Name_En": "Hualien Beipu",
-      "Name_Zh": "\u82b1\u84ee\u5317\u57d4",
-      "Lat": 24.032,
-      "Lng": 121.625,
-      "Advance_Direction": 270,
-      "Description": "Hualien Beipu (Exercise Site)",
-      "Minefield": {
-        "Enabled": true,
-        "Length_Meters": 1000,
-        "Width_Meters": 500,
-        "Num_Mines": 100,
-        "Danger_Radius_Meters": 50,
-        "Entry_Side": "seaward_width_edge",
-        "Entry_Point_Fraction": 0.5,
-        "Path_Incident_Angle_Deg": 90,
-        "Mines_Per_Sweeper_Per_Day": 1,
-        "Default_Lane_Width_Meters": 100
-      }
+    {
+      "id": 9,
+      "name_en": "Hualien Beipu",
+      "category": "Exercise Site",
+      "to_number": 2,
+      "offload_rate": 4400,
+      "capacity_battalions": 2,
+      "floating_piers": 0,
+      "jackup_barge": 0,
+      "advance_direction": 270,
+      "lat": 24.032,
+      "lng": 121.625
     }
-  },
-  "total_force_composition": {
-    "Light": {
-      "Total_Count": 12,
-      "Surviving_Count": 12,
-      "Destroyed_Count": 0
-    },
-    "Medium": {
-      "Total_Count": 8,
-      "Surviving_Count": 8,
-      "Destroyed_Count": 0
-    },
-    "Heavy": {
-      "Total_Count": 4,
-      "Surviving_Count": 4,
-      "Destroyed_Count": 0
-    },
-    "Amphib": {
-      "Total_Count": 8,
-      "Surviving_Count": 8,
-      "Destroyed_Count": 0
-    },
-    "SOF": {
-      "Total_Count": 4,
-      "Surviving_Count": 4,
-      "Destroyed_Count": 0
-    },
-    "Towed_Arty": {
-      "Total_Count": 8,
-      "Surviving_Count": 8,
-      "Destroyed_Count": 0
-    },
-    "SP_Arty": {
-      "Total_Count": 6,
-      "Surviving_Count": 6,
-      "Destroyed_Count": 0
-    },
-    "C2": {
-      "Total_Count": 5,
-      "Surviving_Count": 5,
-      "Destroyed_Count": 0
-    },
-    "Recon": {
-      "Total_Count": 8,
-      "Surviving_Count": 8,
-      "Destroyed_Count": 0
-    },
-    "SHORAD": {
-      "Total_Count": 4,
-      "Surviving_Count": 4,
-      "Destroyed_Count": 0
-    },
-    "Cargo_Handling": {
-      "Total_Count": 5,
-      "Surviving_Count": 5,
-      "Destroyed_Count": 0
-    },
-    "Engineer": {
-      "Total_Count": 5,
-      "Surviving_Count": 5,
-      "Destroyed_Count": 0
-    },
-    "Airborne": {
-      "Total_Count": 3,
-      "Surviving_Count": 3,
-      "Destroyed_Count": 0
-    },
-    "Air_Assault": {
-      "Total_Count": 5,
-      "Surviving_Count": 5,
-      "Destroyed_Count": 0
-    },
-    "DOS": {
-      "Total_Count": 5,
-      "Surviving_Count": 5,
-      "Destroyed_Count": 0
-    },
-    "Supply_Units": {
-      "Total_Count": 3,
-      "Surviving_Count": 3,
-      "Destroyed_Count": 0
-    },
-    "CSS": {
-      "Total_Count": 4,
-      "Surviving_Count": 4,
-      "Destroyed_Count": 0
-    },
-    "Service": {
-      "Total_Count": 3,
-      "Surviving_Count": 3,
-      "Destroyed_Count": 0
-    }
-  }
+  ]
 }

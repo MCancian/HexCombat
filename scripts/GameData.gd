@@ -4,9 +4,11 @@ class_name GameDataStore
 const HexResource = preload("res://scripts/model/Hex.gd")
 const BrigadeResource = preload("res://scripts/model/Brigade.gd")
 const BattalionResource = preload("res://scripts/model/Battalion.gd")
+const BeachDefResource = preload("res://scripts/model/BeachDef.gd")
 
 const OOB_PATHS := ["res://data/pla_ground_forces.json", "res://data/roc_ground_forces.json"]
 const DEFAULT_SCENARIO_PATH := "res://data/scenario_default.json"
+const BEACHES_PATH := "res://data/beaches.json"
 
 var scenario_name: String = ""
 var turn_length_days: int = 0
@@ -21,6 +23,8 @@ var hex_states: Dictionary = {}  # hex_id -> {owner, feba_km}
 var brigades: Dictionary = {}  # brigade_id -> Brigade
 var brigades_by_hex: Dictionary = {}  # hex_id -> Array[String]
 
+var beaches: Dictionary = {}  # beach_id (int) -> BeachDef
+
 
 func _ready() -> void:
 	load_all()
@@ -31,7 +35,8 @@ func load_all() -> void:
 	build_neighbor_lookup()
 	load_brigades()
 	load_scenario(DEFAULT_SCENARIO_PATH)
-	print_debug("GameData ready: %d hexes, %d brigades" % [hexes.size(), brigades.size()])
+	load_beaches()
+	print_debug("GameData ready: %d hexes, %d brigades, %d beaches" % [hexes.size(), brigades.size(), beaches.size()])
 
 
 func load_hex_grid() -> void:
@@ -268,6 +273,40 @@ func get_unit_count_in_hex(hex_id: String, team: Brigade.Team = Brigade.Team.RED
 		if brigade != null and brigade.team == team:
 			total += brigade.get_battalion_count()
 	return total
+
+
+func load_beaches() -> void:
+	beaches.clear()
+	var json = _read_json(BEACHES_PATH)
+	if json == null or not (json is Dictionary):
+		push_error("beaches.json format not recognized: expected Dictionary")
+		return
+	var beaches_data = json.get("beaches", null)
+	if not (beaches_data is Array):
+		push_error("beaches.json missing beaches array")
+		return
+	for beach_data in beaches_data:
+		var beach: BeachDef = BeachDefResource.new()
+		beach.id = int(beach_data.get("id", 0))
+		beach.name_en = String(beach_data.get("name_en", ""))
+		beach.category = String(beach_data.get("category", ""))
+		beach.to_number = int(beach_data.get("to_number", 0))
+		beach.offload_rate = float(beach_data.get("offload_rate", 0.0))
+		beach.capacity_battalions = int(beach_data.get("capacity_battalions", 0))
+		beach.floating_piers = int(beach_data.get("floating_piers", 0))
+		beach.jackup_barge = int(beach_data.get("jackup_barge", 0))
+		beach.advance_direction = float(beach_data.get("advance_direction", 0.0))
+		beach.lat = float(beach_data.get("lat", 0.0))
+		beach.lng = float(beach_data.get("lng", 0.0))
+		if beach.id == 0:
+			push_error("Beach entry missing id field")
+			continue
+		beaches[beach.id] = beach
+	print_debug("Loaded %d beaches" % beaches.size())
+
+
+func get_beach(beach_id: int) -> BeachDef:
+	return beaches.get(beach_id, null)
 
 
 func _add_brigade_to_hex(brigade_id: String, hex_id: String) -> void:

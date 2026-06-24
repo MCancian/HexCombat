@@ -126,6 +126,11 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-24 — D1-A beaches.json normalization:** Rewrote the existing `data/beaches.json`
+  (raw TIV PascalCase object dict format) into a clean snake_case array format matching our
+  GDScript conventions. Stripped minefield data (deferred to anti-ship phase). Values (rates,
+  coords, capacities) ported exactly from TIV `defaults/beaches.json`.
+
 - **2026-06-24 — Movement mobility: nato_type only (deliberate divergence from the TIV oracle):**
   `Movement.is_fast_mobility` now classifies a brigade fast/slow from its **brigade `nato_type`
   only**, ignoring battalion composition. The TIV oracle
@@ -320,7 +325,97 @@ caveat is resolved.
   artillery** (count artillery/rocket/rotary battalions in the committed brigades → support dicts).
   Theater CAS/CRBM stays 0 until the fires (IJFS) phase.
 
+---
+
+## Track D, Phase 1 — Amphibious Offload (D1)  *(scoped 2026-06-24)*
+
+**Goal**: Port TIV's beach offload mechanism into HexCombat as a per-turn offload phase that
+models Red reinforcement brigades arriving from sea to beach hexes via beach throughput limits,
+brigade priority ordering, and the maneuver-first Day 1 landing rule.
+
+**TIV source oracle**:
+- Logic: `src/services/offload/beach_throughput.py`, `src/services/offload/_rates.py`,
+  `src/services/offload_calculator.py`, `src/contracts/units.py`
+- Tests: `tests/python/unit/test_offload_day1_redesign.py`,
+  `tests/python/unit/test_offload_brigade_priority.py`,
+  `tests/python/unit/test_offload_brigade_spacing.py`
+
+**Architecture** (per-phase template):
+- `scripts/model/BeachDef.gd` — typed Resource: id, name_en, offload_rate_tons, capacity_bns,
+  to_number, floating_piers, jackup_barge, advance_direction_deg, lat, lng
+- `scripts/OffloadRates.gd` — const class: all 9 rate keys (beach_base=4400,
+  floating_pier=2200, jackup_barge=4400, operational_port=11000, etc.), TONS_PER_BN=2200
+- `scripts/OffloadCalculator.gd` — pure RefCounted lib (no Node): beach throughput
+  calculation (tons → BN slots), brigade-priority greedy admission, Day 1 maneuver-bypass rule,
+  battalion manifest (sent/landed/waiting/lost formula), `bns_waiting = bns_sent - bns_landed - lost_at_sea`
+- `data/beaches.json` — ported from TIV `defaults/beaches.json` (9 beaches, exact rates/TO/coords)
+- `data/offload_rates.json` — ported from TIV `defaults/offload_rates.json` (9 rate keys)
+- `GameData` extended: `load_beaches()` → `Dictionary` keyed by beach id (int)
+- `GameState` extended: `ShipReserve` (Red brigades/BNs at sea, not yet on map),
+  `resolve_offload_turn(dice)` → applies landing manifest → `GameData.set_brigade_hex()` for
+  newly-fully-landed brigades
+
+**Sub-tasks**:
+
+- [x] **D1-A** *(2026-06-24)* — Beach data + model: `data/beaches.json` (9 beaches, exact TIV
+      values, snake_case array format), `scripts/model/BeachDef.gd`, `GameData.load_beaches()`,
+      `tools/validate_beaches_data.gd` (asserts 9 beaches, all TO/rate/coord fields present).
+      Gate green (import + smoke + 7 validators + 33 GdUnit4 tests all pass).
+
+- [ ] **D1-B** — Offload rates: `data/offload_rates.json` + `scripts/OffloadRates.gd` (loads
+      from JSON, exposes all 9 required keys as typed consts + TONS_PER_BN=2200). Validated by
+      `tools/validate_offload_data.gd`.
+
+- [ ] **D1-C** — `OffloadCalculator.gd` pure lib — ports the core math from TIV:
+      `calculate_beach_throughput_bns(beaches, infra)` (sum offload_rate / TONS_PER_BN);
+      `admit_brigades(priority_order, beach_slots)` (greedy, locked-beach-first);
+      Day 1 maneuver-bypass rule (maneuver BNs land regardless of throughput);
+      `bns_waiting = bns_sent - bns_landed - lost_at_sea`. GdUnit4 tests in
+      `tests/offload_calculator_test.gd` mirroring `test_offload_day1_redesign.py`:
+      all 36 BNs load; 16 maneuver land Day 1; 20 support waiting; bypass holds even at low rate.
+
+- [ ] **D1-D** — Ship fleet model: `scripts/model/ShipFleet.gd` (typed Resource: ship_type,
+      ready, sent, offloading, returning, destroyed, carrying_capacity_bns); add a starter Red
+      fleet to `data/scenario_default.json` (enough ships to carry the 4 PLA brigades);
+      `GameState.ship_reserve` holds un-landed Red brigades.
+
+- [ ] **D1-E** — GameState wiring: `resolve_offload_turn(dice)` runs `OffloadCalculator` on the
+      current ship reserve + active beaches → for each fully-landed brigade calls
+      `GameData.set_brigade_hex()` on the beach's hex. Hook into turn resolution order
+      (offload before move-then-fight). `tools/validate_headless_offload.gd` drives a
+      headless offload turn and asserts ≥1 brigade lands. Gate green.
+
+- [ ] **D1-F** — Gate: `tools/run_all_tests.ps1` updated (validate_beaches_data +
+      validate_offload_data + headless_offload + GdUnit4 offload_calculator_test). Full gate green.
+
+**Note on scenario rework (see Open Questions)**: D1-D/E are gated on resolving whether Red
+starts at sea or whether initial 4 brigades stay on beaches with the offload adding reinforcements.
+D1-A through D1-C are independent of that decision and can proceed first.
+
+---
+
 ## Open questions (settle at the relevant milestone)
 
 _None blocking the slice — the design is settled. Future-phase questions (supply/organization
 interactions, fog of war, terrain via ArcGIS, theater fires) are tracked in `ROADMAP.md`._
+
+### D1 — Amphibious Offload open question (blocking D1-D/E)
+
+**Q: Initial placement vs. reinforcement-only offload**
+
+The current scenario places 4 Red brigades directly on beach hexes (Day 1, already landed).
+The TIV offload phase models how brigades get FROM ships ONTO beaches.
+
+Two options:
+1. **Reinforcements-only**: Keep the 4 initial Red brigades on-beach. The offload phase delivers
+   *additional* Red reinforcement brigades from a ship reserve each turn. Scenario stays intact;
+   offload adds depth without reworking what works.
+2. **Full offload start**: Red starts with all brigades at sea (no on-beach units). Day 1 runs
+   the offload phase to land the initial assault brigades. Requires reworking
+   `scenario_default.json` and the starter scenario logic.
+
+**Why this is a genuine design question**: Option 1 is additive and lower-risk for existing tests;
+Option 2 is more faithful to TIV's flow but changes what the user sees when they press Play.
+Neither is answerable from the source repo (TIV always starts from a scripted Day 0).
+
+**Please decide** before D1-D/E begin. D1-A through D1-C are unblocked.
