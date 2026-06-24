@@ -64,7 +64,11 @@ Scoped 2026-06-23 (sources located; see Decisions). Two independent sub-units; d
       (`hex_selected`/`brigade_selected`/`selection_cleared`); `GameController` emits on click;
       `HexMap` highlights via the bus; `InfoPanel` shows hex+brigade details; `selection_test.gd`
       covers select→signal. Gate: 5 validators + 8 GdUnit4 tests.
-- [ ] M3 — Turn/phase state machine (`GameState` autoload)
+- [x] M3 — Turn/phase state machine (`GameState` autoload) ✓ *(complete 2026-06-23)* — WeGo action
+      API: `Phase{PLANNING,RESOLUTION,END}`, per-team `MoveOrder` buffers, `add_move_order`
+      (fail-loud), `resolve_turn` (move-then-fight; combat = M5 hook; detects `last_contested_hexes`),
+      `begin_next_turn` (flag/buffer/turn resets). `EventBus.turn_resolved`/`phase_changed`. Gate:
+      5 validators + 12 GdUnit4 tests.
 - [ ] M4 — Movement (reachable highlight, allowance)
 - [ ] M5 — Combat wiring (apply casualties, FEBA, ownership)
 - [ ] M6 — Headless turn check (AI-readiness)

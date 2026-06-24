@@ -187,3 +187,29 @@ in-scope suggestions are applied immediately; the rest are deferred with a one-l
   calling `_on_hex_clicked`; InfoPanel rendering from a typed view-model. — _Deferred: all sensible.
   The typed `HexState` Resource is worth doing when M5 combat wiring starts mutating hex_states
   (owner/FEBA); the `select_hex()` command + view-model are UI polish (Track C)._
+
+---
+
+## 2026-06-23 — M3: WeGo turn/phase state machine (GameState autoload; M3 complete)
+
+**(a) What shipped** (orchestrator-verified: full gate green, 12 GdUnit4 tests)
+- `scripts/model/MoveOrder.gd` (typed Resource: brigade_id, target_hex, mode).
+- `scripts/GameState.gd` (autoload `GameState`, `class_name GameStateType`, after GameData/EventBus):
+  the view-independent **action API** — `Phase {PLANNING,RESOLUTION,END}`, turn_number,
+  turn_length_days (from scenario), per-team `orders` buffers, `last_contested_hexes`.
+  `add_move_order` (fail-loud: wrong phase / unknown brigade / team mismatch / unknown hex),
+  `resolve_turn` (MOVE-THEN-FIGHT: applies all moves from both buffers, then detects every hex with
+  both teams — combat itself is the M5 hook), `begin_next_turn` (resets moved/fought flags on all
+  brigades, clears buffers, turn++, back to PLANNING). Emits `EventBus.turn_resolved` /
+  `phase_changed`.
+- `EventBus`: added `turn_resolved(turn_number)` + `phase_changed(phase)`.
+- `tests/game_state_test.gd`: reset defaults, order collection + 3 rejection cases, move-then-fight
+  ordering (Red onto Green's hex → contested), flag/buffer/turn/phase resets. Isolated via
+  before/after reload of GameData + GameState.
+
+**(b) pi's machine-readability suggestions**
+- `MoveOrder.mode` → typed enum once M4 validates movement modes (apply at M4); typed
+  `TurnSnapshot`/`ContestedHex` models instead of raw `Array[String]`; a pure `TurnResolver`
+  RefCounted so AI/headless sims run isolated from autoload state via the same typed order API. —
+  _Deferred: the pure `TurnResolver` is directly relevant to M6 (headless AI-readiness) — revisit
+  there; `mode` enum folds into M4; typed snapshot is polish._

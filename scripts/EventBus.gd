@@ -4,3 +4,5 @@ class_name EventBusType
 signal hex_selected(hex_id: String)
 signal brigade_selected(brigade_id: String)
 signal selection_cleared()
+signal turn_resolved(turn_number: int)
+signal phase_changed(phase: int)

@@ -1,0 +1,87 @@
+extends GdUnitTestSuite
+
+const RED_BRIGADE_ID := "PLA-71-2-Amphibious"
+const GREEN_BRIGADE_ID := "BDE-66"
+const RED_START_HEX := "hex_44_16"
+const GREEN_START_HEX := "hex_43_17"
+
+
+func before_test() -> void:
+	_reset_fixture()
+
+
+func after_test() -> void:
+	_reset_fixture()
+
+
+func test_reset_to_scenario_initializes_turn_phase_days_and_empty_buffers() -> void:
+	GameState.reset_to_scenario()
+
+	assert_int(GameState.turn_number).is_equal(1)
+	assert_int(GameState.phase).is_equal(GameStateType.Phase.PLANNING)
+	assert_int(GameState.turn_length_days).is_equal(1)
+	assert_int(GameState.orders_for(Brigade.Team.RED).size()).is_equal(0)
+	assert_int(GameState.orders_for(Brigade.Team.GREEN).size()).is_equal(0)
+
+
+func test_add_move_order_collects_valid_orders_and_rejects_invalid_orders() -> void:
+	GameState.add_move_order(Brigade.Team.RED, RED_BRIGADE_ID, GREEN_START_HEX, "tactical")
+
+	assert_int(GameState.orders_for(Brigade.Team.RED).size()).is_equal(1)
+	assert_int(GameState.orders_for(Brigade.Team.GREEN).size()).is_equal(0)
+	var order: MoveOrder = GameState.orders_for(Brigade.Team.RED)[0]
+	assert_str(order.brigade_id).is_equal(RED_BRIGADE_ID)
+	assert_str(order.target_hex).is_equal(GREEN_START_HEX)
+	assert_str(order.mode).is_equal("tactical")
+
+	await assert_error(func() -> void:
+		GameState.add_move_order(Brigade.Team.GREEN, RED_BRIGADE_ID, GREEN_START_HEX, "tactical")
+	).is_push_error("Move order team mismatch for PLA-71-2-Amphibious: order=Green brigade=Red")
+	assert_int(GameState.orders_for(Brigade.Team.GREEN).size()).is_equal(0)
+
+	await assert_error(func() -> void:
+		GameState.add_move_order(Brigade.Team.RED, "UNKNOWN-BRIGADE", GREEN_START_HEX, "tactical")
+	).is_push_error("Move order references unknown brigade_id: UNKNOWN-BRIGADE")
+	assert_int(GameState.orders_for(Brigade.Team.RED).size()).is_equal(1)
+
+	await assert_error(func() -> void:
+		GameState.add_move_order(Brigade.Team.RED, RED_BRIGADE_ID, "unknown_hex", "tactical")
+	).is_push_error("Move order references unknown target_hex: unknown_hex")
+	assert_int(GameState.orders_for(Brigade.Team.RED).size()).is_equal(1)
+
+
+func test_resolve_turn_applies_all_movement_before_contested_detection() -> void:
+	GameState.add_move_order(Brigade.Team.RED, RED_BRIGADE_ID, GREEN_START_HEX, "tactical")
+
+	GameState.resolve_turn()
+
+	var red_brigade: Brigade = GameData.get_brigade(RED_BRIGADE_ID)
+	var green_brigade: Brigade = GameData.get_brigade(GREEN_BRIGADE_ID)
+	assert_str(red_brigade.hex_id).is_equal(GREEN_START_HEX)
+	assert_str(green_brigade.hex_id).is_equal(GREEN_START_HEX)
+	assert_array(GameState.last_contested_hexes).contains([GREEN_START_HEX])
+	assert_int(GameState.phase).is_equal(GameStateType.Phase.END)
+
+
+func test_begin_next_turn_resets_flags_buffers_turn_and_phase() -> void:
+	GameState.add_move_order(Brigade.Team.RED, RED_BRIGADE_ID, GREEN_START_HEX, "tactical")
+	GameState.resolve_turn()
+
+	var moved_brigade: Brigade = GameData.get_brigade(RED_BRIGADE_ID)
+	assert_bool(moved_brigade.moved_this_turn).is_true()
+
+	GameState.begin_next_turn()
+
+	for brigade in GameData.brigades.values():
+		var typed_brigade: Brigade = brigade
+		assert_bool(typed_brigade.moved_this_turn).is_false()
+		assert_bool(typed_brigade.fought_this_turn).is_false()
+	assert_int(GameState.orders_for(Brigade.Team.RED).size()).is_equal(0)
+	assert_int(GameState.orders_for(Brigade.Team.GREEN).size()).is_equal(0)
+	assert_int(GameState.turn_number).is_equal(2)
+	assert_int(GameState.phase).is_equal(GameStateType.Phase.PLANNING)
+
+
+func _reset_fixture() -> void:
+	GameData.load_all()
+	GameState.reset_to_scenario()
