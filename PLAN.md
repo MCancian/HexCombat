@@ -126,6 +126,18 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-24 — Movement mobility: nato_type only (deliberate divergence from the TIV oracle):**
+  `Movement.is_fast_mobility` now classifies a brigade fast/slow from its **brigade `nato_type`
+  only**, ignoring battalion composition. The TIV oracle
+  (`boots_hex_service.infer_green_brigade_speed`) also promotes a brigade to fast if *any* battalion
+  type string contains a `FAST_MOBILITY_HINTS` token ("mechanized"/"armor"/"tank"); that string
+  matches "Mechanized **Artillery** Battalion" (77× across the OOBs), so leg/amphibious brigades were
+  fast purely from a support battalion. **User chose to diverge** (2026-06-24) so support units don't
+  change march speed. The amphibious scenario brigade is now slow (1-hex tactical / 10-hex admin).
+  `movement_test.gd` updated (asserts nato_type-only + a leg-with-mech-artillery-stays-slow case);
+  the headless full-turn validator is unaffected (its scripted move is to an adjacent hex, reachable
+  for slow units). Surfaced via the click-through playtest.
+
 - **2026-06-23 — M1 starter scenario placement (resolved a gap):** beaches 1-4 (TIV
   `defaults/beaches.json`, all TO 3 Northern) map by nearest hex center to hex_44_16/44_15/43_14/43_13;
   each Green inland hex = the real HexMath neighbor of the beach hex whose bearing best matches the

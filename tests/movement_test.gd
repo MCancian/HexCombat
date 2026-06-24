@@ -12,23 +12,28 @@ func after_test() -> void:
 
 
 func test_movement_speeds_and_unknown_mode_error() -> void:
+	# Fast mobility is decided by the brigade nato_type only.
 	var fast_brigade := Brigade.new()
-	fast_brigade.nato_type = "amphibious"
-	var fast_battalion := Battalion.new()
-	fast_battalion.type = "Armor Battalion"
-	fast_battalion.qty = 1
-	fast_brigade.composition.append(fast_battalion)
+	fast_brigade.nato_type = "armor"
 
 	assert_bool(Movement.is_fast_mobility(fast_brigade)).is_true()
 	assert_int(Movement.tactical_speed(fast_brigade)).is_equal(Movement.TACTICAL_FAST)
 	assert_int(Movement.administrative_speed(fast_brigade)).is_equal(Movement.ADMIN_FAST)
 
+	# Divergence from the TIV oracle: a leg brigade with a mechanized/armor *support*
+	# battalion stays slow — composition no longer promotes mobility.
+	var leg_with_support := Brigade.new()
+	leg_with_support.nato_type = "amphibious"
+	var support_battalion := Battalion.new()
+	support_battalion.type = "Mechanized Artillery Battalion"
+	support_battalion.qty = 1
+	leg_with_support.composition.append(support_battalion)
+
+	assert_bool(Movement.is_fast_mobility(leg_with_support)).is_false()
+	assert_int(Movement.tactical_speed(leg_with_support)).is_equal(Movement.TACTICAL_SLOW)
+
 	var slow_brigade := Brigade.new()
 	slow_brigade.nato_type = "reserve"
-	var slow_battalion := Battalion.new()
-	slow_battalion.type = "Infantry Battalion (Reserve)"
-	slow_battalion.qty = 1
-	slow_brigade.composition.append(slow_battalion)
 
 	assert_bool(Movement.is_fast_mobility(slow_brigade)).is_false()
 	assert_int(Movement.tactical_speed(slow_brigade)).is_equal(Movement.TACTICAL_SLOW)

@@ -10,17 +10,16 @@ const MODE_TACTICAL := "tactical"
 const MODE_ADMINISTRATIVE := "administrative"
 
 
+# Mobility is decided by the brigade's own nato_type only.
+# NOTE: deliberate divergence from the TIV oracle (boots_hex_service.infer_green_brigade_speed),
+# which also promotes a brigade to "fast" if ANY battalion type contains a hint token — that made
+# leg brigades fast purely from a "Mechanized Artillery" support battalion. Composition is ignored
+# here so support units don't change a formation's march speed. (User decision 2026-06-24.)
 static func is_fast_mobility(brigade: Brigade) -> bool:
 	var nato_type_lower := brigade.nato_type.to_lower()
 	for hint in FAST_MOBILITY_HINTS:
 		if nato_type_lower.contains(hint):
 			return true
-
-	for battalion in brigade.composition:
-		var battalion_type_lower := battalion.type.to_lower()
-		for hint in FAST_MOBILITY_HINTS:
-			if battalion_type_lower.contains(hint):
-				return true
 
 	return false
 
