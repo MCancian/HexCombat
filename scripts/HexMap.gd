@@ -87,7 +87,7 @@ func render_brigade_markers() -> void:
 		var bearing_radians := deg_to_rad(brigade.entry_bearing)
 		var offset := Vector2(sin(bearing_radians), -cos(bearing_radians)) * (0.4 * radius)
 
-		var marker := _build_brigade_marker(brigade, texture)
+		var marker := _build_brigade_marker(brigade, texture, radius)
 		marker.position = center + offset
 		add_child(marker)
 		brigade_markers[brigade.id] = marker
@@ -103,18 +103,22 @@ func _estimate_hex_radius(center: Vector2, vertices: PackedVector2Array) -> floa
 	return total / float(vertices.size())
 
 
-func _build_brigade_marker(brigade: Brigade, texture: Texture2D) -> Node2D:
+func _build_brigade_marker(brigade: Brigade, texture: Texture2D, radius: float) -> Node2D:
 	var marker := Node2D.new()
 	marker.name = "BrigadeMarker_%s" % brigade.id
 	marker.z_index = 10
 
+	# Size the marker relative to the hex so it never dwarfs or overflows the cell.
+	var half_w := radius * 0.95
+	var half_h := radius * 0.68
+
 	var backing := Polygon2D.new()
 	backing.name = "TeamBacking"
 	backing.polygon = PackedVector2Array([
-		Vector2(-41.0, -29.0),
-		Vector2(41.0, -29.0),
-		Vector2(41.0, 29.0),
-		Vector2(-41.0, 29.0),
+		Vector2(-half_w, -half_h),
+		Vector2(half_w, -half_h),
+		Vector2(half_w, half_h),
+		Vector2(-half_w, half_h),
 	])
 	backing.color = _team_marker_color(brigade.team)
 	backing.z_index = 0
@@ -126,7 +130,7 @@ func _build_brigade_marker(brigade: Brigade, texture: Texture2D) -> Node2D:
 	sprite.centered = true
 	var texture_height := float(texture.get_height())
 	assert(texture_height > 0.0, "NATO symbol texture has invalid height for brigade '%s'" % brigade.id)
-	sprite.scale = Vector2.ONE * (48.0 / texture_height)
+	sprite.scale = Vector2.ONE * (radius * 1.1 / texture_height)
 	sprite.z_index = 1
 	marker.add_child(sprite)
 
