@@ -76,7 +76,16 @@ Scoped 2026-06-23 (sources located; see Decisions). Two independent sub-units; d
   - [x] **M4b**: select brigade → mode (Tactical/Administrative) → `HexMap` highlights the reachable
         set → click reachable hex issues a `MoveOrder` → **End Turn** resolves + advances + re-renders
         markers. `movement_ui_test.gd`. Gate: 5 validators + 20 GdUnit4 tests. pi visually confirmed.
-- [ ] M5 — Combat wiring (apply casualties, FEBA, ownership)
+- [~] M5 — Combat wiring (apply casualties, FEBA, ownership)
+  - [x] **M5a** *(2026-06-24)*: continuous combat in `GameState.resolve_turn(dice)` — each contested
+        hex runs the ported `resolve_map_attack` (Red attacker / Green defender; `CombatForces`
+        maneuver/support split; admin-moved & destroyed excluded), applies casualties (battalion
+        decrement → brigade destroy/remove), accumulates FEBA, sets `fought_this_turn`, then
+        `recompute_hex_ownership` (occupancy). Seeded determinism. `combat_resolution_test.gd`
+        (25 tests total). Gate green.
+  - [ ] **M5b**: post-combat advance/retreat (FEBA threshold), the composition menu (commit
+        support/adjacent maneuver), hex-color refresh on ownership change, result display; pi visual
+        check. **Completes M5 → push.**
 - [ ] M6 — Headless turn check (AI-readiness)
 - [ ] M7 — Slice completion + Definition of done
 
@@ -99,6 +108,20 @@ including seeded golden combat and movement-reachability tests).
   starter beachhead). **Red:** PLA-71-2 / 72-5 / 73-14 / 74-1 Amphibious (one per group army).
   `offset_bearing`: Red = seaward (advance+180), Green = bearing toward its beach hex. Not a blocking
   question — resolved in-spirit of the settled design.
+- **2026-06-24 — M5 combat wiring sub-decisions (derived from settled design; not blocking):**
+  (1) **Attacker/defender roles:** at a contested hex Red = attacker, Green = defender (the
+  amphibious-grind framing; defender takes the terrain modifier, =1.0 for the slice). (2)
+  **Maneuver vs support split:** a brigade's battalions tagged `artillery` or `rotary_wing` feed the
+  **support dicts** (rocket→`rocket_artillery`, other artillery→`artillery`, rotary→`rotary_wing`;
+  theater `cas`/`crbm`=0), and the **maneuver unit list** is the brigade's *non-support* battalions —
+  so artillery isn't double-counted (it's support, never a maneuver casualty; consistent with
+  `resolve_map_attack` never selecting artillery). (3) **Admin-moved brigades contribute nothing to
+  combat** that turn (neither attack nor support — they road-marched) but still occupy the hex for
+  ownership; combat at a hex only resolves if BOTH sides have ≥1 non-admin brigade. (4) **Casualty
+  application:** each casualty unit decrements its battalion's qty by 1; a battalion at qty 0 is
+  removed; a brigade at 0 battalions is marked destroyed and removed from the map. (5) **Ownership**
+  recomputed by occupancy after all combats (both→contested, one→that side, empty→keep last owner).
+  Retreat/advance + composition menu + colors/result = M5b.
 - **2026-06-23 — MA-2 / symbols done:** copied all 185 NATO SVGs → `assets/symbols/`; mapped the 11
   OOB nato_types in `data/nato_symbol_map.json` (air-defense→air_defence, amphibious→amphibious_infantry,
   area-command→headquarters, armor→armour, artillery→artillery, aviation→helicopters, infantry→infantry,

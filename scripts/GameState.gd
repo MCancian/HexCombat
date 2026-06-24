@@ -69,10 +69,13 @@ func add_move_order(team: Brigade.Team, brigade_id: String, target_hex: String, 
 	orders[team].append(order)
 
 
-func resolve_turn() -> void:
+func resolve_turn(dice: Dice = null) -> void:
 	if phase != Phase.PLANNING:
 		push_error("Cannot resolve turn outside PLANNING phase")
 		return
+
+	if dice == null:
+		dice = SeededDice.new(turn_number)
 
 	phase = Phase.RESOLUTION
 	EventBus.phase_changed.emit(phase)
@@ -80,6 +83,9 @@ func resolve_turn() -> void:
 	_apply_move_orders(Brigade.Team.RED)
 	_apply_move_orders(Brigade.Team.GREEN)
 	last_contested_hexes = _find_contested_hexes()
+	for hex_id in last_contested_hexes:
+		_resolve_combat_at(hex_id, dice)
+	GameData.recompute_hex_ownership()
 
 	phase = Phase.END
 	EventBus.phase_changed.emit(phase)
@@ -127,6 +133,8 @@ func _find_contested_hexes() -> Array[String]:
 		var has_green := false
 		for brigade_id in GameData.get_brigades_in_hex(String(hex_id)):
 			var brigade: Brigade = GameData.get_brigade(String(brigade_id))
+			if brigade == null or brigade.destroyed:
+				continue
 			match brigade.team:
 				Brigade.Team.RED:
 					has_red = true
@@ -136,6 +144,70 @@ func _find_contested_hexes() -> Array[String]:
 				contested.append(String(hex_id))
 				break
 	return contested
+
+
+func _resolve_combat_at(hex_id: String, dice: Dice) -> void:
+	var attacker_brigades: Array = []
+	var defender_brigades: Array = []
+	for brigade_id_value in GameData.get_brigades_in_hex(hex_id):
+		var brigade: Brigade = GameData.get_brigade(String(brigade_id_value))
+		if brigade == null or brigade.destroyed or brigade.moved_admin_this_turn:
+			continue
+		match brigade.team:
+			Brigade.Team.RED:
+				attacker_brigades.append(brigade)
+			Brigade.Team.GREEN:
+				defender_brigades.append(brigade)
+
+	if attacker_brigades.is_empty() or defender_brigades.is_empty():
+		return
+
+	var attacker_units := CombatForces.maneuver_units(attacker_brigades)
+	var defender_units := CombatForces.maneuver_units(defender_brigades)
+	var attacker_support := CombatForces.support_counts(attacker_brigades)
+	var defender_support := CombatForces.support_counts(defender_brigades)
+	var result := CombatCalculator.resolve_map_attack(
+		dice,
+		attacker_units,
+		defender_units,
+		attacker_support,
+		defender_support,
+		1.0,
+		2.0
+	)
+
+	for casualty in result.attacker_casualties:
+		_apply_casualty(casualty)
+	for casualty in result.defender_casualties:
+		_apply_casualty(casualty)
+
+	GameData.hex_states[hex_id]["feba_km"] = float(GameData.hex_states[hex_id]["feba_km"]) + result.feba_movement_km
+	for brigade_value in attacker_brigades + defender_brigades:
+		var fought_brigade: Brigade = brigade_value
+		fought_brigade.fought_this_turn = true
+
+
+func _apply_casualty(casualty: Dictionary) -> void:
+	var brigade_id := String(casualty["brigade_id"])
+	var casualty_type := String(casualty["type"])
+	var brigade: Brigade = GameData.get_brigade(brigade_id)
+	if brigade == null:
+		push_error("Combat casualty references unknown brigade_id: %s" % brigade_id)
+		return
+
+	for index in range(brigade.composition.size()):
+		var battalion: Battalion = brigade.composition[index]
+		if battalion.type != casualty_type:
+			continue
+		battalion.qty -= 1
+		if battalion.qty <= 0:
+			brigade.composition.remove_at(index)
+		if brigade.get_battalion_count() == 0:
+			brigade.destroyed = true
+			GameData.remove_brigade_from_map(brigade_id)
+		return
+
+	push_error("Combat casualty references missing battalion type '%s' in brigade %s" % [casualty_type, brigade_id])
 
 
 func _team_to_string(team: Brigade.Team) -> String:

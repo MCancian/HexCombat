@@ -262,3 +262,31 @@ in-scope suggestions are applied immediately; the rest are deferred with a one-l
   of checking buffer growth. — _Deferred: the command/result wrapper is the most valuable (cleaner
   than buffer-delta detection) and pairs with the M3/M4a "structured validation result" note —
   revisit when the UI needs to surface rejection reasons (Track C)._
+
+---
+
+## 2026-06-24 — M5a: headless continuous-combat resolution (pi-implemented)
+
+**(a) What shipped** (orchestrator-verified: full gate green, 25 GdUnit4 tests)
+- `scripts/CombatForces.gd` (pure lib): `is_support_type` (artillery|rotary_wing), `maneuver_units`
+  (non-support battalions expanded per qty), `support_counts` (rocket→rocket_artillery, other
+  artillery→artillery, rotary→rotary_wing; cas/crbm=0).
+- `GameState.resolve_turn(dice = SeededDice(turn_number))`: after move-then-fight detection, calls
+  `_resolve_combat_at(hex, dice)` for each contested hex, then `recompute_hex_ownership`.
+  `_resolve_combat_at`: Red=attacker / Green=defender, excludes destroyed + admin-moved brigades
+  (no combat unless both sides have ≥1 contributor), builds forces via CombatForces, runs the ported
+  `resolve_map_attack` (terrain 1.0, feba_base 2.0), applies casualties, accumulates FEBA, sets
+  `fought_this_turn`. `_apply_casualty` decrements the battalion (removes at qty 0; marks brigade
+  destroyed + removes from map at 0 battalions).
+- `GameData.recompute_hex_ownership` (occupancy: both→contested, one→that side, empty→keep) +
+  `remove_brigade_from_map`.
+- `tests/combat_resolution_test.gd`: forces split, single-hex casualties+FEBA+fought, occupancy
+  ownership, admin-move exclusion, seeded determinism. (Math itself stays golden-tested in M0.)
+
+**(b) pi's machine-readability suggestions**
+- Typed combat force/result DTO resources instead of loose Dictionaries; a shared
+  `tests/helpers/CombatFixture.gd`; `GameData.validate_runtime_indexes()` to assert
+  `brigades_by_hex`/`hex_id` stay in sync after mutations; a `HexOwner` constants table to replace
+  the "red"/"green"/"contested" string literals. — _Deferred: the `HexOwner` constants + a runtime-
+  index invariant check are cheap hardening worth doing during M5b/M6; typed DTOs + CombatFixture are
+  larger and fold in as combat grows. Logged for M5b._

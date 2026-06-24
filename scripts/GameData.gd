@@ -225,6 +225,32 @@ func set_brigade_hex(brigade_id: String, hex_id: String) -> void:
 		_add_brigade_to_hex(brigade_id, hex_id)
 
 
+func remove_brigade_from_map(brigade_id: String) -> void:
+	set_brigade_hex(brigade_id, "")
+
+
+func recompute_hex_ownership() -> void:
+	for hex_id_value in hex_lookup.keys():
+		var hex_id := String(hex_id_value)
+		var has_red := false
+		var has_green := false
+		for brigade_id_value in get_brigades_in_hex(hex_id):
+			var brigade: Brigade = get_brigade(String(brigade_id_value))
+			if brigade == null or brigade.destroyed:
+				continue
+			match brigade.team:
+				Brigade.Team.RED:
+					has_red = true
+				Brigade.Team.GREEN:
+					has_green = true
+		if has_red and has_green:
+			hex_states[hex_id]["owner"] = "contested"
+		elif has_red:
+			hex_states[hex_id]["owner"] = "red"
+		elif has_green:
+			hex_states[hex_id]["owner"] = "green"
+
+
 func set_hex_owner(hex_id: String, owner: String) -> void:
 	if hex_id in hex_states:
 		hex_states[hex_id]["owner"] = owner
