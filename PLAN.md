@@ -602,6 +602,48 @@ manifest.
       manifest). Suppressed systems flag carried into next turn. `tools/validate_headless_antiship.gd`.
       Gate green.
 
+### D3 — Open Questions  *(SURFACED 2026-06-24 — scoped the TIV oracle; PAUSED for a decision)*
+
+Scoping read of the TIV anti-ship oracle (`antiship_calculator.py` 28KB, `antiship_crossing.py`
+41KB, firing_plan/launch_attrition/magazine/suppression/mutation services, `mine_warfare_service.py`,
+`contracts/antiship.py`, and the `defaults/` catalogs) shows D3 is **by far the largest, most
+DB/pandas-centric, player-input-driven phase**, and it does not stand alone:
+
+- **Full multi-stage missile model.** Crossing = launch attrition (per-system detect/destroy/
+  intercept-before-launch) → missiles in groups of 4 → escort interception (CG/DDG/FFG/FFL,
+  attempts × success_prob) → decoy discrimination → weighted homing by `target_value` → terminal
+  defense (`base + susceptibility + capability`) → hit → neutralization (sink vs damage by ship
+  `vulnerability` × munition `lethality`, damaged-hull multiplier). Plus a munition combat catalog,
+  finite magazines, and suppression carry-over.
+- **28-ship-type model + munition catalog** (`ship_types_definition.json`,
+  `antiship_combat_catalog.json`, `antiship_crossing_config.json`) — HexCombat has **no ship-type
+  model** (D1 deliberately deferred it; `ShipFleet` is an inert stub and `ship_reserve` carries BNs
+  directly, no ships).
+- **Coupled to D4 (IJFS).** `build_firing_plan(available_systems, ijfs_results, …)` consumes IJFS
+  strike outputs (which anti-ship systems were destroyed) and suppression comes from IJFS hits.
+  Building D3 before D4 means stubbing that coupling.
+- **Player-input-driven.** Firing percentages per (location, system type) and minesweeper
+  assignments are human inputs — no auto-policy exists; HexCombat would need new UI or an AI policy.
+- **Only consumer in the current slice** is offload `lost_at_sea` (today hard-coded 0), which only
+  reduces landed BNs — modest gameplay payoff for a very large build.
+
+**Questions for the user (not answerable from the source — it has a full impl; the call is how much
+of it fits HexCombat's simplified-slice philosophy, à la the D2 single-pool decision):**
+
+1. **D3 vs D4 ordering.** The ROADMAP lists D3 before D4, but the source has D3 depend on D4's
+   outputs (IJFS-destroyed/suppressed systems). Do D4 (IJFS) first, then D3? Or keep D3 first with a
+   stubbed/zero IJFS-suppression input?
+2. **D3 fidelity.** Full faithful port of the multi-stage pipeline + 28-ship model + munition
+   catalog + magazines + suppression + mine warfare (multi-week, ≥6 sub-tasks)? A **simplified
+   fleet-attrition slice** (abstract Green anti-ship strength vs Red crossing fleet → expected ship
+   losses → `lost_at_sea`, single pure lib + minimal ship abstraction, mirroring the D2 approach)?
+   Or **defer D3** until the ground slice needs it?
+3. **Ship model depth.** Full 28-type ship roster with carrying-capacity-equiv and per-type
+   profiles, or a minimal fleet abstraction (total carrying capacity → BN-equiv lost)?
+
+**Recommendation:** simplified fleet-attrition slice (Q2) AND reorder so D4/IJFS precedes a fuller
+D3 (Q1) — but this is the user's call; awaiting direction before any D3 coding.
+
 ---
 
 ## Track D, Phase 4 — IJFS (D4)  *(not yet started — largest phase)*
