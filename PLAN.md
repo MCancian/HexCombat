@@ -83,9 +83,13 @@ Scoped 2026-06-23 (sources located; see Decisions). Two independent sub-units; d
         decrement → brigade destroy/remove), accumulates FEBA, sets `fought_this_turn`, then
         `recompute_hex_ownership` (occupancy). Seeded determinism. `combat_resolution_test.gd`
         (25 tests total). Gate green.
-  - [ ] **M5b**: post-combat advance/retreat (FEBA threshold), the composition menu (commit
-        support/adjacent maneuver), hex-color refresh on ownership change, result display; pi visual
-        check. **Completes M5 → push.**
+  - [x] **M5b** *(2026-06-24)*: post-combat retreat (`FEBA_RETREAT_THRESHOLD_KM`=10; FEBA-losing
+        side retreats to a valid adjacent hex, feba resets; encircled holds; advance implicit),
+        `HexOwner` constants, `combat_resolved` result summary, `HexMap.refresh_all_hex_colors` on
+        `turn_advanced`. `combat_retreat_test.gd` (29 tests total). Gate green. **M5 acceptance met.**
+  - [ ] **M5c**: composition menu — each turn a side commits adjacent brigades' maneuver/artillery
+        into a contested hex's combat (target hex auto-contributes; support feeds the dicts); UI +
+        action-layer commitment + pi visual. **Completes M5's full designed scope → push.**
 - [ ] M6 — Headless turn check (AI-readiness)
 - [ ] M7 — Slice completion + Definition of done
 

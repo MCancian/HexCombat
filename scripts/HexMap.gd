@@ -25,6 +25,7 @@ func _ready() -> void:
 	EventBus.hex_selected.connect(_on_hex_selected)
 	EventBus.reachable_hexes_changed.connect(_on_reachable_hexes_changed)
 	EventBus.selection_cleared.connect(_on_selection_cleared)
+	EventBus.turn_advanced.connect(_on_turn_advanced)
 	spawn_hex_cells()
 	render_brigade_markers()
 
@@ -148,14 +149,14 @@ func get_hex_color(hex_id: String) -> Color:
 		return color_none
 
 	var state = GameData.hex_states[hex_id]
-	var owner = state.get("owner", "green")
+	var owner = state.get("owner", HexOwner.GREEN)
 	var feba_km = state.get("feba_km", 0.0)
 
-	if owner == "red":
+	if owner == HexOwner.RED:
 		return color_red
-	elif owner == "green":
+	elif owner == HexOwner.GREEN:
 		return color_green
-	elif owner == "contested":
+	elif owner == HexOwner.CONTESTED:
 		if feba_km < 2.5:
 			return color_contested_light
 		elif feba_km < 7.5:
@@ -169,6 +170,12 @@ func get_hex_color(hex_id: String) -> Color:
 func refresh_hex(hex_id: String) -> void:
 	if hex_id in hex_cells:
 		hex_cells[hex_id].color = get_hex_color(hex_id)
+
+
+func refresh_all_hex_colors() -> void:
+	for hex_id in hex_cells:
+		var typed_hex_id := String(hex_id)
+		hex_cells[typed_hex_id].color = get_hex_color(typed_hex_id)
 
 
 func set_hex_owner(hex_id: String, owner: String) -> void:
@@ -203,6 +210,10 @@ func _on_selection_cleared() -> void:
 	_selected_hex = ""
 	_reachable_hexes = []
 	clear_highlights()
+
+
+func _on_turn_advanced(_turn_number: int) -> void:
+	refresh_all_hex_colors()
 
 
 func get_hex_by_point(point: Vector2) -> String:

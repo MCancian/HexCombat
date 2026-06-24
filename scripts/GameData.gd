@@ -74,7 +74,7 @@ func load_hex_grid() -> void:
 		hex_lookup[hex.id] = hex
 		coord_lookup[hex.coord] = hex.id
 		hex_states[hex.id] = {
-			"owner": "green",
+			"owner": HexOwner.GREEN,
 			"feba_km": 0.0
 		}
 
@@ -244,11 +244,11 @@ func recompute_hex_ownership() -> void:
 				Brigade.Team.GREEN:
 					has_green = true
 		if has_red and has_green:
-			hex_states[hex_id]["owner"] = "contested"
+			hex_states[hex_id]["owner"] = HexOwner.CONTESTED
 		elif has_red:
-			hex_states[hex_id]["owner"] = "red"
+			hex_states[hex_id]["owner"] = HexOwner.RED
 		elif has_green:
-			hex_states[hex_id]["owner"] = "green"
+			hex_states[hex_id]["owner"] = HexOwner.GREEN
 
 
 func set_hex_owner(hex_id: String, owner: String) -> void:

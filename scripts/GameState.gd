@@ -2,6 +2,7 @@ extends Node
 class_name GameStateType
 
 const MoveOrderResource = preload("res://scripts/model/MoveOrder.gd")
+const FEBA_RETREAT_THRESHOLD_KM := 10.0
 
 enum Phase { PLANNING, RESOLUTION, END }
 
@@ -83,12 +84,20 @@ func resolve_turn(dice: Dice = null) -> void:
 	_apply_move_orders(Brigade.Team.RED)
 	_apply_move_orders(Brigade.Team.GREEN)
 	last_contested_hexes = _find_contested_hexes()
+	var combat_summaries: Array = []
 	for hex_id in last_contested_hexes:
-		_resolve_combat_at(hex_id, dice)
+		var summary := _resolve_combat_at(hex_id, dice)
+		if not summary.is_empty():
+			combat_summaries.append(summary)
+	_apply_feba_retreats()
 	GameData.recompute_hex_ownership()
+	for summary in combat_summaries:
+		var typed_summary: Dictionary = summary
+		typed_summary["owner_after"] = String(GameData.hex_states[String(typed_summary["hex_id"])]["owner"])
 
 	phase = Phase.END
 	EventBus.phase_changed.emit(phase)
+	EventBus.combat_resolved.emit(combat_summaries)
 	EventBus.turn_resolved.emit(turn_number)
 
 
@@ -146,7 +155,7 @@ func _find_contested_hexes() -> Array[String]:
 	return contested
 
 
-func _resolve_combat_at(hex_id: String, dice: Dice) -> void:
+func _resolve_combat_at(hex_id: String, dice: Dice) -> Dictionary:
 	var attacker_brigades: Array = []
 	var defender_brigades: Array = []
 	for brigade_id_value in GameData.get_brigades_in_hex(hex_id):
@@ -160,7 +169,7 @@ func _resolve_combat_at(hex_id: String, dice: Dice) -> void:
 				defender_brigades.append(brigade)
 
 	if attacker_brigades.is_empty() or defender_brigades.is_empty():
-		return
+		return {}
 
 	var attacker_units := CombatForces.maneuver_units(attacker_brigades)
 	var defender_units := CombatForces.maneuver_units(defender_brigades)
@@ -185,6 +194,65 @@ func _resolve_combat_at(hex_id: String, dice: Dice) -> void:
 	for brigade_value in attacker_brigades + defender_brigades:
 		var fought_brigade: Brigade = brigade_value
 		fought_brigade.fought_this_turn = true
+
+	return {
+		"hex_id": hex_id,
+		"attacker_losses": result.attacker_losses,
+		"defender_losses": result.defender_losses,
+		"feba_movement_km": result.feba_movement_km,
+		"owner_after": String(GameData.hex_states[hex_id]["owner"])
+	}
+
+
+func _apply_feba_retreats() -> void:
+	for hex_id in last_contested_hexes:
+		var feba: float = float(GameData.hex_states[hex_id]["feba_km"])
+		if absf(feba) < FEBA_RETREAT_THRESHOLD_KM:
+			continue
+
+		var retreating_team := Brigade.Team.RED
+		if feba > 0.0:
+			retreating_team = Brigade.Team.GREEN
+
+		var retreaters: Array[Brigade] = []
+		for brigade_id_value in GameData.get_brigades_in_hex(hex_id):
+			var brigade: Brigade = GameData.get_brigade(String(brigade_id_value))
+			if brigade != null and not brigade.destroyed and brigade.team == retreating_team:
+				retreaters.append(brigade)
+		if retreaters.is_empty():
+			continue
+
+		var target := _find_retreat_hex(hex_id, retreating_team)
+		if target == "":
+			continue
+
+		for brigade in retreaters:
+			GameData.set_brigade_hex(brigade.id, target)
+		GameData.hex_states[hex_id]["feba_km"] = 0.0
+
+
+func _find_retreat_hex(from_hex: String, team: Brigade.Team) -> String:
+	var friendly_owner := HexOwner.RED
+	var enemy_team := Brigade.Team.GREEN
+	if team == Brigade.Team.GREEN:
+		friendly_owner = HexOwner.GREEN
+		enemy_team = Brigade.Team.RED
+
+	for neighbor_id_value in GameData.get_neighbors(from_hex):
+		var neighbor_id := String(neighbor_id_value)
+		var has_enemy := false
+		for brigade_id_value in GameData.get_brigades_in_hex(neighbor_id):
+			var brigade: Brigade = GameData.get_brigade(String(brigade_id_value))
+			if brigade != null and not brigade.destroyed and brigade.team == enemy_team:
+				has_enemy = true
+				break
+		if has_enemy:
+			continue
+
+		var owner := String(GameData.hex_states[neighbor_id]["owner"])
+		if owner == friendly_owner or owner == HexOwner.NONE:
+			return neighbor_id
+	return ""
 
 
 func _apply_casualty(casualty: Dictionary) -> void:

@@ -290,3 +290,31 @@ in-scope suggestions are applied immediately; the rest are deferred with a one-l
   the "red"/"green"/"contested" string literals. — _Deferred: the `HexOwner` constants + a runtime-
   index invariant check are cheap hardening worth doing during M5b/M6; typed DTOs + CombatFixture are
   larger and fold in as combat grows. Logged for M5b._
+
+---
+
+## 2026-06-24 — M5b: post-combat retreat + ownership colors + result (pi-implemented)
+
+**(a) What shipped** (orchestrator-verified: full gate green, 29 GdUnit4 tests)
+- `scripts/HexOwner.gd` constants (RED/GREEN/CONTESTED/NONE); `GameData` + `HexMap` now use them
+  instead of bare owner-string literals.
+- `GameState`: `FEBA_RETREAT_THRESHOLD_KM = 10.0`; `_apply_feba_retreats()` (after combat, before the
+  final ownership recompute) — when a contested hex's cumulative |feba| ≥ 10 km, the FEBA-losing side
+  (Green if feba>0, Red if feba<0) retreats to the first adjacent hex with no enemy that it owns or is
+  unowned; the hex's feba resets to 0; encircled units hold. Attacker advance is implicit (already
+  co-located). Per-combat summaries collected → `EventBus.combat_resolved(summaries)`.
+- `GameController` shows a one-line result on the DebugLabel; `HexMap.refresh_all_hex_colors()` runs
+  on `EventBus.turn_advanced` so the front/ownership shift is visible.
+- `tests/combat_retreat_test.gd`: retreat + ownership flip, encircled hold, combat_resolved signal,
+  HexOwner constants. (Live interactive combat/retreat visual wasn't fully drivable in pi's harness;
+  logic is headless-tested and color refresh is a re-apply of the spawn-proven `get_hex_color`.)
+
+**(b) pi's machine-readability suggestions**
+- Typed `CombatSummary` + `HexState` Resources (replace Dictionaries); a `GameData` test-fixture/reset
+  API; a structured per-turn event log (movements/combats/casualties/FEBA/retreats/ownership). —
+  _Deferred: the per-turn structured event log is high-value for M6 (headless AI-readiness) and
+  save/replay — strongly consider at M6; typed HexState/CombatSummary fold in with that._
+
+**M5 status:** acceptance criteria (seeded golden test, occupancy ownership, defeat/retreat,
+headless-reproducible) are MET. **M5c** (the per-turn composition menu — commit adjacent maneuver/
+artillery into a contested hex) remains to complete M5's full designed scope, then push.

@@ -11,6 +11,7 @@ var selected_hex: String = ""
 var selected_brigade: String = ""
 var current_move_mode: String = Movement.MODE_TACTICAL
 var current_reachable: Array = []
+var _last_combat_summary_text: String = ""
 
 
 func _ready() -> void:
@@ -20,6 +21,7 @@ func _ready() -> void:
 	move_mode_option.add_item("Administrative")
 	move_mode_option.item_selected.connect(_on_move_mode_option_selected)
 	end_turn_button.pressed.connect(end_turn)
+	EventBus.combat_resolved.connect(_on_combat_resolved)
 	_update_turn_status()
 	debug_label.text = "HexCombat | Loaded %d hexes, %d brigades. Click a hex to select." % [GameData.hex_lookup.size(), GameData.brigades.size()]
 
@@ -85,7 +87,19 @@ func end_turn() -> void:
 	EventBus.reachable_hexes_changed.emit(current_reachable)
 	EventBus.turn_advanced.emit(GameState.turn_number)
 	_update_turn_status()
-	debug_label.text = "Turn %d — Planning. Select a brigade." % GameState.turn_number
+	if _last_combat_summary_text == "":
+		debug_label.text = "Turn %d — Planning. Select a brigade." % GameState.turn_number
+
+
+func _on_combat_resolved(summaries: Array) -> void:
+	var attacker_losses := 0
+	var defender_losses := 0
+	for summary_value in summaries:
+		var summary: Dictionary = summary_value
+		attacker_losses += int(summary["attacker_losses"])
+		defender_losses += int(summary["defender_losses"])
+	_last_combat_summary_text = "Turn %d resolved: %d combat(s), R lost %d / G lost %d" % [GameState.turn_number, summaries.size(), attacker_losses, defender_losses]
+	debug_label.text = _last_combat_summary_text
 
 
 func _on_move_mode_option_selected(index: int) -> void:
