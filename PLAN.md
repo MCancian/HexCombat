@@ -126,6 +126,22 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-24 — D1-D ship-reserve rosters derived from OOB (single source of truth):** the
+  scenario `red_ship_reserve` carries only `{brigade_id, locked_beach, beach_hex, offset_bearing}`;
+  it does NOT duplicate battalion rosters (which live only in `pla_ground_forces.json`).
+  `GameState._rebuild_ship_reserve()` expands each brigade's OOB `composition` into the
+  `bns:[{id,type}]` list `OffloadCalculator.resolve_offload_day()` expects (bn id =
+  `"<brigade_id>-<type_slug>-<n>"`, n 1-based across the brigade). `beach_hex`/`offset_bearing`
+  preserve each brigade's former placement so D1-E knows the landing hex + seaward render offset.
+  `ship_fleet` holds one forward-compat `ShipFleet` (amphibious_transport) sized to the reserve.
+- **2026-06-24 — D1-D test fixtures self-provision Red:** since Red is no longer auto-placed by the
+  scenario, tests/validators that drive a Red brigade place it themselves via
+  `GameData.set_brigade_hex(RED_ID, START_HEX)` in setup (durable for movement/combat/selection
+  unit tests; `validate_headless_turn.gd` + `validate_llm_api.gd` carry a note that D1-E replaces
+  their manual placement with a real offload pass). Composition/combat tests were untouched — they
+  build synthetic `TEST-RED-*` brigades and never depended on scenario Red placement. Headless
+  full-turn golden values are unchanged (seed 20260624 → casualties=2, feba=0.76).
+
 - **2026-06-24 — D1 scenario rework (user decision: full offload start):** Red starts at sea.
   All 4 PLA amphibious brigades move from beach hex placements to `GameState.ship_reserve` in
   `scenario_default.json`. Day 1 runs `resolve_offload_day(1, …)` → maneuver BNs land (4×4=16);
@@ -394,18 +410,20 @@ brigade priority ordering, and the maneuver-first Day 1 landing rule.
       bypass holds at low throughput; locked-beach respected; brigades don't split beaches;
       Day 2 support lands up to throughput. Full gate green (8 validators + 54 GdUnit4 tests).
 
-- [ ] **D1-D** — Ship fleet model + scenario rework:
-      - `scripts/model/ShipFleet.gd` typed Resource: `ship_type: String`, `ready: int`,
-        `offloading: int`, `returning: int`, `destroyed: int`, `carrying_capacity_bns: int`
-      - Rework `data/scenario_default.json`: remove the 4 Red brigades from beach hex placements;
-        add `red_ship_reserve` array (4 PLA amphibious brigades with full BN rosters at sea,
-        locked_beach per TIV beach assignments). Green defenders (4 brigades on inland hexes)
-        remain unchanged.
-      - `GameState.ship_reserve: Array` loaded from scenario; `GameData` no longer places Red
-        on-map at startup
-      - Update smoke test marker: "Rendered 4 brigade markers" (only Green on map at start)
-      - Fix any scenario_loader tests and movement fixtures that assumed Red on beach hexes
-      - pi must visually confirm: 4 Green markers on inland hexes, 0 Red, no errors
+- [x] **D1-D** *(2026-06-24)* — Ship fleet model + scenario rework:
+      - `scripts/model/ShipFleet.gd` typed Resource (ship_type, ready, offloading, returning,
+        destroyed, carrying_capacity_bns).
+      - `data/scenario_default.json`: removed the 4 Red placements; added `red_ship_reserve` array
+        ({brigade_id, locked_beach, beach_hex, offset_bearing} — rosters stay in the OOB, not
+        duplicated). Green defenders unchanged.
+      - `GameData.red_ship_reserve` parsed fail-loud; Red no longer placed at startup.
+        `GameState.ship_reserve` (OffloadCalculator-ready, bns expanded from OOB composition),
+        `ship_fleet`, `ship_reserve_priority_order()`. Smoke marker 8→4;
+        `validate_scenario_data` reworked (4 Green + reserve checks, beach_hex↔Green adjacency
+        preserved). Tests/validators driving Red self-provision it via `set_brigade_hex`.
+      - Gate green (import + smoke 4-markers + 8 validators + 54 GdUnit4). Orchestrator visual:
+        captured `reports/d1d_startup.png` → 4 Green markers, 0 Red, no errors. (pi's Godot MCP
+        not exposed this run; orchestrator used `capture_screenshot.gd` instead.)
 
 - [ ] **D1-E** — GameState offload wiring:
       - `GameState.resolve_offload_turn(dice)`: runs `OffloadCalculator.resolve_offload_day(
