@@ -3,7 +3,7 @@ class_name GameStateType
 
 const MoveOrderResource = preload("res://scripts/model/MoveOrder.gd")
 const CommitOrderResource = preload("res://scripts/model/CommitOrder.gd")
-const ShipFleetResource = preload("res://scripts/model/ShipFleet.gd")
+const ShipStateResource = preload("res://scripts/model/ShipState.gd")
 const SupplyStateResource = preload("res://scripts/model/SupplyState.gd")
 const FEBA_RETREAT_THRESHOLD_KM := 10.0
 
@@ -15,7 +15,8 @@ var turn_length_days: int = 1
 var orders: Dictionary = {}  # Brigade.Team -> Array[MoveOrder]
 var commitments: Dictionary = {}  # Brigade.Team -> Array[CommitOrder]
 var ship_reserve: Array = []  # OffloadCalculator-ready: [{brigade_id, locked_beach, beach_hex, offset_bearing, bns:[{id,type}]}]
-var ship_fleet: Array[ShipFleet] = []  # forward-compat fleet inventory
+var fleet: Dictionary = {}  # ship name (String) -> ShipState
+var pending_lost_at_sea: int = 0
 var supply_state: SupplyState
 var last_contested_hexes: Array[String] = []
 var last_combat_summaries: Array = []
@@ -41,8 +42,9 @@ func reset_to_scenario() -> void:
 		Brigade.Team.GREEN: []
 	}
 	_rebuild_ship_reserve()
-	_rebuild_ship_fleet()
+	_rebuild_fleet()
 	_rebuild_supply_state()
+	pending_lost_at_sea = 0
 	last_contested_hexes.clear()
 	last_combat_summaries.clear()
 	EventBus.phase_changed.emit(phase)
@@ -229,6 +231,9 @@ func resolve_offload_turn(dice: Dice) -> Dictionary:
 	assert(dice != null, "resolve_offload_turn requires a Dice instance")
 	if ship_reserve.is_empty():
 		var empty_manifest := _empty_offload_manifest()
+		empty_manifest["lost_at_sea"] = pending_lost_at_sea
+		# D3-F applies lost_at_sea to the reserve; D0-C only threads the value.
+		pending_lost_at_sea = 0
 		EventBus.offload_resolved.emit(empty_manifest)
 		return empty_manifest
 
@@ -284,6 +289,9 @@ func resolve_offload_turn(dice: Dice) -> Dictionary:
 	ship_reserve = remaining_ship_reserve
 	GameData.recompute_hex_ownership()
 	manifest["landed_brigade_ids"] = landed_brigade_ids
+	manifest["lost_at_sea"] = pending_lost_at_sea
+	# D3-F applies lost_at_sea to the reserve; D0-C only threads the value.
+	pending_lost_at_sea = 0
 	EventBus.offload_resolved.emit(manifest)
 	return manifest
 
@@ -381,22 +389,26 @@ func _rebuild_supply_state() -> void:
 	supply_state.day_history = []
 
 
-func _rebuild_ship_fleet() -> void:
-	ship_fleet.clear()
-	var total_bns_at_sea := 0
-	for reserve_entry_value in ship_reserve:
-		var reserve_entry: Dictionary = reserve_entry_value
-		total_bns_at_sea += (reserve_entry["bns"] as Array).size()
+func register_ship_losses(bn_equiv_lost: int) -> void:
+	pending_lost_at_sea = maxi(0, bn_equiv_lost)
 
-	var fleet: ShipFleet = ShipFleetResource.new()
-	fleet.ship_type = "amphibious_transport"
-	fleet.ready = ship_reserve.size()
-	fleet.offloading = 0
-	fleet.returning = 0
-	fleet.destroyed = 0
-	fleet.carrying_capacity_bns = total_bns_at_sea
-	assert(fleet.carrying_capacity_bns >= total_bns_at_sea, "Ship fleet capacity is less than total BNs at sea")
-	ship_fleet.append(fleet)
+
+func _rebuild_fleet() -> void:
+	fleet.clear()
+	for ship_def_value in GameData.ship_defs.values():
+		var ship_def: ShipDef = ship_def_value
+		var ship_state: ShipState = ShipStateResource.new()
+		ship_state.ship_type = ship_def.name
+		ship_state.fleet_total = ship_def.total_count
+		ship_state.fleet_surviving_total = ship_def.total_count
+		ship_state.ready = ship_def.total_count
+		ship_state.sent_original = 0
+		ship_state.surviving_sent = 0
+		ship_state.offloading = 0
+		ship_state.returning = 0
+		ship_state.destroyed = 0
+		assert(ship_state.validate(), "Invalid initial ShipState for %s" % ship_def.name)
+		fleet[ship_def.name] = ship_state
 
 
 func _apply_move_orders(team: Brigade.Team) -> void:

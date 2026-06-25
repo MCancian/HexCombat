@@ -5,11 +5,13 @@ const HexResource = preload("res://scripts/model/Hex.gd")
 const BrigadeResource = preload("res://scripts/model/Brigade.gd")
 const BattalionResource = preload("res://scripts/model/Battalion.gd")
 const BeachDefResource = preload("res://scripts/model/BeachDef.gd")
+const ShipDefResource = preload("res://scripts/model/ShipDef.gd")
 
 const OOB_PATHS := ["res://data/pla_ground_forces.json", "res://data/roc_ground_forces.json"]
 const DEFAULT_SCENARIO_PATH := "res://data/scenario_default.json"
 const BEACHES_PATH := "res://data/beaches.json"
 const THEATERS_PATH := "res://data/theaters.json"
+const SHIPS_PATH := "res://data/ships.json"
 
 var scenario_name: String = ""
 var turn_length_days: int = 0
@@ -27,6 +29,7 @@ var brigades: Dictionary = {}  # brigade_id -> Brigade
 var brigades_by_hex: Dictionary = {}  # hex_id -> Array[String]
 
 var beaches: Dictionary = {}  # beach_id (int) -> BeachDef
+var ship_defs: Dictionary = {}  # id (int) -> ShipDef
 
 var active_tos: Array[int] = []
 var to_adjacency: Dictionary = {}  # to_number (int) -> Array[int]
@@ -44,7 +47,8 @@ func load_all() -> void:
 	load_scenario(DEFAULT_SCENARIO_PATH)
 	load_theaters()
 	load_beaches()
-	print_debug("GameData ready: %d hexes, %d brigades, %d beaches, %d TOs" % [hexes.size(), brigades.size(), beaches.size(), active_tos.size()])
+	load_ships()
+	print_debug("GameData ready: %d hexes, %d brigades, %d beaches, %d TOs, %d ship types" % [hexes.size(), brigades.size(), beaches.size(), active_tos.size(), ship_defs.size()])
 
 
 func load_hex_grid() -> void:
@@ -395,6 +399,53 @@ func load_beaches() -> void:
 
 func get_beach(beach_id: int) -> BeachDef:
 	return beaches.get(beach_id, null)
+
+
+func load_ships() -> void:
+	ship_defs.clear()
+	var json = _read_json(SHIPS_PATH)
+	if json == null or not (json is Dictionary):
+		push_error("ships.json format not recognized: expected Dictionary")
+		return
+	var ships_data = json.get("ships", null)
+	if not (ships_data is Array):
+		push_error("ships.json missing ships array")
+		return
+	var categories_data = json.get("categories", null)
+	if not (categories_data is Dictionary):
+		push_error("ships.json missing categories object")
+		return
+	for ship_data_value in ships_data:
+		if not (ship_data_value is Dictionary):
+			push_error("ships.json ship entry must be a Dictionary")
+			continue
+		var ship_data: Dictionary = ship_data_value
+		var ship_def: ShipDef = ShipDefResource.new()
+		ship_def.id = int(ship_data.get("id", 0))
+		ship_def.name = String(ship_data.get("name", ""))
+		ship_def.display_name = String(ship_data.get("display_name", ""))
+		ship_def.category = String(ship_data.get("category", ""))
+		ship_def.infrastructure = bool(ship_data.get("infrastructure", false))
+		ship_def.total_count = int(ship_data.get("total_count", 0))
+		ship_def.initial_ready = int(ship_data.get("initial_ready", 0))
+		ship_def.carrying_capacity_bn_equiv = float(ship_data.get("carrying_capacity_bn_equiv", 0.0))
+		ship_def.is_decoy = bool(ship_data.get("is_decoy", false))
+		ship_def.setup_group = String(ship_data.get("setup_group", ""))
+		if ship_def.id == 0:
+			push_error("Ship entry missing id field")
+			continue
+		if ship_def.name.is_empty():
+			push_error("Ship %d missing name" % ship_def.id)
+		if ship_def.category not in categories_data:
+			push_error("Ship %d has unknown category: %s" % [ship_def.id, ship_def.category])
+		if ship_def.initial_ready != ship_def.total_count:
+			push_error("Ship %s initial_ready must equal total_count" % ship_def.name)
+		ship_defs[ship_def.id] = ship_def
+	print_debug("Loaded %d ship types" % ship_defs.size())
+
+
+func get_ship_def(ship_id: int) -> ShipDef:
+	return ship_defs.get(ship_id, null)
 
 
 func _add_brigade_to_hex(brigade_id: String, hex_id: String) -> void:

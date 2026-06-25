@@ -29,11 +29,17 @@ func test_reset_to_scenario_initializes_turn_phase_days_and_empty_buffers() -> v
 		"PLA-73-14-Amphibious",
 		"PLA-74-1-Amphibious"
 	])
-	assert_int(GameState.ship_fleet.size()).is_equal(1)
-	var fleet: ShipFleet = GameState.ship_fleet[0]
-	assert_str(fleet.ship_type).is_equal("amphibious_transport")
-	assert_int(fleet.ready).is_equal(4)
-	assert_int(fleet.carrying_capacity_bns).is_equal(_ship_reserve_bn_count())
+	assert_int(GameState.fleet.size()).is_equal(27)
+	var cg_state: ShipState = GameState.fleet["CG"]
+	var cg_def: ShipDef = GameData.get_ship_def(1)
+	assert_float(cg_def.carrying_capacity_bn_equiv).is_equal(0.0)
+	assert_int(cg_state.ready).is_equal(cg_def.total_count)
+	assert_bool(cg_state.validate()).is_true()
+	var lha_state: ShipState = GameState.fleet["LHA"]
+	var lha_def: ShipDef = GameData.get_ship_def(5)
+	assert_float(lha_def.carrying_capacity_bn_equiv).is_equal(1.0)
+	assert_int(lha_state.ready).is_equal(lha_def.total_count)
+	assert_bool(lha_state.validate()).is_true()
 
 
 func test_add_move_order_collects_valid_orders_and_rejects_invalid_orders() -> void:

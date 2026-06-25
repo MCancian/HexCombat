@@ -1,0 +1,314 @@
+{
+  "description": "Numerical ship type definitions with all properties",
+  "version": "4.0",
+  "categories": {
+    "Escort": {
+      "display_name": "Escort Ships",
+      "description": "Combat escorts with no battalion carrying capacity",
+      "behavior": "standard_cycle"
+    },
+    "Military_Amphibious": {
+      "display_name": "Military Amphibious Ships",
+      "description": "Military landing ships that can carry all battalion types",
+      "behavior": "standard_cycle"
+    },
+    "Civilian_Amphibious": {
+      "display_name": "Civilian Amphibious Ships",
+      "description": "Modified civilian ships that can carry all battalion types",
+      "behavior": "standard_cycle"
+    },
+    "Civilian_Non_Amphibious": {
+      "display_name": "Civilian Non-Amphibious Ships",
+      "description": "Civilian ships that can only carry non-amphibious battalions",
+      "behavior": "standard_cycle"
+    },
+    "Infrastructure": {
+      "display_name": "Infrastructure Ships",
+      "description": "Ships that remain in offloading zone once deployed",
+      "behavior": "stay_offloading"
+    }
+  },
+  "ships": [
+    {
+      "id": 1,
+      "name": "CG",
+      "display_name": "CG",
+      "category": "Escort",
+      "infrastructure": false,
+      "total_count": 12,
+      "initial_ready": 12,
+      "carrying_capacity_bn_equiv": 0.0
+    },
+    {
+      "id": 2,
+      "name": "DDG",
+      "display_name": "DDG",
+      "category": "Escort",
+      "infrastructure": false,
+      "total_count": 12,
+      "initial_ready": 12,
+      "carrying_capacity_bn_equiv": 0.0
+    },
+    {
+      "id": 3,
+      "name": "FFG",
+      "display_name": "FFG",
+      "category": "Escort",
+      "infrastructure": false,
+      "total_count": 24,
+      "initial_ready": 24,
+      "carrying_capacity_bn_equiv": 0.0
+    },
+    {
+      "id": 4,
+      "name": "FFL",
+      "display_name": "FFL",
+      "category": "Escort",
+      "infrastructure": false,
+      "total_count": 24,
+      "initial_ready": 24,
+      "carrying_capacity_bn_equiv": 0.0
+    },
+    {
+      "id": 5,
+      "name": "LHA",
+      "display_name": "LHA",
+      "category": "Military_Amphibious",
+      "infrastructure": false,
+      "total_count": 4,
+      "initial_ready": 4,
+      "carrying_capacity_bn_equiv": 1.0
+    },
+    {
+      "id": 6,
+      "name": "LPD",
+      "display_name": "LPD",
+      "category": "Military_Amphibious",
+      "infrastructure": false,
+      "total_count": 8,
+      "initial_ready": 8,
+      "carrying_capacity_bn_equiv": 1.0
+    },
+    {
+      "id": 7,
+      "name": "LST",
+      "display_name": "LST",
+      "category": "Military_Amphibious",
+      "infrastructure": false,
+      "total_count": 17,
+      "initial_ready": 17,
+      "carrying_capacity_bn_equiv": 0.25
+    },
+    {
+      "id": 8,
+      "name": "LSM",
+      "display_name": "LSM",
+      "category": "Military_Amphibious",
+      "infrastructure": false,
+      "total_count": 11,
+      "initial_ready": 11,
+      "carrying_capacity_bn_equiv": 0.1
+    },
+    {
+      "id": 9,
+      "name": "LCU",
+      "display_name": "LCU",
+      "category": "Military_Amphibious",
+      "infrastructure": false,
+      "total_count": 24,
+      "initial_ready": 24,
+      "carrying_capacity_bn_equiv": 0.1
+    },
+    {
+      "id": 10,
+      "name": "Large_RoRo_Mod",
+      "display_name": "Large RoRo Mod",
+      "category": "Civilian_Amphibious",
+      "infrastructure": false,
+      "total_count": 30,
+      "initial_ready": 30,
+      "carrying_capacity_bn_equiv": 1.0
+    },
+    {
+      "id": 11,
+      "name": "Small_RoRo_Mod",
+      "display_name": "Small RoRo Mod",
+      "category": "Civilian_Amphibious",
+      "infrastructure": false,
+      "total_count": 20,
+      "initial_ready": 20,
+      "carrying_capacity_bn_equiv": 0.25
+    },
+    {
+      "id": 12,
+      "name": "Container_Ship",
+      "display_name": "Container Ship",
+      "category": "Civilian_Non_Amphibious",
+      "infrastructure": false,
+      "total_count": 15,
+      "initial_ready": 15,
+      "carrying_capacity_bn_equiv": 1.0
+    },
+    {
+      "id": 13,
+      "name": "Assault_Barges",
+      "display_name": "Assault Barges",
+      "category": "Civilian_Non_Amphibious",
+      "infrastructure": false,
+      "total_count": 10,
+      "initial_ready": 10,
+      "carrying_capacity_bn_equiv": 0.5
+    },
+    {
+      "id": 14,
+      "name": "Fast_Transport",
+      "display_name": "Fast Transport",
+      "category": "Civilian_Non_Amphibious",
+      "infrastructure": false,
+      "total_count": 12,
+      "initial_ready": 12,
+      "carrying_capacity_bn_equiv": 1.0
+    },
+    {
+      "id": 15,
+      "name": "LCT_Causeway",
+      "display_name": "LCT Causeway",
+      "category": "Infrastructure",
+      "infrastructure": true,
+      "total_count": 8,
+      "initial_ready": 8,
+      "carrying_capacity_bn_equiv": 0.0
+    },
+    {
+      "id": 16,
+      "name": "LCT_Transfer",
+      "display_name": "LCT Transfer",
+      "category": "Infrastructure",
+      "infrastructure": true,
+      "total_count": 6,
+      "initial_ready": 6,
+      "carrying_capacity_bn_equiv": 0.0
+    },
+    {
+      "id": 17,
+      "name": "Floating_Piers",
+      "display_name": "Floating Piers",
+      "category": "Infrastructure",
+      "infrastructure": true,
+      "total_count": 1,
+      "initial_ready": 1,
+      "carrying_capacity_bn_equiv": 0.0
+    },
+    {
+      "id": 18,
+      "name": "Jackup_Barges",
+      "display_name": "Jackup Barges",
+      "category": "Infrastructure",
+      "infrastructure": true,
+      "total_count": 4,
+      "initial_ready": 4,
+      "carrying_capacity_bn_equiv": 0.0
+    },
+    {
+      "id": 19,
+      "name": "Spud_Barge",
+      "display_name": "Spud Barge",
+      "category": "Infrastructure",
+      "infrastructure": true,
+      "total_count": 5,
+      "initial_ready": 5,
+      "carrying_capacity_bn_equiv": 0.0
+    },
+    {
+      "id": 20,
+      "name": "Semi_Sub",
+      "display_name": "Semi Sub",
+      "category": "Infrastructure",
+      "infrastructure": true,
+      "total_count": 3,
+      "initial_ready": 3,
+      "carrying_capacity_bn_equiv": 0.0
+    },
+    {
+      "id": 21,
+      "name": "AOT_Fujian",
+      "display_name": "AOT Fujian",
+      "category": "Infrastructure",
+      "infrastructure": true,
+      "total_count": 2,
+      "initial_ready": 2,
+      "carrying_capacity_bn_equiv": 0.0
+    },
+    {
+      "id": 22,
+      "name": "Pump_Relay",
+      "display_name": "Pump Relay",
+      "category": "Infrastructure",
+      "infrastructure": true,
+      "total_count": 4,
+      "initial_ready": 4,
+      "carrying_capacity_bn_equiv": 0.0
+    },
+    {
+      "id": 23,
+      "name": "Tug",
+      "display_name": "Tug",
+      "category": "Infrastructure",
+      "infrastructure": true,
+      "total_count": 8,
+      "initial_ready": 8,
+      "carrying_capacity_bn_equiv": 0.0,
+      "setup_group": "Others"
+    },
+    {
+      "id": 24,
+      "name": "Break_Bulk",
+      "display_name": "Break Bulk",
+      "category": "Infrastructure",
+      "infrastructure": true,
+      "total_count": 12,
+      "initial_ready": 12,
+      "carrying_capacity_bn_equiv": 0.0,
+      "setup_group": "Others"
+    },
+    {
+      "id": 25,
+      "name": "Decoys",
+      "display_name": "Decoys",
+      "category": "Infrastructure",
+      "infrastructure": true,
+      "total_count": 40,
+      "initial_ready": 40,
+      "carrying_capacity_bn_equiv": 0.0,
+      "is_decoy": true,
+      "setup_group": "Others"
+    },
+    {
+      "id": 27,
+      "name": "Large_RoRo_Unmod",
+      "display_name": "Large RoRo Unmod",
+      "category": "Civilian_Non_Amphibious",
+      "infrastructure": false,
+      "total_count": 30,
+      "initial_ready": 30,
+      "carrying_capacity_bn_equiv": 1.0
+    },
+    {
+      "id": 28,
+      "name": "Small_RoRo_Unmod",
+      "display_name": "Small RoRo Unmod",
+      "category": "Civilian_Non_Amphibious",
+      "infrastructure": false,
+      "total_count": 20,
+      "initial_ready": 20,
+      "carrying_capacity_bn_equiv": 0.25
+    }
+  ],
+  "notes": [
+    "Ship IDs are numerical and start from 1",
+    "Names are for display only - IDs are used internally",
+    "Infrastructure ships have carrying_capacity_bn_equiv of 0",
+    "carrying_capacity_bn_equiv is in BN-equivalents (e.g., 1.0 = 1 mech-inf BN = 2,200 t)",
+    "Users can add more ships by increasing the highest ID"
+  ]
+}
