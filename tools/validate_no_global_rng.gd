@@ -66,6 +66,11 @@ func _scan_file(path: String, regex: RegEx) -> void:
 		var hash_at := code.find("#")
 		if hash_at != -1:
 			code = code.substr(0, hash_at)
+		# Allow method DEFINITIONS to share a name with a global RNG fn (e.g. the
+		# Dice abstraction's own `func randf()`); a definition is not a global call.
+		# Safe because the codebase has no single-line `func x(): ...` bodies.
+		if code.strip_edges().begins_with("func "):
+			continue
 		if regex.search(code) != null:
 			_fail("%s:%d global RNG call: %s" % [path, line_no, line.strip_edges()])
 
