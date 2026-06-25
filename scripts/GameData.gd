@@ -9,6 +9,7 @@ const BeachDefResource = preload("res://scripts/model/BeachDef.gd")
 const OOB_PATHS := ["res://data/pla_ground_forces.json", "res://data/roc_ground_forces.json"]
 const DEFAULT_SCENARIO_PATH := "res://data/scenario_default.json"
 const BEACHES_PATH := "res://data/beaches.json"
+const THEATERS_PATH := "res://data/theaters.json"
 
 var scenario_name: String = ""
 var turn_length_days: int = 0
@@ -27,6 +28,10 @@ var brigades_by_hex: Dictionary = {}  # hex_id -> Array[String]
 
 var beaches: Dictionary = {}  # beach_id (int) -> BeachDef
 
+var active_tos: Array[int] = []
+var to_adjacency: Dictionary = {}  # to_number (int) -> Array[int]
+var beach_to_to: Dictionary = {}  # beach_id (int) -> to_number (int)
+
 
 func _ready() -> void:
 	load_all()
@@ -37,8 +42,9 @@ func load_all() -> void:
 	build_neighbor_lookup()
 	load_brigades()
 	load_scenario(DEFAULT_SCENARIO_PATH)
+	load_theaters()
 	load_beaches()
-	print_debug("GameData ready: %d hexes, %d brigades, %d beaches" % [hexes.size(), brigades.size(), beaches.size()])
+	print_debug("GameData ready: %d hexes, %d brigades, %d beaches, %d TOs" % [hexes.size(), brigades.size(), beaches.size(), active_tos.size()])
 
 
 func load_hex_grid() -> void:
@@ -313,6 +319,48 @@ func get_unit_count_in_hex(hex_id: String, team: Brigade.Team = Brigade.Team.RED
 		if brigade != null and brigade.team == team:
 			total += brigade.get_battalion_count()
 	return total
+
+
+func load_theaters() -> void:
+	active_tos.clear()
+	to_adjacency.clear()
+	beach_to_to.clear()
+
+	var json = _read_json(THEATERS_PATH)
+	if json == null or not (json is Dictionary):
+		push_error("theaters.json format not recognized: expected Dictionary")
+		return
+
+	var active_tos_data = json.get("active_tos", null)
+	if not (active_tos_data is Array):
+		push_error("theaters.json missing active_tos array")
+		return
+	for to_value in active_tos_data:
+		active_tos.append(int(to_value))
+
+	var adjacency_data = json.get("to_adjacency", null)
+	if not (adjacency_data is Dictionary):
+		push_error("theaters.json missing to_adjacency object")
+		return
+	for to_key in adjacency_data.keys():
+		var to_number := int(String(to_key))
+		var neighbors_data = adjacency_data[to_key]
+		if not (neighbors_data is Array):
+			push_error("theaters.json to_adjacency[%d] must be an Array" % to_number)
+			continue
+		var neighbors: Array[int] = []
+		for neighbor_value in neighbors_data:
+			neighbors.append(int(neighbor_value))
+		to_adjacency[to_number] = neighbors
+
+	var beach_to_to_data = json.get("beach_to_to", null)
+	if not (beach_to_to_data is Dictionary):
+		push_error("theaters.json missing beach_to_to object")
+		return
+	for beach_key in beach_to_to_data.keys():
+		beach_to_to[int(String(beach_key))] = int(beach_to_to_data[beach_key])
+
+	print_debug("Loaded %d active TOs" % active_tos.size())
 
 
 func load_beaches() -> void:
