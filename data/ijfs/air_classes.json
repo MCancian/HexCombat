@@ -1,0 +1,17 @@
+{
+  "model_version": 3,
+  "reference_isr_sum": 1.0,
+  "classes": {
+    "5th Gen": {"kind": "manned", "rcs": -2, "wvr": 5, "isr_value": 0.8, "sead_eff": 0},
+    "4.5th Gen": {"kind": "manned", "rcs": 0, "wvr": 4, "isr_value": 0.7, "sead_eff": 0},
+    "4th Gen": {"kind": "manned", "rcs": 0, "wvr": 3, "isr_value": 0.4, "sead_eff": 0},
+    "J-16D": {"kind": "manned", "rcs": 0, "wvr": 3, "isr_value": 0.5, "sead_eff": 1},
+    "JH-7": {"kind": "manned", "rcs": 1, "wvr": 2, "isr_value": 0.2, "sead_eff": 0},
+    "H-6": {"kind": "manned", "rcs": 2, "wvr": 0, "isr_value": 0.3, "sead_eff": 0},
+    "Stealth": {"kind": "unmanned", "rcs": -3, "wvr": 0, "isr_value": 0.9, "sead_eff": 0},
+    "MALE Armed": {"kind": "unmanned", "rcs": 0, "wvr": 0, "isr_value": 0.7, "sead_eff": 0},
+    "HALE Armed": {"kind": "unmanned", "rcs": -1, "wvr": 0, "isr_value": 1.0, "sead_eff": 0},
+    "Decoys": {"kind": "unmanned", "rcs": 0, "wvr": 0, "isr_value": 0.0, "sead_eff": 0},
+    "HARM": {"kind": "unmanned", "rcs": -1, "wvr": 0, "isr_value": 0.1, "sead_eff": 1}
+  }
+}

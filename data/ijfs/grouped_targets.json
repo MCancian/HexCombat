@@ -1,0 +1,104 @@
+{
+  "metadata": {
+    "version": "1",
+    "topology_version": "mobile-sams-v1"
+  },
+  "groups": [
+    {
+      "group_id": "mobile_sam_antelope",
+      "replaces_target_ids": [
+        "sam_mobile_antelope_to2",
+        "sam_mobile_antelope_to3",
+        "sam_mobile_antelope_to4",
+        "sam_mobile_antelope_to5"
+      ],
+      "name": "Antelope mobile SAM unit",
+      "category": "Mobile SAMs",
+      "subcategory": "Short-Range Mobile SAM – Antelope",
+      "unit_size": 5,
+      "mobility": "mobile",
+      "hardness": "soft",
+      "detectability_active": "medium",
+      "detectability_hiding": "low",
+      "posture_default": "active",
+      "segments": [
+        {
+          "segment_id": "to2",
+          "aggregate_target_id": "sam_mobile_antelope_to2",
+          "to_number": 2,
+          "total_systems": 10,
+          "target_id_prefix": "sam_mobile_antelope_to2"
+        },
+        {
+          "segment_id": "to3",
+          "aggregate_target_id": "sam_mobile_antelope_to3",
+          "to_number": 3,
+          "total_systems": 20,
+          "target_id_prefix": "sam_mobile_antelope_to3"
+        },
+        {
+          "segment_id": "to4",
+          "aggregate_target_id": "sam_mobile_antelope_to4",
+          "to_number": 4,
+          "total_systems": 10,
+          "target_id_prefix": "sam_mobile_antelope_to4"
+        },
+        {
+          "segment_id": "to5",
+          "aggregate_target_id": "sam_mobile_antelope_to5",
+          "to_number": 5,
+          "total_systems": 10,
+          "target_id_prefix": "sam_mobile_antelope_to5"
+        }
+      ]
+    },
+    {
+      "group_id": "mobile_sam_stinger",
+      "replaces_target_ids": [
+        "sam_mobile_stinger_to2",
+        "sam_mobile_stinger_to3",
+        "sam_mobile_stinger_to4",
+        "sam_mobile_stinger_to5"
+      ],
+      "name": "Stinger MANPADS unit",
+      "category": "Mobile SAMs",
+      "subcategory": "MANPADS – Stinger",
+      "unit_size": 100,
+      "mobility": "mobile",
+      "hardness": "soft",
+      "detectability_active": "medium",
+      "detectability_hiding": "low",
+      "posture_default": "active",
+      "segments": [
+        {
+          "segment_id": "to2",
+          "aggregate_target_id": "sam_mobile_stinger_to2",
+          "to_number": 2,
+          "total_systems": 500,
+          "target_id_prefix": "sam_mobile_stinger_to2"
+        },
+        {
+          "segment_id": "to3",
+          "aggregate_target_id": "sam_mobile_stinger_to3",
+          "to_number": 3,
+          "total_systems": 1000,
+          "target_id_prefix": "sam_mobile_stinger_to3"
+        },
+        {
+          "segment_id": "to4",
+          "aggregate_target_id": "sam_mobile_stinger_to4",
+          "to_number": 4,
+          "total_systems": 500,
+          "target_id_prefix": "sam_mobile_stinger_to4"
+        },
+        {
+          "segment_id": "to5",
+          "aggregate_target_id": "sam_mobile_stinger_to5",
+          "to_number": 5,
+          "total_systems": 500,
+          "target_id_prefix": "sam_mobile_stinger_to5"
+        }
+      ]
+    }
+  ]
+}

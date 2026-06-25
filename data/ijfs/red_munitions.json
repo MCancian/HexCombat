@@ -1,0 +1,453 @@
+{
+  "metadata": {
+    "version": "0.2",
+    "created_by": "ChatGPT",
+    "created": "2026-05-10",
+    "purpose": "Red munition inventory and attributes for Taiwan bombardment campaign-analysis simulation.",
+    "scope_note": "Open-source, campaign-level abstraction. Not a strike plan, no target sequencing, no aimpoints. Inventories are scenario defaults and should remain user-editable.",
+    "modeling_assumptions": [
+      "category is one of Inorganic-Slow, Inorganic-Fast, or Organic.",
+      "warhead_size is one of large, medium, or small.",
+      "rounds_per_engagement_default represents a package/salvo, not necessarily one launcher load.",
+      "effects are modeled in munition_target_pairings.json conditional on target detection; detection is handled elsewhere.",
+      "Static targets bypass ISR detection and are always known/targetable if not destroyed.",
+      "Moveable and mobile targets require detection before attack.",
+      "This standalone IJFS calculator does not apply suppression effects; suppression may be handled elsewhere.",
+      "UAV and manned-aircraft strike/ISR availability is handled through ijfs_scenario.json mission pools."
+    ],
+    "source_refs": {
+      "dod_cmp_2024": {
+        "title": "Military and Security Developments Involving the People's Republic of China 2024",
+        "publisher": "U.S. Department of Defense",
+        "url": "https://media.defense.gov/2024/dec/18/2003615520/-1/-1/0/military-and-security-developments-involving-the-peoples-republic-of-china-2024.pdf",
+        "date": "2024-12-18",
+        "claim_supported": "PLA Rocket Force missile classes, estimated inventories, ranges; PLAAF/PLAN aviation force structure; PLA joint firepower strike context."
+      },
+      "cmsi_pch191_2023": {
+        "title": "China Maritime Report No. 32: The PCH191 Modular Long-Range Rocket Launcher",
+        "publisher": "China Maritime Studies Institute, U.S. Naval War College",
+        "url": "https://digital-commons.usnwc.edu/cmsi-maritime-reports/32/",
+        "date": "2023-11",
+        "claim_supported": "PCH191 has multiple long-range precision munition types and can support joint firepower strikes and landing operations against Taiwan."
+      },
+      "target_inventory_2026": {
+        "title": "Taiwan Bombardment Target Inventory JSONs and Research Memo",
+        "publisher": "Deep research agent output supplied by simulation designer",
+        "url": null,
+        "date": "2026-05-10",
+        "claim_supported": "Target categories, target attributes, and target type templates."
+      }
+    },
+    "updated_for": "IJFS_Rework standalone daily detection/strike prototype",
+    "inventory_accounting_rule": "Always decrement inventory by rounds_per_engagement_default. No partial salvos. All inventory_default values are clean multiples of rounds_per_engagement_default."
+  },
+  "munitions": [
+    {
+      "munition_id": "pla_srbm_large_generic",
+      "name": "PLA SRBM Strike Package (DF-15/DF-16 family)",
+      "display_label": "SRBM",
+      "representative_systems": [
+        "DF-15 / CSS-6",
+        "DF-16 / CSS-11"
+      ],
+      "category": "Inorganic-Fast",
+      "warhead_size": "large",
+      "special_effects": [],
+      "inventory_default": 800,
+      "inventory_notes": "Clean multiple of 8. Scenario default for generic large SRBM packages after reserving DF-15C penetrators separately.",
+      "rounds_per_engagement_default": 8,
+      "package_label": "SRBM salvo",
+      "best_target_types": [
+        "ROCAF Airbases",
+        "ROCN Bases",
+        "Static Radars",
+        "Static SAMs",
+        "Government Buildings",
+        "surface Military Headquarters"
+      ],
+      "poor_target_types": [
+        "mobile maneuver units in hiding",
+        "mobile anti-ship launchers in hiding",
+        "submerged submarines",
+        "buried facilities without penetrator effects"
+      ],
+      "confidence": "medium",
+      "source_refs": [
+        "dod_cmp_2024"
+      ],
+      "notes": "Fast, preplanned or rapidly tasked missile package. Strong against fixed soft/hard targets; conservative destruction probabilities against mobile targets even conditional on detection.",
+      "inventory_remaining_default": 800,
+      "inventory_is_clean_multiple_of_engagement_size": true
+    },
+    {
+      "munition_id": "df15c_penetrator_srbm",
+      "name": "DF-15C Penetrator SRBM",
+      "display_label": "DF-15C Penetrator",
+      "representative_systems": [
+        "DF-15C / CSS-6 Mod variant"
+      ],
+      "category": "Inorganic-Fast",
+      "warhead_size": "large",
+      "special_effects": [
+        "penetrator",
+        "buried_target_capable"
+      ],
+      "inventory_default": 50,
+      "inventory_notes": "User-specified default. Clean multiple of 10; reserved for buried/hardened targets.",
+      "rounds_per_engagement_default": 10,
+      "package_label": "penetrator SRBM salvo",
+      "best_target_types": [
+        "buried Military Headquarters",
+        "buried ROCAF Airbases",
+        "hard fixed command facilities"
+      ],
+      "poor_target_types": [
+        "mobile targets",
+        "low-value soft targets",
+        "targets requiring persistent loitering or terminal visual identification"
+      ],
+      "confidence": "low",
+      "source_refs": [
+        "dod_cmp_2024"
+      ],
+      "notes": "Specialized abstraction for buried targets such as Heng Shan and Chiashan. Destruction of buried targets remains difficult; suppression is much more likely than destruction.",
+      "inventory_remaining_default": 50,
+      "inventory_is_clean_multiple_of_engagement_size": true
+    },
+    {
+      "munition_id": "pch191_bre6_crbm",
+      "name": "PCH191 BRE6 Close-Range Ballistic Rocket Package",
+      "display_label": "BRE6",
+      "representative_systems": [
+        "PCH191 / PHL-16 family",
+        "BRE6-class guided rocket"
+      ],
+      "category": "Inorganic-Fast",
+      "warhead_size": "medium",
+      "special_effects": [
+        "precision_rocket"
+      ],
+      "inventory_default": 28800,
+      "inventory_notes": "User-specified default. Clean multiple of 48; represents 600 battalion-sized 48-round fire missions.",
+      "rounds_per_engagement_default": 48,
+      "package_label": "PCH191 BRE6 battalion-sized 48-round fire mission",
+      "best_target_types": [
+        "fixed soft targets",
+        "fixed radars",
+        "airbase suppression",
+        "exposed SAM sites",
+        "ports and logistics areas"
+      ],
+      "poor_target_types": [
+        "buried targets",
+        "mobile targets in hiding",
+        "hardened underground facilities"
+      ],
+      "confidence": "low",
+      "source_refs": [
+        "cmsi_pch191_2023",
+        "dod_cmp_2024"
+      ],
+      "notes": "Modeled as a fast, massed, medium-warhead close-range precision rocket package. Useful for suppression and attrition of fixed or recently located targets.",
+      "inventory_remaining_default": 28800,
+      "inventory_is_clean_multiple_of_engagement_size": true
+    },
+    {
+      "munition_id": "pch191_bre8_crbm",
+      "name": "PCH191 BRE8 Close-Range Ballistic Rocket Package",
+      "display_label": "BRE8",
+      "representative_systems": [
+        "PCH191 / PHL-16 family",
+        "BRE8-class tactical missile"
+      ],
+      "category": "Inorganic-Fast",
+      "warhead_size": "large",
+      "special_effects": [
+        "precision_rocket",
+        "large_unitary_warhead"
+      ],
+      "inventory_default": 7200,
+      "inventory_notes": "Scenario knob. Clean multiple of 12; represents 600 heavy 12-round fire missions.",
+      "rounds_per_engagement_default": 12,
+      "package_label": "PCH191 large-caliber fire mission",
+      "best_target_types": [
+        "fixed hard targets",
+        "ports",
+        "airbase suppression",
+        "large fixed command facilities"
+      ],
+      "poor_target_types": [
+        "buried targets without penetrator effect",
+        "mobile targets in hiding"
+      ],
+      "confidence": "low",
+      "source_refs": [
+        "cmsi_pch191_2023",
+        "dod_cmp_2024"
+      ],
+      "notes": "Modeled as a heavier PCH191 package than BRE6. More destructive against hard/static targets; still conservative against mobile targets.",
+      "inventory_remaining_default": 7200,
+      "inventory_is_clean_multiple_of_engagement_size": true
+    },
+    {
+      "munition_id": "cj10_lacm_glcm",
+      "name": "Land-Attack Cruise Missile Package (CJ-10 / DH-10 / CJ-100 family)",
+      "display_label": "LACMs",
+      "representative_systems": [
+        "CJ-10 / DH-10",
+        "CJ-100 / DF-100",
+        "air-launched LACM from H-6K-class bombers"
+      ],
+      "category": "Inorganic-Slow",
+      "warhead_size": "large",
+      "special_effects": [
+        "terrain_following",
+        "standoff"
+      ],
+      "inventory_default": 400,
+      "inventory_notes": "Clean multiple of 4. Scenario default for land-attack cruise missile packages.",
+      "rounds_per_engagement_default": 4,
+      "package_label": "cruise-missile salvo",
+      "best_target_types": [
+        "fixed government buildings",
+        "fixed radars",
+        "fixed headquarters",
+        "airbases",
+        "naval bases"
+      ],
+      "poor_target_types": [
+        "mobile targets",
+        "moveable SAMs in hiding",
+        "mobile anti-ship systems in hiding"
+      ],
+      "confidence": "medium",
+      "source_refs": [
+        "dod_cmp_2024"
+      ],
+      "notes": "Slow compared with ballistic missiles; strong against fixed targets if defenses are penetrated, but very poor against mobile targets unless the target remains static after detection.",
+      "inventory_remaining_default": 400,
+      "inventory_is_clean_multiple_of_engagement_size": true
+    },
+    {
+      "munition_id": "yj_62_ascm",
+      "name": "YJ-62 Anti-Ship Cruise Missile Package",
+      "representative_systems": [
+        "YJ-62",
+        "YJ-62A"
+      ],
+      "category": "Inorganic-Slow",
+      "warhead_size": "medium",
+      "special_effects": [
+        "sea_skimming",
+        "active_radar_homing"
+      ],
+      "inventory_default": 864,
+      "inventory_notes": "Clean multiple of 4. Coastal-defense anti-ship cruise missiles.",
+      "rounds_per_engagement_default": 4,
+      "package_label": "ASCM salvo",
+      "best_target_types": [
+        "Surface Combatants",
+        "Missile Patrol Boats",
+        "Corvettes / Fast Attack Craft",
+        "naval targets at sea or in port"
+      ],
+      "poor_target_types": [
+        "land targets without coastal exposure",
+        "buried targets",
+        "hardened ground facilities"
+      ],
+      "confidence": "medium",
+      "source_refs": [
+        "dod_cmp_2024"
+      ],
+      "notes": "Subsonic anti-ship cruise missile for coastal-defense strike role.",
+      "inventory_remaining_default": 864,
+      "inventory_is_clean_multiple_of_engagement_size": true
+    },
+    {
+      "munition_id": "yj_12_ascm",
+      "name": "YJ-12 Anti-Ship Cruise Missile Package",
+      "representative_systems": [
+        "YJ-12",
+        "YJ-12B"
+      ],
+      "category": "Inorganic-Fast",
+      "warhead_size": "large",
+      "special_effects": [
+        "supersonic_terminal",
+        "sea_skimming",
+        "active_radar_homing"
+      ],
+      "inventory_default": 432,
+      "inventory_notes": "Clean multiple of 4. Coastal-defense anti-ship cruise missiles.",
+      "rounds_per_engagement_default": 4,
+      "package_label": "ASCM salvo",
+      "best_target_types": [
+        "Surface Combatants",
+        "Missile Patrol Boats",
+        "Corvettes / Fast Attack Craft",
+        "naval targets at sea or in port"
+      ],
+      "poor_target_types": [
+        "land targets without coastal exposure",
+        "buried targets",
+        "hardened ground facilities"
+      ],
+      "confidence": "medium",
+      "source_refs": [
+        "dod_cmp_2024"
+      ],
+      "notes": "Supersonic anti-ship cruise missile for coastal-defense strike role.",
+      "inventory_remaining_default": 432,
+      "inventory_is_clean_multiple_of_engagement_size": true
+    },
+    {
+      "munition_id": "cm401_asbm",
+      "name": "CM-401 Anti-Ship Ballistic Missile Package",
+      "representative_systems": [
+        "CM-401",
+        "PCH191-launched ASBM"
+      ],
+      "category": "Inorganic-Fast",
+      "warhead_size": "large",
+      "special_effects": [
+        "supersonic_terminal",
+        "anti_ship_ballistic"
+      ],
+      "inventory_default": 432,
+      "inventory_notes": "Clean multiple of 4. Short-range anti-ship ballistic missile, PCH191-launched.",
+      "rounds_per_engagement_default": 4,
+      "package_label": "ASBM salvo",
+      "best_target_types": [
+        "large surface combatants",
+        "destroyers and frigates"
+      ],
+      "poor_target_types": [
+        "small patrol boats",
+        "land targets",
+        "coastal AShM launchers"
+      ],
+      "confidence": "medium",
+      "source_refs": [
+        "dod_cmp_2024"
+      ],
+      "notes": "Supersonic anti-ship ballistic missile with terminal maneuvering. Devastating against large combatants; less effective against small maneuvering craft.",
+      "inventory_remaining_default": 432,
+      "inventory_is_clean_multiple_of_engagement_size": true
+    },
+    {
+      "munition_id": "owa_drone_small",
+      "name": "One-Way Attack Drone Package",
+      "display_label": "OWA-UAV",
+      "representative_systems": [
+        "ASN-301-like loitering munition",
+        "Shahed-like OWA drone analogues"
+      ],
+      "category": "Inorganic-Slow",
+      "warhead_size": "small",
+      "special_effects": [
+        "loitering_or_one_way_attack",
+        "low_cost_mass"
+      ],
+      "inventory_default": 1200,
+      "inventory_notes": "Clean multiple of 12. Scenario default for mass one-way-attack drone packages.",
+      "rounds_per_engagement_default": 12,
+      "package_label": "OWA drone wave",
+      "best_target_types": [
+        "soft fixed targets",
+        "radar emitters",
+        "lightly protected vehicles if active",
+        "suppression and distraction targets"
+      ],
+      "poor_target_types": [
+        "buried targets",
+        "hard targets",
+        "mobile targets in hiding",
+        "hardened airbases"
+      ],
+      "confidence": "low",
+      "source_refs": [
+        "dod_cmp_2024"
+      ],
+      "notes": "Useful as a low-cost suppression or saturation tool. Destruction probabilities are deliberately conservative, especially for hard or mobile targets.",
+      "inventory_remaining_default": 1200,
+      "inventory_is_clean_multiple_of_engagement_size": true
+    },
+    {
+      "munition_id": "attack_uav_small",
+      "name": "Attack UAV Package",
+      "representative_systems": [
+        "Wing Loong-class UCAV",
+        "CH-series UCAV",
+        "other PLA armed UAVs"
+      ],
+      "category": "Organic",
+      "warhead_size": "small",
+      "special_effects": [
+        "terminal_identification",
+        "loitering_sensor_shooter"
+      ],
+      "inventory_default": 600,
+      "inventory_notes": "Clean multiple of 2. Scenario default for attack UAV engagements; availability may also be constrained by UAV mission allocation.",
+      "rounds_per_engagement_default": 2,
+      "package_label": "armed UAV attack",
+      "best_target_types": [
+        "active mobile soft targets",
+        "radar emitters",
+        "SAM components after air defense degradation",
+        "light vehicles"
+      ],
+      "poor_target_types": [
+        "buried targets",
+        "hardened airbases",
+        "hard naval bases",
+        "targets under strong air defense"
+      ],
+      "confidence": "low",
+      "source_refs": [
+        "dod_cmp_2024"
+      ],
+      "notes": "Organic sensor-shooter package that performs better than delayed munitions against active mobile targets, but air-defense losses are handled separately. Platform-backed (capacity from OrganicStrikeBudget); this inventory pool no longer depletes.",
+      "inventory_remaining_default": 600,
+      "inventory_is_clean_multiple_of_engagement_size": true
+    },
+    {
+      "munition_id": "strike_aircraft_medium",
+      "name": "Attack Aircraft Precision Strike Package",
+      "representative_systems": [
+        "J-16-class multirole strike aircraft",
+        "JH-7-class strike aircraft",
+        "H-6K standoff strike where appropriate"
+      ],
+      "category": "Organic",
+      "warhead_size": "medium",
+      "special_effects": [
+        "terminal_retargeting",
+        "large_sortie_package"
+      ],
+      "inventory_default": 400,
+      "inventory_notes": "Clean multiple of 4. Scenario default for manned aircraft strike packages; availability may also be constrained by manned aircraft mission allocation.",
+      "rounds_per_engagement_default": 4,
+      "package_label": "aircraft strike package",
+      "best_target_types": [
+        "fixed soft/hard targets after air defenses are degraded",
+        "active maneuver units",
+        "ports",
+        "airbases",
+        "SAM/radar components"
+      ],
+      "poor_target_types": [
+        "buried targets without penetrator weapons",
+        "targets covered by intact air defenses",
+        "well-hidden small mobile targets"
+      ],
+      "confidence": "medium",
+      "source_refs": [
+        "dod_cmp_2024"
+      ],
+      "notes": "Represents manned aircraft delivering guided munitions. Platform-backed: daily capacity is derived from surviving OOB manned strike-role squadrons (OrganicStrikeBudget), not from this inventory pool, which no longer depletes. Effects are conditional on reaching the target; air-defense attrition and air superiority are modeled elsewhere.",
+      "inventory_remaining_default": 400,
+      "inventory_is_clean_multiple_of_engagement_size": true
+    }
+  ]
+}

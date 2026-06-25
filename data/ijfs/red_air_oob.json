@@ -1,0 +1,16 @@
+{
+  "model_version": 3,
+  "red_air_oob": [
+    {"class": "5th Gen",    "role": "strike", "squadrons": 2, "aircraft_per_sqn": 24},
+    {"class": "4.5th Gen",  "role": "strike", "squadrons": 4, "aircraft_per_sqn": 24},
+    {"class": "4th Gen",    "role": "strike", "squadrons": 4, "aircraft_per_sqn": 24},
+    {"class": "J-16D",      "role": "sead",   "squadrons": 2, "aircraft_per_sqn": 24},
+    {"class": "JH-7",       "role": "strike", "squadrons": 4, "aircraft_per_sqn": 24},
+    {"class": "H-6",        "role": "strike", "squadrons": 2, "aircraft_per_sqn": 12},
+    {"class": "HALE Armed", "role": "isr",    "squadrons": 2, "aircraft_per_sqn": 12},
+    {"class": "MALE Armed", "role": "isr",    "squadrons": 2, "aircraft_per_sqn": 18},
+    {"class": "Stealth",    "role": "isr",    "squadrons": 1, "aircraft_per_sqn": 8},
+    {"class": "HARM",       "role": "sead",   "squadrons": 1, "aircraft_per_sqn": 48},
+    {"class": "Decoys",     "role": "strike", "squadrons": 1, "aircraft_per_sqn": 60}
+  ]
+}

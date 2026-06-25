@@ -1,0 +1,615 @@
+{
+  "china_isr_pools": {
+    "isr_capacity_cap": 1.5,
+    "isr_capacity_rule": "ISR capacity = sqrt((alive aircraft * ISR allocation fraction) / baseline_isr_aircraft), capped by isr_capacity_cap. Baseline defaults preserve legacy Day-1 detection at 100 aircraft with 50% ISR allocation.",
+    "manned_aircraft": {
+      "allocation_default": {
+        "isr": 0.5,
+        "sead": 0.25,
+        "strike": 0.25
+      },
+      "baseline_isr_aircraft": 50,
+      "health_default": 1.0,
+      "initial_assigned_to_ground_support": 100,
+      "notes": "Aircraft count and allocation affect ISR capacity with diminishing returns; attrition carries forward by day."
+    },
+    "satellite_floor": {
+      "cannot_be_destroyed": true,
+      "handled_in_detection_model": true
+    },
+    "target_type_isr_weights": {
+      "Anti-Ship Systems": {
+        "manned_aircraft": 0.4,
+        "uav": 0.6
+      },
+      "Maneuver Units": {
+        "manned_aircraft": 0.5,
+        "uav": 0.5
+      },
+      "Mobile Radars": {
+        "manned_aircraft": 0.6,
+        "uav": 0.4
+      },
+      "Moveable SAMs": {
+        "manned_aircraft": 0.4,
+        "uav": 0.6
+      },
+      "default": {
+        "manned_aircraft": 0.5,
+        "uav": 0.5
+      }
+    },
+    "uav": {
+      "allocation_default": {
+        "isr": 0.5,
+        "sead": 0.25,
+        "strike": 0.25
+      },
+      "baseline_isr_aircraft": 50,
+      "health_default": 1.0,
+      "initial_assigned_to_ground_support": 100,
+      "notes": "Aircraft count and allocation affect ISR capacity with diminishing returns; attrition carries forward by day."
+    }
+  },
+  "detection_model": {
+    "detectability_label_base_probability": {
+      "high": 0.5,
+      "low": 0.05,
+      "medium": 0.2
+    },
+    "final_probability_rule": "For each target instance: P_detect = min(1.0, satellite_floor + base_probability_from_detectability_label * mobility_multiplier * posture_multiplier * weighted_ISR_health_for_target_type). Then draw one random number per target instance.",
+    "antiship_active_attempt_multiplier": 1.5,
+    "mobility_multiplier": {
+      "mobile": 1.0,
+      "moveable": 1.2
+    },
+    "posture_multiplier": {
+      "mobile": {
+        "active": 1.25,
+        "hiding": 1.0
+      },
+      "moveable": {
+        "active": 1.5,
+        "hiding": 1.0
+      }
+    },
+    "satellite_floor_probability": {
+      "mobile": {
+        "active": 0.02,
+        "hiding": 0.01
+      },
+      "moveable": {
+        "active": 0.95,
+        "hiding": 0.50
+      }
+    },
+    "static_target_rule": "Static targets are known_to_red=true and detected_this_turn=true unless destroyed; they do not use this probability calculation."
+  },
+  "isr_sources": [
+    {
+      "degradation": {
+        "half_life_days": 21,
+        "mode": "exp_decay"
+      },
+      "detection_weight": 0.3,
+      "floor": 0.4,
+      "initial_capability": 1.0,
+      "runtime_capability_override": null,
+      "source_id": "satellite_recon",
+      "target_categories": [
+        "*"
+      ]
+    },
+    {
+      "degradation": {
+        "mode": "from_attrition",
+        "source": "isr.uav_alive"
+      },
+      "detection_weight": 0.25,
+      "floor": 0.0,
+      "initial_capability": 1.0,
+      "runtime_capability_override": null,
+      "source_id": "uav_pool",
+      "target_categories": [
+        "*"
+      ]
+    },
+    {
+      "degradation": {
+        "mode": "from_attrition",
+        "source": "isr.manned_alive"
+      },
+      "detection_weight": 0.2,
+      "floor": 0.0,
+      "initial_capability": 1.0,
+      "runtime_capability_override": null,
+      "source_id": "manned_recon",
+      "target_categories": [
+        "*"
+      ]
+    },
+    {
+      "degradation": {
+        "duration_days": 14,
+        "mode": "linear"
+      },
+      "detection_weight": 0.15,
+      "floor": 0.0,
+      "initial_capability": 1.0,
+      "runtime_capability_override": null,
+      "source_id": "humint_network",
+      "target_categories": [
+        "Air Defense",
+        "Government",
+        "Maneuver Units"
+      ]
+    },
+    {
+      "degradation": {
+        "d_mid": 5,
+        "k": 0.4,
+        "mode": "logistic"
+      },
+      "detection_weight": 0.1,
+      "floor": 0.0,
+      "initial_capability": 1.0,
+      "runtime_capability_override": null,
+      "source_id": "balloon_recon",
+      "target_categories": [
+        "Air Defense",
+        "Anti-Ship Systems"
+      ]
+    }
+  ],
+  "metadata": {
+    "created_for": "docs/plans/IJFS_Rework",
+    "purpose": "Scenario parameters for standalone daily IJFS detection/strike calculator.",
+    "scope_note": "One-day module called by an existing day-based simulation. This file intentionally omits ijfs_days, reattack-suppressed-targets, and partial-salvo settings.",
+    "version": "0.1"
+  },
+  "mobile_target_destroy_caps": {
+    "active": {
+      "Inorganic-Fast": 0.08,
+      "Inorganic-Slow": 0.02,
+      "Organic": 0.2
+    },
+    "description": "Apply these runtime caps to probability_destroyed before resolving mobile-target attacks. Active posture uses full cap; hiding posture uses hidden cap. Caps apply even when target has been detected.",
+    "hiding": {
+      "Inorganic-Fast": 0.04,
+      "Inorganic-Slow": 0.01,
+      "Organic": 0.1
+    },
+    "subcategory_overrides": {
+      "Surface Combatant – Destroyer and Frigate": {
+        "active": {
+          "Inorganic-Slow": 0.95,
+          "Inorganic-Fast": 0.95,
+          "Organic": 0.95
+        },
+        "hiding": {
+          "Inorganic-Slow": 0.8,
+          "Inorganic-Fast": 0.8,
+          "Organic": 0.8
+        }
+      },
+      "Missile Patrol Boat": {
+        "active": {
+          "Inorganic-Slow": 0.95,
+          "Inorganic-Fast": 0.95,
+          "Organic": 0.95
+        },
+        "hiding": {
+          "Inorganic-Slow": 0.8,
+          "Inorganic-Fast": 0.8,
+          "Organic": 0.8
+        }
+      },
+      "Stealth Corvette / Fast Attack Craft": {
+        "active": {
+          "Inorganic-Slow": 0.95,
+          "Inorganic-Fast": 0.95,
+          "Organic": 0.95
+        },
+        "hiding": {
+          "Inorganic-Slow": 0.8,
+          "Inorganic-Fast": 0.8,
+          "Organic": 0.8
+        }
+      }
+    }
+  },
+  "munition_inventory_model": {
+    "decrement_rule": "Always decrement by rounds_expended_per_engagement.",
+    "inventory_source_file": "red_munitions.json",
+    "inventory_values_must_be_clean_multiples_of_engagement_size": true,
+    "pairings_source_file": "munition_target_pairings.json",
+    "partial_salvos_allowed": false
+  },
+  "outputs": {
+    "write_detailed_detection_log": true,
+    "write_detailed_strike_log": true,
+    "write_isr_status_after_ijfs": true,
+    "write_red_munition_inventory_after_ijfs": true,
+    "write_target_status_after_ijfs": true
+  },
+  "prelanding": {
+    "days": 3,
+    "attrition_profile": "front_loaded",
+    "intel": {
+      "decoys": [],
+      "exquisite_intel": {
+        "antiship": {
+          "decay": {
+            "half_life_days": 3,
+            "mode": "exp_decay"
+          },
+          "initial_count": 8,
+          "selection": "random"
+        },
+        "maneuver": {
+          "decay": {
+            "half_life_days": 3,
+            "mode": "exp_decay"
+          },
+          "initial_count": 8,
+          "selection": "random"
+        }
+      },
+      "static_overrides": null
+    },
+    "rules": {
+      "ad_attrition_enabled": false,
+      "munition_filter": {
+        "ids": [],
+        "mode": null
+      },
+      "posture_default_override": "active",
+      "sead_enabled": false
+    }
+  },
+  "red_aircraft_attrition_and_sead": {
+    "manned_aircraft_attrition_per_day_at_ad_health_1": 0.04,
+    "notes": "Attrition values are placeholders for sensitivity analysis.",
+    "role_exposure_multipliers": {
+      "isr": 0.7,
+      "sead": 1.0,
+      "strike": 1.2
+    },
+    "role_exposure_rule": "Per-aircraft loss probability is multiplied by allocation-weighted exposure: 0.7*ISR + 1.0*SEAD + 1.2*strike.",
+    "sead_effect_on_taiwan_ad_attrition": {
+      "enabled": true,
+      "manned_sead_multiplier": 0.75,
+      "rule": "SEAD allocation increases daily attrition pressure on Taiwan air-defense target categories; exact implementation left to standalone module.",
+      "uav_sead_multiplier": 0.5
+    },
+    "uav_attrition_per_day_at_ad_health_1": 0.08
+  },
+  "red_firing_capacity": {
+    "attack_uav_small": {
+      "attrition_link": null,
+      "firing_units": 40,
+      "platform_type": "uav",
+      "sorties_per_unit_per_day": 2.0
+    },
+    "cj10_lacm_glcm": {
+      "attrition_link": null,
+      "firing_units": 24,
+      "platform_type": "ground",
+      "sorties_per_unit_per_day": 1.5
+    },
+    "cm401_asbm": {
+      "attrition_link": null,
+      "firing_units": 20,
+      "platform_type": "ground",
+      "sorties_per_unit_per_day": 2.0
+    },
+    "yj_62_ascm": {
+      "attrition_link": null,
+      "firing_units": 30,
+      "platform_type": "ground",
+      "sorties_per_unit_per_day": 2.0
+    },
+    "yj_12_ascm": {
+      "attrition_link": null,
+      "firing_units": 15,
+      "platform_type": "ground",
+      "sorties_per_unit_per_day": 2.0
+    },
+    "df15c_penetrator_srbm": {
+      "attrition_link": null,
+      "firing_units": 12,
+      "platform_type": "ground",
+      "sorties_per_unit_per_day": 1.5
+    },
+    "owa_drone_small": {
+      "attrition_link": null,
+      "firing_units": 60,
+      "platform_type": "uav",
+      "sorties_per_unit_per_day": 3.0
+    },
+    "pch191_bre6_crbm": {
+      "attrition_link": null,
+      "firing_units": 20,
+      "platform_type": "ground",
+      "sorties_per_unit_per_day": 6.0
+    },
+    "pch191_bre8_crbm": {
+      "attrition_link": null,
+      "firing_units": 24,
+      "platform_type": "ground",
+      "sorties_per_unit_per_day": 1.5
+    },
+    "pla_srbm_large_generic": {
+      "attrition_link": null,
+      "firing_units": 30,
+      "platform_type": "ground",
+      "sorties_per_unit_per_day": 2.0
+    },
+    "strike_aircraft_medium": {
+      "attrition_link": null,
+      "firing_units": 36,
+      "platform_type": "aircraft",
+      "sorties_per_unit_per_day": 0.8
+    }
+  },
+  "schema_version": 1,
+  "taiwan_air_defense_health": {
+    "hiding_sam_deterrent_rule": "Hiding SAMs do not directly attrit UAV/manned ISR, but Red SEAD allocation represents deterrence/suppression effort and increases Taiwan AD attrition.",
+    "radar_dependency": {
+      "enabled": true,
+      "sam_effectiveness_multiplier_rule": "SAM contribution is multiplied by radar_health, where radar_health is the surviving fraction of Static Radars and Mobile Radars weighted together."
+    },
+    "surviving_unsuppressed_weighted_categories": {
+      "Mobile Radars": 0.15,
+      "Moveable SAMs": 0.4,
+      "Static Radars": 0.25,
+      "Static SAMs": 0.15,
+      "Mobile SAMs": 0.05
+    }
+  },
+  "target_release": [
+    {
+      "match": {
+        "category": "Air Defense"
+      },
+      "phase_name": "all_phases",
+      "release_day": -999
+    }
+  ],
+  "target_state_fields": {
+    "destroyed_dominates_suppressed": true,
+    "optional_runtime_fields": [
+      "suppressed"
+    ],
+    "required_runtime_fields": [
+      "destroyed",
+      "detected_this_turn",
+      "last_detected_day",
+      "known_to_red",
+      "posture"
+    ],
+    "suppression_used_by_standalone_calculator": true
+  },
+  "targeting_doctrine": [
+    {
+      "match": {
+        "hardness": "buried"
+      },
+      "munition_priority": [
+        "df15c_penetrator_srbm",
+        "pch191_bre8_crbm",
+        "pla_srbm_large_generic"
+      ],
+      "name": "buried_fixed_penetrator"
+    },
+    {
+      "match": {
+        "category": "Maneuver Units"
+      },
+      "munition_priority": [
+        "pch191_bre6_crbm",
+        "pch191_bre8_crbm",
+        "strike_aircraft_medium"
+      ],
+      "name": "maneuver_units_crbm"
+    },
+    {
+      "match": {
+        "category": "Moveable SAMs"
+      },
+      "munition_priority": [
+        "pch191_bre8_crbm",
+        "pch191_bre6_crbm",
+        "strike_aircraft_medium"
+      ],
+      "name": "moveable_sams_crbm"
+    },
+    {
+      "match": {
+        "category": "Mobile Radars"
+      },
+      "munition_priority": [
+        "pch191_bre8_crbm",
+        "pch191_bre6_crbm",
+        "strike_aircraft_medium"
+      ],
+      "name": "mobile_radars_crbm"
+    },
+    {
+      "match": {
+        "category": "Anti-Ship Systems",
+        "subcategory": "Missile Patrol Boat"
+      },
+      "munition_priority": [
+        "yj_62_ascm",
+        "yj_12_ascm",
+        "cm401_asbm",
+        "strike_aircraft_medium"
+      ],
+      "name": "anti_ship_ascm_patrol_boat"
+    },
+    {
+      "match": {
+        "category": "Anti-Ship Systems",
+        "subcategory": "Stealth Corvette / Fast Attack Craft"
+      },
+      "munition_priority": [
+        "yj_62_ascm",
+        "yj_12_ascm",
+        "cm401_asbm",
+        "strike_aircraft_medium"
+      ],
+      "name": "anti_ship_ascm_corvette_fac"
+    },
+    {
+      "match": {
+        "category": "Anti-Ship Systems"
+      },
+      "munition_priority": [
+        "yj_12_ascm",
+        "yj_62_ascm",
+        "cm401_asbm",
+        "strike_aircraft_medium"
+      ],
+      "name": "anti_ship_ascm"
+    }
+  ],
+  "targeting_model": {
+    "attack_destroyed_targets": false,
+    "attack_detected_moveable_mobile_targets_daily": true,
+    "attack_static_targets_daily_if_not_destroyed": true,
+    "autonomous_all_detected_targets": true,
+    "munition_selection": "Use pairings to select a valid munition for each detected target. Initial placeholder may choose the highest priority available munition with sufficient inventory; later versions can optimize allocation.",
+    "no_reattack_within_day": true
+  },
+  "turn_model": {
+    "called_once_per_existing_simulation_day": true,
+    "detection_decay_handled_by_existing_cleanup_phase": true,
+    "increments_day_counter": false,
+    "moveable_and_mobile_targets_require_detection": true,
+    "static_targets_bypass_detection": true
+  },
+  "strike_probability_modifiers": [
+    {
+      "modifier_id": "mobile_hiding_fast_bre6_launcher_like",
+      "operation": "add",
+      "value": -0.005,
+      "match": {
+        "mobility": "mobile",
+        "posture": "hiding",
+        "munition_id": "pch191_bre6_crbm",
+        "subcategory": [
+          "Static CDCMs",
+          "Mobile Coastal AShM (generic template)",
+          "Mobile Coastal Anti-Ship Missile – Indigenous",
+          "Mobile Coastal Anti-Ship Missile – US-supplied",
+          "Airborne Early Warning"
+        ]
+      },
+      "notes": "Slight hide/dispersal penalty for BRE6 against launcher-like mobile targets and AEW support aircraft."
+    },
+    {
+      "modifier_id": "mobile_hiding_fast_bre8_launcher_like",
+      "operation": "add",
+      "value": -0.02,
+      "match": {
+        "mobility": "mobile",
+        "posture": "hiding",
+        "munition_id": "pch191_bre8_crbm",
+        "subcategory": [
+          "Static CDCMs",
+          "Mobile Coastal AShM (generic template)",
+          "Mobile Coastal Anti-Ship Missile – Indigenous",
+          "Mobile Coastal Anti-Ship Missile – US-supplied",
+          "Airborne Early Warning"
+        ]
+      },
+      "notes": "Dispersed mobile targets trim BRE8 lethality unless they are operating openly."
+    },
+    {
+      "modifier_id": "mobile_hiding_fast_bre8_maneuver_medium",
+      "operation": "add",
+      "value": -0.002,
+      "match": {
+        "mobility": "mobile",
+        "posture": "hiding",
+        "munition_id": "pch191_bre8_crbm",
+        "subcategory": [
+          "Army Aviation – Attack",
+          "Army Aviation – Transport",
+          "Field Artillery",
+          "Light Infantry – Reserve",
+          "Precision Rocket Artillery / ATACMS",
+          "Rocket Artillery"
+        ]
+      },
+      "notes": "Small hide penalty for medium-signature maneuver targets under BRE8 attack."
+    },
+    {
+      "modifier_id": "mobile_hiding_organic_uav_launcher_like",
+      "operation": "add",
+      "value": -0.02,
+      "match": {
+        "mobility": "mobile",
+        "posture": "hiding",
+        "munition_id": "attack_uav_small",
+        "subcategory": [
+          "Static CDCMs",
+          "Mobile Coastal AShM (generic template)",
+          "Mobile Coastal Anti-Ship Missile – Indigenous",
+          "Mobile Coastal Anti-Ship Missile – US-supplied",
+          "Airborne Early Warning"
+        ]
+      },
+      "notes": "Attack UAVs lose some lethality against dispersed launcher-like targets."
+    },
+    {
+      "modifier_id": "mobile_hiding_organic_air_launcher_like",
+      "operation": "add",
+      "value": -0.04,
+      "match": {
+        "mobility": "mobile",
+        "posture": "hiding",
+        "munition_id": "strike_aircraft_medium",
+        "subcategory": [
+          "Static CDCMs",
+          "Mobile Coastal AShM (generic template)",
+          "Mobile Coastal Anti-Ship Missile – Indigenous",
+          "Mobile Coastal Anti-Ship Missile – US-supplied",
+          "Army Aviation – Attack",
+          "Army Aviation – Transport",
+          "Field Artillery",
+          "Light Infantry – Reserve",
+          "Precision Rocket Artillery / ATACMS",
+          "Rocket Artillery",
+          "Airborne Early Warning"
+        ]
+      },
+      "notes": "Organic strike aircraft lose effectiveness against mobile targets that remain dispersed/hidden."
+    },
+    {
+      "modifier_id": "moveable_hiding_air_launched",
+      "operation": "add",
+      "value": -0.1,
+      "match": {
+        "mobility": "moveable",
+        "posture": "hiding",
+        "subcategory": "Air-Launched Anti-Ship Missile Platform",
+        "intel_locked": false
+      },
+      "notes": "Dispersed fighters and support aircraft bins are still vulnerable once found, but hiding/dispersal reduces kill odds."
+    },
+    {
+      "modifier_id": "moveable_hiding_c2",
+      "operation": "add",
+      "value": -0.1,
+      "match": {
+        "mobility": "moveable",
+        "posture": "hiding",
+        "subcategory": "Command & Control",
+        "intel_locked": false
+      },
+      "notes": "Relocating command nodes gain some survivability from concealment and movement between known sites."
+    }
+  ]
+}

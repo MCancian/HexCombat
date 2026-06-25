@@ -1,0 +1,2489 @@
+{
+  "metadata": {
+    "version": "0.1",
+    "created_by": "deep_research_agent",
+    "purpose": "Taiwan bombardment target inventory for campaign-analysis simulation",
+    "scope_note": "Open-source target inventory only; no strike planning, no aimpoints, no munition effects. IISS Military Balance 2025 used as authoritative source for force structure. All geolocation from publicly-available official, academic, or credentialed journalistic sources.",
+    "geolocation_policy": "Only public locations included; no inferred hidden sites or tactical deployment locations for mobile or moveable systems.",
+    "iiss_reference": "International Institute for Strategic Studies, The Military Balance 2025, London: IISS, 2025 (Taiwan entry, pp. 299-302).",
+    "generated": "2026-05-10"
+  },
+  "targets": [
+    {
+      "target_id": "gov_001",
+      "name": "Presidential Office Building",
+      "category": "Government Buildings",
+      "subcategory": "National Government",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Office of the President, ROC",
+      "location_public": {
+        "city": "Taipei",
+        "county": "Zhongzheng District",
+        "region": "Northern Taiwan",
+        "description": "No. 122, Section 1, Chongqing South Road, Zhongzheng District, Taipei. Publicly accessible landmark on Ketagalan Boulevard."
+      },
+      "geolocation_public": {
+        "lat": 25.0404,
+        "lon": 121.5117,
+        "source": "Taiwan Tourism Administration official website; Google Maps public listing"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "soft",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Presidential Office Building – Official Site",
+          "publisher": "Tourism Administration, ROC (Taiwan)",
+          "url": "https://eng.taiwan.net.tw/m1.aspx?sNo=0002090&id=137",
+          "date": null,
+          "claim_supported": "Address, location, and function of the Presidential Office Building"
+        }
+      ],
+      "notes": "Political and symbolic target; militarily functional as seat of civil-military authority. Four above-ground floors, one underground floor; historical red-brick structure. No known dedicated hardening. Co-located with executive staff. Primary continuity-of-government leadership would likely relocate to Heng Shan upon D-Hour."
+    },
+    {
+      "target_id": "gov_002",
+      "name": "Executive Yuan",
+      "category": "Government Buildings",
+      "subcategory": "National Government",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Executive Yuan",
+      "location_public": {
+        "city": "Taipei",
+        "county": "Zhongzheng District",
+        "region": "Northern Taiwan",
+        "description": "No. 1, Zhongxiao East Road Section 1, Zhongzheng District, Taipei. Adjacent to the Presidential Office complex."
+      },
+      "geolocation_public": {
+        "lat": 25.0432,
+        "lon": 121.5131,
+        "source": "Executive Yuan official website; public maps"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "soft",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Executive Yuan – Official Website",
+          "publisher": "Executive Yuan, ROC (Taiwan)",
+          "url": "https://english.ey.gov.tw",
+          "date": null,
+          "claim_supported": "Location and function of Executive Yuan"
+        }
+      ],
+      "notes": "Political and administrative target. Symbolic and functional. No known hardening; wartime government functions would devolve to Heng Shan complex."
+    },
+    {
+      "target_id": "gov_003",
+      "name": "Legislative Yuan",
+      "category": "Government Buildings",
+      "subcategory": "National Government",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Legislative Yuan",
+      "location_public": {
+        "city": "Taipei",
+        "county": "Zhongzheng District",
+        "region": "Northern Taiwan",
+        "description": "No. 1, Zhongshan South Road, Zhongzheng District, Taipei."
+      },
+      "geolocation_public": {
+        "lat": 25.0442,
+        "lon": 121.5148,
+        "source": "Legislative Yuan official website; public maps"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "soft",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Legislative Yuan – Official Website",
+          "publisher": "Legislative Yuan, ROC (Taiwan)",
+          "url": "https://www.ly.gov.tw/en",
+          "date": null,
+          "claim_supported": "Location and function of Legislative Yuan"
+        }
+      ],
+      "notes": "Primarily symbolic/political target. Wartime legislative function is constitutionally limited; primary value is decapitation signaling."
+    },
+    {
+      "target_id": "gov_004",
+      "name": "Ministry of National Defense Headquarters",
+      "category": "Government Buildings",
+      "subcategory": "National Government – Defense Ministry",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Ministry of National Defense, ROC",
+      "location_public": {
+        "city": "Taipei",
+        "county": "Zhongzheng District",
+        "region": "Northern Taiwan",
+        "description": "No. 9, Boai Road, Zhongzheng District, Taipei. The MND main building is a publicly-known address adjacent to the Presidential Office area."
+      },
+      "geolocation_public": {
+        "lat": 25.0407,
+        "lon": 121.51,
+        "source": "ROC Ministry of National Defense official site; public reporting"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "soft",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Ministry of National Defense – Official Website",
+          "publisher": "Ministry of National Defense, ROC",
+          "url": "https://www.mnd.gov.tw/en",
+          "date": null,
+          "claim_supported": "Location and function of MND headquarters"
+        }
+      ],
+      "notes": "Both militarily functional and symbolic. Wartime C2 functions shift to Heng Shan; building represents peacetime administrative hub. Model separately from Heng Shan."
+    },
+    {
+      "target_id": "gov_005",
+      "name": "National Security Bureau Headquarters",
+      "category": "Government Buildings",
+      "subcategory": "National Government – Intelligence",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "National Security Bureau, ROC",
+      "location_public": {
+        "city": "Taipei",
+        "county": "Zhongzheng District",
+        "region": "Northern Taiwan",
+        "description": "Zhongzheng District, Taipei. NSB headquarters location is publicly referenced in government budget documents and media but precise street address is not officially published."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "administrative",
+      "mobility": "static",
+      "hardness": "hard",
+      "detectability_active": "medium",
+      "detectability_hiding": "medium",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "National Security Bureau – Overview",
+          "publisher": "National Security Bureau, ROC",
+          "url": "https://www.nsb.gov.tw/en",
+          "date": null,
+          "claim_supported": "Existence and Taipei location of NSB"
+        }
+      ],
+      "notes": "Intelligence hub; militarily functional. Precise address not publicly confirmed in open sources. Confidence medium due to incomplete public location data. Hardness assessed as hard given intelligence-facility construction norms."
+    },
+    {
+      "target_id": "gov_006",
+      "name": "Judicial Yuan",
+      "category": "Government Buildings",
+      "subcategory": "National Government",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Judicial Yuan",
+      "location_public": {
+        "city": "Taipei",
+        "county": "Zhongzheng District",
+        "region": "Northern Taiwan",
+        "description": "No. 124, Chongqing South Road, Section 1, Zhongzheng District, Taipei."
+      },
+      "geolocation_public": {
+        "lat": 25.041,
+        "lon": 121.5123,
+        "source": "Judicial Yuan official website; public maps"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "soft",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Judicial Yuan – Official Website",
+          "publisher": "Judicial Yuan, ROC",
+          "url": "https://www.judicial.gov.tw/en",
+          "date": null,
+          "claim_supported": "Location and function of Judicial Yuan"
+        }
+      ],
+      "notes": "Primarily symbolic target; limited wartime military utility. Included for completeness of constitutional branch coverage."
+    },
+    {
+      "target_id": "gov_007",
+      "name": "Control Yuan",
+      "category": "Government Buildings",
+      "subcategory": "National Government",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Control Yuan",
+      "location_public": {
+        "city": "Taipei",
+        "county": "Zhongshan District",
+        "region": "Northern Taiwan",
+        "description": "No. 2, Zhongxiao East Road, Section 1, Zhongshan District, Taipei."
+      },
+      "geolocation_public": {
+        "lat": 25.0461,
+        "lon": 121.5218,
+        "source": "Control Yuan official website; public maps"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "soft",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Control Yuan – Official Website",
+          "publisher": "Control Yuan, ROC",
+          "url": "https://www.cy.gov.tw/en",
+          "date": null,
+          "claim_supported": "Location and function of Control Yuan"
+        }
+      ],
+      "notes": "Primarily symbolic target; no wartime military function."
+    },
+    {
+      "target_id": "gov_008",
+      "name": "Examination Yuan",
+      "category": "Government Buildings",
+      "subcategory": "National Government",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Examination Yuan",
+      "location_public": {
+        "city": "Taipei",
+        "county": "Daan District",
+        "region": "Northern Taiwan",
+        "description": "No. 1, Shiyuan Road, Daan District, Taipei."
+      },
+      "geolocation_public": {
+        "lat": 25.0249,
+        "lon": 121.543,
+        "source": "Examination Yuan official website; public maps"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "soft",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Examination Yuan – Official Website",
+          "publisher": "Examination Yuan, ROC",
+          "url": "https://www.exam.gov.tw/en",
+          "date": null,
+          "claim_supported": "Location and function of Examination Yuan"
+        }
+      ],
+      "notes": "Symbolic target only; no wartime military utility."
+    },
+    {
+      "target_id": "gov_009",
+      "name": "Kaohsiung City Government",
+      "category": "Government Buildings",
+      "subcategory": "City / County Government",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Kaohsiung City Government",
+      "location_public": {
+        "city": "Kaohsiung",
+        "county": "Sanmin District",
+        "region": "Southern Taiwan",
+        "description": "No. 2, Sichuan 1st Road, Sanmin District, Kaohsiung. Second-largest city; major industrial and port hub."
+      },
+      "geolocation_public": {
+        "lat": 22.629,
+        "lon": 120.3014,
+        "source": "Kaohsiung City Government official website"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "soft",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Kaohsiung City Government",
+          "publisher": "Kaohsiung City Government",
+          "url": "https://www.kcg.gov.tw/en",
+          "date": null,
+          "claim_supported": "Location of Kaohsiung City Government headquarters"
+        }
+      ],
+      "notes": "Strategically important regional government for southern Taiwan military logistics and port operations."
+    },
+    {
+      "target_id": "gov_010",
+      "name": "Taichung City Government",
+      "category": "Government Buildings",
+      "subcategory": "City / County Government",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Taichung City Government",
+      "location_public": {
+        "city": "Taichung",
+        "county": "Xitun District",
+        "region": "Central-Western Taiwan",
+        "description": "No. 1727, Taiwan Boulevard, Section 4, Xitun District, Taichung. Central Taiwan's major administrative hub."
+      },
+      "geolocation_public": {
+        "lat": 24.163,
+        "lon": 120.6467,
+        "source": "Taichung City Government official website"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "soft",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Taichung City Government",
+          "publisher": "Taichung City Government",
+          "url": "https://www.taichung.gov.tw/en",
+          "date": null,
+          "claim_supported": "Location of Taichung City Government headquarters"
+        }
+      ],
+      "notes": "Central Taiwan regional administrative hub; proximity to Ching Chuan Kang air base gives regional military significance."
+    },
+    {
+      "target_id": "mil_hq_001",
+      "name": "Heng Shan Military Command Center",
+      "category": "Military Headquarters",
+      "subcategory": "National Joint Command – Underground",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "ROC Armed Forces (Joint / Tri-Service)",
+      "location_public": {
+        "city": "Taipei",
+        "county": "Zhongshan District (Dazhi area)",
+        "region": "Northern Taiwan",
+        "description": "Underground tunnel complex excavated into Hengshan mountain ridge in Dazhi, Zhongshan District, Taipei. Public reporting consistently places it in the Dazhi area between the Grand Hotel and the Dazhi commercial district. Specific tunnel entry points are not disclosed in public sources."
+      },
+      "geolocation_public": {
+        "lat": 25.082,
+        "lon": 121.539,
+        "source": "The Diplomat (2014); Wendell Minnick / Defense News (2010); Taiwan Military Wiki (twmil.miraheze.org)"
+      },
+      "geolocation_precision": "administrative",
+      "mobility": "static",
+      "hardness": "buried",
+      "detectability_active": "low",
+      "detectability_hiding": "low",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Taiwan, Asia's Secret Air Power",
+          "publisher": "The Diplomat / Project 2049",
+          "url": "https://thediplomat.com/2014/09/taiwan-asias-secret-air-power/",
+          "date": "2014-09-26",
+          "claim_supported": "Dazhi location, tunnel extent, role as primary wartime national command authority shelter"
+        },
+        {
+          "title": "Heng Shan Command Center",
+          "publisher": "Wendell Minnick / Defense News (republished at chinainarms.substack.com)",
+          "url": "https://chinainarms.substack.com/p/heng-shan-command-center",
+          "date": null,
+          "claim_supported": "Underground tri-service command facility, Dazhi, Zhongshan District; missile-resistant design; comparison to Cheyenne Mountain"
+        },
+        {
+          "title": "Military Command Center – Taiwan Military Wiki",
+          "publisher": "twmil.miraheze.org",
+          "url": "https://twmil.miraheze.org/wiki/Military_Command_Center",
+          "date": null,
+          "claim_supported": "Construction began 1960, completed 1982; withstands ballistic missile attack; connected to Yuan Shan Command Center by tunnel; fiber optics, JTLS simulation system"
+        },
+        {
+          "title": "Heng Shan Military Command Center – Fandom Military Wiki",
+          "publisher": "Military History Fandom",
+          "url": "https://military-history.fandom.com/wiki/Heng_Shan_Military_Command_Center",
+          "date": null,
+          "claim_supported": "Designed to withstand 20kt nuclear blast, 2kt conventional bombing, EMP"
+        }
+      ],
+      "notes": "Taiwan's primary national wartime command node; equivalent in function to NORAD/Cheyenne Mountain. Hardened to resist ballistic missile strikes; some assessments note vulnerability to advanced precision munitions or massed attack. Connected to Yuan Shan Command Center via tunnel. Houses space for President, Cabinet, and thousands of military personnel for months of independent operation. Linked to USPACOM Hawaii. Air Operations Center ('Toad Mountain') near NTU is a separate publicly-reported facility. CONFIRMED hardened underground facility."
+    },
+    {
+      "target_id": "mil_hq_002",
+      "name": "ROCAF Air Operations Center (Toad Mountain)",
+      "category": "Military Headquarters",
+      "subcategory": "Air Force Command – Underground",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Air Force",
+      "location_public": {
+        "city": "Taipei",
+        "county": "Daan District (near National Taiwan University)",
+        "region": "Northern Taiwan",
+        "description": "Underground tunnel facility in a rock outcropping near the National Taiwan University campus. Publicly referred to as 'Toad Mountain' by ROCAF officers. Precise site not publicly confirmed beyond this description."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "administrative",
+      "mobility": "static",
+      "hardness": "buried",
+      "detectability_active": "low",
+      "detectability_hiding": "low",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "Taiwan, Asia's Secret Air Power",
+          "publisher": "The Diplomat",
+          "url": "https://thediplomat.com/2014/09/taiwan-asias-secret-air-power/",
+          "date": "2014-09-26",
+          "claim_supported": "Existence of underground Air Operations Center near NTU campus; 'Toad Mountain' nickname; described as overseeing one of the most robust air/missile defense networks on the planet"
+        }
+      ],
+      "notes": "Publicly confirmed as a distinct facility from Heng Shan in credentialed defense reporting. Precise location within the NTU-adjacent area is not publicly confirmed. Confidence medium due to limited detail. CONFIRMED as existing based on The Diplomat / Project 2049 reporting; treat as LIKELY underground but details limited."
+    },
+    {
+      "target_id": "mil_hq_003",
+      "name": "ROCAF Headquarters",
+      "category": "Military Headquarters",
+      "subcategory": "Service Headquarters – Air Force",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Air Force",
+      "location_public": {
+        "city": "Taipei",
+        "county": "Daan District",
+        "region": "Northern Taiwan",
+        "description": "ROCAF GHQ is publicly reported as located in Taipei, Daan District, on Jianguo South Road. Specific address is referenced in open reporting."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": "ROCAF Wikipedia article; Aviation Press Taiwan ORBAT"
+      },
+      "geolocation_precision": "administrative",
+      "mobility": "static",
+      "hardness": "hard",
+      "detectability_active": "medium",
+      "detectability_hiding": "medium",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "Republic of China Air Force – Wikipedia",
+          "publisher": "Wikipedia (citing Taiwan government sources)",
+          "url": "https://en.wikipedia.org/wiki/Republic_of_China_Air_Force",
+          "date": null,
+          "claim_supported": "ROCAF GHQ existence and Taipei location"
+        }
+      ],
+      "notes": "Peacetime administrative HQ. Wartime command authority migrates to underground Air Operations Center. Confidence medium; precise address not confirmed in open sources."
+    },
+    {
+      "target_id": "mil_hq_004",
+      "name": "ROCN Fleet Command / Naval Headquarters – Zuoying",
+      "category": "Military Headquarters",
+      "subcategory": "Service Headquarters – Navy",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Navy – Fleet Command",
+      "location_public": {
+        "city": "Kaohsiung",
+        "county": "Zuoying District",
+        "region": "Southern Taiwan",
+        "description": "Tsoying (Zuoying) Naval Base, Zuoying District, Kaohsiung. Co-located with ROCN Fleet Command, Naval Academy, and primary shipyard."
+      },
+      "geolocation_public": {
+        "lat": 22.69,
+        "lon": 120.28,
+        "source": "GlobalSecurity.org ROCN Order of Battle; FAS Taiwan Navy entry"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "hard",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Republic of China Navy Order of Battle",
+          "publisher": "GlobalSecurity.org",
+          "url": "https://www.globalsecurity.org/military/world/taiwan/navy-orbat.htm",
+          "date": null,
+          "claim_supported": "1st Naval District HQ at Tsoying; Fleet Command, Naval Academy, Naval Shipyard"
+        },
+        {
+          "title": "Zuoying Naval Base – Wikipedia",
+          "publisher": "Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Zuoying_Naval_Base",
+          "date": null,
+          "claim_supported": "ROCN's largest naval base; Fleet Command; Weihai Project expansion; Naval Academy"
+        }
+      ],
+      "notes": "Primary ROCN command node and largest naval base. Includes Naval Academy, Fleet Command, major shipyard, and 1st Naval District HQ. Directly on western (Taiwan Strait-facing) coast; assessed as high-priority PLA target. Modeled as facility group encompassing command building, piers, shipyard, and aviation facilities."
+    },
+    {
+      "target_id": "mil_hq_005",
+      "name": "ROC Army Headquarters",
+      "category": "Military Headquarters",
+      "subcategory": "Service Headquarters – Army",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Army",
+      "location_public": {
+        "city": "Taipei",
+        "county": "Zhongzheng District",
+        "region": "Northern Taiwan",
+        "description": "Army GHQ is publicly referenced as located in Taipei. Specific address not confirmed in open sources beyond city level."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "administrative",
+      "mobility": "static",
+      "hardness": "soft",
+      "detectability_active": "medium",
+      "detectability_hiding": "medium",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "International Institute for Strategic Studies",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "3 corps HQ, 5 defence comd HQ confirmed; Army structure"
+        }
+      ],
+      "notes": "Wartime Army command would decentralize to corps and defense command HQs. IISS confirms 3 corps HQ and 5 defence command HQs exist within the Army structure; these are not individually geolocated in public sources."
+    },
+    {
+      "target_id": "ab_001",
+      "name": "Chiashan Air Force Base (Jiashan / Hualien Underground)",
+      "category": "ROCAF Airbases",
+      "subcategory": "Underground Fighter Base – Eastern",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Air Force – 401st Tactical Fighter Wing",
+      "location_public": {
+        "city": "Hualien",
+        "county": "Xincheng Township, Hualien County",
+        "region": "Eastern Taiwan",
+        "description": "Chiashan Air Force Base, adjacent to Hualien Airport (IATA: HUN), Xincheng Township, Hualien County. Underground complex inside adjacent granite mountain. Hualien Airport civilian section (28 acres) operates within the base perimeter."
+      },
+      "geolocation_public": {
+        "lat": 24.0253,
+        "lon": 121.617,
+        "source": "Wikipedia Hualien Airport; Defense News / Minnick (2010) citing public coordinates; The Drive / TWZ (2022)"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "buried",
+      "detectability_active": "high",
+      "detectability_hiding": "low",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Taiwan's Hidden Base Will Safeguard Aircraft",
+          "publisher": "Defense News / Wendell Minnick",
+          "url": "http://minnickarticles.blogspot.com/2010/05/taiwans-hidden-base-will-safeguard.html",
+          "date": "2010-05",
+          "claim_supported": "Underground facility inside mountain adjacent to Hualien Air Base; capacity ~200 fighters; completed 1993 under Jianan No. 3 project; 7,500-ft taxiway connecting to Hualien; separate 8,000-ft runway"
+        },
+        {
+          "title": "Extremely Rare Photos Inside Taiwan's Underground Fighter Jet Caves",
+          "publisher": "The Drive / The War Zone",
+          "url": "https://www.twz.com/extremely-rare-photos-inside-taiwans-underground-fighter-jet-caves",
+          "date": "2022-07-27",
+          "claim_supported": "10 blast doors; capacity 200 fighters including F-16V; independent power, C2, medical, fuel; Project Jian'an III; second facility is Shizishan at Chihhang/Taitung"
+        },
+        {
+          "title": "Chiashan Air Force Base – Wikipedia",
+          "publisher": "Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Chiashan_Air_Force_Base",
+          "date": null,
+          "claim_supported": "Construction 1985-1993; cost >27 billion NTD; capacity ~200 fighters; 10 blast doors"
+        }
+      ],
+      "notes": "Taiwan's most important underground military facility after Heng Shan. Carved into granite mountain; rated to survive air attack from the west. 10 reinforced blast doors; underground fuel, ammunition, medical, command. Houses F-16V wing (401st TFW). Modeled as single target. Surface runway/taxiway detectable; underground entry points less so. detectability_hiding set LOW because aircraft are underground and facility is granite-shielded. Runway entrances on satellite imagery are publicly visible."
+    },
+    {
+      "target_id": "ab_002",
+      "name": "Chihhang Air Base / Taitung with Shizishan Underground Complex",
+      "category": "ROCAF Airbases",
+      "subcategory": "Underground Fighter Base – Eastern (Secondary)",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Air Force",
+      "location_public": {
+        "city": "Taitung",
+        "county": "Taitung County",
+        "region": "Eastern Taiwan",
+        "description": "Chihhang Air Base, Taitung County, southeastern Taiwan. Shizishan (Stone Mountain) underground complex at the north end of the air base. Training base with some fighter presence."
+      },
+      "geolocation_public": {
+        "lat": 22.7935,
+        "lon": 121.1823,
+        "source": "Wikipedia Chihhang Air Base; Scramble Taiwan Air Force ORBAT"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "buried",
+      "detectability_active": "high",
+      "detectability_hiding": "low",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Chihhang Air Base – Wikipedia",
+          "publisher": "Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Chihhang_Air_Base",
+          "date": null,
+          "claim_supported": "Shizishan underground complex at north end; tunnels shelter up to 80 aircraft"
+        },
+        {
+          "title": "Taiwan's Hidden Base Will Safeguard Aircraft",
+          "publisher": "Defense News / Wendell Minnick",
+          "url": "http://minnickarticles.blogspot.com/2010/05/taiwans-hidden-base-will-safeguard.html",
+          "date": "2010",
+          "claim_supported": "Second smaller underground facility at Taitung Air Base"
+        }
+      ],
+      "notes": "Secondary eastern underground base; Shizishan complex shelters ~80 aircraft. Currently hosts T-5 Yung Ying trainer aircraft primarily; previously F-5. Smaller than Chiashan but similarly hardened concept. Part of Project Jian'an III."
+    },
+    {
+      "target_id": "ab_003",
+      "name": "Hualien Air Base (Chiashan surface component)",
+      "category": "ROCAF Airbases",
+      "subcategory": "Fighter Base – Eastern Surface",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Air Force – 401st TFW",
+      "location_public": {
+        "city": "Hualien",
+        "county": "Hualien County",
+        "region": "Eastern Taiwan",
+        "description": "Surface airfield component of Chiashan complex. Shares civilian airport (IATA: HUN). Home to 401st Tactical Fighter Wing (F-16V). Modeled separately from underground Chiashan per simulation schema."
+      },
+      "geolocation_public": {
+        "lat": 24.0253,
+        "lon": 121.617,
+        "source": "Wikipedia Hualien Airport; Aviation Press Taiwan ORBAT"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "hard",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Aviation Press Taiwan Air Force",
+          "publisher": "Aviation Press",
+          "url": "https://aviationpress.co.uk/taiwan-air-force/",
+          "date": null,
+          "claim_supported": "401st TFW at Hualien with F-16V"
+        }
+      ],
+      "notes": "Surface runway and apron; hardened revetments. Aircraft survivability depends on dispersal to Chiashan underground. Runway interdiction is the primary PLA aim for this surface facility."
+    },
+    {
+      "target_id": "ab_004",
+      "name": "Hsinchu Air Base",
+      "category": "ROCAF Airbases",
+      "subcategory": "Fighter Base – Western",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Air Force – 499th TFW (Mirage 2000-5)",
+      "location_public": {
+        "city": "Hsinchu",
+        "county": "Hsinchu City",
+        "region": "Northwestern Taiwan",
+        "description": "Hsinchu Air Base, Hsinchu City, northern Taiwan west coast. Also known as Hsinchu Airport (IATA: HSZ)."
+      },
+      "geolocation_public": {
+        "lat": 24.818,
+        "lon": 120.9393,
+        "source": "FAS Taiwan Air Bases; Aviation Press Taiwan ORBAT"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "hard",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Hsinchu Air Base – FAS",
+          "publisher": "Federation of American Scientists",
+          "url": "https://irp.fas.org/world/taiwan/facility/hsingchu.htm",
+          "date": null,
+          "claim_supported": "499th TFW at Hsinchu; longest runway 12,000 ft; opened to civil aviation 1998"
+        },
+        {
+          "title": "Aviation Press Taiwan Air Force",
+          "publisher": "Aviation Press",
+          "url": "https://aviationpress.co.uk/taiwan-air-force/",
+          "date": null,
+          "claim_supported": "499th TFW with Mirage 2000-5Di/Ei (3 groups: 41st, 42nd, 48th TFG)"
+        },
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "53 Mirage 2000-5 (44 EI + 9 DI) in ROCAF inventory"
+        }
+      ],
+      "notes": "Home of all ROCAF Mirage 2000-5 aircraft. Western-facing; front-line vulnerability. Hardened aircraft shelters (HAS) reported but no confirmed underground component. France's decision to end Mirage support creates long-term fleet sustainability questions."
+    },
+    {
+      "target_id": "ab_005",
+      "name": "Ching Chuan Kang Air Base (CCK) / Taichung",
+      "category": "ROCAF Airbases",
+      "subcategory": "Fighter Base – Western",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Air Force – 427th TFW (F-CK-1)",
+      "location_public": {
+        "city": "Taichung",
+        "county": "Taichung City",
+        "region": "Central-Western Taiwan",
+        "description": "Ching Chuan Kang Air Base, Taichung City. Shared with Taichung International Airport (IATA: RMQ, ICAO: RCMQ)."
+      },
+      "geolocation_public": {
+        "lat": 24.2647,
+        "lon": 120.6207,
+        "source": "Wikipedia Ching Chuan Kang Air Base; FAS Taiwan Air Bases"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "hard",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Ching Chuan Kang Air Base – Wikipedia",
+          "publisher": "Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Ching_Chuan_Kang_Air_Base",
+          "date": null,
+          "claim_supported": "3rd TFW with F-CK-1 Ching-kuo; shared with Taichung International Airport; also hosts Army AH-1W"
+        },
+        {
+          "title": "Aviation Press Taiwan Air Force",
+          "publisher": "Aviation Press",
+          "url": "https://aviationpress.co.uk/taiwan-air-force/",
+          "date": null,
+          "claim_supported": "427th TFW (3TFW) with F-CK-1 (7th and 28th TFG)"
+        }
+      ],
+      "notes": "PRC reportedly built a replica of CCK at Dingxin, Gansu for attack-training purposes (confirmed by Wikipedia/open sources, 1999). Hosts 3rd TFW F-CK-1s and Army 602nd Brigade AH-1W attack helicopters. Western-coast exposure makes it high-priority for early PLA strike. Shared civilian airport complicates peacetime but wartime dual-use is standard."
+    },
+    {
+      "target_id": "ab_006",
+      "name": "Chiayi Air Base",
+      "category": "ROCAF Airbases",
+      "subcategory": "Fighter Base – Western",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Air Force – 455th TFW (F-16V)",
+      "location_public": {
+        "city": "Chiayi",
+        "county": "Chiayi City",
+        "region": "Southern-Western Taiwan",
+        "description": "Chiayi Air Base, Chiayi City. Major F-16V base."
+      },
+      "geolocation_public": {
+        "lat": 23.461,
+        "lon": 120.3927,
+        "source": "Aviation Press Taiwan ORBAT; Scramble Taiwan Air Force"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "hard",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Aviation Press Taiwan Air Force",
+          "publisher": "Aviation Press",
+          "url": "https://aviationpress.co.uk/taiwan-air-force/",
+          "date": null,
+          "claim_supported": "455th TFW (4TFW) at Chiayi with F-16V (21st, 22nd, 23rd TFG); SAR squadron"
+        },
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "140 F-16V (110 A + 30 B variant) in ROCAF inventory across multiple bases"
+        }
+      ],
+      "notes": "Largest single concentration of F-16V aircraft in ROCAF. Six fighter squadrons across two wings (Chiayi and Hualien). Major target. Hardened aircraft shelters present. No underground component confirmed."
+    },
+    {
+      "target_id": "ab_007",
+      "name": "Tainan Air Base",
+      "category": "ROCAF Airbases",
+      "subcategory": "Fighter Base – Western",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Air Force – 443rd TFW (F-CK-1)",
+      "location_public": {
+        "city": "Tainan",
+        "county": "Tainan City",
+        "region": "Southern-Western Taiwan",
+        "description": "Tainan Air Base, Tainan City."
+      },
+      "geolocation_public": {
+        "lat": 22.9503,
+        "lon": 120.2057,
+        "source": "Aviation Press Taiwan ORBAT; Scramble Taiwan Air Force"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "hard",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Aviation Press Taiwan Air Force",
+          "publisher": "Aviation Press",
+          "url": "https://aviationpress.co.uk/taiwan-air-force/",
+          "date": null,
+          "claim_supported": "443rd TFW (1TFW) at Tainan with F-CK-1 (1st, 3rd, 9th TFG)"
+        }
+      ],
+      "notes": "Home to 443rd TFW; all three fighter groups equipped with F-CK-1. Additionally serves as partial pilot training wing. Southern Taiwan; directly west-facing."
+    },
+    {
+      "target_id": "ab_008",
+      "name": "Gangshan Air Base",
+      "category": "ROCAF Airbases",
+      "subcategory": "Training Base",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Air Force – Training Command",
+      "location_public": {
+        "city": "Gangshan",
+        "county": "Kaohsiung City (Gangshan District)",
+        "region": "Southern Taiwan",
+        "description": "Gangshan Air Base (Kangshan), Gangshan District, Kaohsiung. Home to ROCAF training units and ROCAF Museum."
+      },
+      "geolocation_public": {
+        "lat": 22.7872,
+        "lon": 120.2607,
+        "source": "Scramble Taiwan Air Force; Aviation Press Taiwan"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "hard",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Chasing Tigers in Taiwan – ROCAF over the Fence",
+          "publisher": "flying-wings.com",
+          "url": "https://www.flying-wings.com/travel/taiwan-rocaf-planespotting-over-the-fence/",
+          "date": null,
+          "claim_supported": "Gangshan is training base; AT-3 Tzu-Chiang trainers; ROCAF Museum adjacent"
+        }
+      ],
+      "notes": "Primary fixed-wing training base; hosts AT-3 and T-34C. Militarily significant as pipeline for ROCAF pilots; secondary strike priority relative to fighter bases."
+    },
+    {
+      "target_id": "ab_009",
+      "name": "Pingtung North Air Base (ASW / Airlift)",
+      "category": "ROCAF Airbases",
+      "subcategory": "ASW / Transport Base",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Air Force / Navy Aviation",
+      "location_public": {
+        "city": "Pingtung",
+        "county": "Pingtung County",
+        "region": "Southern Taiwan",
+        "description": "Pingtung North Air Base, Pingtung County. Two separate bases (North and South) form a large complex."
+      },
+      "geolocation_public": {
+        "lat": 22.6996,
+        "lon": 120.4718,
+        "source": "Scramble Taiwan Air Force ORBAT; Aviation Press Taiwan"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "hard",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Chasing Tigers in Taiwan – ROCAF over the Fence",
+          "publisher": "flying-wings.com",
+          "url": "https://www.flying-wings.com/travel/taiwan-rocaf-planespotting-over-the-fence/",
+          "date": null,
+          "claim_supported": "Pingtung North: 33rd/34th ASW Sqns with P-3C Orion; C-130H transport"
+        },
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "12 P-3C Orion in ROCAF inventory; 19 C-130H"
+        }
+      ],
+      "notes": "P-3C ASW and C-130H transport operate from Pingtung North. Strategically important as primary maritime patrol hub. Two adjacent bases (North/South) form a large complex; modeled as one aggregate."
+    },
+    {
+      "target_id": "ab_010",
+      "name": "Songshan Airport (Taipei)",
+      "category": "ROCAF Airbases",
+      "subcategory": "VIP / Special Transport",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Air Force – Special Transport Squadron",
+      "location_public": {
+        "city": "Taipei",
+        "county": "Songshan District",
+        "region": "Northern Taiwan",
+        "description": "Songshan Airport, Taipei City. Dual-use civil/military airport in the center of Taipei. Home to Presidential/VIP transport and ROCAF special transport."
+      },
+      "geolocation_public": {
+        "lat": 25.0694,
+        "lon": 121.5528,
+        "source": "IATA/ICAO public records; Scramble Taiwan Air Force"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "soft",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Chasing Tigers in Taiwan – ROCAF over the Fence",
+          "publisher": "flying-wings.com",
+          "url": "https://www.flying-wings.com/travel/taiwan-rocaf-planespotting-over-the-fence/",
+          "date": null,
+          "claim_supported": "Songshan: Special Transport Squadron; Presidential Flight; Beech 1900C; F-50"
+        }
+      ],
+      "notes": "Urban location limits military utility under fire. VIP evacuation asset. Low hardening. Civil airport with military ramp."
+    },
+    {
+      "target_id": "nav_001",
+      "name": "Zuoying (Tsoying) Naval Base",
+      "category": "ROCN Bases",
+      "subcategory": "Fleet HQ / Major Naval Base",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Navy – 1st Naval District",
+      "location_public": {
+        "city": "Kaohsiung",
+        "county": "Zuoying District",
+        "region": "Southern Taiwan",
+        "description": "Zuoying Naval Base, Zuoying District, Kaohsiung. Largest ROCN base; 1st Naval District HQ, Fleet Command, Naval Academy, and primary naval shipyard."
+      },
+      "geolocation_public": {
+        "lat": 22.69,
+        "lon": 120.28,
+        "source": "GlobalSecurity.org; Wikipedia Zuoying Naval Base"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "hard",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "facility_group",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Zuoying Naval Base – Wikipedia",
+          "publisher": "Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Zuoying_Naval_Base",
+          "date": null,
+          "claim_supported": "ROCN's largest naval base; Fleet Command; Weihai Project billion-dollar expansion; Naval Academy; previous submarine base"
+        },
+        {
+          "title": "Pacific Forum PacNet #67",
+          "publisher": "CSIS Pacific Forum",
+          "url": "https://pacforum.org/publications/pacnet-67-pla-navy-adjusts-operations-to-further-undermine-taiwans-defensive-capabilities/",
+          "date": "2024-09",
+          "claim_supported": "Zuoying is directly in path of potential PLA assault; wartime fleet would relocate east"
+        }
+      ],
+      "notes": "Primary ROCN facility; modeled as facility_group covering piers, command buildings, shipyard, and aviation ramp. Western-coast facing; assessed as first-wave target. Weihai expansion added new piers and facilities post-2017. Primary submarine base (Hai Lung-class) previously at Zuoying; new facility at Suao planned."
+    },
+    {
+      "target_id": "nav_002",
+      "name": "Suao Naval Base",
+      "category": "ROCN Bases",
+      "subcategory": "East Coast Naval Base",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Navy – East Coast Command",
+      "location_public": {
+        "city": "Su-ao",
+        "county": "Yilan County",
+        "region": "Northeastern Taiwan",
+        "description": "Suao Naval Base, Su-ao Township, Yilan County. East coast base supporting Keelung; Hai Chiao missile boat squadrons. New submarine base reportedly planned here."
+      },
+      "geolocation_public": {
+        "lat": 24.599,
+        "lon": 121.8559,
+        "source": "GlobalSecurity.org Taiwan Naval Bases; Military History Fandom ROC Navy"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "hard",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Republic of China Navy – Military History Fandom",
+          "publisher": "Military History Fandom",
+          "url": "https://military-history.fandom.com/wiki/Republic_of_China_Navy",
+          "date": null,
+          "claim_supported": "Suao: East Coast Command; 1st Hai Chiao Missile Boat Squadron (10 Kuang Hua VI); new submarine base planned"
+        },
+        {
+          "title": "Pacific Forum PacNet #67",
+          "publisher": "CSIS Pacific Forum",
+          "url": "https://pacforum.org/publications/pacnet-67-pla-navy-adjusts-operations-to-further-undermine-taiwans-defensive-capabilities/",
+          "date": "2024-09",
+          "claim_supported": "Plans for new submarine base at Su'ao, Yilan (March 2024 reports); wartime force preservation zone"
+        }
+      ],
+      "notes": "Key eastern survival base for wartime ROCN dispersal. Hai Chiao missile boat squadrons. New submarine base reportedly under consideration as of 2024. Eastern facing limits direct PLA surface threat but accessible from sea approaches north and south."
+    },
+    {
+      "target_id": "nav_003",
+      "name": "Keelung Naval Base (Weihai Naval Base)",
+      "category": "ROCN Bases",
+      "subcategory": "Northern Naval Base",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Navy – 3rd Naval District",
+      "location_public": {
+        "city": "Keelung",
+        "county": "Keelung City",
+        "region": "Northern Taiwan",
+        "description": "Keelung Naval Base (Weihai Naval Base), Port of Keelung. Home to 131st Fleet and Tuo Chiang-class corvettes."
+      },
+      "geolocation_public": {
+        "lat": 25.151,
+        "lon": 121.744,
+        "source": "GlobalSecurity.org Keelung; CNA / President Lai inspection July 2024"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "hard",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "President Lai inspects Keelung naval base",
+          "publisher": "GlobalSecurity.org (citing CNA)",
+          "url": "https://www.globalsecurity.org/wmd/library/news/taiwan/2024/taiwan-240713-cna02.htm",
+          "date": "2024-07-13",
+          "claim_supported": "131st Fleet at Keelung; Tuo Chiang-class corvettes; harbor expansion project underway"
+        }
+      ],
+      "notes": "3rd Naval District HQ; 131st Fleet with Ta Jiang-class corvettes. Small naval yard. Northern approach to Taipei; strategic northern harbor. Patrol craft reportedly shifted to Suao due to space constraints."
+    },
+    {
+      "target_id": "nav_004",
+      "name": "Makung (Magong) Naval Base – Penghu",
+      "category": "ROCN Bases",
+      "subcategory": "Outlying Island Naval Base",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Navy – 2nd Naval District",
+      "location_public": {
+        "city": "Magong",
+        "county": "Penghu County",
+        "region": "Penghu Islands (Taiwan Strait)",
+        "description": "Makung (Magong) Naval Base, Penghu County. 2nd Naval District; attack squadrons, shipyard, and training facilities on the Penghu Islands."
+      },
+      "geolocation_public": {
+        "lat": 23.567,
+        "lon": 119.628,
+        "source": "GlobalSecurity.org ROCN Naval Bases; FAS Taiwan Naval Bases"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "hard",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "Republic of China Navy Order of Battle",
+          "publisher": "GlobalSecurity.org",
+          "url": "https://www.globalsecurity.org/military/world/taiwan/navy-orbat.htm",
+          "date": null,
+          "claim_supported": "2nd District at Makung: attack squadrons, naval shipyard, training facilities"
+        }
+      ],
+      "notes": "Strategically located in the Taiwan Strait; highly exposed. IISS 2025 lists Kwang Hua VI (PBG) missile boats with Hsiung Feng II. Assessed as early-phase PLA target due to Strait-blocking position. Penghu also hosts air defense units."
+    },
+    {
+      "target_id": "nav_005",
+      "name": "ROCN Submarines – Hai Lung class and Hai Shih class",
+      "category": "Anti-Ship Systems",
+      "subcategory": "Submarine Force",
+      "quantity": 4,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Navy – 256th Submarine Squadron",
+      "location_public": {
+        "city": "Kaohsiung (primary); new base at Suao planned",
+        "county": "Zuoying District / Yilan County",
+        "region": "Southern and Northeastern Taiwan",
+        "description": "Primary basing at Zuoying. IISS 2025 lists 2 Hai Lung (operational SSK) and 2 Hai Shih (training, ex-US Guppy II). New submarine base at Suao reportedly planned as of 2024."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "administrative",
+      "mobility": "mobile",
+      "hardness": "hard",
+      "detectability_active": "low",
+      "detectability_hiding": "low",
+      "posture_default": "hiding",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "platform_category",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "2 Hai Lung (with Harpoon Block II AShM and SUT HWT); 2 Hai Shih training submarines; total 4 SSK"
+        },
+        {
+          "title": "Pacific Forum PacNet #67",
+          "publisher": "CSIS Pacific Forum",
+          "url": "https://pacforum.org/publications/pacnet-67-pla-navy-adjusts-operations-to-further-undermine-taiwans-defensive-capabilities/",
+          "date": "2024-09",
+          "claim_supported": "New submarine base planned at Suao; previous basing at Zuoying"
+        }
+      ],
+      "notes": "2 Hai Lung operationally capable with Harpoon Block II and SUT HWT. 2 Hai Shih are training hulls (ex-Guppy II), limited combat utility. 1 indigenous Hai Kun (IDS) expected delivery 2025 per IISS 2025 capability section; not in IISS equipment list yet. Do not provide pier-level basing data. Mobility = mobile (at sea); detectability_hiding = low when submerged."
+    },
+    {
+      "target_id": "sam_001",
+      "name": "Patriot PAC-3 SAM Batteries – Aggregate",
+      "category": "Moveable SAMs",
+      "subcategory": "Long-Range SAM – Patriot",
+      "quantity": 9,
+      "country": "Taiwan",
+      "posture": "active",
+      "service_or_agency": "ROC Air Defense and Missile Command (793rd, 794th, 795th SAM Brigades)",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Concentrated around Taipei area; additional batteries in central and southern Taiwan",
+        "description": "IISS 2025 identifies 3 Patriot-equipped SAM brigades (793, 794, 795) with a total of 3 PAC-3 battalions. Open-source reporting indicates deployment concentrated around Taipei and Kaohsiung; January 2023 deployment to northern Taiwan confirmed. Precise deployment sites are not provided per geolocation policy."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "none",
+      "mobility": "moveable",
+      "hardness": "soft",
+      "detectability_active": "high",
+      "detectability_hiding": "low",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "battery",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "72+ M902 Patriot PAC-3 launchers; 3 Patriot-equipped SAM battalions across brigades 793-795; 792 brigade has no Patriot"
+        },
+        {
+          "title": "Taiwan's Air and Missile Defence Part 2: Patriot PAC-2 and PAC-3",
+          "publisher": "Open Nuclear Network",
+          "url": "https://platform.opennuclear.org/thoughtroom/quick-takes/taiwans-air-and-missile-defence-part-2-patriot-pac-2-and-pac-3",
+          "date": null,
+          "claim_supported": "3 original PAC-2 batteries (1997); 6 additional PAC-3 batteries; total ~9 batteries; concentrated around Taipei and Kaohsiung"
+        },
+        {
+          "title": "Taiwan Toughens Air Defense by Forming Fourth Patriot Battalion",
+          "publisher": "The Defense Post",
+          "url": "https://thedefensepost.com/2025/04/25/taiwan-fourth-patriot-battalion/",
+          "date": "2025-04-25",
+          "claim_supported": "4th Patriot battalion being established; NASAMS also on order"
+        }
+      ],
+      "notes": "Quantity of 9 represents batteries (fire units), not launchers. IISS lists 72+ M902 launchers; standard Patriot battery has ~8 launchers, implying ~9 batteries. Radar (AN/MPQ-65), launchers, and C2 should be modeled separately if desired by simulation. All elements are moveable (vehicle-mounted) but require hours-to-days for relocation. Radar emits when active (high detectability_active); silent when hiding (low). PAC-3 MSE deliveries expected by end 2025/early 2026 per recent reporting."
+    },
+    {
+      "target_id": "sam_002",
+      "name": "Tien Kung II (Sky Bow II) SAM Batteries – Aggregate",
+      "category": "Moveable SAMs",
+      "subcategory": "Long-Range SAM – Indigenous",
+      "quantity": 6,
+      "country": "Taiwan",
+      "posture": "active",
+      "service_or_agency": "ROC Air Defense and Missile Command (792nd, 793rd, 794th SAM Brigades)",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Northern Taiwan (Sanchih, Tungyin, Penghu per GlobalSecurity); additional sites across island",
+        "description": "IISS 2025 lists approximately 50 Tien Kung II launchers. GlobalSecurity identifies TK-II deployment regions as Sanchih, Tungyin, Penghu, and Lungtan. Fixed silo infrastructure (432 silos built per Open Nuclear Network) but launchers are mobile. Precise tactical sites not provided."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "none",
+      "mobility": "moveable",
+      "hardness": "hard",
+      "detectability_active": "high",
+      "detectability_hiding": "low",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "battery",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "~50 Tien Kung II launchers in ROCAF Air Defense and Missile Command"
+        },
+        {
+          "title": "Air Defense – Taiwan",
+          "publisher": "GlobalSecurity.org",
+          "url": "https://www.globalsecurity.org/military/world/taiwan/air-defense.htm",
+          "date": null,
+          "claim_supported": "TK-II: Sanchih, Tungyin, Penghu, Lungtan; mobile launchers; 300 km range"
+        },
+        {
+          "title": "Taiwan's Air and Missile Defence Part 4",
+          "publisher": "Open Nuclear Network",
+          "url": "https://platform.opennuclear.org/thoughtroom/quick-takes/taiwans-air-and-missile-defence-part-4-long-range-sams-versus-pla-offensive-capabilities",
+          "date": "2025-04",
+          "claim_supported": "432 TK-2 silos constructed; sufficient missiles to arm all silos"
+        }
+      ],
+      "notes": "Quantity of ~6 batteries is estimated from IISS ~50 launchers (standard TK-2 battery has 8 launchers). Fixed silo infrastructure exists at many sites but launchers themselves are mobile transporter-erector-launchers. Hardness set HARD due to silo infrastructure where applicable. Confidence medium given site-count uncertainty. HAWK replacement completed Dec 2022."
+    },
+    {
+      "target_id": "sam_003",
+      "name": "Tien Kung III (Sky Bow III) SAM / ATBM Batteries – Aggregate",
+      "category": "Moveable SAMs",
+      "subcategory": "Long-Range ATBM – Indigenous",
+      "quantity": 6,
+      "country": "Taiwan",
+      "posture": "active",
+      "service_or_agency": "ROC Air Defense and Missile Command (792nd, 793rd SAM Brigades)",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Deployed across Taiwan; public reporting confirms TK-3 battery observed at Taitung Air Base (March 2024)",
+        "description": "IISS 2025 lists TK-III in 792nd brigade (1 bn) and 793rd brigade (1 bn). Open Nuclear Network (April 2025) cites 12 batteries planned for delivery 2015-2026. Precise deployment sites not provided."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "none",
+      "mobility": "moveable",
+      "hardness": "soft",
+      "detectability_active": "high",
+      "detectability_hiding": "low",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "battery",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "Tien Kung III under 792nd (1 bn) and 793rd (1 bn); Missile Defence noted separately"
+        },
+        {
+          "title": "Taiwan's Air and Missile Defence Part 3: Tien Kung-3 and Tien Kung-4",
+          "publisher": "Open Nuclear Network",
+          "url": "https://platform.opennuclear.org/thoughtroom/quick-takes/taiwans-air-and-missile-defence-part-3-tien-kung-3-and-tien-kung-4",
+          "date": null,
+          "claim_supported": "12 batteries planned; production 2015-2026; TK-3 battery with AESA radar observed at Taitung March 2024"
+        }
+      ],
+      "notes": "Quantity = 6 batteries estimated (partial production run as of 2025; 12 total planned by 2026). Interception altitude ~24-30 km. AESA fire control radar confirmed in public imagery. TK-4 (Tien Kung IV / Strong Bow) entering production 2025 per reporting but not yet in IISS 2025 inventory."
+    },
+    {
+      "target_id": "sam_004",
+      "name": "NASAMS Batteries (on order / initial delivery)",
+      "category": "Moveable SAMs",
+      "subcategory": "Medium-Range SAM – US-supplied",
+      "quantity": 3,
+      "country": "Taiwan",
+      "posture": "active",
+      "service_or_agency": "ROC Air Defense and Missile Command",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Not yet deployed as of IISS 2025 publication; first delivery expected end-2025/2026",
+        "description": "NASAMS order of 3 batteries announced October 2024; $1.16 billion. First delivery anticipated late 2025 per Defense Post April 2025."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "none",
+      "mobility": "moveable",
+      "hardness": "soft",
+      "detectability_active": "high",
+      "detectability_hiding": "low",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "battery",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "Taiwan Toughens Air Defense by Forming Fourth Patriot Battalion",
+          "publisher": "The Defense Post",
+          "url": "https://thedefensepost.com/2025/04/25/taiwan-fourth-patriot-battalion/",
+          "date": "2025-04-25",
+          "claim_supported": "3 NASAMS batteries ordered October 2024 ($1.16B); new battalion to be formed; range 50 km; counters drones, missiles, helicopters, aircraft"
+        }
+      ],
+      "notes": "Not in IISS 2025 equipment list; order confirmed October 2024. Confidence medium: procurement confirmed but delivery/operational timeline uncertain. Simulation may hold as 'on order' pending confirmation of delivery."
+    },
+    {
+      "target_id": "sam_005",
+      "name": "RIM-7 Sparrow / Skyguard Short-Range SAM – Static Sites",
+      "category": "Static SAMs",
+      "subcategory": "Short-Range SAM – Fixed",
+      "quantity": 4,
+      "country": "Taiwan",
+      "service_or_agency": "ROC Air Defense and Missile Command",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Fixed installations; locations not confirmed in public sources",
+        "description": "IISS 2025 lists 30 RIM-7M Sparrow with Skyguard fire control; 20+ GDF-006 35mm Skyguard guns. These are fixed or semi-fixed installations associated with airbase and facility defense."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "none",
+      "mobility": "static",
+      "hardness": "soft",
+      "detectability_active": "medium",
+      "detectability_hiding": "medium",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "aggregate_category",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "30 RIM-7M Sparrow with Skyguard; 20+ GDF-006 35mm with Skyguard"
+        }
+      ],
+      "notes": "Point-defense systems protecting key installations. Quantity of 4 = estimated site clusters based on 30 launchers (~8 per site). Exact siting not public. Model as site clusters per airbase if desired."
+    },
+    {
+      "target_id": "radar_001",
+      "name": "Leshan PAVE PAWS (AN/FPS-115) Early Warning Radar",
+      "category": "Static Radars",
+      "subcategory": "Long-Range Ballistic Missile Early Warning Radar",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Air Force",
+      "location_public": {
+        "city": "Wufeng Township",
+        "county": "Hsinchu County",
+        "region": "Northern Taiwan",
+        "description": "Leshan Radar Station, Luchang Mountain (Leshan), Wufeng Township (五峰), Hsinchu County. Altitude approximately 2,620 meters. Officially designated Leshan Radar Station."
+      },
+      "geolocation_public": {
+        "lat": 24.4167,
+        "lon": 121.0,
+        "source": "Wikipedia PAVE PAWS; Taipei Times; South China Morning Post; Taiwan News"
+      },
+      "geolocation_precision": "approximate_public",
+      "mobility": "static",
+      "hardness": "hard",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "individual_facility",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "PAVE PAWS – Wikipedia",
+          "publisher": "Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/PAVE_PAWS",
+          "date": null,
+          "claim_supported": "AN/FPS-115 installed at Leshan Radar Station, Luchang Mountain, Tai'an, Miaoli (variant: Wufeng, Hsinchu County per other sources); operational 2013; ~$1.4B cost; Phalanx CIWS protection reported"
+        },
+        {
+          "title": "Taiwan's early warning radar to receive software upgrades",
+          "publisher": "Taiwan News",
+          "url": "https://www.taiwannews.com.tw/news/5135888",
+          "date": "2024-04-03",
+          "claim_supported": "Leshan, Hsinchu County; AN/FPS-115 PAVE PAWS; RTX awarded upgrade contract"
+        },
+        {
+          "title": "Taiwan, US count on giant radar for early warning",
+          "publisher": "South China Morning Post",
+          "url": "https://www.scmp.com/news/china/military/article/3112692/taiwan-us-count-giant-radar-system-early-warning-if-pla-attacks",
+          "date": "2020-12-06",
+          "claim_supported": "Altitude 2,600m; 5,000km detection range; Hsinchu County; priority PLA target"
+        }
+      ],
+      "notes": "Taiwan's most strategically important radar. Detects ballistic missiles, cruise missiles, aircraft, and ships. Provides ~6 minutes warning of Chinese SRBM/MRBM launch. US technicians on-site permanently. Assessed as first-strike priority target for PLA. Protected by reported Phalanx CIWS. Very large fixed installation; easily detected when active. Mountain-top hardening provides some protection."
+    },
+    {
+      "target_id": "radar_002",
+      "name": "E-2T Hawkeye Airborne Early Warning Aircraft",
+      "category": "Mobile Radars",
+      "subcategory": "Airborne Early Warning",
+      "quantity": 5,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Air Force",
+      "location_public": {
+        "city": "Pingtung",
+        "county": "Pingtung County",
+        "region": "Southern Taiwan (home base); airborne when operational",
+        "description": "Home-based at Pingtung South per Scramble Taiwan Air Force ORBAT. Airborne when operational. IISS 2025 lists 5 E-2T Hawkeye."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "administrative",
+      "mobility": "mobile",
+      "hardness": "soft",
+      "detectability_active": "high",
+      "detectability_hiding": "medium",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "platform_category",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "5 E-2T Hawkeye in ROCAF AEW&C inventory"
+        },
+        {
+          "title": "Taiwan Air Force – Scramble",
+          "publisher": "Scramble.nl",
+          "url": "https://www.scramble.nl/planning/orbats/taiwan/taiwan-air-force",
+          "date": null,
+          "claim_supported": "2nd Early Warning Squadron; Pingtung South (formal station), operates from Pingtung North"
+        }
+      ],
+      "notes": "Critical airborne battle management and early warning; prioritized target for PLA suppression. Detectability high when airborne (emitting APS-145 radar). On ground at Pingtung: soft, detectable. Simulation should model as airborne platform with sortie scheduling."
+    },
+    {
+      "target_id": "radar_003",
+      "name": "AN/FPS-117 Long-Range Air Search Radars",
+      "category": "Static Radars",
+      "subcategory": "Long-Range Air Defense Radar",
+      "quantity": 5,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Air Force",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Multiple sites across Taiwan; Missile Defense Advocacy Alliance cites AN/FPS-117 in ROCAF network",
+        "description": "AN/FPS-117 (Gap-filler) fixed long-range air defense radars deployed at multiple sites as part of ROCAF air defense network. Part of Taiwan's layered radar architecture alongside PAVE PAWS and mobile radars."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "none",
+      "mobility": "static",
+      "hardness": "soft",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "aggregate_category",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "AN/FPS-117",
+          "publisher": "Missile Defense Advocacy Alliance",
+          "url": "https://www.missiledefenseadvocacy.org/defense-systems/an-fps-117/",
+          "date": "2018-05-01",
+          "claim_supported": "AN/FPS-117 cited as part of Taiwan radar network"
+        },
+        {
+          "title": "Taiwan's Layered Air Defence and the Calculus of Deterrence",
+          "publisher": "CIMSEC",
+          "url": "https://cimsec.org/the-shield-of-the-strait-taiwans-layered-air-defence-and-the-calculus-of-deterrence/",
+          "date": "2026-02-24",
+          "claim_supported": "PAVE PAWS feeds resilient network of fixed and mobile long-range air-search radars"
+        }
+      ],
+      "notes": "Quantity of 5 is estimated; exact count not publicly confirmed. Fixed sites; high detectability when emitting. Specific locations not confirmed in public sources. Confidence medium."
+    },
+    {
+      "target_id": "radar_004",
+      "name": "Coastal Surveillance Radar Network (Bee-Eye and legacy)",
+      "category": "Static Radars",
+      "subcategory": "Coastal Maritime Surveillance Radar",
+      "quantity": 12,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Navy – Naval Maritime and Surveillance Command",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Multiple coastal sites including Dongyin, Kinmen, Pratas, Taiping; high-altitude inland sites",
+        "description": "Taiwan operates a network of coastal surveillance radars. June 2022: MND signed $110M contract for 11 new Bee-Eye radar systems for Dongyin, Quemoy, Pratas, and Taiping. Navy also operates high-altitude sites including Hsiaohsuehshan (>3,000m)."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "none",
+      "mobility": "static",
+      "hardness": "soft",
+      "detectability_active": "high",
+      "detectability_hiding": "high",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "aggregate_category",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "Taiwan – Missile Defense Advocacy Alliance",
+          "publisher": "Missile Defense Advocacy Alliance",
+          "url": "https://www.missiledefenseadvocacy.org/intl_cooperation/taiwan/",
+          "date": null,
+          "claim_supported": "June 2022: $110M for 11 Bee-Eye radars; Dongyin, Quemoy, Pratas, Taiping"
+        },
+        {
+          "title": "Republic of China Navy – Military History Fandom",
+          "publisher": "Military History Fandom",
+          "url": "https://military-history.fandom.com/wiki/Republic_of_China_Navy",
+          "date": null,
+          "claim_supported": "Naval Maritime and Surveillance Command; high-altitude sites including Hsiaohsuehshan (>3,000m)"
+        }
+      ],
+      "notes": "Network covers Taiwan Strait approaches. New medium-to-long range maritime radars ordered May 2021. Quantity 12 estimated; exact site count not publicly confirmed. Confidence medium."
+    },
+    {
+      "target_id": "anti_ship_001",
+      "name": "Hsiung Feng IIE GLCM Batteries",
+      "category": "Anti-Ship Systems",
+      "subcategory": "Static CDCMs",
+      "quantity": 3,
+      "country": "Taiwan",
+      "service_or_agency": "ROC Air Defense and Missile Command – GLCM Brigade",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Not publicly disclosed; deployed with dedicated GLCM brigade under Air Defense and Missile Command",
+        "description": "IISS 2025 lists 1 GLCM brigade with 3 GLCM battalions, each equipped with Hsiung Feng IIE. Approximately 12 launchers total per IISS."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "none",
+      "mobility": "mobile",
+      "hardness": "soft",
+      "detectability_active": "low",
+      "detectability_hiding": "low",
+      "posture_default": "hiding",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "battery",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "1 GLCM bde (3 GLCM bn with Hsiung Feng IIE); ~12 conventional GLCM launchers"
+        }
+      ],
+      "notes": "Offensive strike capability against PLAN ships and PRC coastal targets. Shoot-and-scoot mobile; high wartime survivability. Quantity = 3 battalions (each is one operational firing unit). Total ~12 launcher vehicles per IISS."
+    },
+    {
+      "target_id": "anti_ship_002",
+      "name": "Hsiung Feng II/III Mobile Coastal Missile Launchers (Army Coastal Defense)",
+      "category": "Anti-Ship Systems",
+      "subcategory": "Mobile Coastal Anti-Ship Missile – Indigenous",
+      "quantity": 1,
+      "country": "Taiwan",
+      "service_or_agency": "ROC Army – Coastal Defense / Littoral Combatant Command (ROCN from 2026)",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Dispersed along western and southern coastlines; organizational concentration under Army coastal defense and transitioning to ROCN Littoral Combatant Command",
+        "description": "IISS 2025 lists 1 AShM battalion in ROC Army coastal defense. Hsiung Feng II/III mobile launchers on truck platforms. ROCN establishing Littoral Combatant Command July 2026 to consolidate all coastal missile units."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "none",
+      "mobility": "mobile",
+      "hardness": "soft",
+      "detectability_active": "low",
+      "detectability_hiding": "low",
+      "posture_default": "hiding",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "aggregate_category",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "1 AShM bn in Army coastal defense; Ching Feng coastal artillery also listed"
+        },
+        {
+          "title": "Taiwan to have highest anti-ship missile density",
+          "publisher": "Taipei Times",
+          "url": "https://www.taipeitimes.com/News/front/archives/2026/03/11/2003853607",
+          "date": "2026-03-11",
+          "claim_supported": "1,000 Hsiung Feng II and III produced by end 2025; 131 HF-II/IIE and 70 HF-III produced annually; total 1,400 AShMs expected by 2028 including Harpoon"
+        }
+      ],
+      "notes": "Massive anti-ship capability. Mobile launchers dispersed across road network. Extremely difficult to suppress unless caught in garrison or transit. Simulation should model as dispersed mobile aggregate."
+    },
+    {
+      "target_id": "anti_ship_003",
+      "name": "Harpoon Coastal Defense System (HCDS) – Mobile Batteries",
+      "category": "Anti-Ship Systems",
+      "subcategory": "Mobile Coastal Anti-Ship Missile – US-supplied",
+      "quantity": 8,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Navy – Littoral Combatant Command",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Mobile; deployable across road network. First 32 launcher units of 100 total ordered; initial deliveries late 2025/early 2026.",
+        "description": "100 HCDS launchers and 400 RGM-84L-4 Harpoon Block II missiles on FMS order (2020). First 32 launchers scheduled delivery by end 2026. 5 launcher trucks and radar vehicle already in-country for integration and training as of October 2025. Full 100-unit delivery by 2028."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "none",
+      "mobility": "mobile",
+      "hardness": "soft",
+      "detectability_active": "low",
+      "detectability_hiding": "low",
+      "posture_default": "hiding",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "aggregate_category",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "Taiwan to Deploy U.S. Harpoon Missile Batteries in 2026",
+          "publisher": "Army Recognition",
+          "url": "https://www.armyrecognition.com/news/navy-news/2025/taiwan-to-deploy-u-s-harpoon-missile-batteries-in-2026-to-deter-chinese-invasion",
+          "date": "2025-10-23",
+          "claim_supported": "First shipment of HCDS to arrive around New Year [2026]; 5 launcher trucks and radar vehicle in-country Oct 2025; $2.37B FMS sale of 100 launchers and 400 RGM-84L-4"
+        },
+        {
+          "title": "Taiwan to have highest anti-ship missile density",
+          "publisher": "Taipei Times",
+          "url": "https://www.taipeitimes.com/News/front/archives/2026/03/11/2003853607",
+          "date": "2026-03-11",
+          "claim_supported": "32 HCDS with 128 missiles expected; 400 total by 2028; organized under new Littoral Combatant Command"
+        }
+      ],
+      "notes": "Quantity of 8 = estimated initial batteries (4 launchers per battery from 32 launchers). Mobile tractor-trailer launcher plus dedicated radar truck. Shoot-and-scoot capable; road network survivability high. Range 120-140 km. Organized under new ROCN Littoral Combatant Command from January 2026."
+    },
+    {
+      "target_id": "anti_ship_004",
+      "name": "ROCN Principal Surface Combatants – DDG and FFG",
+      "category": "Anti-Ship Systems",
+      "subcategory": "Surface Combatant – Destroyer and Frigate",
+      "quantity": 26,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Navy – 124th and 168th Fleets",
+      "location_public": {
+        "city": "Kaohsiung (primary); Keelung; Suao",
+        "county": "Multiple bases",
+        "region": "Multiple naval bases",
+        "description": "26 principal surface combatants: 4 DDG (Keelung/ex-Kidd class), 22 FFG (8 Cheng Kung, 2 Meng Chuan, 6 Chin Yang, 6 Kang Ding). Based at Zuoying (primary), Keelung, Suao."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "administrative",
+      "mobility": "mobile",
+      "hardness": "hard",
+      "detectability_active": "high",
+      "detectability_hiding": "medium",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "platform_category",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "4 DDG Keelung class; 8 FFG Cheng Kung; 2 Meng Chuan; 5+1 Chin Yang; 6 Kang Ding; all with Harpoon or Hsiung Feng AShM"
+        }
+      ],
+      "notes": "All DDG/FFG carry anti-ship missiles (Harpoon or Hsiung Feng II/III). IISS lists full armament. In port: high detectability. At sea / dispersed: medium. Wartime posture: dispersal east of Central Mountain Range per Pacific Forum analysis."
+    },
+    {
+      "target_id": "anti_ship_005",
+      "name": "Ta Jiang / Tuo Jiang Corvettes (FSGM/PCFG)",
+      "category": "Anti-Ship Systems",
+      "subcategory": "Stealth Corvette / Fast Attack Craft",
+      "quantity": 7,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Navy – 131st Fleet",
+      "location_public": {
+        "city": "Keelung",
+        "county": "Keelung City",
+        "region": "Northern Taiwan",
+        "description": "6 Ta Jiang (Tuo Jiang mod) FSGM and 1 Tuo Jiang PCFG based at Weihai Naval Base, Keelung per President Lai's 2024 inspection."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "administrative",
+      "mobility": "mobile",
+      "hardness": "soft",
+      "detectability_active": "medium",
+      "detectability_hiding": "low",
+      "posture_default": "hiding",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "platform_category",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "6 Ta Jiang FSGM with HF-II/III AShM and Sea Sword II SAM; 1 Tuo Jiang PCFG with HF-II/III AShM"
+        },
+        {
+          "title": "President Lai inspects Keelung naval base",
+          "publisher": "GlobalSecurity.org / CNA",
+          "url": "https://www.globalsecurity.org/wmd/library/news/taiwan/2024/taiwan-240713-cna02.htm",
+          "date": "2024-07-13",
+          "claim_supported": "Tuo Chiang-class corvettes at 131st Fleet, Keelung"
+        }
+      ],
+      "notes": "Stealth hull; low radar cross section. Primary anti-ship platform for Taiwan Strait sea denial. 8 Hsiung Feng II + 4 Hsiung Feng III per Ta Jiang; additional SAM (Sea Sword II). High missile density. Wartime posture: dispersed to coastal hide sites."
+    },
+    {
+      "target_id": "anti_ship_006",
+      "name": "Kwang Hua VI Missile Boats (PBG)",
+      "category": "Anti-Ship Systems",
+      "subcategory": "Missile Patrol Boat",
+      "quantity": 31,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Navy",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Multiple bases including Suao (1st Hai Chiao Sqn), Makung; dispersed",
+        "description": "31 Kwang Hua VI (PBG) each with 2 twin Hsiung Feng II AShM launchers. Small, fast, dispersible."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "administrative",
+      "mobility": "mobile",
+      "hardness": "soft",
+      "detectability_active": "medium",
+      "detectability_hiding": "low",
+      "posture_default": "hiding",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "platform_category",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "31 PBG Kwang Hua with 2 twin HF-II launchers each"
+        }
+      ],
+      "notes": "Core of Taiwan's asymmetric sea denial. Small, fast, can hide in small ports and inlets. Each carries 4 Hsiung Feng II missiles. Critical for salvo mass in strait interdiction. Modeled as platform category; individual boats not trackable in open source."
+    },
+    {
+      "target_id": "anti_ship_007",
+      "name": "ROCAF Anti-Ship Aircraft (F-16V / P-3C with Harpoon)",
+      "category": "Anti-Ship Systems",
+      "subcategory": "Air-Launched Anti-Ship Missile Platform",
+      "quantity": 152,
+      "country": "Taiwan",
+      "service_or_agency": "Republic of China Air Force",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Chiayi (F-16V primary); Hualien (F-16V secondary); Pingtung North (P-3C)",
+        "description": "140 F-16V capable of AGM-84 Harpoon AShM; 12 P-3C Orion with AGM-84 Harpoon AShM. Modeled as platform category per spec."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "administrative",
+      "mobility": "mobile",
+      "hardness": "soft",
+      "detectability_active": "high",
+      "detectability_hiding": "low",
+      "posture_default": "hiding",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "platform_category",
+      "confidence": "high",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "140 F-16V; 12 P-3C; AGM-84 Harpoon listed as AShM for ROCAF aircraft"
+        }
+      ],
+      "notes": "F-16V and P-3C are the primary air-launched anti-ship platforms. Quantity = 140 F-16V + 12 P-3C = 152 platforms potentially capable; not all will be armed with Harpoon simultaneously. Ground-based when not airborne; survivability depends on airbase hardening and dispersal. Modeled as platform category; survivability linked to airbase targets."
+    },
+    {
+      "target_id": "sam_mobile_antelope_to2",
+      "name": "TC-1 Antelope Short-Range SAM – TO 2",
+      "category": "Mobile SAMs",
+      "subcategory": "Short-Range Mobile SAM – Antelope",
+      "quantity": 10,
+      "to_number": 2,
+      "country": "Taiwan",
+      "service_or_agency": "ROC Army Air Defense",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Theater of Operations 2",
+        "description": "TC-1 Antelope mobile SAM system operated by ROC Army air defense units. Vehicle-mounted, towed, or man-portable configuration depending on unit. IISS 2025 lists TC-1 Antelope in ROC Army inventory."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "none",
+      "mobility": "mobile",
+      "hardness": "soft",
+      "detectability_active": "medium",
+      "detectability_hiding": "low",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "platform_category",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "TC-1 Antelope short-range mobile SAM system in ROC Army air defense inventory"
+        }
+      ],
+      "notes": "TC-1 Antelope is a domestically produced short-range mobile SAM for point defense. Quantity 10 represents estimated launchers/fire units in TO 2. Highly mobile; quantity count varies by TO based on assessed deployment density."
+    },
+    {
+      "target_id": "sam_mobile_antelope_to3",
+      "name": "TC-1 Antelope Short-Range SAM – TO 3",
+      "category": "Mobile SAMs",
+      "subcategory": "Short-Range Mobile SAM – Antelope",
+      "quantity": 20,
+      "to_number": 3,
+      "country": "Taiwan",
+      "service_or_agency": "ROC Army Air Defense",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Theater of Operations 3",
+        "description": "TC-1 Antelope mobile SAM system operated by ROC Army air defense units. Vehicle-mounted, towed, or man-portable configuration depending on unit. IISS 2025 lists TC-1 Antelope in ROC Army inventory."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "none",
+      "mobility": "mobile",
+      "hardness": "soft",
+      "detectability_active": "medium",
+      "detectability_hiding": "low",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "platform_category",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "TC-1 Antelope short-range mobile SAM system in ROC Army air defense inventory"
+        }
+      ],
+      "notes": "TC-1 Antelope is a domestically produced short-range mobile SAM for point defense. Quantity 20 represents estimated launchers/fire units in TO 3. Highly mobile; quantity count varies by TO based on assessed deployment density."
+    },
+    {
+      "target_id": "sam_mobile_antelope_to4",
+      "name": "TC-1 Antelope Short-Range SAM – TO 4",
+      "category": "Mobile SAMs",
+      "subcategory": "Short-Range Mobile SAM – Antelope",
+      "quantity": 10,
+      "to_number": 4,
+      "country": "Taiwan",
+      "service_or_agency": "ROC Army Air Defense",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Theater of Operations 4",
+        "description": "TC-1 Antelope mobile SAM system operated by ROC Army air defense units. Vehicle-mounted, towed, or man-portable configuration depending on unit. IISS 2025 lists TC-1 Antelope in ROC Army inventory."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "none",
+      "mobility": "mobile",
+      "hardness": "soft",
+      "detectability_active": "medium",
+      "detectability_hiding": "low",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "platform_category",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "TC-1 Antelope short-range mobile SAM system in ROC Army air defense inventory"
+        }
+      ],
+      "notes": "TC-1 Antelope is a domestically produced short-range mobile SAM for point defense. Quantity 10 represents estimated launchers/fire units in TO 4. Highly mobile; quantity count varies by TO based on assessed deployment density."
+    },
+    {
+      "target_id": "sam_mobile_antelope_to5",
+      "name": "TC-1 Antelope Short-Range SAM – TO 5",
+      "category": "Mobile SAMs",
+      "subcategory": "Short-Range Mobile SAM – Antelope",
+      "quantity": 10,
+      "to_number": 5,
+      "country": "Taiwan",
+      "service_or_agency": "ROC Army Air Defense",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Theater of Operations 5",
+        "description": "TC-1 Antelope mobile SAM system operated by ROC Army air defense units. Vehicle-mounted, towed, or man-portable configuration depending on unit. IISS 2025 lists TC-1 Antelope in ROC Army inventory."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "none",
+      "mobility": "mobile",
+      "hardness": "soft",
+      "detectability_active": "medium",
+      "detectability_hiding": "low",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "platform_category",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "TC-1 Antelope short-range mobile SAM system in ROC Army air defense inventory"
+        }
+      ],
+      "notes": "TC-1 Antelope is a domestically produced short-range mobile SAM for point defense. Quantity 10 represents estimated launchers/fire units in TO 5. Highly mobile; quantity count varies by TO based on assessed deployment density."
+    },
+    {
+      "target_id": "sam_mobile_stinger_to2",
+      "name": "FIM-92 Stinger MANPADS – TO 2",
+      "category": "Mobile SAMs",
+      "subcategory": "MANPADS – Stinger",
+      "quantity": 500,
+      "to_number": 2,
+      "country": "Taiwan",
+      "service_or_agency": "ROC Army / ROC Marines",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Theater of Operations 2",
+        "description": "FIM-92 Stinger man-portable air defense system. Distributed across ROC Army and Marine Corps units. IISS 2025 lists Stinger in Taiwan inventory."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "none",
+      "mobility": "mobile",
+      "hardness": "soft",
+      "detectability_active": "low",
+      "detectability_hiding": "low",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "platform_category",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "FIM-92 Stinger MANPADS in ROC Army and Marine Corps inventory"
+        }
+      ],
+      "notes": "Stinger MANPADS represents individual shoulder-launched units distributed across ground forces in TO 2. High mobility; nearly impossible to track at individual-launcher level. Quantity 500 is estimated TO-level count based on assessed ground force density. As point defense weapons, their primary effect is deterrence against low-flying aircraft."
+    },
+    {
+      "target_id": "sam_mobile_stinger_to3",
+      "name": "FIM-92 Stinger MANPADS – TO 3",
+      "category": "Mobile SAMs",
+      "subcategory": "MANPADS – Stinger",
+      "quantity": 1000,
+      "to_number": 3,
+      "country": "Taiwan",
+      "service_or_agency": "ROC Army / ROC Marines",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Theater of Operations 3",
+        "description": "FIM-92 Stinger man-portable air defense system. Distributed across ROC Army and Marine Corps units. IISS 2025 lists Stinger in Taiwan inventory."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "none",
+      "mobility": "mobile",
+      "hardness": "soft",
+      "detectability_active": "low",
+      "detectability_hiding": "low",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "platform_category",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "FIM-92 Stinger MANPADS in ROC Army and Marine Corps inventory"
+        }
+      ],
+      "notes": "Stinger MANPADS represents individual shoulder-launched units distributed across ground forces in TO 3. High mobility; nearly impossible to track at individual-launcher level. Quantity 1000 is estimated TO-level count based on assessed ground force density. As point defense weapons, their primary effect is deterrence against low-flying aircraft."
+    },
+    {
+      "target_id": "sam_mobile_stinger_to4",
+      "name": "FIM-92 Stinger MANPADS – TO 4",
+      "category": "Mobile SAMs",
+      "subcategory": "MANPADS – Stinger",
+      "quantity": 500,
+      "to_number": 4,
+      "country": "Taiwan",
+      "service_or_agency": "ROC Army / ROC Marines",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Theater of Operations 4",
+        "description": "FIM-92 Stinger man-portable air defense system. Distributed across ROC Army and Marine Corps units. IISS 2025 lists Stinger in Taiwan inventory."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "none",
+      "mobility": "mobile",
+      "hardness": "soft",
+      "detectability_active": "low",
+      "detectability_hiding": "low",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "platform_category",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "FIM-92 Stinger MANPADS in ROC Army and Marine Corps inventory"
+        }
+      ],
+      "notes": "Stinger MANPADS represents individual shoulder-launched units distributed across ground forces in TO 4. High mobility; nearly impossible to track at individual-launcher level. Quantity 500 is estimated TO-level count based on assessed ground force density. As point defense weapons, their primary effect is deterrence against low-flying aircraft."
+    },
+    {
+      "target_id": "sam_mobile_stinger_to5",
+      "name": "FIM-92 Stinger MANPADS – TO 5",
+      "category": "Mobile SAMs",
+      "subcategory": "MANPADS – Stinger",
+      "quantity": 500,
+      "to_number": 5,
+      "country": "Taiwan",
+      "service_or_agency": "ROC Army / ROC Marines",
+      "location_public": {
+        "city": null,
+        "county": null,
+        "region": "Theater of Operations 5",
+        "description": "FIM-92 Stinger man-portable air defense system. Distributed across ROC Army and Marine Corps units. IISS 2025 lists Stinger in Taiwan inventory."
+      },
+      "geolocation_public": {
+        "lat": null,
+        "lon": null,
+        "source": null
+      },
+      "geolocation_precision": "none",
+      "mobility": "mobile",
+      "hardness": "soft",
+      "detectability_active": "low",
+      "detectability_hiding": "low",
+      "posture_default": "active",
+      "status_default": {
+        "destroyed": false,
+        "suppressed": false
+      },
+      "target_modeling_level": "platform_category",
+      "confidence": "medium",
+      "sources": [
+        {
+          "title": "IISS Military Balance 2025 – Taiwan entry",
+          "publisher": "IISS",
+          "url": null,
+          "date": "2025",
+          "claim_supported": "FIM-92 Stinger MANPADS in ROC Army and Marine Corps inventory"
+        }
+      ],
+      "notes": "Stinger MANPADS represents individual shoulder-launched units distributed across ground forces in TO 5. High mobility; nearly impossible to track at individual-launcher level. Quantity 500 is estimated TO-level count based on assessed ground force density. As point defense weapons, their primary effect is deterrence against low-flying aircraft."
+    }
+  ]
+}

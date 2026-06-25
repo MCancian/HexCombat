@@ -1,0 +1,17 @@
+{
+  "model_version": 3,
+  "fallback_by_category": {
+    "Moveable SAMs": 3,
+    "Static SAMs": 2,
+    "Mobile SAMs": 1
+  },
+  "sam_score_by_subcategory": {
+    "Long-Range SAM – Patriot": 4,
+    "Long-Range SAM – Indigenous": 4,
+    "Long-Range ATBM – Indigenous": 4,
+    "Medium-Range SAM – US-supplied": 3,
+    "Short-Range SAM – Fixed": 2,
+    "Short-Range Mobile SAM – Antelope": 1,
+    "MANPADS – Stinger": 1
+  }
+}
