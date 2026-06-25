@@ -602,7 +602,23 @@ manifest.
       manifest). Suppressed systems flag carried into next turn. `tools/validate_headless_antiship.gd`.
       Gate green.
 
-### D3 — Open Questions  *(SURFACED 2026-06-24 — scoped the TIV oracle; PAUSED for a decision)*
+### D3 — Open Questions  *(RESOLVED 2026-06-25 — see decision below)*
+
+**Decision (2026-06-25, user):** (Q1 order) **D4 (IJFS) first, then D3** — so D3's firing plan
+consumes real IJFS destroyed/suppressed anti-ship systems instead of a stub. (Q2 fidelity) **Full
+faithful port of D3** — the 7-stage missile-crossing model + mine warfare + magazines + suppression
++ 28-ship roster + munition catalog. (Q3 ship depth) **Full 28-type ship roster** (implied by Q2;
+replaces the inert `ShipFleet` stub and wires `lost_at_sea`). (D4 fidelity) **Full standalone-engine
+port** of `ijfs_standalone` (all 6 phases). (D3 inputs) firing-% + minesweeper assignments come from
+**scenario/config defaults** via the headless action layer — **no new UI** this phase (Track C).
+**Build structure:** orchestrated, phased — each sub-task is a self-contained model+lib+tests unit
+handed to a `pi` subagent, gated and committed independently; dependency-independent sub-tasks in a
+wave run as concurrent `pi` sessions. Full sub-task breakdown (Wave 0 foundations D0-A/B/C; D4-A…H;
+D3-A…F) lives in the approved plan file
+`C:\Users\mdogg\.claude\plans\where-we-left-we-gentle-parnas.md`. The D3-A…D and D4-scope stubs above
+are superseded by that breakdown.
+
+<details><summary>Original scoping rationale (kept for the record)</summary>
 
 Scoping read of the TIV anti-ship oracle (`antiship_calculator.py` 28KB, `antiship_crossing.py`
 41KB, firing_plan/launch_attrition/magazine/suppression/mutation services, `mine_warfare_service.py`,
@@ -643,6 +659,9 @@ of it fits HexCombat's simplified-slice philosophy, à la the D2 single-pool dec
 
 **Recommendation:** simplified fleet-attrition slice (Q2) AND reorder so D4/IJFS precedes a fuller
 D3 (Q1) — but this is the user's call; awaiting direction before any D3 coding.
+*(User overrode the simplified recommendation: chose full faithful for both — see Decision above.)*
+
+</details>
 
 ---
 
