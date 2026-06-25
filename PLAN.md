@@ -126,6 +126,20 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-25 — D4/D3 build kickoff + Wave 0 foundations complete:** Resolved the paused D3
+  questions (see "D3 — Open Questions → Decision"): build **D4 (IJFS) first**, both **full faithful
+  ports**, D3 inputs from **scenario/config defaults** (no UI), build **orchestrated/phased via pi**.
+  Wave 0 (shared foundations, all committed, gate green) done: **D0-A** Dice/RNG extensions
+  (`randf`/`weighted_choice`/`weighted_choices`/`shuffle_indices`/`derive` substreams on
+  Dice/SeededDice/ScriptedDice; `validate_no_global_rng.gd` now skips `func ` definition lines so the
+  abstraction can define its own `randf()`); **D0-B** Theater/TO model (`data/theaters.json` +
+  `Theaters.gd` from TIV `contracts/theater.py`; validator cross-checks beach `to_number`); **D0-C**
+  ship-type model (`data/ships.json` 27 entries, `ShipDef`/`ShipState`/`IndividualShip`; replaced the
+  inert `ShipFleet` stub with a typed `GameState.fleet`; added the `pending_lost_at_sea` /
+  `register_ship_losses` seam — **reporting only**, BN-removal deferred to D3-F so offload golden is
+  byte-stable). Combat golden unchanged throughout (seed 20260624 → casualties=2, feba=0.76). Full
+  sub-task breakdown in the approved plan file `~/.claude/plans/where-we-left-we-gentle-parnas.md`.
+
 - **2026-06-24 — D2-C/D supply wiring decisions:** (1) **Unit selection:** supply consumption
   counts the FULL current composition of every Red brigade that is on-map (`hex_id` set) and not
   destroyed — the HexCombat analogue of TIV's `active_red_battalion_records` (Team=Red,
