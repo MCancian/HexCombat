@@ -134,3 +134,34 @@ next sub-tasks (D4-G/H, D3) don't relearn them.
 - IJFS per-turn cost → **act later (→ backlog)**: if gate runtime becomes a problem, cache the
   loaded IJFS data statically or make the phase opt-out for pure combat unit tests.
 - Validator-not-GdUnit coverage → **record only**: expected per the project's testing rule.
+
+---
+
+## 2026-06-26 — D3-A: anti-ship data + models   (implementer: direct)
+
+**What would you do differently (self-retro):**
+- **Copy beats transcribe for tuning data.** The 5 TIV anti-ship configs are ~30KB of interdependent
+  numbers (escort interception, lethality, ship profiles, magazines). Copying them verbatim into
+  `data/antiship/` (then loading as Dictionaries) is the only safe move — hand-normalizing to
+  snake_case like D1-A did for beaches would have been a transcription-bug minefield for zero benefit
+  since D3-B consumes them as opaque config. Lesson: normalize *structural* data you'll model; copy
+  *tuning* data you'll just read.
+- **The grouping spec is the row source, not the catalog.** I almost modeled rows off
+  `antiship_systems_consolidated.json` (the type catalog) before noticing its own note: "TOs block
+  removed; row generation owned by defaults_loader + grouping spec." The real quantities live in
+  `antiship_grouping_spec.json` as index-aligned `group_sizes[]`/`to_assignments[]`. Always read the
+  data files' own `notes` array first — TIV documents its schema there.
+- **Aggregation vs. container fidelity.** TIV keeps per-container rows ("Option B-lite"); I aggregated
+  by (TO, type_id) because the firing plan keys on (TO, Type). This is a deliberate simplification —
+  if D3-B ever needs per-container granularity (e.g. per-platform magazines), it'll have to re-read
+  the grouping spec. Flagged in the Decisions log.
+- **Data lacked beach names until I used the right key.** TIV `beaches.json` uses `Name_En` (not
+  `Name_EN`); my first minefield export got blank names. Generating data via a script + immediately
+  printing a sample caught it in one cycle — worth doing for every data port.
+
+**Orchestrator triage:**
+- Copy-vs-transcribe heuristic → **brief forward**: add to the D3 sub-task briefs (D3-C mine warfare
+  will face the same choice).
+- Read data `notes` first → **record only**: general data-port discipline.
+- Aggregation simplification → **act later (→ watch)**: revisit only if D3-B needs per-container state.
+- Verify generated data with a printed sample → **record only**: already standard practice here.

@@ -126,6 +126,30 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-26 — D3-A anti-ship data + models (direct):** Ported the D3 data layer. Decisions:
+  (1) **TIV configs copied verbatim** into `data/antiship/` (systems_consolidated, grouping_spec,
+  combat_catalog, crossing_config, magazine_defaults) — same precedent as D4-A; copying avoids
+  transcription error on ~30KB of interdependent tuning data. The combat/crossing/magazine files are
+  loaded as Dictionaries (the D3-B calculator consumes them); only systems + minefields expand into
+  typed Resources. (2) **System rows aggregated by (TO, type_id).** The grouping spec stores platform
+  groups as index-aligned `group_sizes[]` / `to_assignments[]`; the same (type, TO) recurs across
+  entries (e.g. aircraft type 3, static sites type 5), so `AntishipLoaders.load_systems` sums quantity
+  per (TO, type_id) into one `AntishipSystem` row — matching the firing plan's (TO, Type) keying
+  (`FiringAllocationRow`) rather than TIV's per-container "Option B-lite" storage. Expansion yields
+  **650 platforms** total (Keelung 4 / Cheng Kung 10 / Kang Ding 6 / Chi Yang 6 / Kwang Hua 30 / Tuo
+  Chiang 12 / Anping 12 / aircraft 334 / coastal-HF 26 / coastal-Harpoon 100 / static-CDCM 104 /
+  subs 2 / C2 4), all in TOs 2–5. (3) **Deprecated types dropped:** the grouping spec only references
+  current type_ids (3, 5, 6, 16–24, 99); legacy platform groups 1/2/4 and 7–15 (in the catalog for
+  backward compat) emit no rows. C2 (type 99) IS emitted from the grouping spec (carries
+  `special:"C2"`); the D3-B firing plan will filter it (it is not a firing system). (4) **Minefields
+  recovered:** D1-A stripped the `Minefield` blocks from `data/beaches.json`; recovered them into
+  `data/antiship/minefields.json` (9 beaches × 100 mines, 1 mine/sweeper/day, `available_minesweepers`
+  6 per `AntishipMinefieldSummary` default), carrying `to_number` for D3-C. `ships.json` + ShipDef/
+  ShipState were already in place from D0-C — D3-A did not recreate them. Gate green; golden seed
+  20260624 → casualties=2, feba=0.76 unchanged. See `RETROSPECTIVES.md 2026-06-26 D3-A`. Next: **D3-B**
+  (`AntishipCalculator`: firing plan + crossing damage + magazine expenditure) — resolve the
+  IJFS-target `to_number` stamping there (D4-H Open Question) so suppression joins per (TO,Type).
+
 - **2026-06-26 — D4-H IJFS GameState wiring + writeback (direct); D4 milestone complete:** Wired
   `GameState.resolve_ijfs_turn(dice)` into `resolve_turn` (after `resolve_offload_turn`, before
   maneuver/combat — IJFS suppresses anti-ship systems for D3 and is conceptually Red's joint fires
@@ -693,10 +717,15 @@ manifest.
 
 **Sub-tasks** (scope from TIV oracle before writing):
 
-- [ ] **D3-A** — Data + models: `data/ships.json` (Red ship types with capacity/count from TIV
-      defaults), `data/antiship_systems.json` (Green weapon systems from TIV defaults);
-      `scripts/model/ShipState.gd`, `scripts/model/AntishipSystem.gd`,
-      `scripts/model/Minefield.gd`. `tools/validate_antiship_data.gd`. Gate green.
+- [x] **D3-A** *(2026-06-26)* — Data + models. `data/ships.json` + `ShipDef`/`ShipState` already
+      existed (D0-C). Added: `data/antiship/` (5 TIV configs copied verbatim — systems catalog,
+      grouping spec, combat catalog, crossing config, magazine defaults — + `minefields.json`
+      recovered from TIV `beaches.json`); `scripts/model/AntishipSystem.gd` (per-(TO,type) row,
+      mirrors `AntishipSystemEntry`), `scripts/model/Minefield.gd` (per-beach, mirrors
+      `AntishipMinefieldBeachSummary`); `scripts/AntishipLoaders.gd` (expands the grouping spec into
+      650 systems aggregated by (TO,type_id); loads catalog/crossing/magazine/minefields, fail-loud);
+      `tools/validate_antiship_data.gd` (per-type totals, aggregation uniqueness, catalog/crossing/
+      magazine/minefield shapes). Gate green; golden invariant unchanged.
 
 - [ ] **D3-B** — `scripts/AntishipCalculator.gd` — pure lib: `build_firing_plan()`,
       `resolve_crossing_damage()`, `apply_magazine_expenditure()`. Mirror TIV unit tests

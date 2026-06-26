@@ -1,0 +1,160 @@
+{
+  "description": "Antiship combat behavior: missile (munition) properties and per-launcher-type loadouts. Names sourced from the TaiwanDefenseRefactor sister repo. This file owns COMBAT BEHAVIOR only; container layout lives in the grouping spec and display names in antiship_systems_consolidated.json.",
+  "version": "1.0",
+  "munitions": {
+    "Harpoon_Sea_I": {
+      "quantity": 150,
+      "terminal_defense_susceptibility": "High",
+      "discrimination_ability": "Low",
+      "lethality": "Medium",
+      "in_flight_failure_rate": 0.08
+    },
+    "Hsiung Feng II": {
+      "quantity": 340,
+      "store_group": "HF",
+      "terminal_defense_susceptibility": "High",
+      "discrimination_ability": "Low",
+      "lethality": "Medium",
+      "in_flight_failure_rate": 0.07
+    },
+    "Hsiung Feng III": {
+      "quantity": 320,
+      "store_group": "HF",
+      "terminal_defense_susceptibility": "Low",
+      "discrimination_ability": "Medium",
+      "lethality": "High",
+      "in_flight_failure_rate": 0.05
+    },
+    "Harpoon_Sea_II": {
+      "quantity": 71,
+      "terminal_defense_susceptibility": "Medium",
+      "discrimination_ability": "High",
+      "lethality": "Medium",
+      "in_flight_failure_rate": 0.06
+    },
+    "SLAM-ER": {
+      "quantity": 135,
+      "terminal_defense_susceptibility": "High",
+      "discrimination_ability": "Low",
+      "lethality": "Medium",
+      "in_flight_failure_rate": 0.07
+    },
+    "Harpoon_Air_II": {
+      "quantity": 120,
+      "terminal_defense_susceptibility": "Medium",
+      "discrimination_ability": "High",
+      "lethality": "Medium",
+      "in_flight_failure_rate": 0.06
+    },
+    "Harpoon_Ground_II": {
+      "quantity": 460,
+      "terminal_defense_susceptibility": "Medium",
+      "discrimination_ability": "High",
+      "lethality": "Medium",
+      "in_flight_failure_rate": 0.06
+    },
+    "Harpoon_Sub_II": {
+      "quantity": 32,
+      "terminal_defense_susceptibility": "Medium",
+      "discrimination_ability": "High",
+      "lethality": "Medium",
+      "in_flight_failure_rate": 0.05
+    },
+    "Torpedo": {
+      "quantity": 50,
+      "terminal_defense_susceptibility": "None",
+      "discrimination_ability": "High",
+      "lethality": "High",
+      "in_flight_failure_rate": 0.03
+    }
+  },
+  "launchers": {
+    "19": {
+      "_comment": "Keelung-class Destroyers - 8x Harpoon each",
+      "missiles": ["Harpoon_Sea_II"],
+      "missiles_per_launcher": 8,
+      "range_tier": "neighboring"
+    },
+    "20": {
+      "_comment": "Cheng Kung Frigates - 8x HF each (HF-III, shared HF store)",
+      "missiles": ["Hsiung Feng III"],
+      "missiles_per_launcher": 8,
+      "range_tier": "neighboring"
+    },
+    "21": {
+      "_comment": "Kang Ding Frigates - 8x HF each (HF-II, shared HF store)",
+      "missiles": ["Hsiung Feng II"],
+      "missiles_per_launcher": 8,
+      "range_tier": "neighboring"
+    },
+    "22": {
+      "_comment": "Chi Yang Frigates - 2x Harpoon each",
+      "missiles": ["Harpoon_Sea_I"],
+      "missiles_per_launcher": 2,
+      "range_tier": "neighboring"
+    },
+    "16": {
+      "_comment": "Kwang Hua VI Patrol Boats - 4x HF-II each",
+      "missiles": ["Hsiung Feng II"],
+      "missiles_per_launcher": 4,
+      "range_tier": "own_to"
+    },
+    "17": {
+      "_comment": "Tuo Chiang Corvettes - 12 missiles each (HF-III, shared HF store)",
+      "missiles": ["Hsiung Feng III"],
+      "missiles_per_launcher": 12,
+      "range_tier": "own_to"
+    },
+    "18": {
+      "_comment": "Anping Patrol Vessels - 4x HF-II each",
+      "missiles": ["Hsiung Feng II"],
+      "missiles_per_launcher": 4,
+      "range_tier": "own_to"
+    },
+    "3": {
+      "_comment": "Air-Launched AShM Platforms",
+      "missiles": ["Harpoon_Air_II", "SLAM-ER"],
+      "missiles_per_launcher": 2,
+      "range_tier": "whole_island"
+    },
+    "23": {
+      "_comment": "Mobile Coastal AShM Launchers (HF) - 26 launchers, 4x HF-II each, shared HF store",
+      "missiles": ["Hsiung Feng II"],
+      "missiles_per_launcher": 4,
+      "range_tier": "neighboring"
+    },
+    "24": {
+      "_comment": "Mobile Coastal AShM Launchers (Harpoon) - 100 launchers, 4x Harpoon_Ground_II each",
+      "missiles": ["Harpoon_Ground_II"],
+      "missiles_per_launcher": 4,
+      "range_tier": "neighboring"
+    },
+    "5": {
+      "_comment": "Static CDCMs",
+      "missiles": ["Harpoon_Ground_II"],
+      "missiles_per_launcher": 8,
+      "range_tier": "own_to"
+    },
+    "6": {
+      "_comment": "Submarines",
+      "missiles": ["Harpoon_Sub_II", "Torpedo"],
+      "missiles_per_launcher": 4,
+      "range_tier": "whole_island"
+    }
+  },
+  "store_groups": {
+    "HF": {
+      "quantity": 660,
+      "_comment": "Interchangeable Hsiung Feng II/III inventory (was 340 + 320). Munitions tagged store_group=HF draw their inventory from this shared budget; their individual quantity fields are retained for documentation only and ignored by the engine."
+    }
+  },
+  "notes": [
+    "munitions: keyed by missile name. quantity is the theater-wide global pool. in_flight_failure_rate is per-missile loss probability before reaching the fleet.",
+    "store_group: when a munition declares one, its inventory is drawn from store_groups[group].quantity (a shared budget) instead of its own quantity. Hsiung Feng II and III share the 'HF' store because their physical magazines are interchangeable.",
+    "launchers: keyed by antiship type_id (string). missiles is the loadout list in priority order - a launcher fires the first munition with remaining global pool, falling back to the next.",
+    "range_tier: own_to (fires only into its own TO), neighboring (own + TO_ADJACENCY neighbors), whole_island (any TO).",
+    "2026 OOB breakout: type 1 split into 19-22 (Keelung/Cheng Kung/Kang Ding/Chi Yang); type 4 split into 23 (HF) + 24 (Harpoon). HF-firing classes each declare a single primary HF variant; the II/III mix emerges at fleet level and all draw the shared HF store.",
+    "Phase 2 will add type_id 7 (UAV) and 8 (USV) as self-attacking single-use entries.",
+    "Seed values are conservative; Phase 3 tunes against the sister repo."
+  ]
+}

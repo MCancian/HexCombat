@@ -1,0 +1,35 @@
+{
+  "description": "Antiship shared missile magazine definitions and per-type loadout map.",
+  "version": "2.0",
+  "magazines": [
+    {"magazine_key": "block_i", "display_name": "Harpoon Block I", "initial_count": 150},
+    {"magazine_key": "block_ii_surface", "display_name": "Harpoon Block II (Surface)", "initial_count": 71},
+    {"magazine_key": "block_ii_aircraft", "display_name": "Harpoon Block II (Aircraft)", "initial_count": 120},
+    {"magazine_key": "block_ii_mobile", "display_name": "Harpoon Block II (Mobile)", "initial_count": 400},
+    {"magazine_key": "block_ii_submarine", "display_name": "Harpoon Block II (Submarine)", "initial_count": 32},
+    {"magazine_key": "slam_er", "display_name": "SLAM-ER", "initial_count": 135},
+    {"magazine_key": "hf_ii", "display_name": "HF-II", "initial_count": 352},
+    {"magazine_key": "hf_iii", "display_name": "HF-III", "initial_count": 320}
+  ],
+  "loadout": [
+    {"type_id": 19, "magazine_mode": "additive", "entries": [{"magazine_key": "block_i", "missiles_per_launcher": 4, "is_primary": 1}, {"magazine_key": "block_ii_surface", "missiles_per_launcher": 4, "is_primary": 0}], "is_aircraft": false, "notes": "Keelung DD: 4x Block I + 4x Block II(Surface) per hull, 4 hulls."},
+    {"type_id": 22, "magazine_mode": "additive", "entries": [{"magazine_key": "block_i", "missiles_per_launcher": 2, "is_primary": 1}, {"magazine_key": "block_ii_surface", "missiles_per_launcher": 1, "is_primary": 0}], "is_aircraft": false, "notes": "Chi Yang FF: 2x Block I + 1x Block II(Surface) per hull, 6 hulls."},
+    {"type_id": 5, "magazine_mode": "additive", "entries": [{"magazine_key": "block_i", "missiles_per_launcher": 1, "is_primary": 1}], "is_aircraft": false, "notes": "Static CDCM: 1x Block I per launcher, 104 sites."},
+    {"type_id": 3, "magazine_mode": "aircraft_pool", "entries": [{"magazine_key": "block_ii_aircraft", "missiles_per_launcher": 2, "is_primary": 1, "platform_cap": 60}, {"magazine_key": "slam_er", "missiles_per_launcher": 2, "is_primary": 0, "platform_cap": 67}], "is_aircraft": true, "notes": "Aircraft: 2 missiles per sortie. Fixed ratio: Block II(Aircraft) covers 60 aircraft, SLAM-ER covers 67. Remaining aircraft carry air-to-air only. Aircraft destroyed -> no magazine deduction."},
+    {"type_id": 24, "magazine_mode": "additive", "entries": [{"magazine_key": "block_ii_mobile", "missiles_per_launcher": 4, "is_primary": 1}], "is_aircraft": false, "notes": "Mobile Coastal Harpoon: 4x Block II(Mobile) per launcher, 100 launchers."},
+    {"type_id": 6, "magazine_mode": "additive", "entries": [{"magazine_key": "block_ii_submarine", "missiles_per_launcher": 4, "is_primary": 1}], "is_aircraft": false, "notes": "Submarines: 4x Block II(Submarine) per launch, 2 submarines."},
+    {"type_id": 20, "magazine_mode": "cross_draw", "entries": [{"magazine_key": "hf_ii", "missiles_per_launcher": 8, "is_primary": 1}, {"magazine_key": "hf_iii", "missiles_per_launcher": 8, "is_primary": 0}], "is_aircraft": false, "notes": "Cheng Kung FFG: 8x HF-II per hull, cross-draw to HF-III."},
+    {"type_id": 16, "magazine_mode": "cross_draw", "entries": [{"magazine_key": "hf_ii", "missiles_per_launcher": 4, "is_primary": 1}, {"magazine_key": "hf_iii", "missiles_per_launcher": 4, "is_primary": 0}], "is_aircraft": false, "notes": "Kwang Hua VI PB: 4x HF-II each, cross-draw to HF-III."},
+    {"type_id": 18, "magazine_mode": "cross_draw", "entries": [{"magazine_key": "hf_ii", "missiles_per_launcher": 4, "is_primary": 1}, {"magazine_key": "hf_iii", "missiles_per_launcher": 4, "is_primary": 0}], "is_aircraft": false, "notes": "Anping PB: 4x HF-II each, cross-draw to HF-III."},
+    {"type_id": 23, "magazine_mode": "cross_draw", "entries": [{"magazine_key": "hf_ii", "missiles_per_launcher": 4, "is_primary": 1}, {"magazine_key": "hf_iii", "missiles_per_launcher": 4, "is_primary": 0}], "is_aircraft": false, "notes": "Mobile Coastal HF: 4x HF-II each, cross-draw to HF-III."},
+    {"type_id": 21, "magazine_mode": "cross_draw", "entries": [{"magazine_key": "hf_iii", "missiles_per_launcher": 8, "is_primary": 1}, {"magazine_key": "hf_ii", "missiles_per_launcher": 8, "is_primary": 0}], "is_aircraft": false, "notes": "Kang Ding FFG: 8x HF-III primary, cross-draw to HF-II."},
+    {"type_id": 17, "magazine_mode": "cross_draw", "entries": [{"magazine_key": "hf_iii", "missiles_per_launcher": 12, "is_primary": 1}, {"magazine_key": "hf_ii", "missiles_per_launcher": 12, "is_primary": 0}], "is_aircraft": false, "notes": "Tuo Chiang Corvette: 12x HF-III primary, cross-draw to HF-II."}
+  ],
+  "notes": [
+    "Aircraft (type_id 3) are exempt from magazine deduction on kill.",
+    "HF-II/HF-III are the only cross-draw pair.",
+    "No cross-draw between Harpoon families.",
+    "Volley gate is full-volley-or-nothing after firing percentage allocation.",
+    "Aircraft split is fixed at scenario seed via platform_cap values."
+  ]
+}

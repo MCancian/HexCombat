@@ -1,0 +1,178 @@
+{
+  "description": "Consolidated antiship system definitions and quantities by TO",
+  "version": "5.2",
+  "systems": [
+    {
+      "id": 1,
+      "name": "Destroyers and Frigates",
+      "detectability": "High",
+      "description": "Surface combatant destroyers and frigates (platform group 1) - split into types 19/20/21/22 per 2026 OOB update",
+      "deprecated": true
+    },
+    {
+      "id": 2,
+      "name": "Missile Patrol Boats",
+      "detectability": "High",
+      "description": "Missile patrol boats (platform group 2) - split into types 16/17/18 per 2026 OOB update",
+      "deprecated": true
+    },
+    {
+      "id": 3,
+      "name": "Air-Launched AShM Platforms",
+      "detectability": "High",
+      "description": "Air-launched anti-ship missile platforms (platform group 3)"
+    },
+    {
+      "id": 4,
+      "name": "Mobile Coastal AShM Launchers",
+      "detectability": "Medium",
+      "description": "Mobile coastal anti-ship missile launchers (platform group 4) - split into types 23 (HF) and 24 (Harpoon) per 2026 OOB update",
+      "deprecated": true
+    },
+    {
+      "id": 5,
+      "name": "Static CDCMs",
+      "detectability": "Medium",
+      "description": "Static CDCM sites (platform group 5)"
+    },
+    {
+      "id": 6,
+      "name": "Submarines",
+      "detectability": "Low",
+      "description": "Submarine force (platform group 6)"
+    },
+    {
+      "id": 7,
+      "name": "Swordfish",
+      "detectability": "Low",
+      "description": "Anti-ship system 7 (formerly G)",
+      "deprecated": true
+    },
+    {
+      "id": 8,
+      "name": "Mako",
+      "detectability": "High",
+      "description": "Anti-ship system 8 (formerly H)",
+      "deprecated": true
+    },
+    {
+      "id": 9,
+      "name": "Tigershark",
+      "detectability": "Low",
+      "description": "Anti-ship system 9 (formerly I)",
+      "deprecated": true
+    },
+    {
+      "id": 10,
+      "name": "Thresher",
+      "detectability": "Medium",
+      "description": "Anti-ship system 10 (formerly J)",
+      "deprecated": true
+    },
+    {
+      "id": 11,
+      "name": "Wahoo",
+      "detectability": "Low",
+      "description": "Anti-ship system 11 (formerly K)",
+      "deprecated": true
+    },
+    {
+      "id": 12,
+      "name": "Nautilus",
+      "detectability": "High",
+      "description": "Anti-ship system 12 (formerly L)",
+      "deprecated": true
+    },
+    {
+      "id": 13,
+      "name": "Scorpion",
+      "detectability": "Low",
+      "description": "Anti-ship system 13 (formerly M)",
+      "deprecated": true
+    },
+    {
+      "id": 14,
+      "name": "Piranha",
+      "detectability": "Medium",
+      "description": "Anti-ship system 14 (formerly N)",
+      "deprecated": true
+    },
+    {
+      "id": 15,
+      "name": "Leviathan",
+      "detectability": "Low",
+      "description": "Anti-ship system 15 (formerly O)",
+      "deprecated": true
+    },
+    {
+      "id": 16,
+      "name": "Kwang Hua VI Patrol Boats",
+      "detectability": "High",
+      "description": "30 Kwang Hua VI missile patrol boats, 4x HF-II each (split from former type 2)"
+    },
+    {
+      "id": 17,
+      "name": "Tuo Chiang Corvettes",
+      "detectability": "Medium",
+      "description": "12 Tuo Chiang low-observable corvettes, 12 missiles each (split from former type 2)"
+    },
+    {
+      "id": 18,
+      "name": "Anping Patrol Vessels",
+      "detectability": "High",
+      "description": "12 Anping (CGA) patrol vessels, 4x HF-II each (split from former type 2)"
+    },
+    {
+      "id": 19,
+      "name": "Keelung-class Destroyers",
+      "detectability": "High",
+      "description": "4 Keelung-class DDs, 8x Harpoon each (split from former type 1)"
+    },
+    {
+      "id": 20,
+      "name": "Cheng Kung Frigates",
+      "detectability": "High",
+      "description": "10 Cheng Kung FFGs, 8x HF each, HF-III primary, shared HF store (split from former type 1)"
+    },
+    {
+      "id": 21,
+      "name": "Kang Ding Frigates",
+      "detectability": "High",
+      "description": "6 Kang Ding FFGs, 8x HF each, HF-II primary, shared HF store (split from former type 1)"
+    },
+    {
+      "id": 22,
+      "name": "Chi Yang Frigates",
+      "detectability": "High",
+      "description": "6 Chi Yang FFs, 2x Harpoon each (split from former type 1)"
+    },
+    {
+      "id": 23,
+      "name": "Mobile Coastal AShM Launchers (HF)",
+      "detectability": "Medium",
+      "description": "26 mobile coastal launchers firing HF (HF-II, shared HF store), 4 each (split from former type 4)"
+    },
+    {
+      "id": 24,
+      "name": "Mobile Coastal AShM Launchers (Harpoon)",
+      "detectability": "Medium",
+      "description": "100 mobile coastal launchers firing Harpoon_Ground_II, 4 each (split from former type 4)"
+    },
+    {
+      "id": 99,
+      "name": "CommandControl",
+      "detectability": "High",
+      "description": "Command & Control system",
+      "special": "C2"
+    }
+  ],
+  "notes": [
+    "Version 5.2: 2026 OOB breakout - type 1 (Destroyers and Frigates) split into Keelung (19), Cheng Kung (20), Kang Ding (21), Chi Yang (22); type 4 (Mobile Coastal AShM) split into HF launchers (23, 26 units) and Harpoon launchers (24, 100 units). HF-II/HF-III now share a single 'HF' store_group in the combat catalog.",
+    "Version 5.1: type 2 (Missile Patrol Boats) split into Kwang Hua VI (16), Tuo Chiang (17), and Anping (18) per the 2026 OOB update; 30/12/12 boats with 4/12/4 missiles each (312 total).",
+    "Version 5.0: types 1-6 renamed to platform-group display names per grouping spec.",
+    "Types 1, 2, 4 and 7-15 are deprecated; no default rows emitted for them (retained in the reference table for backward compat with old scenarios).",
+    "Type 99 CommandControl retained as reference only; not emitted as container row.",
+    "Default rows are now emitted by get_antiship_defaults() reading antiship_grouping_spec.json.",
+    "TOs block removed; row generation is owned by defaults_loader.py + grouping spec."
+  ]
+}

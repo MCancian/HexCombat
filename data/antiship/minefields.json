@@ -1,0 +1,69 @@
+{
+  "description": "Per-beach minefield defaults ported from TIV defaults/beaches.json Minefield blocks (stripped from data/beaches.json in D1-A, recovered for D3 anti-ship/mine warfare).",
+  "available_minesweepers": 6,
+  "minefields": [
+    {
+      "beach_id": 1,
+      "name": "New Taipei Bali",
+      "to_number": 3,
+      "num_mines": 100,
+      "mines_per_sweeper_per_day": 1
+    },
+    {
+      "beach_id": 2,
+      "name": "Linkou Baodoucuo",
+      "to_number": 3,
+      "num_mines": 100,
+      "mines_per_sweeper_per_day": 1
+    },
+    {
+      "beach_id": 3,
+      "name": "Taoyuan Zhuwei",
+      "to_number": 3,
+      "num_mines": 100,
+      "mines_per_sweeper_per_day": 1
+    },
+    {
+      "beach_id": 4,
+      "name": "Taoyuan Haihu",
+      "to_number": 3,
+      "num_mines": 100,
+      "mines_per_sweeper_per_day": 1
+    },
+    {
+      "beach_id": 5,
+      "name": "Taichung Jianan",
+      "to_number": 5,
+      "num_mines": 100,
+      "mines_per_sweeper_per_day": 1
+    },
+    {
+      "beach_id": 6,
+      "name": "Tainan Xishu",
+      "to_number": 4,
+      "num_mines": 100,
+      "mines_per_sweeper_per_day": 1
+    },
+    {
+      "beach_id": 7,
+      "name": "Pingtung Jialutang",
+      "to_number": 4,
+      "num_mines": 100,
+      "mines_per_sweeper_per_day": 1
+    },
+    {
+      "beach_id": 8,
+      "name": "Taitung Zhiben",
+      "to_number": 2,
+      "num_mines": 100,
+      "mines_per_sweeper_per_day": 1
+    },
+    {
+      "beach_id": 9,
+      "name": "Hualien Beipu",
+      "to_number": 2,
+      "num_mines": 100,
+      "mines_per_sweeper_per_day": 1
+    }
+  ]
+}

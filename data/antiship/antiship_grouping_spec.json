@@ -1,0 +1,434 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "persistence": "antiship_systems_rows_as_containers_b_lite",
+    "to_assignment_mode": "explicit_per_container",
+    "notes": [
+      "One platform group entry expands into antiship_systems container rows; platform_group, platform_group_index, container_capacity, and mainline_mobility are stored as DB columns (Option B-lite).",
+      "group_sizes and to_assignments arrays are index-aligned and 1-based for platform_group_index in exports.",
+      "type_id values map to existing antiship_system_types IDs; fresh defaults use IDs 3, 5, 6 and 16-24. 2026 OOB update: type 2 (Missile Patrol Boats) split into Kwang Hua VI (16), Tuo Chiang (17), Anping (18); type 1 (Destroyers and Frigates) split into Keelung (19), Cheng Kung (20), Kang Ding (21), Chi Yang (22); type 4 (Mobile Coastal AShM) split into HF launchers (23) and Harpoon launchers (24).",
+      "mainline_mobility is metadata-only; IJFS runtime uses ijfs_profile.mobility."
+    ]
+  },
+  "taiwan_platform_groups": {
+    "destroyers_keelung": {
+      "type_id": 19,
+      "platform_name": "Keelung-class Destroyers",
+      "mainline_detectability": "High",
+      "mainline_mobility": "mobile",
+      "total_platforms": 4,
+      "group_count": 4,
+      "group_sizes": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "to_assignments": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "ijfs_profile": {
+        "category": "Anti-Ship Systems",
+        "subcategory": "Surface Combatant – Destroyer and Frigate",
+        "mobility": "mobile",
+        "hardness": "hard",
+        "detectability_active": "high",
+        "detectability_hiding": "medium"
+      },
+      "notes": "4 Keelung-class DDs, 8x Harpoon each. Spread one per TO across 2/3/4/5."
+    },
+    "frigates_cheng_kung": {
+      "type_id": 20,
+      "platform_name": "Cheng Kung Frigates",
+      "mainline_detectability": "High",
+      "mainline_mobility": "mobile",
+      "total_platforms": 10,
+      "group_count": 4,
+      "group_sizes": [
+        1,
+        4,
+        4,
+        1
+      ],
+      "to_assignments": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "ijfs_profile": {
+        "category": "Anti-Ship Systems",
+        "subcategory": "Surface Combatant – Destroyer and Frigate",
+        "mobility": "mobile",
+        "hardness": "hard",
+        "detectability_active": "high",
+        "detectability_hiding": "medium"
+      },
+      "notes": "10 Cheng Kung FFGs, 8x HF each (HF-III, shared HF store). Distributed 10/40/40/10 across TOs 2/3/4/5."
+    },
+    "frigates_kang_ding": {
+      "type_id": 21,
+      "platform_name": "Kang Ding Frigates",
+      "mainline_detectability": "High",
+      "mainline_mobility": "mobile",
+      "total_platforms": 6,
+      "group_count": 4,
+      "group_sizes": [
+        1,
+        2,
+        2,
+        1
+      ],
+      "to_assignments": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "ijfs_profile": {
+        "category": "Anti-Ship Systems",
+        "subcategory": "Surface Combatant – Destroyer and Frigate",
+        "mobility": "mobile",
+        "hardness": "hard",
+        "detectability_active": "high",
+        "detectability_hiding": "medium"
+      },
+      "notes": "6 Kang Ding FFGs, 8x HF each (HF-II, shared HF store). Distributed across TOs 2/3/4/5."
+    },
+    "frigates_chi_yang": {
+      "type_id": 22,
+      "platform_name": "Chi Yang Frigates",
+      "mainline_detectability": "High",
+      "mainline_mobility": "mobile",
+      "total_platforms": 6,
+      "group_count": 4,
+      "group_sizes": [
+        1,
+        2,
+        2,
+        1
+      ],
+      "to_assignments": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "ijfs_profile": {
+        "category": "Anti-Ship Systems",
+        "subcategory": "Surface Combatant – Destroyer and Frigate",
+        "mobility": "mobile",
+        "hardness": "hard",
+        "detectability_active": "high",
+        "detectability_hiding": "medium"
+      },
+      "notes": "6 Chi Yang FFs, 2x Harpoon each. Distributed across TOs 2/3/4/5."
+    },
+    "patrol_boats_kwang_hua": {
+      "type_id": 16,
+      "platform_name": "Kwang Hua VI Patrol Boats",
+      "mainline_detectability": "High",
+      "mainline_mobility": "mobile",
+      "total_platforms": 30,
+      "group_count": 4,
+      "group_sizes": [
+        3,
+        12,
+        12,
+        3
+      ],
+      "to_assignments": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "ijfs_profile": {
+        "category": "Anti-Ship Systems",
+        "subcategory": "Missile Patrol Boat",
+        "mobility": "mobile",
+        "hardness": "soft",
+        "detectability_active": "high",
+        "detectability_hiding": "medium"
+      },
+      "notes": "30 Kwang Hua VI boats, 4x HF-II each. Distributed 10/40/40/10 across TOs 2/3/4/5."
+    },
+    "patrol_boats_tuo_chiang": {
+      "type_id": 17,
+      "platform_name": "Tuo Chiang Corvettes",
+      "mainline_detectability": "Medium",
+      "mainline_mobility": "mobile",
+      "total_platforms": 12,
+      "group_count": 4,
+      "group_sizes": [
+        1,
+        5,
+        5,
+        1
+      ],
+      "to_assignments": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "ijfs_profile": {
+        "category": "Anti-Ship Systems",
+        "subcategory": "Missile Patrol Boat",
+        "mobility": "mobile",
+        "hardness": "soft",
+        "detectability_active": "medium",
+        "detectability_hiding": "low"
+      },
+      "notes": "12 Tuo Chiang low-observable corvettes, 12 missiles each (HF-II/HF-III mix). Distributed 10/40/40/10 across TOs 2/3/4/5."
+    },
+    "patrol_boats_anping": {
+      "type_id": 18,
+      "platform_name": "Anping Patrol Vessels",
+      "mainline_detectability": "High",
+      "mainline_mobility": "mobile",
+      "total_platforms": 12,
+      "group_count": 4,
+      "group_sizes": [
+        1,
+        5,
+        5,
+        1
+      ],
+      "to_assignments": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "ijfs_profile": {
+        "category": "Anti-Ship Systems",
+        "subcategory": "Missile Patrol Boat",
+        "mobility": "mobile",
+        "hardness": "soft",
+        "detectability_active": "high",
+        "detectability_hiding": "medium"
+      },
+      "notes": "12 Anping (CGA) vessels, 4x HF-II each. Distributed 10/40/40/10 across TOs 2/3/4/5."
+    },
+    "aircraft": {
+      "type_id": 3,
+      "platform_name": "Air-Launched AShM Platforms",
+      "mainline_detectability": "High",
+      "mainline_mobility": "moveable",
+      "total_platforms": 334,
+      "group_count": 18,
+      "group_sizes": [
+        19,
+        19,
+        19,
+        19,
+        19,
+        19,
+        19,
+        19,
+        19,
+        19,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18
+      ],
+      "to_assignments": [
+        2,
+        3,
+        4,
+        3,
+        2,
+        3,
+        4,
+        3,
+        5,
+        3,
+        2,
+        4,
+        3,
+        2,
+        3,
+        4,
+        3,
+        5
+      ],
+      "ijfs_profile": {
+        "category": "Anti-Ship Systems",
+        "subcategory": "Air-Launched Anti-Ship Missile Platform",
+        "mobility": "moveable",
+        "hardness": "soft",
+        "detectability_active": "high",
+        "detectability_hiding": "low"
+      },
+      "notes": "Eighteen air-platform containers; each target represents an operating bin, not an individual aircraft."
+    },
+    "mobile_coastal_hf": {
+      "type_id": 23,
+      "platform_name": "Mobile Coastal AShM Launchers (HF)",
+      "mainline_detectability": "Medium",
+      "mainline_mobility": "mobile",
+      "total_platforms": 26,
+      "group_count": 4,
+      "group_sizes": [
+        3,
+        10,
+        10,
+        3
+      ],
+      "to_assignments": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "ijfs_profile": {
+        "category": "Anti-Ship Systems",
+        "subcategory": "Mobile Coastal AShM (generic template)",
+        "mobility": "mobile",
+        "hardness": "soft",
+        "detectability_active": "medium",
+        "detectability_hiding": "low"
+      },
+      "notes": "26 of 126 mobile coastal launchers fire HF (HF-II, shared HF store), 4 each. Distributed 10/40/40/10 across TOs 2/3/4/5."
+    },
+    "mobile_coastal_harpoon": {
+      "type_id": 24,
+      "platform_name": "Mobile Coastal AShM Launchers (Harpoon)",
+      "mainline_detectability": "Medium",
+      "mainline_mobility": "mobile",
+      "total_platforms": 100,
+      "group_count": 4,
+      "group_sizes": [
+        10,
+        40,
+        40,
+        10
+      ],
+      "to_assignments": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "ijfs_profile": {
+        "category": "Anti-Ship Systems",
+        "subcategory": "Mobile Coastal AShM (generic template)",
+        "mobility": "mobile",
+        "hardness": "soft",
+        "detectability_active": "medium",
+        "detectability_hiding": "low"
+      },
+      "notes": "100 of 126 mobile coastal launchers fire Harpoon (Harpoon_Ground_II), 4 each. Distributed 10/40/40/10 across TOs 2/3/4/5."
+    },
+    "static_ground_sites": {
+      "type_id": 5,
+      "platform_name": "Static CDCMs",
+      "mainline_detectability": "Medium",
+      "mainline_mobility": "static",
+      "total_platforms": 104,
+      "group_count": 13,
+      "group_sizes": [
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8
+      ],
+      "to_assignments": [
+        2,
+        3,
+        4,
+        3,
+        2,
+        3,
+        4,
+        3,
+        2,
+        3,
+        4,
+        3,
+        5
+      ],
+      "ijfs_profile": {
+        "category": "Anti-Ship Systems",
+        "subcategory": "Static CDCM Launcher",
+        "mobility": "static",
+        "hardness": "hard",
+        "detectability_active": "high",
+        "detectability_hiding": "high"
+      },
+      "notes": "Static-site mainline group; exported as static/hard to IJFS. Fixed sites with hardened shelters. Auto-detected by satellite/ISR, no mobile destroy cap."
+    },
+    "submarines": {
+      "type_id": 6,
+      "platform_name": "Submarines",
+      "mainline_detectability": "Low",
+      "mainline_mobility": "mobile",
+      "total_platforms": 2,
+      "group_count": 2,
+      "group_sizes": [
+        1,
+        1
+      ],
+      "to_assignments": [
+        3,
+        4
+      ],
+      "ijfs_profile": {
+        "category": "Anti-Ship Systems",
+        "subcategory": "Submarine Force",
+        "mobility": "mobile",
+        "hardness": "hard",
+        "detectability_active": "low",
+        "detectability_hiding": "low"
+      },
+      "notes": "Submarine containers use existing Anti-Ship Systems/Submarine Force IJFS profile while preserving antiship source mapping."
+    },
+    "c2": {
+      "type_id": 99,
+      "platform_name": "Command & Control",
+      "mainline_detectability": "High",
+      "mainline_mobility": "moveable",
+      "total_platforms": 4,
+      "group_count": 4,
+      "group_sizes": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "to_assignments": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "ijfs_profile": {
+        "category": "Anti-Ship Systems",
+        "subcategory": "Command & Control",
+        "mobility": "moveable",
+        "hardness": "soft",
+        "detectability_active": "high",
+        "detectability_hiding": "medium"
+      },
+      "notes": "One C2 node per TO; always resets to 1 each turn. Does not fire. Moveable in IJFS; detection now depends on ISR rather than static auto-detect."
+    }
+  }
+}

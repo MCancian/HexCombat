@@ -1,0 +1,85 @@
+{
+  "description": "Tuning parameters for the antiship crossing-damage pipeline: escort interception, decoy discrimination, weighted homing, terminal defense, and neutralization. Seed values are conservative; Phase 3 tunes against the sister repo.",
+  "version": "1.0",
+  "missile_group_size": 4,
+  "escort_interception": {
+    "CG": { "attempts": 4, "success_prob": 0.45, "fleet_count": 12 },
+    "DDG": { "attempts": 6, "success_prob": 0.55, "fleet_count": 12 },
+    "FFG": { "attempts": 3, "success_prob": 0.4, "fleet_count": 24 },
+    "FFL": { "attempts": 2, "success_prob": 0.35, "fleet_count": 24 }
+  },
+  "discrimination_probabilities": {
+    "Low": 0.2,
+    "Medium": 0.5,
+    "High": 0.8
+  },
+  "terminal_defense": {
+    "base_probability": 0.45,
+    "susceptibility_adjustment": {
+      "High": 0.0,
+      "Medium": -0.1,
+      "Low": -0.2,
+      "None": -0.45
+    },
+    "capability_adjustment": {
+      "None": -0.25,
+      "Low": -0.1,
+      "Medium": 0.0,
+      "High": 0.15
+    }
+  },
+  "neutralization_likelihoods": {
+    "High": 0.7,
+    "Medium": 0.45,
+    "Low": 0.25
+  },
+  "lethality_multipliers": {
+    "High": 1.25,
+    "Medium": 1.0,
+    "Low": 0.75
+  },
+  "damaged_hull_neut_multiplier": 1.5,
+  "launch_attrition": {
+    "_default": { "p_detect": 0.3, "p_destroy_if_detected": 0.5, "p_intercept_before_launch": 0.4 },
+    "3":  { "p_detect": 0.1, "p_destroy_if_detected": 0.2, "p_intercept_before_launch": 0.1 },
+    "23": { "p_detect": 0.5, "p_destroy_if_detected": 0.7, "p_intercept_before_launch": 0.6 }
+  },
+  "ship_profiles": {
+    "CG": { "target_value": 5, "terminal_defense_capability": "High", "vulnerability": "Low" },
+    "DDG": { "target_value": 5, "terminal_defense_capability": "High", "vulnerability": "Low" },
+    "FFG": { "target_value": 4, "terminal_defense_capability": "Medium", "vulnerability": "Medium" },
+    "FFL": { "target_value": 3, "terminal_defense_capability": "Medium", "vulnerability": "Medium" },
+    "LHA": { "target_value": 10, "terminal_defense_capability": "Low", "vulnerability": "High" },
+    "LPD": { "target_value": 7, "terminal_defense_capability": "Low", "vulnerability": "High" },
+    "LST": { "target_value": 5, "terminal_defense_capability": "None", "vulnerability": "High" },
+    "LSM": { "target_value": 3, "terminal_defense_capability": "None", "vulnerability": "High" },
+    "LCU": { "target_value": 2, "terminal_defense_capability": "None", "vulnerability": "High" },
+    "Large_RoRo_Mod": { "target_value": 8, "terminal_defense_capability": "None", "vulnerability": "High" },
+    "Small_RoRo_Mod": { "target_value": 4, "terminal_defense_capability": "None", "vulnerability": "High" },
+    "Container_Ship": { "target_value": 4, "terminal_defense_capability": "None", "vulnerability": "High" },
+    "Assault_Barges": { "target_value": 2, "terminal_defense_capability": "None", "vulnerability": "High" },
+    "Fast_Transport": { "target_value": 2, "terminal_defense_capability": "None", "vulnerability": "High" },
+    "Large_RoRo_Unmod": { "target_value": 6, "terminal_defense_capability": "None", "vulnerability": "High" },
+    "Small_RoRo_Unmod": { "target_value": 3, "terminal_defense_capability": "None", "vulnerability": "High" },
+    "LCT_Causeway": { "target_value": 2, "terminal_defense_capability": "None", "vulnerability": "Medium" },
+    "LCT_Transfer": { "target_value": 2, "terminal_defense_capability": "None", "vulnerability": "Medium" },
+    "Floating_Piers": { "target_value": 2, "terminal_defense_capability": "None", "vulnerability": "Medium" },
+    "Jackup_Barges": { "target_value": 2, "terminal_defense_capability": "None", "vulnerability": "Medium" },
+    "Spud_Barge": { "target_value": 1, "terminal_defense_capability": "None", "vulnerability": "Medium" },
+    "Semi_Sub": { "target_value": 1, "terminal_defense_capability": "None", "vulnerability": "Medium" },
+    "AOT_Fujian": { "target_value": 3, "terminal_defense_capability": "None", "vulnerability": "Medium" },
+    "Pump_Relay": { "target_value": 1, "terminal_defense_capability": "None", "vulnerability": "Medium" },
+    "Tug": { "target_value": 1, "terminal_defense_capability": "None", "vulnerability": "Medium" },
+    "Break_Bulk": { "target_value": 2, "terminal_defense_capability": "None", "vulnerability": "Medium" },
+    "Decoys": { "target_value": 4, "terminal_defense_capability": "None", "vulnerability": "Low", "is_decoy": true }
+  },
+  "notes": [
+    "escort_interception: per escort ship type. attempts is interception rolls per ship; success_prob is per-roll kill probability against a missile group.",
+    "discrimination_probabilities: probability a missile correctly ignores decoys, keyed by the munition's discrimination_ability.",
+    "terminal_defense: probability defense SUCCEEDS = base + susceptibility_adjustment[missile susceptibility] + capability_adjustment[ship capability]. A missile hits when it beats this.",
+    "neutralization_likelihoods: base probability a hit sinks (vs only damages) the ship, keyed by ship vulnerability. Multiplied by lethality_multipliers[munition lethality], capped at 1.0.",
+    "lethality_multipliers: per-munition-lethality-rating multiplier on the sink probability. The combat catalog stores each munition's lethality rating (High/Medium/Low); this table turns that rating into a number.",
+    "damaged_hull_neut_multiplier: a hit on an already-damaged hull scales its sink probability by this factor (damaged hulls are more fragile on re-hit).",
+    "ship_profiles: target_value weights homing selection; is_decoy ships consume a missile with no fleet effect when targeted."
+  ]
+}

@@ -31,12 +31,15 @@ Confirm with `git log --oneline -15` + a fresh `pwsh ./tools/run_all_tests.ps1` 
   casualty port). Hooked after offload, before maneuver/combat. `EventBus.ijfs_resolved`; LLM `ijfs`
   observation block (schema + validator required-key + regenerated fixture);
   `tools/validate_headless_ijfs.gd` in the gate. **D4 (IJFS) milestone COMPLETE — pushed.**
-- **D3 anti-ship & mine warfare — NOT STARTED** (no `scripts/antiship/`, `data/antiship/` yet).
-  ← resume here. **Before D3-B:** resolve the `PLAN.md` Open Question *"D4-H writeback (TO +
-  ground-casualty) linkage"* — D3-B's firing plan wants anti-ship suppression per **(TO,Type)**, but
-  the IJFS writeback is keyed by **Type only** (target data lacks `to_number`). Decide the TO mapping
-  (likely add `to_number` to `data/ijfs/targets_master.json` via `data/theaters.json` polygons) as
-  part of D3-A.
+- **D3-A — DONE (2026-06-26, committed).** `data/antiship/` (5 TIV configs verbatim + `minefields.json`),
+  `scripts/model/AntishipSystem.gd` + `Minefield.gd`, `scripts/AntishipLoaders.gd` (grouping spec →
+  650 systems aggregated by (TO,type_id)), `tools/validate_antiship_data.gd` in the gate. ships.json +
+  ShipDef/ShipState reused from D0-C.
+- **D3-B…F — NOT STARTED** ← resume here. **Before D3-B:** resolve the `PLAN.md` Open Question
+  *"D4-H writeback (TO + ground-casualty) linkage"* — D3-B's firing plan wants anti-ship suppression
+  per **(TO,Type)**, but the IJFS writeback is keyed by **Type only** (target data lacks `to_number`).
+  Stamp `to_number` onto `data/ijfs/targets_master.json` (via `data/theaters.json` polygons by lat/lon)
+  as part of D3-B so the join works.
 - **Final integration** (turn-sequence wiring, LLM observation contract) — after D3.
 
 **Backlog order (dependency-checked):** `D4-G → D4-H → D3-A → {D3-B, D3-C, D3-D, D3-E} → D3-F →
@@ -147,22 +150,30 @@ Question and cross-link (`see RETROSPECTIVES.md <date>/<subtask>`).
 
 ---
 
-## 6. Immediate next action: D3 (Anti-ship & Mine Warfare)
+## 6. Immediate next action: D3-B (anti-ship calculator)
 
-**D4 (IJFS) is COMPLETE and pushed** (D4-A…H all green). The IJFS phase runs each `resolve_turn`
-via `GameState.resolve_ijfs_turn(dice)`, exposing `GameState.last_ijfs_summary` +
-`GameState.last_ijfs_writeback` (and an `ijfs` block in the LLM observation). The writeback is the
-seam D3-B consumes.
+**D3-A is DONE** — the data layer + models + loader are in place: `AntishipLoaders.load_systems`
+returns 650 `AntishipSystem` rows by (TO,type_id); `load_combat_catalog` / `load_crossing_config` /
+`load_magazines` return the TIV config dicts; `load_minefields` returns 9 `Minefield`s. Validator:
+`tools/validate_antiship_data.gd`.
 
-Begin **D3** — sub-task breakdown is in `PLAN.md` §"Track D, Phase 3" (D3-A data+models → D3-B
-calculator → D3-C mine warfare → D3-D GameState wiring → … → D3-F ship-loss propagation). TIV oracle
-files are listed there and in `ROADMAP.md` §D3. Dependency note from §1: D3-B consumes the IJFS
-anti-ship writeback; D3-F consumes D0-C's ship layer via the `lost_at_sea` seam.
-
-**Resolve first, as part of D3-A** — `PLAN.md` Open Question *"D4-H writeback (TO + ground-casualty)
-linkage"*: the IJFS anti-ship writeback is keyed by **Type only** because `targets_master.json` has no
-`to_number`. D3-B wants **(TO,Type)**. Decide the TO mapping (likely: stamp `to_number` onto IJFS
-targets from `data/theaters.json` polygons by lat/lon during load) so D3 gets per-theater suppression.
+**D3-B — `scripts/AntishipCalculator.gd`** (pure RefCounted lib; scope from the TIV oracle —
+`antiship_firing_plan.py`, `antiship_crossing.py`, `antiship_launch_attrition.py`,
+`antiship_magazine_service.py`, `contracts/antiship.py`):
+- `build_firing_plan(systems, ijfs_results, fire_allocations_by_to, …)` — consumes the D4-H IJFS
+  writeback (anti-ship destroyed/suppressed). **First:** stamp `to_number` onto
+  `data/ijfs/targets_master.json` (from `data/theaters.json` polygons by lat/lon) so the IJFS
+  writeback can key by (TO,Type) — currently it is Type-only (D4-H Open Question). Filter C2
+  (type 99 / `special:"C2"`) from firing.
+- `resolve_crossing_damage(crossing_result, dice)` — the 7-stage missile model (launch attrition →
+  groups of 4 → escort interception → decoy discrimination → weighted homing → terminal defense →
+  neutralization) using `antiship_crossing_config.json` + `ship_profiles`.
+- `apply_magazine_expenditure(...)` — finite shared magazines from `antiship_magazine_defaults.json`.
+- **RNG:** inject `Dice`; mirror the source draw order exactly; mirror the TIV pytests
+  (`test_antiship_firing_plan.py`, `test_antiship_crossing.py`, `test_antiship_magazine_service.py`)
+  in `tests/antiship_calculator_test.gd`.
+- D3-C (mine warfare) and D3-B are independent given D3-A; D3-D wires `resolve_antiship_turn` into
+  `GameState` (apply ship losses → `pending_lost_at_sea` via the D0-C `register_ship_losses` seam).
 
 D3-B…E are dependency-independent once D3-A lands — they can run as concurrent opencode sessions
 (gate + commit + retrospect each). D3-B/D are RNG-sensitive (firing plan / ship-loss); D3-A/C are
