@@ -100,3 +100,37 @@ next sub-tasks (D4-G/H, D3) don't relearn them.
 - `carry_to_next_day` parity gap → **act later (→ backlog)**: when D4-H persists IJFS state on
   `GameState` across turns, add a continuity test that roundtrips through `IjfsLoaders` and asserts
   field-by-field parity with `carry_to_next_day`. Cross-link `PLAN.md 2026-06-26 D4-G`.
+
+---
+
+## 2026-06-26 — D4-H: IJFS GameState wiring + writeback   (implementer: direct)
+
+**What would you do differently (self-retro):**
+- **The RNG-isolation trap was the whole ballgame.** `ScriptedDice.derive()` returns `self` (shared
+  queue), so naively doing `dice.derive("ijfs")` inside `resolve_turn` would have silently drained
+  the scripted combat rolls in ~10 combat suites — green-looking until casualty asserts shifted. I
+  caught it by checking how the combat tests call `resolve_turn` *before* wiring, not after a red
+  gate. Lesson: whenever a new phase joins a shared `dice` pipeline, audit every caller's dice *type*
+  first. The dice-type-aware branch (SeededDice→derive, else fresh SeededDice) is the durable fix.
+- **The handoff's "(TO,Type)" spec outran the data.** The brief assumed targets carry a theater and
+  battalion IDs; they don't. Rather than invent fake `to_number`s to satisfy the spec, I keyed the
+  writeback by Type and logged an Open Question. Lesson: when porting a writeback, grep the *actual*
+  data for the join keys before trusting the spec's shape.
+- **Performance: IJFS now runs a full ~150-target pass on every `resolve_turn`.** That added ~6s to
+  the suite (two GdUnit combat suites jumped to ~3.7s each). Acceptable now, but it's pure overhead
+  in unit tests that don't care about IJFS. If the suite gets slow, gate IJFS behind a flag or cache
+  the loaded `IjfsDailyState` statically across resets.
+- **Integration coverage lives in a validator, not GdUnit** (per the teardown-flake rule), so the
+  GdUnit count stayed at 124 — `tools/validate_headless_ijfs.gd` carries the day1/determinism/
+  continuity/observation assertions. Right call, but it means the headline "what changed" isn't
+  visible in the GdUnit number; the validator phase is where D4-H is actually tested.
+
+**Orchestrator triage:**
+- Dice-type isolation audit → **acted now** + **brief forward**: add "audit every `resolve_turn`
+  caller's dice type before adding a phase" to the standing checklist; same caution applies to any
+  future phase that joins the turn pipeline.
+- Spec-vs-data join keys → **acted now**: keyed by Type + logged `PLAN.md` Open Question (D4-H
+  writeback linkage) for D3 to resolve.
+- IJFS per-turn cost → **act later (→ backlog)**: if gate runtime becomes a problem, cache the
+  loaded IJFS data statically or make the phase opt-out for pure combat unit tests.
+- Validator-not-GdUnit coverage → **record only**: expected per the project's testing rule.

@@ -22,6 +22,7 @@ const REQUIRED_OBSERVATION_KEYS := [
 	"occupied_hexes",
 	"ship_reserve",
 	"supply_state",
+	"ijfs",
 	"legal_moves",
 	"legal_commits",
 	"pending_orders",

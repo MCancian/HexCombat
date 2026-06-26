@@ -7,6 +7,15 @@ const ShipStateResource = preload("res://scripts/model/ShipState.gd")
 const SupplyStateResource = preload("res://scripts/model/SupplyState.gd")
 const FEBA_RETREAT_THRESHOLD_KM := 10.0
 
+# IJFS (D4) data sources — Red joint/air-missile fires phase.
+const IJFS_TARGETS_PATH := "res://data/ijfs/targets_master.json"
+const IJFS_MUNITIONS_PATH := "res://data/ijfs/red_munitions.json"
+const IJFS_PAIRINGS_PATH := "res://data/ijfs/munition_target_pairings.json"
+const IJFS_SCENARIO_PATH := "res://data/ijfs/ijfs_scenario.json"
+const IJFS_AIR_CLASSES_PATH := "res://data/ijfs/air_classes.json"
+const IJFS_OOB_PATH := "res://data/ijfs/red_air_oob.json"
+const IJFS_SAM_CAPS_PATH := "res://data/ijfs/sam_capabilities.json"
+
 enum Phase { PLANNING, RESOLUTION, END }
 
 var turn_number: int = 1
@@ -20,6 +29,11 @@ var pending_lost_at_sea: int = 0
 var supply_state: SupplyState
 var last_contested_hexes: Array[String] = []
 var last_combat_summaries: Array = []
+# IJFS daily state persists across turns (carry_to_next_day advances it each turn).
+var ijfs_state: IjfsDailyState = null
+var _ijfs_day: int = 0
+var last_ijfs_summary: Dictionary = {}
+var last_ijfs_writeback: Dictionary = {}
 
 
 func _ready() -> void:
@@ -44,9 +58,17 @@ func reset_to_scenario() -> void:
 	_rebuild_ship_reserve()
 	_rebuild_fleet()
 	_rebuild_supply_state()
+	# IJFS state is lazy-loaded on the first resolve_ijfs_turn (it pulls ~500KB of pairings + many
+	# Resource objects; eager-loading it in every booted process — validators, smoke, tests — bloated
+	# shutdown and triggered the Godot 4.7 teardown crash). Reset the handle; resolve_ijfs_turn builds
+	# it fresh per scenario.
+	ijfs_state = null
+	_ijfs_day = 0
 	pending_lost_at_sea = 0
 	last_contested_hexes.clear()
 	last_combat_summaries.clear()
+	last_ijfs_summary = {}
+	last_ijfs_writeback = {}
 	EventBus.phase_changed.emit(phase)
 
 
@@ -104,6 +126,10 @@ func resolve_turn(dice: Dice = null) -> void:
 	phase = Phase.RESOLUTION
 	EventBus.phase_changed.emit(phase)
 	resolve_offload_turn(dice)
+	# IJFS (Red joint fires) runs before maneuver/combat so its effects (suppressed anti-ship
+	# systems for D3, future theater CAS/CRBM) precede ground combat. It draws from an INDEPENDENT
+	# IJFS substream (never the combat dice), so the ground-combat golden invariant is byte-stable.
+	resolve_ijfs_turn(dice)
 
 	_apply_move_orders(Brigade.Team.RED)
 	_apply_move_orders(Brigade.Team.GREEN)
@@ -333,6 +359,98 @@ func resolve_supply_turn() -> Dictionary:
 	supply_state.day_history.append(summary)
 	EventBus.supply_updated.emit(summary)
 	return summary
+
+
+# --- IJFS (D4) — Red joint/air-missile fires daily phase ----------------------------------------
+
+func resolve_ijfs_turn(dice: Dice) -> Dictionary:
+	assert(dice != null, "resolve_ijfs_turn requires a Dice instance")
+	if ijfs_state == null:
+		_rebuild_ijfs_state()
+	# Continuity: after the first IJFS day, carry destroyed/known/inventory/attrition forward and
+	# clear per-day suppression flags (mirrors the TIV loader reload reset).
+	if _ijfs_day > 0:
+		IjfsEngine.carry_to_next_day(ijfs_state)
+	_ijfs_day = turn_number
+
+	# Independent IJFS substream — NEVER consume the combat dice. SeededDice.derive() yields a fresh
+	# stream (so SeededDice combat is reproducible AND isolated); ScriptedDice.derive() returns self
+	# (shared queue), so for scripted combat we seed an independent SeededDice off the turn instead.
+	var ijfs_dice: Dice
+	if dice is SeededDice:
+		ijfs_dice = dice.derive("ijfs:%d" % turn_number)
+	else:
+		ijfs_dice = SeededDice.new(hash("ijfs:%d" % turn_number))
+
+	var ledgers := IjfsEngine.run_daily(ijfs_state, ijfs_dice, turn_number)
+	last_ijfs_summary = ledgers["summary"]
+	last_ijfs_writeback = _compute_ijfs_writeback(ledgers)
+	EventBus.ijfs_resolved.emit(last_ijfs_summary)
+	return ledgers
+
+
+func _rebuild_ijfs_state() -> void:
+	ijfs_state = IjfsDailyState.new()
+	ijfs_state.targets = IjfsLoaders.load_targets(IJFS_TARGETS_PATH, 1)
+	ijfs_state.munitions = IjfsLoaders.load_munitions(IJFS_MUNITIONS_PATH)
+	ijfs_state.pairings = IjfsLoaders.load_pairings(IJFS_PAIRINGS_PATH)
+	ijfs_state.scenario = IjfsLoaders.load_scenario(IJFS_SCENARIO_PATH)
+	ijfs_state.air_classes = IjfsLoaders.load_air_classes(IJFS_AIR_CLASSES_PATH)
+	ijfs_state.squadron_force = IjfsLoaders.expand_oob_to_squadrons(IjfsLoaders.load_oob(IJFS_OOB_PATH))
+	IjfsLoaders.enrich_sam_scores(ijfs_state.targets, IjfsLoaders.load_sam_capabilities(IJFS_SAM_CAPS_PATH))
+	_ijfs_day = 0
+
+
+## Aggregates the IJFS ledgers into the writeback seam D3 (anti-ship) and future ground-casualty
+## linkage consume. NOTE: HexCombat's target data carries no theater (TO) or battalion IDs, so
+## anti-ship is keyed by Type (subcategory) and maneuver casualties stay empty until target data
+## carries that metadata — see PLAN.md Open Question (D4-H writeback linkage).
+func _compute_ijfs_writeback(ledgers: Dictionary) -> Dictionary:
+	var strike_log: Array = ledgers["strike_log"]
+	var engagement_log: Array = ledgers["engagement_log"]
+
+	var antiship_destroyed_by_type: Dictionary = {}
+	var antiship_suppressed_by_type: Dictionary = {}
+	var maneuver_casualties: Array = []
+	for entry in strike_log:
+		if not entry.get("attack_executed"):
+			continue
+		var category := String(entry.get("category", ""))
+		if category == "Anti-Ship Systems":
+			var type_key := String(entry.get("subcategory", ""))
+			if entry.get("destroyed"):
+				antiship_destroyed_by_type[type_key] = int(antiship_destroyed_by_type.get(type_key, 0)) + 1
+			if entry.get("suppressed"):
+				antiship_suppressed_by_type[type_key] = int(antiship_suppressed_by_type.get(type_key, 0)) + 1
+		elif category == "Maneuver Units" and entry.get("destroyed"):
+			# Faithful port of ijfs_maneuver_writeback_service.compute_maneuver_writeback.
+			var metadata: Dictionary = entry.get("metadata", {})
+			var unit_id: Variant = metadata.get("battalion_id", metadata.get("unit_id", null))
+			if unit_id == null or String(unit_id) == "":
+				continue
+			maneuver_casualties.append({
+				"battalion_id": unit_id,
+				"brigade_id": metadata.get("brigade_id", null),
+				"to": metadata.get("to_number", null),
+				"unit_type": metadata.get("unit_type", null),
+				"subcategory": entry.get("subcategory", null),
+			})
+
+	var sam_destroyed := 0
+	var sam_suppressed := 0
+	for entry in engagement_log:
+		if entry.get("destroyed"):
+			sam_destroyed += 1
+		if entry.get("suppressed"):
+			sam_suppressed += 1
+
+	return {
+		"antiship_destroyed_by_type": antiship_destroyed_by_type,
+		"antiship_suppressed_by_type": antiship_suppressed_by_type,
+		"maneuver_casualties": maneuver_casualties,
+		"sam_destroyed": sam_destroyed,
+		"sam_suppressed": sam_suppressed,
+	}
 
 
 func _active_red_battalion_units() -> Array:

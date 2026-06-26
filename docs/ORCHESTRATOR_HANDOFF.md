@@ -25,8 +25,18 @@ Confirm with `git log --oneline -15` + a fresh `pwsh ./tools/run_all_tests.ps1` 
   state container) + `IjfsTarget.to_dict()` + `summarize_run` + `carry_to_next_day` continuity.
   5 GdUnit cases in `tests/ijfs/ijfs_engine_test.gd` (full-run / continuity / dedup / budget-routing,
   mirroring `test_ijfs_standalone.py`). Gate green at 124 GdUnit cases; golden invariant byte-stable.
-- **D4-H — NOT STARTED.** ← resume here.
+- **D4-H — DONE (2026-06-26, committed).** `GameState.resolve_ijfs_turn(dice)` runs `IjfsEngine`
+  each turn on an **independent** substream (golden byte-stable), storing `last_ijfs_summary` +
+  `last_ijfs_writeback` (anti-ship destroyed/suppressed by Type; SAM destroyed/suppressed; maneuver-
+  casualty port). Hooked after offload, before maneuver/combat. `EventBus.ijfs_resolved`; LLM `ijfs`
+  observation block (schema + validator required-key + regenerated fixture);
+  `tools/validate_headless_ijfs.gd` in the gate. **D4 (IJFS) milestone COMPLETE — pushed.**
 - **D3 anti-ship & mine warfare — NOT STARTED** (no `scripts/antiship/`, `data/antiship/` yet).
+  ← resume here. **Before D3-B:** resolve the `PLAN.md` Open Question *"D4-H writeback (TO +
+  ground-casualty) linkage"* — D3-B's firing plan wants anti-ship suppression per **(TO,Type)**, but
+  the IJFS writeback is keyed by **Type only** (target data lacks `to_number`). Decide the TO mapping
+  (likely add `to_number` to `data/ijfs/targets_master.json` via `data/theaters.json` polygons) as
+  part of D3-A.
 - **Final integration** (turn-sequence wiring, LLM observation contract) — after D3.
 
 **Backlog order (dependency-checked):** `D4-G → D4-H → D3-A → {D3-B, D3-C, D3-D, D3-E} → D3-F →
@@ -137,28 +147,23 @@ Question and cross-link (`see RETROSPECTIVES.md <date>/<subtask>`).
 
 ---
 
-## 6. Immediate next action: D4-H (then push the D4 milestone)
+## 6. Immediate next action: D3 (Anti-ship & Mine Warfare)
 
-D4-G is done (see §1). The engine to wire is `IjfsEngine.run_daily(state, dice, current_day,
-warmup_context=null) -> Dictionary` — returns the ledgers dict (detection / strike / engagement /
-contest / free-shot / target-status / inventory / OOB / summary); `IjfsDailyState` is the in-memory
-state container; `IjfsEngine.carry_to_next_day(state)` advances days (clears suppression/sead_result,
-persists destroyed/known/inventory/squadron attrition).
+**D4 (IJFS) is COMPLETE and pushed** (D4-A…H all green). The IJFS phase runs each `resolve_turn`
+via `GameState.resolve_ijfs_turn(dice)`, exposing `GameState.last_ijfs_summary` +
+`GameState.last_ijfs_writeback` (and an `ijfs` block in the LLM observation). The writeback is the
+seam D3-B consumes.
 
-**D4-H — `GameState.resolve_ijfs_turn(dice)` wiring + writeback** (port the TIV `services/ijfs_*.py`
-writeback layer, scope from the oracle first):
-- Build/persist an `IjfsDailyState` on `GameState` from `data/ijfs/` via `IjfsLoaders` (load once;
-  `carry_to_next_day` between turns). Run `IjfsEngine.run_daily` each turn with a **dedicated seeded
-  substream** (`dice.derive("ijfs")`) so it does **not** consume the ground-combat RNG (golden
-  invariant must stay byte-stable: seed 20260624 → casualties=2, feba=0.76).
-- **Writeback** from the ledgers: anti-ship destroyed/suppressed aggregated per **(TO, Type)** for
-  D3-B's firing plan; maneuver-unit casualties; theater CAS/CRBM made available to combat (currently
-  0). Watch the WritebackIsolation regression — SEAD/contest log entries lack `attack_executed`/
-  `munition_id`/`rounds_expended` and must NOT drive anti-ship/maneuver writeback (only strike-log
-  executed entries do).
-- `EventBus.ijfs_resolved(summary)`; extend `LLMGameAPI.get_observation()` with an IJFS block
-  (keep the JSON observation contract intact); `tools/validate_headless_ijfs.gd` in the gate.
-- Sequencing within `resolve_turn`: decide where IJFS runs relative to offload/combat/supply and
-  record it in the Decisions log (it feeds combat support + D3, so likely before combat resolution).
+Begin **D3** — sub-task breakdown is in `PLAN.md` §"Track D, Phase 3" (D3-A data+models → D3-B
+calculator → D3-C mine warfare → D3-D GameState wiring → … → D3-F ship-loss propagation). TIV oracle
+files are listed there and in `ROADMAP.md` §D3. Dependency note from §1: D3-B consumes the IJFS
+anti-ship writeback; D3-F consumes D0-C's ship layer via the `lost_at_sea` seam.
 
-Then **push the D4 milestone** (D4 fully green).
+**Resolve first, as part of D3-A** — `PLAN.md` Open Question *"D4-H writeback (TO + ground-casualty)
+linkage"*: the IJFS anti-ship writeback is keyed by **Type only** because `targets_master.json` has no
+`to_number`. D3-B wants **(TO,Type)**. Decide the TO mapping (likely: stamp `to_number` onto IJFS
+targets from `data/theaters.json` polygons by lat/lon during load) so D3 gets per-theater suppression.
+
+D3-B…E are dependency-independent once D3-A lands — they can run as concurrent opencode sessions
+(gate + commit + retrospect each). D3-B/D are RNG-sensitive (firing plan / ship-loss); D3-A/C are
+more mechanical and opencode-suitable. Use the per-sub-task loop in §3 throughout.

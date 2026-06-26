@@ -126,6 +126,36 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-26 — D4-H IJFS GameState wiring + writeback (direct); D4 milestone complete:** Wired
+  `GameState.resolve_ijfs_turn(dice)` into `resolve_turn` (after `resolve_offload_turn`, before
+  maneuver/combat — IJFS suppresses anti-ship systems for D3 and is conceptually Red's joint fires
+  preceding the ground fight). `IjfsDailyState` is loaded once in `reset_to_scenario`
+  (`_rebuild_ijfs_state`, incl. `enrich_sam_scores`) and advanced via `IjfsEngine.carry_to_next_day`
+  at the start of each `resolve_ijfs_turn` after day 1. Decisions: (1) **RNG isolation is mandatory
+  and dice-type-aware.** IJFS must never consume the combat dice. `SeededDice.derive()` returns a
+  fresh independent stream (combat reproducible + isolated), but `ScriptedDice.derive()` returns
+  `self` (shared queue) — so for scripted-combat unit tests we instead seed an independent
+  `SeededDice.new(hash("ijfs:<turn>"))`. Verified: the golden seed 20260624 → casualties=2, feba=0.76
+  is byte-stable with IJFS now running every `resolve_turn`, and all ScriptedDice combat suites stay
+  green. (2) **Writeback keyed by Type, not (TO,Type).** The handoff/D3 want anti-ship destroyed/
+  suppressed per **(TO,Type)**, but `data/ijfs/targets_master.json` carries **no `to_number`** (nor
+  battalion/brigade IDs) on targets — so `last_ijfs_writeback` aggregates anti-ship by **subcategory
+  (Type)** only, and the maneuver-casualty list (faithful port of
+  `ijfs_maneuver_writeback_service.compute_maneuver_writeback`) stays **empty** because the target
+  metadata lacks `battalion_id`. Both are structured so adding TO/IDs later is a pure data change.
+  See **Open Question: D4-H writeback (TO + ground-casualty) linkage**. (3) **DB-backed TIV writeback
+  not ported.** TIV's `ijfs_writeback_service`/`target_system_writeback_service` mutate SQL via repos;
+  HexCombat has no DB — the in-memory ledger aggregation on `GameState` is the slice's equivalent and
+  the forward-compat seam D3-B consumes. (4) **Theater CAS/CRBM into combat deferred** — IJFS does not
+  produce a CAS/CRBM combat-support value in the oracle; combat support inputs stay as-is (revisit when
+  D5/front-line or an explicit fires-support rebalance lands). (5) **Observation contract extended:**
+  added an `ijfs` block to `LLMGameAPI.observation` (last summary + writeback aggregates), added `ijfs`
+  to the schema (`schemas/llm_observation.schema.json`) + the validator's required-key list, and
+  regenerated `docs/examples/llm_observation_red_turn1.json` (+11 lines, no reformat). Verified: import
+  clean; full gate ALL PHASES GREEN; 124 GdUnit cases unchanged (D4-H is validator-tested, not GdUnit —
+  integration assertions live in `tools/validate_headless_ijfs.gd` per the SceneTree/teardown-flake
+  rule); golden byte-stable. **D4 (IJFS) milestone complete.** See `RETROSPECTIVES.md 2026-06-26 D4-H`.
+
 - **2026-06-26 — D4-G IJFS daily orchestration ported (direct, not opencode):** Ported
   `run_daily_ijfs.py` (6-phase sequence) + `run_context.py` (day-semantics) + `logging_utils.summarize_run`
   into `scripts/ijfs/IjfsEngine.gd`, with `scripts/ijfs/IjfsDailyState.gd` as the in-memory state
@@ -776,9 +806,15 @@ D4-A → {B,C,D,E} → F → G → H):
       `carry_to_next_day` reproduces the loader reload reset for in-memory continuity. 5 GdUnit cases
       mirror the oracle full-run/continuity/dedup/budget-routing tests. Gate green (124 cases); golden
       invariant byte-stable.
-- [ ] **D4-H** — `GameState.resolve_ijfs_turn` wiring + writeback (anti-ship destroyed/suppressed per
-      (TO,Type) for D3; maneuver casualties; theater CAS/CRBM; `EventBus.ijfs_resolved`; LLM block;
-      `validate_headless_ijfs.gd`).
+- [x] **D4-H** *(2026-06-26)* — `GameState.resolve_ijfs_turn(dice)` wiring + writeback. Runs
+      `IjfsEngine.run_daily` each turn on an **independent** IJFS substream (golden byte-stable),
+      stores `last_ijfs_summary` + `last_ijfs_writeback` (anti-ship destroyed/suppressed **by Type**
+      — TO unavailable in target data, see Open Question; SAM destroyed/suppressed; maneuver-casualty
+      port). Hooked after offload, before maneuver/combat. `EventBus.ijfs_resolved`; `LLMGameAPI`
+      `ijfs` observation block (schema + validator required-key + regenerated fixture);
+      `tools/validate_headless_ijfs.gd` in the gate. **D4 (IJFS) milestone complete — pushed.**
+      *Deferred:* theater CAS/CRBM into combat (combat `supply_effectiveness`/support inputs stay as-is);
+      ground-casualty ID linkage (see Open Question).
 
 **TIV source oracle** — **read all of these before scoping sub-tasks**:
 - `src/ijfs_standalone/` package (self-contained engine):
@@ -838,6 +874,19 @@ Red maneuver BNs redistribute along it. Cleanup phase normalizes ownership after
 
 _None blocking the slice — the design is settled. Future-phase questions (supply/organization
 interactions, fog of war, terrain via ArcGIS, theater fires) are tracked in `ROADMAP.md`._
+
+### D4-H writeback (TO + ground-casualty) linkage  *(open — settle when D3 lands)*
+
+`GameState.last_ijfs_writeback` aggregates IJFS anti-ship destroyed/suppressed by **Type
+(subcategory) only**, and `maneuver_casualties` is **empty**, because `data/ijfs/targets_master.json`
+carries neither a theater (`to_number`) field nor `battalion_id`/`brigade_id` on targets — the IJFS
+target set and the ground-combat `Brigade`/`Battalion` OOB are currently disjoint datasets with no
+shared keys. **To resolve when D3-B (anti-ship firing plan) is built:** decide how IJFS targets map
+to theaters (add `to_number` to the target data, sourced from `data/theaters.json` polygons by
+lat/lon) so anti-ship suppression can be consumed **per (TO,Type)**; and whether IJFS-destroyed
+"Maneuver Units" should mark ground battalions (needs an ID bridge between the IJFS target set and the
+PLA/ROC OOB, or a category→OOB mapping). Until then the writeback shape is forward-compatible (adding
+the key is a data change). See `RETROSPECTIVES.md 2026-06-26 D4-H`.
 
 ### D1 — Amphibious Offload design decision  *(RESOLVED 2026-06-24)*
 

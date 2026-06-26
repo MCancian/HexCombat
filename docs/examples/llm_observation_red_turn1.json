@@ -62,6 +62,17 @@
 		"legal_moves": "Authoritative target hex lists by brigade and movement mode.",
 		"organization": "0-100 readiness value affected by movement and combat."
 	},
+	"ijfs": {
+		"antiship_destroyed_by_type": {},
+		"antiship_suppressed_by_type": {},
+		"attacks": {},
+		"maneuver_casualties": [],
+		"red_air_losses": 0,
+		"resolved_day": 0,
+		"sam_destroyed": 0,
+		"sam_suppressed": 0,
+		"taiwan_ad_health_after": {}
+	},
 	"last_combat": [],
 	"last_contested_hexes": [],
 	"legal_commits": {},

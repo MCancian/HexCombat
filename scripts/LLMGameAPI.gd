@@ -30,6 +30,7 @@ static func observation(perspective_team: String = "") -> Dictionary:
 		"occupied_hexes": _occupied_hex_observations(),
 		"ship_reserve": _ship_reserve_observations(),
 		"supply_state": _supply_state_observation(),
+		"ijfs": _ijfs_observation(),
 		"legal_moves": _legal_move_observations(perspective_team),
 		"legal_commits": _legal_commit_observations(perspective_team),
 		"pending_orders": _pending_orders(),
@@ -225,6 +226,24 @@ static func _supply_state_observation() -> Dictionary:
 		"current_dos_tons": current_dos_tons,
 		"current_dos_equivalent": current_dos_tons / float(DosConsumption.TONS_PER_DOS),
 		"day_count": _game_state().supply_state.day_history.size()
+	}
+
+
+## IJFS (Red joint fires) — last resolved day's summary + the writeback aggregates. Empty before
+## the first turn resolves. Keeps the JSON observation contract forward-compatible for D3/AI play.
+static func _ijfs_observation() -> Dictionary:
+	var summary: Dictionary = _game_state().last_ijfs_summary
+	var writeback: Dictionary = _game_state().last_ijfs_writeback
+	return {
+		"resolved_day": _game_state()._ijfs_day,
+		"attacks": summary.get("attacks", {}),
+		"taiwan_ad_health_after": summary.get("taiwan_ad_health_after", {}),
+		"red_air_losses": summary.get("red_air_losses", 0),
+		"antiship_destroyed_by_type": writeback.get("antiship_destroyed_by_type", {}),
+		"antiship_suppressed_by_type": writeback.get("antiship_suppressed_by_type", {}),
+		"sam_destroyed": writeback.get("sam_destroyed", 0),
+		"sam_suppressed": writeback.get("sam_suppressed", 0),
+		"maneuver_casualties": writeback.get("maneuver_casualties", []),
 	}
 
 
