@@ -167,3 +167,37 @@ targets from `data/theaters.json` polygons by lat/lon during load) so D3 gets pe
 D3-B…E are dependency-independent once D3-A lands — they can run as concurrent opencode sessions
 (gate + commit + retrospect each). D3-B/D are RNG-sensitive (firing plan / ship-loss); D3-A/C are
 more mechanical and opencode-suitable. Use the per-sub-task loop in §3 throughout.
+
+### D3-A scoping notes (gathered 2026-06-26 — start here)
+
+**Already exists (from D0-C — do NOT recreate):** `data/ships.json` (27 entries) +
+`scripts/model/ShipDef.gd` / `ShipState.gd` / `IndividualShip.gd`; `GameState.fleet` (name→ShipState,
+built by `_rebuild_fleet`); the `pending_lost_at_sea` / `register_ship_losses` seam (reporting-only,
+BN-removal deferred to D3-F). So D3-A's *new* work is the **anti-ship systems + minefield** data/models,
+not ships.
+
+**TIV data oracle** (at `…/TaiwanInvasionViewer/TaiwanInvasionViewer/defaults/`, NOT `src/defaults/`):
+- `antiship_systems_consolidated.json` (6KB) — Green weapon-system **type catalog** (id, name,
+  detectability, description) + per-TO quantities. **CAVEAT:** several platform groups are
+  `"deprecated": true` (split into finer types per the "2026 OOB update" — e.g. group 1 → types
+  19/20/21/22; group 4 → 23/24). Port the **non-deprecated current types**; record which you dropped.
+- `antiship_crossing_config.json` (5.7KB) — crossing-damage params (munition stages: launched →
+  failed-in-flight → intercepted → leakers → hits/decoy/wasted; per-ship-type destroy/damage). Feeds D3-B.
+- `antiship_combat_catalog.json` (6.3KB) — combat params per system/munition. Feeds D3-B.
+- `antiship_magazine_defaults.json` (4.9KB) — magazine counts (D3-B `apply_magazine_expenditure`).
+- `antiship_grouping_spec.json` (12KB) — TO/type grouping spec.
+- Contracts: `src/contracts/antiship.py` (read — TypedDicts/dataclasses: `FiringAllocationRow`,
+  `LaunchAttritionSummaryRow`, `AntishipCrossingSummary`, `AntishipMinefieldBeachSummary`, etc.).
+
+**Proposed D3-A deliverables:** `data/antiship/antiship_systems.json` (+ crossing/magazine configs as
+needed), `scripts/model/AntishipSystem.gd` (to, type, type_name, quantity, original_quantity,
+destroyed, fired, expended, destroyed_this_turn, active — mirror `AntishipSystemEntry`),
+`scripts/model/Minefield.gd` (beach_id, name, dangerous_mines, remaining_mines, lane_cleared,
+minesweepers_assigned, lat/lng/advance_direction — mirror `AntishipMinefieldBeachSummary`),
+`scripts/AntishipLoaders.gd` (or extend `GameData`), `tools/validate_antiship_data.gd`. Keep the TO
+(theater) key consistent with `data/theaters.json` so D3-B can join IJFS suppression per (TO,Type) and
+the D4-H Open Question resolves naturally.
+
+**TO-mapping (D4-H Open Question):** likely defer the *actual IJFS-target `to_number` stamping* to
+D3-B (where it's consumed) — but settle the **key convention** (TO = `theaters.json` `to_number`) in
+D3-A so models/data agree from the start.
