@@ -20,4 +20,5 @@ extends Resource
 @export var suppressed_this_turn: bool = false
 @export var intel_locked: bool = false
 @export var sam_score: int = -1
+@export var sead_result: String = ""
 @export var metadata: Dictionary = {}
