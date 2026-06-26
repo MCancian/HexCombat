@@ -126,6 +126,25 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-26 — D3-B split into B1/B2/B3; D3-B1 magazine service ported (direct):** The planned
+  single `AntishipCalculator` (firing plan + crossing + magazine) is ~2,100 lines of TIV source with a
+  tight dependency chain (firing plan needs the magazine reservation context — both firing-plan pytests
+  exercise it), so D3-B is split **magazine (B1) → firing plan (B2) → crossing (B3)**, each a
+  gated/committed unit. **D3-B1:** ported the *calculator-pure* parts of `antiship_magazine_service.py`
+  into `scripts/AntishipMagazine.gd` — `MagazineReservation`-equivalent state seeded from
+  `data/antiship/antiship_magazine_defaults.json` (single source of truth; the Python `_DEFAULTS`
+  mirrors that JSON), `cap_launcher_count`, `reserve_full_volley` (additive / cross_draw / aircraft_pool
+  modes, full-volley-or-nothing), `deduct_launcher_kills` (aircraft exempt). **Did NOT port the DB
+  funcs** (`load_magazine_rows`/`seed_magazines_if_empty`/`persist_reservations`/`create_reservation_context`)
+  — HexCombat has no DB; the pure reservation math is the slice. Faithful-port notes: integer floor
+  division for the aircraft-pool `// mpl` cap (`@warning_ignore("integer_division")`); `_sorted_entries`
+  reproduces Python's `-is_primary` ordering via a stable primary-then-secondary partition (GDScript
+  `sort_custom` isn't guaranteed stable). 9 GdUnit cases mirror `test_antiship_magazine_service.py`
+  (additive 19→block_i/surface, cross_draw fallback 20, aircraft_pool caps/primary-first 3, cap-exceeded
+  block, ground deduction 5, aircraft exemption, full-volley exact+shortfall, cap_launcher_count). Gate
+  green; golden 20260624 → casualties=2, feba=0.76 unchanged. Next: **D3-B2** (firing plan; IJFS
+  coupling stays a plain input dict — the (TO,Type)/`to_number` join is deferred to D3-D wiring).
+
 - **2026-06-26 — D3-A anti-ship data + models (direct):** Ported the D3 data layer. Decisions:
   (1) **TIV configs copied verbatim** into `data/antiship/` (systems_consolidated, grouping_spec,
   combat_catalog, crossing_config, magazine_defaults) — same precedent as D4-A; copying avoids
@@ -727,9 +746,24 @@ manifest.
       `tools/validate_antiship_data.gd` (per-type totals, aggregation uniqueness, catalog/crossing/
       magazine/minefield shapes). Gate green; golden invariant unchanged.
 
-- [ ] **D3-B** — `scripts/AntishipCalculator.gd` — pure lib: `build_firing_plan()`,
-      `resolve_crossing_damage()`, `apply_magazine_expenditure()`. Mirror TIV unit tests
-      (`tests/antiship_calculator_test.gd`). Gate green.
+- **D3-B — split** (the original "firing plan + crossing + magazine in one lib" is ~2,100 lines of
+  TIV source; dependency order is magazine → firing plan → crossing → calculator orchestration):
+  - [x] **D3-B1** *(2026-06-26)* — Magazine service: `scripts/AntishipMagazine.gd` (calculator-pure
+        port of `antiship_magazine_service.py` — `from_defaults`, `cap_launcher_count`,
+        `reserve_full_volley` [additive / cross_draw / aircraft_pool], `deduct_launcher_kills`; DB
+        seed/persist not ported — seeds from `antiship_magazine_defaults.json`).
+        `tests/antiship_magazine_test.gd` (9 cases mirroring `test_antiship_magazine_service.py`).
+        Gate green; golden unchanged.
+  - [ ] **D3-B2** — Firing plan: `AntishipCalculator.build_firing_plan(systems, ijfs_destroyed,
+        firing_percentages, destroyed_fire_percentages, magazine)` over `AntishipSystem` rows
+        (aggregated by (TO,type), so the per-container `allocate_firing_to_rows` is single-row);
+        C2 excluded; magazine volley-gate via D3-B1. Port `antiship_allocation.allocate_firing_to_rows`
+        + `antiship_launch_attrition.py`. Mirror `test_antiship_firing_plan.py`. IJFS coupling is a
+        plain input dict (the (TO,Type) join / `to_number` stamping is wired in D3-D).
+  - [ ] **D3-B3** — Crossing model (`antiship_crossing.py`, ~941 lines): the 7-stage missile pipeline
+        (launch attrition → groups of 4 → escort interception → decoy discrimination → weighted
+        homing → terminal defense → neutralization) on `antiship_crossing_config.json` + ship_profiles.
+        Inject `Dice`; mirror source draw order; mirror `test_antiship_crossing.py`. Likely sub-split.
 
 - [ ] **D3-C** — Mine warfare: `scripts/MineWarfareService.gd` — `resolve_minefield()`,
       lay/sweep/activate logic. Mirror `test_antiship_mine_warfare_service.py`. Gate green.

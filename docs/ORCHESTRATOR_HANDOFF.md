@@ -35,11 +35,14 @@ Confirm with `git log --oneline -15` + a fresh `pwsh ./tools/run_all_tests.ps1` 
   `scripts/model/AntishipSystem.gd` + `Minefield.gd`, `scripts/AntishipLoaders.gd` (grouping spec →
   650 systems aggregated by (TO,type_id)), `tools/validate_antiship_data.gd` in the gate. ships.json +
   ShipDef/ShipState reused from D0-C.
-- **D3-B…F — NOT STARTED** ← resume here. **Before D3-B:** resolve the `PLAN.md` Open Question
-  *"D4-H writeback (TO + ground-casualty) linkage"* — D3-B's firing plan wants anti-ship suppression
-  per **(TO,Type)**, but the IJFS writeback is keyed by **Type only** (target data lacks `to_number`).
-  Stamp `to_number` onto `data/ijfs/targets_master.json` (via `data/theaters.json` polygons by lat/lon)
-  as part of D3-B so the join works.
+- **D3-B split into B1/B2/B3** (dependency order: magazine → firing plan → crossing; ~2,100 src lines):
+  - **D3-B1 — DONE (2026-06-26, committed):** `scripts/AntishipMagazine.gd` (calculator-pure magazine
+    reservation: `from_defaults`, `cap_launcher_count`, `reserve_full_volley`, `deduct_launcher_kills`)
+    + `tests/antiship_magazine_test.gd` (9 cases). DB funcs not ported.
+  - **D3-B2…B3, D3-C…F — NOT STARTED** ← resume here (D3-B2 firing plan next).
+  - Note: `data/theaters.json` has **no polygons** (only TO adjacency + beach_to_to), so `to_number`
+    stamping needs polygon data (TIV `config/taiwan_TOs.json`) + point-in-polygon — defer to **D3-D**
+    wiring; D3-B2 takes IJFS-destroyed counts as a plain `{(to,type): n}` input.
 - **Final integration** (turn-sequence wiring, LLM observation contract) — after D3.
 
 **Backlog order (dependency-checked):** `D4-G → D4-H → D3-A → {D3-B, D3-C, D3-D, D3-E} → D3-F →

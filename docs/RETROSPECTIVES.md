@@ -165,3 +165,32 @@ next sub-tasks (D4-G/H, D3) don't relearn them.
 - Read data `notes` first → **record only**: general data-port discipline.
 - Aggregation simplification → **act later (→ watch)**: revisit only if D3-B needs per-container state.
 - Verify generated data with a printed sample → **record only**: already standard practice here.
+
+---
+
+## 2026-06-26 — D3-B1: anti-ship magazine service (D3-B split)   (implementer: direct)
+
+**What would you do differently (self-retro):**
+- **Size the sub-task from the source, not the plan.** PLAN.md listed D3-B as one lib (firing plan +
+  crossing + magazine). Reading the oracle showed ~2,100 lines with a hard dependency chain — the
+  firing-plan pytests both require the magazine reservation context, so "firing plan first" was
+  impossible. Re-deriving the real dependency order (magazine → firing plan → crossing) up front and
+  splitting B1/B2/B3 saved a false start. Lesson: for big phases, read the pytests' imports first —
+  they reveal the true coupling.
+- **Port the pure core, drop the DB shell.** The magazine service interleaves pure reservation math
+  with sqlite seed/load/persist. Only the pure part is the slice; copying the DB functions would have
+  added untestable, irrelevant code. Clean cut at the conn boundary.
+- **GDScript stability + integer-division gotchas, again.** Python's `sorted(key=-is_primary)` is
+  stable; GDScript `sort_custom` is not — used an explicit primary-then-secondary partition. And the
+  aircraft-pool cap is `count // mpl` (floor) — needs `@warning_ignore("integer_division")`. Both are
+  recurring GDScript-port hazards now worth a standing checklist item.
+- **Single source of truth for data.** Python keeps a `_DEFAULTS` constant "in sync with" the JSON;
+  the GDScript port seeds straight from `antiship_magazine_defaults.json` (no duplicated constant),
+  so there's nothing to drift. Better than the source here.
+
+**Orchestrator triage:**
+- Size-from-source + read-pytest-imports → **brief forward**: apply to D3-B2/B3 and any large port.
+- Pure-core/DB-shell cut → **record only**: standard for this DB-free port.
+- Stability + integer-division hazards → **act now (done)** + **brief forward**: add to the GDScript
+  port checklist alongside ScriptedDice/Variant-`:=`/key-shape items.
+- JSON-as-single-source → **record only**: keep doing it.
