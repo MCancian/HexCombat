@@ -126,6 +126,34 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-26 — D4-G IJFS daily orchestration ported (direct, not opencode):** Ported
+  `run_daily_ijfs.py` (6-phase sequence) + `run_context.py` (day-semantics) + `logging_utils.summarize_run`
+  into `scripts/ijfs/IjfsEngine.gd`, with `scripts/ijfs/IjfsDailyState.gd` as the in-memory state
+  container (port of `state.py` `IJFSDailyState`). **Implemented directly, not via opencode** — D4-G is
+  the central integration tying all six prior libs together with strict RNG-draw-order requirements
+  across phases; the free model's risk of subtle, hard-to-catch fidelity bugs is highest exactly here,
+  and the handoff sanctions direct implementation for intricate sub-tasks (precedent: D4-F). Decisions:
+  (1) **No `write_outputs` file IO** (per handoff): `run_daily(state, dice, current_day, warmup_context=null)`
+  returns the ledgers dict directly — `metadata`, `detection_log`, `strike_log`, `target_status_after`,
+  `munition_inventory_after`, `engagement_log`, `contest_log`, `free_shot_log`, `air_oob_after`, `summary`.
+  (2) **Single shared `Dice` replaces Python's `state.rng`**, threaded into every probabilistic phase in
+  source order (exquisite-intel → satellite → pre-AD strike → SEAD → aircraft detect → post-AD strike →
+  free shot), preserving draw order. (3) **In-memory continuity** via `carry_to_next_day(state)`, which
+  reproduces `loaders.load_targets`'s runtime-reload reset (clear `suppressed`/`suppressed_this_turn`/
+  `sead_result`; `destroyed`/`known_to_red`/`last_detected_day`/`detected_this_turn` + munition/squadron
+  attrition persist) — the faithful equivalent of TIV's file-roundtrip continuity without file IO.
+  (4) **`WarmupContext` → Dictionary** (established Python-dataclass→GDScript-Dictionary divergence);
+  `IjfsRunContext` ported as a Dictionary from `make_run_context`. (5) **`IjfsTarget.to_dict()`** added,
+  mapping GDScript sentinels back to the source's `None` (`last_detected_day`/`sam_score == -1` → null,
+  `sead_result == "" ` → null) for faithful ledger/skip-log shapes. (6) **`air_oob_after`** built from the
+  `Array[IjfsSquadron]` as `{model_version:3, squadrons:[…], provenance:{}}` mirroring
+  `SquadronForce.to_dict`. Verified independently: import clean; full gate ALL PHASES GREEN; GdUnit
+  119→124 cases (5 new engine tests mirroring `test_run_daily_outputs_and_continuity` + dedup +
+  TestBudgetRouting); ground-combat golden seed 20260624 → casualties=2, feba=0.76 byte-stable
+  (two-run deterministic). Note: the "238 cases" figure in earlier notes counted assertions, not
+  GdUnit test methods — the real method count is 124. See `RETROSPECTIVES.md 2026-06-26 D4-G`.
+  Next: **D4-H** (GameState wiring + writeback), then push the D4 milestone.
+
 - **2026-06-26 — Implementer switched pi → opencode; retrospective loop added:** The `pi` CLI is
   unusable on this Windows box — it spawns its `opencode` provider backend via `spawn('opencode')`
   (no `shell:true`), which can't resolve the Windows `.cmd`/`.ps1` shim and dies `ENOENT`. Per user
@@ -740,8 +768,14 @@ D4-A → {B,C,D,E} → F → G → H):
 - [x] **D4-E** *(2026-06-26)* — `scripts/ijfs/IjfsFiringCapacity.gd`: `FiringCapacityBudget` (inorganic
       floor budget) + `OrganicStrikeBudget` (aircraft-backed, scaled by surviving strike squadrons,
       platform-kind filter) (`firing_capacity.py`).
-- [ ] **D4-F** — SEAD + AD health + warmup (`engagement.py`, `ad_health.py`, `warmup_profiles.py`).
-- [ ] **D4-G** — daily orchestration + continuity (`run_daily_ijfs.py` 6-phase sequence → `IjfsEngine.gd`).
+- [x] **D4-F** *(2026-06-26, committed e20c582)* — SEAD + AD health + warmup (`engagement.py`,
+      `ad_health.py`, `warmup_profiles.py`) → `IjfsEngagement.gd` / `IjfsAdHealth.gd` / `IjfsWarmup.gd`.
+- [x] **D4-G** *(2026-06-26)* — daily orchestration + continuity (`run_daily_ijfs.py` 6-phase sequence
+      → `IjfsEngine.gd` + `IjfsDailyState.gd`). `run_daily(state, dice, current_day, warmup_context)`
+      returns the ledgers dict directly (no `write_outputs` file IO); `summarize_run` ported;
+      `carry_to_next_day` reproduces the loader reload reset for in-memory continuity. 5 GdUnit cases
+      mirror the oracle full-run/continuity/dedup/budget-routing tests. Gate green (124 cases); golden
+      invariant byte-stable.
 - [ ] **D4-H** — `GameState.resolve_ijfs_turn` wiring + writeback (anti-ship destroyed/suppressed per
       (TO,Type) for D3; maneuver casualties; theater CAS/CRBM; `EventBus.ijfs_resolved`; LLM block;
       `validate_headless_ijfs.gd`).

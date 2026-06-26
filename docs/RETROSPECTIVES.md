@@ -60,3 +60,43 @@ next sub-tasks (D4-G/H, D3) don't relearn them.
 **Orchestrator triage:**
 - All → **record only / brief forward**: fold the relevant items into each sub-task brief. The
   ScriptedDice and key-shape items are the highest-value to repeat in every D3 brief.
+
+---
+
+## 2026-06-26 — D4-G: IJFS daily orchestration engine   (implementer: direct)
+
+**What would you do differently (implementer = orchestrator, self-retro):**
+- **Bypassed opencode deliberately.** D4-G is the integration layer — it threads a single `Dice`
+  through six phases in a fixed draw order. Fidelity here is all-or-nothing and failures are subtle
+  (a reordered phase still runs green on structural tests but silently diverges from the oracle).
+  That's the worst possible task for the weak free model. Implementing directly was the right call;
+  the cost was ~all of the session's reading budget spent pinning exact signatures first. Next time,
+  front-load the signature sweep (grep `static func` across the libs in one pass) before writing any
+  brief — I did, and it paid off.
+- **GDScript Variant type-inference bites `:=`.** `var is_organic := mun != null and mun.category == …`
+  failed to compile ("can't infer type") because `mun` is `Variant`. Any `:=` whose RHS touches a
+  `Variant` member needs an explicit `: bool`/`: String`. Cost one compile cycle. Brief every future
+  port: when porting Python duck-typed locals, annotate the type explicitly.
+- **GdUnit captures engine `push_error`/`push_warning` as stack traces but does NOT fail the test.**
+  The synthetic dedup test logged a line-158 trace (AD-health "no Moveable SAMs" warning + minimal-
+  scenario strike noise) yet PASSED. I nearly misread the truncated first run as a failure. Always
+  read the `Statistics:`/`Overall Summary` line, not the inline traces, to judge pass/fail.
+- **Doc drift caught during verify:** PLAN.md still showed D4-F unchecked (it was committed in
+  e20c582) and prior notes claimed "238 / 210 cases". The real GdUnit count is 124 (= `grep -c
+  'func test_'`); the inflated numbers counted assertions. Trust `Overall Summary`, not prose.
+- **`carry_to_next_day` is the fragile seam.** It hand-reproduces `loaders.load_targets`'s reload
+  reset. If TIV ever changes which fields reset on reload, this silently diverges with no test
+  linking the two. Under-tested: I assert suppression clears + destroyed persists, but not the full
+  field-by-field parity against a real loader roundtrip.
+
+**Orchestrator triage:**
+- Bypass opencode for integration-heavy sub-tasks → **record only**: same call will apply to D4-H's
+  RNG-sensitive writeback; revisit for D3-B…E (more mechanical, opencode-suitable).
+- Variant `:=` annotation → **act now (done)** + **brief forward**: add to the standing D3 brief
+  checklist alongside the ScriptedDice/key-shape items.
+- GdUnit traces ≠ failures → **record only**: verification-reading guidance, already internalized.
+- D4-F checkbox + case-count prose → **acted now**: ticked D4-F/D4-G in PLAN.md; corrected the
+  count to 124 in the Decisions log.
+- `carry_to_next_day` parity gap → **act later (→ backlog)**: when D4-H persists IJFS state on
+  `GameState` across turns, add a continuity test that roundtrips through `IjfsLoaders` and asserts
+  field-by-field parity with `carry_to_next_day`. Cross-link `PLAN.md 2026-06-26 D4-G`.

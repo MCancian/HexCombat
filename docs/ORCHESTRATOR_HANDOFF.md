@@ -20,7 +20,12 @@ Confirm with `git log --oneline -15` + a fresh `pwsh ./tools/run_all_tests.ps1` 
   and the six pure libs — `IjfsDetection`, `IjfsTargeting`, `IjfsStrike`, `IjfsFiringCapacity`,
   `IjfsEngagement`, `IjfsAdHealth`, `IjfsWarmup` — each with a GdUnit4 suite in `tests/ijfs/`
   (~238 cases, gate green).
-- **D4-G, D4-H — NOT STARTED.** ← resume here.
+- **D4-G — DONE (2026-06-26, committed).** `scripts/ijfs/IjfsEngine.gd` (`run_daily` 6-phase
+  orchestration, returns ledgers dict — no file IO) + `scripts/ijfs/IjfsDailyState.gd` (in-memory
+  state container) + `IjfsTarget.to_dict()` + `summarize_run` + `carry_to_next_day` continuity.
+  5 GdUnit cases in `tests/ijfs/ijfs_engine_test.gd` (full-run / continuity / dedup / budget-routing,
+  mirroring `test_ijfs_standalone.py`). Gate green at 124 GdUnit cases; golden invariant byte-stable.
+- **D4-H — NOT STARTED.** ← resume here.
 - **D3 anti-ship & mine warfare — NOT STARTED** (no `scripts/antiship/`, `data/antiship/` yet).
 - **Final integration** (turn-sequence wiring, LLM observation contract) — after D3.
 
@@ -132,13 +137,28 @@ Question and cross-link (`see RETROSPECTIVES.md <date>/<subtask>`).
 
 ---
 
-## 6. Immediate next action: D4-G
+## 6. Immediate next action: D4-H (then push the D4 milestone)
 
-`scripts/ijfs/IjfsEngine.gd` — `run_daily(state, dice) -> Dictionary` of ledgers (detection,
-strike, engagement, contest, free-shot, target-status, inventory, OOB, summary) porting TIV
-`run_daily_ijfs.py`'s 6-phase sequence + `run_context.py` (IJFSRunContext/WarmupContext
-day-semantics) + a state container + `summarize_run` (logging_utils.py). **Do NOT port
-`write_outputs` file IO** — return the ledgers dict directly. Add day-to-day continuity (carry
-target destroyed/suppressed/known flags, depleted munitions, attrited OOB into next day). Mirror
-the full-run + continuity cases from `test_ijfs_standalone.py` (the 67KB oracle). Then **D4-H**
-(GameState wiring + writeback), then **push the D4 milestone**.
+D4-G is done (see §1). The engine to wire is `IjfsEngine.run_daily(state, dice, current_day,
+warmup_context=null) -> Dictionary` — returns the ledgers dict (detection / strike / engagement /
+contest / free-shot / target-status / inventory / OOB / summary); `IjfsDailyState` is the in-memory
+state container; `IjfsEngine.carry_to_next_day(state)` advances days (clears suppression/sead_result,
+persists destroyed/known/inventory/squadron attrition).
+
+**D4-H — `GameState.resolve_ijfs_turn(dice)` wiring + writeback** (port the TIV `services/ijfs_*.py`
+writeback layer, scope from the oracle first):
+- Build/persist an `IjfsDailyState` on `GameState` from `data/ijfs/` via `IjfsLoaders` (load once;
+  `carry_to_next_day` between turns). Run `IjfsEngine.run_daily` each turn with a **dedicated seeded
+  substream** (`dice.derive("ijfs")`) so it does **not** consume the ground-combat RNG (golden
+  invariant must stay byte-stable: seed 20260624 → casualties=2, feba=0.76).
+- **Writeback** from the ledgers: anti-ship destroyed/suppressed aggregated per **(TO, Type)** for
+  D3-B's firing plan; maneuver-unit casualties; theater CAS/CRBM made available to combat (currently
+  0). Watch the WritebackIsolation regression — SEAD/contest log entries lack `attack_executed`/
+  `munition_id`/`rounds_expended` and must NOT drive anti-ship/maneuver writeback (only strike-log
+  executed entries do).
+- `EventBus.ijfs_resolved(summary)`; extend `LLMGameAPI.get_observation()` with an IJFS block
+  (keep the JSON observation contract intact); `tools/validate_headless_ijfs.gd` in the gate.
+- Sequencing within `resolve_turn`: decide where IJFS runs relative to offload/combat/supply and
+  record it in the Decisions log (it feeds combat support + D3, so likely before combat resolution).
+
+Then **push the D4 milestone** (D4 fully green).
