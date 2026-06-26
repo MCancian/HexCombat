@@ -126,6 +126,26 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-26 — D4 pure-lib wave (D4-B/C/D/E) ported via pi, all gated + committed:** Dispatched the
+  four dependency-independent IJFS pure libs as self-contained pi briefs, verified each with the full
+  gate, committed individually (gate green throughout; ground-combat golden seed 20260624 → casualties=2
+  feba=0.76 unchanged; GdUnit4 grew 81 → 210 cases). **Note for future agents:** the TIV source tree is
+  nested one level deeper than AGENTS.md states — `C:\Users\mdogg\TaiwanInvasionViewer\TaiwanInvasionViewer\src\ijfs_standalone\`.
+  Faithful-port divergences taken (all in-spirit of AGENTS.md, RNG order/formulas preserved):
+  (1) **Tuple→Dictionary returns:** Python functions returning tuples (`select_munition*`,
+  `_select_from_ordered_pairings`, detection passes) return `Dictionary` with stable source-parallel keys
+  (`selected`/`reason`/`doctrine_name`/`selection`, `detected_ids`/`log`) so D4-G/H can build ledgers.
+  (2) **`_wildcard` type-guard (IjfsStrike):** GDScript `bool == ""` raises (Python tolerates it), so
+  wildcard checks short-circuit on type before string compare — required for bool match keys like
+  `intel_locked`. (3) **Fail-loud firing-capacity keys:** `FiringCapacityBudget`/`OrganicStrikeBudget`
+  push_error on a config entry missing `firing_units`/`sorties_per_unit_per_day` instead of the source's
+  silent `.get(...,0)` default (per AGENTS.md fail-loud; shipped scenario data carries both keys).
+  (4) **Shared `ScriptedDice`:** all IJFS GdUnit suites reuse `tests/helpers/ScriptedDice.gd` (global
+  `class_name`; scripted `randf()` draws are its 3rd ctor arg) — never a local `class ScriptedDice`
+  (class_name collision = parse error). RNG mapping: Python `rng.random()`→`dice.randf()`,
+  `rng.sample(c,k)`→`dice.choose_indices(c.size(),k)`. Next: D4-F (SEAD/AD-health/warmup) → D4-G
+  (daily orchestration) → D4-H (GameState wiring), which are sequential (each consumes the prior).
+
 - **2026-06-25 — D4/D3 build kickoff + Wave 0 foundations complete:** Resolved the paused D3
   questions (see "D3 — Open Questions → Decision"): build **D4 (IJFS) first**, both **full faithful
   ports**, D3 inputs from **scenario/config defaults** (no UI), build **orchestrated/phased via pi**.
@@ -679,11 +699,36 @@ D3 (Q1) — but this is the user's call; awaiting direction before any D3 coding
 
 ---
 
-## Track D, Phase 4 — IJFS (D4)  *(not yet started — largest phase)*
+## Track D, Phase 4 — IJFS (D4)  *(in progress — pure-lib wave done; engine/wiring next)*
 
 **Goal**: Port TIV's Joint/Air-Missile Fires phase. ISR → detection → targeting → fires
 allocation → strike probability → hit/miss. Provides theater CAS/CRBM for combat (currently 0)
 and suppresses anti-ship systems (feeding D3).
+
+**Sub-task status** (full breakdown in the approved plan
+`~/.claude/plans/where-we-left-we-gentle-parnas.md`; dep graph
+D4-A → {B,C,D,E} → F → G → H):
+- [x] **D4-A** *(committed prior session)* — data layer (8 ijfs_config JSONs → `data/ijfs/`),
+      typed models (`scripts/model/ijfs/`), `IjfsLoaders.gd`, `validate_ijfs_data.gd`.
+- [x] **D4-B** *(2026-06-26)* — `scripts/ijfs/IjfsDetection.gd`: 7 ISR degradation curves
+      (`isr_sources.py`) + two-pass satellite/aircraft detection (`detection.py`) incl. inline
+      antiship-exposure multiplier. Sorted-by-id iteration preserves `dice.randf()` order. Tests mirror
+      the detection oracle cases.
+- [x] **D4-C** *(2026-06-26)* — `scripts/ijfs/IjfsTargeting.gd`: `targets_to_attack`, pairing/doctrine
+      match, `select_munition_with_doctrine` (priority/fallback + reason codes), phase filter,
+      `target_release_eligible`, munition filter, posture override, `apply_exquisite_intel`
+      (decay fraction via `IjfsDetection.evaluate_isr_source`; C2 exclusion; deterministic/random).
+- [x] **D4-D** *(2026-06-26)* — `scripts/ijfs/IjfsStrike.gd`: add-then-multiply modifier formula
+      (`strike_probability.py`) + legacy mobile cap + `resolve_strike` (organic/inorganic inventory,
+      destroy-then-conditional-suppress RNG order) (`strike_resolution.py`).
+- [x] **D4-E** *(2026-06-26)* — `scripts/ijfs/IjfsFiringCapacity.gd`: `FiringCapacityBudget` (inorganic
+      floor budget) + `OrganicStrikeBudget` (aircraft-backed, scaled by surviving strike squadrons,
+      platform-kind filter) (`firing_capacity.py`).
+- [ ] **D4-F** — SEAD + AD health + warmup (`engagement.py`, `ad_health.py`, `warmup_profiles.py`).
+- [ ] **D4-G** — daily orchestration + continuity (`run_daily_ijfs.py` 6-phase sequence → `IjfsEngine.gd`).
+- [ ] **D4-H** — `GameState.resolve_ijfs_turn` wiring + writeback (anti-ship destroyed/suppressed per
+      (TO,Type) for D3; maneuver casualties; theater CAS/CRBM; `EventBus.ijfs_resolved`; LLM block;
+      `validate_headless_ijfs.gd`).
 
 **TIV source oracle** — **read all of these before scoping sub-tasks**:
 - `src/ijfs_standalone/` package (self-contained engine):
