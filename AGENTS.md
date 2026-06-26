@@ -1,6 +1,6 @@
 # AGENTS.md — HexCombat Agent Guide
 
-Canonical rules for **every** agent working in this repo (Claude, pi/GPT-5.5, and any other).
+Canonical rules for **every** agent working in this repo (Claude, the opencode implementer, and any other).
 Read this first. Claude-specific orchestration material lives in `CLAUDE.md`.
 
 ## Project
@@ -82,7 +82,7 @@ work done. The `.godot/` cache is git-ignored; `.gd.uid` files are committed wit
 ## Documentation map
 
 - `AGENTS.md` (this file) — shared rules, canonical.
-- `CLAUDE.md` — orchestrator role + how to use pi (Claude-only).
+- `CLAUDE.md` — orchestrator role + how to use the opencode implementer (Claude-only).
 - `ROADMAP.md` — long-term, sequenced milestones with acceptance criteria + forward-compat notes.
 - `PLAN.md` — the active milestone in detail + an append-only **Decisions** log + open questions.
 - `docs/ARCHITECTURE.md` — deeper design / rationale; per-phase notes under `docs/phases/`.

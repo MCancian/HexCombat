@@ -3,7 +3,7 @@
   "permissions": {
     "allow": [
       "Bash(godot *)",
-      "Bash(pi *)",
+      "Bash(opencode *)",
       "Read",
       "Edit",
       "Write",

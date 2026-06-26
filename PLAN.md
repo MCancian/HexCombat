@@ -126,6 +126,22 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-26 — Implementer switched pi → opencode; retrospective loop added:** The `pi` CLI is
+  unusable on this Windows box — it spawns its `opencode` provider backend via `spawn('opencode')`
+  (no `shell:true`), which can't resolve the Windows `.cmd`/`.ps1` shim and dies `ENOENT`. Per user
+  direction, the orchestrator now drives **`opencode` directly** (`opencode run -m
+  opencode/deepseek-v4-flash-free`; `--agent explore` read-only, build agent auto-allows writes,
+  `-s` for session continuity). Updated `CLAUDE.md`, `AGENTS.md`, `.claude/settings.json`
+  (`Bash(opencode *)`), `docs/LLM_PLAYTESTING.md`; **left dated pi references in the logs intact**
+  (append-only history). Caveat: the default model is a small free model (weaker than the prior
+  GPT-5.5) → tighter briefs, higher orchestrator review bar. New **per-sub-task retrospective loop**
+  (user-requested): after implementation + gating, ask the implementer "knowing what you know now,
+  what would you do differently?", then the orchestrator reviews **both** the diff and the lessons.
+  Design decisions → this log; implementer lessons + triage → new `docs/RETROSPECTIVES.md`. The
+  active build plan/backlog for the next orchestrator is `docs/ORCHESTRATOR_HANDOFF.md`. Also: D4-F
+  (SEAD + AD-health + warmup) was completed directly (pi quota exhausted) and committed (e20c582);
+  gate green at 238 GdUnit4 cases, golden invariant unchanged. Next: **D4-G** (daily orchestration).
+
 - **2026-06-26 — D4 pure-lib wave (D4-B/C/D/E) ported via pi, all gated + committed:** Dispatched the
   four dependency-independent IJFS pure libs as self-contained pi briefs, verified each with the full
   gate, committed individually (gate green throughout; ground-combat golden seed 20260624 → casualties=2

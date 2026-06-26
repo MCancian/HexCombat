@@ -1,6 +1,6 @@
 # LLM Playtesting Plan
 
-Goal: let pi/Claude/other LLM agents play HexCombat from the same game-action layer as the UI, optionally with rendered screenshots, and record comparable benchmark runs.
+Goal: let opencode/Claude/other LLM agents play HexCombat from the same game-action layer as the UI, optionally with rendered screenshots, and record comparable benchmark runs.
 
 For the implementation plan and schema discipline that make structured observations understandable to future development/playtesting LLMs, see `docs/LLM_AGENT_PROTOCOL_PLAN.md` and `docs/LLM_OBSERVATION_SCHEMA.md`.
 
