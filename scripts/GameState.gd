@@ -31,6 +31,9 @@ const DEFAULT_ANTISHIP_FIRE_PCT := 100.0
 # directly). Suppressed-C2 TOs fire at this fraction of their surviving capacity. There is NO C2
 # destruction mechanic — suppression already models the staff being knocked out (user decision, D3-D).
 const C2_SUPPRESSED_FIRE_MULTIPLIER := 0.70
+const PRE_INVASION_IJFS_DAYS := 4
+# Number of IJFS daily cycles run on the FIRST IJFS of the game (the pre-invasion air campaign:
+# several days attriting anti-ship platforms + a final suppression day). Later turns run one cycle.
 
 enum Phase { PLANNING, RESOLUTION, END }
 
@@ -401,20 +404,27 @@ func resolve_ijfs_turn(dice: Dice) -> Dictionary:
 		_rebuild_ijfs_state()
 	# Continuity: after the first IJFS day, carry destroyed/known/inventory/attrition forward and
 	# clear per-day suppression flags (mirrors the TIV loader reload reset).
-	if _ijfs_day > 0:
-		IjfsEngine.carry_to_next_day(ijfs_state)
+	# On the FIRST IJFS of the game, run the multi-day pre-invasion air campaign so anti-ship
+	# platforms are attrited cumulatively before the turn-1 crossing; later turns run one cycle.
+	var cycles := PRE_INVASION_IJFS_DAYS if _ijfs_day == 0 else 1
+	var ledgers: Dictionary = {}
+	for i in range(cycles):
+		# carry_to_next_day persists destroyed/known/inventory and clears per-day suppression flags
+		# (so only the final pre-invasion day's suppression survives; destruction accumulates).
+		if _ijfs_day > 0 or i > 0:
+			IjfsEngine.carry_to_next_day(ijfs_state)
+		# Independent IJFS substream per cycle — NEVER consume the combat dice. SeededDice.derive()
+		# yields a fresh stream (so SeededDice combat is reproducible AND isolated); ScriptedDice
+		# .derive() returns self (shared queue), so for scripted combat we seed an independent
+		# SeededDice off the turn+cycle instead.
+		var ijfs_dice: Dice
+		if dice is SeededDice:
+			ijfs_dice = dice.derive("ijfs:%d:%d" % [turn_number, i])
+		else:
+			ijfs_dice = SeededDice.new(hash("ijfs:%d:%d" % [turn_number, i]))
+		ledgers = IjfsEngine.run_daily(ijfs_state, ijfs_dice, turn_number + i)
+	# The whole pre-invasion campaign resolves as THIS turn's IJFS (validators expect day==turn).
 	_ijfs_day = turn_number
-
-	# Independent IJFS substream — NEVER consume the combat dice. SeededDice.derive() yields a fresh
-	# stream (so SeededDice combat is reproducible AND isolated); ScriptedDice.derive() returns self
-	# (shared queue), so for scripted combat we seed an independent SeededDice off the turn instead.
-	var ijfs_dice: Dice
-	if dice is SeededDice:
-		ijfs_dice = dice.derive("ijfs:%d" % turn_number)
-	else:
-		ijfs_dice = SeededDice.new(hash("ijfs:%d" % turn_number))
-
-	var ledgers := IjfsEngine.run_daily(ijfs_state, ijfs_dice, turn_number)
 	last_ijfs_summary = ledgers["summary"]
 	last_ijfs_writeback = _compute_ijfs_writeback(ledgers)
 	EventBus.ijfs_resolved.emit(last_ijfs_summary)
@@ -458,28 +468,32 @@ func _compute_ijfs_writeback(ledgers: Dictionary) -> Dictionary:
 	var antiship_destroyed_by_type: Dictionary = {}
 	var antiship_suppressed_by_type: Dictionary = {}
 	var maneuver_casualties: Array = []
+
+	# Anti-ship attrition is read from the CUMULATIVE target state (target.destroyed persists across
+	# days; target.suppressed reflects the latest day) so the multi-day pre-invasion campaign feeds
+	# the firing plan. Keyed by encode_key("<to>:<type>"); a struck container removes its whole bin.
+	# INVARIANT: antiship_destroyed_by_type is a running TOTAL (all days so far), NOT a per-turn delta
+	# — resolve_antiship_turn relies on this to decrement from original_quantity idempotently.
+	# (Reads ijfs_state directly, not `ledgers`, because cumulative state spans multiple run_daily days.)
+	for target_value in ijfs_state.targets:
+		var target: IjfsTarget = target_value
+		if String(target.category) != "Anti-Ship Systems":
+			continue
+		var asm: Dictionary = target.metadata
+		if not (asm.has("to_number") and asm.has("type_id")):
+			continue
+		var rep := int(asm.get("systems_represented", 1))
+		var ask := AntishipCalculator.encode_key(int(asm["to_number"]), int(asm["type_id"]))
+		if target.destroyed:
+			antiship_destroyed_by_type[ask] = int(antiship_destroyed_by_type.get(ask, 0)) + rep
+		elif target.suppressed:
+			antiship_suppressed_by_type[ask] = int(antiship_suppressed_by_type.get(ask, 0)) + rep
+
 	for entry in strike_log:
 		if not entry.get("attack_executed"):
 			continue
 		var category := String(entry.get("category", ""))
-		if category == "Anti-Ship Systems":
-			# D3-D (1-A): anti-ship targets carry (to_number, type_id) in metadata, so write back keyed
-			# by AntishipCalculator.encode_key("<to>:<type>") to match the firing plan's (TO,type) rows.
-			# Legacy C2/static rows without that metadata fall back to subcategory.
-			var metadata: Dictionary = entry.get("metadata", {})
-			var to_number: Variant = metadata.get("to_number", null)
-			var type_id: Variant = metadata.get("type_id", null)
-			# A struck container removes its whole bin: scale by systems_represented (default 1 for
-			# legacy/static rows). Keyed by encode_key("<to>:<type>") to feed the firing plan.
-			var represented := int(metadata.get("systems_represented", 1))
-			var type_key := String(entry.get("subcategory", ""))
-			if to_number != null and type_id != null:
-				type_key = AntishipCalculator.encode_key(int(to_number), int(type_id))
-			if entry.get("destroyed"):
-				antiship_destroyed_by_type[type_key] = int(antiship_destroyed_by_type.get(type_key, 0)) + represented
-			if entry.get("suppressed"):
-				antiship_suppressed_by_type[type_key] = int(antiship_suppressed_by_type.get(type_key, 0)) + represented
-		elif category == "Maneuver Units" and entry.get("destroyed"):
+		if category == "Maneuver Units" and entry.get("destroyed"):
 			# Faithful port of ijfs_maneuver_writeback_service.compute_maneuver_writeback.
 			var metadata: Dictionary = entry.get("metadata", {})
 			var unit_id: Variant = metadata.get("battalion_id", metadata.get("unit_id", null))
@@ -571,10 +585,11 @@ func resolve_antiship_turn(dice: Dice) -> Dictionary:
 	for system_value in antiship_systems:
 		var system: AntishipSystem = system_value
 		var key := AntishipCalculator.encode_key(system.to_number, system.type_id)
+		# `killed` is the CUMULATIVE total destroyed across all IJFS days (see _compute_ijfs_writeback),
+		# so set quantity from original_quantity rather than subtracting — idempotent across turns.
 		var killed := int(ijfs_destroyed.get(key, 0))
-		if killed > 0:
-			system.quantity = maxi(0, system.quantity - killed)
-			system.destroyed += killed
+		system.quantity = maxi(0, system.original_quantity - killed)
+		system.destroyed = killed
 		if system.type_id == AntishipCalculator.SYSTEM_TYPE_C2:
 			continue
 		var avail := maxi(0, system.quantity)

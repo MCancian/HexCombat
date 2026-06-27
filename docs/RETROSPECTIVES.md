@@ -338,3 +338,41 @@ next sub-tasks (D4-G/H, D3) don't relearn them.
   cross-turn magazines) are design calls for the next loop / the user.
 - Cross-turn magazine state + persisted suppression flag → **act later** (→ noted in `GameState`
   wiring comment + Open Questions): additive once a persistent per-turn anti-ship state seam exists.
+
+---
+
+## 2026-06-27 — D3-D balance: multi-day IJFS + screen targeting   (implementer: opencode deepseek-v4-flash-free)
+
+Two self-contained briefs (Part A: screen-preferential homing in `AntishipCrossing`; Part B:
+multi-day pre-invasion IJFS + cumulative writeback in `GameState`). Part A given as goal+constraints;
+Part B given as exact before/after code blocks (intricate, RNG/validator-sensitive). Both came back
+matching spec on the first pass; orchestrator verified the gate independently (the implementer's
+"pre-existing GdUnit crash" claim was the real Godot 4.7 teardown flake — confirmed by isolation runs).
+
+**What would you do differently (implementer):**
+- `PRE_INVASION_IJFS_DAYS = 4` and `screen_target_preference = 3.0` are tuning knobs that live in
+  source / a config key, not in scenario data — a designer can't vary the campaign length per scenario
+  without editing code, and the validators don't exercise the data path.
+- The cumulative anti-ship writeback now depends on `IjfsEngine.carry_to_next_day` preserving
+  `target.destroyed`, but no test asserted it — a regression there would silently zero out attrition.
+- `_compute_ijfs_writeback(ledgers)` reads `ijfs_state.targets` as a side effect while its signature
+  advertises only `ledgers` — a contract smell; rename/repass or split the anti-ship scan out.
+- In-place mutation of the persistent `antiship_systems` array means a read-only validator that calls
+  `resolve_antiship_turn` mutates state the real game would later read.
+- The `original_quantity - killed` decrement is correct **only** because the writeback reports a
+  cumulative TOTAL; a future switch to incremental deltas would silently double-charge losses.
+
+**Orchestrator triage:**
+- No test for the cumulative writeback → **acted now**: added `_validate_cumulative_ijfs_attrition`
+  to `validate_headless_antiship.gd` (writeback destroyed reconciles with an independent recount of
+  destroyed containers' `systems_represented`, and is > 0). Catches the carry_to_next_day regression.
+- "TOTAL not per-turn delta" invariant + side-effect read → **acted now**: invariant comments added
+  at `_compute_ijfs_writeback` and the decrement site, noting the read of `ijfs_state` is deliberate
+  (cumulative state spans multiple `run_daily` days).
+- In-place `antiship_systems` mutation → **record only**: the idempotent `original_quantity - killed`
+  rewrite makes `resolve_antiship_turn` self-resetting w.r.t. IJFS kills each call, so the validator-
+  corrupts-game-state concern is largely mitigated; a full `_rebuild_antiship_systems()` reset is a
+  later cleanup if a non-resetting caller appears.
+- Knobs in source/config not scenario data → **act later** (→ Open Question "D3-D crossing lethality
+  calibration"): move `PRE_INVASION_IJFS_DAYS` + `screen_target_preference` into scenario/config when
+  the crossing is tuned for real; until then the const + config key are the tuning surface.

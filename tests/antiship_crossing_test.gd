@@ -222,6 +222,23 @@ func test_deterministic_with_fixed_seed() -> void:
 	assert_dict(r1["damaged_by_ship_type"]).is_equal(r2["damaged_by_ship_type"])
 
 
+func test_screen_preference_biases_hits_toward_escorts() -> void:
+	var catalog := _catalog({"MissileA": _missile(10000)})
+	var cfg := _crossing_config()
+	cfg["screen_target_preference"] = 10.0
+	cfg["ship_profiles"] = {
+		"FFG": {"target_value": 1, "terminal_defense_capability": "None", "vulnerability": "High"},
+		"LPD": {"target_value": 1, "terminal_defense_capability": "None", "vulnerability": "High"},
+	}
+	cfg["neutralization_likelihoods"]["High"] = 1.0
+	var snaps := [_snap("FFG", 100), _snap("LPD", 100)]
+	var sf := [{"location": 3, "type": 1, "systems_fired": 100}]
+	var r := AntishipCrossing.resolve_crossing_damage(sf, snaps, catalog, cfg, [3], SeededDice.new(42))
+	var ffg_destroyed := int(r["destroyed_by_ship_type"].get("FFG", 0))
+	var lpd_destroyed := int(r["destroyed_by_ship_type"].get("LPD", 0))
+	assert_int(ffg_destroyed).is_greater(lpd_destroyed)
+
+
 func test_real_catalog_loads_and_runs() -> void:
 	var catalog := AntishipLoaders.load_combat_catalog(CATALOG_PATH)
 	var cfg := AntishipLoaders.load_crossing_config(CROSSING_PATH)

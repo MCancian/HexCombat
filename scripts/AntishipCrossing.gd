@@ -261,7 +261,9 @@ static func _apply_interception(
 
 # --- stage 4: homing -----------------------------------------------------------------------------
 
-static func _weighted_pool(snaps: Array, ship_profiles: Dictionary, include_decoys: bool) -> Array:
+static func _weighted_pool(
+		snaps: Array, ship_profiles: Dictionary, include_decoys: bool,
+		screen_preference: float = 1.0) -> Array:
 	var types: Array = []
 	var weights: Array = []
 	for snap in snaps:
@@ -274,6 +276,8 @@ static func _weighted_pool(snaps: Array, ship_profiles: Dictionary, include_deco
 		if bool(profile.get("is_decoy", false)) and not include_decoys:
 			continue
 		var weight := _cfg_num(profile, "target_value", 1.0) * float(int(snap["surviving_sent"]))
+		if ESCORT_SHIP_TYPES.has(ship_type) or bool(profile.get("is_decoy", false)):
+			weight *= screen_preference
 		if weight <= 0.0:
 			continue
 		types.append(ship_type)
@@ -286,14 +290,15 @@ static func _apply_homing(
 		munitions: Dictionary, dice: Dice, result: Dictionary) -> Dictionary:
 	var ship_profiles: Dictionary = crossing_config.get("ship_profiles", {})
 	var discrimination: Dictionary = crossing_config.get("discrimination_probabilities", {})
+	var screen_pref := _cfg_num(crossing_config, "screen_target_preference", 1.0)
 
 	for snap in snaps:
 		if int(snap["surviving_sent"]) > 0 and not ship_profiles.has(snap["ship_type"]):
 			result["warnings"].append(
 				"Ship type '%s' has no crossing-config profile; it cannot be targeted by antiship missiles" % snap["ship_type"])
 
-	var real_pool := _weighted_pool(snaps, ship_profiles, false)
-	var all_pool := _weighted_pool(snaps, ship_profiles, true)
+	var real_pool := _weighted_pool(snaps, ship_profiles, false, screen_pref)
+	var all_pool := _weighted_pool(snaps, ship_profiles, true, screen_pref)
 	var real_types: Array = real_pool[0]
 	var real_weights: Array = real_pool[1]
 	var all_types: Array = all_pool[0]

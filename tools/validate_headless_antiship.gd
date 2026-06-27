@@ -28,6 +28,7 @@ func _initialize() -> void:
 	_validate_run_and_reconcile()
 	_validate_determinism()
 	_validate_c2_suppression_reduces_firing()
+	_validate_cumulative_ijfs_attrition()
 	_finish()
 
 
@@ -117,6 +118,34 @@ func _fired_count_with_c2(writeback: Dictionary, c2_key: String, suppressed_valu
 	GameState.last_ijfs_writeback = wb
 	var summary: Dictionary = GameState.resolve_antiship_turn(SeededDice.new(SEED))
 	return int(summary.get("systems_fired_count", 0))
+
+
+# Multi-day pre-invasion IJFS (D3-D balance): the first IJFS of the game runs PRE_INVASION_IJFS_DAYS
+# cycles and the anti-ship writeback is CUMULATIVE (read off the persisted target state, not one day's
+# strike_log). Guard the wiring: the writeback's destroyed total must (a) be non-zero — multi-day
+# attrition actually happened — and (b) reconcile exactly with an independent recount of destroyed
+# anti-ship containers' systems_represented. Catches a carry_to_next_day regression that drops the
+# destroyed flag, or a writeback that silently falls back to per-day counts.
+func _validate_cumulative_ijfs_attrition() -> void:
+	GameState.reset_to_scenario()
+	GameState.turn_number = 1
+	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
+	var destroyed: Dictionary = GameState.last_ijfs_writeback.get("antiship_destroyed_by_type", {})
+	var wb_sum := 0
+	for v in destroyed.values():
+		wb_sum += int(v)
+	var state_sum := 0
+	for target_value in GameState.ijfs_state.targets:
+		var target: IjfsTarget = target_value
+		if String(target.category) != "Anti-Ship Systems":
+			continue
+		var md: Dictionary = target.metadata
+		if not (md.has("to_number") and md.has("type_id")):
+			continue
+		if target.destroyed:
+			state_sum += int(md.get("systems_represented", 1))
+	_assert_true("multi-day IJFS attrited some anti-ship systems (writeback destroyed > 0)", wb_sum > 0)
+	_assert_equal_int("writeback destroyed == cumulative target-state destroyed", wb_sum, state_sum)
 
 
 func _assert_true(label: String, value: bool) -> void:

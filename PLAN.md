@@ -126,6 +126,36 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-27 — D3-D balance pass: multi-day pre-invasion IJFS + screen-preferential targeting
+  (implemented via opencode, user-requested levers):** Two user-chosen levers to make the crossing
+  survivable. **(1) Multi-day pre-invasion IJFS (`GameState`).** The first IJFS of the game now runs
+  `PRE_INVASION_IJFS_DAYS = 4` daily cycles (the air campaign: several days attriting anti-ship
+  platforms + a final suppression day) instead of one, carrying state forward between cycles; later
+  turns run one cycle. The anti-ship writeback was changed to read the **cumulative** target state
+  (`ijfs_state.targets`: `destroyed` persists across days, `suppressed` reflects the latest day)
+  rather than a single day's `strike_log`, so multi-day attrition actually reaches the firing plan;
+  the `resolve_antiship_turn` IJFS-kill decrement is now idempotent (`quantity = original_quantity -
+  cumulative_killed`). Validator constraint preserved: `_ijfs_day == turn_number` after the campaign
+  (validate_headless_ijfs). **(2) Screen-preferential targeting (`AntishipCrossing`).** Missiles that
+  reach homing now weight escort warships (CG/DDG/FFG/FFL) and decoys by `screen_target_preference`
+  (data key in `antiship_crossing_config.json`, **3.0**; code default 1.0 so existing synthetic-config
+  tests are unchanged), modeling the screen surrounding the transports in the convoy centre — only
+  capacity-bearing carrier losses cost landed BNs. A future version will model flotilla geometry +
+  attack entry-angle; this is the simple stand-in. **Measured effect (avg 24 seeds, golden TO3
+  crossing):** BNs lost at sea **33→~24 of 36**; of ~88 hulls destroyed the screen absorbs ~64 and
+  carriers only ~24 (**carrier share 27%**). The crossing is now governed by two tunable knobs;
+  screen preference caps protection at screen size (~73 hulls), so once the screen is exhausted
+  overflow still hits carriers — driving lethality lower needs fewer missiles (more IJFS days /
+  deeper suppression) or a lower leak rate (terminal defence). Verified: import clean; full gate ALL
+  PHASES GREEN; golden 20260624 → casualties=2, feba=0.76 byte-stable; new coverage —
+  `tests/antiship_crossing_test.gd` screen-preference case + `validate_headless_antiship.gd`
+  cumulative-attrition reconciliation (writeback destroyed == cumulative target-state destroyed, > 0).
+  **Retrospective triage** (see `RETROSPECTIVES.md 2026-06-27 D3-D balance`): acted now — added the
+  cumulative-writeback test + "TOTAL not per-turn delta" invariant comments at both sites; the
+  idempotent decrement already mitigates the in-place-mutation concern. Deferred — moving
+  `PRE_INVASION_IJFS_DAYS` / `screen_target_preference` into scenario data (currently a const + a
+  config key). See the updated Open Question "D3-D crossing lethality calibration".
+
 - **2026-06-27 — D3-D anti-ship GameState wiring + BN↔ship mapping + C2 suppression (direct; D3
   milestone complete):** Wired `GameState.resolve_antiship_turn(dice)` to thread D3-B2 firing plan →
   D3-B3 crossing → D3-C mines, runs after `resolve_ijfs_turn` and before `resolve_offload_turn`
@@ -1120,11 +1150,21 @@ Red maneuver BNs redistribute along it. Cleanup phase normalizes ownership after
 _None blocking the slice — the design is settled. Future-phase questions (supply/organization
 interactions, fog of war, terrain via ArcGIS, theater fires) are tracked in `ROADMAP.md`._
 
-### D3-D crossing lethality calibration  *(open — next balance lever; not blocking)*
+### D3-D crossing lethality calibration  *(partially addressed 2026-06-27; still tunable)*
 
-D3-D's anti-ship crossing is wired and reconciles correctly, but is currently **catastrophically
-lethal**: for the golden scenario (seed 20260624) the assault wave crosses into **TO3** and loses
-**33 of 36 BNs** on turn 1. The two suppression levers in place do not bite here:
+**Update (2026-06-27 balance pass):** two user-chosen levers landed — a **multi-day pre-invasion
+IJFS** campaign (`PRE_INVASION_IJFS_DAYS = 4`, cumulative attrition into the firing plan) and
+**screen-preferential targeting** (`screen_target_preference = 3.0`: escorts + decoys soak missiles
+ahead of the transports). Together these cut golden-scenario BN loss from **33 → ~24 of 36** and hold
+carriers to ~27% of destroyed hulls (the screen absorbs ~64 of ~88). Still open: ~24/36 is high, and
+screen preference caps at screen size (~73 hulls) — once the screen is gone, overflow hits carriers.
+Driving lethality lower needs **fewer missiles** (more IJFS days / deeper suppression) or a **lower
+leak rate** (terminal defence / interception), or moving the two knobs into scenario data so designers
+can tune per scenario. Remaining candidate levers (design calls for the user):
+
+D3-D's anti-ship crossing is wired and reconciles correctly. Before the balance pass it was
+**catastrophically lethal**: for the golden scenario (seed 20260624) the assault wave crosses into
+**TO3** and lost **33 of 36 BNs** on turn 1. The two suppression levers in place did not bite here:
 - **C2 suppression** (the user's 30% fire penalty) only applies to a TO whose C2 the IJFS suppressed.
   For this seed the IJFS suppresses **TO4 and TO5** C2 — *not* TO3 — so the assaulted TO fires at full
   surviving capacity (283 systems fire). The mechanic is correct and unit-tested (suppressing TO3's C2
