@@ -126,6 +126,43 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-27 — D3-B3 anti-ship crossing model ported (direct, count-based path):** Ported TIV
+  `services/antiship_crossing.py` into `scripts/AntishipCrossing.gd` (pure RefCounted) — the
+  6-stage missile-crossing pipeline (`resolve_crossing_damage` + `CrossingResult` ledgers +
+  `validate_combat_catalog`/`validate_crossing_config`). **Implemented directly, not via opencode**
+  (the largest, most RNG-draw-order-sensitive D3 sub-task; same rationale as D4-G/D3-B2). Key
+  decision / documented divergence: **(1) Count-based path, not per-hull.** TIV's live
+  `resolve_crossing_damage` dispatches stage 3 (escort interception) and stages 5/6 (terminal
+  defense + damage) to **per-hull** variants (`_apply_interception_per_hull`,
+  `_apply_terminal_defense_and_resolve_damage_per_hull`) that track each escort's `IndividualShip`
+  magazines (hq10/hhq9 via `services.ship_ammo`) and apply damage-status combat multipliers
+  (`services.ship_readiness_policy`), using **nested RNG substreams** seeded from the main rng.
+  HexCombat models none of that ship-ammo/readiness subsystem. This port uses the **count-based
+  stages also present in the TIV source** (`_apply_interception`, `_apply_terminal_defense`,
+  `_resolve_damage`) — every assertion in `test_antiship_crossing.py` holds under them because the
+  test escort `attempts`/`success_prob` are set so per-hull ammo never binds, and the damage math
+  (fresh→damaged→sunk, re-hit fragility, overkill→wasted) is identical. Per-hull escort-magazine
+  depletion across days is a real full-sim mechanic — **deferred (Open Question: per-hull ship
+  magazines)** until HexCombat models ship ammo. (2) **RNG via injected `Dice`**, mirroring source
+  **formulas + draw order**, not Python's PRNG bitstream (per AGENTS.md): `rng.random()`→`randf()`,
+  `rng.shuffle`→`shuffle_indices`, `rng.choice`→`weighted_choice(ones)`, `rng.choices(pop,w,k)`→
+  `weighted_choices(w,k)`, `rng.randrange(n)`→`weighted_choice(ones(n))`. Tests assert structural
+  invariants + deterministic outcomes (not exact counts that would depend on the bitstream); two-run
+  determinism holds via `SeededDice`. (3) **Tuple→String-key parity:** ledgers keyed by munition/
+  ship-type strings (no tuple-key issue here). (4) **Theater range-tier data injected**
+  (`active_tos`/`to_adjacency` params, default empty → own_to) to keep the lib pure (no `GameData`
+  autoload dependency); the real-catalog test passes `theaters.json`'s TO graph. (5) **CrossingResult
+  → Dictionary** of ledgers + computed `missile_stage_totals`/`casualty_totals` (the established
+  dataclass→Dictionary divergence). (6) **`systems_fired` rows** read `location`/`to` +
+  `type` + `systems_fired` (the D3-B2 `resolve_launch_attrition` output adapts to this in D3-D).
+  Verified: import clean; `tests/antiship_crossing_test.gd` 15/15 (full `test_antiship_crossing.py`
+  mirror incl. the real-shipped-config smoke test asserting reconciliation invariants + no warnings);
+  full gate green (150→165 GdUnit cases); golden seed 20260624 → casualties=2, feba=0.76 byte-stable.
+  **D3-B (magazine + firing plan + crossing) milestone-internal complete.** See
+  `RETROSPECTIVES.md 2026-06-27 D3-B3`. Next: **D3-D** (GameState `resolve_antiship_turn`: thread
+  D3-B2 firing → D3-B3 crossing → D3-C mines, propagate `lost_at_sea`, IJFS (TO,Type) join, tune mine
+  lethality) — the final D3 sub-task before milestone push.
+
 - **2026-06-27 — D3-C mine warfare ported (direct, deliberately simplified):** Ported the
   sweep/sink core of TIV `services/antiship/mine_warfare_service.py`
   (`MineWarfareService.resolve_ship_losses`) into `scripts/MineWarfareService.gd` (pure RefCounted).
@@ -837,10 +874,18 @@ manifest.
         scripted launch-attrition). Gate green; golden 20260624 → casualties=2, feba=0.76 unchanged.
         IJFS coupling stays a plain `"<to>:<type>"`→count input dict (the (TO,Type) `to_number`
         join is wired in D3-D).
-  - [ ] **D3-B3** — Crossing model (`antiship_crossing.py`, ~941 lines): the 7-stage missile pipeline
-        (launch attrition → groups of 4 → escort interception → decoy discrimination → weighted
-        homing → terminal defense → neutralization) on `antiship_crossing_config.json` + ship_profiles.
-        Inject `Dice`; mirror source draw order; mirror `test_antiship_crossing.py`. Likely sub-split.
+  - [x] **D3-B3** *(2026-06-27)* — Crossing model: `scripts/AntishipCrossing.gd` (pure RefCounted) —
+        `resolve_crossing_damage(systems_fired, ship_snapshots, combat_catalog, crossing_config,
+        target_tos, dice, active_tos, to_adjacency)`: the 6-stage count-based pipeline (launches +
+        global munition/store-group pools + range-tier gating + partial-fire → in-flight failures →
+        escort interception in groups → weighted homing + decoy discrimination → terminal defense →
+        damage resolution with fresh/damaged/sunk hull states + re-hit fragility). Returns per-stage
+        ledgers + `missile_stage_totals`/`casualty_totals`. `validate_combat_catalog` /
+        `validate_crossing_config` ported (fail-loud). Count-based port (per-hull escort-magazine
+        refinement deferred — see Decisions). `tests/antiship_crossing_test.gd` (15 cases — full
+        `test_antiship_crossing.py` mirror incl. the real-catalog smoke test, no warnings). Gate
+        green (150→165 GdUnit cases); golden 20260624 → casualties=2, feba=0.76 byte-stable.
+        **D3-B (anti-ship calculator: magazine + firing plan + crossing) COMPLETE.**
 
 - [x] **D3-C** *(2026-06-27)* — Mine warfare: `scripts/MineWarfareService.gd` (pure RefCounted) —
       `resolve_ship_losses(minefields, target_beaches, assignments, fleet_pool, dice)`: per beach
@@ -1021,6 +1066,19 @@ Red maneuver BNs redistribute along it. Cleanup phase normalizes ownership after
 
 _None blocking the slice — the design is settled. Future-phase questions (supply/organization
 interactions, fog of war, terrain via ArcGIS, theater fires) are tracked in `ROADMAP.md`._
+
+### D3-B3 per-hull escort magazines  *(open — settle if/when ship ammo is modeled)*
+
+`AntishipCrossing.resolve_crossing_damage` ports TIV's **count-based** crossing stages; TIV's live
+code instead runs **per-hull** escort interception + terminal defense that deplete each escort's
+`hq10`/`hhq9` magazines (via `services.ship_ammo`) and scale interception/defense by damage status
+(`services.ship_readiness_policy`), so escort defensive ammo runs out across multi-day crossings.
+HexCombat has no ship-ammo/readiness subsystem (D0-C's `ShipState`/`IndividualShip` carry no
+magazines). The count-based port matches all `test_antiship_crossing.py` behavior (escort ammo never
+binds in those configs). **To revisit** if a later phase models ship magazines/readiness: add per-hull
+escort ammo to the interception/terminal-defense stages (the count-based stage seams are isolated, so
+this is an additive swap). Until then escort interception is bounded only by `attempts`/`success_prob`,
+not magazine depletion.
 
 ### D4-H writeback (TO + ground-casualty) linkage  *(open — settle when D3 lands)*
 

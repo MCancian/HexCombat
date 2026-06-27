@@ -262,3 +262,42 @@ next sub-tasks (D4-G/H, D3) don't relearn them.
   annihilates the crossing fleet. Recorded in PLAN.md Decisions (balance note).
 - Same-day-rerun dropped → **record only**: justified by the single-resolution action layer;
   re-evaluate only if a re-preview UI lands (Track C).
+
+---
+
+## 2026-06-27 — D3-B3: anti-ship crossing model (count-based)   (direct)
+
+**What would you do differently (self-retro):**
+- **Trace which functions the entrypoint actually calls before porting the whole file.** 941 lines,
+  but `resolve_crossing_damage` calls the *per-hull* interception/damage variants — the count-based
+  `_apply_interception`/`_apply_terminal_defense`/`_resolve_damage` are dead code kept from a prior
+  iteration. Recognizing that the per-hull path needs a ship-ammo/readiness subsystem HexCombat
+  lacks, *and* that the count-based twins reproduce every pytest assertion, collapsed a daunting port
+  into a tractable one. Lesson: read the entrypoint's call graph first; a big file is often two code
+  paths and you only need one.
+- **Confirm the test assertions don't depend on the dropped layer.** The deciding evidence for
+  "count-based is faithful" was checking each pytest: escort `attempts`/`success_prob` are set high
+  enough that per-hull magazine limits never bind, and the damage assertions are structural
+  (ranges/sums) or deterministic regardless of seed (e.g. neut=1.0 → exactly `capacity` sinks). Two
+  cases (`damage_capped`, `damaged_rehit`) are fully seed-independent — worth designing the GDScript
+  mirrors around those so they're not flaky under a different PRNG.
+- **Keep the lib pure by injecting theater data.** `_reachable_tos` uses module-level
+  ACTIVE_TOS/TO_ADJACENCY in TIV; reaching for HexCombat's `Theaters`/`GameData` autoload would have
+  made the lib un-unit-testable. Passing `active_tos`/`to_adjacency` as defaulted params kept it a
+  pure RefCounted and let the real-catalog test feed `theaters.json` directly.
+- **Fragile/under-tested:** the per-hull escort-magazine depletion is genuinely gone (Open Question
+  logged), so multi-day escort ammo attrition isn't modeled — escorts intercept at full strength
+  every turn. Also, because RNG draw-order matches formulas but not Python's bitstream, the
+  destroyed/damaged *split* values aren't asserted exactly (only that both occur) — a regression that
+  shifted the split would pass. The deterministic-outcome cases + reconciliation invariants are the
+  real guardrails.
+
+**Orchestrator triage:**
+- Call-graph-before-port → **brief forward**: standard for any large TIV service; add to the port
+  checklist (read entrypoint → identify live path → check pytest coupling).
+- Per-hull escort magazines deferred → **act later** (→ Open Question logged): additive swap if ship
+  ammo is ever modeled; the count-based stage seams are isolated.
+- RNG-bitstream divergence (split not exactly pinned) → **record only**: inherent to the
+  formula+draw-order strategy (AGENTS.md); reconciliation invariants + deterministic cases cover it.
+- Inject-theater-data-for-purity → **record only**: good pattern; reuse for any lib that would
+  otherwise reach the GameData autoload.

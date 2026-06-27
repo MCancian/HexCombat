@@ -52,10 +52,21 @@ Confirm with `git log --oneline -15` + a fresh `pwsh ./tools/run_all_tests.ps1` 
     model + polygons + same-day-rerun baseline; see PLAN.md Decisions). `tests/mine_warfare_test.gd`
     (8 cases). Golden byte-stable. *Balance flag:* every unswept mine is lethal → 100-mine beaches
     are very lethal un-swept; tune in D3-D.
-  - **D3-B3, D3-D…F — NOT STARTED** ← resume here. **D3-B3** (crossing model, ~941-line 7-stage
-    missile pipeline — the big one, likely sub-split) then **D3-D** (GameState wiring:
-    `resolve_antiship_turn`, `lost_at_sea` via the D0-C `register_ship_losses` seam, IJFS (TO,Type)
-    `to_number` join, mine-lethality tuning).
+  - **D3-B3 — DONE (2026-06-27, committed):** `scripts/AntishipCrossing.gd` (pure) —
+    `resolve_crossing_damage` (6-stage count-based pipeline: launches+pools+range-gating+partial-fire
+    → in-flight → escort interception → weighted homing+decoy discrimination → terminal defense →
+    fresh/damaged/sunk damage). `validate_combat_catalog`/`validate_crossing_config` ported.
+    **Count-based** port — per-hull escort-magazine refinement deferred (Open Question; needs a ship
+    ammo/readiness subsystem HexCombat lacks). Theater data injected to keep the lib pure.
+    `tests/antiship_crossing_test.gd` (15 cases — full `test_antiship_crossing.py` mirror). Golden
+    byte-stable. **D3-B (magazine + firing plan + crossing) COMPLETE.**
+  - **D3-D…F — NOT STARTED** ← resume here. **D3-D** (GameState wiring) is the last D3 sub-task
+    before the milestone push: `GameState.resolve_antiship_turn(dice)` threading D3-B2 firing plan →
+    D3-B3 crossing → D3-C mines; map D3-B2 `resolve_launch_attrition` `systems_fired` rows into the
+    crossing `systems_fired` input; build `ship_snapshots` from `GameState.fleet` (ShipState);
+    propagate ship losses → `pending_lost_at_sea` via the D0-C `register_ship_losses` seam; resolve
+    the IJFS (TO,Type) `to_number` join (D4-H Open Question); **tune mine lethality** (D3-C balance
+    flag); extend the LLM observation contract; add `tools/validate_headless_antiship.gd`.
   - Note: `data/theaters.json` has **no polygons** (only TO adjacency + beach_to_to), so `to_number`
     stamping needs polygon data (TIV `config/taiwan_TOs.json`) + point-in-polygon — defer to **D3-D**
     wiring; D3-B2 takes IJFS-destroyed counts as a plain `{(to,type): n}` input.
@@ -169,15 +180,17 @@ Question and cross-link (`see RETROSPECTIVES.md <date>/<subtask>`).
 
 ---
 
-## 6. Immediate next action: D3-B3 (crossing model)
+## 6. Immediate next action: D3-D (GameState wiring — last D3 sub-task)
 
-**D3-A/B1/B2/C are DONE.** Magazine reservation (`AntishipMagazine`), the firing plan
-(`AntishipCalculator.build_firing_plan` / `allocate_firing_to_rows` / `resolve_launch_attrition`),
-and mine warfare (`MineWarfareService`) are committed and gated. Resume at **D3-B3** — the ~941-line
-7-stage crossing model (likely sub-split). **D3-D** then wires `resolve_antiship_turn` into
-`GameState`, resolves the IJFS (TO,Type) `to_number` join, propagates `lost_at_sea`, and tunes
-mine lethality. The scoping below is the original D3-B brief, kept for the crossing-model details
-(`resolve_crossing_damage`).
+**D3-A/B1/B2/B3/C are DONE** — the full anti-ship calculator + mine warfare are committed and gated:
+`AntishipMagazine` (reservations), `AntishipCalculator` (firing plan + launch attrition),
+`AntishipCrossing` (crossing damage), `MineWarfareService` (mines). Only **D3-D** remains before the
+D3 milestone push: wire `GameState.resolve_antiship_turn(dice)` to thread firing plan → crossing →
+mines, build `ship_snapshots` from `GameState.fleet`, propagate ship losses to `pending_lost_at_sea`
+via the D0-C `register_ship_losses` seam, resolve the IJFS (TO,Type) `to_number` join (D4-H Open
+Question), tune mine lethality (D3-C balance flag), extend the LLM observation contract, and add
+`tools/validate_headless_antiship.gd`. The scoping below is the original D3-B brief, kept for context
+(`resolve_crossing_damage` details now live in `scripts/AntishipCrossing.gd`).
 
 **D3-A is DONE** — the data layer + models + loader are in place: `AntishipLoaders.load_systems`
 returns 650 `AntishipSystem` rows by (TO,type_id); `load_combat_catalog` / `load_crossing_config` /
