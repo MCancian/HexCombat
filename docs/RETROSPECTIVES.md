@@ -376,3 +376,33 @@ matching spec on the first pass; orchestrator verified the gate independently (t
 - Knobs in source/config not scenario data → **act later** (→ Open Question "D3-D crossing lethality
   calibration"): move `PRE_INVASION_IJFS_DAYS` + `screen_target_preference` into scenario/config when
   the crossing is tuned for real; until then the const + config key are the tuning surface.
+
+---
+
+## 2026-06-27 — D5-A: FrontLineService (polyline → hex sequence)   (implementer: opencode deepseek-v4-flash-free; refactor: 2nd opencode session)
+
+Port brief (pure lib + tests, end with a retrospective) → orchestrator triage → a 2nd opencode
+subagent implemented the one approved refactor. Both gated independently by the orchestrator.
+
+**What would you do differently (implementer):**
+- `find_hexes_for_polyline` baked the polyline sampling into the hex-lookup loop; D5-B (wiring) and
+  D5-C (draw UI) both need the raw sampled points, so the sampling should be its own helper.
+- `point_to_hex` is an O(N) haversine scan rebuilt every call — fine at game tick, but a redrawn
+  polyline × hundreds of centers is many calls; a spatial index / parallel packed arrays would cut it.
+- `distribute_units_along_hexes` silently tolerates duplicate `unit_ids` / non-deduped `hex_sequence`
+  and extreme N≫M ratios; a guard would surface bad callers.
+- Linear lat/lon interpolation during sampling (faithful to TIV) makes `sample_interval_km` only
+  approximate in real km at higher latitudes — fine for the game, worth a caller note.
+- The flat `Array[{id,lat,lon}]` hex-center shape diverges from GameData's `Hex` Resources, so D5-B
+  needs a translation adapter — keep it in GameState; do NOT make the lib depend on GameData.
+
+**Orchestrator triage:**
+- Extract `sample_polyline` → **acted now (2nd subagent)**: added `sample_polyline(coords, interval)`
+  returning the ordered sampled `Vector2`s; `find_hexes_for_polyline` now consumes it with a
+  regression test proving identical output. Helps D5-B/C reuse the sampling.
+- O(N) `point_to_hex` micro-opt → **rejected / record only**: premature optimization; the scan is
+  trivial at game tick and a spatial index adds complexity with no measured need.
+- `distribute_units_along_hexes` ratio/dupe warning → **rejected / record only**: the threshold is
+  arbitrary and would be noisy; empty inputs are already handled; dupe-free input is a caller contract.
+- Linear-interp sampling caveat + flat-hex adapter → **record only / brief forward to D5-B**: faithful
+  port; the GameData→flat-hex adapter is D5-B's job and must stay out of the pure lib.

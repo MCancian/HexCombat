@@ -126,6 +126,29 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-27 — D5-A FrontLineService ported (pure lib; via two opencode subagents):** Ported the
+  polyline→hex-sequence core of TIV `services/front_line_service.py` + `core/hex_grid.point_to_hex`
+  into `scripts/FrontLineService.gd` (pure RefCounted, static funcs). Faithful: `haversine_km`
+  (radius 6371, `atan2(√a, √max(1e-12,1-a))`), `polyline_cumulative_lengths`, `interpolate_along_line`,
+  `point_to_hex` (nearest hex CENTER by haversine — TIV's actual algorithm, not point-in-polygon),
+  `find_hexes_for_polyline` (vertex + 2 km-interval midpoint sampling, dedupe first-seen). Decisions /
+  divergences: (1) **Coords as `Vector2(lat,lon)`** (matches `Hex.center`) and **hex centers as a flat
+  `Array[{id,lat,lon}]`** (not TIV's nested `{"hexes":[…]}`), so the lib stays pure — D5-B will add a
+  thin GameData→flat adapter rather than passing `Hex` Resources into the lib. (2) **`distribute_units_
+  along_hexes` replaces TIV `distribute_battalions_along_line`.** TIV repositions each maneuver
+  battalion to an interpolated lat/lon within its hex; HexCombat tracks brigades as atomic hex-
+  positioned units (battalions are attributes, never individually placed — settled B1 decision), so the
+  slice distributes whole units EVENLY across the hex sequence (`floor(k*M/N)`) and returns
+  `{unit_id: hex_id}`. The per-battalion lat/lon spacing + support-BN HQ offset are not ported (no
+  per-battalion position state in HexCombat). (3) **`sample_polyline` extracted** (approved refactor,
+  2nd subagent) so D5-B/C can reuse the raw sampled points; `find_hexes_for_polyline` consumes it with
+  proven-identical output (regression test). **Retrospective triage** (see `RETROSPECTIVES.md 2026-06-27
+  D5-A`): acted now — the `sample_polyline` extraction; rejected — a spatial-index micro-opt for
+  `point_to_hex` (premature; O(N) is fine at game tick) and an arbitrary unit/hex-ratio warning in
+  `distribute_units_along_hexes` (noisy). 23 GdUnit cases; gate ALL PHASES GREEN; golden byte-stable.
+  Next: **D5-B** (`GameState.resolve_frontline_phase` + the GameData→flat-hex adapter), then **D5-C**
+  (cleanup + polyline-draw UI — UI needs visual verification, less autonomous-friendly).
+
 - **2026-06-27 — Gate now distinguishes the Godot 4.7 teardown flake from real failures:**
   `tools/run_all_tests.ps1` used to decide each phase purely on the process EXIT CODE, so the known
   Godot 4.7 *teardown* crash (the engine intermittently segfaults / corrupts the heap during
@@ -1149,9 +1172,16 @@ Red maneuver BNs redistribute along it. Cleanup phase normalizes ownership after
 
 **Sub-tasks** (scope from TIV oracle before writing):
 
-- [ ] **D5-A** — `scripts/FrontLineService.gd` — pure lib: `polyline_to_hex_sequence(coords,
-      hex_lookup)` samples at 2 km intervals; `distribute_bns(bns, hex_sequence)` assigns BNs
-      evenly. `tests/frontline_service_test.gd` mirroring `test_front_line_service.py`. Gate green.
+- [x] **D5-A** *(2026-06-27)* — `scripts/FrontLineService.gd` (pure RefCounted, static funcs):
+      `haversine_km` (exact port of TIV `_haversine_km`), `polyline_cumulative_lengths`,
+      `interpolate_along_line`, `point_to_hex` (nearest hex CENTER by haversine — faithful to TIV
+      `core/hex_grid.point_to_hex`), `sample_polyline` (vertices + 2 km-interval segment midpoints),
+      `find_hexes_for_polyline` (= map `sample_polyline` points → `point_to_hex`, dedupe first-seen),
+      and `distribute_units_along_hexes` (even `floor(k*M/N)` assignment — HexCombat-specific, replaces
+      TIV's per-battalion lat/lon spacing since brigades are hex-positioned, not lat/lon-positioned).
+      Coords are `Vector2(lat,lon)`; hex centers passed as `Array[{id,lat,lon}]` to keep the lib pure.
+      `tests/frontline_service_test.gd` (23 cases). Ported + refactored via two opencode subagents;
+      gate ALL PHASES GREEN; golden 20260624 → casualties=2, feba=0.76 byte-stable.
 
 - [ ] **D5-B** — UI: HexMap polyline-draw mode — player clicks to add polyline vertices on the
       map; Confirm button commits → `GameState.resolve_frontline_phase(coords, dice)` applies
