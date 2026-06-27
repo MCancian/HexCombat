@@ -230,3 +230,35 @@ next sub-tasks (D4-G/H, D3) don't relearn them.
 - Gate teardown flake (`-1073741819` in random SceneTree validators) → **record only / watch**:
   pre-existing Godot 4.7 instability, not introduced here; all test cases pass every run and flagged
   validators pass deterministically in isolation. Same class as the 2026-06-24 GdUnit teardown flake.
+
+---
+
+## 2026-06-27 — D3-C: mine warfare (geometry-free)   (direct)
+
+**What would you do differently (self-retro):**
+- **Read the RNG seeding before estimating effort.** The handoff billed D3-C as "more mechanical /
+  opencode-suitable," but the oracle uses Python's *string-seeded* Mersenne Twister twice (mine
+  geometry + ship-type draw) — neither reproducible in Godot. That turns a "mechanical port" into a
+  *scoping decision* (port the geometry with a different RNG, or drop it). Recognizing the danger
+  radius spans the whole beach in the test configs (so dangerous==num_mines regardless of positions)
+  is what made "drop the geometry" provably behavior-preserving for the mirrored cases. Lesson:
+  grep the oracle for `random.Random(` / string seeds *first* — it decides portability and scope.
+- **Let the existing model tell you the intended scope.** `Minefield.gd` (from D3-A) already carried
+  exactly the simplified runtime fields (remaining/dangerous/swept/lane_cleared/ships_destroyed) and
+  *none* of the geometry (Length/Width/Danger_Radius/Entry/Angle). The model was the spec — the
+  geometry-free port was the pre-decided intent, not a fresh call.
+- **Fragile/under-tested:** with the geometric filter gone, lethality is "1 unswept mine = 1 hull,"
+  so the D3-A 100-mines/beach defaults could wipe a fleet if D3-D feeds them un-swept. The slice is
+  correct but the *tuning* is untested and likely too lethal — explicitly flagged for D3-D. Also the
+  same-day-rerun idempotency is genuinely gone (not just untested); if a future UI ever re-previews,
+  it must re-resolve from saved state, not re-call this.
+
+**Orchestrator triage:**
+- grep-for-string-RNG-before-scoping → **brief forward**: add to the port checklist next to the
+  tuple-key / integer-division / ScriptedDice items; it's the deciding factor for any DB/UI-heavy
+  TIV service.
+- Geometry-free lethality / tuning → **act later** (→ D3-D): when wiring `resolve_antiship_turn`,
+  sanity-check ship losses vs. fleet size and tune sweeper supply / mine counts if a single turn
+  annihilates the crossing fleet. Recorded in PLAN.md Decisions (balance note).
+- Same-day-rerun dropped → **record only**: justified by the single-resolution action layer;
+  re-evaluate only if a re-preview UI lands (Track C).

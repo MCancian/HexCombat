@@ -46,8 +46,16 @@ Confirm with `git log --oneline -15` + a fresh `pwsh ./tools/run_all_tests.ps1` 
     systems-fired / launch-attrition summaries). `tests/antiship_firing_plan_test.gd` (9 cases incl.
     the two `test_antiship_firing_plan.py` mirrors). Tuple keys → `"<to>:<type>"` String encoding;
     launch-attrition config = crossing config's `launch_attrition` section. Golden byte-stable.
-  - **D3-B3, D3-C…F — NOT STARTED** ← resume here (D3-B3 crossing model OR D3-C mine warfare; both
-    dependency-independent given D3-A/B1/B2). D3-B3 is the big one (~941-line 7-stage missile pipeline).
+  - **D3-C — DONE (2026-06-27, committed):** `scripts/MineWarfareService.gd` (pure) —
+    `resolve_ship_losses` (sweep → 1-mine-sinks-1-ship via `Dice.weighted_choice` → pool depletion
+    across beaches ascending). **Geometry-free** simplified port (dropped the string-seeded-MT danger
+    model + polygons + same-day-rerun baseline; see PLAN.md Decisions). `tests/mine_warfare_test.gd`
+    (8 cases). Golden byte-stable. *Balance flag:* every unswept mine is lethal → 100-mine beaches
+    are very lethal un-swept; tune in D3-D.
+  - **D3-B3, D3-D…F — NOT STARTED** ← resume here. **D3-B3** (crossing model, ~941-line 7-stage
+    missile pipeline — the big one, likely sub-split) then **D3-D** (GameState wiring:
+    `resolve_antiship_turn`, `lost_at_sea` via the D0-C `register_ship_losses` seam, IJFS (TO,Type)
+    `to_number` join, mine-lethality tuning).
   - Note: `data/theaters.json` has **no polygons** (only TO adjacency + beach_to_to), so `to_number`
     stamping needs polygon data (TIV `config/taiwan_TOs.json`) + point-in-polygon — defer to **D3-D**
     wiring; D3-B2 takes IJFS-destroyed counts as a plain `{(to,type): n}` input.
@@ -161,14 +169,15 @@ Question and cross-link (`see RETROSPECTIVES.md <date>/<subtask>`).
 
 ---
 
-## 6. Immediate next action: D3-B3 (crossing) / D3-C (mine warfare)
+## 6. Immediate next action: D3-B3 (crossing model)
 
-**D3-A/B1/B2 are DONE.** Magazine reservation (`AntishipMagazine`) and the firing plan
-(`AntishipCalculator.build_firing_plan` / `allocate_firing_to_rows` / `resolve_launch_attrition`)
-are committed and gated. Resume at **D3-B3** (the ~941-line 7-stage crossing model — likely
-sub-split) or **D3-C** (mine warfare); both are dependency-independent given D3-A/B1/B2. D3-D then
-wires `resolve_antiship_turn` into `GameState` and resolves the (TO,Type) `to_number` join. The
-scoping below is the original D3-B brief, kept for the crossing-model details (`resolve_crossing_damage`).
+**D3-A/B1/B2/C are DONE.** Magazine reservation (`AntishipMagazine`), the firing plan
+(`AntishipCalculator.build_firing_plan` / `allocate_firing_to_rows` / `resolve_launch_attrition`),
+and mine warfare (`MineWarfareService`) are committed and gated. Resume at **D3-B3** — the ~941-line
+7-stage crossing model (likely sub-split). **D3-D** then wires `resolve_antiship_turn` into
+`GameState`, resolves the IJFS (TO,Type) `to_number` join, propagates `lost_at_sea`, and tunes
+mine lethality. The scoping below is the original D3-B brief, kept for the crossing-model details
+(`resolve_crossing_damage`).
 
 **D3-A is DONE** — the data layer + models + loader are in place: `AntishipLoaders.load_systems`
 returns 650 `AntishipSystem` rows by (TO,type_id); `load_combat_catalog` / `load_crossing_config` /

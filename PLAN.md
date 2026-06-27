@@ -126,6 +126,39 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-27 — D3-C mine warfare ported (direct, deliberately simplified):** Ported the
+  sweep/sink core of TIV `services/antiship/mine_warfare_service.py`
+  (`MineWarfareService.resolve_ship_losses`) into `scripts/MineWarfareService.gd` (pure RefCounted).
+  Per target beach, in **ascending beach_id order** (so the shared surviving-fleet pool depletes
+  deterministically and a hull never sinks twice): minesweepers clear
+  `min(remaining, assigned*mines_per_sweeper_per_day)`; each remaining unswept mine sinks one ship;
+  the ship **type** is drawn from the surviving pool weighted by remaining count and removed.
+  Deliberate divergences from the TIV oracle (all in-spirit of the settled simplified-slice
+  philosophy — cf. D2 single-pool supply, D1 deferred ship geometry, D3-A geometry-free `Minefield`):
+  (1) **Geometric danger model dropped.** TIV scatters mines via Python's **string-seeded Mersenne
+  Twister** and filters "dangerous" mines by a ship-path danger-radius, plus builds beach/lane
+  polygons. That RNG is **not reproducible in Godot**, the geometry fields are **absent from
+  HexCombat's `Minefield`**, and the polygons are **UI-only** (D3 is headless, no new UI). So
+  **dangerous mines == remaining unswept mines** — and in TIV's own test configs the danger radius
+  already spans the whole beach (`|mine_x−500| ≤ 500` for all `mine_x∈[0,1000]`), so its dangerous
+  count equals `num_mines` there too, making this behavior-preserving for the mirrored cases.
+  *Balance note:* without the geometric filter every unswept mine is lethal, so the 100-mines/beach
+  defaults (D3-A) are very lethal un-swept — flag for **D3-D** wiring / tuning. (2) **Same-day
+  re-preview baseline dropped.** TIV recomputes from a saved day-start baseline when re-run on the
+  same day (a web-UI idempotency concern); HexCombat resolves each turn exactly once through the
+  action layer, so `last_resolved_day`/`*_day_start` are unnecessary — the one pytest exercising it
+  (`test_same_day_rerun_…`) is the only one of seven not mirrored. (3) **Ship-type selection via
+  injected `Dice.weighted_choice`** replaces Python's non-portable string-seeded `random.choices`,
+  mirroring the **formula + one-draw-per-sinking order** per the AGENTS RNG strategy; determinism in
+  tests comes from `SeededDice(seed)`. (4) **"Disabled beach" = no `Minefield` for that target
+  beach** → skipped summary `{status:"disabled"}` (HexCombat's `Minefield` has no `enabled` flag;
+  presence in the loaded set is enablement). (5) `int`/`String` assignment keys both accepted
+  (faithful to TIV). Verified: import clean; `tests/mine_warfare_test.gd` 8/8; full gate green
+  (142→150 GdUnit cases); golden seed 20260624 → casualties=2, feba=0.76 byte-stable (mine warfare
+  uses its own injected stream, never combat RNG). See `RETROSPECTIVES.md 2026-06-27 D3-C`. Next:
+  **D3-B3** (crossing model) then **D3-D** (GameState wiring: `resolve_antiship_turn`, `lost_at_sea`,
+  IJFS (TO,Type) `to_number` join).
+
 - **2026-06-27 — D3-B2 anti-ship firing plan ported (direct):** Ported `antiship_firing_plan.py`
   (`build_firing_plan`) + `antiship_allocation.py` (`allocate_firing_to_rows`) +
   `antiship_launch_attrition.py` (`resolve_launch_attrition`) into the new pure RefCounted
@@ -809,8 +842,15 @@ manifest.
         homing → terminal defense → neutralization) on `antiship_crossing_config.json` + ship_profiles.
         Inject `Dice`; mirror source draw order; mirror `test_antiship_crossing.py`. Likely sub-split.
 
-- [ ] **D3-C** — Mine warfare: `scripts/MineWarfareService.gd` — `resolve_minefield()`,
-      lay/sweep/activate logic. Mirror `test_antiship_mine_warfare_service.py`. Gate green.
+- [x] **D3-C** *(2026-06-27)* — Mine warfare: `scripts/MineWarfareService.gd` (pure RefCounted) —
+      `resolve_ship_losses(minefields, target_beaches, assignments, fleet_pool, dice)`: per beach
+      (ascending beach_id), minesweepers clear `min(remaining, assigned*mines_per_sweeper)`, each
+      remaining unswept mine sinks one ship (type drawn from the surviving fleet pool weighted by
+      count via injected `Dice.weighted_choice`), pool depleted in place across beaches; mutates the
+      matched `Minefield` rows + returns per-beach resolutions. `status_color` ported. Geometry-free
+      simplified port (see Decisions). `tests/mine_warfare_test.gd` (8 cases mirroring 6 of the 7
+      `test_antiship_mine_warfare_service.py` behaviors + lane/status). Gate green; golden 20260624 →
+      casualties=2, feba=0.76 unchanged.
 
 - [ ] **D3-D** — GameState wiring: `GameState.resolve_antiship_turn(dice)` runs calculator,
       applies ship losses, propagates `lost_at_sea` back to the offload reserve (D1-E's
