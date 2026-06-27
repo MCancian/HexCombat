@@ -39,7 +39,15 @@ Confirm with `git log --oneline -15` + a fresh `pwsh ./tools/run_all_tests.ps1` 
   - **D3-B1 — DONE (2026-06-26, committed):** `scripts/AntishipMagazine.gd` (calculator-pure magazine
     reservation: `from_defaults`, `cap_launcher_count`, `reserve_full_volley`, `deduct_launcher_kills`)
     + `tests/antiship_magazine_test.gd` (9 cases). DB funcs not ported.
-  - **D3-B2…B3, D3-C…F — NOT STARTED** ← resume here (D3-B2 firing plan next).
+  - **D3-B2 — DONE (2026-06-27, committed):** `scripts/AntishipCalculator.gd` —
+    `build_firing_plan` (single-row over pre-aggregated rows; C2 type-99 excluded; magazine
+    `cap_launcher_count` + full-volley gate) + `allocate_firing_to_rows` (proportional largest-
+    remainder) + `resolve_launch_attrition` (per-shot RNG draw order, in-place row mutation,
+    systems-fired / launch-attrition summaries). `tests/antiship_firing_plan_test.gd` (9 cases incl.
+    the two `test_antiship_firing_plan.py` mirrors). Tuple keys → `"<to>:<type>"` String encoding;
+    launch-attrition config = crossing config's `launch_attrition` section. Golden byte-stable.
+  - **D3-B3, D3-C…F — NOT STARTED** ← resume here (D3-B3 crossing model OR D3-C mine warfare; both
+    dependency-independent given D3-A/B1/B2). D3-B3 is the big one (~941-line 7-stage missile pipeline).
   - Note: `data/theaters.json` has **no polygons** (only TO adjacency + beach_to_to), so `to_number`
     stamping needs polygon data (TIV `config/taiwan_TOs.json`) + point-in-polygon — defer to **D3-D**
     wiring; D3-B2 takes IJFS-destroyed counts as a plain `{(to,type): n}` input.
@@ -153,7 +161,14 @@ Question and cross-link (`see RETROSPECTIVES.md <date>/<subtask>`).
 
 ---
 
-## 6. Immediate next action: D3-B (anti-ship calculator)
+## 6. Immediate next action: D3-B3 (crossing) / D3-C (mine warfare)
+
+**D3-A/B1/B2 are DONE.** Magazine reservation (`AntishipMagazine`) and the firing plan
+(`AntishipCalculator.build_firing_plan` / `allocate_firing_to_rows` / `resolve_launch_attrition`)
+are committed and gated. Resume at **D3-B3** (the ~941-line 7-stage crossing model — likely
+sub-split) or **D3-C** (mine warfare); both are dependency-independent given D3-A/B1/B2. D3-D then
+wires `resolve_antiship_turn` into `GameState` and resolves the (TO,Type) `to_number` join. The
+scoping below is the original D3-B brief, kept for the crossing-model details (`resolve_crossing_damage`).
 
 **D3-A is DONE** — the data layer + models + loader are in place: `AntishipLoaders.load_systems`
 returns 650 `AntishipSystem` rows by (TO,type_id); `load_combat_catalog` / `load_crossing_config` /

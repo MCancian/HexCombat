@@ -194,3 +194,39 @@ next sub-tasks (D4-G/H, D3) don't relearn them.
 - Stability + integer-division hazards → **act now (done)** + **brief forward**: add to the GDScript
   port checklist alongside ScriptedDice/Variant-`:=`/key-shape items.
 - JSON-as-single-source → **record only**: keep doing it.
+
+---
+
+## 2026-06-27 — D3-B2: anti-ship firing plan   (direct)
+
+**What would you do differently (self-retro):**
+- **Read the pytest imports first — confirmed the B1 lesson paid off.** `test_antiship_firing_plan.py`
+  imports `MagazineReservationContext` and exercises it in both cases, so the D3-B1-first split was
+  the right call; B2 dropped straight onto the existing `AntishipMagazine`. Reading the two pytests
+  before coding gave the exact, minimal behavior contract (shared-pool-once, full-volley-gates-before-
+  row-split) and saved guessing at the larger calculator's surface.
+- **The DataFrame `systems_expended` copy is a pandas artifact, not real semantics.** TIV's
+  `build_firing_plan` returns a mutated-column copy purely so `resolve_launch_attrition` can write
+  back by `row_idx`. Porting that literally would mean cloning every `AntishipSystem`. The faithful
+  call is: `build_firing_plan` pure, `resolve_launch_attrition` mutates the rows in place by index.
+  Lesson: distinguish source behavior from its pandas plumbing before porting.
+- **Tuple-keyed dicts are a recurring port hazard.** Three of the inputs key on `(location, type)`
+  tuples; GDScript Dictionaries silently misbehave with Array keys (reference identity), so a String
+  encoding (`"<to>:<type>"`) is mandatory and must be applied consistently across every map plus the
+  summary-ordering decode. Worth a standing checklist item next to ScriptedDice / integer-division.
+- **Under-tested:** only single-row `(TO,type)` allocation is exercised through `build_firing_plan`
+  (HexCombat pre-aggregates), so the multi-row largest-remainder path is covered by a *direct*
+  `allocate_firing_to_rows` unit test only. If D3-D ever feeds un-aggregated rows, that path needs an
+  integration test. Also: the launch-attrition summary's destroyed-only-key ordering relies on
+  `_decode_key` assuming int type-keys — fine for current data, fragile if non-numeric types appear.
+
+**Orchestrator triage:**
+- Tuple-key → String-encoding hazard → **act now (done)** + **brief forward**: added to the GDScript
+  port checklist (ScriptedDice / Variant-`:=` / integer-division / stability / **tuple-key encoding**).
+- DataFrame-copy-vs-semantics → **record only**: standard for this pandas→GDScript port; the pure
+  build + in-place resolve split is the pattern for D3-B3/D3-C too.
+- Multi-row allocation under-tested → **act later** (→ revisit in D3-D wiring): if GameState passes
+  un-aggregated rows, add an integration case; today's aggregation makes it single-row.
+- Gate teardown flake (`-1073741819` in random SceneTree validators) → **record only / watch**:
+  pre-existing Godot 4.7 instability, not introduced here; all test cases pass every run and flagged
+  validators pass deterministically in isolation. Same class as the 2026-06-24 GdUnit teardown flake.

@@ -126,6 +126,44 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-27 — D3-B2 anti-ship firing plan ported (direct):** Ported `antiship_firing_plan.py`
+  (`build_firing_plan`) + `antiship_allocation.py` (`allocate_firing_to_rows`) +
+  `antiship_launch_attrition.py` (`resolve_launch_attrition`) into the new pure RefCounted
+  `scripts/AntishipCalculator.gd`. **Implemented directly, not via opencode** — launch attrition is
+  RNG-draw-order-sensitive and the firing plan has subtle largest-remainder + full-volley magazine
+  gating; the handoff sanctions direct implementation for intricate RNG-sensitive sub-tasks
+  (precedent: D3-A, D3-B1, D4-F/G/H). Decisions / faithful-port divergences:
+  (1) **Tuple keys → `"<to>:<type>"` String keys.** TIV keys `firing_percentages` /
+  `destroyed_fire_percentages` / `destroyed_firing_plan` on `(location, type_key)` tuples; GDScript
+  Dictionaries can't key on value-arrays (Arrays compare by reference), so all four maps use
+  `"<to>:<type>"` String keys via `AntishipCalculator.encode_key`. `type_key` is always int in
+  HexCombat data, so TIV's `_normalize_type_key` str-fallback for non-numeric types is unexercised
+  (a `_decode_key` helper still parses back to int when numeric for the summary ordering). (2)
+  **Single-row allocation.** HexCombat's `AntishipSystem` rows are pre-aggregated one-per-(TO,type)
+  by `AntishipLoaders`, so the per-container row split collapses to a single row; `allocate_firing_to_rows`
+  is still ported faithfully (proportional largest-remainder, remainder ties to earlier rows) and
+  unit-tested directly for the multi-row behavior even though `build_firing_plan` only calls it
+  single-row. (3) **In-place row mutation replaces the pandas `systems_expended` copy.**
+  `build_firing_plan` is pure (returns `{allocation_plan, destroyed_firing_plan}`, no mutation);
+  `resolve_launch_attrition` mutates the `AntishipSystem` rows by `row_idx` (array index) — `active`,
+  `quantity` (−attempted, clamp 0), `fired`/`expended` (+launched), `destroyed_this_turn` and
+  `destroyed` (+pre+post). TIV's `Total_Destroyed_Cumulative` maps to `AntishipSystem.destroyed`;
+  the `Final_Attrition_Pct` reporting-only derived column is not ported. (4) **RNG via injected
+  `Dice`.** Per attempted shot: `dice.randf() < p_destroy` (=clamp(p_detect·p_destroy_if_detected));
+  a second `dice.randf() < p_intercept_before_launch` ONLY when the first kills — exact source draw
+  order. Launch-attrition config = the `launch_attrition` section of
+  `data/antiship/antiship_crossing_config.json` (per-type with `_default` fallback; flat-config
+  short-circuit preserved). (5) **C2 filter** on `type_id == 99` (`SYSTEM_TYPE_C2`), mirroring the
+  source. Verified: import clean; `tests/antiship_firing_plan_test.gd` 9/9 (incl. the two
+  `test_antiship_firing_plan.py` magazine-gating mirrors — shared-pool-once-across-locations and
+  short-magazine-gates-before-row-split); full gate green (golden seed 20260624 → casualties=2,
+  feba=0.76 byte-stable; 133→142 GdUnit cases). **Note (flake):** the gate's overall verdict is
+  intermittently `FAILED` from a Godot 4.7 *teardown* segfault (exit `-1073741819` / 0xC0000005) in
+  random SceneTree validators (`validate_no_global_rng`, `validate_symbol_map`, …) run back-to-back —
+  all 142 cases PASS every run and the flagged validators pass deterministically (exit 0) in
+  isolation; pre-existing, unrelated to this pure-lib change. See `RETROSPECTIVES.md 2026-06-27 D3-B2`.
+  Next: **D3-B3** (crossing model) and **D3-C** (mine warfare) — dependency-independent.
+
 - **2026-06-26 — D3-B split into B1/B2/B3; D3-B1 magazine service ported (direct):** The planned
   single `AntishipCalculator` (firing plan + crossing + magazine) is ~2,100 lines of TIV source with a
   tight dependency chain (firing plan needs the magazine reservation context — both firing-plan pytests
@@ -754,12 +792,18 @@ manifest.
         seed/persist not ported — seeds from `antiship_magazine_defaults.json`).
         `tests/antiship_magazine_test.gd` (9 cases mirroring `test_antiship_magazine_service.py`).
         Gate green; golden unchanged.
-  - [ ] **D3-B2** — Firing plan: `AntishipCalculator.build_firing_plan(systems, ijfs_destroyed,
-        firing_percentages, destroyed_fire_percentages, magazine)` over `AntishipSystem` rows
-        (aggregated by (TO,type), so the per-container `allocate_firing_to_rows` is single-row);
-        C2 excluded; magazine volley-gate via D3-B1. Port `antiship_allocation.allocate_firing_to_rows`
-        + `antiship_launch_attrition.py`. Mirror `test_antiship_firing_plan.py`. IJFS coupling is a
-        plain input dict (the (TO,Type) join / `to_number` stamping is wired in D3-D).
+  - [x] **D3-B2** *(2026-06-27)* — Firing plan: `scripts/AntishipCalculator.gd` —
+        `build_firing_plan(systems, ijfs_destroyed, target_locations, firing_percentages,
+        destroyed_fire_percentages, magazine)` over `AntishipSystem` rows (aggregated by (TO,type),
+        so the per-container `allocate_firing_to_rows` is single-row); C2 (type 99) excluded;
+        magazine `cap_launcher_count` + full-volley gate via D3-B1. Ports
+        `antiship_allocation.allocate_firing_to_rows` (proportional largest-remainder) +
+        `antiship_launch_attrition.resolve_launch_attrition` (per-shot RNG draw order, inventory
+        mutation, systems-fired / launch-attrition summaries). `tests/antiship_firing_plan_test.gd`
+        (9 cases: the 2 TIV magazine-gating mirrors + C2/no-magazine/destroyed-only + allocate +
+        scripted launch-attrition). Gate green; golden 20260624 → casualties=2, feba=0.76 unchanged.
+        IJFS coupling stays a plain `"<to>:<type>"`→count input dict (the (TO,Type) `to_number`
+        join is wired in D3-D).
   - [ ] **D3-B3** — Crossing model (`antiship_crossing.py`, ~941 lines): the 7-stage missile pipeline
         (launch attrition → groups of 4 → escort interception → decoy discrimination → weighted
         homing → terminal defense → neutralization) on `antiship_crossing_config.json` + ship_profiles.
