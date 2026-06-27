@@ -16,6 +16,10 @@ const IJFS_AIR_CLASSES_PATH := "res://data/ijfs/air_classes.json"
 const IJFS_OOB_PATH := "res://data/ijfs/red_air_oob.json"
 const IJFS_SAM_CAPS_PATH := "res://data/ijfs/sam_capabilities.json"
 
+# D3 anti-ship / mine-warfare data (Green coastal anti-ship fires vs the Red crossing).
+const ANTISHIP_TYPES_PATH := "res://data/antiship/antiship_systems_consolidated.json"
+const ANTISHIP_GROUPING_PATH := "res://data/antiship/antiship_grouping_spec.json"
+
 enum Phase { PLANNING, RESOLUTION, END }
 
 var turn_number: int = 1
@@ -34,6 +38,9 @@ var ijfs_state: IjfsDailyState = null
 var _ijfs_day: int = 0
 var last_ijfs_summary: Dictionary = {}
 var last_ijfs_writeback: Dictionary = {}
+# D3 anti-ship Green firing systems (AntishipSystem rows aggregated by (to_number, type_id)). Persist
+# across turns so launcher destruction/suppression carries forward; lazily built on first use.
+var antiship_systems: Array = []
 
 
 func _ready() -> void:
@@ -69,6 +76,9 @@ func reset_to_scenario() -> void:
 	last_combat_summaries.clear()
 	last_ijfs_summary = {}
 	last_ijfs_writeback = {}
+	# Anti-ship systems are lazily (re)built on first use (resolve_ijfs_turn / resolve_antiship_turn),
+	# matching the IJFS state's lazy-load pattern; clearing here forces a fresh build per scenario.
+	antiship_systems = []
 	EventBus.phase_changed.emit(phase)
 
 
@@ -389,9 +399,22 @@ func resolve_ijfs_turn(dice: Dice) -> Dictionary:
 	return ledgers
 
 
+## Lazily build the persistent anti-ship Green firing systems (aggregated by (to_number, type_id)).
+## Shared by resolve_ijfs_turn (IJFS targeting) and resolve_antiship_turn (firing).
+func _ensure_antiship_systems() -> void:
+	if not antiship_systems.is_empty():
+		return
+	var types := AntishipLoaders.load_system_types(ANTISHIP_TYPES_PATH)
+	antiship_systems = AntishipLoaders.load_systems(ANTISHIP_GROUPING_PATH, types)
+
+
 func _rebuild_ijfs_state() -> void:
+	_ensure_antiship_systems()
 	ijfs_state = IjfsDailyState.new()
-	ijfs_state.targets = IjfsLoaders.load_targets(IJFS_TARGETS_PATH, 1)
+	# D3-D (1-A): anti-ship targets are generated per-(TO,type) from antiship_systems (carrying that
+	# pair in metadata) and replace the static "Anti-Ship Systems" rows, so IJFS strikes write back by
+	# (TO, type) for the D3 firing-plan join.
+	ijfs_state.targets = IjfsLoaders.load_targets_with_antiship(IJFS_TARGETS_PATH, antiship_systems, 1)
 	ijfs_state.munitions = IjfsLoaders.load_munitions(IJFS_MUNITIONS_PATH)
 	ijfs_state.pairings = IjfsLoaders.load_pairings(IJFS_PAIRINGS_PATH)
 	ijfs_state.scenario = IjfsLoaders.load_scenario(IJFS_SCENARIO_PATH)
@@ -402,9 +425,9 @@ func _rebuild_ijfs_state() -> void:
 
 
 ## Aggregates the IJFS ledgers into the writeback seam D3 (anti-ship) and future ground-casualty
-## linkage consume. NOTE: HexCombat's target data carries no theater (TO) or battalion IDs, so
-## anti-ship is keyed by Type (subcategory) and maneuver casualties stay empty until target data
-## carries that metadata — see PLAN.md Open Question (D4-H writeback linkage).
+## linkage consume. D3-D (1-A) closed the anti-ship side: targets are generated per-(TO,type) from
+## antiship_systems, so anti-ship writeback is keyed by encode_key("<to>:<type>"). Maneuver casualties
+## still depend on per-battalion target metadata (see PLAN.md Open Question, D4-H maneuver linkage).
 func _compute_ijfs_writeback(ledgers: Dictionary) -> Dictionary:
 	var strike_log: Array = ledgers["strike_log"]
 	var engagement_log: Array = ledgers["engagement_log"]
@@ -417,7 +440,15 @@ func _compute_ijfs_writeback(ledgers: Dictionary) -> Dictionary:
 			continue
 		var category := String(entry.get("category", ""))
 		if category == "Anti-Ship Systems":
+			# D3-D (1-A): anti-ship targets carry (to_number, type_id) in metadata, so write back keyed
+			# by AntishipCalculator.encode_key("<to>:<type>") to match the firing plan's (TO,type) rows.
+			# Legacy C2/static rows without that metadata fall back to subcategory.
+			var metadata: Dictionary = entry.get("metadata", {})
+			var to_number: Variant = metadata.get("to_number", null)
+			var type_id: Variant = metadata.get("type_id", null)
 			var type_key := String(entry.get("subcategory", ""))
+			if to_number != null and type_id != null:
+				type_key = AntishipCalculator.encode_key(int(to_number), int(type_id))
 			if entry.get("destroyed"):
 				antiship_destroyed_by_type[type_key] = int(antiship_destroyed_by_type.get(type_key, 0)) + 1
 			if entry.get("suppressed"):

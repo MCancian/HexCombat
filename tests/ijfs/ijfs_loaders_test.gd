@@ -95,3 +95,54 @@ func _write_json(file_name: String, payload: Dictionary) -> String:
 	file.store_string(JSON.stringify(payload))
 	file.close()
 	return path
+
+
+# --- D3-D (1-A): dynamic (TO,type) anti-ship target generation ---------------------------------
+
+func _asys(to_number: int, type_id: int, type_name: String, qty: int, subcategory: String, mobility: String = "mobile") -> AntishipSystem:
+	var s := AntishipSystem.new()
+	s.to_number = to_number
+	s.type_id = type_id
+	s.type_name = type_name
+	s.quantity = qty
+	s.ijfs_profile = {
+		"category": "Anti-Ship Systems",
+		"subcategory": subcategory,
+		"mobility": mobility,
+		"hardness": "hard",
+		"detectability_active": "high",
+		"detectability_hiding": "medium",
+	}
+	return s
+
+
+func test_build_antiship_targets_carries_to_and_type_metadata() -> void:
+	var systems := [
+		_asys(2, 3, "DDG", 2, "Surface Combatant – Destroyer and Frigate"),
+		_asys(3, 5, "CDCM", 1, "Static CDCMs", "static"),
+	]
+	var targets := IjfsLoaders.build_antiship_targets(systems, 1)
+	assert_int(targets.size()).is_equal(3)  # 2 + 1 instances
+	var ddg: Array = []
+	for t in targets:
+		assert_str(t.category).is_equal("Anti-Ship Systems")
+		assert_bool(t.metadata.has("to_number")).is_true()
+		assert_bool(t.metadata.has("type_id")).is_true()
+		if int(t.metadata["to_number"]) == 2 and int(t.metadata["type_id"]) == 3:
+			ddg.append(t)
+	assert_int(ddg.size()).is_equal(2)
+	assert_str(ddg[0].target_id).is_equal("antiship_to2_type3#001")
+	assert_str(ddg[0].subcategory).is_equal("Surface Combatant – Destroyer and Frigate")
+
+
+func test_load_targets_with_antiship_replaces_static_rows() -> void:
+	var systems := [_asys(2, 3, "DDG", 2, "Surface Combatant – Destroyer and Frigate")]
+	var merged := IjfsLoaders.load_targets_with_antiship(TARGETS_PATH, systems, 1)
+	var dynamic_antiship := 0
+	for t in merged:
+		# No static anti-ship rows survive; every anti-ship target carries (TO,type) metadata.
+		assert_bool(t.source_target_id == "anti_ship_007").is_false()
+		if t.category == "Anti-Ship Systems":
+			assert_bool(t.metadata.has("to_number")).is_true()
+			dynamic_antiship += 1
+	assert_int(dynamic_antiship).is_equal(2)

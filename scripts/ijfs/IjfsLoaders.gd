@@ -59,6 +59,64 @@ static func load_targets(path: String, current_day: int = -1) -> Array[IjfsTarge
 	return targets
 
 
+## D3-D (decision 1-A): build IJFS anti-ship targets dynamically from the D3-A antiship_systems list,
+## one container per (to_number, type_id) carrying that pair in metadata so IJFS strikes write back by
+## (TO, type) instead of subcategory-only. Mirrors TIV ijfs_standalone/default_targets.build_antiship_
+## targets: category/subcategory/mobility/hardness/detectability come from each system's ijfs_profile
+## (the grouping-spec profile the munition pairings are authored against). Each system row expands into
+## `quantity` instances so a destroyed strike entry counts one destroyed system (preserving the
+## ijfs_destroyed count semantics AntishipCalculator.build_firing_plan expects).
+static func build_antiship_targets(systems: Array, current_day: int = 1) -> Array[IjfsTarget]:
+	var total := 0
+	for system_value in systems:
+		total += int((system_value as AntishipSystem).quantity)
+	if total > EXPANSION_GUARD:
+		_fail("Anti-ship target expansion would create %d instances; guard is %d" % [total, EXPANSION_GUARD])
+
+	var targets: Array[IjfsTarget] = []
+	for system_value in systems:
+		var system: AntishipSystem = system_value
+		var qty := int(system.quantity)
+		if qty <= 0:
+			continue
+		var profile: Dictionary = system.ijfs_profile
+		if profile.is_empty() or not profile.has("subcategory"):
+			_fail("Anti-ship system TO %d type %d has no ijfs_profile for IJFS targeting" % [system.to_number, system.type_id])
+		var source_id := "antiship_to%d_type%d" % [system.to_number, system.type_id]
+		var row := {
+			"target_id": source_id,
+			"category": String(profile.get("category", "Anti-Ship Systems")),
+			"subcategory": String(profile["subcategory"]),
+			"quantity": qty,
+			"mobility": String(profile.get("mobility", "mobile")),
+			"hardness": String(profile.get("hardness", "soft")),
+			"detectability_active": String(profile.get("detectability_active", "medium")),
+			"detectability_hiding": String(profile.get("detectability_hiding", "low")),
+			"to_number": int(system.to_number),
+			"type_id": int(system.type_id),
+			"type_name": String(system.type_name),
+		}
+		for idx in range(1, qty + 1):
+			var target_id := source_id if qty == 1 else "%s#%03d" % [source_id, idx]
+			targets.append(_runtime_target_from_master(row, target_id, source_id, idx, current_day))
+	targets.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id < b.target_id)
+	return targets
+
+
+## Load targets_master.json, drop the static "Anti-Ship Systems" rows, and append the dynamic
+## per-(TO,type) anti-ship containers built from `systems`. Single entry point the IJFS state builder
+## uses so static + dynamic targets share one merged, sorted population.
+static func load_targets_with_antiship(path: String, systems: Array, current_day: int = -1) -> Array[IjfsTarget]:
+	var merged: Array[IjfsTarget] = []
+	for target in load_targets(path, current_day):
+		if target.category != "Anti-Ship Systems":
+			merged.append(target)
+	for target in build_antiship_targets(systems, maxi(current_day, 1)):
+		merged.append(target)
+	merged.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id < b.target_id)
+	return merged
+
+
 static func load_munitions(path: String) -> Dictionary:
 	var body: Variant = _unwrap_data(_read_json(path))
 	var result: Dictionary = {}
