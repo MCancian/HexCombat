@@ -126,6 +126,27 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-27 — D5-C cleanup phase ported (end-of-turn system reset; via opencode):** Added
+  `GameState.resolve_cleanup_phase()` + `EventBus.cleanup_resolved` + `tools/validate_cleanup.gd`,
+  hooked into `resolve_turn` after `resolve_supply_turn` / before `phase = END`. **Scoping correction:**
+  the ROADMAP described D5-C as "residual attrition + isolated-unit check", but reading the TIV oracle
+  (`cleanup_calculator.py` `reset_systems`, `cleanup_hex_service.py`, `cleanup_application_service.py`)
+  shows the real cleanup phase is a pure **end-of-turn system reset** (reset per-turn anti-ship/maneuver
+  flags; restore moved/unavailable quantities) + ownership normalization — there is no attrition or
+  isolation logic. Decisions: (1) **The only non-redundant work is resetting the anti-ship per-turn
+  flags.** HexCombat already resets brigade flags in `begin_next_turn` and recomputes ownership after
+  combat, and IJFS per-day flags clear in `carry_to_next_day` — but `AntishipSystem.fired / expended /
+  destroyed_this_turn / suppressed / active` were reset NOWHERE and accumulate on the persistent
+  `antiship_systems` array (latent bug, masked only because the crossing rarely runs past turn 1).
+  Cleanup resets exactly those, leaving cumulative `destroyed`/`quantity`/`original_quantity` to
+  resolve_antiship_turn's idempotent decrement. (2) **TIV `Quantity_Moved`/`Quantity_Unavailable`
+  restore not ported** — no HexCombat equivalent (those are TIV DB columns; quantity is recomputed each
+  turn); noted in-code. (3) **No RNG; runs after combat** → golden 20260624 → casualties=2, feba=0.76
+  byte-stable. **Retrospective triage** (see `RETROSPECTIVES.md 2026-06-27 D5-C`): rejected/recorded —
+  a `Phase.CLEANUP` enum state (positional hook works + commented; low value) and merging the brigade-
+  flag reset into cleanup (tangles with `begin_next_turn`'s turn-advance/buffer-clear; risky, low
+  value). No 2nd-subagent refactor warranted. Gate ALL PHASES GREEN.
+
 - **2026-06-27 — D5-B front-line GameState wiring (via opencode):** Added
   `GameState.resolve_frontline_phase(polyline_coords) -> Dictionary` + the `_frontline_hex_centers()`
   adapter (flattens `GameData.hexes` → `[{id,lat,lon}]`, keeping `FrontLineService` pure) +
@@ -1212,9 +1233,16 @@ Red maneuver BNs redistribute along it. Cleanup phase normalizes ownership after
       `tools/validate_frontline.gd` (distribution + empty-polyline + no-brigades + determinism). Gate
       ALL PHASES GREEN; golden byte-stable. Red-only is intentional (TIV single-side filter; commented).
 
-- [ ] **D5-C** — Cleanup: `GameState.resolve_cleanup_phase()` runs residual attrition + isolated
-      unit check + final `recompute_hex_ownership()`. Hook into end-of-turn after combat.
-      Gate green.
+- [x] **D5-C** *(2026-06-27)* — Cleanup: `GameState.resolve_cleanup_phase()` — end-of-turn system
+      reset (faithful to TIV `CleanupCalculator.reset_systems`, which is a per-turn flag reset, NOT the
+      "residual attrition/isolation" the ROADMAP speculated). Resets the per-turn anti-ship flags
+      (`fired`/`expended`/`destroyed_this_turn` → 0, `suppressed`/`active` → false) on the persistent
+      `antiship_systems` array — fixing a latent cross-turn accumulation (reset nowhere before) — and
+      runs `recompute_hex_ownership()` as the canonical end-of-turn ownership pass. Hooked into
+      `resolve_turn` after `resolve_supply_turn`, before `phase = END` (no RNG → golden byte-stable).
+      `EventBus.cleanup_resolved`; `tools/validate_cleanup.gd`. Gate ALL PHASES GREEN. (Brigade per-turn
+      flags stay in `begin_next_turn`; TIV's Quantity_Moved/Unavailable restore has no HexCombat
+      equivalent — both noted in-code.)
 
 - [ ] **D5-D** — Front-line UI + turn integration: HexMap polyline-draw mode (player clicks vertices,
       Confirm commits → `resolve_frontline_phase`), store the drawn polyline as a PLANNING-phase action

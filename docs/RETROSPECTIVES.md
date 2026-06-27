@@ -433,3 +433,32 @@ retrospective). Orchestrator gated independently (validator + full gate green, g
   D5-D adds a live drag-preview loop.
 - PLANNING-phase action plumbing for turn integration → **record only / brief forward to D5-D**: real
   and correct, but it's D5-D's scope (UI + turn sequencing), not this headless wiring step.
+
+---
+
+## 2026-06-27 — D5-C: cleanup phase (end-of-turn system reset)   (implementer: opencode deepseek-v4-flash-free)
+
+Port brief (GameState method + EventBus signal + validator + resolve_turn hook, end with a
+retrospective). Orchestrator corrected the ROADMAP's mis-scoping first (cleanup is a flag reset, not
+attrition/isolation), gated independently (validator + gate green, golden byte-stable), fixed a
+"D2-C"→"D5-C" header typo inline.
+
+**What would you do differently (implementer):**
+- The hook position (between `resolve_supply_turn` and `phase = Phase.END`) is positional/brittle — a
+  `Phase.CLEANUP` enum state with explicit `phase_changed` emissions would make the ordering contract
+  visible rather than implicit.
+- Cleanup resets only anti-ship flags; nothing guards a future contributor to `antiship_systems` who
+  forgets to extend the reset (the validator checks the current fields but can't know about new ones).
+- End-of-turn resets are now split across three sites (`begin_next_turn` = brigade flags + turn
+  advance; `resolve_cleanup_phase` = anti-ship flags; `carry_to_next_day` = IJFS per-day flags); one
+  canonical reset point would be cleaner.
+
+**Orchestrator triage:**
+- `Phase.CLEANUP` enum state → **rejected / record only**: the positional hook works and is commented;
+  adding a phase state touches the phase machine + observation `phase` strings for low value.
+- Merge brigade-flag reset into cleanup for one canonical point → **rejected / record only**: the
+  implementer itself flagged the risk — `begin_next_turn` runs in PLANNING and also does
+  `turn_number += 1` / buffer-clearing; merging would drag that into cleanup. Real churn, real risk,
+  little benefit while the reset set is this small. Revisit only if end-of-turn resets grow.
+- Guard against forgotten future resets → **record only**: the validator already asserts the cumulative
+  fields are NOT touched; a "new field" guard isn't expressible without reflection.

@@ -62,6 +62,7 @@ var antiship_containers: Array = []
 var lost_at_sea_accumulator: float = 0.0
 var last_antiship_summary: Dictionary = {}
 var last_frontline_summary: Dictionary = {}
+var last_cleanup_summary: Dictionary = {}
 
 
 func _ready() -> void:
@@ -104,6 +105,7 @@ func reset_to_scenario() -> void:
 	lost_at_sea_accumulator = 0.0
 	last_antiship_summary = {}
 	last_frontline_summary = {}
+	last_cleanup_summary = {}
 	EventBus.phase_changed.emit(phase)
 
 
@@ -183,6 +185,7 @@ func resolve_turn(dice: Dice = null) -> void:
 		typed_summary["owner_after"] = String(GameData.hex_states[String(typed_summary["hex_id"])]["owner"])
 	last_combat_summaries = combat_summaries.duplicate(true)
 	resolve_supply_turn()
+	resolve_cleanup_phase()
 
 	phase = Phase.END
 	EventBus.phase_changed.emit(phase)
@@ -763,6 +766,28 @@ func _mine_status_summary(mine_res: Array) -> Array:
 			"status_color": String(beach_res.get("status_color", "")),
 		})
 	return out
+
+
+# --- D5-C Cleanup phase — end-of-turn per-system flag reset ------------------------------------
+
+func resolve_cleanup_phase() -> Dictionary:
+	var reset_count := 0
+	for system_value in antiship_systems:
+		var system: AntishipSystem = system_value
+		system.fired = 0
+		system.expended = 0
+		system.destroyed_this_turn = 0
+		system.suppressed = false
+		system.active = false
+		reset_count += 1
+	# NOTE: TIV's Quantity_Moved/Quantity_Unavailable->Quantity_Available restore has no HexCombat
+	# equivalent (AntishipSystem has no moved/unavailable split; quantity is recomputed each turn).
+	# Brigade per-turn flags (moved_this_turn / fought_this_turn / moved_admin_this_turn) are reset
+	# in begin_next_turn, so cleanup does not duplicate them.
+	GameData.recompute_hex_ownership()
+	last_cleanup_summary = {"antiship_systems_reset": reset_count}
+	EventBus.cleanup_resolved.emit(last_cleanup_summary)
+	return last_cleanup_summary
 
 
 # --- D5-A Frontline phase — redistribute Red brigades along a drawn polyline -------------------
