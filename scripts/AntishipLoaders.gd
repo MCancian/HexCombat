@@ -80,6 +80,45 @@ static func load_systems(grouping_path: String, types: Dictionary) -> Array[Anti
 	return systems
 
 
+## Container-level view of the grouping spec: one Dictionary per platform-group container (each
+## group_sizes[i]/to_assignments[i] entry), preserving the bin granularity that load_systems
+## aggregates away. Used by IjfsLoaders.build_antiship_targets so IJFS strikes hit whole operating
+## bins (see that func). Each: {to_number, type_id, type_name, systems_represented, detectability,
+## ijfs_profile, platform_group, platform_group_index}.
+static func load_containers(grouping_path: String, types: Dictionary) -> Array:
+	var body: Dictionary = _read_json(grouping_path)
+	var groups: Dictionary = body.get("taiwan_platform_groups", {})
+	var containers: Array = []
+	for group_name in groups.keys():
+		var group: Dictionary = groups[group_name]
+		var type_id := int(group["type_id"])
+		var sizes: Array = group.get("group_sizes", [])
+		var tos: Array = group.get("to_assignments", [])
+		if sizes.size() != tos.size():
+			_fail("Anti-ship group '%s' has mismatched group_sizes (%d) / to_assignments (%d)" % [group_name, sizes.size(), tos.size()])
+		var ijfs_profile: Dictionary = group.get("ijfs_profile", {})
+		var group_detectability := String(group.get("mainline_detectability", ""))
+		var type_def: Dictionary = types.get(type_id, {})
+		for i in range(sizes.size()):
+			containers.append({
+				"to_number": int(tos[i]),
+				"type_id": type_id,
+				"type_name": String(type_def.get("name", "")),
+				"systems_represented": int(sizes[i]),
+				"detectability": String(type_def.get("detectability", group_detectability)),
+				"ijfs_profile": ijfs_profile,
+				"platform_group": group_name,
+				"platform_group_index": i,
+			})
+	containers.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a["to_number"]) != int(b["to_number"]):
+			return int(a["to_number"]) < int(b["to_number"])
+		if int(a["type_id"]) != int(b["type_id"]):
+			return int(a["type_id"]) < int(b["type_id"])
+		return int(a["platform_group_index"]) < int(b["platform_group_index"]))
+	return containers
+
+
 static func load_combat_catalog(path: String) -> Dictionary:
 	var body: Dictionary = _read_json(path)
 	for key in ["munitions", "launchers", "store_groups"]:

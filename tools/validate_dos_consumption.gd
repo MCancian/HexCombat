@@ -93,12 +93,16 @@ func _validate_clamp_at_zero() -> void:
 	_assert_equal_float("pool clamps at zero", GameState.supply_state.current_dos_tons, 0.0)
 
 
-# The resolve_turn() hook deducts supply each turn (Turn 1 lands Red via offload, then consumes).
+# The resolve_turn() hook runs the supply phase each turn (day_history grows; pool never increases).
+# NOTE: since D3-D, the anti-ship phase runs before offload and can remove the entire landing wave at
+# sea, so a turn may legitimately land zero forces and consume zero supply. The exact consumption math
+# is covered by the isolated idle/activity cases above; here we only assert the hook fires and the pool
+# never grows. (Crossing lethality balance is tracked separately — see PLAN.md D3-D.)
 func _validate_full_resolve_turn_hook() -> void:
 	GameData.load_all()
 	GameState.reset_to_scenario()
 	GameState.resolve_turn(SeededDice.new(DICE_SEED))
-	_assert_true("full resolve_turn decremented pool", GameState.supply_state.current_dos_tons < INITIAL_POOL_TONS)
+	_assert_true("full resolve_turn did not increase pool", GameState.supply_state.current_dos_tons <= INITIAL_POOL_TONS)
 	_assert_equal_int("full resolve_turn day_history size", GameState.supply_state.day_history.size(), 1)
 
 

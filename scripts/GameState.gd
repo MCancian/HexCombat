@@ -19,6 +19,13 @@ const IJFS_SAM_CAPS_PATH := "res://data/ijfs/sam_capabilities.json"
 # D3 anti-ship / mine-warfare data (Green coastal anti-ship fires vs the Red crossing).
 const ANTISHIP_TYPES_PATH := "res://data/antiship/antiship_systems_consolidated.json"
 const ANTISHIP_GROUPING_PATH := "res://data/antiship/antiship_grouping_spec.json"
+const ANTISHIP_CATALOG_PATH := "res://data/antiship/antiship_combat_catalog.json"
+const ANTISHIP_CROSSING_PATH := "res://data/antiship/antiship_crossing_config.json"
+const ANTISHIP_MINEFIELDS_PATH := "res://data/antiship/minefields.json"
+# Default share of each surviving Green launcher group that fires at the crossing each turn. 100 =
+# fire-all (maximally lethal: the whole coastal arsenal engages every wave). Lethality balance knob —
+# scenario-configurable firing/detection percentages are a follow-up (see PLAN.md D3-D).
+const DEFAULT_ANTISHIP_FIRE_PCT := 100.0
 
 enum Phase { PLANNING, RESOLUTION, END }
 
@@ -41,6 +48,11 @@ var last_ijfs_writeback: Dictionary = {}
 # D3 anti-ship Green firing systems (AntishipSystem rows aggregated by (to_number, type_id)). Persist
 # across turns so launcher destruction/suppression carries forward; lazily built on first use.
 var antiship_systems: Array = []
+# Container-level view of the same arsenal (one entry per platform-group bin) — IJFS target source.
+var antiship_containers: Array = []
+# Fractional BN-equiv owed from ship losses, carried across turns (ShipLoadingModel.resolve_bn_losses).
+var lost_at_sea_accumulator: float = 0.0
+var last_antiship_summary: Dictionary = {}
 
 
 func _ready() -> void:
@@ -79,6 +91,9 @@ func reset_to_scenario() -> void:
 	# Anti-ship systems are lazily (re)built on first use (resolve_ijfs_turn / resolve_antiship_turn),
 	# matching the IJFS state's lazy-load pattern; clearing here forces a fresh build per scenario.
 	antiship_systems = []
+	antiship_containers = []
+	lost_at_sea_accumulator = 0.0
+	last_antiship_summary = {}
 	EventBus.phase_changed.emit(phase)
 
 
@@ -135,11 +150,13 @@ func resolve_turn(dice: Dice = null) -> void:
 
 	phase = Phase.RESOLUTION
 	EventBus.phase_changed.emit(phase)
-	resolve_offload_turn(dice)
-	# IJFS (Red joint fires) runs before maneuver/combat so its effects (suppressed anti-ship
-	# systems for D3, future theater CAS/CRBM) precede ground combat. It draws from an INDEPENDENT
-	# IJFS substream (never the combat dice), so the ground-combat golden invariant is byte-stable.
+	# Sea phase ordering (D3-D): IJFS (Red joint fires) suppresses/destroys Green anti-ship systems
+	# first; then Green anti-ship + mines attrit the Red crossing (removing BNs from the reserve);
+	# then offload lands only the survivors. Each draws from its own INDEPENDENT substream (never the
+	# combat dice), so the ground-combat golden invariant stays byte-stable.
 	resolve_ijfs_turn(dice)
+	resolve_antiship_turn(dice)
+	resolve_offload_turn(dice)
 
 	_apply_move_orders(Brigade.Team.RED)
 	_apply_move_orders(Brigade.Team.GREEN)
@@ -406,6 +423,7 @@ func _ensure_antiship_systems() -> void:
 		return
 	var types := AntishipLoaders.load_system_types(ANTISHIP_TYPES_PATH)
 	antiship_systems = AntishipLoaders.load_systems(ANTISHIP_GROUPING_PATH, types)
+	antiship_containers = AntishipLoaders.load_containers(ANTISHIP_GROUPING_PATH, types)
 
 
 func _rebuild_ijfs_state() -> void:
@@ -414,7 +432,7 @@ func _rebuild_ijfs_state() -> void:
 	# D3-D (1-A): anti-ship targets are generated per-(TO,type) from antiship_systems (carrying that
 	# pair in metadata) and replace the static "Anti-Ship Systems" rows, so IJFS strikes write back by
 	# (TO, type) for the D3 firing-plan join.
-	ijfs_state.targets = IjfsLoaders.load_targets_with_antiship(IJFS_TARGETS_PATH, antiship_systems, 1)
+	ijfs_state.targets = IjfsLoaders.load_targets_with_antiship(IJFS_TARGETS_PATH, antiship_containers, 1)
 	ijfs_state.munitions = IjfsLoaders.load_munitions(IJFS_MUNITIONS_PATH)
 	ijfs_state.pairings = IjfsLoaders.load_pairings(IJFS_PAIRINGS_PATH)
 	ijfs_state.scenario = IjfsLoaders.load_scenario(IJFS_SCENARIO_PATH)
@@ -446,13 +464,16 @@ func _compute_ijfs_writeback(ledgers: Dictionary) -> Dictionary:
 			var metadata: Dictionary = entry.get("metadata", {})
 			var to_number: Variant = metadata.get("to_number", null)
 			var type_id: Variant = metadata.get("type_id", null)
+			# A struck container removes its whole bin: scale by systems_represented (default 1 for
+			# legacy/static rows). Keyed by encode_key("<to>:<type>") to feed the firing plan.
+			var represented := int(metadata.get("systems_represented", 1))
 			var type_key := String(entry.get("subcategory", ""))
 			if to_number != null and type_id != null:
 				type_key = AntishipCalculator.encode_key(int(to_number), int(type_id))
 			if entry.get("destroyed"):
-				antiship_destroyed_by_type[type_key] = int(antiship_destroyed_by_type.get(type_key, 0)) + 1
+				antiship_destroyed_by_type[type_key] = int(antiship_destroyed_by_type.get(type_key, 0)) + represented
 			if entry.get("suppressed"):
-				antiship_suppressed_by_type[type_key] = int(antiship_suppressed_by_type.get(type_key, 0)) + 1
+				antiship_suppressed_by_type[type_key] = int(antiship_suppressed_by_type.get(type_key, 0)) + represented
 		elif category == "Maneuver Units" and entry.get("destroyed"):
 			# Faithful port of ijfs_maneuver_writeback_service.compute_maneuver_writeback.
 			var metadata: Dictionary = entry.get("metadata", {})
@@ -482,6 +503,229 @@ func _compute_ijfs_writeback(ledgers: Dictionary) -> Dictionary:
 		"sam_destroyed": sam_destroyed,
 		"sam_suppressed": sam_suppressed,
 	}
+
+
+## D3-D: Green coastal anti-ship fires + mine warfare against the Red amphibious crossing. Threads the
+## firing plan (D3-B2) -> crossing (D3-B3) -> mines (D3-C); ship losses convert to BNs lost at sea
+## (ShipLoadingModel) and feed register_ship_losses (the D0-C seam offload consumes). Runs after IJFS
+## (Green systems suppressed/destroyed first) and before offload (only survivors land). Draws from an
+## INDEPENDENT substream so the ground-combat golden invariant stays byte-stable.
+func resolve_antiship_turn(dice: Dice) -> Dictionary:
+	_ensure_antiship_systems()
+	last_antiship_summary = {}
+
+	# The crossing wave = BNs still at sea. No wave -> no anti-ship phase.
+	var bns_at_sea: Array = []
+	var beach_set: Dictionary = {}
+	for entry in ship_reserve:
+		for bn in entry.get("bns", []):
+			bns_at_sea.append(bn)
+		beach_set[int(entry.get("locked_beach", 0))] = true
+	if bns_at_sea.is_empty():
+		return {}
+
+	# Independent substream (same isolation pattern as resolve_ijfs_turn).
+	var as_dice: Dice
+	if dice is SeededDice:
+		as_dice = dice.derive("antiship:%d" % turn_number)
+	else:
+		as_dice = SeededDice.new(hash("antiship:%d" % turn_number))
+
+	var target_beaches: Array = []
+	var target_tos: Array = []
+	var to_seen: Dictionary = {}
+	for beach_id in beach_set.keys():
+		if int(beach_id) <= 0:
+			continue
+		target_beaches.append(int(beach_id))
+		var to_num := Theaters.to_for_beach(int(beach_id))
+		if not to_seen.has(to_num):
+			to_seen[to_num] = true
+			target_tos.append(to_num)
+	target_beaches.sort()
+	target_tos.sort()
+
+	# Apply the IJFS writeback to the Green firing systems: destroyed launchers are permanently removed
+	# from quantity; suppressed launchers sit out this turn (reduced firing %). Fire-all otherwise.
+	var ijfs_destroyed: Dictionary = last_ijfs_writeback.get("antiship_destroyed_by_type", {})
+	var ijfs_suppressed: Dictionary = last_ijfs_writeback.get("antiship_suppressed_by_type", {})
+	var firing_percentages: Dictionary = {}
+	var target_locations: Array = []
+	var loc_seen: Dictionary = {}
+	for system_value in antiship_systems:
+		var system: AntishipSystem = system_value
+		var key := AntishipCalculator.encode_key(system.to_number, system.type_id)
+		var killed := int(ijfs_destroyed.get(key, 0))
+		if killed > 0:
+			system.quantity = maxi(0, system.quantity - killed)
+			system.destroyed += killed
+		if system.type_id == AntishipCalculator.SYSTEM_TYPE_C2:
+			continue
+		var avail := maxi(0, system.quantity)
+		if avail <= 0:
+			continue
+		var suppressed := mini(avail, int(ijfs_suppressed.get(key, 0)))
+		firing_percentages[key] = DEFAULT_ANTISHIP_FIRE_PCT * float(avail - suppressed) / float(avail)
+		if not loc_seen.has(system.to_number):
+			loc_seen[system.to_number] = true
+			target_locations.append(system.to_number)
+	target_locations.sort()
+
+	var crossing_config := AntishipLoaders.load_crossing_config(ANTISHIP_CROSSING_PATH)
+	var combat_catalog := AntishipLoaders.load_combat_catalog(ANTISHIP_CATALOG_PATH)
+	# Magazine gating is left null for this wiring: rebuilt-per-turn it would start full and never bind;
+	# meaningful gating needs persistent cross-turn magazine state (logged follow-up, PLAN.md D3-D).
+	var plan := AntishipCalculator.build_firing_plan(
+		antiship_systems, {}, target_locations, firing_percentages, {}, null)
+	var attrition := AntishipCalculator.resolve_launch_attrition(
+		antiship_systems, plan["allocation_plan"], plan["destroyed_firing_plan"],
+		crossing_config["launch_attrition"], as_dice)
+	var systems_fired: Array = attrition["systems_fired"]
+
+	# Sent fleet (D3-D BN<->ship mapping) + crossing (D3-B3).
+	var sent := _build_sent_fleet(bns_at_sea.size())
+	var to_adjacency: Dictionary = {}
+	for to_num in GameData.active_tos:
+		to_adjacency[to_num] = Theaters.adjacent_tos(to_num)
+	var crossing := AntishipCrossing.resolve_crossing_damage(
+		systems_fired, sent["snapshots"], combat_catalog, crossing_config,
+		target_tos, as_dice, GameData.active_tos, to_adjacency)
+
+	# Combine crossing + mine ship losses; mines run on the surviving crossing fleet pool.
+	var destroyed_by_type: Dictionary = {}
+	var crossing_destroyed: Dictionary = crossing["destroyed_by_ship_type"]
+	var fleet_pool: Dictionary = (sent["sent_by_type"] as Dictionary).duplicate(true)
+	for t in crossing_destroyed.keys():
+		destroyed_by_type[t] = int(destroyed_by_type.get(t, 0)) + int(crossing_destroyed[t])
+		fleet_pool[t] = maxi(0, int(fleet_pool.get(t, 0)) - int(crossing_destroyed[t]))
+	var minefields := AntishipLoaders.load_minefields(ANTISHIP_MINEFIELDS_PATH)
+	var sweepers := AntishipLoaders.available_minesweepers(ANTISHIP_MINEFIELDS_PATH)
+	var mine_res := MineWarfareService.resolve_ship_losses(
+		minefields, target_beaches, _distribute_minesweepers(sweepers, target_beaches), fleet_pool, as_dice)
+	for beach_res in mine_res:
+		for t in (beach_res["ship_loss_counts"] as Dictionary).keys():
+			destroyed_by_type[t] = int(destroyed_by_type.get(t, 0)) + int(beach_res["ship_loss_counts"][t])
+
+	# Ship losses -> BNs lost at sea (carry the fractional accumulator across turns).
+	var losses := ShipLoadingModel.resolve_bn_losses(
+		destroyed_by_type, _ship_capacity_by_type(), bns_at_sea, lost_at_sea_accumulator, as_dice)
+	lost_at_sea_accumulator = float(losses["accumulator"])
+	_remove_bns_from_reserve(losses["lost_ids"])
+	register_ship_losses(int(losses["bn_equiv_lost"]))
+	_apply_ship_losses_to_fleet(destroyed_by_type)
+
+	last_antiship_summary = {
+		"resolved_turn": turn_number,
+		"sent_by_type": sent["sent_by_type"],
+		"unliftable_bn": int(sent["unliftable_bn"]),
+		"systems_fired_count": _sum_systems_fired(systems_fired),
+		"destroyed_by_ship_type": destroyed_by_type,
+		"crossing_casualties": crossing["casualty_totals"],
+		"bns_lost_at_sea": int(losses["bn_equiv_lost"]),
+		"target_beaches": target_beaches,
+		"target_tos": target_tos,
+		"mine_status": _mine_status_summary(mine_res),
+	}
+	EventBus.antiship_resolved.emit(last_antiship_summary)
+	return last_antiship_summary
+
+
+## Build the sent crossing fleet inputs from the surviving fleet: carriers (capacity > 0, non-infra)
+## and the escort + decoy screen (capacity 0). Infrastructure ships do not sail in the assault wave.
+func _build_sent_fleet(bn_count: int) -> Dictionary:
+	var carriers: Array = []
+	var screen: Array = []
+	for ship_def_value in GameData.ship_defs.values():
+		var ship_def: ShipDef = ship_def_value
+		if ship_def.infrastructure and not ship_def.is_decoy:
+			continue
+		var state: ShipState = fleet.get(ship_def.name, null)
+		var ready := int(state.ready) if state != null else 0
+		if ready <= 0:
+			continue
+		if ship_def.carrying_capacity_bn_equiv > 0.0:
+			carriers.append({"ship_type": ship_def.name, "capacity": ship_def.carrying_capacity_bn_equiv, "ready": ready})
+		else:
+			screen.append({"ship_type": ship_def.name, "ready": ready})
+	return ShipLoadingModel.build_sent_snapshots(bn_count, carriers, screen)
+
+
+func _ship_capacity_by_type() -> Dictionary:
+	var caps: Dictionary = {}
+	for ship_def_value in GameData.ship_defs.values():
+		var ship_def: ShipDef = ship_def_value
+		caps[ship_def.name] = ship_def.carrying_capacity_bn_equiv
+	return caps
+
+
+## Apply net ship losses (ready -> destroyed) to the fleet ShipStates, preserving the validate()
+## invariants (the one-turn crossing send/return nets out to a straight ready->destroyed transfer).
+func _apply_ship_losses_to_fleet(destroyed_by_type: Dictionary) -> void:
+	for ship_type in destroyed_by_type.keys():
+		var state: ShipState = fleet.get(String(ship_type), null)
+		if state == null:
+			continue
+		var lost := mini(int(destroyed_by_type[ship_type]), state.ready)
+		if lost <= 0:
+			continue
+		state.ready -= lost
+		state.destroyed += lost
+		state.fleet_surviving_total -= lost
+		assert(state.validate(), "ShipState invariant broken applying anti-ship losses for %s" % ship_type)
+
+
+func _remove_bns_from_reserve(lost_ids: Array) -> void:
+	if lost_ids.is_empty():
+		return
+	var lost: Dictionary = {}
+	for id in lost_ids:
+		lost[String(id)] = true
+	var kept: Array = []
+	for entry in ship_reserve:
+		var bns: Array = entry.get("bns", [])
+		var surviving: Array = []
+		for bn in bns:
+			if not lost.has(String(bn.get("id", ""))):
+				surviving.append(bn)
+		if surviving.is_empty():
+			continue
+		entry["bns"] = surviving
+		kept.append(entry)
+	ship_reserve = kept
+
+
+## Spread the available minesweepers round-robin across the target beaches (ascending beach_id).
+func _distribute_minesweepers(available: int, target_beaches: Array) -> Dictionary:
+	var assignments: Dictionary = {}
+	if target_beaches.is_empty() or available <= 0:
+		return assignments
+	var sorted_beaches: Array = target_beaches.duplicate()
+	sorted_beaches.sort()
+	var i := 0
+	while i < available:
+		var beach_id := int(sorted_beaches[i % sorted_beaches.size()])
+		assignments[beach_id] = int(assignments.get(beach_id, 0)) + 1
+		i += 1
+	return assignments
+
+
+func _sum_systems_fired(systems_fired: Array) -> int:
+	var total := 0
+	for row in systems_fired:
+		total += int(row.get("systems_fired", 0))
+	return total
+
+
+func _mine_status_summary(mine_res: Array) -> Array:
+	var out: Array = []
+	for beach_res in mine_res:
+		out.append({
+			"beach_id": int(beach_res.get("beach_id", 0)),
+			"ships_destroyed": int(beach_res.get("ships_destroyed", 0)),
+			"lane_cleared": bool(beach_res.get("lane_cleared", false)),
+			"status_color": String(beach_res.get("status_color", "")),
+		})
+	return out
 
 
 func _active_red_battalion_units() -> Array:

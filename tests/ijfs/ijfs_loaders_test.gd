@@ -97,47 +97,48 @@ func _write_json(file_name: String, payload: Dictionary) -> String:
 	return path
 
 
-# --- D3-D (1-A): dynamic (TO,type) anti-ship target generation ---------------------------------
+# --- D3-D (1-A): container-level (TO,type) anti-ship target generation -------------------------
 
-func _asys(to_number: int, type_id: int, type_name: String, qty: int, subcategory: String, mobility: String = "mobile") -> AntishipSystem:
-	var s := AntishipSystem.new()
-	s.to_number = to_number
-	s.type_id = type_id
-	s.type_name = type_name
-	s.quantity = qty
-	s.ijfs_profile = {
-		"category": "Anti-Ship Systems",
-		"subcategory": subcategory,
-		"mobility": mobility,
-		"hardness": "hard",
-		"detectability_active": "high",
-		"detectability_hiding": "medium",
+func _container(to_number: int, type_id: int, type_name: String, systems_represented: int, subcategory: String, mobility: String = "moveable") -> Dictionary:
+	return {
+		"to_number": to_number,
+		"type_id": type_id,
+		"type_name": type_name,
+		"systems_represented": systems_represented,
+		"ijfs_profile": {
+			"category": "Anti-Ship Systems",
+			"subcategory": subcategory,
+			"mobility": mobility,
+			"hardness": "soft",
+			"detectability_active": "high",
+			"detectability_hiding": "low",
+		},
 	}
-	return s
 
 
-func test_build_antiship_targets_carries_to_and_type_metadata() -> void:
-	var systems := [
-		_asys(2, 3, "DDG", 2, "Surface Combatant – Destroyer and Frigate"),
-		_asys(3, 5, "CDCM", 1, "Static CDCMs", "static"),
+func test_build_antiship_targets_carries_to_type_and_systems_represented() -> void:
+	var containers := [
+		_container(2, 3, "Air-Launched", 19, "Air-Launched Anti-Ship Missile Platform"),
+		_container(2, 3, "Air-Launched", 18, "Air-Launched Anti-Ship Missile Platform"),
+		_container(3, 5, "CDCM", 24, "Static CDCMs", "static"),
 	]
-	var targets := IjfsLoaders.build_antiship_targets(systems, 1)
-	assert_int(targets.size()).is_equal(3)  # 2 + 1 instances
-	var ddg: Array = []
+	var targets := IjfsLoaders.build_antiship_targets(containers, 1)
+	assert_int(targets.size()).is_equal(3)  # one target per container bin (NOT per system)
+	var bins: Array = []
 	for t in targets:
 		assert_str(t.category).is_equal("Anti-Ship Systems")
 		assert_bool(t.metadata.has("to_number")).is_true()
-		assert_bool(t.metadata.has("type_id")).is_true()
+		assert_bool(t.metadata.has("systems_represented")).is_true()
 		if int(t.metadata["to_number"]) == 2 and int(t.metadata["type_id"]) == 3:
-			ddg.append(t)
-	assert_int(ddg.size()).is_equal(2)
-	assert_str(ddg[0].target_id).is_equal("antiship_to2_type3#001")
-	assert_str(ddg[0].subcategory).is_equal("Surface Combatant – Destroyer and Frigate")
+			bins.append(t)
+	assert_int(bins.size()).is_equal(2)
+	assert_str(bins[0].target_id).is_equal("antiship_to2_type3_c000")
+	assert_int(int(bins[0].metadata["systems_represented"])).is_equal(19)
 
 
 func test_load_targets_with_antiship_replaces_static_rows() -> void:
-	var systems := [_asys(2, 3, "DDG", 2, "Surface Combatant – Destroyer and Frigate")]
-	var merged := IjfsLoaders.load_targets_with_antiship(TARGETS_PATH, systems, 1)
+	var containers := [_container(2, 3, "Air-Launched", 19, "Air-Launched Anti-Ship Missile Platform")]
+	var merged := IjfsLoaders.load_targets_with_antiship(TARGETS_PATH, containers, 1)
 	var dynamic_antiship := 0
 	for t in merged:
 		# No static anti-ship rows survive; every anti-ship target carries (TO,type) metadata.
@@ -145,4 +146,4 @@ func test_load_targets_with_antiship_replaces_static_rows() -> void:
 		if t.category == "Anti-Ship Systems":
 			assert_bool(t.metadata.has("to_number")).is_true()
 			dynamic_antiship += 1
-	assert_int(dynamic_antiship).is_equal(2)
+	assert_int(dynamic_antiship).is_equal(1)  # one container bin
