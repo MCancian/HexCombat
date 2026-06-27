@@ -126,6 +126,26 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-27 — D5-B front-line GameState wiring (via opencode):** Added
+  `GameState.resolve_frontline_phase(polyline_coords) -> Dictionary` + the `_frontline_hex_centers()`
+  adapter (flattens `GameData.hexes` → `[{id,lat,lon}]`, keeping `FrontLineService` pure) +
+  `EventBus.frontline_resolved` + `tools/validate_frontline.gd`. Decisions: (1) **No RNG / not yet in
+  `resolve_turn`.** The redistribution is deterministic (`floor(k*M/N)`), so the method takes no `dice`
+  (ROADMAP's `(coords, dice)` stub dropped the unused param) and is a standalone, deterministically-
+  callable method — turn integration + the polyline-draw UI are split into **D5-D** (a player-drawn
+  polyline is a PLANNING-phase action, so it must be stored and executed at the right point in
+  `resolve_turn`, like move orders — not auto-sequenced). Golden combat is byte-stable because nothing
+  is wired into `resolve_turn` yet and no RNG is consumed. (2) **Affected = Red, non-destroyed brigades
+  whose current hex is in the polyline's hex sequence** (snapshotted before moving, sorted for
+  determinism), redistributed evenly across the sequence — faithful to TIV front_line_service ("only
+  brigades in hexes the line passes through are affected; the front reshuffles along the drawn line").
+  **Red-only is intentional** (TIV filters to one side; the amphibious attacker draws the front) and is
+  commented in-code so it's not mistaken for a bug — a `team` parameter is the extension point if Green
+  ever draws lines. **Retrospective triage** (see `RETROSPECTIVES.md 2026-06-27 D5-B`): acted now —
+  the Red-only clarifying comment (too small for a 2nd subagent); rejected/deferred — pre-caching
+  `_frontline_hex_centers()` (the phase runs once per turn, not per-frame; revisit only if D5-D adds a
+  live drag-preview). No 2nd-subagent refactor warranted this iteration. Gate ALL PHASES GREEN.
+
 - **2026-06-27 — D5-A FrontLineService ported (pure lib; via two opencode subagents):** Ported the
   polyline→hex-sequence core of TIV `services/front_line_service.py` + `core/hex_grid.point_to_hex`
   into `scripts/FrontLineService.gd` (pure RefCounted, static funcs). Faithful: `haversine_km`
@@ -1183,14 +1203,23 @@ Red maneuver BNs redistribute along it. Cleanup phase normalizes ownership after
       `tests/frontline_service_test.gd` (23 cases). Ported + refactored via two opencode subagents;
       gate ALL PHASES GREEN; golden 20260624 → casualties=2, feba=0.76 byte-stable.
 
-- [ ] **D5-B** — UI: HexMap polyline-draw mode — player clicks to add polyline vertices on the
-      map; Confirm button commits → `GameState.resolve_frontline_phase(coords, dice)` applies
-      `FrontLineService` and calls `GameData.set_brigade_hex()` for moved brigades.
-      `tools/validate_frontline.gd` headless scripted polyline test. Gate green.
+- [x] **D5-B** *(2026-06-27)* — GameState wiring (headless; UI split out to D5-D):
+      `GameState.resolve_frontline_phase(polyline_coords) -> Dictionary` (no RNG — deterministic, not
+      yet auto-called from resolve_turn): `_frontline_hex_centers()` adapter flattens GameData.hexes to
+      `[{id,lat,lon}]`; `FrontLineService.find_hexes_for_polyline` → affected = Red non-destroyed
+      brigades in the sequence (sorted, snapshotted) → `distribute_units_along_hexes` →
+      `GameData.set_brigade_hex`; stores/emits `last_frontline_summary` (`EventBus.frontline_resolved`).
+      `tools/validate_frontline.gd` (distribution + empty-polyline + no-brigades + determinism). Gate
+      ALL PHASES GREEN; golden byte-stable. Red-only is intentional (TIV single-side filter; commented).
 
 - [ ] **D5-C** — Cleanup: `GameState.resolve_cleanup_phase()` runs residual attrition + isolated
       unit check + final `recompute_hex_ownership()`. Hook into end-of-turn after combat.
       Gate green.
+
+- [ ] **D5-D** — Front-line UI + turn integration: HexMap polyline-draw mode (player clicks vertices,
+      Confirm commits → `resolve_frontline_phase`), store the drawn polyline as a PLANNING-phase action
+      and execute it at the right point in `resolve_turn`, + an `frontline` LLM observation block
+      (from `last_frontline_summary`). Needs visual verification. Gate green.
 
 ---
 

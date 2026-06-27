@@ -61,6 +61,7 @@ var antiship_containers: Array = []
 # Fractional BN-equiv owed from ship losses, carried across turns (ShipLoadingModel.resolve_bn_losses).
 var lost_at_sea_accumulator: float = 0.0
 var last_antiship_summary: Dictionary = {}
+var last_frontline_summary: Dictionary = {}
 
 
 func _ready() -> void:
@@ -102,6 +103,7 @@ func reset_to_scenario() -> void:
 	antiship_containers = []
 	lost_at_sea_accumulator = 0.0
 	last_antiship_summary = {}
+	last_frontline_summary = {}
 	EventBus.phase_changed.emit(phase)
 
 
@@ -761,6 +763,43 @@ func _mine_status_summary(mine_res: Array) -> Array:
 			"status_color": String(beach_res.get("status_color", "")),
 		})
 	return out
+
+
+# --- D5-A Frontline phase — redistribute Red brigades along a drawn polyline -------------------
+
+func _frontline_hex_centers() -> Array:
+	var centers: Array = []
+	for hex_value in GameData.hexes:
+		var hex: Hex = hex_value
+		centers.append({"id": hex.id, "lat": hex.center.x, "lon": hex.center.y})
+	return centers
+
+
+func resolve_frontline_phase(polyline_coords: Array) -> Dictionary:
+	var hex_sequence: Array = FrontLineService.find_hexes_for_polyline(polyline_coords, _frontline_hex_centers())
+	if hex_sequence.is_empty():
+		last_frontline_summary = {"hex_sequence": [], "affected_brigades": [], "moves": {}}
+		EventBus.frontline_resolved.emit(last_frontline_summary)
+		return last_frontline_summary
+
+	# Only the drawing side's brigades reshuffle along the line — RED here (the amphibious attacker),
+	# mirroring TIV front_line_service's single-side filter. Intentional asymmetry, not a bug; if Green
+	# ever draws front lines this needs a team parameter. Snapshot the affected set BEFORE moving anyone
+	# (no mid-iteration mutation); sort so distribute_units_along_hexes is deterministic.
+	var affected_ids: Array[String] = []
+	for brigade_value in GameData.brigades.values():
+		var brigade: Brigade = brigade_value
+		if brigade.team == Brigade.Team.RED and not brigade.destroyed and brigade.hex_id in hex_sequence:
+			affected_ids.append(brigade.id)
+	affected_ids.sort()
+
+	var moves: Dictionary = FrontLineService.distribute_units_along_hexes(affected_ids, hex_sequence)
+	for brigade_id in moves.keys():
+		GameData.set_brigade_hex(String(brigade_id), String(moves[brigade_id]))
+
+	last_frontline_summary = {"hex_sequence": hex_sequence, "affected_brigades": affected_ids, "moves": moves}
+	EventBus.frontline_resolved.emit(last_frontline_summary)
+	return last_frontline_summary
 
 
 func _active_red_battalion_units() -> Array:

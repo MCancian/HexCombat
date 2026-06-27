@@ -406,3 +406,30 @@ subagent implemented the one approved refactor. Both gated independently by the 
   arbitrary and would be noisy; empty inputs are already handled; dupe-free input is a caller contract.
 - Linear-interp sampling caveat + flat-hex adapter → **record only / brief forward to D5-B**: faithful
   port; the GameData→flat-hex adapter is D5-B's job and must stay out of the pure lib.
+
+---
+
+## 2026-06-27 — D5-B: front-line GameState wiring   (implementer: opencode deepseek-v4-flash-free)
+
+Wiring brief (GameState method + adapter + EventBus signal + headless validator, end with a
+retrospective). Orchestrator gated independently (validator + full gate green, golden byte-stable).
+
+**What would you do differently (implementer):**
+- `_frontline_hex_centers()` rebuilds the 455-entry centers array every call; fine once-per-turn but a
+  D5-D drag-preview that calls it per frame would want it pre-built (hexes are static after load).
+- Red-only repositioning is hardcoded (`Brigade.Team.RED`); intentional and faithful to TIV's
+  single-side filter, but undocumented it reads like a bug — and if Green ever draws lines it needs a
+  team parameter.
+- Turn integration (D5-D) must decide *when* the front-line fires in the resolve_turn sequence; since
+  it's a player-drawn polyline it has to be a PLANNING-phase action stored on GameState and executed at
+  the right point, not auto-sequenced — a new data structure the wiring doesn't yet have.
+
+**Orchestrator triage:**
+- Red-only asymmetry → **acted now (inline, orchestrator)**: added a comment documenting the
+  intentional single-side filter + the `team`-parameter extension point. Too small to commission a 2nd
+  subagent.
+- Pre-cache `_frontline_hex_centers()` → **rejected / deferred (→ D5-D)**: the phase runs once per
+  turn, not per frame; pre-caching adds state to keep in sync for no current benefit. Revisit only if
+  D5-D adds a live drag-preview loop.
+- PLANNING-phase action plumbing for turn integration → **record only / brief forward to D5-D**: real
+  and correct, but it's D5-D's scope (UI + turn sequencing), not this headless wiring step.
