@@ -31,6 +31,7 @@ static func observation(perspective_team: String = "") -> Dictionary:
 		"ship_reserve": _ship_reserve_observations(),
 		"supply_state": _supply_state_observation(),
 		"ijfs": _ijfs_observation(),
+		"antiship": _antiship_observation(),
 		"legal_moves": _legal_move_observations(perspective_team),
 		"legal_commits": _legal_commit_observations(perspective_team),
 		"pending_orders": _pending_orders(),
@@ -244,6 +245,25 @@ static func _ijfs_observation() -> Dictionary:
 		"sam_destroyed": writeback.get("sam_destroyed", 0),
 		"sam_suppressed": writeback.get("sam_suppressed", 0),
 		"maneuver_casualties": writeback.get("maneuver_casualties", []),
+	}
+
+
+# Anti-ship / mine-warfare resolution from the most recent crossing (D3-D). Empty until the first
+# turn a crossing wave is at sea. `bns_lost_at_sea` feeds the offload reserve (BNs removed before
+# landing); `destroyed_by_ship_type` is the combined crossing + mine hull toll.
+static func _antiship_observation() -> Dictionary:
+	var summary: Dictionary = _game_state().last_antiship_summary
+	return {
+		"resolved_turn": summary.get("resolved_turn", 0),
+		"sent_by_type": summary.get("sent_by_type", {}),
+		"unliftable_bn": summary.get("unliftable_bn", 0),
+		"systems_fired_count": summary.get("systems_fired_count", 0),
+		"destroyed_by_ship_type": summary.get("destroyed_by_ship_type", {}),
+		"crossing_casualties": summary.get("crossing_casualties", {}),
+		"bns_lost_at_sea": summary.get("bns_lost_at_sea", 0),
+		"target_beaches": summary.get("target_beaches", []),
+		"target_tos": summary.get("target_tos", []),
+		"mine_status": summary.get("mine_status", {}),
 	}
 
 

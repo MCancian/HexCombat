@@ -60,22 +60,31 @@ Confirm with `git log --oneline -15` + a fresh `pwsh ./tools/run_all_tests.ps1` 
     ammo/readiness subsystem HexCombat lacks). Theater data injected to keep the lib pure.
     `tests/antiship_crossing_test.gd` (15 cases — full `test_antiship_crossing.py` mirror). Golden
     byte-stable. **D3-B (magazine + firing plan + crossing) COMPLETE.**
-  - **D3-D…F — NOT STARTED** ← resume here. **D3-D** (GameState wiring) is the last D3 sub-task
-    before the milestone push: `GameState.resolve_antiship_turn(dice)` threading D3-B2 firing plan →
-    D3-B3 crossing → D3-C mines; map D3-B2 `resolve_launch_attrition` `systems_fired` rows into the
-    crossing `systems_fired` input; build `ship_snapshots` from `GameState.fleet` (ShipState);
-    propagate ship losses → `pending_lost_at_sea` via the D0-C `register_ship_losses` seam; resolve
-    the IJFS (TO,Type) `to_number` join (D4-H Open Question); **tune mine lethality** (D3-C balance
-    flag); extend the LLM observation contract; add `tools/validate_headless_antiship.gd`.
-  - Note: `data/theaters.json` has **no polygons** (only TO adjacency + beach_to_to), so `to_number`
-    stamping needs polygon data (TIV `config/taiwan_TOs.json`) + point-in-polygon — defer to **D3-D**
-    wiring; D3-B2 takes IJFS-destroyed counts as a plain `{(to,type): n}` input.
-- **Final integration** (turn-sequence wiring, LLM observation contract) — after D3.
+  - **D3-D — DONE (2026-06-27, committed). D3 (anti-ship & mine warfare) MILESTONE COMPLETE.**
+    `GameState.resolve_antiship_turn(dice)` threads D3-B2 firing → D3-B3 crossing → D3-C mines (runs
+    after `resolve_ijfs_turn`, before `resolve_offload_turn`). New `scripts/ShipLoadingModel.gd` maps
+    BNs-at-sea → a sent fleet (min-lift greedy carrier fill + escort/decoy screen) and converts
+    destroyed hulls → BNs lost at sea (fractional accumulator carried across turns), removing them from
+    `ship_reserve` and feeding the D0-C `register_ship_losses` seam (D3-D absorbed the formerly-deferred
+    D3-F BN-removal). IJFS suppression joins per **(TO,type)** via container-level dynamic targets
+    (decision 1-A — resolves the D4-H TO-linkage Open Question); **C2 suppression** (type 99) costs a
+    TO 30% of surviving anti-ship firing (`C2_SUPPRESSED_FIRE_MULTIPLIER`, no C2 destruction);
+    bounded per-lane mine danger + first-transit lane clearing (decision 2-iii). LLM observation gains
+    an `antiship` block (+schema/validator/fixture). `tools/validate_headless_antiship.gd`
+    (reconciliation + determinism + C2-reduces-firing) in the gate. Golden 20260624 → casualties=2,
+    feba=0.76 byte-stable. **Balance-flagged, not "tuned":** the crossing is catastrophically lethal
+    (golden scenario loses 33/36 BNs into TO3, whose C2 the IJFS didn't suppress) — see PLAN.md Open
+    Question "D3-D crossing lethality calibration". The ground-casualty half of the D4-H writeback Open
+    Question is still open (no IJFS↔OOB ID bridge).
+- **Final integration** (turn-sequence polish, full LLM observation contract) + **D5** (front-line /
+  cleanup, scoped in PLAN.md) + **anti-ship balance calibration** — after D3. ← **resume here.**
 
-**Backlog order (dependency-checked):** `D4-G → D4-H → D3-A → {D3-B, D3-C, D3-D, D3-E} → D3-F →
-final integration`. D3-B consumes D4-H's per-(TO,Type) destroyed/suppressed output; D3-F consumes
-D0-C's ship layer via the `lost_at_sea` seam. Sub-task specs: approved plan §"Wave 1+ — D4" and
-§"Wave N — D3". TIV oracle file/line refs: `ROADMAP.md` §D3/§D4.
+**Backlog order (dependency-checked):** `D4-G → D4-H → D3-A → {D3-B, D3-C} → D3-D` — **all DONE
+(D4 + D3 milestones complete, pushed)**. Remaining: **anti-ship balance calibration** (PLAN.md Open
+Question "D3-D crossing lethality calibration" — a user/design call, not a port), **D5** (front-line
++ cleanup; sub-tasks D5-A/B/C scoped in PLAN.md), the **ground-casualty IJFS↔OOB linkage** (open half
+of the D4-H Open Question), and **final integration / refactoring** polish. TIV oracle file/line refs:
+`ROADMAP.md` §D3/§D4/§D5. (D3-D absorbed the formerly-separate D3-E/F BN-removal scope.)
 
 ---
 
@@ -180,17 +189,32 @@ Question and cross-link (`see RETROSPECTIVES.md <date>/<subtask>`).
 
 ---
 
-## 6. Immediate next action: D3-D (GameState wiring — last D3 sub-task)
+## 6. Immediate next action (D3 + D4 milestones complete — pushed)
 
-**D3-A/B1/B2/B3/C are DONE** — the full anti-ship calculator + mine warfare are committed and gated:
-`AntishipMagazine` (reservations), `AntishipCalculator` (firing plan + launch attrition),
-`AntishipCrossing` (crossing damage), `MineWarfareService` (mines). Only **D3-D** remains before the
-D3 milestone push: wire `GameState.resolve_antiship_turn(dice)` to thread firing plan → crossing →
-mines, build `ship_snapshots` from `GameState.fleet`, propagate ship losses to `pending_lost_at_sea`
-via the D0-C `register_ship_losses` seam, resolve the IJFS (TO,Type) `to_number` join (D4-H Open
-Question), tune mine lethality (D3-C balance flag), extend the LLM observation contract, and add
-`tools/validate_headless_antiship.gd`. The scoping below is the original D3-B brief, kept for context
-(`resolve_crossing_damage` details now live in `scripts/AntishipCrossing.gd`).
+**All of D3 (anti-ship & mine warfare) and D4 (IJFS) are DONE, gated, and pushed.** Pick the next
+unit from the post-D3 backlog (consult `ROADMAP.md` + `PLAN.md` so choices stay forward-compatible).
+In rough priority order — settle the first with the user, it's a design call:
+
+1. **Anti-ship crossing-lethality calibration** *(balance / design — surface to user first).* D3-D is
+   wired and reconciles, but the crossing is catastrophically lethal (golden scenario loses 33/36 BNs
+   into TO3, whose C2 the IJFS didn't suppress). The C2 lever (30% fire penalty) and aircraft
+   suppression both work but don't bite the assaulted TO. Candidate levers (all additive on existing
+   seams) are enumerated in **PLAN.md → Open Questions → "D3-D crossing lethality calibration"**: IJFS
+   targeting weight on the assault-TO C2, `DEFAULT_ANTISHIP_FIRE_PCT`/`range_tier` tuning, cross-turn
+   magazine state, or accepting a deadly unsupported crossing as intended. **Not a port — do not
+   "fix" it autonomously; get the user's design call.**
+2. **D5 — front-line + cleanup** (sub-tasks D5-A/B/C scoped in `PLAN.md`; TIV oracle in `ROADMAP.md`
+   §D5). The next *port* work: `FrontLineService` (polyline → hex sequence, BN distribution), the
+   polyline-draw UI, and the cleanup phase (residual attrition + isolation + ownership).
+3. **Ground-casualty IJFS↔OOB linkage** — the still-open half of the D4-H writeback Open Question
+   (`maneuver_casualties` is empty; needs an ID bridge between the IJFS target set and the PLA/ROC OOB).
+4. **Final integration / refactoring** polish (see `docs/REFACTOR_NOTES.md`).
+
+Use the per-sub-task loop in §3 throughout (plan → opencode → retrospective → independent gate →
+review diff + lessons → record in PLAN.md Decisions + RETROSPECTIVES.md → commit; push at milestones).
+
+> The historical scoping notes below (D3-A/B brief, D3-A deliverables) are kept as append-only record
+> for the now-complete D3 sub-tasks; they are **not** the next action.
 
 **D3-A is DONE** — the data layer + models + loader are in place: `AntishipLoaders.load_systems`
 returns 650 `AntishipSystem` rows by (TO,type_id); `load_combat_catalog` / `load_crossing_config` /

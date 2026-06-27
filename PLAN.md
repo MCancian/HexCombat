@@ -126,6 +126,49 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-27 — D3-D anti-ship GameState wiring + BN↔ship mapping + C2 suppression (direct; D3
+  milestone complete):** Wired `GameState.resolve_antiship_turn(dice)` to thread D3-B2 firing plan →
+  D3-B3 crossing → D3-C mines, runs after `resolve_ijfs_turn` and before `resolve_offload_turn`
+  (IJFS suppresses, then the crossing attrits the wave, then survivors land). Decisions / divergences:
+  **(1) BN↔ship mapping (`scripts/ShipLoadingModel.gd`, new pure lib).** The user chose to derive
+  the sent ships from BNs at sea (not a reporting-only stub). `build_sent_snapshots` does a **min-lift
+  greedy** load — fill highest-capacity carriers first (capacity desc, ties by ship_type),
+  `sent = mini(ready, ceil(remaining/cap))` — then appends the full escort+decoy screen (all ready
+  sail). `resolve_bn_losses` converts destroyed hulls → `capacity_lost = Σ destroyed×capacity` →
+  `bn_count_lost = floor(capacity_lost + accumulator)`, carrying the fractional + pool-exhaustion
+  remainder across turns, and draws the specific lost BN ids via `dice.shuffle_indices(n)`.
+  Simplifications: every BN is 1.0 BN-equiv; the amphibious-vs-cargo ship-eligibility split is dropped
+  (any carrier lifts any BN). **(2) IJFS (TO,type) suppression join — decision 1-A.** Ported TIV's
+  `build_antiship_targets`: `AntishipLoaders.load_containers` + `IjfsLoaders.build_antiship_targets`
+  emit **one IJFS target per platform-group container** (an "operating bin", `systems_represented`
+  carried in metadata), so strikes hit whole bins and the writeback keys by `encode_key(to,type)` —
+  resolving the **D4-H Open Question** (TO linkage) as a pure data/loader change. Container granularity
+  was essential: per-individual aircraft targets spread IJFS strikes too thin (41% suppressed); bins
+  raised it to ~72%. **(3) C2 suppression (user decision).** A TO's mobile shoot-and-scoot coastal
+  launchers (types 23/24) can't be IJFS-targeted directly; they depend on the TO's C2 node (type 99)
+  for over-the-horizon targeting. So when the IJFS suppresses a TO's C2, every surviving anti-ship
+  system in that TO fires at `C2_SUPPRESSED_FIRE_MULTIPLIER = 0.70` (stacking on direct per-system
+  suppression). **No C2 destruction mechanic** — suppression already models the staff being knocked
+  out. C2 itself never fires (excluded from the firing loop), so the suppressed-C2-TO set is computed
+  up front from the writeback. **(4) Mine danger bound — decision 2-iii.** `MineWarfareService` caps
+  dangerous mines per lane (`DEFAULT_MAX_DANGEROUS_PER_LANE = 10`) until the first successful transit
+  clears+marks the lane. **(5) Phase order + offload seam.** Ship losses remove BNs from
+  `ship_reserve` (D3-D now actually applies `lost_at_sea`, absorbing the formerly-deferred D3-F
+  BN-removal) and feed `register_ship_losses`; `_apply_ship_losses_to_fleet` keeps `ShipState`
+  invariants. **(6) Observation contract.** Added an `antiship` block to `LLMGameAPI.observation`
+  (+ schema required-key + validator required-key + regenerated `red_turn1` fixture), mirroring the
+  D4-H `ijfs` block. **(7) `validate_dos_consumption` relaxed:** the anti-ship phase can legitimately
+  remove the entire landing wave at sea, so a turn may land zero forces and consume zero supply — the
+  full-`resolve_turn` hook now asserts "pool did not increase" (exact consumption math stays covered
+  by the isolated idle/activity cases). Verified: import clean; `tools/validate_headless_antiship.gd`
+  (reconciliation: BNs removed == bns_lost_at_sea == pending_lost_at_sea; fleet `validate()`;
+  determinism; **C2-suppressed TO fires strictly fewer systems**) + full gate ALL PHASES GREEN; golden
+  20260624 → casualties=2, feba=0.76 byte-stable (anti-ship draws its own substream). **Open balance
+  finding (see Open Questions):** for the golden scenario the wave crosses into **TO3**, but the IJFS
+  suppressed **TO4/TO5** C2 (not TO3), so the 30% penalty never applies to the assaulted TO and 33/36
+  BNs are still lost — non-aircraft fire-%/range calibration is the next lever. See
+  `RETROSPECTIVES.md 2026-06-27 D3-D`. **D3 milestone complete — push.**
+
 - **2026-06-27 — D3-B3 anti-ship crossing model ported (direct, count-based path):** Ported TIV
   `services/antiship_crossing.py` into `scripts/AntishipCrossing.gd` (pure RefCounted) — the
   6-stage missile-crossing pipeline (`resolve_crossing_damage` + `CrossingResult` ledgers +
@@ -897,10 +940,20 @@ manifest.
       `test_antiship_mine_warfare_service.py` behaviors + lane/status). Gate green; golden 20260624 →
       casualties=2, feba=0.76 unchanged.
 
-- [ ] **D3-D** — GameState wiring: `GameState.resolve_antiship_turn(dice)` runs calculator,
-      applies ship losses, propagates `lost_at_sea` back to the offload reserve (D1-E's
-      manifest). Suppressed systems flag carried into next turn. `tools/validate_headless_antiship.gd`.
-      Gate green.
+- [x] **D3-D** *(2026-06-27)* — GameState wiring: `GameState.resolve_antiship_turn(dice)` threads
+      firing plan (D3-B2) → crossing (D3-B3) → mines (D3-C); the crossing wave = BNs at sea, mapped to
+      a sent fleet via the new `ShipLoadingModel.gd` (min-lift greedy carrier fill + escort/decoy
+      screen). Ship losses → BNs lost at sea, removed from `ship_reserve` and propagated via the D0-C
+      `register_ship_losses` seam (fractional accumulator carried across turns). IJFS suppression joins
+      per **(TO,type)** via container-level dynamic targets (decision 1-A, resolves the D4-H Open
+      Question); **C2 suppression** (type 99) costs a TO 30% of its surviving anti-ship firing
+      (`C2_SUPPRESSED_FIRE_MULTIPLIER`, no C2 destruction — user decision); bounded per-lane mine
+      danger with first-transit lane clearing (decision 2-iii). LLM observation gains an `antiship`
+      block (+schema/validator/fixture). `tools/validate_headless_antiship.gd` (reconciliation +
+      determinism + C2-reduces-firing). Gate green; golden 20260624 → casualties=2, feba=0.76
+      byte-stable. **D3 (anti-ship & mine warfare) milestone COMPLETE.** *Balance flag:* see Open
+      Questions — for the golden scenario the wave crosses into TO3 whose C2 the IJFS did not suppress,
+      so 33/36 BNs are still lost; non-aircraft fire-%/range calibration is the next tuning lever.
 
 ### D3 — Open Questions  *(RESOLVED 2026-06-25 — see decision below)*
 
@@ -1067,6 +1120,27 @@ Red maneuver BNs redistribute along it. Cleanup phase normalizes ownership after
 _None blocking the slice — the design is settled. Future-phase questions (supply/organization
 interactions, fog of war, terrain via ArcGIS, theater fires) are tracked in `ROADMAP.md`._
 
+### D3-D crossing lethality calibration  *(open — next balance lever; not blocking)*
+
+D3-D's anti-ship crossing is wired and reconciles correctly, but is currently **catastrophically
+lethal**: for the golden scenario (seed 20260624) the assault wave crosses into **TO3** and loses
+**33 of 36 BNs** on turn 1. The two suppression levers in place do not bite here:
+- **C2 suppression** (the user's 30% fire penalty) only applies to a TO whose C2 the IJFS suppressed.
+  For this seed the IJFS suppresses **TO4 and TO5** C2 — *not* TO3 — so the assaulted TO fires at full
+  surviving capacity (283 systems fire). The mechanic is correct and unit-tested (suppressing TO3's C2
+  strictly reduces its firing); it simply doesn't trigger for the TO under assault here.
+- **Aircraft suppression** works (container granularity → ~72% of air-launched platforms
+  destroyed/suppressed), but the **mobile coastal launchers** (types 23/24, ~126 launchers) are
+  shoot-and-scoot and get **zero direct IJFS suppression** — they only degrade via the C2 lever above.
+
+**Candidate levers to settle with the user (design calls, not forced by the source):** (a) should the
+IJFS prioritize the *assaulted* TO's C2 (targeting/value weighting) so C2 suppression actually lands
+where the crossing happens; (b) tune `DEFAULT_ANTISHIP_FIRE_PCT` / per-type `range_tier` so a single
+TO's arsenal isn't fully brought to bear on one wave; (c) magazine gating across turns (currently the
+per-turn rebuild starts full and never binds — see the D3-D wiring note in `GameState`); (d) accept a
+deadly unsupported crossing as intended and require the Red player to suppress the assault-TO C2 first.
+All are additive on the existing seams. Until settled, the crossing is balance-flagged, not "done."
+
 ### D3-B3 per-hull escort magazines  *(open — settle if/when ship ammo is modeled)*
 
 `AntishipCrossing.resolve_crossing_damage` ports TIV's **count-based** crossing stages; TIV's live
@@ -1080,7 +1154,14 @@ escort ammo to the interception/terminal-defense stages (the count-based stage s
 this is an additive swap). Until then escort interception is bounded only by `attempts`/`success_prob`,
 not magazine depletion.
 
-### D4-H writeback (TO + ground-casualty) linkage  *(open — settle when D3 lands)*
+### D4-H writeback (TO + ground-casualty) linkage  *(TO part RESOLVED 2026-06-27 in D3-D; ground-casualty part still open)*
+
+**Update (D3-D, 2026-06-27):** the **(TO,Type)** half is resolved. D3-D's decision 1-A ports TIV's
+`build_antiship_targets` so anti-ship IJFS targets are generated **per container** carrying
+`to_number`/`type_id`, and `last_ijfs_writeback` now keys anti-ship destroyed/suppressed by
+`encode_key(to,type)` — consumed by `resolve_antiship_turn` for the per-(TO,type) firing join and the
+C2 lever. The **ground-casualty (`maneuver_casualties`) half remains open**: it is still empty because
+the IJFS target set and the PLA/ROC OOB have no shared `battalion_id`/`brigade_id` key (see below).
 
 `GameState.last_ijfs_writeback` aggregates IJFS anti-ship destroyed/suppressed by **Type
 (subcategory) only**, and `maneuver_casualties` is **empty**, because `data/ijfs/targets_master.json`

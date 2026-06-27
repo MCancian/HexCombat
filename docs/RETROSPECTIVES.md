@@ -301,3 +301,40 @@ next sub-tasks (D4-G/H, D3) don't relearn them.
   formula+draw-order strategy (AGENTS.md); reconciliation invariants + deterministic cases cover it.
 - Inject-theater-data-for-purity → **record only**: good pattern; reuse for any lib that would
   otherwise reach the GameData autoload.
+
+---
+
+## 2026-06-27 — D3-D: anti-ship GameState wiring + BN↔ship mapping + C2 suppression   (direct)
+
+**What would you do differently (self-retro):**
+- **Surface the balance question with a measurement, not a guess.** The crossing was catastrophic
+  (33/36 BNs lost turn 1). The instinct was to treat it as a wiring bug; the right move was to confirm
+  the reconciliation (BNs removed == bns_lost_at_sea == pending) was *correct* and surface it to the
+  user as a **balance finding**, which kicked off the whole calibration dialogue. A tiny measurement
+  script (`resolve_ijfs → resolve_antiship`, dump systems_fired + bns_lost + which TOs had C2
+  suppressed) was worth more than any amount of staring at the firing loop.
+- **Model the real granularity before tuning probabilities.** Two wrong turns chasing lethality: (a)
+  expanding aircraft to 334 individual targets spread IJFS strikes too thin (41% suppressed) — TIV
+  models them as 18 operating *bins*; restoring container granularity got it to ~72%; (b) raising
+  aircraft `detectability_hiding` to "high" to push suppression — reverted, because strike *capacity*,
+  not detection, was the limiter. Lesson: match the source's unit-of-account first; only then tune.
+- **Find the structural cause of a mechanic's non-effect.** The C2 lever is correct and unit-tested,
+  but it doesn't move the golden scenario because the IJFS suppresses TO4/TO5 C2 while the wave
+  assaults TO3. That's not a bug — it's an emergent targeting gap. Worth stating explicitly in the
+  Open Question so the next loop doesn't "fix" a working mechanic.
+- **Fragile/under-tested:** per-turn magazines are rebuilt full each turn so they never bind (logged
+  in the wiring comment) — cross-turn magazine state is unimplemented; the suppressed-systems "carry
+  to next turn" is effectively re-derived from the IJFS writeback each turn rather than persisted on
+  the systems; and the crossing lethality itself is unbalanced (Open Question). The reconciliation +
+  determinism + C2-reduces-firing validators are the guardrails that *are* solid.
+
+**Orchestrator triage:**
+- Measurement-over-guess for balance → **brief forward**: when a wired phase produces an extreme
+  outcome, first prove reconciliation, then measure and surface — don't assume wiring bug.
+- Container granularity (TIV operating bins) → **acted now**: reworked aircraft + all platform groups
+  to per-container IJFS targets (decision 1-A); committed. Detectability tweak reverted.
+- Crossing lethality unbalanced → **act later** (→ Open Question "D3-D crossing lethality
+  calibration"): surfaced to the user; the candidate levers (assault-TO C2 targeting, fire-%/range,
+  cross-turn magazines) are design calls for the next loop / the user.
+- Cross-turn magazine state + persisted suppression flag → **act later** (→ noted in `GameState`
+  wiring comment + Open Questions): additive once a persistent per-turn anti-ship state seam exists.

@@ -23,6 +23,7 @@ const REQUIRED_OBSERVATION_KEYS := [
 	"ship_reserve",
 	"supply_state",
 	"ijfs",
+	"antiship",
 	"legal_moves",
 	"legal_commits",
 	"pending_orders",

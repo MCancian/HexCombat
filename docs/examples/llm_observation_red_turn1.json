@@ -1,4 +1,16 @@
 {
+	"antiship": {
+		"bns_lost_at_sea": 0,
+		"crossing_casualties": {},
+		"destroyed_by_ship_type": {},
+		"mine_status": {},
+		"resolved_turn": 0,
+		"sent_by_type": {},
+		"systems_fired_count": 0,
+		"target_beaches": [],
+		"target_tos": [],
+		"unliftable_bn": 0
+	},
 	"brigades": [
 		{
 			"battalions": 5,

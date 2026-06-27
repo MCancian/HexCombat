@@ -26,6 +26,11 @@ const ANTISHIP_MINEFIELDS_PATH := "res://data/antiship/minefields.json"
 # fire-all (maximally lethal: the whole coastal arsenal engages every wave). Lethality balance knob —
 # scenario-configurable firing/detection percentages are a follow-up (see PLAN.md D3-D).
 const DEFAULT_ANTISHIP_FIRE_PCT := 100.0
+# When a TO's C2 node (type 99) is suppressed by the IJFS, the TO loses over-the-horizon targeting
+# for its anti-ship systems (esp. mobile shoot-and-scoot coastal launchers that can't be IJFS-targeted
+# directly). Suppressed-C2 TOs fire at this fraction of their surviving capacity. There is NO C2
+# destruction mechanic — suppression already models the staff being knocked out (user decision, D3-D).
+const C2_SUPPRESSED_FIRE_MULTIPLIER := 0.70
 
 enum Phase { PLANNING, RESOLUTION, END }
 
@@ -549,6 +554,17 @@ func resolve_antiship_turn(dice: Dice) -> Dictionary:
 	# from quantity; suppressed launchers sit out this turn (reduced firing %). Fire-all otherwise.
 	var ijfs_destroyed: Dictionary = last_ijfs_writeback.get("antiship_destroyed_by_type", {})
 	var ijfs_suppressed: Dictionary = last_ijfs_writeback.get("antiship_suppressed_by_type", {})
+	# TOs whose C2 (type 99) the IJFS suppressed lose over-the-horizon targeting: every surviving
+	# anti-ship system in that TO fires at C2_SUPPRESSED_FIRE_MULTIPLIER of capacity. Computed up front
+	# because C2 itself is skipped (continue) in the firing loop below and never fires.
+	var c2_suppressed_tos: Dictionary = {}
+	for system_value in antiship_systems:
+		var c2_system: AntishipSystem = system_value
+		if c2_system.type_id != AntishipCalculator.SYSTEM_TYPE_C2:
+			continue
+		var c2_key := AntishipCalculator.encode_key(c2_system.to_number, c2_system.type_id)
+		if int(ijfs_suppressed.get(c2_key, 0)) > 0:
+			c2_suppressed_tos[c2_system.to_number] = true
 	var firing_percentages: Dictionary = {}
 	var target_locations: Array = []
 	var loc_seen: Dictionary = {}
@@ -565,7 +581,11 @@ func resolve_antiship_turn(dice: Dice) -> Dictionary:
 		if avail <= 0:
 			continue
 		var suppressed := mini(avail, int(ijfs_suppressed.get(key, 0)))
-		firing_percentages[key] = DEFAULT_ANTISHIP_FIRE_PCT * float(avail - suppressed) / float(avail)
+		var fire_pct := DEFAULT_ANTISHIP_FIRE_PCT * float(avail - suppressed) / float(avail)
+		# C2 suppression stacks on direct per-system suppression: the TO loses targeting for the rest.
+		if c2_suppressed_tos.has(system.to_number):
+			fire_pct *= C2_SUPPRESSED_FIRE_MULTIPLIER
+		firing_percentages[key] = fire_pct
 		if not loc_seen.has(system.to_number):
 			loc_seen[system.to_number] = true
 			target_locations.append(system.to_number)

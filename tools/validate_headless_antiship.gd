@@ -27,6 +27,7 @@ func _initialize() -> void:
 	GameData.load_all()
 	_validate_run_and_reconcile()
 	_validate_determinism()
+	_validate_c2_suppression_reduces_firing()
 	_finish()
 
 
@@ -79,6 +80,43 @@ func _validate_determinism() -> void:
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
 	var second := JSON.stringify(GameState.resolve_antiship_turn(SeededDice.new(SEED)))
 	_assert_true("same seed -> identical anti-ship summary", first == second)
+
+
+# C2 suppression (D3-D): suppressing a TO's C2 node (type 99) costs that TO over-the-horizon
+# targeting, so its surviving anti-ship systems fire at 70% (C2_SUPPRESSED_FIRE_MULTIPLIER). We run
+# the same seeded writeback twice -- once with the assaulted TO's C2 intact, once suppressed -- and
+# assert strictly fewer systems fire when its C2 is suppressed.
+func _validate_c2_suppression_reduces_firing() -> void:
+	GameState.reset_to_scenario()
+	GameState.turn_number = 1
+	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
+	# Snapshot the deterministic writeback, then find the TO actually under assault.
+	var writeback: Dictionary = (GameState.last_ijfs_writeback as Dictionary).duplicate(true)
+	var probe: Dictionary = GameState.resolve_antiship_turn(SeededDice.new(SEED))
+	var target_tos: Array = probe.get("target_tos", [])
+	if target_tos.is_empty():
+		_fail("C2 suppression: no assaulted TO to probe")
+		return
+	var assault_to := int(target_tos[0])
+	var c2_key := AntishipCalculator.encode_key(assault_to, AntishipCalculator.SYSTEM_TYPE_C2)
+
+	var fired_intact := _fired_count_with_c2(writeback, c2_key, 0)
+	var fired_suppressed := _fired_count_with_c2(writeback, c2_key, 1)
+	_assert_true(
+		"C2-suppressed TO%d fires fewer systems (%d < %d)" % [assault_to, fired_suppressed, fired_intact],
+		fired_suppressed < fired_intact)
+
+
+func _fired_count_with_c2(writeback: Dictionary, c2_key: String, suppressed_value: int) -> int:
+	GameState.reset_to_scenario()
+	GameState.turn_number = 1
+	var wb: Dictionary = writeback.duplicate(true)
+	var supp: Dictionary = (wb.get("antiship_suppressed_by_type", {}) as Dictionary).duplicate(true)
+	supp[c2_key] = suppressed_value
+	wb["antiship_suppressed_by_type"] = supp
+	GameState.last_ijfs_writeback = wb
+	var summary: Dictionary = GameState.resolve_antiship_turn(SeededDice.new(SEED))
+	return int(summary.get("systems_fired_count", 0))
 
 
 func _assert_true(label: String, value: bool) -> void:
