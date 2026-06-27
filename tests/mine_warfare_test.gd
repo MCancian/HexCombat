@@ -95,3 +95,39 @@ func test_status_color_thresholds() -> void:
 	assert_str(MineWarfareService.status_color(5, false)).is_equal("amber")
 	assert_str(MineWarfareService.status_color(0, false)).is_equal("green")
 	assert_str(MineWarfareService.status_color(99, true)).is_equal("green")
+
+
+# --- D3-D (decision 2-iii): bounded per-lane danger + first-transit lane clearing ---------------
+
+func test_large_minefield_danger_is_bounded_per_lane() -> void:
+	# 100-mine field (the shipped config) no longer sinks ~100 hulls: the default cap (10) bounds it.
+	var mf := _mf(2, 100)
+	var pool := {"LST": 50}
+	var res := MineWarfareService.resolve_ship_losses([mf], [2], {2: 0}, pool, SeededDice.new(3))
+	assert_int(int(res[0]["ships_destroyed"])).is_equal(10)
+	assert_dict(res[0]["ship_loss_counts"]).is_equal({"LST": 10})
+	assert_int(int(pool["LST"])).is_equal(40)
+	assert_int(mf.remaining_mines).is_equal(90)  # 90 mines remain in the wider field
+	assert_bool(mf.lane_cleared).is_true()  # but the transit lane is cleared + marked
+	assert_str(res[0]["status_color"]).is_equal("green")
+
+
+func test_cleared_lane_stays_safe_on_next_transit() -> void:
+	var mf := _mf(2, 100)
+	var pool := {"LST": 50}
+	MineWarfareService.resolve_ship_losses([mf], [2], {2: 0}, pool, SeededDice.new(3))  # turn 1 clears lane
+	assert_bool(mf.lane_cleared).is_true()
+	var res2 := MineWarfareService.resolve_ship_losses([mf], [2], {2: 0}, pool, SeededDice.new(3))  # turn 2
+	assert_int(int(res2[0]["ships_destroyed"])).is_equal(0)
+	assert_dict(res2[0]["ship_loss_counts"]).is_empty()
+	assert_int(int(pool["LST"])).is_equal(40)  # untouched on the cleared lane
+	assert_str(res2[0]["status_color"]).is_equal("green")
+
+
+func test_custom_lane_cap_and_sweepers_within_lane() -> void:
+	var mf := _mf(2, 100)
+	var pool := {"LST": 50}
+	# Cap 5 -> 5 lane mines; 2 sweepers clear 2, the remaining 3 sink ships.
+	var res := MineWarfareService.resolve_ship_losses([mf], [2], {2: 2}, pool, SeededDice.new(3), 5)
+	assert_int(int(res[0]["newly_swept"])).is_equal(2)
+	assert_int(int(res[0]["ships_destroyed"])).is_equal(3)
