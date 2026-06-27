@@ -126,6 +126,25 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-27 — Gate now distinguishes the Godot 4.7 teardown flake from real failures:**
+  `tools/run_all_tests.ps1` used to decide each phase purely on the process EXIT CODE, so the known
+  Godot 4.7 *teardown* crash (the engine intermittently segfaults / corrupts the heap during
+  SceneTree process SHUTDOWN when many headless scripts run back-to-back — exit `-1073741819`
+  0xC0000005, `-1073740940` 0xC0000374, or a corrupted GdUnit `100`) flipped a fully-passing run to a
+  red `FAILED`. This repeatedly wasted runs and even misled the opencode implementer into reporting a
+  "pre-existing crash." **Fix:** the verdict is now taken from the OUTPUT, with crash exit codes
+  downgraded to warnings when results are clean. Per phase: Import fails only on a SCRIPT/Parse/Compile
+  error; Smoke on a missing marker / SCRIPT ERROR; each validator on a `^FAIL`/SCRIPT-ERROR marker or
+  a non-crash nonzero exit (a real failure `quit(1)`s → exit 1, which is NOT a crash code, so it still
+  fails); GdUnit on the summed `errors|failures` across its `Statistics:` lines (>0 = fail; no
+  statistics = fail), never on the exit code. A known teardown-crash code with otherwise-clean output
+  is logged as a `~ teardown-flake … ignored` warning and the gate still exits 0 (`ALL PHASES GREEN
+  (with N teardown-flake warning(s) ignored)`). Verified: ran the gate 3×; one run hit the flake (2
+  warnings) and still correctly reported GREEN / exit 0, the other two were clean. Real failures still
+  fail (validator quit(1)=exit 1 and GdUnit failures>0 are not crash codes / are caught by statistics).
+  Net: green output → green gate, and the flake is visible-but-not-fatal. This supersedes the manual
+  "re-run in isolation to confirm the flake" dance noted in the 2026-06-24/06-27 decisions.
+
 - **2026-06-27 — D3-D balance pass: multi-day pre-invasion IJFS + screen-preferential targeting
   (implemented via opencode, user-requested levers):** Two user-chosen levers to make the crossing
   survivable. **(1) Multi-day pre-invasion IJFS (`GameState`).** The first IJFS of the game now runs
