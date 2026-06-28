@@ -506,3 +506,42 @@ point #6 (unknown-`kind` `push_error` fallthrough) before reporting.
 - #4 second validator datapoint → **record only:** snapshot-equality against the gate-trusted oracle is
   already a strong proof; revisit if `play_turn`'s order-iteration logic grows.
 - #6 unknown-`kind` guard → **already applied by the implementer** (verified in the diff).
+
+---
+
+## 2026-06-28 — turn-event-log: per-turn structured event log (TurnEvent)   (implementer: opencode deepseek-v4-flash-free)
+
+Second Track E AI-readiness seam (REFACTOR_NOTES.md M5b/M6 + the play_turn retrospective's #1). Brief:
+typed `TurnEvent` Resource + a pure `TurnEventLog.build(state) -> Array[TurnEvent]` deriving an ordered
+turn trace from the data `resolve_turn` already stores, populated into `TurnResult.events` by `play_turn`.
+Explicit constraint: non-invasive (read stored state only) so the golden invariant stays byte-stable.
+Gated independently (validator PASS; full gate ALL PHASES GREEN; golden 20260624 → casualties=2, feba=0.76
+byte-stable).
+
+**What would you do differently (implementer):**
+1. `kind` as String vs typed enum — String is fine at the JSON/AI serialization boundary; refactor to an
+   enum only when the event log becomes a first-class persistence format with a second consumer.
+2. One combat rollup event vs per-casualty/per-FEBA/per-ownership sub-events — rollup is correct for the AI
+   observation surface; `data` already nests `combat_detail` with the full casualty breakdown, so finer
+   granularity is derivable without splitting. Premature to split now.
+3. Deriving move/commit from the buffered orders is intentionally fragile — it forces consumption of
+   `result.events` before `begin_next_turn()` clears the buffers; a future path that advances first would
+   silently drop the moves. Alternative (snapshot orders into TurnResult during play_turn) duplicates state.
+4. Surface the event log through `LLMGameAPI` next — appending `"events"` to the observation/action result
+   gives LLM agents a structured turn trace without parsing combat summaries; `TurnEvent.to_dict()` makes it
+   trivial. Highest-impact next step.
+5. For save/replay journaling: add `to_line()`/`from_line()` (flat + JSON-encoded `data`) and a per-event
+   `turn_number` so a flat multi-turn journal reconstructs without the TurnResult wrapper.
+
+**Orchestrator triage:**
+- #3 ordering dependency → **ACTED NOW (inline):** the dependency is fully contained inside `play_turn`
+  (it builds the log immediately after `resolve_turn`, before any advance), so it's not externally
+  exposed — but added a docstring to `TurnEventLog.build` documenting that move/commit read the still-buffered
+  orders and the call must precede `begin_next_turn` if ever moved. Comment-only; re-ran the validator (PASS).
+- #4 surface through `LLMGameAPI` → **PROMOTED to the next backlog unit** (`PLAN.md` Decisions 2026-06-28 +
+  ORCHESTRATOR_HANDOFF §6). Natural next Track E step; `to_dict()` is the ready serialization bridge.
+- #1 enum `kind` → **record only:** keep String at the boundary; revisit on a second consumer.
+- #2 per-casualty sub-events → **record only:** rollup + nested `combat_detail` is sufficient; split only if a
+  granular replay/attribution consumer appears.
+- #5 `to_line`/`from_line` + per-event `turn_number` → **record / act later (persistence track):** cheap and
+  genuinely useful for flat journals, but premature without a save/replay consumer.

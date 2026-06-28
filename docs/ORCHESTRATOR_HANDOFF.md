@@ -198,10 +198,16 @@ D5-B (`resolve_frontline_phase`), D5-C (cleanup phase) are committed; the only D
 (polyline-draw UI — needs visual verification, NOT autonomous-overnight-safe). The first **Track E**
 (AI-readiness) seam also landed: `GameState.play_turn(red_orders, green_orders, dice) -> TurnResult` +
 `GameData.snapshot_state()` (see `PLAN.md` Decisions 2026-06-28 / `RETROSPECTIVES.md 2026-06-28
-play_turn-facade`). **Next autonomous-safe unit:** a **typed per-turn structured event log** (extend
-`TurnResult` with `Array[TurnEvent]` — movements/combats/casualties/FEBA/retreats/ownership — the seam
-the play_turn retrospective + REFACTOR_NOTES M5b/M6 both point at; pure-logic, headless-verifiable). The
-remaining non-autonomous items (UI, design calls, data-blocked linkage) are unchanged below.
+play_turn-facade`), followed by the **per-turn structured event log** — `scripts/model/TurnEvent.gd` +
+pure `scripts/TurnEventLog.gd` (`build(state) -> Array[TurnEvent]`) populating `TurnResult.events` in
+`play_turn`; ordered `ijfs→antiship→move→commit→combat→frontline?→cleanup?`, derived non-invasively from
+stored `last_*` state (golden byte-stable). See `PLAN.md`/`RETROSPECTIVES.md 2026-06-28 turn-event-log`.
+**Next autonomous-safe unit:** **surface the event log + `TurnResult`/snapshot through `LLMGameAPI`** — its
+`apply_agent_response` `end_turn` path already calls `resolve_turn`+`begin_next_turn` but returns no
+structured record of *what happened*; route it through `play_turn` and append a serialized `events` (and/or
+`turn_result`) block to the action result (+schema/validator/fixture, per the existing `antiship`/`ijfs`
+observation-block pattern). Pure-logic + headless-verifiable. The remaining non-autonomous items (UI, design
+calls, data-blocked linkage) are unchanged below.
 
 Pick the next unit from the post-D3 backlog (consult `ROADMAP.md` + `PLAN.md` so choices stay
 forward-compatible). In rough priority order — settle the first with the user, it's a design call:

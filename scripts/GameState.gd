@@ -1121,6 +1121,7 @@ func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> Tur
 	result.antiship_summary = last_antiship_summary.duplicate(true)
 	result.frontline_summary = last_frontline_summary.duplicate(true)
 	result.cleanup_summary = last_cleanup_summary.duplicate(true)
+	result.events = TurnEventLog.build(self)
 	return result
 
 

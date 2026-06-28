@@ -126,6 +126,31 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-28 — Track E AI-readiness: per-turn structured event log (`TurnEvent`) (via opencode):**
+  Added `scripts/model/TurnEvent.gd` (typed Resource: `seq, kind, hex_id, team, data` + `to_dict()`) and
+  `scripts/TurnEventLog.gd` (pure static `build(state) -> Array[TurnEvent]`), and populated `TurnResult.events`
+  from it in `play_turn`. The log is an **ordered, turn-execution-order** trace: `ijfs` → `antiship` → `move`
+  (Red then Green) → `commit` → `combat` (one per contested hex) → `frontline?` → `cleanup?`, each phase
+  rollup emitted only when its `last_*` summary is non-empty. Decisions: (1) **Pure non-invasive derivation
+  from already-stored state** — `TurnEventLog.build` reads only GameState `last_*` fields + the order buffers
+  via `orders_for`/`commitments_for`; `resolve_turn`/combat math/RNG are untouched, so the golden invariant
+  stays byte-stable (this was the explicit design constraint, not an accident). (2) **`combat` events copy the
+  whole combat-summary dict verbatim** (deep-copied) rather than re-projecting fields — faithful and avoids
+  type assumptions about the loss fields; `combat_detail` (full casualty/roll breakdown) rides along, so
+  per-casualty granularity stays derivable without splitting events. (3) **`move`/`commit` events derive from
+  the still-buffered orders**, which `begin_next_turn` clears — `play_turn` builds the log immediately after
+  `resolve_turn` (before any advance), so the dependency is contained inside `play_turn`, not exposed to
+  callers; documented in `TurnEventLog.build`'s docstring (orchestrator-added). (4) **`kind` is a String, not
+  an enum** — it's a JSON serialization boundary for AI agents; revisit only when a second consumer appears.
+  Verification: extended `tools/validate_play_turn.gd` asserts the golden turn's log is non-empty, contains a
+  `move` for the Red mover → target hex and a `combat` at the target hex; the existing
+  `result.to_dict() == result2.to_dict()` determinism assert now covers event-log determinism for free. Gate
+  ALL PHASES GREEN; golden 20260624 → casualties=2, feba=0.76 byte-stable. **Retrospective triage** (see
+  `RETROSPECTIVES.md 2026-06-28 turn-event-log`): acted now on the ordering-dependency docstring; **promoted
+  surfacing the event log through `LLMGameAPI`** (action result / observation) to the next unit; recorded
+  enum-`kind`, per-casualty sub-events, and `to_line`/`from_line` save-replay helpers (+ per-event
+  `turn_number`) for the persistence track.
+
 - **2026-06-28 — Track E AI-readiness: `play_turn` headless façade + `snapshot_state` (via opencode):**
   Added `scripts/model/TurnResult.gd` (typed Resource mirroring the `last_*` summary fields + `to_dict()`),
   `GameState.play_turn(red_orders, green_orders, dice) -> TurnResult`, and `GameData.snapshot_state()`

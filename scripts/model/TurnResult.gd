@@ -9,8 +9,13 @@ class_name TurnResult
 @export var antiship_summary: Dictionary = {}
 @export var frontline_summary: Dictionary = {}
 @export var cleanup_summary: Dictionary = {}
+@export var events: Array = []
 
 func to_dict() -> Dictionary:
+	var events_out: Array = []
+	for e in events:
+		var te: TurnEvent = e
+		events_out.append(te.to_dict())
 	return {
 		"turn_number": turn_number,
 		"contested_hexes": contested_hexes.duplicate(),
@@ -20,4 +25,5 @@ func to_dict() -> Dictionary:
 		"antiship_summary": antiship_summary.duplicate(true),
 		"frontline_summary": frontline_summary.duplicate(true),
 		"cleanup_summary": cleanup_summary.duplicate(true),
+		"events": events_out,
 	}

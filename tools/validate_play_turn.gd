@@ -51,6 +51,14 @@ func _initialize() -> void:
 	if TARGET_HEX not in result.contested_hexes:
 		_fail("result.contested_hexes missing %s: %s" % [TARGET_HEX, str(result.contested_hexes)])
 
+	# Event-log assertions.
+	if result.events.is_empty():
+		_fail("result.events is empty")
+	elif not _has_event(result.events, "move", func(e): return e.data["brigade_id"] == RED_MOVER_ID and e.data["target_hex"] == TARGET_HEX):
+		_fail("result.events missing move for %s -> %s" % [RED_MOVER_ID, TARGET_HEX])
+	elif not _has_event(result.events, "combat", func(e): return e.hex_id == TARGET_HEX):
+		_fail("result.events missing combat at %s" % TARGET_HEX)
+
 	# Determinism: run Path B a second time.
 	GameData.load_all()
 	GameState.reset_to_scenario()
@@ -89,6 +97,13 @@ func _assert_dicts_equal(label: String, a: Dictionary, b: Dictionary) -> void:
 func _assert_equal_int(label: String, actual: int, expected: int) -> void:
 	if actual != expected:
 		_fail("%s: expected %d, got %d" % [label, expected, actual])
+
+func _has_event(events: Array, kind: String, pred: Callable) -> bool:
+	for e in events:
+		var te: TurnEvent = e
+		if te.kind == kind and pred.call(te):
+			return true
+	return false
 
 
 func _fail(message: String) -> void:
