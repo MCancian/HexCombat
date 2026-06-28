@@ -645,3 +645,38 @@ PHASES GREEN — flake-free; golden 20260624 → casualties=2, feba=0.76 byte-st
 - #3 assert wrapper → **record** (pairs with #1).
 - #4 reusable validate_invariants() pattern → **record:** good direction; extract once a third container needs
   it (YAGNI until then).
+
+---
+
+## 2026-06-28 — selfplay-harness: headless AI-vs-AI self-play regression gate   (implementer: opencode deepseek-v4-flash-free)
+
+Track-E capstone. Brief: a gated validator that plays 4 turns through LLMGameAPI with a deterministic policy
+and asserts full-game reproducibility + index health. Drives only existing tested APIs; no game-logic change.
+Gated independently and THOROUGHLY (the riskiest unit so far): validator deterministic across two separate
+Godot processes; full gate run TWICE → ALL PHASES GREEN both, golden 20260624 → casualties=2, feba=0.76
+byte-stable both. The trivial policy drives combat in all 4 turns.
+
+**What would you do differently (implementer):**
+1. A gated multi-turn self-play validator is a good regression gasket (the per-turn determinism check is
+   stronger than a single-turn test), but the trivial "first adjacent hex" policy doesn't stress admin moves,
+   commitments, zero-org brigades, or stacking. A fuzzier (still deterministic) policy would be higher-value.
+2. Extract the policy into a reusable `tools/policies/<name>.gd` (`static build_actions(observation)->Array`)
+   so the validator is policy-agnostic and real agents/stress profiles plug in.
+3. Add a `GameState.play_game(policy, turns, seed) -> {snapshot,digests,violations}` headless-driver
+   entrypoint — the load_all/reset/loop bootstrap is now duplicated across three validators; DRY it.
+4. Add `export_turn_log(game_result)` writing deterministic JSON-per-turn to reports/ for review — TurnResult.events
+   already has the right structure, just needs a serialization helper.
+
+**Orchestrator triage:**
+- #3 `GameState.play_game(...)` entrypoint + #2 reusable policy helper → **PROMOTED to the next unit**
+  (`PLAN.md` Decisions 2026-06-28 + ORCHESTRATOR_HANDOFF §6). Genuine DRY + the pluggable-policy seam a real
+  agent-vs-agent mode needs. Scope note for the follow-up: add `play_game` + refactor the self-play validator
+  to use it, but LEAVE `validate_headless_turn.gd` (the golden validator) untouched to avoid perturbing the
+  golden assertion.
+- #1 fuzzier policy → **record:** a deterministic-but-varied policy (occasional admin/stacking) would harden
+  coverage; fold into the reusable-policy helper.
+- #4 export_turn_log → **record (save/replay track):** pairs with the event log; defer until a replay/instrument
+  consumer exists.
+- **Arc note:** this caps the Track-E AI-readiness arc. After the `play_game` extraction the autonomous backlog
+  is design-calls (calibration, victory conditions), blocked (UI, IJFS↔OOB linkage), or risky typed-model
+  migrations — at which point the right move is a clean handoff, not manufactured work.

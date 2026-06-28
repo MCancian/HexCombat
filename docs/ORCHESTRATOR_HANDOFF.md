@@ -222,18 +222,26 @@ follow-up — a debug-gated auto-assert in the mutators / end of `resolve_turn` 
 (a new hot-path assert risks destabilizing currently-green tests on a benign transient desync; do it with
 attention, not unattended).
 
-**Autonomous backlog status (2026-06-28, after 5 Track-E/hardening units):** genuinely thin. Remaining
-opencode-suitable, autonomous-safe candidates, in rough value order:
-1. **Bulk `LLMGameAPI.submit_and_resolve(red_orders, green_orders, seed)`** — a thin wrapper over `play_turn`
-   that lets a headless AI driver submit a whole turn in one call (vs N action dicts); advances the Track-E
-   agent-vs-agent goal. Modest but real value, low risk.
-2. **`validate_data_layer()` aggregation** — extend invariant-guarding to the other indexes; several are
-   low-drift today, so marginal until a third index needs it.
+The **headless AI-vs-AI self-play harness** (`tools/validate_headless_selfplay.gd`) is **DONE 2026-06-28** —
+the Track-E capstone: a gated, deterministic 4-turn self-play game over the existing action API, asserting
+full-game reproducibility + index health (cross-process determinism + 2× gate stability verified). See
+`PLAN.md`/`RETROSPECTIVES.md 2026-06-28 selfplay-harness`.
+
+**Autonomous backlog status (2026-06-28, after 6 Track-E/hardening units — play_turn façade → event log → LLM
+surfacing → result schema → index guard → self-play harness):** essentially exhausted. The one remaining
+clearly-safe, opencode-suitable candidate:
+1. **`GameState.play_game(policy: Callable, turns, seed) -> {snapshot, digests, violations}` headless-driver
+   entrypoint + a reusable `tools/policies/<name>.gd` helper** — DRYs the load/reset/loop bootstrap now
+   duplicated across validators and makes real agent policies pluggable (the seam an actual agent-vs-agent mode
+   needs). Scope note: add it + refactor `validate_headless_selfplay` to use it, but LEAVE
+   `validate_headless_turn.gd` (the golden validator) untouched. Modest value, low risk.
+
 **Needs the user (NOT autonomous):** crossing-lethality calibration + `game_over`/`winner` victory conditions
-(design calls); the debug-gated auto-assert (do deliberately); typed `HexState`/`CombatSummary` Resource
-migrations (touch many call sites — high regression risk for the free model). **Blocked:** D5-D polyline UI
-(needs visual verification); the ground-casualty IJFS↔OOB linkage (no ID bridge in source data).
-**When these conveniences are exhausted, stop and hand off rather than manufacture risky work.**
+(design calls); the debug-gated runtime-index auto-assert (do deliberately — risks destabilizing green tests);
+typed `HexState`/`CombatSummary` Resource migrations (touch many call sites — high regression risk for the
+free model). **Blocked:** D5-D polyline UI (needs visual verification); the ground-casualty IJFS↔OOB linkage
+(no ID bridge in source data). **After the `play_game` extraction the safe autonomous backlog is exhausted —
+the correct move is a clean handoff (a status note here + stop the loop), NOT manufactured/risky work.**
 
 > **Note on the deeper AI-driver track (surfaced for the user — NOT autonomous):** a `game_over`/`winner`
 > field requires defining **victory conditions**, which is new game-design, not a faithful TIV port — that is

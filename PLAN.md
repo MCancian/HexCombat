@@ -126,6 +126,27 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-28 — Track E capstone: headless AI-vs-AI self-play harness (via opencode).** Added
+  `tools/validate_headless_selfplay.gd` (gated validator) — the Track-E goal ("agents drive the action API
+  with no view; full games run headless"). It plays `TURNS=4` turns from a clean `reset_to_scenario()` through
+  the existing `LLMGameAPI.observation("")` + `apply_agent_response(...)` layer with a trivial DETERMINISTIC
+  policy (each placed brigade of either team issues a tactical move to the first legal target ≠ its own hex;
+  `end_turn` seed = `BASE_SEED + turn`), then asserts: every turn resolved, **full-game determinism** (identical
+  `snapshot_state()` + per-turn `turn_result` digests across two fresh games), runtime-index health after the
+  game (cross-checks the M5a guard), and that the game advanced to `turn_number == TURNS+1`. Decisions:
+  (1) **Drives both sides naturally from turn 1** (Red lands via the offload phase inside turn-1 resolve — no
+  manual `resolve_offload_turn` provisioning), so it's a genuine end-to-end game, not a scripted fixture.
+  (2) **Asserts loop + determinism + index health + turn advance ONLY — NOT that combat occurs** (kept
+  design-free + gate-stable); in practice the trivial policy does drive contact (combat in all 4 turns).
+  (3) **Verified cross-PROCESS determinism** (orchestrator ran the validator twice in separate Godot processes
+  → byte-identical PASS) and **gate stability** (ran the full gate twice → ALL PHASES GREEN both times, golden
+  20260624 → casualties=2, feba=0.76 byte-stable). No game-logic/combat/RNG touched. **This is the capstone of
+  the Track-E AI-readiness arc** (play_turn façade → event log → LLM surfacing → result schema → index guard →
+  **headless self-play regression test**). **Retrospective triage** (see `RETROSPECTIVES.md 2026-06-28
+  selfplay-harness`): **promoted a `GameState.play_game(policy, turns, seed)` headless-driver entrypoint +
+  a reusable `tools/policies/` helper** (DRYs the bootstrap across validators, makes real agent policies
+  pluggable) as the next unit; recorded an `export_turn_log` JSON-per-turn helper for the save/replay track.
+
 - **2026-06-28 — Data-layer hardening: `GameData.validate_runtime_indexes()` invariant guard (via opencode):**
   Added a read-only `validate_runtime_indexes() -> Array[String]` (REFACTOR_NOTES M5a) that bidirectionally
   checks the `brigades` ↔ `brigades_by_hex` indexes (every placed brigade listed in its bucket; every bucket
