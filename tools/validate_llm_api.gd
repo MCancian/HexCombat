@@ -105,6 +105,18 @@ func _validate_action_application() -> void:
 	_assert_true("last_contested_hexes array after turn", post_observation["last_contested_hexes"] is Array)
 	_assert_true("last_combat array after turn", post_observation["last_combat"] is Array)
 
+	var has_turn_result := result.has("turn_result") and result["turn_result"] is Dictionary
+	_assert_true("result has turn_result dict", has_turn_result)
+	if has_turn_result:
+		var tr: Dictionary = result["turn_result"]
+		_assert_equal_int("turn_result turn_number", int(tr.get("turn_number", 0)), 1)
+		var contested: Array = tr.get("contested_hexes", [])
+		_assert_true("hex_43_17 in contested_hexes", TARGET_HEX in contested)
+		var events: Array = tr.get("events", [])
+		_assert_true("turn_result events non-empty", not events.is_empty())
+		_assert_true("events has move for PLA-71-2-Amphibious to hex_43_17", _find_event(events, "move", "hex_43_17", RED_MOVER_ID))
+		_assert_true("events has combat at hex_43_17", _find_combat_event(events, "hex_43_17"))
+
 
 func _validate_missing_seed_rejected() -> void:
 	_game_data().load_all()
@@ -121,6 +133,10 @@ func _validate_missing_seed_rejected() -> void:
 	_assert_true("missing seed rejected", not bool(result["ok"]))
 	_assert_true("missing seed does not resolve", not bool(result["resolved"]))
 	_assert_equal_int("missing seed keeps turn", _game_state().turn_number, 1)
+	var tr_empty := true
+	if result.has("turn_result") and result["turn_result"] is Dictionary:
+		tr_empty = (result["turn_result"] as Dictionary).is_empty()
+	_assert_true("turn_result empty when not resolved", tr_empty)
 
 
 func _validate_examples_parse_and_apply() -> void:
@@ -194,6 +210,29 @@ func _assert_equal_string(label: String, actual: String, expected: String) -> vo
 func _fail(message: String) -> void:
 	_failures.append(message)
 	push_error(message)
+
+
+static func _find_event(events: Array, kind: String, target_hex: String, brigade_id: String) -> bool:
+	for e in events:
+		if not (e is Dictionary):
+			continue
+		var ev: Dictionary = e
+		if ev.get("kind", "") != kind:
+			continue
+		var data: Dictionary = ev.get("data", {})
+		if data.get("brigade_id", "") == brigade_id and data.get("target_hex", "") == target_hex:
+			return true
+	return false
+
+
+static func _find_combat_event(events: Array, hex_id: String) -> bool:
+	for e in events:
+		if not (e is Dictionary):
+			continue
+		var ev: Dictionary = e
+		if ev.get("kind", "") == "combat" and ev.get("hex_id", "") == hex_id:
+			return true
+	return false
 
 
 func _finish() -> void:

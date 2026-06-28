@@ -202,12 +202,24 @@ play_turn-facade`), followed by the **per-turn structured event log** — `scrip
 pure `scripts/TurnEventLog.gd` (`build(state) -> Array[TurnEvent]`) populating `TurnResult.events` in
 `play_turn`; ordered `ijfs→antiship→move→commit→combat→frontline?→cleanup?`, derived non-invasively from
 stored `last_*` state (golden byte-stable). See `PLAN.md`/`RETROSPECTIVES.md 2026-06-28 turn-event-log`.
-**Next autonomous-safe unit:** **surface the event log + `TurnResult`/snapshot through `LLMGameAPI`** — its
-`apply_agent_response` `end_turn` path already calls `resolve_turn`+`begin_next_turn` but returns no
-structured record of *what happened*; route it through `play_turn` and append a serialized `events` (and/or
-`turn_result`) block to the action result (+schema/validator/fixture, per the existing `antiship`/`ijfs`
-observation-block pattern). Pure-logic + headless-verifiable. The remaining non-autonomous items (UI, design
-calls, data-blocked linkage) are unchanged below.
+The event log is now also **surfaced through `LLMGameAPI`**: `apply_agent_response`'s `end_turn` routes
+through `play_turn` and threads `turn_result.to_dict()` (incl. the `events` log) into the action result under
+a `turn_result` key; `tools/export_llm_result.gd` regenerates `docs/examples/llm_result_after_turn.json` (see
+`PLAN.md`/`RETROSPECTIVES.md 2026-06-28 llm-event-surfacing`). **Next autonomous-safe unit:** add a
+**`schemas/llm_action_result.schema.json`** JSON Schema for the action-result contract — the observation and
+action_response already have schema files but the result does not (a contract-consistency gap); mirror the
+existing `llm_observation.schema.json` pattern, cover the new `turn_result`/`events` shape, and wire it into
+`tools/validate_llm_api.gd` (it already parses `EXAMPLE_PATHS`; add a conformance check of the committed
+result fixture). Pure documentation/validation, zero golden risk.
+
+> **Note on the deeper AI-driver track (surfaced for the user — NOT autonomous):** a `game_over`/`winner`
+> field requires defining **victory conditions**, which is new game-design, not a faithful TIV port — that is
+> a design call for the user, not an overnight unit. A bulk `submit_and_resolve(red_orders, green_orders,
+> seed)` endpoint (a thin `play_turn` wrapper) + a `current_player` observation field are safe later
+> conveniences. After the result-schema unit, the autonomous Track-E backlog is largely exhausted; reassess
+> whether to continue or hand off.
+
+The remaining non-autonomous items (UI, design calls, data-blocked linkage) are unchanged below.
 
 Pick the next unit from the post-D3 backlog (consult `ROADMAP.md` + `PLAN.md` so choices stay
 forward-compatible). In rough priority order — settle the first with the user, it's a design call:

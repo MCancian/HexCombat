@@ -545,3 +545,38 @@ byte-stable).
   granular replay/attribution consumer appears.
 - #5 `to_line`/`from_line` + per-event `turn_number` → **record / act later (persistence track):** cheap and
   genuinely useful for flat journals, but premature without a save/replay consumer.
+
+---
+
+## 2026-06-28 — llm-event-surfacing: surface event log + TurnResult through LLMGameAPI   (implementer: opencode deepseek-v4-flash-free)
+
+Third Track E AI-readiness seam (the event-log retrospective's #4). Brief: route apply_agent_response's
+end_turn through play_turn, thread turn_result.to_dict() into the action result, add an export tool +
+regenerate the result fixture, extend the validator. Pure wiring over already-tested seams (play_turn /
+TurnResult / TurnEventLog). Gated independently (validate_llm_api PASS; full gate ALL PHASES GREEN; golden
+20260624 → casualties=2, feba=0.76 byte-stable; committed fixture confirmed byte-identical to a fresh
+tool regeneration).
+
+**What would you do differently (implementer):**
+1. `turn_result` in the action result is the right home — observation = current/forward state, turn_result =
+   transient "what happened"; separate keys keep semantics clean and avoid bloating the observation.
+2. There should be a `hexcombat.llm_action_result` JSON Schema file (the observation + action_response already
+   have schemas under res://schemas/); the result now has a structured `turn_result` worth self-documenting.
+3. Regenerating the 1300-line fixture by hand-running a tool is fragile — most of the diff is hex-list noise.
+   The validator already applies in-memory; the committed fixture is only human-readable documentation. Could
+   commit a small hand-trimmed example instead, or generate in CI rather than commit the full blob.
+4. Next AI-driver conveniences: a `current_player` observation field, a `game_over`+`winner` field, and a bulk
+   `submit_and_resolve(red_orders, green_orders, seed)` endpoint (play_turn already takes bulk arrays).
+
+**Orchestrator triage:**
+- #2 result schema file → **PROMOTED to the next backlog unit** (`PLAN.md` Decisions 2026-06-28 +
+  ORCHESTRATOR_HANDOFF §6). Real contract-consistency gap, cleanly bounded, mirrors the existing observation
+  schema pattern, zero golden risk. Did NOT rush it inline — a faithful schema is its own unit of work.
+- #1 turn_result home → **record only** (confirms the design).
+- #3 fixture fragility → **record only:** the fixture is tool-generated + byte-verified and the validator
+  already gates via in-memory application; the committed blob is documentation. Removing/trimming it is a
+  separate doc-artifact decision, not a defect. Logged as a known tradeoff.
+- #4 AI-driver conveniences → **split:** `game_over`/`winner` requires defining VICTORY CONDITIONS, which is
+  new game-design, NOT a faithful TIV port — that must go to the user as a design call, not an autonomous
+  unit. `submit_and_resolve` is a thin play_turn wrapper + `current_player` is a small observation add; both
+  recorded as later low-risk conveniences once the schema unit lands.

@@ -45,6 +45,7 @@ static func observation(perspective_team: String = "") -> Dictionary:
 static func apply_agent_response(response: Dictionary) -> Dictionary:
 	var errors: Array[String] = []
 	var resolved := false
+	var turn_result_dict: Dictionary = {}
 	var seed := -1
 
 	if String(response.get("protocol_version", PROTOCOL_VERSION)) != PROTOCOL_VERSION:
@@ -54,7 +55,7 @@ static func apply_agent_response(response: Dictionary) -> Dictionary:
 
 	var actions = response.get("actions", [])
 	if not (actions is Array):
-		return _action_result(false, errors + ["response.actions must be an array"], false, seed, String(response.get("perspective_team", "")))
+		return _action_result(false, errors + ["response.actions must be an array"], false, seed, String(response.get("perspective_team", "")), {})
 
 	for action_value in actions:
 		if not (action_value is Dictionary):
@@ -72,9 +73,9 @@ static func apply_agent_response(response: Dictionary) -> Dictionary:
 					errors.append("end_turn action requires an explicit seed for reproducibility")
 					continue
 				seed = int(action["seed"])
-				var phase_before := int(_game_state().phase)
-				_game_state().resolve_turn(SeededDice.new(seed))
-				if phase_before == 0 and int(_game_state().phase) == 2:
+				var turn_result = _game_state().play_turn([], [], SeededDice.new(seed))
+				if turn_result != null and int(_game_state().phase) == 2:
+					turn_result_dict = turn_result.to_dict()
 					_game_state().begin_next_turn()
 					resolved = true
 				else:
@@ -82,7 +83,7 @@ static func apply_agent_response(response: Dictionary) -> Dictionary:
 			_:
 				errors.append("unknown action type: %s" % action_type)
 
-	return _action_result(errors.is_empty(), errors, resolved, seed, String(response.get("perspective_team", "")))
+	return _action_result(errors.is_empty(), errors, resolved, seed, String(response.get("perspective_team", "")), turn_result_dict)
 
 
 static func rules_summary() -> Dictionary:
@@ -106,11 +107,12 @@ static func field_glossary() -> Dictionary:
 		"legal_moves": "Authoritative target hex lists by brigade and movement mode.",
 		"legal_commits": "Authoritative adjacent support options by target hex and team.",
 		"last_contested_hexes": "Hex IDs that were contested in the most recently resolved turn.",
-		"last_combat": "Combat summaries from the most recently resolved turn. Empty before any combat or if no contested hex produced combat."
+		"last_combat": "Combat summaries from the most recently resolved turn. Empty before any combat or if no contested hex produced combat.",
+		"turn_result": "Structured record of the turn just resolved (only populated when resolved=true): turn_number, contested_hexes, combat_summaries, phase summaries, and an ordered `events` log."
 	}
 
 
-static func _action_result(ok: bool, errors: Array[String], resolved: bool, seed: int, perspective_team: String) -> Dictionary:
+static func _action_result(ok: bool, errors: Array[String], resolved: bool, seed: int, perspective_team: String, turn_result: Dictionary = {}) -> Dictionary:
 	return {
 		"protocol_version": PROTOCOL_VERSION,
 		"schema": "hexcombat.llm_action_result",
@@ -118,6 +120,7 @@ static func _action_result(ok: bool, errors: Array[String], resolved: bool, seed
 		"errors": errors,
 		"resolved": resolved,
 		"seed": seed,
+		"turn_result": turn_result,
 		"observation": observation(perspective_team)
 	}
 

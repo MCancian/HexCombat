@@ -1,6 +1,69 @@
 {
 	"errors": [],
 	"observation": {
+		"antiship": {
+			"bns_lost_at_sea": 9,
+			"crossing_casualties": {
+				"damaged": 25,
+				"destroyed": 39
+			},
+			"destroyed_by_ship_type": {
+				"CG": 7,
+				"Container_Ship": 8,
+				"DDG": 9,
+				"Decoys": 21,
+				"FFG": 13,
+				"FFL": 14,
+				"Fast_Transport": 1
+			},
+			"mine_status": [
+				{
+					"beach_id": 1,
+					"lane_cleared": true,
+					"ships_destroyed": 8,
+					"status_color": "green"
+				},
+				{
+					"beach_id": 2,
+					"lane_cleared": true,
+					"ships_destroyed": 8,
+					"status_color": "green"
+				},
+				{
+					"beach_id": 3,
+					"lane_cleared": true,
+					"ships_destroyed": 9,
+					"status_color": "green"
+				},
+				{
+					"beach_id": 4,
+					"lane_cleared": true,
+					"ships_destroyed": 9,
+					"status_color": "green"
+				}
+			],
+			"resolved_turn": 1,
+			"sent_by_type": {
+				"CG": 12,
+				"Container_Ship": 15,
+				"DDG": 12,
+				"Decoys": 40,
+				"FFG": 24,
+				"FFL": 24,
+				"Fast_Transport": 5
+			},
+			"systems_fired_count": 162,
+			"target_beaches": [
+				1,
+				2,
+				3,
+				4
+			],
+			"target_tos": [
+				3
+			],
+			"unliftable_bn": 0
+		},
 		"brigades": [
 			{
 				"battalions": 8,
@@ -114,7 +177,62 @@
 			"last_contested_hexes": "Hex IDs that were contested in the most recently resolved turn.",
 			"legal_commits": "Authoritative adjacent support options by target hex and team.",
 			"legal_moves": "Authoritative target hex lists by brigade and movement mode.",
-			"organization": "0-100 readiness value affected by movement and combat."
+			"organization": "0-100 readiness value affected by movement and combat.",
+			"turn_result": "Structured record of the turn just resolved (only populated when resolved=true): turn_number, contested_hexes, combat_summaries, phase summaries, and an ordered `events` log."
+		},
+		"ijfs": {
+			"antiship_destroyed_by_type": {
+				"2:17": 1,
+				"2:20": 1,
+				"2:21": 1,
+				"2:3": 55,
+				"2:5": 16,
+				"3:16": 12,
+				"3:19": 1,
+				"3:21": 2,
+				"3:3": 149,
+				"3:5": 24,
+				"4:16": 12,
+				"4:20": 4,
+				"4:21": 2,
+				"4:3": 74,
+				"5:16": 3,
+				"5:18": 1,
+				"5:19": 1,
+				"5:22": 1,
+				"5:3": 37,
+				"5:5": 8
+			},
+			"antiship_suppressed_by_type": {
+				"2:5": 8,
+				"2:99": 1,
+				"3:5": 16,
+				"3:99": 1
+			},
+			"attacks": {
+				"executed": 30,
+				"skipped": 0,
+				"skipped_by_reason": {}
+			},
+			"maneuver_casualties": [],
+			"red_air_losses": 0,
+			"resolved_day": 1,
+			"sam_destroyed": 0,
+			"sam_suppressed": 0,
+			"taiwan_ad_health_after": {
+				"category_health": {
+					"Mobile Radars": 0.6,
+					"Moveable SAMs": 0.0,
+					"Static Radars": 0.0,
+					"Static SAMs": 0.0
+				},
+				"effective_ad_health": 0.09,
+				"effective_sam_health": 0.0,
+				"radar_health": 0.225,
+				"radar_weight_total": 0.4,
+				"raw_sam_health": 0.0,
+				"sam_weight_total": 0.6
+			}
 		},
 		"last_combat": [
 			{
@@ -338,99 +456,7 @@
 					"hex_35_15",
 					"hex_34_16",
 					"hex_33_18",
-					"hex_33_17",
-					"hex_39_10",
-					"hex_38_11",
-					"hex_37_12",
-					"hex_36_13",
-					"hex_35_14",
-					"hex_34_15",
-					"hex_33_16",
-					"hex_32_19",
-					"hex_38_10",
-					"hex_37_11",
-					"hex_36_12",
-					"hex_35_13",
-					"hex_34_14",
-					"hex_33_15",
-					"hex_32_16",
-					"hex_32_20",
-					"hex_31_19",
-					"hex_38_9",
-					"hex_37_10",
-					"hex_36_11",
-					"hex_35_12",
-					"hex_34_13",
-					"hex_33_14",
-					"hex_32_15",
-					"hex_31_16",
-					"hex_33_20",
-					"hex_31_18",
-					"hex_30_20",
-					"hex_30_19",
-					"hex_37_9",
-					"hex_36_10",
-					"hex_35_11",
-					"hex_34_12",
-					"hex_33_13",
-					"hex_32_14",
-					"hex_31_15",
-					"hex_33_21",
-					"hex_30_18",
-					"hex_29_19",
-					"hex_37_8",
-					"hex_36_9",
-					"hex_35_10",
-					"hex_34_11",
-					"hex_33_12",
-					"hex_32_13",
-					"hex_31_14",
-					"hex_30_15",
-					"hex_34_21",
-					"hex_29_18",
-					"hex_28_19",
-					"hex_36_8",
-					"hex_35_9",
-					"hex_34_10",
-					"hex_33_11",
-					"hex_32_12",
-					"hex_31_13",
-					"hex_30_14",
-					"hex_35_20",
-					"hex_28_18",
-					"hex_35_8",
-					"hex_34_9",
-					"hex_33_10",
-					"hex_32_11",
-					"hex_31_12",
-					"hex_30_13",
-					"hex_29_14",
-					"hex_28_17",
-					"hex_27_18",
-					"hex_35_7",
-					"hex_34_8",
-					"hex_33_9",
-					"hex_32_10",
-					"hex_31_11",
-					"hex_30_12",
-					"hex_29_13",
-					"hex_27_17",
-					"hex_26_18",
-					"hex_34_7",
-					"hex_33_8",
-					"hex_32_9",
-					"hex_31_10",
-					"hex_30_11",
-					"hex_29_12",
-					"hex_28_13",
-					"hex_26_17",
-					"hex_33_7",
-					"hex_32_8",
-					"hex_31_9",
-					"hex_30_10",
-					"hex_29_11",
-					"hex_28_12",
-					"hex_25_17"
+					"hex_33_17"
 				],
 				"from_hex": "hex_43_17",
 				"tactical": [
@@ -440,18 +466,7 @@
 					"hex_44_17",
 					"hex_43_18",
 					"hex_42_18",
-					"hex_42_17",
-					"hex_43_15",
-					"hex_44_15",
-					"hex_42_16",
-					"hex_45_16",
-					"hex_45_17",
-					"hex_44_18",
-					"hex_43_19",
-					"hex_42_19",
-					"hex_41_19",
-					"hex_41_18",
-					"hex_41_17"
+					"hex_42_17"
 				],
 				"team": "Red"
 			},
@@ -562,101 +577,7 @@
 					"hex_34_18",
 					"hex_34_17",
 					"hex_34_16",
-					"hex_34_15",
-					"hex_38_10",
-					"hex_37_11",
-					"hex_36_12",
-					"hex_35_13",
-					"hex_34_14",
-					"hex_33_18",
-					"hex_33_17",
-					"hex_33_16",
-					"hex_33_15",
-					"hex_38_9",
-					"hex_37_10",
-					"hex_36_11",
-					"hex_35_12",
-					"hex_34_13",
-					"hex_33_14",
-					"hex_32_19",
-					"hex_32_16",
-					"hex_32_15",
-					"hex_37_9",
-					"hex_36_10",
-					"hex_35_11",
-					"hex_34_12",
-					"hex_33_13",
-					"hex_32_14",
-					"hex_32_20",
-					"hex_31_19",
-					"hex_31_16",
-					"hex_31_15",
-					"hex_37_8",
-					"hex_36_9",
-					"hex_35_10",
-					"hex_34_11",
-					"hex_33_12",
-					"hex_32_13",
-					"hex_31_14",
-					"hex_33_20",
-					"hex_31_18",
-					"hex_30_20",
-					"hex_30_19",
-					"hex_30_15",
-					"hex_36_8",
-					"hex_35_9",
-					"hex_34_10",
-					"hex_33_11",
-					"hex_32_12",
-					"hex_31_13",
-					"hex_30_14",
-					"hex_33_21",
-					"hex_30_18",
-					"hex_29_19",
-					"hex_35_8",
-					"hex_34_9",
-					"hex_33_10",
-					"hex_32_11",
-					"hex_31_12",
-					"hex_30_13",
-					"hex_29_14",
-					"hex_34_21",
-					"hex_29_18",
-					"hex_28_19",
-					"hex_35_7",
-					"hex_34_8",
-					"hex_33_9",
-					"hex_32_10",
-					"hex_31_11",
-					"hex_30_12",
-					"hex_29_13",
-					"hex_35_20",
-					"hex_28_18",
-					"hex_34_7",
-					"hex_33_8",
-					"hex_32_9",
-					"hex_31_10",
-					"hex_30_11",
-					"hex_29_12",
-					"hex_28_13",
-					"hex_28_17",
-					"hex_27_18",
-					"hex_33_7",
-					"hex_32_8",
-					"hex_31_9",
-					"hex_30_10",
-					"hex_29_11",
-					"hex_28_12",
-					"hex_27_17",
-					"hex_26_18",
-					"hex_33_6",
-					"hex_32_7",
-					"hex_31_8",
-					"hex_30_9",
-					"hex_29_10",
-					"hex_28_11",
-					"hex_27_12",
-					"hex_26_17"
+					"hex_34_15"
 				],
 				"from_hex": "hex_44_15",
 				"tactical": [
@@ -664,14 +585,7 @@
 					"hex_44_14",
 					"hex_44_16",
 					"hex_43_16",
-					"hex_43_15",
-					"hex_43_14",
-					"hex_45_16",
-					"hex_44_17",
-					"hex_43_17",
-					"hex_42_17",
-					"hex_42_16",
-					"hex_42_15"
+					"hex_43_15"
 				],
 				"team": "Red"
 			},
@@ -797,99 +711,7 @@
 					"hex_33_17",
 					"hex_33_16",
 					"hex_33_15",
-					"hex_33_14",
-					"hex_37_9",
-					"hex_36_10",
-					"hex_35_11",
-					"hex_34_12",
-					"hex_33_13",
-					"hex_32_19",
-					"hex_32_16",
-					"hex_32_15",
-					"hex_32_14",
-					"hex_37_8",
-					"hex_36_9",
-					"hex_35_10",
-					"hex_34_11",
-					"hex_33_12",
-					"hex_32_13",
-					"hex_32_20",
-					"hex_31_19",
-					"hex_31_16",
-					"hex_31_15",
-					"hex_31_14",
-					"hex_36_8",
-					"hex_35_9",
-					"hex_34_10",
-					"hex_33_11",
-					"hex_32_12",
-					"hex_31_13",
-					"hex_33_20",
-					"hex_31_18",
-					"hex_30_20",
-					"hex_30_19",
-					"hex_30_15",
-					"hex_30_14",
-					"hex_35_8",
-					"hex_34_9",
-					"hex_33_10",
-					"hex_32_11",
-					"hex_31_12",
-					"hex_30_13",
-					"hex_33_21",
-					"hex_30_18",
-					"hex_29_19",
-					"hex_29_14",
-					"hex_35_7",
-					"hex_34_8",
-					"hex_33_9",
-					"hex_32_10",
-					"hex_31_11",
-					"hex_30_12",
-					"hex_29_13",
-					"hex_34_21",
-					"hex_29_18",
-					"hex_28_19",
-					"hex_34_7",
-					"hex_33_8",
-					"hex_32_9",
-					"hex_31_10",
-					"hex_30_11",
-					"hex_29_12",
-					"hex_28_13",
-					"hex_35_20",
-					"hex_28_18",
-					"hex_33_7",
-					"hex_32_8",
-					"hex_31_9",
-					"hex_30_10",
-					"hex_29_11",
-					"hex_28_12",
-					"hex_28_17",
-					"hex_27_18",
-					"hex_33_6",
-					"hex_32_7",
-					"hex_31_8",
-					"hex_30_9",
-					"hex_29_10",
-					"hex_28_11",
-					"hex_27_12",
-					"hex_27_17",
-					"hex_26_18",
-					"hex_32_6",
-					"hex_31_7",
-					"hex_30_8",
-					"hex_29_9",
-					"hex_28_10",
-					"hex_27_11",
-					"hex_26_17",
-					"hex_31_6",
-					"hex_30_7",
-					"hex_29_8",
-					"hex_28_9",
-					"hex_27_10",
-					"hex_26_11",
-					"hex_25_17"
+					"hex_33_14"
 				],
 				"from_hex": "hex_43_14",
 				"tactical": [
@@ -898,15 +720,7 @@
 					"hex_44_14",
 					"hex_43_15",
 					"hex_42_15",
-					"hex_42_14",
-					"hex_43_12",
-					"hex_42_13",
-					"hex_44_15",
-					"hex_43_16",
-					"hex_42_16",
-					"hex_41_16",
-					"hex_41_15",
-					"hex_41_14"
+					"hex_42_14"
 				],
 				"team": "Red"
 			},
@@ -1037,100 +851,7 @@
 					"hex_33_16",
 					"hex_33_15",
 					"hex_33_14",
-					"hex_33_13",
-					"hex_37_8",
-					"hex_36_9",
-					"hex_35_10",
-					"hex_34_11",
-					"hex_33_12",
-					"hex_32_19",
-					"hex_32_16",
-					"hex_32_15",
-					"hex_32_14",
-					"hex_32_13",
-					"hex_36_8",
-					"hex_35_9",
-					"hex_34_10",
-					"hex_33_11",
-					"hex_32_12",
-					"hex_32_20",
-					"hex_31_19",
-					"hex_31_16",
-					"hex_31_15",
-					"hex_31_14",
-					"hex_31_13",
-					"hex_35_8",
-					"hex_34_9",
-					"hex_33_10",
-					"hex_32_11",
-					"hex_31_12",
-					"hex_33_20",
-					"hex_31_18",
-					"hex_30_20",
-					"hex_30_19",
-					"hex_30_15",
-					"hex_30_14",
-					"hex_30_13",
-					"hex_35_7",
-					"hex_34_8",
-					"hex_33_9",
-					"hex_32_10",
-					"hex_31_11",
-					"hex_30_12",
-					"hex_33_21",
-					"hex_30_18",
-					"hex_29_19",
-					"hex_29_14",
-					"hex_29_13",
-					"hex_34_7",
-					"hex_33_8",
-					"hex_32_9",
-					"hex_31_10",
-					"hex_30_11",
-					"hex_29_12",
-					"hex_34_21",
-					"hex_29_18",
-					"hex_28_19",
-					"hex_28_13",
-					"hex_33_7",
-					"hex_32_8",
-					"hex_31_9",
-					"hex_30_10",
-					"hex_29_11",
-					"hex_28_12",
-					"hex_35_20",
-					"hex_28_18",
-					"hex_33_6",
-					"hex_32_7",
-					"hex_31_8",
-					"hex_30_9",
-					"hex_29_10",
-					"hex_28_11",
-					"hex_27_12",
-					"hex_28_17",
-					"hex_27_18",
-					"hex_32_6",
-					"hex_31_7",
-					"hex_30_8",
-					"hex_29_9",
-					"hex_28_10",
-					"hex_27_11",
-					"hex_27_17",
-					"hex_26_18",
-					"hex_31_6",
-					"hex_30_7",
-					"hex_29_8",
-					"hex_28_9",
-					"hex_27_10",
-					"hex_26_11",
-					"hex_26_17",
-					"hex_31_5",
-					"hex_30_6",
-					"hex_29_7",
-					"hex_28_8",
-					"hex_27_9",
-					"hex_26_10",
-					"hex_25_17"
+					"hex_33_13"
 				],
 				"from_hex": "hex_43_13",
 				"tactical": [
@@ -1138,14 +859,7 @@
 					"hex_43_12",
 					"hex_43_14",
 					"hex_42_14",
-					"hex_42_13",
-					"hex_42_12",
-					"hex_44_14",
-					"hex_43_15",
-					"hex_42_15",
-					"hex_41_15",
-					"hex_41_14",
-					"hex_41_13"
+					"hex_42_13"
 				],
 				"team": "Red"
 			}
@@ -1170,49 +884,6 @@
 		},
 		"objectives": [],
 		"occupied_hexes": [
-			{
-				"brigades": [
-					"PLA-72-5-Amphibious"
-				],
-				"feba_km": 0.0,
-				"hex_id": "hex_44_15",
-				"neighbors": [
-					"hex_44_14",
-					"hex_44_16",
-					"hex_43_16",
-					"hex_43_15"
-				],
-				"owner": "red"
-			},
-			{
-				"brigades": [
-					"PLA-73-14-Amphibious"
-				],
-				"feba_km": 0.0,
-				"hex_id": "hex_43_14",
-				"neighbors": [
-					"hex_43_13",
-					"hex_44_14",
-					"hex_43_15",
-					"hex_42_15",
-					"hex_42_14"
-				],
-				"owner": "red"
-			},
-			{
-				"brigades": [
-					"PLA-74-1-Amphibious"
-				],
-				"feba_km": 0.0,
-				"hex_id": "hex_43_13",
-				"neighbors": [
-					"hex_43_12",
-					"hex_43_14",
-					"hex_42_14",
-					"hex_42_13"
-				],
-				"owner": "red"
-			},
 			{
 				"brigades": [
 					"BDE-66",
@@ -1277,6 +948,49 @@
 					"hex_41_14"
 				],
 				"owner": "green"
+			},
+			{
+				"brigades": [
+					"PLA-72-5-Amphibious"
+				],
+				"feba_km": 0.0,
+				"hex_id": "hex_44_15",
+				"neighbors": [
+					"hex_44_14",
+					"hex_44_16",
+					"hex_43_16",
+					"hex_43_15"
+				],
+				"owner": "red"
+			},
+			{
+				"brigades": [
+					"PLA-73-14-Amphibious"
+				],
+				"feba_km": 0.0,
+				"hex_id": "hex_43_14",
+				"neighbors": [
+					"hex_43_13",
+					"hex_44_14",
+					"hex_43_15",
+					"hex_42_15",
+					"hex_42_14"
+				],
+				"owner": "red"
+			},
+			{
+				"brigades": [
+					"PLA-74-1-Amphibious"
+				],
+				"feba_km": 0.0,
+				"hex_id": "hex_43_13",
+				"neighbors": [
+					"hex_43_12",
+					"hex_43_14",
+					"hex_42_14",
+					"hex_42_13"
+				],
+				"owner": "red"
 			}
 		],
 		"pending_commitments": {
@@ -1302,6 +1016,37 @@
 		},
 		"scenario": "BOOTS Starter - Northern Beachhead",
 		"schema": "hexcombat.llm_observation",
+		"ship_reserve": [
+			{
+				"beach_hex": "hex_44_16",
+				"bns_remaining": 2,
+				"brigade_id": "PLA-71-2-Amphibious",
+				"locked_beach": 1
+			},
+			{
+				"beach_hex": "hex_44_15",
+				"bns_remaining": 3,
+				"brigade_id": "PLA-72-5-Amphibious",
+				"locked_beach": 2
+			},
+			{
+				"beach_hex": "hex_43_14",
+				"bns_remaining": 3,
+				"brigade_id": "PLA-73-14-Amphibious",
+				"locked_beach": 3
+			},
+			{
+				"beach_hex": "hex_43_13",
+				"bns_remaining": 3,
+				"brigade_id": "PLA-74-1-Amphibious",
+				"locked_beach": 4
+			}
+		],
+		"supply_state": {
+			"current_dos_equivalent": 74.0,
+			"current_dos_tons": 11100.0,
+			"day_count": 1
+		},
 		"turn": 2,
 		"turn_length_days": 1
 	},
@@ -1309,5 +1054,770 @@
 	"protocol_version": "0.1.0",
 	"resolved": true,
 	"schema": "hexcombat.llm_action_result",
-	"seed": 20260624
+	"seed": 20260624,
+	"turn_result": {
+		"antiship_summary": {
+			"bns_lost_at_sea": 9,
+			"crossing_casualties": {
+				"damaged": 25,
+				"destroyed": 39
+			},
+			"destroyed_by_ship_type": {
+				"CG": 7,
+				"Container_Ship": 8,
+				"DDG": 9,
+				"Decoys": 21,
+				"FFG": 13,
+				"FFL": 14,
+				"Fast_Transport": 1
+			},
+			"mine_status": [
+				{
+					"beach_id": 1,
+					"lane_cleared": true,
+					"ships_destroyed": 8,
+					"status_color": "green"
+				},
+				{
+					"beach_id": 2,
+					"lane_cleared": true,
+					"ships_destroyed": 8,
+					"status_color": "green"
+				},
+				{
+					"beach_id": 3,
+					"lane_cleared": true,
+					"ships_destroyed": 9,
+					"status_color": "green"
+				},
+				{
+					"beach_id": 4,
+					"lane_cleared": true,
+					"ships_destroyed": 9,
+					"status_color": "green"
+				}
+			],
+			"resolved_turn": 1,
+			"sent_by_type": {
+				"CG": 12,
+				"Container_Ship": 15,
+				"DDG": 12,
+				"Decoys": 40,
+				"FFG": 24,
+				"FFL": 24,
+				"Fast_Transport": 5
+			},
+			"systems_fired_count": 162,
+			"target_beaches": [
+				1,
+				2,
+				3,
+				4
+			],
+			"target_tos": [
+				3
+			],
+			"unliftable_bn": 0
+		},
+		"cleanup_summary": {
+			"antiship_systems_reset": 50
+		},
+		"combat_summaries": [
+			{
+				"attacker_brigade_ids": [
+					"PLA-71-2-Amphibious"
+				],
+				"attacker_losses": 1,
+				"combat_detail": {
+					"attacker": {
+						"maneuver_combat_power": 7.0,
+						"maneuver_unit_count": 8,
+						"support_breakdown": {
+							"artillery": 0.8,
+							"cas": 0.0,
+							"crbm": 0.0,
+							"rocket_artillery": 0.0,
+							"rotary_wing": 0.0
+						},
+						"support_combat_power": 0.8,
+						"support_counts": {
+							"artillery": 1,
+							"cas": 0,
+							"crbm": 0,
+							"rocket_artillery": 0,
+							"rotary_wing": 0
+						},
+						"total_combat_power_unmodified": 7.8
+					},
+					"defender": {
+						"maneuver_combat_power": 4.4,
+						"maneuver_unit_count": 3,
+						"support_breakdown": {
+							"artillery": 0.8,
+							"cas": 0.0,
+							"crbm": 0.0,
+							"rocket_artillery": 0.0,
+							"rotary_wing": 0.0
+						},
+						"support_combat_power": 0.8,
+						"support_counts": {
+							"artillery": 1,
+							"cas": 0,
+							"crbm": 0,
+							"rocket_artillery": 0,
+							"rotary_wing": 0
+						},
+						"terrain_modifier": 1.0,
+						"total_combat_power_terrain_modified": 5.2,
+						"total_combat_power_unmodified": 5.2
+					},
+					"feba": {
+						"base_km": 2.0,
+						"movement_km": 0.764,
+						"roll_factor": 0.955
+					},
+					"losses": {
+						"attacker": 1,
+						"attacker_loss_rate": 0.184,
+						"defender": 1,
+						"defender_loss_rate": 0.241
+					},
+					"ratios": {
+						"terrain_modified": 1.5,
+						"unmodified": 1.5
+					},
+					"result": "Attacker Advantage",
+					"rolls": {
+						"attacker_loss_roll": 74,
+						"defender_loss_roll": 41,
+						"feba_movement_roll": 41
+					}
+				},
+				"defender_brigade_ids": [
+					"BDE-66"
+				],
+				"defender_losses": 1,
+				"feba_movement_km": 0.764,
+				"hex_id": "hex_43_17",
+				"owner_after": "contested"
+			}
+		],
+		"contested_hexes": [
+			"hex_43_17"
+		],
+		"events": [
+			{
+				"data": {
+					"attacks": {
+						"executed": 30,
+						"skipped": 0,
+						"skipped_by_reason": {}
+					},
+					"contest_losses": 0,
+					"destroyed_targets_by_category": {
+						"Anti-Ship Systems": 8,
+						"ROCAF Airbases": 1
+					},
+					"detections_by_category": {
+						"Anti-Ship Systems": 31,
+						"Military Headquarters": 4,
+						"Mobile Radars": 3,
+						"ROCAF Airbases": 5
+					},
+					"detections_by_mobility": {
+						"mobile": 7,
+						"moveable": 10,
+						"static": 26
+					},
+					"exquisite_intel_overrides": [],
+					"firing_capacity_utilization": {
+						"cj10_lacm_glcm": {
+							"budget": 36,
+							"remaining": 36,
+							"used": 0
+						},
+						"cm401_asbm": {
+							"budget": 40,
+							"remaining": 40,
+							"used": 0
+						},
+						"df15c_penetrator_srbm": {
+							"budget": 18,
+							"remaining": 18,
+							"used": 0
+						},
+						"owa_drone_small": {
+							"budget": 180,
+							"remaining": 180,
+							"used": 0
+						},
+						"pch191_bre6_crbm": {
+							"budget": 120,
+							"remaining": 104,
+							"used": 16
+						},
+						"pch191_bre8_crbm": {
+							"budget": 36,
+							"remaining": 30,
+							"used": 6
+						},
+						"pla_srbm_large_generic": {
+							"budget": 60,
+							"remaining": 58,
+							"used": 2
+						},
+						"yj_12_ascm": {
+							"budget": 30,
+							"remaining": 28,
+							"used": 2
+						},
+						"yj_62_ascm": {
+							"budget": 60,
+							"remaining": 58,
+							"used": 2
+						}
+					},
+					"free_shot_losses": 0,
+					"red_air_losses": 0,
+					"rounds_expended_by_munition": {
+						"pch191_bre6_crbm": 768,
+						"pch191_bre8_crbm": 72,
+						"pla_srbm_large_generic": 16,
+						"strike_aircraft_medium": 8,
+						"yj_12_ascm": 8,
+						"yj_62_ascm": 8
+					},
+					"sead_destroyed": 0,
+					"sead_engagements": 0,
+					"sead_pressure": {},
+					"sead_suppressed": 0,
+					"suppressed_targets_by_category": {
+						"Anti-Ship Systems": 5,
+						"Mobile Radars": 1,
+						"ROCAF Airbases": 2
+					},
+					"taiwan_ad_health_after": {
+						"category_health": {
+							"Mobile Radars": 0.6,
+							"Moveable SAMs": 0.0,
+							"Static Radars": 0.0,
+							"Static SAMs": 0.0
+						},
+						"effective_ad_health": 0.09,
+						"effective_sam_health": 0.0,
+						"radar_health": 0.225,
+						"radar_weight_total": 0.4,
+						"raw_sam_health": 0.0,
+						"sam_weight_total": 0.6
+					},
+					"taiwan_ad_health_after_missile_phase": {
+						"category_health": {
+							"Mobile Radars": 0.8,
+							"Moveable SAMs": 0.0,
+							"Static Radars": 0.0,
+							"Static SAMs": 0.0
+						},
+						"effective_ad_health": 0.12,
+						"effective_sam_health": 0.0,
+						"radar_health": 0.3,
+						"radar_weight_total": 0.4,
+						"raw_sam_health": 0.0,
+						"sam_weight_total": 0.6
+					},
+					"taiwan_ad_health_after_sead": {
+						"category_health": {
+							"Mobile Radars": 0.8,
+							"Moveable SAMs": 0.0,
+							"Static Radars": 0.0,
+							"Static SAMs": 0.0
+						},
+						"effective_ad_health": 0.12,
+						"effective_sam_health": 0.0,
+						"radar_health": 0.3,
+						"radar_weight_total": 0.4,
+						"raw_sam_health": 0.0,
+						"sam_weight_total": 0.6
+					},
+					"taiwan_ad_health_before": {
+						"category_health": {
+							"Mobile Radars": 0.8,
+							"Moveable SAMs": 0.0,
+							"Static Radars": 0.0,
+							"Static SAMs": 0.0
+						},
+						"effective_ad_health": 0.12,
+						"effective_sam_health": 0.0,
+						"radar_health": 0.3,
+						"radar_weight_total": 0.4,
+						"raw_sam_health": 0.0,
+						"sam_weight_total": 0.6
+					},
+					"target_counts_by_category_status": {
+						"Anti-Ship Systems": {
+							"destroyed": 36,
+							"surviving": 37,
+							"total": 73
+						},
+						"Government Buildings": {
+							"destroyed": 10,
+							"surviving": 0,
+							"total": 10
+						},
+						"Military Headquarters": {
+							"destroyed": 3,
+							"surviving": 2,
+							"total": 5
+						},
+						"Mobile Radars": {
+							"destroyed": 1,
+							"surviving": 4,
+							"total": 5
+						},
+						"Mobile SAMs": {
+							"destroyed": 2550,
+							"surviving": 0,
+							"total": 2550
+						},
+						"Moveable SAMs": {
+							"destroyed": 24,
+							"surviving": 0,
+							"total": 24
+						},
+						"ROCAF Airbases": {
+							"destroyed": 8,
+							"surviving": 2,
+							"total": 10
+						},
+						"ROCN Bases": {
+							"destroyed": 4,
+							"surviving": 0,
+							"total": 4
+						},
+						"Static Radars": {
+							"destroyed": 18,
+							"surviving": 0,
+							"total": 18
+						},
+						"Static SAMs": {
+							"destroyed": 4,
+							"surviving": 0,
+							"total": 4
+						}
+					},
+					"warnings": []
+				},
+				"hex_id": "",
+				"kind": "ijfs",
+				"seq": 0,
+				"team": "Red"
+			},
+			{
+				"data": {
+					"bns_lost_at_sea": 9,
+					"crossing_casualties": {
+						"damaged": 25,
+						"destroyed": 39
+					},
+					"destroyed_by_ship_type": {
+						"CG": 7,
+						"Container_Ship": 8,
+						"DDG": 9,
+						"Decoys": 21,
+						"FFG": 13,
+						"FFL": 14,
+						"Fast_Transport": 1
+					},
+					"mine_status": [
+						{
+							"beach_id": 1,
+							"lane_cleared": true,
+							"ships_destroyed": 8,
+							"status_color": "green"
+						},
+						{
+							"beach_id": 2,
+							"lane_cleared": true,
+							"ships_destroyed": 8,
+							"status_color": "green"
+						},
+						{
+							"beach_id": 3,
+							"lane_cleared": true,
+							"ships_destroyed": 9,
+							"status_color": "green"
+						},
+						{
+							"beach_id": 4,
+							"lane_cleared": true,
+							"ships_destroyed": 9,
+							"status_color": "green"
+						}
+					],
+					"resolved_turn": 1,
+					"sent_by_type": {
+						"CG": 12,
+						"Container_Ship": 15,
+						"DDG": 12,
+						"Decoys": 40,
+						"FFG": 24,
+						"FFL": 24,
+						"Fast_Transport": 5
+					},
+					"systems_fired_count": 162,
+					"target_beaches": [
+						1,
+						2,
+						3,
+						4
+					],
+					"target_tos": [
+						3
+					],
+					"unliftable_bn": 0
+				},
+				"hex_id": "",
+				"kind": "antiship",
+				"seq": 1,
+				"team": "Green"
+			},
+			{
+				"data": {
+					"brigade_id": "PLA-71-2-Amphibious",
+					"mode": "tactical",
+					"target_hex": "hex_43_17"
+				},
+				"hex_id": "hex_43_17",
+				"kind": "move",
+				"seq": 2,
+				"team": "Red"
+			},
+			{
+				"data": {
+					"attacker_brigade_ids": [
+						"PLA-71-2-Amphibious"
+					],
+					"attacker_losses": 1,
+					"combat_detail": {
+						"attacker": {
+							"maneuver_combat_power": 7.0,
+							"maneuver_unit_count": 8,
+							"support_breakdown": {
+								"artillery": 0.8,
+								"cas": 0.0,
+								"crbm": 0.0,
+								"rocket_artillery": 0.0,
+								"rotary_wing": 0.0
+							},
+							"support_combat_power": 0.8,
+							"support_counts": {
+								"artillery": 1,
+								"cas": 0,
+								"crbm": 0,
+								"rocket_artillery": 0,
+								"rotary_wing": 0
+							},
+							"total_combat_power_unmodified": 7.8
+						},
+						"defender": {
+							"maneuver_combat_power": 4.4,
+							"maneuver_unit_count": 3,
+							"support_breakdown": {
+								"artillery": 0.8,
+								"cas": 0.0,
+								"crbm": 0.0,
+								"rocket_artillery": 0.0,
+								"rotary_wing": 0.0
+							},
+							"support_combat_power": 0.8,
+							"support_counts": {
+								"artillery": 1,
+								"cas": 0,
+								"crbm": 0,
+								"rocket_artillery": 0,
+								"rotary_wing": 0
+							},
+							"terrain_modifier": 1.0,
+							"total_combat_power_terrain_modified": 5.2,
+							"total_combat_power_unmodified": 5.2
+						},
+						"feba": {
+							"base_km": 2.0,
+							"movement_km": 0.764,
+							"roll_factor": 0.955
+						},
+						"losses": {
+							"attacker": 1,
+							"attacker_loss_rate": 0.184,
+							"defender": 1,
+							"defender_loss_rate": 0.241
+						},
+						"ratios": {
+							"terrain_modified": 1.5,
+							"unmodified": 1.5
+						},
+						"result": "Attacker Advantage",
+						"rolls": {
+							"attacker_loss_roll": 74,
+							"defender_loss_roll": 41,
+							"feba_movement_roll": 41
+						}
+					},
+					"defender_brigade_ids": [
+						"BDE-66"
+					],
+					"defender_losses": 1,
+					"feba_movement_km": 0.764,
+					"hex_id": "hex_43_17",
+					"owner_after": "contested"
+				},
+				"hex_id": "hex_43_17",
+				"kind": "combat",
+				"seq": 3,
+				"team": ""
+			},
+			{
+				"data": {
+					"antiship_systems_reset": 50
+				},
+				"hex_id": "",
+				"kind": "cleanup",
+				"seq": 4,
+				"team": ""
+			}
+		],
+		"frontline_summary": {},
+		"ijfs_summary": {
+			"attacks": {
+				"executed": 30,
+				"skipped": 0,
+				"skipped_by_reason": {}
+			},
+			"contest_losses": 0,
+			"destroyed_targets_by_category": {
+				"Anti-Ship Systems": 8,
+				"ROCAF Airbases": 1
+			},
+			"detections_by_category": {
+				"Anti-Ship Systems": 31,
+				"Military Headquarters": 4,
+				"Mobile Radars": 3,
+				"ROCAF Airbases": 5
+			},
+			"detections_by_mobility": {
+				"mobile": 7,
+				"moveable": 10,
+				"static": 26
+			},
+			"exquisite_intel_overrides": [],
+			"firing_capacity_utilization": {
+				"cj10_lacm_glcm": {
+					"budget": 36,
+					"remaining": 36,
+					"used": 0
+				},
+				"cm401_asbm": {
+					"budget": 40,
+					"remaining": 40,
+					"used": 0
+				},
+				"df15c_penetrator_srbm": {
+					"budget": 18,
+					"remaining": 18,
+					"used": 0
+				},
+				"owa_drone_small": {
+					"budget": 180,
+					"remaining": 180,
+					"used": 0
+				},
+				"pch191_bre6_crbm": {
+					"budget": 120,
+					"remaining": 104,
+					"used": 16
+				},
+				"pch191_bre8_crbm": {
+					"budget": 36,
+					"remaining": 30,
+					"used": 6
+				},
+				"pla_srbm_large_generic": {
+					"budget": 60,
+					"remaining": 58,
+					"used": 2
+				},
+				"yj_12_ascm": {
+					"budget": 30,
+					"remaining": 28,
+					"used": 2
+				},
+				"yj_62_ascm": {
+					"budget": 60,
+					"remaining": 58,
+					"used": 2
+				}
+			},
+			"free_shot_losses": 0,
+			"red_air_losses": 0,
+			"rounds_expended_by_munition": {
+				"pch191_bre6_crbm": 768,
+				"pch191_bre8_crbm": 72,
+				"pla_srbm_large_generic": 16,
+				"strike_aircraft_medium": 8,
+				"yj_12_ascm": 8,
+				"yj_62_ascm": 8
+			},
+			"sead_destroyed": 0,
+			"sead_engagements": 0,
+			"sead_pressure": {},
+			"sead_suppressed": 0,
+			"suppressed_targets_by_category": {
+				"Anti-Ship Systems": 5,
+				"Mobile Radars": 1,
+				"ROCAF Airbases": 2
+			},
+			"taiwan_ad_health_after": {
+				"category_health": {
+					"Mobile Radars": 0.6,
+					"Moveable SAMs": 0.0,
+					"Static Radars": 0.0,
+					"Static SAMs": 0.0
+				},
+				"effective_ad_health": 0.09,
+				"effective_sam_health": 0.0,
+				"radar_health": 0.225,
+				"radar_weight_total": 0.4,
+				"raw_sam_health": 0.0,
+				"sam_weight_total": 0.6
+			},
+			"taiwan_ad_health_after_missile_phase": {
+				"category_health": {
+					"Mobile Radars": 0.8,
+					"Moveable SAMs": 0.0,
+					"Static Radars": 0.0,
+					"Static SAMs": 0.0
+				},
+				"effective_ad_health": 0.12,
+				"effective_sam_health": 0.0,
+				"radar_health": 0.3,
+				"radar_weight_total": 0.4,
+				"raw_sam_health": 0.0,
+				"sam_weight_total": 0.6
+			},
+			"taiwan_ad_health_after_sead": {
+				"category_health": {
+					"Mobile Radars": 0.8,
+					"Moveable SAMs": 0.0,
+					"Static Radars": 0.0,
+					"Static SAMs": 0.0
+				},
+				"effective_ad_health": 0.12,
+				"effective_sam_health": 0.0,
+				"radar_health": 0.3,
+				"radar_weight_total": 0.4,
+				"raw_sam_health": 0.0,
+				"sam_weight_total": 0.6
+			},
+			"taiwan_ad_health_before": {
+				"category_health": {
+					"Mobile Radars": 0.8,
+					"Moveable SAMs": 0.0,
+					"Static Radars": 0.0,
+					"Static SAMs": 0.0
+				},
+				"effective_ad_health": 0.12,
+				"effective_sam_health": 0.0,
+				"radar_health": 0.3,
+				"radar_weight_total": 0.4,
+				"raw_sam_health": 0.0,
+				"sam_weight_total": 0.6
+			},
+			"target_counts_by_category_status": {
+				"Anti-Ship Systems": {
+					"destroyed": 36,
+					"surviving": 37,
+					"total": 73
+				},
+				"Government Buildings": {
+					"destroyed": 10,
+					"surviving": 0,
+					"total": 10
+				},
+				"Military Headquarters": {
+					"destroyed": 3,
+					"surviving": 2,
+					"total": 5
+				},
+				"Mobile Radars": {
+					"destroyed": 1,
+					"surviving": 4,
+					"total": 5
+				},
+				"Mobile SAMs": {
+					"destroyed": 2550,
+					"surviving": 0,
+					"total": 2550
+				},
+				"Moveable SAMs": {
+					"destroyed": 24,
+					"surviving": 0,
+					"total": 24
+				},
+				"ROCAF Airbases": {
+					"destroyed": 8,
+					"surviving": 2,
+					"total": 10
+				},
+				"ROCN Bases": {
+					"destroyed": 4,
+					"surviving": 0,
+					"total": 4
+				},
+				"Static Radars": {
+					"destroyed": 18,
+					"surviving": 0,
+					"total": 18
+				},
+				"Static SAMs": {
+					"destroyed": 4,
+					"surviving": 0,
+					"total": 4
+				}
+			},
+			"warnings": []
+		},
+		"ijfs_writeback": {
+			"antiship_destroyed_by_type": {
+				"2:17": 1,
+				"2:20": 1,
+				"2:21": 1,
+				"2:3": 55,
+				"2:5": 16,
+				"3:16": 12,
+				"3:19": 1,
+				"3:21": 2,
+				"3:3": 149,
+				"3:5": 24,
+				"4:16": 12,
+				"4:20": 4,
+				"4:21": 2,
+				"4:3": 74,
+				"5:16": 3,
+				"5:18": 1,
+				"5:19": 1,
+				"5:22": 1,
+				"5:3": 37,
+				"5:5": 8
+			},
+			"antiship_suppressed_by_type": {
+				"2:5": 8,
+				"2:99": 1,
+				"3:5": 16,
+				"3:99": 1
+			},
+			"maneuver_casualties": [],
+			"sam_destroyed": 0,
+			"sam_suppressed": 0
+		},
+		"turn_number": 1
+	}
 }

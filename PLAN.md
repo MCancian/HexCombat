@@ -126,6 +126,29 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-28 — Track E AI-readiness: surface event log + `TurnResult` through `LLMGameAPI` (via opencode):**
+  `LLMGameAPI.apply_agent_response`'s `end_turn` action now routes through `GameState.play_turn([], [], dice)`
+  (resolving the already-buffered orders) instead of bare `resolve_turn`, captures the returned `TurnResult`,
+  and threads `turn_result.to_dict()` into the action result under a new top-level `"turn_result"` key (the
+  structured record of the turn just resolved: turn_number, contested_hexes, combat_summaries, phase
+  summaries, and the ordered `events` log). New `tools/export_llm_result.gd` (mirrors `export_llm_observation`)
+  regenerates `docs/examples/llm_result_after_turn.json`. Decisions: (1) **`turn_result` lives in the action
+  RESULT, not the observation** — the observation reflects *current/forward* state, while `turn_result` is the
+  transient "what just happened" record; keeping them separate avoids bloating the always-serialized
+  observation. (2) **Only populated when `resolved == true`** (`{}` otherwise) — the validator asserts both the
+  populated shape (turn_number==1, contested includes the assaulted hex, events contain the move + combat) and
+  the empty-on-reject case. (3) **`play_turn`'s own PLANNING guard replaces the old `phase_before == 0` check**
+  (`turn_result != null` ⟺ was in planning) — semantically identical, cleaner. (4) **Fixture is tool-generated,
+  never hand-edited** — orchestrator independently re-ran the export tool and confirmed the committed fixture
+  is byte-identical. Verification: `tools/validate_llm_api.gd` PASS; gate ALL PHASES GREEN; golden 20260624 →
+  casualties=2, feba=0.76 byte-stable; regenerated fixture's `turn_result.events` = `[ijfs, antiship, move,
+  combat, cleanup]`. **Retrospective triage** (see `RETROSPECTIVES.md 2026-06-28 llm-event-surfacing`):
+  **promoted a `hexcombat.llm_action_result` schema file** (the observation + action_response have schemas; the
+  result doesn't — a contract-consistency gap) to the next unit; recorded the committed-fixture-vs-in-memory
+  tradeoff; flagged that `game_over`/`winner` victory conditions are **new game-design (a design call, not a
+  faithful port)** and must go to the user, while a bulk `submit_and_resolve` endpoint is a thin `play_turn`
+  wrapper for later.
+
 - **2026-06-28 — Track E AI-readiness: per-turn structured event log (`TurnEvent`) (via opencode):**
   Added `scripts/model/TurnEvent.gd` (typed Resource: `seq, kind, hex_id, team, data` + `to_dict()`) and
   `scripts/TurnEventLog.gd` (pure static `build(state) -> Array[TurnEvent]`), and populated `TurnResult.events`
