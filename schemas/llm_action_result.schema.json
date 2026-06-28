@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hexcombat.llm_action_result",
+  "title": "HexCombat LLM Action Result",
+  "type": "object",
+  "required": [
+    "protocol_version",
+    "schema",
+    "ok",
+    "errors",
+    "resolved",
+    "seed",
+    "turn_result",
+    "observation"
+  ],
+  "properties": {
+    "protocol_version": {"type": "string"},
+    "schema": {"const": "hexcombat.llm_action_result"},
+    "ok": {"type": "boolean"},
+    "errors": {"type": "array"},
+    "resolved": {"type": "boolean"},
+    "seed": {"type": "integer"},
+    "observation": {"type": "object"},
+    "turn_result": {
+      "type": "object",
+      "description": "Structured record of the turn just resolved; {} when resolved=false. Sub-keys are NOT required so the empty (unresolved) form also validates.",
+      "properties": {
+        "turn_number": {"type": "integer"},
+        "contested_hexes": {"type": "array"},
+        "combat_summaries": {"type": "array"},
+        "ijfs_summary": {"type": "object"},
+        "ijfs_writeback": {"type": "object"},
+        "antiship_summary": {"type": "object"},
+        "frontline_summary": {"type": "object"},
+        "cleanup_summary": {"type": "object"},
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["seq", "kind", "hex_id", "team", "data"],
+            "properties": {
+              "seq": {"type": "integer"},
+              "kind": {"enum": ["ijfs", "antiship", "move", "commit", "combat", "frontline", "cleanup"]},
+              "hex_id": {"type": "string"},
+              "team": {"type": "string"},
+              "data": {"type": "object"}
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

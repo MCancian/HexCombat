@@ -7,6 +7,16 @@ const RED_MOVER_ID := "PLA-71-2-Amphibious"
 const START_HEX := "hex_44_16"
 const TARGET_HEX := "hex_43_17"
 const DICE_SEED := 20260624
+const REQUIRED_RESULT_KEYS := [
+	"protocol_version",
+	"schema",
+	"ok",
+	"errors",
+	"resolved",
+	"seed",
+	"turn_result",
+	"observation"
+]
 const REQUIRED_OBSERVATION_KEYS := [
 	"protocol_version",
 	"schema",
@@ -37,7 +47,8 @@ const EXAMPLE_PATHS := [
 	"res://docs/examples/llm_action_response_move_end_turn.json",
 	"res://docs/examples/llm_result_after_turn.json",
 	"res://schemas/llm_observation.schema.json",
-	"res://schemas/llm_action_response.schema.json"
+	"res://schemas/llm_action_response.schema.json",
+	"res://schemas/llm_action_result.schema.json"
 ]
 
 var _failures: Array[String] = []
@@ -60,6 +71,7 @@ func _initialize() -> void:
 	_validate_action_application()
 	_validate_missing_seed_rejected()
 	_validate_examples_parse_and_apply()
+	_validate_result_schema_conformance()
 	_finish()
 
 
@@ -233,6 +245,42 @@ static func _find_combat_event(events: Array, hex_id: String) -> bool:
 		if ev.get("kind", "") == "combat" and ev.get("hex_id", "") == hex_id:
 			return true
 	return false
+
+
+func _validate_result_schema_conformance() -> void:
+	var schema_data = _read_json("res://schemas/llm_action_result.schema.json")
+	if not (schema_data is Dictionary):
+		_fail("result schema is not a Dictionary")
+		return
+	var sd: Dictionary = schema_data
+	_assert_equal_string("result schema $id", String(sd.get("$id", "")), "hexcombat.llm_action_result")
+
+	var schema_required: Array = sd.get("required", [])
+	var schema_sorted := schema_required.duplicate()
+	schema_sorted.sort()
+	var expected_sorted := REQUIRED_RESULT_KEYS.duplicate()
+	expected_sorted.sort()
+	if schema_sorted.size() != expected_sorted.size():
+		_fail("result schema required size %d != expected %d" % [schema_sorted.size(), expected_sorted.size()])
+	else:
+		for i in schema_sorted.size():
+			if String(schema_sorted[i]) != String(expected_sorted[i]):
+				_fail("result schema required[%d]: expected %s, got %s" % [i, String(expected_sorted[i]), String(schema_sorted[i])])
+
+	_game_data().load_all()
+	_game_state().reset_to_scenario()
+	_provision_red_mover_for_validation()
+	var result := LLMGameAPI.apply_agent_response(_sample_action_response())
+	for key in REQUIRED_RESULT_KEYS:
+		if not result.has(key):
+			_fail("fresh result missing required key: %s" % key)
+
+	var fixture = _read_json("res://docs/examples/llm_result_after_turn.json")
+	if fixture is Dictionary:
+		var f: Dictionary = fixture
+		for key in REQUIRED_RESULT_KEYS:
+			if not f.has(key):
+				_fail("result fixture missing required key: %s" % key)
 
 
 func _finish() -> void:

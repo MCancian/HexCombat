@@ -580,3 +580,36 @@ tool regeneration).
   new game-design, NOT a faithful TIV port — that must go to the user as a design call, not an autonomous
   unit. `submit_and_resolve` is a thin play_turn wrapper + `current_player` is a small observation add; both
   recorded as later low-risk conveniences once the schema unit lands.
+
+---
+
+## 2026-06-28 — llm-result-schema: llm_action_result JSON Schema + schema-driven key gate   (implementer: opencode deepseek-v4-flash-free)
+
+Fourth Track E AI-readiness seam (the llm-event-surfacing retrospective's #2). Brief: add the missing
+schemas/llm_action_result.schema.json + a schema-driven key conformance check in the validator. Documentation
++ validation only; zero game-logic change. Gated independently (validate_llm_api PASS; full gate ALL PHASES
+GREEN — flake-free this run; golden 20260624 → casualties=2, feba=0.76 byte-stable).
+
+**What would you do differently (implementer):**
+1. No real JSON-Schema validation engine — the schemas are parse-checked JSON but never actually validate
+   documents; GDScript re-lists required keys. Vendoring a GDScript JSON-Schema validator (or a Python
+   jsonschema test harness) would catch type/structural drift, not just key absence.
+2. Duplicated key lists (REQUIRED_RESULT_KEYS mirrors the schema's `required`) are a DRY/drift risk; the
+   sorted-set cross-check mitigates it but the validator could instead parse the schema's `required` at runtime
+   and use it directly, eliminating the constant.
+3. `additionalProperties:true` is too loose for an LLM contract — unknown top-level fields are silently valid;
+   a stricter top-level (all fields enumerated, sub-objects loose) + a Python schema regression suite would
+   catch real drift.
+
+**Orchestrator triage:**
+- #1 real schema engine → **record / later:** genuine value but it's a library/design decision (which engine,
+  GDScript vs a Python test harness) and a unit of its own, not an inline fix.
+- #2 parse schema `required` at runtime instead of a constant → **record only (rejected as inline change):**
+  the cross-check between REQUIRED_RESULT_KEYS and the schema's `required` is the DELIBERATE drift guard —
+  collapsing them to one source removes the very thing being checked; the duplication is intentional and
+  matches the existing REQUIRED_OBSERVATION_KEYS pattern.
+- #3 additionalProperties looseness → **record only:** consistent with the existing observation/action_response
+  schemas; tightening all three is a broader contract decision, out of scope for this consistency-fill unit.
+- **Arc note:** this closes the Track-E AI-readiness arc (play_turn → event log → LLM surfacing → result
+  schema). Next autonomous-safe candidate is the `GameData.validate_runtime_indexes()` hardening guard
+  (REFACTOR_NOTES M5a); `game_over`/`winner` victory conditions remain a user design call.

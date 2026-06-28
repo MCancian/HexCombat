@@ -210,7 +210,17 @@ a `turn_result` key; `tools/export_llm_result.gd` regenerates `docs/examples/llm
 action_response already have schema files but the result does not (a contract-consistency gap); mirror the
 existing `llm_observation.schema.json` pattern, cover the new `turn_result`/`events` shape, and wire it into
 `tools/validate_llm_api.gd` (it already parses `EXAMPLE_PATHS`; add a conformance check of the committed
-result fixture). Pure documentation/validation, zero golden risk.
+result fixture). Pure documentation/validation, zero golden risk. **— DONE 2026-06-28** (`schemas/
+llm_action_result.schema.json` + `REQUIRED_RESULT_KEYS`/`_validate_result_schema_conformance` drift gate; see
+`PLAN.md`/`RETROSPECTIVES.md 2026-06-28 llm-result-schema`). **This completes the Track-E AI-readiness arc**
+(play_turn façade → event log → LLM surfacing → result schema).
+
+**Next autonomous-safe candidate:** a `GameData.validate_runtime_indexes()` hardening guard (flagged in
+`REFACTOR_NOTES.md` M5a) — assert `brigades_by_hex`/`brigade.hex_id` stay in sync after mutations, run it in a
+validator; pure-logic, headless-verifiable, zero design risk. After that the autonomous backlog is genuinely
+thin (a bulk `submit_and_resolve` wrapper is low marginal value; `game_over`/`winner` victory conditions and
+crossing-lethality calibration are USER design calls; D5-D UI needs visual verification; the IJFS↔OOB linkage
+is data-blocked) — at that point reassess continue-vs-hand-off.
 
 > **Note on the deeper AI-driver track (surfaced for the user — NOT autonomous):** a `game_over`/`winner`
 > field requires defining **victory conditions**, which is new game-design, not a faithful TIV port — that is

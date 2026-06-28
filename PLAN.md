@@ -126,6 +126,27 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-28 — Track E AI-readiness: `llm_action_result` JSON Schema + schema-driven key gate (via opencode):**
+  Added `schemas/llm_action_result.schema.json` (the observation + action_response already had schema files;
+  the action result did not — a contract-consistency gap). Mirrors the existing shallow draft-2020-12 style
+  (`$id` "hexcombat.llm_action_result", top-level `required`+`properties`, `additionalProperties:true`); fully
+  enumerates the 8 top-level result keys and documents the nested `turn_result`/`events` shape. Decisions:
+  (1) **`turn_result` sub-keys are intentionally NOT `required`** so the `{}` (unresolved) form validates while
+  the populated form is still documented; per-event `required:[seq,kind,hex_id,team,data]` + a `kind` enum ARE
+  strict since every TurnEvent always carries all five. (2) **Schema is parse-checked + drives a key gate, not
+  a real validator** — Godot has no JSON-Schema engine, so (consistent with `REQUIRED_OBSERVATION_KEYS`)
+  `tools/validate_llm_api.gd` adds `REQUIRED_RESULT_KEYS` and `_validate_result_schema_conformance()`, which
+  cross-checks the schema's `required` array against `REQUIRED_RESULT_KEYS` (sorted-set compare, so they can't
+  drift) and asserts both a fresh resolved result and the committed fixture carry all 8 keys. No game-logic
+  touched → golden 20260624 → casualties=2, feba=0.76 byte-stable; gate ALL PHASES GREEN. **Retrospective
+  triage** (see `RETROSPECTIVES.md 2026-06-28 llm-result-schema`): all three lessons recorded (vendor a real
+  JSON-Schema engine; the duplicated key-list is a deliberate cross-check guard, not pure smell;
+  `additionalProperties:true` looseness is consistent with the existing schemas) — none acted on inline (no
+  defect; each is a broader design call). **This completes the Track-E AI-readiness arc** (play_turn façade →
+  event log → LLM surfacing → result schema); the autonomous Track-E backlog is now largely exhausted (next
+  candidates: a `GameData.validate_runtime_indexes()` hardening guard from REFACTOR_NOTES M5a; a bulk
+  `submit_and_resolve` wrapper; `game_over`/`winner` victory conditions = a USER design call).
+
 - **2026-06-28 — Track E AI-readiness: surface event log + `TurnResult` through `LLMGameAPI` (via opencode):**
   `LLMGameAPI.apply_agent_response`'s `end_turn` action now routes through `GameState.play_turn([], [], dice)`
   (resolving the already-buffered orders) instead of bare `resolve_turn`, captures the returned `TurnResult`,
