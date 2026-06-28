@@ -191,9 +191,20 @@ Question and cross-link (`see RETROSPECTIVES.md <date>/<subtask>`).
 
 ## 6. Immediate next action (D3 + D4 milestones complete — pushed)
 
-**All of D3 (anti-ship & mine warfare) and D4 (IJFS) are DONE, gated, and pushed.** Pick the next
-unit from the post-D3 backlog (consult `ROADMAP.md` + `PLAN.md` so choices stay forward-compatible).
-In rough priority order — settle the first with the user, it's a design call:
+**All of D3 (anti-ship & mine warfare) and D4 (IJFS) are DONE, gated, and pushed.**
+
+**Update 2026-06-28 — D5 headless ports + Track E façade DONE & pushed.** D5-A (`FrontLineService`),
+D5-B (`resolve_frontline_phase`), D5-C (cleanup phase) are committed; the only D5 remainder is **D5-D**
+(polyline-draw UI — needs visual verification, NOT autonomous-overnight-safe). The first **Track E**
+(AI-readiness) seam also landed: `GameState.play_turn(red_orders, green_orders, dice) -> TurnResult` +
+`GameData.snapshot_state()` (see `PLAN.md` Decisions 2026-06-28 / `RETROSPECTIVES.md 2026-06-28
+play_turn-facade`). **Next autonomous-safe unit:** a **typed per-turn structured event log** (extend
+`TurnResult` with `Array[TurnEvent]` — movements/combats/casualties/FEBA/retreats/ownership — the seam
+the play_turn retrospective + REFACTOR_NOTES M5b/M6 both point at; pure-logic, headless-verifiable). The
+remaining non-autonomous items (UI, design calls, data-blocked linkage) are unchanged below.
+
+Pick the next unit from the post-D3 backlog (consult `ROADMAP.md` + `PLAN.md` so choices stay
+forward-compatible). In rough priority order — settle the first with the user, it's a design call:
 
 1. **Anti-ship crossing-lethality calibration** *(balance / design — surface to user first).* D3-D is
    wired and reconciles, but the crossing is catastrophically lethal (golden scenario loses 33/36 BNs

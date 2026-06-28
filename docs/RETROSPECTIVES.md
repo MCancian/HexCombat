@@ -462,3 +462,47 @@ attrition/isolation), gated independently (validator + gate green, golden byte-s
   little benefit while the reset set is this small. Revisit only if end-of-turn resets grow.
 - Guard against forgotten future resets → **record only**: the validator already asserts the cumulative
   fields are NOT touched; a "new field" guard isn't expressible without reflection.
+
+---
+
+## 2026-06-28 — play_turn-facade: headless turn façade + state snapshot   (implementer: opencode deepseek-v4-flash-free)
+
+Track E AI-readiness seam (the deferred `GameState.play_turn(...) -> TurnResult` + `GameData.snapshot_state()`
+flagged across `REFACTOR_NOTES.md` M3/M5c/M6). Brief: typed `TurnResult` Resource + a pure orchestration
+façade over `resolve_turn` + a deterministic snapshot + a validator proving byte-identical behavior to the
+hand-rolled `validate_headless_turn` sequence. Gated independently (validator PASS; full gate ALL PHASES
+GREEN; golden 20260624 → casualties=2, feba=0.76 byte-stable). The implementer also pre-applied its own
+point #6 (unknown-`kind` `push_error` fallthrough) before reporting.
+
+**What would you do differently (implementer):**
+1. `TurnResult` is a flat mirror of the `last_*` fields with untyped `Array`/`Dictionary` payloads
+   (`combat_summaries`, `ijfs_writeback`); the next seam (per-turn structured event log) would be easier if
+   it carried a typed `Array[TurnEvent]` instead of opaque dicts.
+2. `play_turn` shouldn't auto-advance (correct) — but every caller must remember `begin_next_turn()`; a
+   `play_full_turn_and_advance()` convenience belongs on `LLMGameAPI`, not `GameState`.
+3. `snapshot_state()` is GameData-only; a `GameState.snapshot()` superset (turn_number, orders, ship_reserve,
+   `last_*`) would be the right shape for resumable/journaled games.
+4. The validator is a single datapoint (one seed/scenario); a second hex/brigade combo or varied order count
+   would harden it.
+5. No error-path test — `play_turn` returns `null` outside PLANNING / on bad input, but that contract was
+   untested; an AI driver calling it in the wrong phase would get a silent null.
+6. `_apply_order` defaulted unknown `kind` to "move" (a typo'd kind would silently move) — fixed to a
+   `push_error` fallthrough in-session.
+
+**Orchestrator triage:**
+- #5 error-path test → **ACTED NOW (inline):** the contract is the whole point of a fail-loud façade and the
+  test is ~4 lines. Added a wrong-phase `play_turn([],[],…)` → assert `null` case to `validate_play_turn.gd`
+  (the prior `play_turn` leaves the machine in `Phase.END`; the emitted `push_error` is harmless — the gate
+  only fails validators on the two-word "SCRIPT ERROR"). Re-gated green. Did it inline rather than via a 2nd
+  opencode session — below the threshold where the free model adds value and SceneTree assertion structure is
+  easy to botch (per CLAUDE.md "implement it yourself" for too-small tasks).
+- #1 typed per-turn event log → **PROMOTED to the next backlog unit** (`PLAN.md` Decisions 2026-06-28 +
+  ORCHESTRATOR_HANDOFF §6). It's the natural next Track E step and `TurnResult.to_dict()` is already the
+  serialization bridge it will extend.
+- #2 `play_full_turn_and_advance()` on `LLMGameAPI` → **record / act later:** real convenience, fold into the
+  AI-driver loop when it lands; keeping `GameState` minimal is correct now.
+- #3 GameState-superset snapshot → **record / act later (persistence track):** not needed until save/replay;
+  the GameData-only snapshot is exactly right for the current byte-comparison gate.
+- #4 second validator datapoint → **record only:** snapshot-equality against the gate-trusted oracle is
+  already a strong proof; revisit if `play_turn`'s order-iteration logic grows.
+- #6 unknown-`kind` guard → **already applied by the implementer** (verified in the diff).

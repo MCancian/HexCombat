@@ -471,6 +471,31 @@ func _team_to_string(team: Brigade.Team) -> String:
 			return "Red"
 
 
+## Deterministic, key-sorted state snapshot for golden-test / AI byte-comparison.
+## Returns a plain Dictionary with brigade positions/status and hex ownership.
+func snapshot_state() -> Dictionary:
+	var brigade_snap := {}
+	var bids := brigades.keys()
+	bids.sort()
+	for bid in bids:
+		var b: Brigade = brigades[bid]
+		brigade_snap[bid] = {
+			"hex_id": b.hex_id,
+			"battalions": b.get_battalion_count(),
+			"destroyed": b.destroyed,
+			"team": int(b.team)
+		}
+	var hex_snap := {}
+	var hids := hex_states.keys()
+	hids.sort()
+	for hid in hids:
+		hex_snap[hid] = {
+			"owner": String(hex_states[hid]["owner"]),
+			"feba_km": float(hex_states[hid]["feba_km"])
+		}
+	return {"brigades": brigade_snap, "hexes": hex_snap}
+
+
 func _read_json(path: String):
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:

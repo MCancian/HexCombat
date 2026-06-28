@@ -1097,6 +1097,45 @@ func _apply_casualty(casualty: Dictionary) -> void:
 	push_error("Combat casualty references missing battalion type '%s' in brigade %s" % [casualty_type, brigade_id])
 
 
+## Play a full turn from a bulk-order spec: buffers every order, resolves, and
+## returns a typed TurnResult. The caller remains in Phase.END and must call
+## begin_next_turn() separately to advance.
+func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> TurnResult:
+	if phase != Phase.PLANNING:
+		push_error("play_turn requires PLANNING phase")
+		return null
+
+	for raw_order in red_orders:
+		_apply_order(raw_order, Brigade.Team.RED)
+	for raw_order in green_orders:
+		_apply_order(raw_order, Brigade.Team.GREEN)
+
+	resolve_turn(dice)
+
+	var result := TurnResult.new()
+	result.turn_number = turn_number
+	result.contested_hexes = last_contested_hexes.duplicate()
+	result.combat_summaries = last_combat_summaries.duplicate(true)
+	result.ijfs_summary = last_ijfs_summary.duplicate(true)
+	result.ijfs_writeback = last_ijfs_writeback.duplicate(true)
+	result.antiship_summary = last_antiship_summary.duplicate(true)
+	result.frontline_summary = last_frontline_summary.duplicate(true)
+	result.cleanup_summary = last_cleanup_summary.duplicate(true)
+	return result
+
+
+func _apply_order(order: Dictionary, team: Brigade.Team) -> void:
+	var kind := String(order.get("kind", "move"))
+	match kind:
+		"move":
+			var mode := String(order.get("mode", Movement.MODE_TACTICAL))
+			add_move_order(team, String(order["brigade_id"]), String(order["target_hex"]), mode)
+		"commit":
+			add_commit_order(team, String(order["brigade_id"]), String(order["target_hex"]))
+		_:
+			push_error("Unknown order kind: %s" % kind)
+
+
 func _team_to_string(team: Brigade.Team) -> String:
 	match team:
 		Brigade.Team.GREEN:

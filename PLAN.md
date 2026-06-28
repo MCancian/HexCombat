@@ -126,6 +126,28 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-28 — Track E AI-readiness: `play_turn` headless façade + `snapshot_state` (via opencode):**
+  Added `scripts/model/TurnResult.gd` (typed Resource mirroring the `last_*` summary fields + `to_dict()`),
+  `GameState.play_turn(red_orders, green_orders, dice) -> TurnResult`, and `GameData.snapshot_state()`
+  (key-sorted deterministic brigade+hex snapshot for golden/AI byte-comparison). This is the deferred
+  highest-value seam flagged in `REFACTOR_NOTES.md` (M3/M5c/M6) for Track E (headless AI-vs-AI / the
+  autonomous orchestrator). Decisions: (1) **`play_turn` is pure orchestration over the existing
+  `resolve_turn(dice)`** — it only buffers the bulk-order spec (`{kind:"move"|"commit", brigade_id,
+  target_hex, mode?}` via `add_move_order`/`add_commit_order`, reusing their fail-loud validation) then
+  delegates; it changes no combat math or RNG draw order, so the golden invariant stays byte-stable.
+  (2) **Inspect-then-advance contract:** `play_turn` deliberately does NOT call `begin_next_turn()` — it
+  leaves the caller in `Phase.END` so an AI/headless driver can read the `TurnResult` (contested hexes,
+  losses) and snapshot before advancing. (3) **Fail-loud:** returns `null` (push_error) outside PLANNING
+  and on unknown order `kind`. (4) **`snapshot_state` is GameData-only** (brigade positions/battalions/
+  destroyed/team + hex owner/feba) — sufficient for the byte-comparison gate; a GameState-superset
+  snapshot for save/replay is deferred. Verification: new `tools/validate_play_turn.gd` proves the façade
+  is **byte-identical** to the hand-rolled `validate_headless_turn` sequence (snapshot equality) + two-run
+  determinism + the fail-loud null path; gate ALL PHASES GREEN; golden 20260624 → casualties=2, feba=0.76
+  byte-stable. **Retrospective triage** (see `RETROSPECTIVES.md 2026-06-28 play_turn-facade`): acted now on
+  the error-path test (orchestrator added it inline); the typed per-turn **event log** is promoted to the
+  next backlog unit; auto-advance convenience + GameState-superset snapshot recorded for the AI-driver/
+  persistence track.
+
 - **2026-06-27 — D5-C cleanup phase ported (end-of-turn system reset; via opencode):** Added
   `GameState.resolve_cleanup_phase()` + `EventBus.cleanup_resolved` + `tools/validate_cleanup.gd`,
   hooked into `resolve_turn` after `resolve_supply_turn` / before `phase = END`. **Scoping correction:**
