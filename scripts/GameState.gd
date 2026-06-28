@@ -409,31 +409,74 @@ func resolve_ijfs_turn(dice: Dice) -> Dictionary:
 		_rebuild_ijfs_state()
 	# Continuity: after the first IJFS day, carry destroyed/known/inventory/attrition forward and
 	# clear per-day suppression flags (mirrors the TIV loader reload reset).
-	# On the FIRST IJFS of the game, run the multi-day pre-invasion air campaign so anti-ship
-	# platforms are attrited cumulatively before the turn-1 crossing; later turns run one cycle.
-	var cycles := PRE_INVASION_IJFS_DAYS if _ijfs_day == 0 else 1
+	# On the FIRST IJFS of the game, run the multi-day prelanding warmup campaign so exquisite
+	# intel, posture override, SEAD/AD rules, and munition filter are applied (port of TIV's
+	# ijfs_prewarmup._run_warmup_locked). Later turns run one plain cycle.
 	var ledgers: Dictionary = {}
-	for i in range(cycles):
-		# carry_to_next_day persists destroyed/known/inventory and clears per-day suppression flags
-		# (so only the final pre-invasion day's suppression survives; destruction accumulates).
-		if _ijfs_day > 0 or i > 0:
-			IjfsEngine.carry_to_next_day(ijfs_state)
-		# Independent IJFS substream per cycle — NEVER consume the combat dice. SeededDice.derive()
-		# yields a fresh stream (so SeededDice combat is reproducible AND isolated); ScriptedDice
-		# .derive() returns self (shared queue), so for scripted combat we seed an independent
-		# SeededDice off the turn+cycle instead.
+	if _ijfs_day == 0:
+		# First IJFS: prelanding warmup from scenario config (port of TIV warmup driver).
+		var scenario_data: Dictionary = ijfs_state.scenario
+		var prelanding: Dictionary = scenario_data.get("prelanding", {})
+		var warmup_days := int(prelanding.get("days", PRE_INVASION_IJFS_DAYS))
+		var rules: Dictionary = prelanding.get("rules", {})
+		var exquisite_intel: Dictionary = prelanding.get("intel", {}).get("exquisite_intel", {})
+		var attrition_profile: String = prelanding.get("attrition_profile", "even")
+		var firing_capacity_config: Dictionary = scenario_data.get("red_firing_capacity", {})
+		var release_rules: Array = scenario_data.get("target_release", [])
+		for i in range(warmup_days):
+			# carry_to_next_day persists destroyed/known/inventory and clears per-day suppression
+			# flags (so only the final pre-invasion day's suppression survives; destruction
+			# accumulates).
+			if i > 0:
+				IjfsEngine.carry_to_next_day(ijfs_state)
+			# Independent IJFS substream per day — NEVER consume the combat dice.
+			var ijfs_dice: Dice
+			if dice is SeededDice:
+				ijfs_dice = dice.derive("ijfs:%d:%d" % [turn_number, i])
+			else:
+				ijfs_dice = SeededDice.new(hash("ijfs:%d:%d" % [turn_number, i]))
+			var x_day := i + 1
+			var z_day := x_day - warmup_days - 1
+			var warmup := _build_warmup_context(x_day, z_day, warmup_days, rules, exquisite_intel, attrition_profile, firing_capacity_config, release_rules)
+			ledgers = IjfsEngine.run_daily(ijfs_state, ijfs_dice, z_day, warmup)
+	else:
+		# Subsequent turns: single plain day (no warmup context).
+		IjfsEngine.carry_to_next_day(ijfs_state)
 		var ijfs_dice: Dice
 		if dice is SeededDice:
-			ijfs_dice = dice.derive("ijfs:%d:%d" % [turn_number, i])
+			ijfs_dice = dice.derive("ijfs:%d:%d" % [turn_number, 0])
 		else:
-			ijfs_dice = SeededDice.new(hash("ijfs:%d:%d" % [turn_number, i]))
-		ledgers = IjfsEngine.run_daily(ijfs_state, ijfs_dice, turn_number + i)
-	# The whole pre-invasion campaign resolves as THIS turn's IJFS (validators expect day==turn).
+			ijfs_dice = SeededDice.new(hash("ijfs:%d:%d" % [turn_number, 0]))
+		ledgers = IjfsEngine.run_daily(ijfs_state, ijfs_dice, turn_number)
 	_ijfs_day = turn_number
 	last_ijfs_summary = ledgers["summary"]
 	last_ijfs_writeback = _compute_ijfs_writeback(ledgers)
 	EventBus.ijfs_resolved.emit(last_ijfs_summary)
 	return ledgers
+
+
+## Build the warmup_context dict for one prelanding day (port of TIV
+## ijfs_prewarmup._run_warmup_locked's per-day context construction). ZERO dice consumed.
+func _build_warmup_context(
+	x_day: int, z_day: int, total_days: int,
+	rules: Dictionary, exquisite_intel: Dictionary,
+	attrition_profile: String,
+	firing_capacity_config: Dictionary,
+	release_rules: Array,
+) -> Dictionary:
+	var mult := IjfsWarmup.profile_multiplier(attrition_profile, x_day, total_days)
+	var day_firing := IjfsWarmup.scale_firing_capacity(firing_capacity_config, mult)
+	return {
+		"x_day": x_day,
+		"z_day": z_day,
+		"sead_enabled": rules.get("sead_enabled", false),
+		"ad_attrition_enabled": rules.get("ad_attrition_enabled", false),
+		"munition_filter": rules.get("munition_filter", {}),
+		"posture_default_override": rules.get("posture_default_override"),
+		"release_rules": release_rules,
+		"firing_capacity_config": day_firing,
+		"exquisite_intel": exquisite_intel,
+	}
 
 
 ## Lazily build the persistent anti-ship Green firing systems (aggregated by (to_number, type_id)).

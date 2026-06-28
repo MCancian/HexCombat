@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HexCombat — IJFS → Anti-Ship → Crossing Lethality Knobs</title>
+<style>
+  :root{
+    --ink:#1a1f24; --muted:#5a6672; --line:#d4dae0; --bg:#fdfdfc;
+    --hi:#fff6e6; --hi2:#fbeaea; --good:#e9f4ec; --code:#f2f4f6; --accent:#1f6f8b;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.5;
+    max-width:1180px; margin:0 auto; padding:28px 32px 96px;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1{font-size:26px; margin:0 0 4px; line-height:1.2}
+  h2{font-size:20px; margin:42px 0 10px; padding-top:10px; border-top:3px solid var(--accent); color:var(--accent)}
+  h3{font-size:16px; margin:24px 0 6px}
+  p{margin:8px 0}
+  code,.mono{font-family:"SF Mono",Consolas,Menlo,monospace; font-size:12.5px;
+    background:var(--code); padding:1px 5px; border-radius:3px; word-break:break-word}
+  .sub{color:var(--muted); font-size:13px; margin-top:0}
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+  .toc{background:#f6f8fa; border:1px solid var(--line); border-radius:8px; padding:14px 20px; margin:20px 0}
+  .toc ol{margin:6px 0; padding-left:22px; columns:2; column-gap:34px}
+  .toc li{margin:3px 0; break-inside:avoid}
+  .summary{background:#f0f6f9; border:1px solid #cfe2ea; border-radius:8px; padding:16px 22px; margin:18px 0}
+  .formula{background:#11202a; color:#e8f1f5; padding:12px 16px; border-radius:6px; font-family:Consolas,monospace;
+    font-size:13.5px; margin:12px 0; overflow-x:auto}
+  .formula .lit{color:#9ad7ee}
+  table{border-collapse:collapse; width:100%; margin:12px 0 6px; font-size:12.7px}
+  th,td{border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top}
+  th{background:#eef2f5; font-weight:600; position:sticky}
+  td.val{font-family:Consolas,monospace; white-space:nowrap; font-weight:600}
+  tr:nth-child(even) td{background:#fafbfc}
+  .loc{font-family:Consolas,monospace; font-size:11.5px; color:#42525e}
+  .up{color:#9a2b2b; font-weight:600}      /* increases lethality */
+  .down{color:#1d6b3a; font-weight:600}     /* decreases lethality */
+  .flag{background:var(--hi); border-left:4px solid #e0a800; padding:10px 14px; margin:12px 0; border-radius:0 6px 6px 0}
+  .danger{background:var(--hi2); border-left:4px solid #b23b3b; padding:10px 14px; margin:12px 0; border-radius:0 6px 6px 0}
+  .ok{background:var(--good); border-left:4px solid #2e8b57; padding:10px 14px; margin:12px 0; border-radius:0 6px 6px 0}
+  .note{color:var(--muted); font-size:12.5px}
+  .tag{display:inline-block; font-size:11px; padding:1px 7px; border-radius:10px; background:#e3eaf0; color:#33424d; margin-right:4px}
+  .tag.dormant{background:#f3e0e0; color:#8a2b2b}
+  .worked{display:flex; gap:18px; flex-wrap:wrap; margin:14px 0}
+  .worked .card{flex:1; min-width:320px; border:1px solid var(--line); border-radius:8px; padding:14px 18px}
+  .worked .card.air{background:#fbeaea}
+  .worked .card.mob{background:#e9f4ec}
+  .worked .big{font-size:21px; font-weight:700; font-family:Consolas,monospace}
+  .ladder{font-family:Consolas,monospace; font-size:12px; margin:6px 0}
+  .rank{font-size:13px}
+  .rank li{margin:7px 0}
+  hr{border:0; border-top:1px solid var(--line); margin:30px 0}
+  .legend{font-size:12px; color:var(--muted); margin:4px 0 0}
+  caption{caption-side:top; text-align:left; font-weight:600; font-size:13px; margin-bottom:4px; color:#33424d}
+  @media print{body{max-width:none; padding:0} h2{break-before:auto} .worked .card{break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<h1>IJFS → Anti-Ship → Amphibious-Crossing Lethality Knobs</h1>
+<p class="sub">HexCombat (Godot 4 / GDScript) — every tunable in the pipeline that decides how many assault battalions
+survive the crossing. Values pulled directly from source on 2026-06-28. Reference / recalibration document — <strong>no code changed.</strong></p>
+
+<div class="summary">
+  <strong>Why this exists.</strong> In the golden scenario (seed <code>20260624</code>) the amphibious wave loses ~24 of 36
+  battalions crossing into theater <strong>TO3</strong>. The designer's prior is closer to ~25% (~9 of 36). This document maps
+  every knob that drives that outcome so the gap can be tuned with eyes open.
+
+  <h3 style="margin-top:14px">The two-gate structure</h3>
+  <p>Every IJFS effect on a Green anti-ship system passes through <strong>two independent gates</strong>, each its own random draw:</p>
+  <ol style="margin:6px 0">
+    <li><strong>Gate 1 — Detection</strong> (<code>IjfsDetection.gd</code>): is the system found this turn?
+      <span class="mono">P(detect)</span>. Static/intel-locked targets auto-detect; mobile targets roll against a satellite floor (phase&nbsp;1) plus an ISR-weighted term (phase&nbsp;2).</li>
+    <li><strong>Gate 2 — Strike</strong> (<code>IjfsStrike.resolve_strike</code>): given it was found and a munition is paired, is it destroyed, else suppressed?
+      <span class="mono">p_destroy</span> then, on survival, <span class="mono">p_suppress_if_not_destroyed</span>.</li>
+  </ol>
+  <p style="margin-bottom:4px">Per-target net effect each turn (one detection draw, then the strike draws only on the detected fraction):</p>
+  <div class="formula">
+    net P(destroy)  = <span class="lit">P(detect)</span> &times; <span class="lit">p_destroy</span><br>
+    net P(suppress) = <span class="lit">P(detect)</span> &times; (1 &minus; <span class="lit">p_destroy</span>) &times; <span class="lit">p_suppress_if_not_destroyed</span><br>
+    net P(degraded) = net P(destroy) + net P(suppress)
+  </div>
+
+  <div class="danger">
+    <strong>Headline finding.</strong> The detection gate is wildly asymmetric across Green anti-ship system classes:
+    <ul style="margin:6px 0">
+      <li><strong>Air-launched AShM platforms</strong> (<code>moveable</code>): satellite floor = <strong>0.50</strong> when hiding → near-certain detection, and strike <code>p_destroy</code> ≈ 0.55–0.65. Net ~<strong>72–75% neutralized</strong> (destroyed + suppressed). They get gutted.</li>
+      <li><strong>Mobile coastal AShM launchers</strong> (<code>mobile</code>, types 23/24, ~126 launchers): satellite floor = <strong>0.01</strong> when hiding (50× lower) and strike <code>p_destroy</code> ≈ 0.045. Net ~<strong>0.3% neutralized</strong>. They are barely touched.</li>
+    </ul>
+    Result: the assaulted theater's coastal arsenal fires at <strong>near full strength</strong> (~283 systems fire in TO3), so the
+    crossing model sinks ~2/3 of the wave. The <em>only</em> lever that degrades the shoot-and-scoot mobile launchers is the
+    <strong>C2-suppression fire penalty</strong> (×0.70) — and in this seed the IJFS suppresses <strong>TO4/TO5</strong> C2, not the assaulted <strong>TO3</strong>, so the penalty never lands where the wave crosses.
+  </div>
+</div>
+
+<div class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#s1">IJFS Detection (Gate 1)</a></li>
+    <li><a href="#s2">IJFS Strike &amp; SEAD suppression (Gate 2)</a></li>
+    <li><a href="#s3">C2 suppression lever</a></li>
+    <li><a href="#s4">Anti-ship firing plan (fire %, range tier, launch attrition)</a></li>
+    <li><a href="#s5">Amphibious crossing damage model (7 sub-stages)</a></li>
+    <li><a href="#s6">Ship sinking vs damage (per ship type)</a></li>
+    <li><a href="#s7">Magazines</a></li>
+    <li><a href="#s8">Campaign-level knobs</a></li>
+    <li><a href="#worked">Worked numeric example (the disparity)</a></li>
+    <li><a href="#levers">Calibration levers — ranked</a></li>
+    <li><a href="#disc">Discrepancies &amp; dormant knobs vs TIV</a></li>
+  </ol>
+  <p class="legend"><span class="up">↑ red</span> = raising the value raises crossing lethality (more BNs lost);
+  <span class="down">↑ green</span> = raising the value lowers crossing lethality. <span class="tag dormant">dormant</span> = present in data but not consumed in the current scenario.</p>
+</div>
+
+<!-- ============================ STAGE 1 ============================ -->
+<h2 id="s1">1 · IJFS Detection (Gate 1)</h2>
+<p>Two phases per IJFS day. <strong>Phase&nbsp;1 (satellite):</strong> mobile/moveable targets roll only against the satellite floor.
+<strong>Phase&nbsp;2 (aircraft ISR):</strong> floor + an ISR-weighted detectability term. Static or intel-locked targets are auto-known (P=1.0).
+Source formula (<code>IjfsDetection.aircraft_detect_target_ids</code>, matches <code>detection_model.final_probability_rule</code>):</p>
+<div class="formula">
+P_detect = min(1.0, <span class="lit">satellite_floor</span> + <span class="lit">base_probability</span> &times; <span class="lit">mobility_mult</span> &times; <span class="lit">posture_mult</span> &times; weighted_ISR)
+</div>
+
+<table>
+<caption>Detection-model knobs — <code>data/ijfs/ijfs_scenario.json → detection_model</code></caption>
+<tr><th>Knob</th><th>Location (key)</th><th>Current value</th><th>Units / range</th><th>Controls</th><th>Effect dir.</th><th>Consumed by</th></tr>
+
+<tr><td><strong>satellite_floor_probability</strong> — the dominant detection gate</td>
+<td class="loc">detection_model.satellite_floor_probability</td>
+<td class="val">mobile: {active 0.02, hiding 0.01}<br>moveable: {active 0.95, hiding 0.50}</td>
+<td>P, [0,1]</td>
+<td>Per-turn floor that a mobile/moveable target is found by satellite alone. The 50× mobile-vs-moveable gap is the root of the asymmetry.</td>
+<td class="down">↑ floor ⇒ more Green systems found ⇒ <span class="down">lower</span> crossing lethality</td>
+<td class="loc">_base_components → satellite_detect_target_ids; phase-2 p_detect</td></tr>
+
+<tr><td><strong>detectability_label_base_probability</strong></td>
+<td class="loc">detection_model.detectability_label_base_probability</td>
+<td class="val">high 0.5, medium 0.2, low 0.05</td>
+<td>P, [0,1]</td>
+<td>Base detect prob from a target's detectability label (hiding vs active label per target), before ISR scaling. Only used in phase-2.</td>
+<td class="down">↑ ⇒ <span class="down">lower</span> lethality</td>
+<td class="loc">_base_components.base_probability</td></tr>
+
+<tr><td><strong>mobility_multiplier</strong></td>
+<td class="loc">detection_model.mobility_multiplier</td>
+<td class="val">mobile 1.0, moveable 1.2</td>
+<td>×, multiplier</td>
+<td>Scales the base_probability term in phase-2 by mobility class. (static targets bypass the formula entirely.)</td>
+<td class="down">↑ ⇒ <span class="down">lower</span> lethality</td>
+<td class="loc">phase-2 p_detect</td></tr>
+
+<tr><td><strong>posture_multiplier</strong></td>
+<td class="loc">detection_model.posture_multiplier</td>
+<td class="val">mobile {active 1.25, hiding 1.0}<br>moveable {active 1.5, hiding 1.0}</td>
+<td>×, multiplier</td>
+<td>Active (recently firing/moving) systems are easier to find. Hiding = baseline 1.0.</td>
+<td class="down">↑ ⇒ <span class="down">lower</span> lethality</td>
+<td class="loc">phase-2 p_detect</td></tr>
+
+<tr><td><strong>antiship_active_attempt_multiplier</strong></td>
+<td class="loc">detection_model.antiship_active_attempt_multiplier</td>
+<td class="val">1.5</td>
+<td>×, multiplier</td>
+<td>Extra detectability bump applied to <code>base_probability</code> when an anti-ship target's metadata flag <code>active=true</code> (it fired/exposed). Only affects the phase-2 base term, NOT the satellite floor.</td>
+<td class="down">↑ ⇒ <span class="down">lower</span> lethality (but only for already-active systems)</td>
+<td class="loc">_apply_antiship_exposure_modifier</td></tr>
+
+<tr><td><strong>static_target_rule / intel_locked</strong></td>
+<td class="loc">detection_model.static_target_rule; IjfsTarget.intel_locked</td>
+<td class="val">static ⇒ P=1.0</td>
+<td>boolean rule</td>
+<td>Static (e.g. CDCM type 5) and intel-locked targets are auto-detected every turn (skip the roll). Mobile coastal launchers are NOT static, so they escape this.</td>
+<td class="down">more statics ⇒ <span class="down">lower</span> lethality</td>
+<td class="loc">satellite_/aircraft_detect_target_ids</td></tr>
+</table>
+
+<table>
+<caption>ISR sources (feed <code>weighted_ISR</code> in phase-2) — <code>ijfs_scenario.json → isr_sources</code> + <code>IjfsDetection</code> constants</caption>
+<tr><th>Knob</th><th>Location</th><th>Current value</th><th>Controls</th><th>Effect dir.</th></tr>
+<tr><td>satellite_recon weight / floor / half-life</td><td class="loc">isr_sources[satellite_recon]</td><td class="val">weight 0.30, floor 0.40, exp_decay half_life 21d</td><td>Largest ISR contributor; degrades slowly.</td><td class="down">↑ ⇒ lower lethality</td></tr>
+<tr><td>uav_pool / manned_recon weights</td><td class="loc">isr_sources[uav_pool],[manned_recon]</td><td class="val">0.25 / 0.20, from_attrition</td><td>Scale with surviving UAV/manned ISR aircraft.</td><td class="down">↑ ⇒ lower lethality</td></tr>
+<tr><td>humint_network / balloon_recon</td><td class="loc">isr_sources[humint_network],[balloon_recon]</td><td class="val">0.15 (linear 14d) / 0.10 (logistic). balloon targets <em>Anti-Ship Systems</em></td><td>Category-restricted ISR; balloon explicitly covers Anti-Ship.</td><td class="down">↑ ⇒ lower lethality</td></tr>
+<tr><td>ISR local clamp</td><td class="loc">IjfsDetection.ISR_LOCAL_CLAMP_HIGH</td><td class="val">[0.0, 1.5]</td><td>Caps a single source's evaluated capability.</td><td class="note">guard rail</td></tr>
+<tr><td>aircraft contest_adjustment</td><td class="loc">aircraft_detect_target_ids(contest_adjustment)</td><td class="val">runtime (air-superiority contest)</td><td>Scales total weighted_ISR by air contest outcome.</td><td class="down">↑ ⇒ lower lethality</td></tr>
+</table>
+<p class="note">Note: even at maximum ISR, the phase-2 term for a <code>mobile/hiding</code> launcher is
+<code>0.05 × 1.0 × 1.0 × weighted_ISR</code> on top of the <strong>0.01</strong> floor — it stays tiny. The satellite floor, not ISR, is the binding gate for mobile coastal launchers.</p>
+
+<!-- ============================ STAGE 2 ============================ -->
+<h2 id="s2">2 · IJFS Strike &amp; SEAD suppression (Gate 2)</h2>
+<p>Once detected and paired with a munition, the strike resolves destroy → (on survival) suppress.
+The per-(munition × target-subcategory) probabilities live in <code>munition_target_pairings.json</code> (355 rows).
+The destroy probability is then optionally modified by <code>strike_probability_modifiers</code>.</p>
+<div class="formula">
+p_destroy_final = clamp01( (<span class="lit">pairing.probability_destroyed</span> + Σ add_mods) &times; Π mult_mods )<br>
+suppressed  if  not destroyed  and  roll ≤ <span class="lit">pairing.probability_suppressed_if_not_destroyed</span>
+</div>
+
+<table>
+<caption>Strike knobs — <code>scripts/ijfs/IjfsStrike.gd</code> + <code>data/ijfs/munition_target_pairings.json</code></caption>
+<tr><th>Knob</th><th>Location</th><th>Current value (representative)</th><th>Units/range</th><th>Controls</th><th>Effect dir.</th></tr>
+
+<tr><td><strong>probability_destroyed</strong> (air-launched platform)</td>
+<td class="loc">pairings[Air-Launched AShM Platform]</td>
+<td class="val">0.18 – 0.65<br>(BRE6 0.60, BRE8 0.65, strike-acft 0.55)</td>
+<td>P, [0,1]</td>
+<td>Per-strike kill prob vs a found air-launched AShM platform.</td>
+<td class="down">↑ ⇒ fewer Green firers ⇒ lower lethality</td></tr>
+
+<tr><td><strong>probability_destroyed</strong> (mobile coastal AShM)</td>
+<td class="loc">pairings[Mobile Coastal AShM (generic)/Indigenous/US-supplied]</td>
+<td class="val">0.004 – 0.14<br>(BRE6 0.045, BRE8 0.06, strike-acft 0.14)</td>
+<td>P, [0,1]</td>
+<td>Per-strike kill prob vs a found mobile coastal launcher. Tiny by design.</td>
+<td class="down">↑ ⇒ lower lethality (currently almost zero effect)</td></tr>
+
+<tr><td><strong>probability_destroyed</strong> (other naval anti-ship)</td>
+<td class="loc">pairings[Missile Patrol Boat / Stealth Corvette / Static CDCM Launcher / Submarine Force]</td>
+<td class="val">Patrol Boat 0.004–0.45<br>Stealth Corvette 0.004–0.40<br>Static CDCM Launcher 0.02–0.32<br>Submarine 0.002–0.06</td>
+<td>P, [0,1]</td>
+<td>Per-strike kill probs for the remaining Green firer classes.</td>
+<td class="down">↑ ⇒ lower lethality</td></tr>
+
+<tr><td><strong>probability_suppressed_if_not_destroyed</strong></td>
+<td class="loc">pairings[*].probability_suppressed_if_not_destroyed</td>
+<td class="val">Air-launched 0.22–0.50<br>Mobile coastal 0.024–0.36<br>Static CDCM Lnchr 0.024–0.70</td>
+<td>P, [0,1]</td>
+<td>On a non-kill, chance the system sits out this turn (counts as suppressed in firing %).</td>
+<td class="down">↑ ⇒ lower lethality</td></tr>
+
+<tr><td><strong>strike_probability_modifiers</strong> (additive)</td>
+<td class="loc">ijfs_scenario.json → strike_probability_modifiers</td>
+<td class="val">e.g. moveable_hiding_air_launched <span class="up">−0.10</span>; moveable_hiding_c2 −0.10; mobile_hiding BRE8 launcher-like −0.02; organic-air launcher-like −0.04</td>
+<td>add to p_destroy</td>
+<td>Hide/dispersal penalties that trim destroy prob for hiding mobile/moveable targets. All negative here (favor the target).</td>
+<td class="up">more-negative ⇒ <span class="up">higher</span> lethality (Green survives)</td></tr>
+
+<tr><td><strong>mobile_target_destroy_caps</strong> <span class="tag dormant">dormant</span></td>
+<td class="loc">ijfs_scenario.json → mobile_target_destroy_caps</td>
+<td class="val">active {Inorganic-Fast 0.08, Slow 0.02, Organic 0.20}; hiding {0.04, 0.01, 0.10}; ship overrides 0.80–0.95</td>
+<td>cap on p_destroy</td>
+<td>Legacy caps on mobile-target kill prob. <strong>NOT consumed in the current scenario</strong> — they only apply via <code>_legacy_cap_probability</code>, which runs <em>only when</em> <code>strike_probability_modifiers</code> is empty. It is non-empty, so this path is bypassed (the pairing pd values already bake in the low numbers).</td>
+<td class="note">no effect today; would lower kill prob if the modifier list were emptied</td></tr>
+</table>
+
+<h3>SEAD engagement (note: SAM categories, not anti-ship)</h3>
+<p class="note"><code>IjfsEngagement.gd</code> resolves a separate SEAD loop against <code>SAM_CATEGORIES = ["Moveable SAMs","Static SAMs","Mobile SAMs"]</code> —
+<strong>it does not engage anti-ship systems.</strong> Listed for completeness because its suppression math is the template for the anti-ship suppression structure.</p>
+<table>
+<tr><th>Knob</th><th>Location</th><th>Value</th><th>Controls</th></tr>
+<tr><td>SUPPRESSION_FACTOR</td><td class="loc">IjfsEngagement.SUPPRESSION_FACTOR</td><td class="val">0.40</td><td>p_suppress = p_destroy × 0.40 for surviving SAMs.</td></tr>
+<tr><td>SEAD_RETURN_FIRE_FACTOR</td><td class="loc">IjfsEngagement.SEAD_RETURN_FIRE_FACTOR</td><td class="val">0.02</td><td>Per-SAM-score loss rate inflicted on the strike package.</td></tr>
+<tr><td>FREE_SHOT_FACTOR</td><td class="loc">IjfsEngagement.FREE_SHOT_FACTOR</td><td class="val">0.05</td><td>Post-phase-2 free-shot aircraft loss rate vs raw SAM health.</td></tr>
+<tr><td>WVR / RCS / RCS_SURVIVAL / MIN_RCS_SURVIVAL</td><td class="loc">IjfsEngagement constants</td><td class="val">0.10 / 0.05 / 0.10 / 0.20</td><td>Air-combat modifiers on SEAD effectiveness and survival.</td></tr>
+</table>
+
+<!-- ============================ STAGE 3 ============================ -->
+<h2 id="s3">3 · C2 suppression lever</h2>
+<p>The single mechanic that degrades the shoot-and-scoot <strong>mobile coastal launchers</strong> (which get ~zero direct IJFS suppression).
+If the IJFS suppresses a theater's C2 node (type 99), every surviving anti-ship system in that TO fires at a reduced fraction this turn.
+There is <strong>no C2-destroy mechanic</strong> — suppression models the staff being knocked out.</p>
+<table>
+<tr><th>Knob</th><th>Location</th><th>Current value</th><th>Units</th><th>Controls</th><th>Effect dir.</th></tr>
+<tr><td><strong>C2_SUPPRESSED_FIRE_MULTIPLIER</strong></td>
+<td class="loc">scripts/GameState.gd:33</td>
+<td class="val">0.70</td>
+<td>× on fire %</td>
+<td>A TO whose C2 the IJFS suppressed fires at 70% of surviving capacity (a 30% penalty). Stacks multiplicatively on per-system suppression.</td>
+<td class="up">↑ toward 1.0 ⇒ <span class="up">higher</span> lethality; ↓ ⇒ lower</td></tr>
+<tr><td>C2 type id (filtered from firing)</td>
+<td class="loc">AntishipCalculator.SYSTEM_TYPE_C2 = 99</td>
+<td class="val">99</td>
+<td>type id</td>
+<td>C2 rows themselves never fire (skipped in the firing loop); they only carry the suppression flag.</td>
+<td class="note">structural</td></tr>
+<tr><td>C2-suppressed-TO gate</td>
+<td class="loc">GameState.resolve_antiship_turn → c2_suppressed_tos</td>
+<td class="val">per-TO boolean from <code>last_ijfs_writeback.antiship_suppressed_by_type[encode_key(to,99)]</code></td>
+<td>boolean</td>
+<td>Which TOs get the penalty. <strong>Depends entirely on which TO's C2 the IJFS chose to suppress.</strong></td>
+<td class="note">In golden seed: TO4/TO5 suppressed, TO3 (assaulted) NOT — so penalty misses the wave.</td></tr>
+</table>
+<div class="danger"><strong>This is the crux.</strong> The lever exists and is unit-tested (suppressing TO3's C2 strictly reduces TO3 firing),
+but the IJFS targeting does not prioritize the assaulted TO's C2, so in this seed the only mobile-launcher degrader fires at the wrong theaters.
+See lever (a) in <a href="#levers">§ Calibration levers</a>.</div>
+
+<!-- ============================ STAGE 4 ============================ -->
+<h2 id="s4">4 · Anti-ship firing plan (fire %, range tier, launch attrition)</h2>
+<p><code>AntishipCalculator.build_firing_plan</code> → <code>resolve_launch_attrition</code>. Decides how many launchers fire and how many missiles
+actually get airborne (some launchers detected/destroyed before/at launch).</p>
+<table>
+<caption>Firing-plan knobs</caption>
+<tr><th>Knob</th><th>Location</th><th>Current value</th><th>Units</th><th>Controls</th><th>Effect dir.</th><th>Consumed by</th></tr>
+
+<tr><td><strong>DEFAULT_ANTISHIP_FIRE_PCT</strong></td>
+<td class="loc">GameState.gd:28</td>
+<td class="val">100.0</td>
+<td>% of surviving launchers firing</td>
+<td>Fire-all: the entire surviving coastal arsenal of every targeted TO engages every wave. Then reduced per-system by IJFS suppression and (if any) the C2 multiplier.</td>
+<td class="up">↑ ⇒ <span class="up">higher</span> lethality. Biggest single dial on missile volume.</td>
+<td class="loc">fire_pct = 100 × (avail−suppressed)/avail</td></tr>
+
+<tr><td><strong>range_tier</strong> (per launcher type)</td>
+<td class="loc">antiship_combat_catalog.json → launchers[*].range_tier</td>
+<td class="val">own_to: 5,16,17,18 · neighboring: 19,20,21,22,23,24 · whole_island: 3,6</td>
+<td>enum {own_to, neighboring, whole_island}</td>
+<td>Which TOs a launcher can reach. <code>own_to</code> = only its own theater; <code>neighboring</code> = self + adjacent; <code>whole_island</code> = everywhere. Mobile coastal (23/24) reach neighboring TOs.</td>
+<td class="up">wider tier ⇒ more launchers can engage a given wave ⇒ <span class="up">higher</span> lethality</td>
+<td class="loc">AntishipCrossing._reachable_tos / _resolve_launches</td></tr>
+
+<tr><td>destroyed-system firing (%)</td>
+<td class="loc">build_firing_plan(destroyed_fire_percentages)</td>
+<td class="val">{} (0) in current wiring</td>
+<td>%</td>
+<td>Allows IJFS-destroyed launchers a final salvo. Currently passed empty by GameState.</td>
+<td class="up">↑ ⇒ higher lethality</td>
+<td class="loc">destroyed_firing_plan</td></tr>
+
+<tr><td><strong>p_detect</strong> (launch attrition)</td>
+<td class="loc">antiship_crossing_config.json → launch_attrition</td>
+<td class="val">_default 0.30; type&nbsp;3 (aircraft) 0.10; type&nbsp;23 (mobile coastal HF) 0.50</td>
+<td>P, [0,1]</td>
+<td>Chance a launcher is detected at launch (precursor to a pre/post-launch kill).</td>
+<td class="down">↑ ⇒ <span class="down">lower</span> lethality</td>
+<td class="loc">resolve_launch_attrition</td></tr>
+
+<tr><td><strong>p_destroy_if_detected</strong></td>
+<td class="loc">launch_attrition[*].p_destroy_if_detected</td>
+<td class="val">_default 0.50; type 3: 0.20; type 23: 0.70</td>
+<td>P, [0,1]</td>
+<td>Combines: <code>p_destroy = clamp(p_detect × p_destroy_if_detected)</code>. Default launcher ⇒ 0.15; aircraft ⇒ 0.02; type-23 ⇒ 0.35.</td>
+<td class="down">↑ ⇒ <span class="down">lower</span> lethality</td>
+<td class="loc">resolve_launch_attrition</td></tr>
+
+<tr><td><strong>p_intercept_before_launch</strong></td>
+<td class="loc">launch_attrition[*].p_intercept_before_launch</td>
+<td class="val">_default 0.40; type 3: 0.10; type 23: 0.60</td>
+<td>P, [0,1]</td>
+<td>Of the destroyed shots, the fraction killed <em>before</em> the missile launches (no missile) vs after (missile still flies).</td>
+<td class="down">↑ ⇒ <span class="down">lower</span> lethality (more no-launch kills)</td>
+<td class="loc">resolve_launch_attrition</td></tr>
+<tr><td>partial-fire on shortfall</td>
+<td class="loc">AntishipCrossing._resolve_launches</td>
+<td class="val">0.5 × unfillable shortfall</td>
+<td>fraction</td>
+<td>Half of any pool shortfall still launches (attributed to primary munition).</td>
+<td class="up">↑ ⇒ higher lethality</td>
+<td class="loc">launched[loadout[0]]</td></tr>
+</table>
+<p class="note"><strong>Note on the default tier:</strong> the bulk mobile coastal launcher type 24 (100 launchers, Harpoon_Ground_II) is <em>not</em> listed in
+<code>launch_attrition</code> overrides, so it uses <code>_default</code> (p_detect 0.30, p_destroy 0.15) — only ~15% of its shots die at launch.</p>
+
+<!-- ============================ STAGE 5 ============================ -->
+<h2 id="s5">5 · Amphibious crossing damage model</h2>
+<p><code>AntishipCrossing.resolve_crossing_damage</code> — the 6 RNG stages (launch already covered in §4) that turn launched missiles into sunk/damaged hulls.
+Constants from <code>antiship_crossing_config.json</code> unless noted.</p>
+
+<table>
+<caption>Crossing pipeline knobs</caption>
+<tr><th>Stage / Knob</th><th>Location (key)</th><th>Current value</th><th>Units</th><th>Controls</th><th>Effect dir.</th></tr>
+
+<tr><td><strong>2. in_flight_failure_rate</strong></td>
+<td class="loc">antiship_combat_catalog.json → munitions[*].in_flight_failure_rate</td>
+<td class="val">0.03–0.08 (Torpedo 0.03, HF-III 0.05, HF-II 0.07, Harpoon I 0.08)</td>
+<td>P, [0,1]</td>
+<td>Each launched missile fails in flight at this rate before any defense.</td>
+<td class="down">↑ ⇒ <span class="down">lower</span> lethality</td></tr>
+
+<tr><td><strong>3. missile_group_size</strong></td>
+<td class="loc">crossing_config.missile_group_size</td>
+<td class="val">4</td>
+<td>missiles/group</td>
+<td>Escorts intercept missiles in groups of this size (one defender attempt covers a group).</td>
+<td class="up">↑ ⇒ fewer defender attempts spent ⇒ <span class="up">higher</span> lethality</td></tr>
+
+<tr><td><strong>3. escort_interception.attempts</strong></td>
+<td class="loc">crossing_config.escort_interception[*].attempts</td>
+<td class="val">CG 4, DDG 6, FFG 3, FFL 2</td>
+<td>rolls/ship</td>
+<td>Interception attempts each escort hull gets per crossing.</td>
+<td class="down">↑ ⇒ <span class="down">lower</span> lethality</td></tr>
+
+<tr><td><strong>3. escort_interception.success_prob</strong></td>
+<td class="loc">crossing_config.escort_interception[*].success_prob</td>
+<td class="val">CG 0.45, DDG 0.55, FFG 0.40, FFL 0.35</td>
+<td>P/roll</td>
+<td>Per-roll kill prob vs a missile group. <strong>The interception "leak rate" = (1 − success_prob).</strong></td>
+<td class="down">↑ ⇒ <span class="down">lower</span> lethality</td></tr>
+
+<tr><td><strong>4. discrimination_probabilities</strong></td>
+<td class="loc">crossing_config.discrimination_probabilities</td>
+<td class="val">Low 0.20, Medium 0.50, High 0.80</td>
+<td>P, [0,1]</td>
+<td>Chance a missile (keyed by its munition's discrimination_ability) ignores decoys and homes only on real ships.</td>
+<td class="note">↑ ⇒ fewer missiles wasted on decoys ⇒ higher real-ship lethality</td></tr>
+
+<tr><td><strong>4. screen_target_preference</strong></td>
+<td class="loc">crossing_config.screen_target_preference</td>
+<td class="val">3.0</td>
+<td>× weight on escorts+decoys</td>
+<td>Homing weight multiplier on escort warships (CG/DDG/FFG/FFL) and decoys — the screen soaks missiles ahead of transports. Caps at screen size; once the screen is gone, overflow hits carriers.</td>
+<td class="down">↑ ⇒ <span class="down">lower</span> transport/BN losses (screen absorbs more)</td></tr>
+
+<tr><td><strong>4. target_value</strong> (per ship type)</td>
+<td class="loc">crossing_config.ship_profiles[*].target_value</td>
+<td class="val">CG/DDG 5, FFG 4, FFL 3, LHA 10, LPD 7, LST 5, decoys 4 …</td>
+<td>weight</td>
+<td>Base homing weight per ship type (before screen preference).</td>
+<td class="note">redistributes hits across hull types</td></tr>
+
+<tr><td><strong>5. terminal_defense.base_probability</strong></td>
+<td class="loc">crossing_config.terminal_defense.base_probability</td>
+<td class="val">0.45</td>
+<td>P, [0,1]</td>
+<td>Base prob a ship's terminal defense stops an incoming missile (a missile <em>hits</em> only when it beats this). <strong>This is the terminal "leak rate" anchor.</strong></td>
+<td class="down">↑ ⇒ <span class="down">lower</span> lethality</td></tr>
+
+<tr><td>5. susceptibility_adjustment</td>
+<td class="loc">terminal_defense.susceptibility_adjustment</td>
+<td class="val">High 0.0, Medium −0.10, Low −0.20, None −0.45</td>
+<td>+ to defense P</td>
+<td>Per-munition terminal-defense susceptibility modifier (None = stealthy/sea-skimming HF-III, Torpedo ⇒ defense much weaker).</td>
+<td class="up">more-negative ⇒ <span class="up">higher</span> lethality</td></tr>
+
+<tr><td>5. capability_adjustment</td>
+<td class="loc">terminal_defense.capability_adjustment</td>
+<td class="val">None −0.25, Low −0.10, Medium 0.0, High +0.15</td>
+<td>+ to defense P</td>
+<td>Per-ship terminal-defense capability (transports = None ⇒ defense ≈ 0.20 baseline; Aegis CG/DDG = High ⇒ 0.60).</td>
+<td class="down">↑ ⇒ lower lethality</td></tr>
+
+<tr><td><strong>6. neutralization_likelihoods</strong> (sink-vs-damage)</td>
+<td class="loc">crossing_config.neutralization_likelihoods</td>
+<td class="val">High 0.70, Medium 0.45, Low 0.25</td>
+<td>P, [0,1]</td>
+<td>Base prob a hit <em>sinks</em> (vs only damages), keyed by ship vulnerability. See §6.</td>
+<td class="up">↑ ⇒ <span class="up">higher</span> lethality (more sinks)</td></tr>
+
+<tr><td>6. lethality_multipliers</td>
+<td class="loc">crossing_config.lethality_multipliers</td>
+<td class="val">High 1.25, Medium 1.0, Low 0.75</td>
+<td>× on sink P</td>
+<td>Per-munition lethality rating multiplier on the sink prob (HF-III/Torpedo = High).</td>
+<td class="up">↑ ⇒ higher lethality</td></tr>
+
+<tr><td>6. damaged_hull_neut_multiplier</td>
+<td class="loc">crossing_config.damaged_hull_neut_multiplier</td>
+<td class="val">1.5</td>
+<td>× on sink P</td>
+<td>A re-hit on an already-damaged hull scales its sink prob by this (fragility on re-hit). Overkill on a sunk hull ⇒ wasted_hit.</td>
+<td class="up">↑ ⇒ higher lethality</td></tr>
+</table>
+<p class="note">Stage order &amp; draws: launch → in-flight failure → escort interception (groups) → homing + decoy discrimination → terminal defense → damage resolution.
+Each RNG stage sorts inputs first for determinism. Result reports missile-event counts and hull counts as <em>separate units</em> (never summed).</p>
+
+<!-- ============================ STAGE 6 ============================ -->
+<h2 id="s6">6 · Ship sinking vs damage thresholds (per ship type)</h2>
+<p>Damage resolution (stage 6) draws <code>p_neut = neutralization_likelihoods[vulnerability] × lethality_multipliers[munition.lethality]</code>
+(×<code>damaged_hull_neut_multiplier</code> on a damaged hull, capped at 1.0). The per-type inputs:</p>
+<table>
+<caption>Per-ship-type profile — <code>antiship_crossing_config.json → ship_profiles</code></caption>
+<tr><th>Ship type</th><th>target_value</th><th>terminal_defense_capability</th><th>vulnerability ⇒ base sink P</th><th>decoy?</th></tr>
+<tr><td>CG, DDG (Aegis escorts)</td><td class="val">5</td><td>High (+0.15)</td><td>Low ⇒ 0.25</td><td>—</td></tr>
+<tr><td>FFG, FFL (frigates)</td><td class="val">4 / 3</td><td>Medium (0.0)</td><td>Medium ⇒ 0.45</td><td>—</td></tr>
+<tr><td>LHA / LPD (big amphibs)</td><td class="val">10 / 7</td><td>Low (−0.10)</td><td>High ⇒ 0.70</td><td>—</td></tr>
+<tr><td>LST / LSM / LCU (landing ships)</td><td class="val">5 / 3 / 2</td><td>None (−0.25)</td><td>High ⇒ 0.70</td><td>—</td></tr>
+<tr><td>Large/Small RoRo (mod &amp; unmod), Container, Fast_Transport, Assault_Barges</td><td class="val">2–8</td><td>None (−0.25)</td><td>High ⇒ 0.70</td><td>—</td></tr>
+<tr><td>LCT_Causeway/Transfer, Floating_Piers, Jackup/Spud/Semi_Sub, AOT_Fujian, Pump_Relay, Tug, Break_Bulk</td><td class="val">1–3</td><td>None (−0.25)</td><td>Medium ⇒ 0.45</td><td>—</td></tr>
+<tr><td>Decoys</td><td class="val">4</td><td>None</td><td>Low ⇒ 0.25</td><td><strong>yes</strong> (consumes a missile, no fleet effect)</td></tr>
+</table>
+<div class="flag"><strong>Knob direction.</strong> The transports that carry the assault BNs are all <code>vulnerability: High</code> (sink P 0.70) with
+<code>terminal_defense_capability: None</code> (defense ≈ 0.20). Once a missile leaks past the escort screen, a transport is very likely sunk.
+Lowering transport vulnerability, or raising their terminal-defense capability, directly lowers BN loss — but is a heavier-handed
+edit than the upstream detection/C2 fixes.</div>
+
+<!-- ============================ STAGE 7 ============================ -->
+<h2 id="s7">7 · Magazines</h2>
+<p>Two magazine systems exist; <strong>only the crossing-pool one is live in the current wiring.</strong></p>
+<table>
+<caption>Crossing missile pools — <code>antiship_combat_catalog.json</code> (consumed by <code>AntishipCrossing._draw_from_pool</code>)</caption>
+<tr><th>Pool</th><th>Location</th><th>Current value</th><th>Controls</th></tr>
+<tr><td>HF shared store group</td><td class="loc">store_groups.HF.quantity</td><td class="val">660 (was 340 HF-II + 320 HF-III)</td><td>Shared budget for all Hsiung Feng II/III launchers (types 16/17/18/20/21/23). Caps total HF missiles per turn.</td></tr>
+<tr><td>Per-munition quantities</td><td class="loc">munitions[*].quantity</td><td class="val">Harpoon_Ground_II 460, Harpoon_Sea_I 150, SLAM-ER 135, Harpoon_Air_II 120, Harpoon_Sea_II 71, Harpoon_Sub_II 32, Torpedo 50</td><td>Per-munition launch budgets (non-grouped).</td></tr>
+</table>
+<table>
+<caption>Firing-side magazine (AntishipMagazine / magazine_defaults) — <span class="tag dormant">dormant in current wiring</span></caption>
+<tr><th>Knob</th><th>Location</th><th>Current value</th><th>Controls</th></tr>
+<tr><td>magazine initial_count</td><td class="loc">antiship_magazine_defaults.json → magazines</td><td class="val">block_ii_mobile 400, hf_ii 352, hf_iii 320, block_i 150, slam_er 135, block_ii_aircraft 120, block_ii_surface 71, block_ii_submarine 32</td><td>Cross-turn shared magazines for the firing plan (full-volley-or-nothing gate).</td></tr>
+<tr><td>volley gate</td><td class="loc">AntishipMagazine.reserve_full_volley</td><td class="val">full-volley-or-nothing</td><td>A launcher group either reserves its whole volley or fires nothing.</td></tr>
+</table>
+<div class="flag"><strong>Why dormant.</strong> <code>GameState.resolve_antiship_turn</code> passes <code>magazine = null</code> to <code>build_firing_plan</code>
+(line ~618). It is rebuilt per turn, so it would always start full and never bind. Meaningful magazine attrition needs
+<em>persistent cross-turn</em> magazine state — lever (c) below. Today only the crossing pools (store_groups / quantity) cap missiles.</div>
+
+<!-- ============================ STAGE 8 ============================ -->
+<h2 id="s8">8 · Campaign-level knobs</h2>
+<table>
+<tr><th>Knob</th><th>Location</th><th>Current value</th><th>Units</th><th>Controls</th><th>Effect dir.</th></tr>
+<tr><td><strong>PRE_INVASION_IJFS_DAYS</strong></td>
+<td class="loc">GameState.gd:34</td>
+<td class="val">4</td>
+<td>IJFS cycles on first turn</td>
+<td>Days of pre-invasion air campaign run before the assault (cumulative attrition into the firing plan). More days = more Green systems killed/suppressed before the wave.</td>
+<td class="down">↑ ⇒ <span class="down">lower</span> lethality (but mobile launchers barely attrited regardless — see §1)</td></tr>
+<tr><td><strong>screen_target_preference</strong></td>
+<td class="loc">crossing_config.screen_target_preference (mirrored GameState ≈3.0)</td>
+<td class="val">3.0</td>
+<td>× homing weight</td>
+<td>Escorts + decoys soak missiles ahead of transports (see §5). Caps at screen size (~73 hulls).</td>
+<td class="down">↑ ⇒ <span class="down">lower</span> BN loss</td></tr>
+<tr><td>antiship substream isolation</td>
+<td class="loc">GameState.resolve_antiship_turn → dice.derive("antiship:turn")</td>
+<td class="val">independent substream</td>
+<td>RNG</td>
+<td>Keeps the ground-combat golden invariant byte-stable; not a lethality dial but constrains how levers can be changed.</td>
+<td class="note">structural</td></tr>
+</table>
+
+<!-- ============================ WORKED EXAMPLE ============================ -->
+<h2 id="worked">Worked numeric example — the disparity, side by side</h2>
+<p>Both targets <strong>hiding</strong>, IJFS attacking with its best-available anti-ship munition, real numbers plugged in.
+Net per-turn outcome = <code>P(detect) × p_destroy</code> for destruction, and <code>P(detect) × (1−p_destroy) × p_suppress</code> for suppression.</p>
+
+<div class="worked">
+  <div class="card mob">
+    <h3>Mobile Coastal AShM launcher — <code>mobile</code>, hiding (types 23/24)</h3>
+    <div class="ladder">
+      Gate 1 detect (satellite floor, mobile/hiding) ........ <strong>0.01</strong><br>
+      &nbsp;&nbsp;(phase-2 best case: 0.01 + 0.05×1.0×1.0×ISR — stays ~0.02–0.05)<br>
+      Gate 2 p_destroy (BRE6 pairing 0.045, +mods ≈ −0.005) .. <strong>≈ 0.040</strong><br>
+      Gate 2 p_suppress_if_not_destroyed (BRE6) ............. <strong>0.22</strong><br>
+    </div>
+    <hr>
+    net P(destroy)  = 0.01 × 0.040 = <span class="big">0.0004</span><br>
+    net P(suppress) = 0.01 × 0.96 × 0.22 = <span class="big">0.0021</span><br>
+    <strong>net P(degraded) ≈ 0.25%</strong>
+    <p class="note">Even using strike-aircraft (pd 0.14) and a generous phase-2 detect of 0.05, net degraded only reaches ~1%.
+    These launchers fire at essentially full strength. Only the C2 ×0.70 lever touches them — and only if it lands on the assaulted TO.</p>
+  </div>
+
+  <div class="card air">
+    <h3>Air-Launched AShM platform — <code>moveable</code>, hiding (type 3)</h3>
+    <div class="ladder">
+      Gate 1 detect (satellite floor, moveable/hiding) ..... <strong>0.50</strong><br>
+      &nbsp;&nbsp;(phase-2: 0.50 + 0.05×1.2×1.0×ISR → clamps toward <strong>~0.95</strong>)<br>
+      Gate 2 p_destroy (BRE6 0.60, +mod moveable_hiding_air −0.10) <strong>≈ 0.55</strong><br>
+      Gate 2 p_suppress_if_not_destroyed (BRE6) ............. <strong>0.45</strong><br>
+    </div>
+    <hr>
+    net P(destroy)  = 0.95 × 0.55 = <span class="big">0.52</span><br>
+    net P(suppress) = 0.95 × 0.45 × 0.45 = <span class="big">0.19</span><br>
+    <strong>net P(degraded) ≈ 71%</strong>
+    <p class="note">Matches the observed ~72% of air-launched platforms destroyed/suppressed. Detection — not the strike table — is the discriminator: a <strong>50×</strong> higher satellite floor (0.50 vs 0.01).</p>
+  </div>
+</div>
+<div class="danger"><strong>The gap in one line:</strong> ~71% of air-launched platforms are neutralized each turn vs ~0.25% of mobile coastal launchers.
+Since the assaulted TO's lethality is dominated by its ~126 untouched mobile coastal launchers (plus patrol boats/CDCMs), the crossing model
+sees near-full fire and sinks ~2/3 of the wave.</div>
+
+<!-- ============================ LEVERS ============================ -->
+<h2 id="levers">Calibration levers for crossing lethality — ranked</h2>
+<p>Ranked by how directly each moves the ~67% → ~25% target. Cross-referenced to PLAN.md → Open Questions → "D3-D crossing lethality calibration" candidate levers (a)–(d).</p>
+<ol class="rank">
+  <li><strong>(a) Make the IJFS prioritize the <em>assaulted</em> TO's C2.</strong> <span class="tag">PLAN lever (a)</span>
+    Highest leverage with the existing machinery: the C2 ×0.70 penalty already exists and is the <em>only</em> degrader of mobile launchers, but in this seed it lands on TO4/TO5, not TO3. Targeting/value-weighting the assault-TO C2 would route the 30% penalty to the wave. Pairs naturally with deepening the penalty (lower <code>C2_SUPPRESSED_FIRE_MULTIPLIER</code>).</li>
+
+  <li><strong>Lift the mobile-coastal detection floor and/or strike p_destroy.</strong> <span class="tag">detection/strike</span>
+    The most <em>physically direct</em> fix to the root cause: <code>satellite_floor_probability.mobile.hiding</code> = 0.01 and pairing <code>p_destroy</code> ≈ 0.045 mean these launchers are nearly invulnerable. Raising the floor (e.g. 0.01 → 0.10–0.20) or the mobile-coastal pd would let the multi-day pre-invasion IJFS actually thin them. Caution: this is a deliberate "shoot-and-scoot" survivability model — verify against intended doctrine. (Note <code>mobile_target_destroy_caps</code> is dormant, so it won't fight you — but the pairing pd values already bake the caps in.)</li>
+
+  <li><strong>(b) Tune <code>DEFAULT_ANTISHIP_FIRE_PCT</code> and per-type <code>range_tier</code>.</strong> <span class="tag">PLAN lever (b)</span>
+    100% fire-all + <code>neighboring</code>-tier mobile launchers means one TO's whole arsenal (plus adjacent TOs') engages every wave. Dropping fire % (e.g. 100 → 40–60) or tightening mobile-coastal <code>range_tier</code> to <code>own_to</code> cuts missile volume broadly. Blunt but reliable; affects all classes, not just the over-performing ones.</li>
+
+  <li><strong>Lower the crossing leak rate — interception / terminal defense.</strong> <span class="tag">crossing §5</span>
+    Fewer missiles leak to transports ⇒ fewer BN losses, without touching IJFS. Raise <code>escort_interception.success_prob</code> (currently 0.35–0.55) or <code>terminal_defense.base_probability</code> (0.45), or shrink <code>missile_group_size</code> (4) so escorts spend fewer attempts per missile. Risk: decouples lethality from the IJFS suppression story (transports just get tougher).</li>
+
+  <li><strong>(c) Cross-turn magazine gating.</strong> <span class="tag">PLAN lever (c)</span>
+    Currently dormant (<code>magazine = null</code>, rebuilt full each turn). Persisting <code>AntishipMagazine</code> across turns would let multi-day firing deplete missiles (block_ii_mobile 400, HF store 660) so later waves face fewer shots. Medium leverage, more plumbing; mostly matters across multiple crossing turns, less on turn-1.</li>
+
+  <li><strong>Increase <code>PRE_INVASION_IJFS_DAYS</code> / <code>screen_target_preference</code>.</strong> <span class="tag">campaign §8</span>
+    Already at 4 days / 3.0. More days mostly attrits the <em>detectable</em> classes (air-launched), so it yields diminishing returns until the mobile-launcher detection floor (lever 2) is addressed. Screen preference (3.0) protects transports but caps at screen size.</li>
+
+  <li><strong>(d) Accept the deadly unsupported crossing as intended.</strong> <span class="tag">PLAN lever (d)</span>
+    Treat ~2/3 loss as the designed cost of crossing into an un-suppressed coastal-missile theater, and require the Red player to suppress the assault-TO C2 (or run more pre-invasion IJFS) first. No code change; reframes the ~25% prior as "only after suppression."</li>
+</ol>
+
+<!-- ============================ DISCREPANCIES ============================ -->
+<h2 id="disc">Discrepancies, dormant knobs &amp; HexCombat-vs-TIV notes</h2>
+<ul>
+  <li><strong>Dormant: <code>mobile_target_destroy_caps</code></strong> (<code>ijfs_scenario.json</code>). Present and detailed (active/hiding caps + ship overrides 0.80–0.95), but <strong>not consumed</strong>: <code>IjfsStrike.destruction_probability</code> only reaches <code>_legacy_cap_probability</code> when <code>strike_probability_modifiers</code> is empty, and it is non-empty. The low mobile pd values come straight from the pairing table. If you ever clear the modifier list, these caps would suddenly activate — worth knowing before tuning.</li>
+  <li><strong>Dormant: firing-side magazine (<code>AntishipMagazine</code> / <code>antiship_magazine_defaults.json</code>).</strong> Fully implemented but wired with <code>magazine = null</code> in <code>resolve_antiship_turn</code> (per-turn rebuild never binds). Documented follow-up = lever (c).</li>
+  <li><strong>Documented divergence: count-based vs per-hull crossing stages.</strong> <code>AntishipCrossing</code> ports TIV's <em>count-based</em> interception + terminal-defense stages, not TIV's live <em>per-hull</em> variants that deplete each escort's <code>hq10</code>/<code>hhq9</code> magazines (<code>services.ship_ammo</code>) and scale defense by damage status (<code>ship_readiness_policy</code>). HexCombat has no ship-ammo/readiness subsystem, so escort interception is bounded only by <code>attempts</code>/<code>success_prob</code>, never by magazine depletion. Per PLAN.md D3-B3 this matches all <code>test_antiship_crossing.py</code> assertions (escort ammo never binds there). It does mean escort screens here never "run dry" across a long crossing — a latent lethality-reducer that exists in TIV but not yet here.</li>
+  <li><strong>RNG model.</strong> HexCombat mirrors TIV's source formulas and draw <em>order</em> via an injected <code>Dice</code>, not Python's PRNG bitstream (per AGENTS.md). Values are equivalent in distribution, not byte-identical to a TIV run.</li>
+  <li><strong>maneuver_casualties writeback still empty.</strong> The IJFS only writes anti-ship destroyed/suppressed by <code>encode_key(to,type)</code>; the ground-casualty half is unimplemented (no shared battalion_id between the IJFS target set and the OOB). Not a crossing-lethality knob, but it means IJFS effects on the assault are entirely mediated through the anti-ship firing plan, with no direct ground attrition path.</li>
+  <li><strong>No value marked "NOT FOUND."</strong> Every knob above was read from source. The only "verify" caveats are the two <em>dormant</em> tables (caps, firing magazine) — present in data but not on the live code path in the current wiring.</li>
+</ul>
+
+<hr>
+<p class="note">Generated 2026-06-28 from HexCombat source. Primary files: <code>scripts/ijfs/IjfsDetection.gd</code>, <code>IjfsStrike.gd</code>,
+<code>IjfsEngagement.gd</code>; <code>scripts/AntishipCalculator.gd</code>, <code>AntishipCrossing.gd</code>, <code>AntishipMagazine.gd</code>;
+<code>scripts/GameState.gd</code>; <code>data/ijfs/ijfs_scenario.json</code>, <code>munition_target_pairings.json</code>;
+<code>data/antiship/antiship_crossing_config.json</code>, <code>antiship_combat_catalog.json</code>, <code>antiship_magazine_defaults.json</code>;
+<code>PLAN.md</code> → Open Questions. Documentation only — no game logic, data, or code was changed.</p>
+
+</body>
+</html>

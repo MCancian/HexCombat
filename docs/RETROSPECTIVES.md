@@ -714,3 +714,28 @@ golden 20260624 → casualties=2, feba=0.76 byte-stable).
 - **Stop point:** this was the last clearly-safe, valuable, non-design autonomous unit with a real consumer.
   The orchestrator loop is stopping here with a clean handoff (ORCHESTRATOR_HANDOFF §6) — the remaining backlog
   is user design-calls, blocked items, YAGNI-without-consumer, or risky typed-model migrations.
+
+## 2026-06-28 — D3-D: wire prelanding warmup (activate exquisite intel)   (implementer: opencode deepseek-v4-flash-free)
+
+**What would you do differently (implementer):**
+- `resolve_ijfs_turn` was the right seam (only caller of `run_daily`); a dedicated
+  `_run_prelanding_warmup()` would own the same branch — not worth extracting at this size. The
+  `_build_warmup_context` helper is the right factoring.
+- `prelanding.days` (3) vs the old `PRE_INVASION_IJFS_DAYS` (4) caused no surprise — warmup-day count now
+  comes from the scenario JSON; the const survives only as a fallback.
+- **Main fragility: the `warmup_context` dict shape.** Every key is read via `dict.get(key)` inside
+  `IjfsEngine.run_daily`, so a misspelled key silently yields `null` → that piece of warmup config goes
+  dead with no error. This is *exactly* the class of bug that left exquisite intel dormant (the whole
+  context was simply never passed). Plain dicts mirror the Python source's own fragility.
+
+**Orchestrator triage:**
+- Verified independently: golden `casualties=2 feba=0.76` byte-stable, anti-ship PASS, gate 204/204,
+  crossing loss 67%→50.0% (probe). Diff scoped to `GameState.gd` only; RNG isolation (derived ijfs
+  substream) intact. → **acted now** (committed).
+- warmup_context dict-shape fragility → **record + act later**: a typed `WarmupContext` Resource (or a
+  one-line key-allowlist assert in `run_daily`) would make silent dead-config impossible. Not blocking
+  (the config is now exercised and the 50% result proves it's live), but it's the highest-value
+  hardening for this subsystem — queued in `ORCHESTRATOR_HANDOFF.md` as a future cleanup. Cross-ref
+  `PLAN.md 2026-06-28 — D3-D wire warmup`.
+- Vestigial `PRE_INVASION_IJFS_DAYS` const (now only a fallback) → **record only**: harmless; leave as
+  the missing-config fallback rather than churn it.

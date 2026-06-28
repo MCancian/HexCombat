@@ -9,6 +9,63 @@ still correct; only the implementer CLI changed). Do not duplicate it here; poin
 
 ---
 
+## ⏩ CURRENT SESSION HANDOFF (2026-06-28) — START HERE
+
+The user worked a **design + balance** session (victory conditions, IJFS→ground maneuver casualties,
+and anti-ship crossing-lethality calibration), then had to leave mid-task asking to "fix this wiring
+and leave the next agent well set up from a clean slate." The warmup-wiring fix landed **green and
+committed**; the design specs are documented but **not yet implemented**. **Verify git state first**
+(`git status` clean + `git log --oneline -5`).
+
+### DONE this session (committed)
+- **Warmup wiring (D3-D)** — `GameState.resolve_ijfs_turn` now wires the **prelanding warmup** so
+  **exquisite intel actually runs** (it was DEAD CODE — `run_daily` was called with no
+  `warmup_context`). Port of TIV `ijfs_prewarmup._run_warmup_locked`: loops `prelanding.days`, builds a
+  per-`x_day` `warmup_context` (exquisite_intel + posture_override + SEAD/AD rules + munition_filter +
+  release_rules + profile-scaled firing capacity), `z_day = x_day − days − 1`; later turns run one
+  plain day. New private helper `_build_warmup_context`. opencode session `hexcombat-warmup-wiring`,
+  orchestrator-verified. **RESULT (golden seed 20260624): crossing loss ~67% → 50.0% (18/36 wave),
+  golden `casualties=2 feba=0.76` BYTE-STABLE (did NOT move — crossing loss doesn't leak into the
+  measured ground fight), full gate 204/204 green.** RNG isolation preserved (derived ijfs substream).
+
+### Remaining steps to reach the user's ~25% crossing-loss target (in order)
+1. **(DONE)** Warmup wiring is in + green; exquisite intel now defeats the mobile-coastal detection gate
+   (0.01 satellite floor) for the groups it locks — but **detection-only only got to 50%, not 25%**, so:
+2. **Add an `intel_locked` strike bonus for coastal launchers.** Detection alone won't reach 25%:
+   `intel_locked` opens the *detection* gate but NOT the *strike* `p_destroy` (~0.045, atomic binary
+   container kill; the strike modifiers for that subcategory key on `posture`, not `intel_locked`). Add
+   a `strike_probability_modifier` (in `data/ijfs/ijfs_scenario.json`) matching
+   `subcategory ∈ {Mobile Coastal AShM…} AND intel_locked:true` → `add`/`multiply` boosting `p_destroy`
+   ("we know exactly where it is → precision strike"). Mirror the existing `intel_locked:false`
+   penalties on the air-platform / C2 subcategories.
+3. **Empirically sweep `initial_count`** (and the bonus magnitude) on seed 20260624: vary
+   `prelanding.intel.exquisite_intel.antiship.initial_count` (it's a count of GROUPS/containers — TO3's
+   lethal core is just 2 of the 73 containers), measure crossing `bns_lost_at_sea / wave_size`, find the
+   value that yields ~25%. A throwaway headless sweep harness off `tools/validate_headless_antiship.gd`
+   is the tool; report the curve to the user. NOTE selection is **random across all 4 TOs / 73
+   containers** → may be inefficient; if so, raise to the user whether to **bias selection** toward the
+   assaulted TO (a TIV divergence the user has not yet approved — it was offered and deferred to "decide
+   after measuring").
+
+### Design decisions SETTLED this session (documented, NOT yet implemented — future build items)
+- **Victory conditions** (`PLAN.md` → Open Questions → "Victory conditions"): two end-of-turn-cleanup
+  checks on **Taiwan main-island land hexes** — China loses if 0 Chinese BNs on Taiwan; China wins if
+  Chinese BNs > Taiwanese BNs. Loss check **unconditional by default** but **configurable arm**
+  (`unconditional`/`after_first_landing`/`after_turn:N`). Confirm the `winner`/`game_over` field shape
+  at implementation.
+- **IJFS → ground maneuver casualties = Option B + detectability** (`PLAN.md` → Open Questions →
+  "D4-H writeback linkage" → "DECISION 2026-06-28 — Option B"): port `build_maneuver_targets` against
+  the Green/ROC OOB, mint `{brigade_id}-MU-{n}` IDs, detection biased by mobility (less mobile = more
+  found) + posture (moved/fought last turn → "active", needs persistent `moved_last_turn`/
+  `fought_last_turn` on `Brigade`), lethality by hardness (armor = lethality-only, TIV-faithful).
+  Service/Support battalions targetable (soft/high-detect). Suppression reporting-only at first.
+
+### Artifacts produced this session
+- `docs/antiship_lethality_knobs.html` — full self-contained map of every IJFS/anti-ship/crossing knob
+  (review artifact; not part of the gate).
+
+---
+
 ## 1. Where the port stands (verify before trusting)
 
 Confirm with `git log --oneline -15` + a fresh `pwsh ./tools/run_all_tests.ps1` (must exit 0).

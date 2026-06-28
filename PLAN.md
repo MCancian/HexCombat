@@ -126,6 +126,50 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-28 — D3-D crossing lethality: wire the prelanding WARMUP (activate exquisite intel) +
+  planned strike bonus (USER calibration call).** Discovered the exquisite-intel mechanism
+  (peacetime HUMINT/SIGINT that `intel_locked`s a decaying count of anti-ship *groups* → auto-detect,
+  defeating the 0.01 mobile-coastal satellite floor) was **dead code** — `resolve_ijfs_turn` ran
+  `run_daily` with no `warmup_context`, so the current ~67% golden crossing loss is measured with
+  exquisite intel OFF. User chose: keep the exponential decay, **wire the full TIV warmup faithfully**
+  (port of `ijfs_prewarmup._run_warmup_locked`: loop `prelanding.days`, build a per-`x_day`
+  `warmup_context` with exquisite_intel + posture override + SEAD/AD rules + munition filter + release
+  rules + profile-scaled firing capacity, `z_day = x_day − days − 1`), keep selection
+  group/container-level (already so — TO3's 50-launcher threat = just 2 containers), then add an
+  `intel_locked` strike bonus for coastal launchers and **empirically sweep `initial_count`** on the
+  golden seed to hit ~25% crossing loss. Wiring delegated to opencode (`hexcombat-warmup-wiring`),
+  orchestrator-verified. **RESULT: crossing loss ~67% → 50.0% (18/36), golden `casualties=2/feba=0.76`
+  byte-stable, gate 204/204 green** — the golden did NOT move (crossing BN loss does not leak into the
+  measured ground fight). Detection-only halves but doesn't reach 25%; strike bonus + `initial_count`
+  sweep are the remaining levers. Full analysis: Open Questions → "D3-D crossing lethality calibration"
+  → UPDATE 2026-06-28; knob map: `docs/antiship_lethality_knobs.html`; remaining steps:
+  `docs/ORCHESTRATOR_HANDOFF.md`.
+
+- **2026-06-28 — Victory conditions (USER design call; documentation only, not yet implemented).** Two
+  conditions, both checked in **end-of-turn cleanup**, counting battalions **on Taiwan main-island land
+  hexes**: **China loses** if zero Chinese battalions on Taiwan; **China wins** if Chinese battalions
+  on Taiwan **strictly >** Taiwanese battalions. Loss check runs **unconditionally every cleanup by
+  default**, but the arm is **configurable** (`unconditional` / `after_first_landing` / `after_turn:N`)
+  for flexibility. Zero-sum `winner`/`game_over` field assumed (confirm at implementation). Full spec:
+  Open Questions → "Victory conditions". Supersedes the 2026-06-23 "Victory deferred" decision.
+
+- **2026-06-28 — IJFS → ground maneuver casualties = Option B + detectability extensions (USER design
+  call; documentation only, not yet implemented).** Maneuver units become IJFS-targetable by porting
+  TIV's `build_maneuver_targets` + `detection.py` model against the Green/ROC OOB: mint per-battalion
+  IDs (`{brigade_id}-MU-{n}`), generate "Maneuver Units" targets with a ported `MANEUVER_TYPE_MAP`
+  profile, and write destroyed/suppressed back by `battalion_id` into `maneuver_casualties`. Detection
+  is biased per the user: **less-mobile** units (mobility tier → `mobility_multiplier`) and
+  **recently-active** units (moved/fought last turn → `posture="active"` → higher detectability, a
+  generalization of TIV's `antiship_exposure`) are more likely hit; **less-armored** units die more
+  readily via `hardness` on the strike step. Requires **persistent prior-turn activity flags on
+  `Brigade`** (`moved_last_turn`/`fought_last_turn`, latched in cleanup before the per-turn flags
+  reset) — the "record historic actions per brigade" requirement. Must keep the golden invariant
+  byte-stable (inject the IJFS substream). Sub-decisions RESOLVED same day: armor = **lethality only**
+  (no detection divergence); Service/Support battalions **are** targetable (soft/high-detect); history
+  depth **prior-turn only**; suppression **reporting-only** at first (destruction = `qty` loss). Design
+  fully settled, ready to implement. Full spec: Open Questions → "D4-H writeback linkage" → "DECISION
+  2026-06-28 — Option B".
+
 - **2026-06-28 — Track E: reusable self-play runner + pluggable policy (via opencode).** Extracted the
   self-play loop into `scripts/SelfPlayRunner.gd` (`static play_game(policy: Callable, turns, base_seed) ->
   {final_snapshot, turn_digests, all_resolved, final_turn, index_violations}`) and `scripts/SelfPlayPolicy.gd`
@@ -925,7 +969,8 @@ caveat is resolved.
   fights. Does not affect anything yet; will feed combat later. Constants + `adjust_organization()`
   live on `Brigade`.
 - **2026-06-23 — Victory:** deferred for the slice; end-turn advancing state is sufficient.
-  Revisit with scenarios in Track C.
+  Revisit with scenarios in Track C. **→ SUPERSEDED 2026-06-28:** user is now defining victory
+  conditions — see Open Questions → "Victory conditions (design in progress)".
 - **2026-06-23 — Turn model: WeGo.** Both sides plan a full turn of orders; orders resolve
   **simultaneously**. The action layer *collects* per-side orders (moves, attack declarations +
   composition) and a deterministic resolver applies them together. (Open: simultaneous-resolution
@@ -1407,7 +1452,38 @@ Red maneuver BNs redistribute along it. Cleanup phase normalizes ownership after
 _None blocking the slice — the design is settled. Future-phase questions (supply/organization
 interactions, fog of war, terrain via ArcGIS, theater fires) are tracked in `ROADMAP.md`._
 
-### D3-D crossing lethality calibration  *(partially addressed 2026-06-27; still tunable)*
+### Victory conditions  *(DESIGN SETTLED 2026-06-28 — user-driven; supersedes the 2026-06-23 deferral; not yet implemented)*
+
+Replaces the 2026-06-23 "Victory deferred" decision. **Two conditions, both evaluated in the
+end-of-turn cleanup**, counting Chinese (PLA) and Taiwanese (ROC) battalions **on Taiwan**.
+**Design is settled — this is documentation only; no code yet.**
+
+- **China loses** if at the end of a turn there are **zero Chinese battalions on Taiwan**.
+- **China wins** when the number of **Chinese battalions on Taiwan > Taiwanese battalions on Taiwan**
+  at the end of a turn.
+- (Implied) **neither fires when 1 ≤ Chinese ≤ Taiwanese** → game continues. Equal counts are *not* a
+  Chinese win (strictly greater).
+
+**Resolved sub-decisions (user, 2026-06-28):**
+- **(a) Start-of-game guard → unconditional by default, but configurable.** The loss check runs
+  **every cleanup unconditionally** (so an annihilated/failed crossing that leaves zero Chinese ashore
+  ⇒ immediate Chinese loss). **But wire the arming as a config knob** so it can instead be set to fire
+  **only after the first landing** (latch once China has ≥1 battalion ashore) or **only after N turns**.
+  Implementation sketch: a scenario-level setting, e.g. `victory.loss_check_arm = "unconditional" |
+  "after_first_landing" | "after_turn:<N>"` (default `"unconditional"`); the cleanup checker honors it.
+- **(b) "On Taiwan" definition → main-island land hexes.** The census counts battalions on the
+  **land hexes of the Taiwan main island only**. Offshore islands and sea hexes do **not** count toward
+  either side's total. (Needs a way to identify main-island land hexes — terrain/land flag scoped to the
+  main island; confirm the data source when implementing.)
+
+**Still-open sub-decisions on Set 1:**
+- **(c) Symmetry / winner field.** Assumed zero-sum (China loses ⇒ Taiwan wins; China wins ⇒ Taiwan
+  loses), populating a single `winner` field (`"red"`/`"green"`/`null`) plus a `game_over` bool —
+  confirm when implementing.
+- **(d) Precedence.** The two clauses are mutually exclusive (can't have zero Chinese *and* Chinese >
+  Taiwanese), so no conflict; check order is immaterial. Recorded for completeness.
+
+### D3-D crossing lethality calibration  *(2026-06-28: exquisite-intel path chosen; warmup wiring IN PROGRESS — see UPDATE below)*
 
 **Update (2026-06-27 balance pass):** two user-chosen levers landed — a **multi-day pre-invasion
 IJFS** campaign (`PRE_INVASION_IJFS_DAYS = 4`, cumulative attrition into the firing plan) and
@@ -1438,6 +1514,51 @@ per-turn rebuild starts full and never binds — see the D3-D wiring note in `Ga
 deadly unsupported crossing as intended and require the Red player to suppress the assault-TO C2 first.
 All are additive on the existing seams. Until settled, the crossing is balance-flagged, not "done."
 
+**UPDATE 2026-06-28 — exquisite-intel investigation + chosen path (user target: ~25% crossing loss,
+not ~67%).** Deep-dived the suppression model with the user. Findings:
+
+- **Suppression of anti-ship is two-gate + emergent, not a fixed %.** A system must first be DETECTED
+  (`p_detect = satellite_floor + base(label)×mobility_mult×posture_mult×ISR`), then STRUCK
+  (`destroyed` at the pairing `probability_destroyed`, else `suppressed` at
+  `probability_suppressed_if_not_destroyed`). Net suppression ≈ `P(detect)×(1−p_destroy)×p_suppress`.
+  The disparity is a **detection-gate** problem: satellite floor is **0.50–0.95 for moveable/air** vs
+  **0.01–0.02 for mobile/hiding** (50× gap). Air-launched platforms (TO3: 149, High detect) get gutted;
+  the **mobile coastal launchers** (TO3: types 23+24 = 50 systems, Medium detect, mobile/hiding) are
+  near-invisible and fire near-full → ~2/3 loss. Full knob map: `docs/antiship_lethality_knobs.html`.
+- **EXQUISITE INTEL IS DORMANT IN THE LIVE GAME.** `apply_exquisite_intel` (peacetime HUMINT/SIGINT that
+  `intel_locked`s a decaying count of anti-ship groups → auto-detect, bypassing the satellite floor) is
+  correct + unit-tested but **never runs**: `GameState.resolve_ijfs_turn` called `run_daily` with NO
+  `warmup_context`, so the whole prelanding warmup branch (exquisite intel + posture override + SEAD
+  rules + firing-capacity) was dead code. The current ~67% is measured with it **OFF**. (Third
+  "looks-live-but-isn't" trap, after the dormant `mobile_target_destroy_caps` and firing-side magazine.)
+- **Granularity is already by UNIT/GROUP (container).** Anti-ship IJFS targets are generated per
+  *container* (73 total; 25 in TO3), each carrying `systems_represented`. TO3's entire 50-launcher
+  mobile-coastal threat is **2 containers** (type 24 = 40, type 23 = 10). One exquisite-intel lock
+  reveals a whole battery — so the "compromise count" needed is small, not hundreds. (The user's
+  "exquisite intel by unit / a group of systems detected, not an individual" is already the model.)
+- **Detection ≠ kill.** `intel_locked` opens the *detection* gate (auto-detect) but does NOT raise the
+  *strike* `p_destroy` for coastal launchers (~0.045, a binary atomic container kill; the strike
+  modifiers for that subcategory key on **posture**, not `intel_locked`). Two *other* subcategories
+  (dispersed air platforms, C2) DO get an `intel_locked:false` penalty that exquisite intel removes. So
+  detection-only likely won't reach 25% — a strike-side lever is probably needed too.
+
+**User decisions (2026-06-28):** (1) **keep the exponential decay** (half-life 3d) — it models sources
+fading over the campaign; (2) **wire the FULL TIV warmup** (faithful) into the pre-invasion days
+(**DONE 2026-06-28**, opencode session `hexcombat-warmup-wiring`, committed); (3) selection stays
+**group/container-level** (already so); (4) **then add an `intel_locked` strike bonus for coastal
+launchers** and **empirically sweep `initial_count`** (+ the bonus) on the golden seed to find the value
+that yields ~25% crossing loss — magnitude can't be derived (warmup posture override, multi-day
+allocation, binary container kills interact nonlinearly), it must be MEASURED. See the handoff in
+`docs/ORCHESTRATOR_HANDOFF.md` for the remaining steps.
+
+**MEASURED RESULT (2026-06-28, golden seed 20260624):** wiring the warmup (activating exquisite intel)
+cut crossing loss from **~24/36 (~67%) → 18/36 (50.0%)**, golden combat invariant **byte-stable**
+(`casualties=2 feba=0.76`), full gate **204/204 green**. So detection-only (exquisite intel ON) gets
+**halfway** there but **not to 25%** — confirming the analysis that the binding constraint for the
+mobile coastal launchers is the **strike** `p_destroy` gate (~0.045 atomic kill), not just detection.
+**Next levers** (step 4): the `intel_locked` coastal-launcher strike bonus, then sweep `initial_count`
+(currently 8 groups) to dial in ~25%.
+
 ### D3-B3 per-hull escort magazines  *(open — settle if/when ship ammo is modeled)*
 
 `AntishipCrossing.resolve_crossing_damage` ports TIV's **count-based** crossing stages; TIV's live
@@ -1451,7 +1572,7 @@ escort ammo to the interception/terminal-defense stages (the count-based stage s
 this is an additive swap). Until then escort interception is bounded only by `attempts`/`success_prob`,
 not magazine depletion.
 
-### D4-H writeback (TO + ground-casualty) linkage  *(TO part RESOLVED 2026-06-27 in D3-D; ground-casualty part still open)*
+### D4-H writeback (TO + ground-casualty) linkage  *(TO part RESOLVED 2026-06-27 in D3-D; ground-casualty DESIGN SETTLED 2026-06-28 = Option B + detectability; ready to implement — see below)*
 
 **Update (D3-D, 2026-06-27):** the **(TO,Type)** half is resolved. D3-D's decision 1-A ports TIV's
 `build_antiship_targets` so anti-ship IJFS targets are generated **per container** carrying
@@ -1470,6 +1591,119 @@ lat/lon) so anti-ship suppression can be consumed **per (TO,Type)**; and whether
 "Maneuver Units" should mark ground battalions (needs an ID bridge between the IJFS target set and the
 PLA/ROC OOB, or a category→OOB mapping). Until then the writeback shape is forward-compatible (adding
 the key is a data change). See `RETROSPECTIVES.md 2026-06-26 D4-H`.
+
+**How TIV does it (sourced 2026-06-28, for the design call).** In TIV the bridge is *generated*, not
+stored on the static target list: `src/ijfs_standalone/default_targets.py::build_maneuver_targets`
+reads a **`maneuver_units` DB table** (`id, to_number, team, type, quantity, detectability,
+brigade_id, battalion_id`) and emits one IJFS target **per battalion**, each stamped with
+`brigade_id` + a stable `battalion_id` (resolved from a battalions table joined on
+`(brigade_id, type, to_number)`, with fallback `f"{brigade_id}-MU-{row_id}"`). `"Maneuver Units"` is a
+first-class IJFS category (`category_groups.py`) with **exquisite intel** (`run_daily_ijfs.py`:
+`EXQUISITE_INTEL_CATEGORIES = {"maneuver": "Maneuver Units", "antiship": "Anti-Ship Systems"}`).
+IJFS results then write casualties back to the `maneuver` table keyed by that `battalion_id`.
+**Why HexCombat can't today:** (1) the ported `targets_master.json` is a curated *open-source
+strategic-installation* list (54 fixed/mobile sites — airbases, SAMs, radars, HQ, anti-ship, naval
+bases) that **deliberately excludes maneuver units** ("no tactical deployment locations for
+mobile/moveable systems"); (2) the HexCombat ground OOB (`roc_/pla_ground_forces.json`) stores each
+brigade as a **bag of battalion *types* + quantities** with **no per-battalion IDs** — so there is
+nothing to key casualties on. The two datasets share only `lat/lon` and (derivable) `to_number`.
+
+**Design options (user, 2026-06-28):**
+- **(A) Leave empty / out-of-scope (faithful to the ported data).** Pre-invasion IJFS degrades only
+  fixed/air/coastal targets; *all* ground attrition comes from ground combat. `maneuver_casualties`
+  stays absent by design. Zero work; documents the gap as intentional.
+- **(B) Port TIV's `build_maneuver_targets` (faithful to TIV).** Add a maneuver layer: **mint stable
+  per-battalion IDs** from the OOB (`{brigade_id}-MU-{n}` over each composition row × qty), generate
+  `"Maneuver Units"` IJFS targets from them per theater, and write IJFS casualties back to those
+  battalions by ID (applied as OOB attrition). Reproduces TIV's mechanic and lets pre-invasion fires
+  thin ground forces. Cost: ID-minting + maneuver target builder + writeback consumer + OOB-attrition
+  application (medium; RNG-adjacent via IJFS draws — keep the golden invariant byte-stable).
+- **(C) Theater-bucket (to_number) approximation.** No per-battalion IDs: allocate an IJFS maneuver
+  pool per theater and distribute pro-rata (or by injected `Dice`) across that theater's brigades.
+  Uses the existing shared key, no ID minting; diverges from TIV's per-battalion fidelity.
+- **(D) Category→battalion-type mapping (partial).** Map the categories HexCombat *does* have (SAMs,
+  Anti-Ship) onto matching battalion *types* in brigade compositions (Air Defense / coastal-anti-ship
+  battalions) and attrit those. Connects existing targets to the OOB without inventing maneuver
+  targets — but covers only air-defense/anti-ship battalions, not general maneuver infantry/armor.
+
+**The core question for the user:** should pre-invasion IJFS inflict *ground maneuver* casualties at
+all? If **no** → (A). If **yes, faithfully** → (B). If **yes, but cheaply** → (C)/(D).
+
+---
+
+#### DECISION 2026-06-28 — Option B + detectability extensions (user)
+
+The user chose **B**: maneuver units are IJFS-targetable, with detection biased so that **less-armored,
+less-mobile, and recently-active units are more likely to be hit**. This maps cleanly onto mechanics
+TIV *already* implements (so it is a port, not new invention). **Direction:** IJFS is the PLA's
+pre-invasion strike campaign, so maneuver targeting applies to the **defender's (Green/ROC) ground
+OOB** (`data/roc_ground_forces.json`, which already carries `to_number`).
+
+**B1 — Generate maneuver targets from the OOB** (port `build_maneuver_targets`). For each Green
+brigade → each `composition` battalion row → each of `qty` instances, **mint a stable
+`battalion_id`** (`{brigade_id}-MU-{n}` — TIV's own fallback scheme, since the HexCombat OOB stores
+battalion *types*+quantities, not IDs). Emit one IJFS **"Maneuver Units"** target per instance,
+stamped with `brigade_id`, `battalion_id`, `to_number` (from the brigade), and a profile from a ported
+**`MANEUVER_TYPE_MAP`** keyed by battalion `type` → `(subcategory, mobility, hardness,
+detectability_active, detectability_hiding)`. Add "Maneuver Units" to the IJFS category groups with
+**exquisite intel** (mirrors anti-ship: `EXQUISITE_INTEL_CATEGORIES`).
+
+**B2 — Detection = mobility × posture** (port TIV `detection.py`). Per-target detection probability is
+`satellite_floor + base_probability(detectability_label) × mobility_multiplier(mobility) ×
+posture_multiplier(mobility, posture) × weighted_isr`.
+- **Less mobile ⇒ more likely hit** = the `mobility` tier (`mobile` / `moveable` / `static`) selects
+  `mobility_multiplier` (lower mobility → higher multiplier). Static units default to **"active"**
+  posture (always exposed).
+
+**B3 — "Moved or fought ⇒ more detectable next turn" = posture flips to "active"** (generalizes TIV's
+`antiship_exposure` "an active attempt raises next-day detectability" rule to maneuver units). The
+target's `posture` is **"active"** if its brigade was active *last* turn, else **"hiding"** (default
+for mobile units). Active posture selects the higher `detectability_active` label **and** the active
+`posture_multiplier`. **This is the "record historic actions per brigade" requirement:** `Brigade`
+already has `moved_this_turn` / `moved_admin_this_turn` / `fought_this_turn` (current-turn, reset each
+turn) — add **persistent prior-turn flags** that survive `begin_next_turn` (e.g. `moved_last_turn`,
+`fought_last_turn`, set from the current flags during cleanup before they reset) so the *next*
+start-of-turn IJFS can read them. Keep them as separate booleans (not one combined flag) so move vs
+combat can drive different exposure later.
+
+**B4 — "Less armored ⇒ more likely hit" = `hardness`** (`hard` / `soft`), mapped from battalion type
+(Tank/Armor/Mech-Inf/Amphibious = `hard`; artillery/light/reserve/support = `soft`). **Nuance to
+confirm:** in TIV `hardness` feeds the **strike/damage** step (kill-probability *given* detected, in
+`strike_probability.py`), **not** detection — so armor makes a unit *harder to kill once found*, and
+the net effect ("less-armored units are removed more often") matches the user's intent. See open
+sub-decision (1) below if the user instead wants armor to also lower *detection*.
+
+**B5 — Writeback / OOB attrition.** IJFS destroyed/suppressed maneuver results write back keyed by
+`battalion_id` → decrement that battalion's `qty` (or flag the instance destroyed) on the brigade, and
+populate `last_ijfs_writeback.maneuver_casualties`. **RNG:** detection + strike use dice — inject the
+existing **IJFS substream** and keep the golden ground-combat invariant (seed 20260624 → casualties=2,
+feba=0.76) **byte-stable**.
+
+**Sub-decisions — RESOLVED 2026-06-28 (user):**
+1. **Armor → lethality only (TIV-faithful).** `hardness` affects kill-given-detected only; **no**
+   armor term in `detection.py`. Less-armored units die more readily once found, but armor does not
+   change findability. No divergence from TIV.
+2. **Service Support / Support battalions ARE targetable**, modeled as **soft, high-detectability**
+   (logistics tails are findable and fragile). So *all* battalion types are IJFS maneuver targets.
+
+**Sub-decisions — DEFAULTED 2026-06-28 (recommended defaults; user may revisit):**
+3. **History depth = prior-turn only.** A single prior-turn latch (`moved_last_turn`/`fought_last_turn`)
+   drives "active" posture — matches TIV's "next-day exposure" model. (Not a multi-turn decay; can be
+   extended later if a unit should stay "hot" for N turns after acting.)
+4. **Suppression = reporting-only at first; destruction = `qty` loss.** Start with destroyed maneuver
+   results decrementing battalion `qty`; treat *suppressed* as a reported status with no ground-combat
+   penalty yet (an org/readiness penalty on suppressed battalions can be added later, mirroring the
+   existing organization track).
+
+**Still to assign at implementation (mechanical, not a design fork):** `(mobility, hardness,
+detectability_active, detectability_hiding)` profiles for the HexCombat-only battalion types absent
+from TIV's `MANEUVER_TYPE_MAP` — **Air Assault Infantry, Combined Arms, Reconnaissance, Service
+Support, Support** — by analogy to the nearest TIV-mapped type (e.g. Air Assault ≈ Air Assault/Marine
+profile; Combined Arms ≈ Mechanized Infantry; Reconnaissance ≈ mobile/soft/low-detect; Service
+Support & Support ≈ soft/high-detect per (2)).
+
+The design is now fully settled; the B port can proceed when scheduled (keep the golden invariant
+byte-stable; inject the IJFS substream).
 
 ### D1 — Amphibious Offload design decision  *(RESOLVED 2026-06-24)*
 
