@@ -613,3 +613,35 @@ GREEN — flake-free this run; golden 20260624 → casualties=2, feba=0.76 byte-
 - **Arc note:** this closes the Track-E AI-readiness arc (play_turn → event log → LLM surfacing → result
   schema). Next autonomous-safe candidate is the `GameData.validate_runtime_indexes()` hardening guard
   (REFACTOR_NOTES M5a); `game_over`/`winner` victory conditions remain a user design call.
+
+---
+
+## 2026-06-28 — runtime-index-guard: GameData.validate_runtime_indexes() invariant guard   (implementer: opencode deepseek-v4-flash-free)
+
+Data-layer hardening (REFACTOR_NOTES M5a). Brief: a read-only bidirectional brigades ↔ brigades_by_hex
+consistency check returning Array[String] + a validator with a negative corruption test. Pure read-only; no
+game-logic change. Gated independently (validator PASS incl. the __ghost__ negative test; full gate ALL
+PHASES GREEN — flake-free; golden 20260624 → casualties=2, feba=0.76 byte-stable).
+
+**What would you do differently (implementer):**
+1. Run it automatically — a debug/PROFILE_BUILD-gated assert in set_brigade_hex/_add_brigade_to_hex (the only
+   desync vectors) and at the end of resolve_turn (catches combat-path breakage), not just the one validator.
+   O(N) per move is sub-ms at 143 brigades; worth it in debug builds, stripped in release.
+2. Guard other indexes: hex_states vs hex_lookup coverage (low drift today — same populate loop), fleet vs
+   ship_defs (ShipState.validate() already exists), ship_reserve brigade refs after destroy mutations.
+3. Array[String] is right for the gate; add a sibling assert_runtime_indexes() that push_errors each violation
+   for inline debug use (stack trace per violation) without coupling the two use cases.
+4. Extract a reusable pattern: every container type gets validate_invariants() -> Array[String], GameData
+   aggregates via validate_data_layer() gated by project settings — analogous to ShipState.validate().
+
+**Orchestrator triage:**
+- #1 auto-run assert → **RECORDED as the top follow-up; deliberately NOT acted on inline.** The value is real
+  (continuous protection of the golden path), but injecting a new hot-path assert into resolve_turn/
+  set_brigade_hex could turn currently-green GdUnit/validator suites red on any pre-existing benign transient
+  desync — an unacceptable destabilization risk for an unattended overnight run. It's the right change to make
+  deliberately, with attention to which gated scenarios it touches, not autonomously at 5am.
+- #2 other-index guards → **record:** several are low-drift today (hex_states shares the populate loop; fleet
+  has ShipState.validate()); fold into a validate_data_layer() aggregation when a third index needs guarding.
+- #3 assert wrapper → **record** (pairs with #1).
+- #4 reusable validate_invariants() pattern → **record:** good direction; extract once a third container needs
+  it (YAGNI until then).

@@ -471,6 +471,41 @@ func _team_to_string(team: Brigade.Team) -> String:
 			return "Red"
 
 
+## Read-only consistency check: verifies cross-references between the `brigades`
+## and `brigades_by_hex` indexes are correct. Returns a list of human-readable
+## violation strings (empty Array = healthy). Intended for debug asserts / the
+## headless validation gate, NOT the per-frame hot path.
+func validate_runtime_indexes() -> Array[String]:
+	var violations: Array[String] = []
+
+	# A — Forward: every placed brigade is listed in its hex bucket.
+	for b in brigades.values():
+		var brigade: Brigade = b
+		if brigade.hex_id == "":
+			continue
+		var bucket: Array = brigades_by_hex.get(brigade.hex_id, [])
+		if brigade.id not in bucket:
+			violations.append("brigade %s at hex %s missing from brigades_by_hex" % [brigade.id, brigade.hex_id])
+
+	# B — Reverse: every bucket entry references an existing brigade whose hex_id
+	# matches, with no duplicates.
+	for hex_id in brigades_by_hex.keys():
+		var seen := {}
+		for id_value in brigades_by_hex[hex_id]:
+			var id := String(id_value)
+			if seen.has(id):
+				violations.append("brigade %s listed twice in brigades_by_hex[%s]" % [id, hex_id])
+				continue
+			seen[id] = true
+			var b: Brigade = get_brigade(id)
+			if b == null:
+				violations.append("brigades_by_hex[%s] references unknown brigade %s" % [hex_id, id])
+			elif b.hex_id != hex_id:
+				violations.append("brigade %s in bucket %s but its hex_id is %s" % [id, hex_id, b.hex_id])
+
+	return violations
+
+
 ## Deterministic, key-sorted state snapshot for golden-test / AI byte-comparison.
 ## Returns a plain Dictionary with brigade positions/status and hex ownership.
 func snapshot_state() -> Dictionary:

@@ -126,6 +126,25 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-28 — Data-layer hardening: `GameData.validate_runtime_indexes()` invariant guard (via opencode):**
+  Added a read-only `validate_runtime_indexes() -> Array[String]` (REFACTOR_NOTES M5a) that bidirectionally
+  checks the `brigades` ↔ `brigades_by_hex` indexes (every placed brigade listed in its bucket; every bucket
+  entry references an existing brigade whose `hex_id` matches; no duplicates), returning human-readable
+  violation strings (empty = healthy) + `tools/validate_runtime_indexes.gd` exercising 6 scenarios (load /
+  offload / move+remove / full combat turn / **negative corruption test** injecting `__ghost__` and asserting
+  the guard reports it / reload-restores). Decisions: (1) **Read-only, returns `Array[String]`** (not
+  push_error) so callers can log/pattern-match — the negative test asserts a violation mentions `__ghost__`.
+  (2) **Guard is invoked only from the dedicated validator for now, NOT wired into the hot path** — the
+  retrospective's top idea (a debug-gated `assert(validate_runtime_indexes().is_empty())` in `set_brigade_hex`
+  / end of `resolve_turn`) was **deliberately deferred**: a new hot-path assert could turn currently-green
+  GdUnit/validator tests red on any benign transient desync, which is an unacceptable risk for an unattended
+  overnight run — it's the right change to make with full attention, recorded as the top follow-up. No
+  game-logic touched → golden 20260624 → casualties=2, feba=0.76 byte-stable; gate ALL PHASES GREEN.
+  **Retrospective triage** (see `RETROSPECTIVES.md 2026-06-28 runtime-index-guard`): recorded the auto-run
+  assert (top follow-up), a `validate_data_layer()` aggregation over the other indexes (`hex_states`/
+  `hex_lookup` coverage, `fleet`/`ship_defs`, `ship_reserve` brigade refs — several low-drift today), and a
+  reusable per-container `validate_invariants()` pattern (analogous to the existing `ShipState.validate()`).
+
 - **2026-06-28 — Track E AI-readiness: `llm_action_result` JSON Schema + schema-driven key gate (via opencode):**
   Added `schemas/llm_action_result.schema.json` (the observation + action_response already had schema files;
   the action result did not — a contract-consistency gap). Mirrors the existing shallow draft-2020-12 style

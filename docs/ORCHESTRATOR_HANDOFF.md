@@ -215,12 +215,25 @@ llm_action_result.schema.json` + `REQUIRED_RESULT_KEYS`/`_validate_result_schema
 `PLAN.md`/`RETROSPECTIVES.md 2026-06-28 llm-result-schema`). **This completes the Track-E AI-readiness arc**
 (play_turn façade → event log → LLM surfacing → result schema).
 
-**Next autonomous-safe candidate:** a `GameData.validate_runtime_indexes()` hardening guard (flagged in
-`REFACTOR_NOTES.md` M5a) — assert `brigades_by_hex`/`brigade.hex_id` stay in sync after mutations, run it in a
-validator; pure-logic, headless-verifiable, zero design risk. After that the autonomous backlog is genuinely
-thin (a bulk `submit_and_resolve` wrapper is low marginal value; `game_over`/`winner` victory conditions and
-crossing-lethality calibration are USER design calls; D5-D UI needs visual verification; the IJFS↔OOB linkage
-is data-blocked) — at that point reassess continue-vs-hand-off.
+The `GameData.validate_runtime_indexes()` hardening guard (REFACTOR_NOTES M5a) is **DONE 2026-06-28**
+(read-only brigades ↔ brigades_by_hex bidirectional check + `tools/validate_runtime_indexes.gd` with a
+negative corruption test; see `PLAN.md`/`RETROSPECTIVES.md 2026-06-28 runtime-index-guard`). Its top
+follow-up — a debug-gated auto-assert in the mutators / end of `resolve_turn` — was **deliberately deferred**
+(a new hot-path assert risks destabilizing currently-green tests on a benign transient desync; do it with
+attention, not unattended).
+
+**Autonomous backlog status (2026-06-28, after 5 Track-E/hardening units):** genuinely thin. Remaining
+opencode-suitable, autonomous-safe candidates, in rough value order:
+1. **Bulk `LLMGameAPI.submit_and_resolve(red_orders, green_orders, seed)`** — a thin wrapper over `play_turn`
+   that lets a headless AI driver submit a whole turn in one call (vs N action dicts); advances the Track-E
+   agent-vs-agent goal. Modest but real value, low risk.
+2. **`validate_data_layer()` aggregation** — extend invariant-guarding to the other indexes; several are
+   low-drift today, so marginal until a third index needs it.
+**Needs the user (NOT autonomous):** crossing-lethality calibration + `game_over`/`winner` victory conditions
+(design calls); the debug-gated auto-assert (do deliberately); typed `HexState`/`CombatSummary` Resource
+migrations (touch many call sites — high regression risk for the free model). **Blocked:** D5-D polyline UI
+(needs visual verification); the ground-casualty IJFS↔OOB linkage (no ID bridge in source data).
+**When these conveniences are exhausted, stop and hand off rather than manufacture risky work.**
 
 > **Note on the deeper AI-driver track (surfaced for the user — NOT autonomous):** a `game_over`/`winner`
 > field requires defining **victory conditions**, which is new game-design, not a faithful TIV port — that is
