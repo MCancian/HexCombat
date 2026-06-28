@@ -680,3 +680,37 @@ byte-stable both. The trivial policy drives combat in all 4 turns.
 - **Arc note:** this caps the Track-E AI-readiness arc. After the `play_game` extraction the autonomous backlog
   is design-calls (calibration, victory conditions), blocked (UI, IJFS↔OOB linkage), or risky typed-model
   migrations — at which point the right move is a clean handoff, not manufactured work.
+
+---
+
+## 2026-06-28 — selfplay-runner: reusable runner + pluggable policy extraction   (implementer: opencode deepseek-v4-flash-free)
+
+The agent-vs-agent foundation follow-up flagged by the selfplay-harness retrospective. Brief: extract the
+self-play loop into scripts/SelfPlayRunner.gd + scripts/SelfPlayPolicy.gd and rewire the validator to use
+them, LEAVING the golden validator untouched. Pure refactor; behavior preserved. Gated independently
+(validator PASS twice cross-process, identical "combat in 4 turns"; full gate ALL PHASES GREEN — clean run;
+golden 20260624 → casualties=2, feba=0.76 byte-stable).
+
+**What would you do differently (implementer):**
+1. The policy/runner split is at the right layer — runner at the LLMGameAPI adapter level keeps the dependency
+   direction correct (GameState ← LLMGameAPI ← SelfPlayRunner); a real agent just implements
+   build_actions(obs)->Array.
+2. Expose hooks — a `resolve_turn(policy, seed)` mid-game entrypoint (caller owns the loop, can inspect state
+   / detect early termination) on top of the fixed-horizon play_game.
+3. Callable is the right plugin mechanism (idiomatic; no GDScript interface enforcement anyway); the gotcha is
+   it must be a bound instance-method Callable, which is what we used.
+4. A balance-sweep harness would want: the resolve_turn entrypoint, a stats accumulator (or just aggregate the
+   returned turn_digests over N games across a seed range), parallel execution at scale, and an observation
+   perturbation hook to inject balance tweaks while reusing the game flow.
+
+**Orchestrator triage:**
+- #1, #3 → **record (confirm the design):** the adapter-layer placement was an explicit orchestrator decision
+  diverging from the retrospective's "GameState.play_game" precisely to avoid inverting GameState's
+  dependencies (logged in PLAN.md Decisions 2026-06-28).
+- #2 mid-game resolve_turn entrypoint + #4 balance-sweep machinery → **record as YAGNI-until-consumer:** real
+  and sensible, but there is no balance-sweep / real-AI consumer yet, and a balance harness edges into the
+  crossing-lethality CALIBRATION the user reserved as a design call. Building speculative hooks/sweep tooling
+  unattended is exactly the "manufactured/risky work" the handoff guidance says to avoid.
+- **Stop point:** this was the last clearly-safe, valuable, non-design autonomous unit with a real consumer.
+  The orchestrator loop is stopping here with a clean handoff (ORCHESTRATOR_HANDOFF §6) — the remaining backlog
+  is user design-calls, blocked items, YAGNI-without-consumer, or risky typed-model migrations.

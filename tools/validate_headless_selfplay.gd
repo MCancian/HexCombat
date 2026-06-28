@@ -10,24 +10,14 @@ const TURNS := 4
 const BASE_SEED := 20260624
 
 var _failures: Array[String] = []
-var GameData: Node = null
-var GameState: Node = null
 
 
 func _initialize() -> void:
 	print("=== Headless AI-vs-AI self-play validation ===")
-	GameData = get_root().get_node("GameData")
-	GameState = get_root().get_node("GameState")
-	if GameData == null:
-		_fail("Autoload GameData not found on SceneTree root")
-	if GameState == null:
-		_fail("Autoload GameState not found on SceneTree root")
-	if not _failures.is_empty():
-		_finish()
-		return
 
-	var game1 := _play_game()
-	var game2 := _play_game()
+	var policy := SelfPlayPolicy.new()
+	var game1: Dictionary = SelfPlayRunner.play_game(Callable(policy, "build_actions"), TURNS, BASE_SEED)
+	var game2: Dictionary = SelfPlayRunner.play_game(Callable(policy, "build_actions"), TURNS, BASE_SEED)
 	_print_game_summary("Game 1", game1)
 	_print_game_summary("Game 2", game2)
 
@@ -43,62 +33,14 @@ func _initialize() -> void:
 	if game1["turn_digests"] != game2["turn_digests"]:
 		_fail("self-play not deterministic: turn digests differ")
 
-	var violations: Array = GameData.validate_runtime_indexes()
+	var violations: Array = game1["index_violations"]
 	if not violations.is_empty():
 		_fail("indexes inconsistent after self-play: %s" % "; ".join(violations))
 
-	if GameState.turn_number != TURNS + 1:
-		_fail("expected turn_number %d after %d turns, got %d" % [TURNS + 1, TURNS, GameState.turn_number])
+	if game1["final_turn"] != TURNS + 1:
+		_fail("expected turn_number %d after %d turns, got %d" % [TURNS + 1, TURNS, game1["final_turn"]])
 
 	_finish()
-
-
-func _play_game() -> Dictionary:
-	GameData.load_all()
-	GameState.reset_to_scenario()
-	var turn_digests: Array = []
-	var all_resolved := true
-
-	for t in range(TURNS):
-		var obs: Dictionary = LLMGameAPI.observation("")
-		var legal_moves: Dictionary = obs.get("legal_moves", {})
-		var actions: Array = []
-
-		for brigade_id in legal_moves.keys():
-			var lm: Dictionary = legal_moves[brigade_id] as Dictionary
-			var from_hex := String(lm.get("from_hex", ""))
-			var target := ""
-			for h in (lm.get("tactical", []) as Array):
-				if String(h) != from_hex:
-					target = String(h)
-					break
-			if target != "":
-				actions.append({
-					"type": "move",
-					"team": String(lm.get("team", "")),
-					"brigade_id": String(brigade_id),
-					"target_hex": target,
-					"mode": Movement.MODE_TACTICAL
-				})
-
-		actions.append({"type": "end_turn", "seed": BASE_SEED + t})
-		var response := {
-			"protocol_version": LLMGameAPI.PROTOCOL_VERSION,
-			"schema": LLMGameAPI.ACTION_RESPONSE_SCHEMA,
-			"perspective_team": "",
-			"actions": actions
-		}
-		var result: Dictionary = LLMGameAPI.apply_agent_response(response)
-		if not bool(result.get("resolved", false)):
-			all_resolved = false
-		turn_digests.append((result.get("turn_result", {}) as Dictionary).duplicate(true))
-
-	return {
-		"final_snapshot": GameData.snapshot_state(),
-		"turn_digests": turn_digests,
-		"all_resolved": all_resolved,
-		"final_turn": GameState.turn_number
-	}
 
 
 func _print_game_summary(label: String, game_result: Dictionary) -> void:

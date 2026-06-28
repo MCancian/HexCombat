@@ -126,6 +126,26 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-28 — Track E: reusable self-play runner + pluggable policy (via opencode).** Extracted the
+  self-play loop into `scripts/SelfPlayRunner.gd` (`static play_game(policy: Callable, turns, base_seed) ->
+  {final_snapshot, turn_digests, all_resolved, final_turn, index_violations}`) and `scripts/SelfPlayPolicy.gd`
+  (RefCounted reference policy with the `build_actions(observation) -> Array` contract a real agent
+  implements), and rewrote `tools/validate_headless_selfplay.gd` (133→75 lines) to delegate to them — all
+  assertions + behavior preserved (identical PASS, combat in all 4 turns, cross-process deterministic).
+  **DESIGN DECISION (diverged from the retrospective's "GameState.play_game" suggestion):** the runner lives
+  at the **adapter layer**, NOT on GameState. A self-play game drives *through* the public agent API
+  (`LLMGameAPI.observation` + `apply_agent_response`); since LLMGameAPI already depends on GameState
+  (GameState ← LLMGameAPI ← SelfPlayRunner), putting the driver on GameState would **invert** that dependency.
+  The policy plugs in via an instance-method `Callable(policy, "build_actions")` (instance-method Callables are
+  robust in Godot 4; static-method Callables are not). No combat/RNG/GameState change; `validate_headless_turn`
+  (golden validator) left untouched → golden 20260624 → casualties=2, feba=0.76 byte-stable; gate ALL PHASES
+  GREEN. **Retrospective triage** (see `RETROSPECTIVES.md 2026-06-28 selfplay-runner`): all forward-looking
+  (per-turn hooks / a mid-game `resolve_turn(policy, seed)` entrypoint, balance-sweep stats/parallelism/
+  perturbation hooks, `export_turn_log`) recorded as **YAGNI until a consumer exists** — none acted on.
+  **This is the last clearly-safe autonomous unit; the safe backlog is now exhausted** (remaining work is
+  user design-calls, blocked, YAGNI-without-consumer, or risky typed-model migrations) → the orchestrator
+  loop is stopping here with a clean handoff rather than manufacturing risky/speculative unattended work.
+
 - **2026-06-28 — Track E capstone: headless AI-vs-AI self-play harness (via opencode).** Added
   `tools/validate_headless_selfplay.gd` (gated validator) — the Track-E goal ("agents drive the action API
   with no view; full games run headless"). It plays `TURNS=4` turns from a clean `reset_to_scenario()` through

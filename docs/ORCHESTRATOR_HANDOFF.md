@@ -227,21 +227,37 @@ the Track-E capstone: a gated, deterministic 4-turn self-play game over the exis
 full-game reproducibility + index health (cross-process determinism + 2× gate stability verified). See
 `PLAN.md`/`RETROSPECTIVES.md 2026-06-28 selfplay-harness`.
 
-**Autonomous backlog status (2026-06-28, after 6 Track-E/hardening units — play_turn façade → event log → LLM
-surfacing → result schema → index guard → self-play harness):** essentially exhausted. The one remaining
-clearly-safe, opencode-suitable candidate:
-1. **`GameState.play_game(policy: Callable, turns, seed) -> {snapshot, digests, violations}` headless-driver
-   entrypoint + a reusable `tools/policies/<name>.gd` helper** — DRYs the load/reset/loop bootstrap now
-   duplicated across validators and makes real agent policies pluggable (the seam an actual agent-vs-agent mode
-   needs). Scope note: add it + refactor `validate_headless_selfplay` to use it, but LEAVE
-   `validate_headless_turn.gd` (the golden validator) untouched. Modest value, low risk.
+The reusable **`SelfPlayRunner` + pluggable `SelfPlayPolicy`** extraction is **DONE 2026-06-28** (driver at the
+LLMGameAPI adapter layer — NOT on GameState, to avoid inverting the dependency; the self-play validator now
+delegates to it; golden validator untouched). See `PLAN.md`/`RETROSPECTIVES.md 2026-06-28 selfplay-runner`.
 
-**Needs the user (NOT autonomous):** crossing-lethality calibration + `game_over`/`winner` victory conditions
-(design calls); the debug-gated runtime-index auto-assert (do deliberately — risks destabilizing green tests);
-typed `HexState`/`CombatSummary` Resource migrations (touch many call sites — high regression risk for the
-free model). **Blocked:** D5-D polyline UI (needs visual verification); the ground-casualty IJFS↔OOB linkage
-(no ID bridge in source data). **After the `play_game` extraction the safe autonomous backlog is exhausted —
-the correct move is a clean handoff (a status note here + stop the loop), NOT manufactured/risky work.**
+---
+
+### ⏸ AUTONOMOUS LOOP STOPPED 2026-06-28 — clean handoff (safe backlog exhausted)
+
+After 7 units this session (BOOTS port was already complete; this run added the full **Track-E AI-readiness
+arc**: play_turn façade → snapshot_state → per-turn event log → LLM action-result surfacing → llm_action_result
+schema → runtime-index guard → headless self-play harness → reusable runner/policy), **all green and pushed**,
+the orchestrator loop **stopped deliberately**. Every remaining backlog item needs you or is unsafe to do
+unattended with the free-model implementer:
+
+- **Design calls (need you):** anti-ship **crossing-lethality calibration** (PLAN.md Open Question — the
+  crossing is catastrophically lethal by design until tuned); **`game_over`/`winner` victory conditions** (new
+  game-design, not a faithful TIV port); whether to wire the **debug-gated runtime-index auto-assert** into
+  `set_brigade_hex`/`resolve_turn` (deliberate — it can surface latent benign desyncs and turn green tests red).
+- **Blocked:** **D5-D** polyline-draw UI (needs human visual verification — not headless-verifiable); the
+  **ground-casualty IJFS↔OOB linkage** (no shared ID bridge exists in the TIV source data — needs a design
+  decision on how IJFS maneuver targets map to OOB brigades).
+- **Risky for the free model (do with a stronger implementer / attention):** typed `HexState`/`CombatSummary`
+  Resource migrations (touch many call sites across GameState/LLMGameAPI/validators — high golden-regression
+  risk).
+- **YAGNI until a consumer exists:** `SelfPlayRunner` per-turn hooks / a mid-game `resolve_turn(policy, seed)`
+  entrypoint; a balance-sweep harness (also edges into the calibration design call); `export_turn_log` JSON
+  game-log export.
+
+**To resume:** pick a design call to settle (calibration or victory conditions are the highest-leverage), then
+re-run `/loop`. The per-sub-task loop in §3 and all guardrails (§5) still apply. The full per-unit rationale +
+retrospectives are in `PLAN.md` Decisions and `docs/RETROSPECTIVES.md` (2026-06-28 entries).
 
 > **Note on the deeper AI-driver track (surfaced for the user — NOT autonomous):** a `game_over`/`winner`
 > field requires defining **victory conditions**, which is new game-design, not a faithful TIV port — that is
