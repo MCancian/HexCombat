@@ -22,7 +22,7 @@ fixed (obvious) or flagged in `/DECISIONS.md` (design calls).
 |---|---|---|---|:--:|:--:|:--:|
 | 1 | Hex grid & geometry | `HexMath`, `MapProjection`, `Hex`, `HexOwner` | `src/core/hex_grid.py` | ✅ | ✅ | ✅ |
 | 2 | Ground combat (BOOTS) | `CombatCalculator`, `CombatForces`, `Movement`, `UnitStats`, `Brigade`/`Battalion` | `boots_calculator.py::resolve_map_attack` | ✅ | ✅ | ✅ |
-| 3 | Amphibious offload (D1) | `OffloadCalculator`, `OffloadRates`, `ShipLoadingModel`, `BeachDef` | `services/offload*` | ☐ | ☐ | ☐ |
+| 3 | Amphibious offload (D1) | `OffloadCalculator`, `OffloadRates`, `ShipLoadingModel`, `BeachDef` | `services/offload*` | ✅ | ✅ | ✅ |
 | 4 | Supply (D2 DOS) | `DosConsumption`, `SupplyState` | `services/red_dos_*` | ☐ | ☐ | ☐ |
 | 5 | Anti-ship & mine (D3) | `Antiship*`, `MineWarfareService`, ship/mine models | `services/antiship*`, `antiship/mine_warfare_service.py` | ☐ | ☐ | ☐ |
 | 6 | IJFS (D4) | `scripts/ijfs/*` | `src/ijfs_standalone/*` | ☐ | ☐ | ☐ |
@@ -45,3 +45,9 @@ fixed (obvious) or flagged in `/DECISIONS.md` (design calls).
   mapping bug); HexCombat ported the intent; (2) `feba_base_km` 2.0 vs TIV 3.5. Minor notes (in the
   doc): RNG algorithm differs (numpy vs Dice → self-consistent only); `combat_detail` key shape. No
   code changed — both findings await user ratification.
+- Area 3 — documented (`docs/systems/amphibious-offload.md` + html) and compared vs
+  `offload_calculator.py` / `beach_throughput.py`. **✅ Faithful port** — verified `TONS_PER_BN=2200`,
+  the pier/barge throughput formula, and the maneuver-BN whitelist all match TIV exactly; day-1
+  redesign mirrored by 54 GdUnit tests. Only minor intentional `ShipLoadingModel` simplifications
+  (per-type transport weight; amphibious-vs-cargo ship eligibility) diverge — already code-documented.
+  No DECISIONS, no code change.
