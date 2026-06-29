@@ -865,6 +865,12 @@ func resolve_cleanup_phase() -> Dictionary:
 		int(census["red"]), int(census["green"]), arm, turn_number, _china_has_landed)
 	game_over = bool(verdict["game_over"])
 	winner = String(verdict["winner"])
+	# Latch this turn's activity into prior-turn flags (for next turn's IJFS detection posture) BEFORE
+	# begin_next_turn resets the per-turn flags. Pure board read; consumes no dice.
+	for brigade_value in GameData.brigades.values():
+		var brigade: Brigade = brigade_value
+		brigade.moved_last_turn = brigade.moved_this_turn or brigade.moved_admin_this_turn
+		brigade.fought_last_turn = brigade.fought_this_turn
 	last_cleanup_summary = {
 		"antiship_systems_reset": reset_count,
 		"china_battalions_on_taiwan": int(census["red"]),

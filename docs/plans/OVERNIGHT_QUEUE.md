@@ -10,6 +10,19 @@ destructive/irreversible** action or a gate you **can't get green after ~2 focus
 commit `.mcp.json`. **Do NOT touch Track 5 graphics** — it needs visual verification, unsuitable for
 unattended work.
 
+## Known gate flakiness (retry policy)
+A few `await`-signal GdUnit tests (`offload_calculator_test::test_day1_only_maneuver_bns_land`,
+movement/`reachable_hexes_changed` awaits) intermittently time out (2s) under heavier suite load — they
+pass in isolation and on re-run. **Policy:** if `run_all_tests.ps1` fails only on such an await-timeout
+test, **re-run once**; a clean second run counts as green. A deterministic failure (same test, real
+assertion) is a real break — fix it. (Hardening these awaits is queued under "exhausted" work below.)
+
+## opencode invocation (Windows arg limits)
+A long CLI prompt fails with "Argument list too long"; and `-f <file> "<msg>"` makes `--file` (an array)
+swallow the message as a second file. **Use:** put the message FIRST, file LAST —
+`opencode run -m … --dangerously-skip-permissions "short msg, see attached plan" -f "plan.md"` — or
+just implement small/contained sub-tasks directly (faster than fighting the weak model + arg parsing).
+
 ## Per-iteration loop
 1. Pick the next unchecked queue item below (top to bottom).
 2. Implement via `opencode` (read the relevant `docs/systems/*.md` first; preserve ported math unless a
@@ -32,7 +45,18 @@ unattended work.
   shift (record old→new in `PLAN.md` Decisions + `validate_cleanup.gd` + `STATUS.md`).
   *Done when:* a depleted supply pool measurably lowers Red combat strength; gate green.
 
-- [ ] **2. Apply IJFS→ground maneuver casualties.** (`port_audit.md` "Ground-casualty IJFS↔OOB linkage".)
+- [ ] **2. Apply IJFS→ground maneuver casualties** — large (Option B + detectability, settled
+  2026-06-28); split into gateable sub-tasks (orchestrator call 2026-06-29):
+  - [x] **2a. Persistent prior-turn activity flags on `Brigade`** ✅ DONE 2026-06-29 —
+    `moved_last_turn`/`fought_last_turn` latched in `resolve_cleanup_phase`; `brigade_activity_history_test.gd`;
+    gate green; golden unchanged (latch consumes no dice).
+  - [ ] **2b.** Mint per-battalion maneuver IDs (`{brigade_id}-MU-{n}`) + generate "Maneuver Units" IJFS
+    targets from the ROC OOB (port TIV `build_maneuver_targets` + `MANEUVER_TYPE_MAP`).
+  - [ ] **2c.** Detection/lethality bias: `mobility_multiplier` (less-mobile → more detectable),
+    `posture="active"` for recently-active units, `hardness` (less-armored die more readily).
+  - [ ] **2d.** Consume `maneuver_casualties`: remove struck battalions from the OOB before ground
+    combat. Keep golden byte-stable (IJFS substream). Suppression reporting-only at first.
+  Original item below: (`port_audit.md` "Ground-casualty IJFS↔OOB linkage".)
   Two halves: (a) **ID bridge** — ensure IJFS maneuver targets carry an OOB-matching `battalion_id`/
   `brigade_id` so `GameState._compute_ijfs_writeback` (`GameState.gd:547`) produces non-empty
   `maneuver_casualties`; (b) **consume** them — remove the struck battalions from the PLA/ROC OOB before

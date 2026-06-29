@@ -21,6 +21,10 @@ const ORG_RECOVERY_PER_TURN := 10.0     # +10% per turn when neither moving nor 
 @export var moved_this_turn: bool = false
 @export var moved_admin_this_turn: bool = false
 @export var fought_this_turn: bool = false
+# Prior-turn activity (latched in cleanup before the per-turn flags reset). Feeds IJFS detection
+# posture: recently-active units are more detectable. See PLAN.md Decisions 2026-06-28 (D4-H Option B).
+@export var moved_last_turn: bool = false
+@export var fought_last_turn: bool = false
 @export var destroyed: bool = false
 @export var organization: float = MAX_ORGANIZATION  # 0-100; does not affect combat yet
 
