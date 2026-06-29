@@ -25,7 +25,7 @@ fixed (obvious) or flagged in `/DECISIONS.md` (design calls).
 | 3 | Amphibious offload (D1) | `OffloadCalculator`, `OffloadRates`, `ShipLoadingModel`, `BeachDef` | `services/offload*` | ✅ | ✅ | ✅ |
 | 4 | Supply (D2 DOS) | `DosConsumption`, `SupplyState` | `services/red_dos_consumption.py` | ✅ | ✅ | ✅ |
 | 5 | Anti-ship & mine (D3) | `Antiship*`, `MineWarfareService`, ship/mine models | TIV `antiship_crossing.py` + TaiwanDefenseRefactor `mine_warfare.py` | ✅ | ✅ | ✅ |
-| 6 | IJFS (D4) | `scripts/ijfs/*` | `src/ijfs_standalone/*` | ☐ | ☐ | ☐ |
+| 6 | IJFS (D4) | `scripts/ijfs/*` | `src/ijfs_standalone/*` | ✅ | ✅ | ✅ |
 | 7 | Front-line / cleanup / victory (D5) | `FrontLineService`, `VictoryConditions`, `HexOwner` | `services/front_line_service.py`, `cleanup_*` | ☐ | ☐ | ☐ |
 | 8 | Turn engine & data | `GameState`, `GameData`, `Dice`, `EventBus`, `Theaters` | `models/game_state.py` | ☐ | ☐ | ☐ |
 | 9 | LLM API & self-play | `LLMGameAPI`, `SelfPlay*`, `TurnEventLog` | (HexCombat-original) | ☐ | ☐ | ☐ |
@@ -64,3 +64,11 @@ fixed (obvious) or flagged in `/DECISIONS.md` (design calls).
   (verified functions exist), NOT TIV's own sweep-based mine service — a deliberate cross-repo choice.
   Corrected the agent's draft (it had been mis-told the mine model was HexCombat-original). No new
   DECISIONS — count-based-vs-per-hull, per-category neutralization, magazine persistence already logged.
+- Area 6 — documented (`docs/systems/ijfs.md` + html) and compared vs `src/ijfs_standalone/*`.
+  **✅ Faithful port** — 10/11 stages are 1:1 (detection, targeting, engagement, strike Pk+resolution,
+  firing capacity, AD health, warmup, loaders, daily state, run context); orchestrator independently
+  confirmed pipeline order + strike-probability model. One adaptation (anti-ship targets from
+  pre-built containers vs SQLite default_targets). **Port gap (→ `port_audit.md`):** ground
+  (`maneuver_casualties`) writeback is computed but (a) empty at runtime — IJFS targets lack OOB
+  battalion IDs — and (b) not consumed; IJFS air/missile kills don't reduce ground brigades. Anti-ship
+  half IS wired. No new DECISIONS.

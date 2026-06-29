@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HexCombat — IJFS (Joint/Air-Missile Fires, D4)</title>
+<style>
+  body{font:16px/1.55 -apple-system,Segoe UI,Roboto,sans-serif;max-width:880px;margin:2rem auto;padding:0 1rem;color:#1c2230}
+  h1{border-bottom:3px solid #2b6cb0;padding-bottom:.3rem}
+  h2{margin-top:2rem;color:#2b6cb0}
+  table{border-collapse:collapse;width:100%;margin:1rem 0}
+  th,td{border:1px solid #cbd5e0;padding:.4rem .6rem;text-align:left;vertical-align:top}
+  th{background:#edf2f7}
+  code{background:#edf2f7;padding:.1rem .3rem;border-radius:3px;font-size:.9em}
+  ol{background:#f7fafc;border:1px solid #e2e8f0;border-radius:6px;padding:1rem 1rem 1rem 2.2rem}
+  .ok{background:#f0fff4;border:1px solid #68d391;border-left:5px solid #38a169;padding:.8rem 1rem;border-radius:6px;margin:1rem 0}
+  .note{background:#fffaf0;border:1px solid #f6ad55;border-left:5px solid #dd6b20;padding:.8rem 1rem;border-radius:6px;margin:1rem 0}
+  footer{margin-top:3rem;color:#718096;font-size:.85em;border-top:1px solid #e2e8f0;padding-top:1rem}
+</style>
+</head>
+<body>
+<h1>IJFS — Joint / Air-Missile Fires (D4)</h1>
+<p><em>Human-readable summary. Machine reference: <code>docs/systems/ijfs.md</code>.
+Port-fidelity audit, Area 6 of 10 — the largest phase.</em></p>
+
+<h2>What this system does</h2>
+<p>Models the PLA's pre-invasion and ongoing air &amp; missile campaign against Taiwan. Sensors detect
+targets, doctrine picks what to hit and with what munition, fires are budgeted per platform, each
+strike rolls to destroy or suppress, and air defenses degrade over time. Capability ramps up over a
+multi-day "warmup," with an exquisite-intel boost on the opening day. Results feed forward: suppressed
+or destroyed coastal anti-ship launchers fire less in the naval crossing (D3).</p>
+
+<h2>The daily pipeline</h2>
+<ol>
+<li>Build the day's run context (warmup day, z-day).</li>
+<li>Detection — sensors (satellite, aircraft) detect target IDs.</li>
+<li>Air-defense health — compute Taiwan's AD state.</li>
+<li>Targeting — choose targets &amp; munitions by doctrine; apply exquisite intel on the warmup.</li>
+<li>Engagement — SEAD against air defenses (free shot, return fire).</li>
+<li>Strike — per-target probability of destroy/suppress, resolved by dice, within firing-capacity budgets.</li>
+<li>Writeback — aggregate per-(theater, type) results for downstream phases.</li>
+</ol>
+
+<div class="ok">
+<strong>✅ Faithful port — verified.</strong> 10 of the 11 stages are 1:1 ports of TIV's
+<code>ijfs_standalone</code> modules (detection, targeting, engagement, strike probability &amp;
+resolution, firing capacity, AD health, warmup profiles, loaders, daily state, run context). The
+orchestrator independently confirmed the pipeline order and the strike-probability model. The one
+adaptation: anti-ship targets are built from pre-loaded containers rather than TIV's SQLite default-
+targets path. Covered by the ported IJFS tests.</p>
+</div>
+
+<div class="note">
+<strong>🟡 One real port gap — IJFS doesn't kill ground troops yet.</strong>
+<p>The "maneuver casualties" writeback (which PLA/ROC ground battalions the air/missile campaign
+destroyed) is <strong>computed</strong> but has no effect: (a) at runtime it comes out empty because
+the IJFS target list doesn't tag targets with matching battalion IDs, and (b) even if populated,
+nothing removes those battalions before ground combat. So air/missile strikes currently don't thin the
+brigades that fight on the ground. The anti-ship half of the writeback, by contrast, <em>is</em> wired
+(it suppresses coastal launchers in the naval crossing). Tracked as a port-completion item; design
+already settled.</p>
+</div>
+
+<footer>HexCombat systems reference · TaiwanInvasionViewer port-fidelity audit.</footer>
+</body>
+</html>
