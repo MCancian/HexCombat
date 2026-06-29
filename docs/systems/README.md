@@ -10,7 +10,7 @@ HTML mirrors live in `html/`. Audit status + open fidelity questions:
 | Hex grid & geometry | [hex-grid.md](hex-grid.md) | [html](html/hex-grid.html) |
 | Ground combat (BOOTS) | [ground-combat.md](ground-combat.md) | [html](html/ground-combat.html) |
 | Amphibious offload (D1) | [amphibious-offload.md](amphibious-offload.md) | [html](html/amphibious-offload.html) |
-| Supply (D2 DOS) | _pending_ | _pending_ |
+| Supply (D2 DOS) | [supply-dos.md](supply-dos.md) | [html](html/supply-dos.html) |
 | Anti-ship & mine (D3) | _pending_ | _pending_ |
 | IJFS (D4) | _pending_ | _pending_ |
 | Front-line / cleanup / victory (D5) | _pending_ | _pending_ |

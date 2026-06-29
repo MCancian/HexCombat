@@ -18,6 +18,16 @@ ported — source-specific). Sources: TIV (BOOTS oracle; `ROADMAP.md` §D for re
 | **Terrain** | ADAPT | Deferred by design — TIV has no terrain data; a later ArcGIS-sourced phase (`ROADMAP.md` M6 note). |
 | **Front-line polyline-draw UI (D5-D)** | PORT | The one remaining D5 piece; it's a **graphics** item → Track 5 (needs visual verification). |
 
+## Found during the systems audit (2026-06-29)
+
+| Item | Tag | Notes |
+|---|---|---|
+| **Supply-effectiveness → combat link** | PORT | TIV injects per-unit `supply_effectiveness` into combat (`boots_combat_service._inject_supply_effectiveness`, read by `resolve_map_attack`). HexCombat tracks the D2 DOS pool but feeds combat a hardcoded `supply_effectiveness = 1.0` (`CombatForces.gd:20`, `UnitManager.gd:31`), so supply has **no combat consequence yet**. ROADMAP D2 noted this deferral ("wired to combat / zeroed pending D4"). Wire the pool's effectiveness into `CombatForces.maneuver_units`. |
+| **ShipLoadingModel: per-type transport weight** | REFINE | Every BN = 1.0 ship-equivalent; TIV uses `configurator.get_unit_transport_weight()` per type. Matters only for exact ship-manifest → D3 crossing calibration. Code-documented (`ShipLoadingModel.gd:14`). |
+| **ShipLoadingModel: amphibious-vs-cargo ship eligibility** | REFINE | HexCombat: any carrier ships any BN; TIV splits amphibious vs cargo eligibility (`_ship_can_carry_battalion`). Same calibration caveat. |
+| **Ground combat: unit strength table (12/17 types)** | DECISION | See `/DECISIONS.md` (Area 2). HexCombat differentiates maneuver strengths; TIV's runtime flattens to 1.0 (mapping bug). Awaiting user ratification. |
+| **Ground combat: `feba_base_km` 2.0 vs 3.5** | DECISION | See `/DECISIONS.md` (Area 2). Recommend scenario-configurable default 3.5. |
+
 ## Intentionally skipped (source-specific — do NOT port)
 
 - **TIV SQL/DB writeback** (`ijfs_writeback_service`, `target_system_writeback_service`, repo mutations,

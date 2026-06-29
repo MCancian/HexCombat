@@ -23,7 +23,7 @@ fixed (obvious) or flagged in `/DECISIONS.md` (design calls).
 | 1 | Hex grid & geometry | `HexMath`, `MapProjection`, `Hex`, `HexOwner` | `src/core/hex_grid.py` | ✅ | ✅ | ✅ |
 | 2 | Ground combat (BOOTS) | `CombatCalculator`, `CombatForces`, `Movement`, `UnitStats`, `Brigade`/`Battalion` | `boots_calculator.py::resolve_map_attack` | ✅ | ✅ | ✅ |
 | 3 | Amphibious offload (D1) | `OffloadCalculator`, `OffloadRates`, `ShipLoadingModel`, `BeachDef` | `services/offload*` | ✅ | ✅ | ✅ |
-| 4 | Supply (D2 DOS) | `DosConsumption`, `SupplyState` | `services/red_dos_*` | ☐ | ☐ | ☐ |
+| 4 | Supply (D2 DOS) | `DosConsumption`, `SupplyState` | `services/red_dos_consumption.py` | ✅ | ✅ | ✅ |
 | 5 | Anti-ship & mine (D3) | `Antiship*`, `MineWarfareService`, ship/mine models | `services/antiship*`, `antiship/mine_warfare_service.py` | ☐ | ☐ | ☐ |
 | 6 | IJFS (D4) | `scripts/ijfs/*` | `src/ijfs_standalone/*` | ☐ | ☐ | ☐ |
 | 7 | Front-line / cleanup / victory (D5) | `FrontLineService`, `VictoryConditions`, `HexOwner` | `services/front_line_service.py`, `cleanup_*` | ☐ | ☐ | ☐ |
@@ -51,3 +51,10 @@ fixed (obvious) or flagged in `/DECISIONS.md` (design calls).
   redesign mirrored by 54 GdUnit tests. Only minor intentional `ShipLoadingModel` simplifications
   (per-type transport weight; amphibious-vs-cargo ship eligibility) diverge — already code-documented.
   No DECISIONS, no code change.
+- Area 4 — documented (`docs/systems/supply-dos.md` + html) and compared vs `red_dos_consumption.py`.
+  **✅ Faithful port** — constants (300/150/150), activity formula, mechanized hints, and the
+  consumption-summary/net-delta (conservative ceil) all match TIV exactly. **One port gap (→
+  `port_audit.md`):** `supply_effectiveness` is computed but fed to combat as a hardcoded 1.0
+  (`CombatForces.gd:20`), so supply has no combat effect yet (TIV injects real values). No code change.
+  NB: opencode agents default to the WRONG TIV path (outer dir) — pass the nested
+  `…/TaiwanInvasionViewer/TaiwanInvasionViewer/…` path explicitly.
