@@ -27,7 +27,7 @@ fixed (obvious) or flagged in `/DECISIONS.md` (design calls).
 | 5 | Anti-ship & mine (D3) | `Antiship*`, `MineWarfareService`, ship/mine models | TIV `antiship_crossing.py` + TaiwanDefenseRefactor `mine_warfare.py` | ✅ | ✅ | ✅ |
 | 6 | IJFS (D4) | `scripts/ijfs/*` | `src/ijfs_standalone/*` | ✅ | ✅ | ✅ |
 | 7 | Front-line / cleanup / victory (D5) | `FrontLineService`, `VictoryConditions`, `HexOwner` | `services/front_line_service.py`, `cleanup_*` | ✅ | ✅ | ✅ |
-| 8 | Turn engine & data | `GameState`, `GameData`, `Dice`, `EventBus`, `Theaters` | `models/game_state.py` | ☐ | ☐ | ☐ |
+| 8 | Turn engine & data | `GameState`, `GameData`, `Dice`, `EventBus`, `Theaters` | `models/game_state.py` (adaptation) | ✅ | ✅ | ✅ |
 | 9 | LLM API & self-play | `LLMGameAPI`, `SelfPlay*`, `TurnEventLog` | (HexCombat-original) | ☐ | ☐ | ☐ |
 | 10 | View layer | `HexMap`, `GameController`, panels, symbols, `UnitManager` | (HexCombat-original UI) | ☐ | ☐ | ☐ |
 
@@ -78,3 +78,8 @@ fixed (obvious) or flagged in `/DECISIONS.md` (design calls).
   HexCombat-original** (no TIV BOOTS equivalent; settled 2026-06-28). REFINE (→ `port_audit.md`):
   front-line distribution is brigade-level vs TIV battalion-level + per-hex clipping; tied to the
   deferred draw UI (Track 5). taiwan_hexes=null census caveat is known. No new DECISIONS.
+- Area 8 — documented (`docs/systems/turn-engine.md` + html). **Adaptation, not a 1:1 port** (correctly):
+  WeGo plan→resolve + Godot autoloads + seeded `Dice` reimagine TIV's Flask/SQLite phase model, keeping
+  the same phase order (IJFS→antiship→offload→movement→combat→cleanup). `resolve_turn` stage order
+  verified against STATUS. HexCombat-original: the WeGo order layer, `play_turn`/`TurnResult` AI
+  entrypoint, determinism enforcement (`validate_no_global_rng`). No discrepancies / no DECISIONS.

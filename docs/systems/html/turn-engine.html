@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HexCombat — Turn Engine &amp; Data</title>
+<style>
+  body{font:16px/1.55 -apple-system,Segoe UI,Roboto,sans-serif;max-width:880px;margin:2rem auto;padding:0 1rem;color:#1c2230}
+  h1{border-bottom:3px solid #2b6cb0;padding-bottom:.3rem}
+  h2{margin-top:2rem;color:#2b6cb0}
+  table{border-collapse:collapse;width:100%;margin:1rem 0}
+  th,td{border:1px solid #cbd5e0;padding:.4rem .6rem;text-align:left;vertical-align:top}
+  th{background:#edf2f7}
+  code{background:#edf2f7;padding:.1rem .3rem;border-radius:3px;font-size:.9em}
+  ol{background:#f7fafc;border:1px solid #e2e8f0;border-radius:6px;padding:1rem 1rem 1rem 2.2rem}
+  .ok{background:#f0fff4;border:1px solid #68d391;border-left:5px solid #38a169;padding:.8rem 1rem;border-radius:6px;margin:1rem 0}
+  footer{margin-top:3rem;color:#718096;font-size:.85em;border-top:1px solid #e2e8f0;padding-top:1rem}
+</style>
+</head>
+<body>
+<h1>Turn Engine &amp; Data Services</h1>
+<p><em>Human-readable summary. Machine reference: <code>docs/systems/turn-engine.md</code>.
+Port-fidelity audit, Area 8 of 10.</em></p>
+
+<h2>What this is</h2>
+<p>The runtime spine of the game — four always-loaded services: <strong>GameData</strong> (loads all the
+static data once: hexes, orders of battle, ships, beaches, theaters), <strong>GameState</strong> (the
+turn clock and everything that changes turn to turn), <strong>EventBus</strong> (signals so parts of
+the game can react to each other), and <strong>Dice</strong> (a seeded random-number source so every
+game is reproducible).</p>
+
+<h2>How a turn runs (WeGo)</h2>
+<p>HexCombat uses a "WeGo" model: both sides write their orders during planning, then the turn resolves
+all at once in a fixed pipeline:</p>
+<ol>
+<li>Air/missile fires (IJFS)</li>
+<li>Anti-ship &amp; mines vs the crossing fleet</li>
+<li>Amphibious offload (survivors land)</li>
+<li>Movement &amp; commitment (both sides)</li>
+<li>Ground combat at every contested hex</li>
+<li>Front-line retreats &amp; hex ownership</li>
+<li>Supply consumption</li>
+<li>Cleanup + victory census</li>
+</ol>
+<p>A single <code>play_turn(red, green, dice)</code> call drives all of this and returns a structured
+result — the entry point used by the headless LLM/AI play.</p>
+
+<div class="ok">
+<strong>✅ A deliberate adaptation of TIV — not a line-by-line port (correctly so).</strong>
+<p>The original is a Flask/SQLite app where each phase is a web view advanced by clicking through the
+UI. HexCombat keeps the <em>same phase order</em> but rebuilds the engine around Godot autoloads, adds
+a genuine plan-then-resolve order layer, a structured turn result for AI play, and — importantly — a
+seeded dice abstraction so runs are reproducible (the original used unseeded Python randomness). A
+validator (<code>validate_no_global_rng</code>) enforces that no game logic reaches for global
+randomness. These are improvements over the source, by design.</p>
+</div>
+
+<footer>HexCombat systems reference · TaiwanInvasionViewer port-fidelity audit.</footer>
+</body>
+</html>
