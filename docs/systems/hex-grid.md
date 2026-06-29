@@ -67,13 +67,12 @@ Defines the hex-grid coordinate system, geometric computations (distance, neighb
 - **TIV source** is `TaiwanInvasionViewer/src/core/hex_grid.py` — an **offline grid generator** that uses Haversine `get_distance` to compute 10 km side-to-side hex spacing, generates pointy-top vertex geometry, and writes `data/taiwan_hex_grid.json`.
 - **HexCombat does NOT re-implement grid generation.** It consumes a pre-generated snapshot (`data/taiwan_hex_grid.json`) and re-implements only runtime geometry: axial distance (cube formula, not Haversine), neighbor enumeration, and BFS pathfinding — all in `HexMath.gd`.
 - **`MapProjection.gd` has no TIV equivalent.** It is a HexCombat-original render concern (lat/lon → pixel) that does not exist in the Python backend.
-- **🔴 CONFIRMED DISCREPANCY — coordinate system mismatch (see `/DECISIONS.md`).** The grid JSON
-  stores **offset (odd-r, pointy-top)** `row`/`col` (TIV's generator shifts odd rows right by half a
-  hex). TIV's runtime `get_hex_neighbors` (`src/core/hex_grid.py`) uses **parity-dependent odd-r
-  offsets**. HexCombat's `HexMath.neighbor_coords` instead applies **fixed axial directions** to the
-  same `row`/`col` (`GameData` sets `coord = Vector2i(row, col)` with no offset→axial conversion).
-  Empirically (haversine check over the real grid): odd-r neighbors match true geography on
-  **308/308** interior hexes; HexCombat's axial neighbors match on **23/308**. So adjacency is wrong
-  on ~92% of interior hexes, and `distance`/`find_path`/`find_reachable` (built on the same
-  interpretation) diverge from the oracle. Foundational — flagged for the user, not silently changed
-  (the fix re-baselines the golden combat invariant).
+- **✅ FIXED 2026-06-29 — coordinate system now matches TIV (was a confirmed bug; see `/DECISIONS.md`).**
+  The grid JSON stores **offset (odd-r, pointy-top)** `row`/`col` (TIV's generator shifts odd rows
+  right by half a hex), and TIV's runtime `get_hex_neighbors` (`src/core/hex_grid.py`) uses
+  **parity-dependent odd-r offsets**. HexCombat originally applied **fixed axial directions** to the
+  same `row`/`col`, matching true geometry on only **23/308** interior hexes (odd-r: 308/308). Now
+  `HexMath.neighbor_coords` selects an odd-r offset table by `coord.x` (row) parity, and
+  `HexMath.distance` converts odd-r→cube (`x = col - (row - (row&1))/2`, `z = row`, `y = -x-z`) before
+  taking cube distance — matching the TIV oracle. The golden combat invariant was re-baselined as a
+  result (`casualties=2, feba=0.76` → `casualties=3, feba=-0.55`).

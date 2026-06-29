@@ -2,7 +2,7 @@ extends GdUnitTestSuite
 
 const RED_BRIGADE_ID := "PLA-71-2-Amphibious"
 const GREEN_BRIGADE_ID := "BDE-66"
-const COMBAT_HEX := "hex_43_17"
+const COMBAT_HEX := "hex_43_16"
 const EMPTY_HEX := "hex_40_16"
 
 

@@ -19,7 +19,17 @@ Status legend: 🔴 open · 🟡 leaning (recommendation noted) · ✅ resolved 
 
 -->
 
-## Hex grid (Area 1) — HexMath treats offset (odd-r) coords as axial  🟡 (recommend: fix + re-baseline)
+## Hex grid (Area 1) — HexMath treats offset (odd-r) coords as axial  ✅ RESOLVED 2026-06-29 (fixed + re-baselined, user call)
+
+**Resolution:** user chose to fix immediately so the rest of the audit runs against correct
+adjacency. `HexMath.neighbor_coords` → parity-aware odd-r; `HexMath.distance` → offset→cube. Scenario
+beach-1 Green `BDE-66` moved `hex_43_17`→`hex_43_16`; fixtures + LLM example docs updated. Golden
+invariant re-baselined `casualties=2, feba=0.76` → `casualties=3, feba=-0.55` (deterministic; reflects
+correct adjacent-support aggregation). Full gate **ALL PHASES GREEN**. Details: `PLAN.md` → Decisions
+(2026-06-29 hex adjacency). Original finding below for the record.
+
+---
+
 
 **HexCombat:** `data/taiwan_hex_grid.json` stores **offset odd-r** `row`/`col` (the TIV generator
 shifts odd rows right by half a hex). `GameData.load_hex_grid` sets `hex.coord = Vector2i(row, col)`

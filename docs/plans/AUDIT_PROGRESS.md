@@ -30,6 +30,7 @@ fixed (obvious) or flagged in `/DECISIONS.md` (design calls).
 ## Log
 <!-- one line per completed step: area#, step, outcome, commit -->
 - Area 1 — documented (`docs/systems/hex-grid.md` + html) and compared. **Finding:** confirmed
-  coordinate-system bug — `HexMath` treats offset (odd-r) coords as axial; neighbors match geography
-  23/308 vs odd-r 308/308. Flagged in `/DECISIONS.md` (recommend fix + golden re-baseline; not
-  auto-applied due to blast radius).
+  coordinate-system bug — `HexMath` treated offset (odd-r) coords as axial; neighbors matched geography
+  23/308 vs odd-r 308/308. **Resolved (user call): FIXED** — odd-r neighbors + offset→cube distance;
+  scenario beach-1 green + fixtures + LLM docs updated; golden re-baselined to `casualties=3,
+  feba=-0.55`; full gate ALL PHASES GREEN. See `/DECISIONS.md` + `PLAN.md` Decisions (2026-06-29).

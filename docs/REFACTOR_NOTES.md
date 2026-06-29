@@ -116,7 +116,7 @@ in-scope suggestions are applied immediately; the rest are deferred with a one-l
 **(a) What shipped** (orchestrator-verified: full gate green, 5 validators + 6 GdUnit4 tests)
 - `data/scenario_default.json` — authored by the orchestrator: 4 PLA amphibious brigades on beach
   hexes 1-4 (hex_44_16/44_15/43_14/43_13) + 4 ROC brigades on the adjacent inland neighbors
-  (hex_43_17/43_15/42_15/42_14), with `offset_bearing` per brigade. Beach→hex by nearest center;
+  (hex_43_16/43_15/42_15/42_14), with `offset_bearing` per brigade. Beach→hex by nearest center;
   inland neighbor = the real HexMath neighbor whose bearing best matches the beach's advance
   direction. (Caught + fixed an em-dash encoding corruption in the name.)
 - `Brigade.entry_bearing: float` added (entry-side compass bearing for the render offset; data, not
@@ -127,7 +127,7 @@ in-scope suggestions are applied immediately; the rest are deferred with a one-l
 - `tools/validate_scenario_data.gd` — counts, brigade existence + team match vs OOB, hex existence +
   uniqueness, 4 Red / 4 Green, and Green-inland-adjacent-to-Red-beach via `HexMath.neighbor_coords`.
 - `tests/scenario_loader_test.gd` — 8 brigades placed, spot-checks (PLA-71-2→hex_44_16 bearing 315,
-  BDE-66→hex_43_17), meta loaded.
+  BDE-66→hex_43_16), meta loaded.
 
 **(b) pi's machine-readability suggestion**
 - Typed `Scenario`/`ScenarioPlacement` Resources + a pure `ScenarioLoader`/`ScenarioValidator`, with

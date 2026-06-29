@@ -8,8 +8,8 @@ For the implementation plan and schema discipline that make structured observati
 
 1. **Observation**: serialize game state to JSON (`turn`, `phase`, map cells, brigades, legal moves/commits, pending orders, last contested/combat summary fields).
 2. **Action**: agents return a strict JSON command list, not mouse clicks:
-   - `{"type":"move","team":"Red","brigade_id":"PLA-71-2-Amphibious","target_hex":"hex_43_17","mode":"tactical"}`
-   - `{"type":"commit","team":"Green","brigade_id":"BDE-77","target_hex":"hex_43_17"}`
+   - `{"type":"move","team":"Red","brigade_id":"PLA-71-2-Amphibious","target_hex":"hex_43_16","mode":"tactical"}`
+   - `{"type":"commit","team":"Green","brigade_id":"BDE-77","target_hex":"hex_43_16"}`
    - `{"type":"end_turn","seed":1234}`
 3. **Resolver**: apply actions through `LLMGameAPI.gd`, which delegates to `GameState.add_move_order`, `GameState.add_commit_order`, and `GameState.resolve_turn`. The UI and all agents use the same game layer.
 4. **Vision artifact**: render `scenes/Main.tscn` and save a PNG for multimodal LLMs or human review.
@@ -69,7 +69,7 @@ An agent response should be JSON only:
   "schema": "hexcombat.llm_action_response",
   "perspective_team": "Red",
   "actions": [
-    {"type":"move", "team":"Red", "brigade_id":"PLA-71-2-Amphibious", "target_hex":"hex_43_17", "mode":"tactical"},
+    {"type":"move", "team":"Red", "brigade_id":"PLA-71-2-Amphibious", "target_hex":"hex_43_16", "mode":"tactical"},
     {"type":"end_turn", "seed":20260624}
   ],
   "notes": "optional short rationale for logs"

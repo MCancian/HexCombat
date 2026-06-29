@@ -29,7 +29,7 @@
 			"battalions": 4,
 			"destroyed": false,
 			"fought_this_turn": false,
-			"hex_id": "hex_43_17",
+			"hex_id": "hex_43_16",
 			"id": "BDE-66",
 			"moved_admin_this_turn": false,
 			"moved_this_turn": false,
@@ -72,8 +72,10 @@
 		"last_contested_hexes": "Hex IDs that were contested in the most recently resolved turn.",
 		"legal_commits": "Authoritative adjacent support options by target hex and team.",
 		"legal_moves": "Authoritative target hex lists by brigade and movement mode.",
-		"organization": "0-100 readiness value affected by movement and combat."
+		"organization": "0-100 readiness value affected by movement and combat.",
+		"turn_result": "Structured record of the turn just resolved (only populated when resolved=true): turn_number, contested_hexes, combat_summaries, phase summaries, and an ordered `events` log."
 	},
+	"game_over": false,
 	"ijfs": {
 		"antiship_destroyed_by_type": {},
 		"antiship_suppressed_by_type": {},
@@ -114,14 +116,14 @@
 				"BDE-66"
 			],
 			"feba_km": 0.0,
-			"hex_id": "hex_43_17",
+			"hex_id": "hex_43_16",
 			"neighbors": [
-				"hex_43_16",
+				"hex_42_16",
+				"hex_42_17",
+				"hex_43_15",
+				"hex_43_17",
 				"hex_44_16",
-				"hex_44_17",
-				"hex_43_18",
-				"hex_42_18",
-				"hex_42_17"
+				"hex_44_17"
 			],
 			"owner": "green"
 		},
@@ -132,12 +134,12 @@
 			"feba_km": 0.0,
 			"hex_id": "hex_43_15",
 			"neighbors": [
-				"hex_43_14",
-				"hex_44_14",
-				"hex_44_15",
-				"hex_43_16",
+				"hex_42_15",
 				"hex_42_16",
-				"hex_42_15"
+				"hex_43_14",
+				"hex_43_16",
+				"hex_44_15",
+				"hex_44_16"
 			],
 			"owner": "green"
 		},
@@ -148,12 +150,12 @@
 			"feba_km": 0.0,
 			"hex_id": "hex_42_15",
 			"neighbors": [
+				"hex_41_14",
+				"hex_41_15",
 				"hex_42_14",
-				"hex_43_14",
-				"hex_43_15",
 				"hex_42_16",
-				"hex_41_16",
-				"hex_41_15"
+				"hex_43_14",
+				"hex_43_15"
 			],
 			"owner": "green"
 		},
@@ -164,12 +166,12 @@
 			"feba_km": 0.0,
 			"hex_id": "hex_42_14",
 			"neighbors": [
+				"hex_41_13",
+				"hex_41_14",
 				"hex_42_13",
-				"hex_43_13",
-				"hex_43_14",
 				"hex_42_15",
-				"hex_41_15",
-				"hex_41_14"
+				"hex_43_13",
+				"hex_43_14"
 			],
 			"owner": "green"
 		}
@@ -229,5 +231,6 @@
 		"day_count": 0
 	},
 	"turn": 1,
-	"turn_length_days": 1
+	"turn_length_days": 1,
+	"winner": ""
 }

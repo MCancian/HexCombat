@@ -4,15 +4,15 @@
 # Validates D2-C: GameState.resolve_cleanup_phase resets per-turn anti-ship flags and that the result
 # is deterministic. Also validates that the existing resolve_turn golden invariant (byte-stable
 # ground-combat output under seed 20260624) is preserved — cleanup runs after combat and consumes no
-# RNG, so casualties=2, feba=0.76 must be unchanged.
+# RNG, so casualties=3, feba=-0.55 must be unchanged.
 extends SceneTree
 
 const SEED := 20260624
 const RED_MOVER_ID := "PLA-71-2-Amphibious"
 const GREEN_DEFENDER_ID := "BDE-66"
 const START_HEX := "hex_44_16"
-const TARGET_HEX := "hex_43_17"
-const EXPECTED_COMBAT_FINGERPRINT := "casualties=2, feba=0.76"
+const TARGET_HEX := "hex_43_16"
+const EXPECTED_COMBAT_FINGERPRINT := "casualties=3, feba=-0.55"
 
 var _failures: Array[String] = []
 var GameData: Node = null
@@ -106,7 +106,7 @@ func _validate_cleanup_produces_summary() -> void:
 
 
 # Golden invariant: run the same scripted turn as validate_headless_turn.gd with seed 20260624;
-# must still yield casualties=2, feba=0.76 — cleanup runs after combat, consumes no RNG, so
+# must still yield casualties=3, feba=-0.55 — cleanup runs after combat, consumes no RNG, so
 # ground-combat output is byte-stable.
 func _validate_turn_golden_invariant_preserved() -> void:
 	GameState.reset_to_scenario()

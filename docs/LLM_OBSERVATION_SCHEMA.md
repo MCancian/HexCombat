@@ -108,8 +108,8 @@ Object keyed by brigade ID. Each value has exact movement-mode keys:
   "PLA-71-2-Amphibious": {
     "team": "Red",
     "from_hex": "hex_44_16",
-    "tactical": ["hex_44_16", "hex_43_17"],
-    "administrative": ["hex_44_16", "hex_43_17", "hex_42_17"]
+    "tactical": ["hex_44_16", "hex_43_16"],
+    "administrative": ["hex_44_16", "hex_43_16", "hex_42_17"]
   }
 }
 ```
@@ -122,7 +122,7 @@ Object keyed by target hex, then by team:
 
 ```json
 {
-  "hex_43_17": {
+  "hex_43_16": {
     "Green": ["BDE-77"]
   }
 }
@@ -143,7 +143,7 @@ Top-level object passed to `LLMGameAPI.apply_agent_response(response)`:
 ### `move` action
 
 ```json
-{"type": "move", "team": "Red", "brigade_id": "PLA-71-2-Amphibious", "target_hex": "hex_43_17", "mode": "tactical"}
+{"type": "move", "team": "Red", "brigade_id": "PLA-71-2-Amphibious", "target_hex": "hex_43_16", "mode": "tactical"}
 ```
 
 - `mode` must be `tactical` or `administrative`.
@@ -152,7 +152,7 @@ Top-level object passed to `LLMGameAPI.apply_agent_response(response)`:
 ### `commit` action
 
 ```json
-{"type": "commit", "team": "Green", "brigade_id": "BDE-77", "target_hex": "hex_43_17"}
+{"type": "commit", "team": "Green", "brigade_id": "BDE-77", "target_hex": "hex_43_16"}
 ```
 
 - `brigade_id` must be listed under `legal_commits[target_hex][team]`.

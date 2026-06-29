@@ -17,7 +17,7 @@ func _initialize() -> void:
 		"schema": LLMGameAPI.ACTION_RESPONSE_SCHEMA,
 		"perspective_team": "Red",
 		"actions": [
-			{"type": "move", "team": "Red", "brigade_id": "PLA-71-2-Amphibious", "target_hex": "hex_43_17", "mode": Movement.MODE_TACTICAL},
+			{"type": "move", "team": "Red", "brigade_id": "PLA-71-2-Amphibious", "target_hex": "hex_43_16", "mode": Movement.MODE_TACTICAL},
 			{"type": "end_turn", "seed": 20260624}
 		]
 	}

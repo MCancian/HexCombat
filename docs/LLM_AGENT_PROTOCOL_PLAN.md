@@ -77,7 +77,7 @@ Every agent action response should include:
   "schema": "hexcombat.llm_action_response",
   "perspective_team": "Red",
   "actions": [
-    {"type": "move", "team": "Red", "brigade_id": "PLA-71-2-Amphibious", "target_hex": "hex_43_17", "mode": "tactical"},
+    {"type": "move", "team": "Red", "brigade_id": "PLA-71-2-Amphibious", "target_hex": "hex_43_16", "mode": "tactical"},
     {"type": "end_turn", "seed": 20260624}
   ],
   "notes": "short rationale for logs"

@@ -800,3 +800,25 @@ was too sensitive for the free-model implementer):**
 - Census OOB over-count → **act later**: count present/surviving battalions; logged in
   `docs/plans/refactor_audit.md`. Cross-ref `PLAN.md 2026-06-29 — Victory conditions`.
 - Main-island land-hex data → **blocked on terrain phase**: `taiwan_hexes` knob is the hook; documented.
+
+---
+
+## 2026-06-29 — Port audit Area 1: hex-grid coordinate bug   (orchestrator + opencode deepseek-v4-flash-free for the doc)
+
+**What would you do differently:**
+- The opencode doc agent flagged a plausible-sounding "open question" about distance consistency, but
+  the actual bug (odd-r coords read as axial) was only nailed by an **empirical** check — converting
+  the real grid to geography and counting neighbor matches (23/308 vs 308/308). Lesson: for port
+  fidelity, *measure against the source's behavior*, don't reason from code shape alone.
+- The bug had propagated into hand-authored scenario data and ~10 test fixtures (the
+  `hex_44_16`/`hex_43_17` pair), which all encoded the wrong adjacency. Re-baselining meant chasing
+  every fixture keyed to that pair. Lesson: a single foundational geometry bug fans out widely;
+  fix-and-re-baseline is cheaper the earlier it's caught.
+
+**Orchestrator triage:**
+- Empirical-verification habit → act now (done) — kept a haversine check script approach; will reuse
+  for later geometry/data-derived areas.
+- Coordinate convention is now documented in `HexMath.gd` + `docs/systems/hex-grid.md` so the next
+  agent won't reintroduce axial assumptions → record only.
+- Most fixtures cluster on one scenario pair; consider a shared test-fixture constant for the
+  golden beach-1 pair instead of duplicating literals across ~10 files → act later (refactor backlog).

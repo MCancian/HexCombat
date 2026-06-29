@@ -1,27 +1,53 @@
 extends RefCounted
 class_name HexMath
 
-const AXIAL_DIRECTIONS: Array[Vector2i] = [
+# Coordinates are stored as OFFSET (odd-r, pointy-top): coord = Vector2i(row, col), where odd rows
+# are shifted right by half a hex (see data/taiwan_hex_grid.json generation). Neighbor offsets are
+# therefore row-parity dependent, matching TIV's src/core/hex_grid.py get_hex_neighbors. Distance is
+# computed by converting odd-r -> cube and taking the cube distance. (Empirically validated: odd-r
+# neighbors match true great-circle geometry on 308/308 interior hexes; the prior axial scheme
+# matched only 23/308.)
+const ODDR_NEIGHBORS_EVEN: Array[Vector2i] = [
+	Vector2i(-1, -1),
+	Vector2i(-1, 0),
 	Vector2i(0, -1),
-	Vector2i(1, -1),
-	Vector2i(1, 0),
 	Vector2i(0, 1),
+	Vector2i(1, -1),
+	Vector2i(1, 0)
+]
+const ODDR_NEIGHBORS_ODD: Array[Vector2i] = [
+	Vector2i(-1, 0),
 	Vector2i(-1, 1),
-	Vector2i(-1, 0)
+	Vector2i(0, -1),
+	Vector2i(0, 1),
+	Vector2i(1, 0),
+	Vector2i(1, 1)
 ]
 
 
 static func neighbor_coords(coord: Vector2i) -> Array[Vector2i]:
+	# coord.x = row, coord.y = col. Pick the offset table by row parity (odd-r layout).
+	var offsets := ODDR_NEIGHBORS_ODD if (coord.x & 1) == 1 else ODDR_NEIGHBORS_EVEN
 	var neighbors: Array[Vector2i] = []
-	for direction in AXIAL_DIRECTIONS:
-		neighbors.append(coord + direction)
+	for offset in offsets:
+		neighbors.append(coord + offset)
 	return neighbors
 
 
+# Convert an odd-r offset coord (Vector2i(row, col)) to cube coords.
+static func _offset_to_cube(coord: Vector2i) -> Vector3i:
+	var row := coord.x
+	var col := coord.y
+	var x := col - (row - (row & 1)) / 2  # (row - (row & 1)) is always even -> exact
+	var z := row
+	var y := -x - z
+	return Vector3i(x, y, z)
+
+
 static func distance(a: Vector2i, b: Vector2i) -> int:
-	var dq := a.x - b.x
-	var dr := a.y - b.y
-	return int((abs(dq) + abs(dq + dr) + abs(dr)) / 2)
+	var ac := _offset_to_cube(a)
+	var bc := _offset_to_cube(b)
+	return int((abs(ac.x - bc.x) + abs(ac.y - bc.y) + abs(ac.z - bc.z)) / 2)
 
 
 static func find_path(start_id: String, goal_id: String, get_neighbors: Callable, blocked: Array = []) -> Array:

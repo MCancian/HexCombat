@@ -7,7 +7,7 @@
       "type": "move",
       "team": "Red",
       "brigade_id": "PLA-71-2-Amphibious",
-      "target_hex": "hex_43_17",
+      "target_hex": "hex_43_16",
       "mode": "tactical"
     },
     {

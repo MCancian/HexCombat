@@ -130,6 +130,20 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-29 — Hex adjacency coordinate-system bug fixed + golden re-baseline (port audit, Area 1).**
+  The TIV port audit found `HexMath` treated the grid's stored **offset (odd-r)** `row`/`col` as
+  **axial** coordinates. Empirically, the prior axial neighbors matched true great-circle geometry on
+  only **23/308** interior hexes vs **308/308** for odd-r (the TIV `get_hex_neighbors` scheme). Fixed
+  `HexMath.neighbor_coords` to parity-aware odd-r offsets and `HexMath.distance` to offset→cube. **User
+  call:** fix now (not defer) so the rest of the audit runs against correct adjacency, accepting the
+  golden re-baseline. **Re-baseline:** the scripted golden turn now resolves to `casualties=3,
+  feba=-0.55` (was `casualties=2, feba=0.76`) — the corrected adjacency aggregates the right adjacent
+  supporting brigade (`BDE-77` now correctly commits to `hex_43_16`). Scenario beach-1 Green defender
+  `BDE-66` moved `hex_43_17`→`hex_43_16` (a *real* odd-r neighbor of beach hex `hex_44_16`); the other
+  three beach pairs were already valid odd-r neighbors. Updated the pinned fingerprint
+  (`validate_cleanup.gd`), `STATUS.md`, all fixtures keyed to the old pair, and the LLM example docs.
+  Full evidence + the original flag: `DECISIONS.md`; system doc: `docs/systems/hex-grid.md`.
+
 - **2026-06-29 — Victory conditions implemented (Track 3a) + end-to-end golden test (Track 3b).** Built
   the end-of-cleanup win/loss census per the settled design (China loses if 0 PLA battalions on Taiwan
   when the loss check is armed; China wins if PLA battalions > ROC battalions). Pure checker
@@ -900,7 +914,10 @@ caveat is resolved.
   maneuver brigade. Scenario placement overrides each brigade's OOB garrison location (a contrived
   starter beachhead). **Red:** PLA-71-2 / 72-5 / 73-14 / 74-1 Amphibious (one per group army).
   `offset_bearing`: Red = seaward (advance+180), Green = bearing toward its beach hex. Not a blocking
-  question — resolved in-spirit of the settled design.
+  question — resolved in-spirit of the settled design. _[corrected 2026-06-29: hex_43_17 was NOT
+  actually a HexMath neighbor of beach hex hex_44_16 — that "adjacency" relied on the odd-r/axial
+  coordinate bug since fixed; beach-1 Green is now hex_43_16. See the 2026-06-29 hex-adjacency entry
+  above.]_
 - **2026-06-24 — M5 combat wiring sub-decisions (derived from settled design; not blocking):**
   (1) **Attacker/defender roles:** at a contested hex Red = attacker, Green = defender (the
   amphibious-grind framing; defender takes the terrain modifier, =1.0 for the slice). (2)

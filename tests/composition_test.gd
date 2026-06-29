@@ -77,7 +77,7 @@ func test_eligible_commit_brigades_filters_by_adjacency_position_admin_and_order
 	_register_brigade(far)
 	_register_brigade(admin)
 	_register_brigade(moved)
-	GameState.add_move_order(Brigade.Team.RED, moved.id, "hex_40_15", Movement.MODE_TACTICAL)
+	GameState.add_move_order(Brigade.Team.RED, moved.id, "hex_39_15", Movement.MODE_TACTICAL)
 
 	var options := GameState.eligible_commit_brigades(Brigade.Team.RED, TARGET_HEX)
 

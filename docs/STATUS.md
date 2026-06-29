@@ -38,7 +38,8 @@ offload → movement & commit → ground combat → front-line → cleanup (+ vi
 
 **Phases / subsystems implemented:**
 - **Ground combat** (BOOTS slice M0–M7): movement, commit, combat resolution, FEBA, casualties,
-  retreat, hex ownership. Golden invariant: seed 20260624 → `casualties=2, feba=0.76` (byte-stable gate).
+  retreat, hex ownership. Golden invariant: seed 20260624 → `casualties=3, feba=-0.55` (byte-stable gate; re-baselined when
+the hex-adjacency coordinate bug was fixed — see `PLAN.md` → Decisions).
 - **D1 Amphibious offload** — ship reserve → beach landing; lands brigades onto beach hexes.
 - **D2 Red DOS supply** — supply pool / effectiveness tracking.
 - **D3 Anti-ship & mine warfare** — IJFS-fed firing plan → crossing damage (count-based) → **geometric

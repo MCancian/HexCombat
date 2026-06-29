@@ -5,7 +5,7 @@ extends SceneTree
 const RED_MOVER_ID := "PLA-71-2-Amphibious"
 const GREEN_DEFENDER_ID := "BDE-66"
 const START_HEX := "hex_44_16"
-const TARGET_HEX := "hex_43_17"
+const TARGET_HEX := "hex_43_16"
 const DICE_SEED := 20260624
 const PHASE_PLANNING := 0
 const PHASE_END := 2

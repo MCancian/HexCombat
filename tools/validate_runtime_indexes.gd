@@ -4,7 +4,7 @@ extends SceneTree
 
 const DICE_SEED := 20260624
 const RED_MOVER_ID := "PLA-71-2-Amphibious"
-const TARGET_HEX := "hex_43_17"
+const TARGET_HEX := "hex_43_16"
 
 var _failures: Array[String] = []
 var GameData: Node = null
