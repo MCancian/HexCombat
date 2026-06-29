@@ -3,6 +3,10 @@
 Canonical rules for **every** agent working in this repo (Claude, the opencode implementer, and any other).
 Read this first. Claude-specific orchestration material lives in `CLAUDE.md`.
 
+> **Orient fast:** **`docs/STATUS.md`** = what works today + how the docs are organized and the tracking
+> rules; **`docs/plans/BACKLOG.md`** = the forward plan. Update STATUS.md (no dates) when you finish a
+> feature.
+
 ## Project
 
 Godot 4.7 / GDScript hex-grid wargame, ported from the **BOOTS** (Boots On The Ground)

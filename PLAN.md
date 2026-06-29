@@ -1,5 +1,9 @@
 # PLAN.md — Active Work
 
+> **Orientation:** for *what works today* read **`docs/STATUS.md`** (the single current-state doc);
+> for *forward work* read **`docs/plans/BACKLOG.md`**. This file is the **Decisions log** (append-only
+> *why* record) + Open Questions; the milestone task lists below are largely historical.
+
 The orchestrator works this file top-down each loop iteration. See `ROADMAP.md` for the long
 view and `AGENTS.md` for the rules. Status: `[ ]` todo · `[~]` in progress · `[x]` done ·
 `[!]` blocked (see Open Questions).

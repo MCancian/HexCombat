@@ -24,7 +24,14 @@ Rationale (user call): the two audits are read-only and surface findings that th
 
 ---
 
-## Track 1 — Documentation restructure (agent readability)
+## Track 1 — Documentation restructure (agent readability)  *(first pass DONE 2026-06-29)*
+
+**Done (conservative, additive pass):** `docs/STATUS.md` is now the single dateless current-state entry
+point and states the doc-organization + tracking rules; `AGENTS.md`, `PLAN.md`, and
+`ORCHESTRATOR_HANDOFF.md` point to it; forward work lives in `docs/plans/`. **Remaining (deferred — do
+with the user / attention):** the *destructive* prune — collapsing the long `ORCHESTRATOR_HANDOFF.md`
+session log and the historical milestone task-lists in `PLAN.md` into STATUS + the Decisions log. Left
+undone unattended to avoid churning docs the user reads.
 
 **Goal:** make the docs efficient for *new agents*, not historians. The current planning docs
 (`ORCHESTRATOR_HANDOFF.md`, `PLAN.md`) mix completed history, live state, and future intent with heavy

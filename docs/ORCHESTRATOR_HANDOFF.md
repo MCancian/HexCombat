@@ -1,5 +1,9 @@
 # Orchestrator Handoff — continue the TIV port via opencode subagents
 
+> **Start here now:** **`docs/STATUS.md`** = what works today; **`docs/plans/BACKLOG.md`** = the active
+> forward plan (audit-first tracks). The long session log in *this* file is **history** — kept for
+> context, not the current plan. (Pending cleanup pass: prune this file into STATUS + plans.)
+
 **Audience:** the next Claude orchestrator session. Read `AGENTS.md` → `CLAUDE.md` → `ROADMAP.md`
 → `PLAN.md` first; this doc is the *active build plan* for finishing the TaiwanInvasionViewer
 (TIV) port, the **opencode** implementer workflow, and the **per-sub-task retrospective loop** the

@@ -1,0 +1,68 @@
+# HexCombat — Current State
+
+**The single orientation doc.** Read this first to know what works today and where it lives. Present
+tense, no dates (dates live only in the append-only history logs). For *future* work see
+`docs/plans/BACKLOG.md`; for *why* a choice was made see `PLAN.md` → Decisions; for *lessons* see
+`docs/RETROSPECTIVES.md`.
+
+## How the docs are organized (and the tracking rules)
+
+| Doc | Holds | Tense / dates |
+|---|---|---|
+| **`docs/STATUS.md`** (this) | What is implemented today + where | present tense, **no dates** |
+| **`docs/plans/`** | Forward work: `BACKLOG.md` (tracks), `port_audit.md`, `refactor_audit.md` | future intent |
+| **`PLAN.md` → Decisions** | Append-only log of *why* (one dated entry per choice) | history — dates OK |
+| **`docs/RETROSPECTIVES.md`** | Append-only per-task lessons + triage | history — dates OK |
+| **`ROADMAP.md`** | Milestone map + TIV oracle file/line refs | reference |
+| **`AGENTS.md` / `CLAUDE.md`** | Rules for agents / the orchestrator workflow | reference |
+
+**Tracking rules for agents:**
+1. When you **finish** a feature, update **this file** (present tense, no date) and check the item off
+   in `docs/plans/BACKLOG.md`. Record the *why* in `PLAN.md` → Decisions (dated) and *lessons* in
+   `RETROSPECTIVES.md` (dated).
+2. When you **plan** new work, add it to `docs/plans/` — never to STATUS.md.
+3. **Don't date implemented-state text.** Once something works, describe the behavior, not when it
+   landed. Dates belong only in the two append-only logs above.
+4. One source of truth for "what works": this file. If another doc disagrees, this file wins (and fix
+   the other doc).
+
+## What works today
+
+**Engine.** Godot 4 / GDScript. WeGo turn model in `GameState` (autoload): plan orders →
+`resolve_turn(dice)` → `begin_next_turn`. Deterministic via an injectable `Dice` (seeded; no global
+RNG — enforced by a validator). `GameData` (autoload) loads hexes, both OOBs (PLA + ROC brigades),
+ships, theaters, beaches. `EventBus` for signals.
+
+**Turn resolution order** (`resolve_turn`): IJFS air/missile fires → anti-ship crossing → amphibious
+offload → movement & commit → ground combat → front-line → cleanup (+ victory census).
+
+**Phases / subsystems implemented:**
+- **Ground combat** (BOOTS slice M0–M7): movement, commit, combat resolution, FEBA, casualties,
+  retreat, hex ownership. Golden invariant: seed 20260624 → `casualties=2, feba=0.76` (byte-stable gate).
+- **D1 Amphibious offload** — ship reserve → beach landing; lands brigades onto beach hexes.
+- **D2 Red DOS supply** — supply pool / effectiveness tracking.
+- **D3 Anti-ship & mine warfare** — IJFS-fed firing plan → crossing damage (count-based) → **geometric
+  mine model** (randomized approach path, dangerous-mine count within `danger_radius`, decoy-sponge
+  transit; knobs in `data/antiship/minefields.json`). Ship losses → BNs lost at sea.
+- **D4 IJFS** (joint/air-missile fires) — detection → targeting → strike → suppression, with a
+  multi-day pre-invasion warmup (exquisite intel) on the first turn. Per-(TO,type) writeback feeds D3.
+- **D5 Front-line / cleanup** — `FrontLineService` (polyline → hex redistribution), cleanup phase.
+- **Victory conditions** — end-of-cleanup census of PLA vs ROC battalions on Taiwan; `game_over` /
+  `winner` on `GameState`/`TurnResult`/LLM observation. Config: scenario `victory` block.
+- **AI-readiness (Track E)** — `GameState.play_turn(red, green, dice) -> TurnResult`, per-turn event
+  log, `LLMGameAPI` observation/action contract (JSON-schema-gated), headless self-play harness.
+
+**Verification.** `pwsh tools/run_all_tests.ps1` is the canonical gate: import → headless smoke →
+`tools/validate_*.gd` (golden turn, anti-ship, IJFS, victory e2e, data validators, no-global-RNG) →
+GdUnit4 suites under `tests/`. Must end **ALL PHASES GREEN**.
+
+## What is NOT done (see `docs/plans/`)
+
+- **Graphics** (Track 5): anti-ship/mine visualization, front-line draw UI (D5-D), unit/HUD polish,
+  map/terrain polish. Needs visual verification (not headless-gateable).
+- **Terrain / land classification** — the hex grid is geometry-only; a later ArcGIS-sourced phase.
+  (Blocks the precise "main-island land hex" victory census; `taiwan_hexes` config is the hook.)
+- **Deferred ports** — anti-ship missile pipeline depth (strike-coverage lever), ground-casualty
+  IJFS↔OOB linkage, per-hull escort magazines. See `docs/plans/port_audit.md`.
+- **Refactors** — see `docs/plans/refactor_audit.md` (e.g. victory census should count *present*, not
+  OOB, battalions; typed `WarmupContext`/`HexState`).
