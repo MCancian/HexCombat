@@ -50,6 +50,9 @@ when the hex-adjacency coordinate bug was fixed, and when `feba_base_km` was set
   transit; knobs in `data/antiship/minefields.json`). Ship losses → BNs lost at sea.
 - **D4 IJFS** (joint/air-missile fires) — detection → targeting → strike → suppression, with a
   multi-day pre-invasion warmup (exquisite intel) on the first turn. Per-(TO,type) writeback feeds D3.
+  **IJFS now also attrits ground forces:** Green/ROC maneuver battalions are IJFS targets
+  (`build_maneuver_targets`); destroyed ones are removed from the OOB before ground combat
+  (`_apply_ijfs_maneuver_casualties`) — the D4-H ground-casualty linkage.
 - **D5 Front-line / cleanup** — `FrontLineService` (polyline → hex redistribution), cleanup phase.
 - **Victory conditions** — end-of-cleanup census of PLA vs ROC battalions on Taiwan; `game_over` /
   `winner` on `GameState`/`TurnResult`/LLM observation. Config: scenario `victory` block.

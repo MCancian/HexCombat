@@ -192,7 +192,12 @@ whole count from the firing plan.
 
 ### Open Questions
 
-1. **Maneuver-casualties writeback is the OPEN half** (orchestrator-confirmed 2026-06-29). Two gaps:
+1. **✅ Maneuver-casualties linkage CLOSED 2026-06-29 (overnight 2b–2d).** Green/ROC maneuver battalions
+   are now generated as IJFS targets (`IjfsLoaders.build_maneuver_targets`, wired in
+   `_rebuild_ijfs_state`), struck, written back (`maneuver_casualties` populates), and **consumed**
+   (`GameState._apply_ijfs_maneuver_casualties` removes struck battalions from the OOB before ground
+   combat). Tests: `ijfs_maneuver_targets_test.gd`, `ijfs_maneuver_consume_test.gd`. The 2c-ii
+   detection/lethality bias is the remaining refinement. _Historical (now resolved) description:_
    (a) **No ID bridge** — `maneuver_casualties` is accumulated in `_compute_ijfs_writeback`
    (`GameState.gd:547–563`, a faithful port of `ijfs_maneuver_writeback_service`), but at runtime it is
    **empty** because IJFS maneuver targets carry no `battalion_id`/`brigade_id` matching the PLA/ROC OOB.

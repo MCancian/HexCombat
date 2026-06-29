@@ -174,6 +174,9 @@ func resolve_turn(dice: Dice = null) -> void:
 	# then offload lands only the survivors. Each draws from its own INDEPENDENT substream (never the
 	# combat dice), so the ground-combat golden invariant stays byte-stable.
 	resolve_ijfs_turn(dice)
+	# D4-H (2d): IJFS maneuver kills reduce the ground OOB before combat. Deterministic (reads the
+	# writeback the warmup just produced; no dice), so the combat golden stays reproducible.
+	_apply_ijfs_maneuver_casualties()
 	resolve_antiship_turn(dice)
 	resolve_offload_turn(dice)
 
@@ -525,6 +528,36 @@ func _rebuild_ijfs_state() -> void:
 ## linkage consume. D3-D (1-A) closed the anti-ship side: targets are generated per-(TO,type) from
 ## antiship_systems, so anti-ship writeback is keyed by encode_key("<to>:<type>"). Maneuver casualties
 ## still depend on per-battalion target metadata (see PLAN.md Open Question, D4-H maneuver linkage).
+## Consume IJFS maneuver casualties: remove each struck Green/ROC battalion from the OOB before ground
+## combat. Each casualty (battalion_id/brigade_id/unit_type from _compute_ijfs_writeback) decrements one
+## qty of the matching battalion type in that brigade's composition (capped at 0). A brigade whose
+## composition is fully depleted is marked destroyed so it no longer fights or holds a hex.
+## NOTE: ijfs_state (and its maneuver targets) is built once per scenario, so across many turns a
+## removed battalion can still appear as a target; the qty cap keeps this safe (never negative). v1.
+func _apply_ijfs_maneuver_casualties() -> void:
+	var casualties: Array = last_ijfs_writeback.get("maneuver_casualties", [])
+	for casualty_value in casualties:
+		var casualty: Dictionary = casualty_value
+		var brigade_id := String(casualty.get("brigade_id", ""))
+		var unit_type := String(casualty.get("unit_type", ""))
+		if brigade_id == "" or unit_type == "":
+			continue
+		var brigade: Brigade = GameData.get_brigade(brigade_id)
+		if brigade == null:
+			continue
+		for battalion in brigade.composition:
+			if battalion.type == unit_type and battalion.qty > 0:
+				battalion.qty -= 1
+				break
+		var any_left := false
+		for battalion in brigade.composition:
+			if battalion.qty > 0:
+				any_left = true
+				break
+		if not any_left:
+			brigade.destroyed = true
+
+
 func _compute_ijfs_writeback(ledgers: Dictionary) -> Dictionary:
 	var strike_log: Array = ledgers["strike_log"]
 	var engagement_log: Array = ledgers["engagement_log"]

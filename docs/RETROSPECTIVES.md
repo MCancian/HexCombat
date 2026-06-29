@@ -859,3 +859,22 @@ was too sensitive for the free-model implementer):**
 - Dictionary.get-null gotcha → record only (fixed; pattern noted for future JSON loaders).
 - Gate flakiness reconfirmed: an unrelated `is_push_error` test flaked once under load, passed in
   isolation + on retry — the retry policy held.
+
+---
+
+## 2026-06-29 — Overnight loop 2d: consume IJFS maneuver casualties (D4-H linkage CLOSED)   (orchestrator)
+
+**What would you do differently:**
+- Expected 2d to re-baseline the golden; it didn't — the struck units (BDE-269, northern) aren't the
+  golden combatants (BDE-66/BDE-77, southern beach), so the ground-combat fingerprint is legitimately
+  unchanged. `validate_cleanup` (ground losses only) stayed at casualties=3; `validate_headless_turn`'s
+  broader battalion-delta went 3→6 (it now also sees IJFS removals) but pins no exact value. Lesson:
+  before assuming a re-baseline, check WHICH units a change touches — a feature can be live without
+  perturbing a localized golden.
+- Splitting 2c into 2c-i (wire) and pure-2b generation paid off: each step's golden impact was isolated
+  and attributable.
+
+**Orchestrator triage:**
+- Limitation (ijfs_state built once/scenario → removed battalions can re-appear as targets across turns;
+  qty cap makes it safe) → act later: rebuild maneuver targets per turn from the live OOB (future refine).
+- 2c-ii detection/lethality bias remains; lower value than the now-working core linkage.

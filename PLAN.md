@@ -130,6 +130,20 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-29 — IJFS→ground maneuver-casualty linkage CLOSED (overnight loop 2b–2d).** The open D4-H
+  half is done: `IjfsLoaders.build_maneuver_targets` generates per-battalion-instance "Maneuver Units"
+  IJFS targets from the ROC OOB (`{brigade_id}-MU-{n}` + `MANEUVER_TYPE_MAP` profile; port of TIV
+  `default_targets.build_maneuver_targets`); `_rebuild_ijfs_state` adds them so they're struck;
+  `_compute_ijfs_writeback` populates `maneuver_casualties`; `_apply_ijfs_maneuver_casualties` (after
+  IJFS, before combat) decrements struck battalions' qty (capped at 0; brigade destroyed when depleted).
+  Deterministic (no dice). **Golden unchanged** — the struck units (BDE-269) aren't the golden
+  BDE-66/BDE-77 combatants. **Judgment calls (max-autonomy):** per-battalion-INSTANCE granularity (HexCombat
+  settled design, finer than TIV's per-row); qty-decrement-by-(brigade,type) since the OOB stores
+  `{type, qty}` not instance ids; consume right after IJFS. **Limitation:** `ijfs_state` is built once
+  per scenario, so across many turns a removed battalion can re-appear as a target — the qty cap keeps
+  it safe (never negative); rebuilding maneuver targets per turn is a future refinement. The 2c-ii
+  detection/lethality bias (mobility/posture/hardness) is the remaining refinement.
+
 - **2026-06-29 — Supply→combat effectiveness mapping (overnight loop item 1; max-autonomy call).** TIV
   stores per-brigade `effectiveness` (`_inject_supply_effectiveness` ← `SupplyRepo`); HexCombat has a
   single Red DOS **pool** (`supply_state.current_dos_tons`). Chosen mapping: inject at the combat call

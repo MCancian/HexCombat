@@ -64,8 +64,12 @@ just implement small/contained sub-tasks directly (faster than fighting the weak
     UNCHANGED (IJFS strikes maneuver units with leftover budget; anti-ship suppression unperturbed).
   - [ ] **2c-ii.** Detection/lethality bias: `mobility_multiplier` (less-mobile → more detectable),
     `posture="active"` for recently-active units (2a flags), `hardness` (less-armored die more readily).
-  - [ ] **2d.** Consume `maneuver_casualties`: remove struck battalions from the OOB before ground
-    combat. Keep golden byte-stable (IJFS substream). Suppression reporting-only at first.
+  - [x] **2d.** ✅ DONE 2026-06-29 — `GameState._apply_ijfs_maneuver_casualties()` (called after IJFS,
+    before combat) decrements struck battalions' qty by `battalion_id`/`brigade_id`/`unit_type` (capped
+    at 0; brigade marked destroyed when depleted). `ijfs_maneuver_consume_test.gd`. Golden UNCHANGED
+    (struck units are BDE-269, not the golden BDE-66/BDE-77 combatants). **Closes the IJFS→ground
+    linkage (port_audit ADAPT).** Limitation: ijfs_state built once/scenario so a removed battalion can
+    re-appear as a target across many turns — qty cap keeps it safe (v1).
   Original item below: (`port_audit.md` "Ground-casualty IJFS↔OOB linkage".)
   Two halves: (a) **ID bridge** — ensure IJFS maneuver targets carry an OOB-matching `battalion_id`/
   `brigade_id` so `GameState._compute_ijfs_writeback` (`GameState.gd:547`) produces non-empty
