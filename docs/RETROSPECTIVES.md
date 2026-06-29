@@ -739,3 +739,36 @@ golden 20260624 → casualties=2, feba=0.76 byte-stable).
   `PLAN.md 2026-06-28 — D3-D wire warmup`.
 - Vestigial `PRE_INVASION_IJFS_DAYS` const (now only a fallback) → **record only**: harmless; leave as
   the missing-config fallback rather than churn it.
+
+## 2026-06-29 — mine-geometry: geometric danger model + decoy-sponge transit   (implementer: direct)
+
+**What I'd do differently / what surprised me (orchestrator, implemented directly — the geometry/RNG
+was too sensitive for the free-model implementer):**
+- **Measure before building was the win.** A throwaway 2-D sweep (`tools/sweep_antiship_crossing.gd`)
+  falsified the planned strike-bonus path (whole band ~54%→~41%; mine floor ~22%) *before* any code,
+  which is what redirected the work to mines. Keep leading calibration tasks with a measurement harness.
+- **The biggest surprise was the unit bug in my own first harness:** I divided BNs-lost by SHIP hulls
+  (`sent_by_type`, 148) instead of the BN wave (`ship_reserve`, 36) — off by ~4×. Caught it because the
+  baseline didn't reproduce the committed 50%. Lesson: always reproduce a known reference number before
+  trusting a new measurement instrument.
+- **Emergent coupling I didn't expect:** the decoy-sponge made the IJFS intel lever matter *again*
+  (killing launchers → more screen survives the crossing → more sponges at the minefield → fewer amphibs
+  mined). The mine and missile subsystems are now coupled through the shared surviving fleet pool.
+- **Fragility / tech debt:** (1) neutralization likelihood is a per-CATEGORY table, but the source data
+  shows it varies *within* a category (LHD/LPD "Low" vs LST "High" though both Military_Amphibious) — a
+  per-ship-type field on `ShipDef` would be more faithful and is the obvious refinement if mines need
+  finer tuning. (2) The decoy-continue inner loop is unbounded by design (bounded only by
+  `remaining_dangerous`); fine because dangerous counts are small, but worth a guard if geometry is ever
+  cranked. (3) Geometry draws 2·num_mines randf per beach (200 at default) purely to count — cheap, but
+  positions are discarded, so a closed-form expected-count could replace the loop if perf ever matters.
+
+**Orchestrator triage:**
+- Verified independently: 13/13 mine unit cases, `validate_headless_antiship` PASS (determinism +
+  reconciliation), golden `casualties=2/feba=0.76` byte-stable, full gate green (30 suites). Diff scoped
+  to the mine subsystem + data + the PLAN/ref docs; no stray files, no `.mcp.json`. → **acted now**
+  (committing).
+- Per-ship-type neutralization likelihood → **act later**: queue as a refinement (`ShipDef` field) if the
+  user wants finer mine tuning; the category table is a sufficient, tunable default now. Cross-ref
+  `PLAN.md 2026-06-29 — Mine warfare`.
+- Final dial-in toward exactly ~25% → **surface to user**: the model is green at ~32% baseline mean; which
+  knob (mine geometry/decoy mix vs the now-working intel lever) and the exact target is a design call.

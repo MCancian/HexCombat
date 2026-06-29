@@ -683,8 +683,10 @@ func resolve_antiship_turn(dice: Dice) -> Dictionary:
 		fleet_pool[t] = maxi(0, int(fleet_pool.get(t, 0)) - int(crossing_destroyed[t]))
 	var minefields := AntishipLoaders.load_minefields(ANTISHIP_MINEFIELDS_PATH)
 	var sweepers := AntishipLoaders.available_minesweepers(ANTISHIP_MINEFIELDS_PATH)
+	var mine_config := AntishipLoaders.load_mine_config(ANTISHIP_MINEFIELDS_PATH)
 	var mine_res := MineWarfareService.resolve_ship_losses(
-		minefields, target_beaches, _distribute_minesweepers(sweepers, target_beaches), fleet_pool, as_dice)
+		minefields, target_beaches, _distribute_minesweepers(sweepers, target_beaches), fleet_pool,
+		as_dice, _mine_ship_meta(mine_config.get("transit", {})), mine_config)
 	for beach_res in mine_res:
 		for t in (beach_res["ship_loss_counts"] as Dictionary).keys():
 			destroyed_by_type[t] = int(destroyed_by_type.get(t, 0)) + int(beach_res["ship_loss_counts"][t])
@@ -778,6 +780,24 @@ func _remove_bns_from_reserve(lost_ids: Array) -> void:
 
 
 ## Spread the available minesweepers round-robin across the target beaches (ascending beach_id).
+## Per-ship-type metadata the geometric mine model needs: decoy flag (sponge ordering), value
+## (carrying capacity drives ascending-value transit order), and mine-neutralization likelihood
+## (by category, with a decoy override) sourced from the minefields.json transit config.
+func _mine_ship_meta(transit_config: Dictionary) -> Dictionary:
+	var by_category: Dictionary = transit_config.get("neutralization_likelihood_by_category", {})
+	var decoy_label := String(transit_config.get("decoy_neutralization_likelihood", "high"))
+	var meta: Dictionary = {}
+	for ship_def_value in GameData.ship_defs.values():
+		var ship_def: ShipDef = ship_def_value
+		var label := decoy_label if ship_def.is_decoy else String(by_category.get(ship_def.category, "high"))
+		meta[ship_def.name] = {
+			"is_decoy": ship_def.is_decoy,
+			"value": ship_def.carrying_capacity_bn_equiv,
+			"likelihood": label,
+		}
+	return meta
+
+
 func _distribute_minesweepers(available: int, target_beaches: Array) -> Dictionary:
 	var assignments: Dictionary = {}
 	if target_beaches.is_empty() or available <= 0:

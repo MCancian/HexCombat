@@ -163,6 +163,16 @@ static func available_minesweepers(path: String) -> int:
 	return int(_read_json(path).get("available_minesweepers", 0))
 
 
+## The geometric danger-model + transit knobs (port of TaiwanDefenseRefactor/mine_warfare.py). Returns
+## the merged {geometry, transit} config consumed by MineWarfareService.resolve_ship_losses.
+static func load_mine_config(path: String) -> Dictionary:
+	var body: Dictionary = _read_json(path)
+	return {
+		"geometry": body.get("geometry", {}),
+		"transit": body.get("transit", {}),
+	}
+
+
 static func _read_json(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):
 		_fail("Anti-ship data file not found: %s" % path)

@@ -126,6 +126,35 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-29 — Mine warfare: replace the geometry-free cap model with the GEOMETRIC danger model +
+  decoy-sponge transit (USER design call).** After measuring that the planned `intel_locked` strike
+  bonus could not reach the ~25% crossing-loss target (its whole band is ~54%→~41% mean; mines set a
+  ~22% floor — see Open Question "D3-D crossing lethality calibration" UPDATE 2026-06-29), the user
+  redirected calibration to the MINES and deferred the strike-coverage lever
+  (memory `antiship-strike-coverage-lever`). Ported `TaiwanDefenseRefactor/mine_warfare.py`: mines are
+  scattered uniformly in a `length×width` field, the fleet takes a *randomized* straight approach path
+  (random incident angle ∈ [30,60]°, entry ∈ [0.3,0.7]), and only mines within `danger_radius` (50 m)
+  of that path line are DANGEROUS (≈5–15, not all `num_mines`). Pre-landing sweepers clear the closest
+  `assigned × prelanding_clear_per_sweeper` (default 1 → mainly LOCATES the field). The surviving
+  crossing fleet then transits in order — **decoys first, then real ships by ascending value** — each
+  detonating the next dangerous mine; a **decoy that survives a detonation CONTINUES and can trigger
+  subsequent mines** (sponge). Neutralization-if-hit is by hardness (`high/medium/low → 0.9/0.5/0.25`,
+  per-category table + decoy override). **Divergences from the source (documented):** (1) the source
+  detonates exactly one mine per ship; the decoy-continue loop is a USER-specified refinement (decoys
+  sponge ≥1); (2) non-decoys keep one-mine-each; (3) geometry RNG goes through the injected `Dice`
+  (formula + draw order: angle, entry, (x,y)×num_mines, then one roll per detonation), not numpy; (4)
+  positions are not retained after counting (all dangerous mines interchangeable for the count-based
+  transit). Knobs live in `data/antiship/minefields.json` (`geometry` + `transit`). Files:
+  `scripts/MineWarfareService.gd` (rewrite), `AntishipLoaders.load_mine_config`,
+  `GameState._mine_ship_meta` + call-site rewire, `tests/mine_warfare_test.gd` (13 cases, geometry
+  pinned via huge/zero `danger_radius`). **MEASURED (seed 20260624 golden + 24-seed means): mines-only
+  floor ~22% → 0% (intact screen sponges all dangerous mines → 0 amphibs hit); baseline mean crossing
+  loss 54% → 32.4% (golden 30.6%); the intel lever now bites again (32.4%→26.5% at ic=36/+0.2→18.4% at
+  max) via emergent coupling (killing launchers preserves screen to sponge mines).** Golden
+  `casualties=2/feba=0.76` byte-stable; full gate green (30 suites). Sweep harness:
+  `tools/sweep_antiship_crossing.gd`. Final knob dial-in toward exactly ~25% left as a USER call (see
+  RETROSPECTIVES.md 2026-06-29 mine-geometry).
+
 - **2026-06-28 — D3-D crossing lethality: wire the prelanding WARMUP (activate exquisite intel) +
   planned strike bonus (USER calibration call).** Discovered the exquisite-intel mechanism
   (peacetime HUMINT/SIGINT that `intel_locked`s a decaying count of anti-ship *groups* → auto-detect,
@@ -1558,6 +1587,30 @@ cut crossing loss from **~24/36 (~67%) → 18/36 (50.0%)**, golden combat invari
 mobile coastal launchers is the **strike** `p_destroy` gate (~0.045 atomic kill), not just detection.
 **Next levers** (step 4): the `intel_locked` coastal-launcher strike bonus, then sweep `initial_count`
 (currently 8 groups) to dial in ~25%.
+
+**UPDATE 2026-06-29 — step-4 premise MEASURED AND FALSIFIED; the strike bonus is a weak lever.**
+Built a throwaway 2-D sweep harness (`tools/sweep_antiship_crossing.gd`, NOT committed/gated) that, on
+the loaded scenario, varies `exquisite_intel.antiship.initial_count` × an injected `intel_locked:true`
+strike-bonus (`match {category:"Anti-Ship Systems", intel_locked:true}`, additive on `p_destroy`) and
+measures `bns_lost_at_sea / wave_bns` (denominator = BNs at sea = 36; the warmup note's "/36"). Findings
+(24-seed means unless noted):
+- **Baseline** (ic=8, no bonus): **54.1%** mean (single golden seed = exactly the 50.0% from the warmup note).
+- **More intel** (ic=36, +0.20): **48.5%**. **Max intel** (ic=73 — *every* container locked — +0.80, near-certain
+  kills): **41.0%** mean (44.4% on golden). So the entire reachable band of the intel/strike lever is **~54%→~41%**.
+- **Mine-only floor** (force-kill *all* anti-ship systems via the writeback so the crossing fires nothing):
+  **22.2%** (8/36) — **mines alone ≈ the ~25% target**, and are wholly independent of the IJFS lever.
+- **Why the bonus barely moves it:** at max intel the crossing still loses **31 of 37** hull-kills vs baseline
+  (only 6 removed). The binding constraint is **IJFS strike *coverage/throughput*** (how many launchers it can
+  engage in the warmup window), **not** the per-strike `p_destroy` the bonus raises. Boosting `p_destroy` on
+  targets IJFS never strikes does nothing. Biasing intel selection to the assaulted TO is also ruled out — ic=73
+  already locks everything and still only reaches 41%.
+**Conclusion:** the planned step-4 path (intel_locked strike bonus + `initial_count` sweep) **cannot reach ~25%**.
+To hit ~25% the lever must be **crossing-model lethality** (`DEFAULT_ANTISHIP_FIRE_PCT` and/or per-ship-type
+`p_destroy` in `antiship_crossing_config.json` — the direct knob on the 54%→target band) and/or **mine lethality**
+(D3-C; mines are ~half the hull-kills and set the ~22% floor — the "every unswept mine is lethal" flag), possibly
+plus **IJFS throughput** (firing capacity / warmup days / munition inventory) if "exquisite intel matters" is to
+show. The intel_locked bonus is directionally correct and cheap but is a *flavor* mechanic, not the calibration
+lever. **Surfaced to the user 2026-06-29 for the design call (which lever); not committed pending that decision.**
 
 ### D3-B3 per-hull escort magazines  *(open — settle if/when ship ammo is modeled)*
 

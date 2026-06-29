@@ -1,6 +1,28 @@
 {
-  "description": "Per-beach minefield defaults ported from TIV defaults/beaches.json Minefield blocks (stripped from data/beaches.json in D1-A, recovered for D3 anti-ship/mine warfare).",
+  "description": "Per-beach minefield defaults ported from TIV defaults/beaches.json Minefield blocks (stripped from data/beaches.json in D1-A, recovered for D3 anti-ship/mine warfare). 'geometry' + 'transit' configure the geometric danger model (port of TaiwanDefenseRefactor/mine_warfare.py): mines are scattered in a length x width field, the fleet takes a randomized straight approach path, and only mines within danger_radius of that path are 'dangerous'. The goal is to clear a LANE, not the whole field.",
   "available_minesweepers": 6,
+  "geometry": {
+    "minefield_length": 1000,
+    "minefield_width": 500,
+    "danger_radius": 50,
+    "incident_angle_min_deg": 30,
+    "incident_angle_max_deg": 60,
+    "entry_point_min": 0.3,
+    "entry_point_max": 0.7
+  },
+  "transit": {
+    "_comment": "prelanding_clear_per_sweeper: dangerous mines a single assigned minesweeper clears pre-landing (closest first). Default 1 => with the ~1-2 sweepers a beach gets, pre-landing clearing mainly LOCATES the field (clears 1-2), it does not open the lane. The transiting fleet (decoys first, then ascending value) detonates the rest; a decoy that survives a detonation continues and can trigger subsequent mines. Amphibs are only at risk if dangerous mines remain after decoys + sweeping.",
+    "prelanding_clear_per_sweeper": 1,
+    "neutralization_probabilities": { "high": 0.9, "medium": 0.5, "low": 0.25 },
+    "neutralization_likelihood_by_category": {
+      "Escort": "low",
+      "Military_Amphibious": "medium",
+      "Civilian_Amphibious": "high",
+      "Civilian_Non_Amphibious": "high",
+      "Infrastructure": "high"
+    },
+    "decoy_neutralization_likelihood": "high"
+  },
   "minefields": [
     {
       "beach_id": 1,
