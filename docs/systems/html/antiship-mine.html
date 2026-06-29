@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HexCombat — Anti-ship &amp; Mine Warfare (D3)</title>
+<style>
+  body{font:16px/1.55 -apple-system,Segoe UI,Roboto,sans-serif;max-width:880px;margin:2rem auto;padding:0 1rem;color:#1c2230}
+  h1{border-bottom:3px solid #2b6cb0;padding-bottom:.3rem}
+  h2{margin-top:2rem;color:#2b6cb0}
+  table{border-collapse:collapse;width:100%;margin:1rem 0}
+  th,td{border:1px solid #cbd5e0;padding:.4rem .6rem;text-align:left;vertical-align:top}
+  th{background:#edf2f7}
+  code{background:#edf2f7;padding:.1rem .3rem;border-radius:3px;font-size:.9em}
+  ol{background:#f7fafc;border:1px solid #e2e8f0;border-radius:6px;padding:1rem 1rem 1rem 2.2rem}
+  .ok{background:#f0fff4;border:1px solid #68d391;border-left:5px solid #38a169;padding:.8rem 1rem;border-radius:6px;margin:1rem 0}
+  .note{background:#fffaf0;border:1px solid #f6ad55;border-left:5px solid #dd6b20;padding:.8rem 1rem;border-radius:6px;margin:1rem 0}
+  footer{margin-top:3rem;color:#718096;font-size:.85em;border-top:1px solid #e2e8f0;padding-top:1rem}
+</style>
+</head>
+<body>
+<h1>Anti-ship &amp; Mine Warfare (D3)</h1>
+<p><em>Human-readable summary. Machine reference: <code>docs/systems/antiship-mine.md</code>.
+Port-fidelity audit, Area 5 of 10.</em></p>
+
+<h2>What this system does</h2>
+<p>As the PLA invasion fleet crosses the strait, Taiwan's coastal anti-ship missiles fire at it, and
+sea mines threaten the approach to each beach. This system sinks/damages ships, and those losses turn
+into battalions lost at sea (fewer troops reach the beach). It runs each turn after the air/missile
+phase (which can suppress the defenders' launchers) and before the landing.</p>
+
+<h2>Two halves</h2>
+<ol>
+<li><strong>Missile crossing</strong> — a 6-stage pipeline: launch → in-flight failures → escort
+interception → homing/targeting → terminal defense → damage (fresh→damaged→sunk hulls). Decoys and
+escorts soak hits.</li>
+<li><strong>Mine lane</strong> — mines are scattered in a field at each beach; the fleet takes a
+random approach path, and only mines near that path line are dangerous. Minesweepers clear a few;
+then the fleet runs the lane — decoys first (absorbing detonations like sponges), then real ships by
+increasing value — until the lane is open.</li>
+</ol>
+
+<div class="ok">
+<strong>✅ Faithful ports from two source repos.</strong>
+<ul>
+<li>The <strong>missile crossing, firing plan, launch attrition, and magazine</strong> port
+TaiwanInvasionViewer's <code>antiship_*.py</code> stage-for-stage (verified) and are covered by the
+ported tests.</li>
+<li>The <strong>geometric mine model</strong> ports the sister repo
+<code>TaiwanDefenseRefactor/mine_warfare.py</code> (verified those functions exist), adapted to
+HexCombat's per-turn fleet.</li>
+</ul>
+</div>
+
+<div class="note">
+<strong>Deliberate design choices (documented, not bugs):</strong>
+<ul>
+<li><strong>Mine source:</strong> HexCombat uses the sister repo's richer geometric mine model rather
+than TIV's own simpler sweep-based one — a conscious cross-repo choice (the "push a lane" premise the
+user asked for).</li>
+<li><strong>Count-based crossing:</strong> ships are tracked as per-type counts; per-hull escort
+magazine depletion exists as an overlay but is tuned not to bind. The deeper per-missile pipeline from
+the sister repo is intentionally deferred.</li>
+<li><strong>Per-category mine lethality:</strong> neutralization uses a high/medium/low table; a
+per-ship-type field would be more faithful (logged as a refinement).</li>
+<li><strong>Magazine gating</strong> isn't yet persisted across turns (passed empty for now).</li>
+</ul>
+</div>
+
+<footer>HexCombat systems reference · TaiwanInvasionViewer / TaiwanDefenseRefactor port-fidelity audit.</footer>
+</body>
+</html>

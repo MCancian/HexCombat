@@ -24,7 +24,7 @@ fixed (obvious) or flagged in `/DECISIONS.md` (design calls).
 | 2 | Ground combat (BOOTS) | `CombatCalculator`, `CombatForces`, `Movement`, `UnitStats`, `Brigade`/`Battalion` | `boots_calculator.py::resolve_map_attack` | ✅ | ✅ | ✅ |
 | 3 | Amphibious offload (D1) | `OffloadCalculator`, `OffloadRates`, `ShipLoadingModel`, `BeachDef` | `services/offload*` | ✅ | ✅ | ✅ |
 | 4 | Supply (D2 DOS) | `DosConsumption`, `SupplyState` | `services/red_dos_consumption.py` | ✅ | ✅ | ✅ |
-| 5 | Anti-ship & mine (D3) | `Antiship*`, `MineWarfareService`, ship/mine models | `services/antiship*`, `antiship/mine_warfare_service.py` | ☐ | ☐ | ☐ |
+| 5 | Anti-ship & mine (D3) | `Antiship*`, `MineWarfareService`, ship/mine models | TIV `antiship_crossing.py` + TaiwanDefenseRefactor `mine_warfare.py` | ✅ | ✅ | ✅ |
 | 6 | IJFS (D4) | `scripts/ijfs/*` | `src/ijfs_standalone/*` | ☐ | ☐ | ☐ |
 | 7 | Front-line / cleanup / victory (D5) | `FrontLineService`, `VictoryConditions`, `HexOwner` | `services/front_line_service.py`, `cleanup_*` | ☐ | ☐ | ☐ |
 | 8 | Turn engine & data | `GameState`, `GameData`, `Dice`, `EventBus`, `Theaters` | `models/game_state.py` | ☐ | ☐ | ☐ |
@@ -58,3 +58,9 @@ fixed (obvious) or flagged in `/DECISIONS.md` (design calls).
   (`CombatForces.gd:20`), so supply has no combat effect yet (TIV injects real values). No code change.
   NB: opencode agents default to the WRONG TIV path (outer dir) — pass the nested
   `…/TaiwanInvasionViewer/TaiwanInvasionViewer/…` path explicitly.
+- Area 5 — documented (`docs/systems/antiship-mine.md` + html) and compared. **✅ Faithful ports from
+  TWO source repos:** missile crossing/firing-plan/launch-attrition/magazine port TIV `antiship_*.py`
+  stage-for-stage (verified); the geometric **mine model ports `TaiwanDefenseRefactor/mine_warfare.py`**
+  (verified functions exist), NOT TIV's own sweep-based mine service — a deliberate cross-repo choice.
+  Corrected the agent's draft (it had been mis-told the mine model was HexCombat-original). No new
+  DECISIONS — count-based-vs-per-hull, per-category neutralization, magazine persistence already logged.
