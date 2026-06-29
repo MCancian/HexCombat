@@ -16,7 +16,7 @@ fixed (obvious) or flagged in `/DECISIONS.md` (design calls).
 
 | # | Area | HexCombat | TIV oracle | Doc | Compare | Adjudicated |
 |---|---|---|---|:--:|:--:|:--:|
-| 1 | Hex grid & geometry | `HexMath`, `MapProjection`, `Hex`, `HexOwner` | `src/core/hex_grid.py` | ☐ | ☐ | ☐ |
+| 1 | Hex grid & geometry | `HexMath`, `MapProjection`, `Hex`, `HexOwner` | `src/core/hex_grid.py` | ✅ | ✅ | ✅ |
 | 2 | Ground combat (BOOTS) | `CombatCalculator`, `CombatForces`, `Movement`, `UnitStats`, `Brigade`/`Battalion` | `contracts/boots.py` + combat services | ☐ | ☐ | ☐ |
 | 3 | Amphibious offload (D1) | `OffloadCalculator`, `OffloadRates`, `ShipLoadingModel`, `BeachDef` | `services/offload*` | ☐ | ☐ | ☐ |
 | 4 | Supply (D2 DOS) | `DosConsumption`, `SupplyState` | `services/red_dos_*` | ☐ | ☐ | ☐ |
@@ -29,3 +29,7 @@ fixed (obvious) or flagged in `/DECISIONS.md` (design calls).
 
 ## Log
 <!-- one line per completed step: area#, step, outcome, commit -->
+- Area 1 — documented (`docs/systems/hex-grid.md` + html) and compared. **Finding:** confirmed
+  coordinate-system bug — `HexMath` treats offset (odd-r) coords as axial; neighbors match geography
+  23/308 vs odd-r 308/308. Flagged in `/DECISIONS.md` (recommend fix + golden re-baseline; not
+  auto-applied due to blast radius).

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HexCombat — Hex Grid &amp; Geometry</title>
+<style>
+  body{font:16px/1.55 -apple-system,Segoe UI,Roboto,sans-serif;max-width:880px;margin:2rem auto;padding:0 1rem;color:#1c2230}
+  h1{border-bottom:3px solid #2b6cb0;padding-bottom:.3rem}
+  h2{margin-top:2rem;color:#2b6cb0}
+  table{border-collapse:collapse;width:100%;margin:1rem 0}
+  th,td{border:1px solid #cbd5e0;padding:.4rem .6rem;text-align:left;vertical-align:top}
+  th{background:#edf2f7}
+  code{background:#edf2f7;padding:.1rem .3rem;border-radius:3px;font-size:.9em}
+  .flag{background:#fff5f5;border:1px solid #fc8181;border-left:5px solid #e53e3e;padding:.8rem 1rem;border-radius:6px;margin:1rem 0}
+  .ok{color:#2f855a;font-weight:600}
+  .bad{color:#c53030;font-weight:600}
+  footer{margin-top:3rem;color:#718096;font-size:.85em;border-top:1px solid #e2e8f0;padding-top:1rem}
+</style>
+</head>
+<body>
+<h1>Hex Grid &amp; Geometry</h1>
+<p><em>Human-readable summary. Machine reference: <code>docs/systems/hex-grid.md</code>.
+Part of the TIV port-fidelity audit (Area 1 of 10).</em></p>
+
+<h2>What this system does</h2>
+<p>Defines the hex coordinate system and the runtime geometry the game runs on: which hexes are
+adjacent, how far apart two hexes are, shortest paths, reachable ranges, and how each hex's
+geographic outline is drawn on screen. The grid itself (455 hexes covering Taiwan) is
+<strong>generated offline</strong> by the original Python toolchain and shipped as a static file
+(<code>data/taiwan_hex_grid.json</code>); HexCombat only consumes it.</p>
+
+<h2>Pieces</h2>
+<table>
+<tr><th>File</th><th>Role</th></tr>
+<tr><td><code>scripts/HexMath.gd</code></td><td>Coordinate math — neighbors, distance, BFS path &amp; reachable</td></tr>
+<tr><td><code>scripts/MapProjection.gd</code></td><td>Latitude/longitude → screen pixels (aspect-correct fit). HexCombat-original; no TIV equivalent.</td></tr>
+<tr><td><code>scripts/model/Hex.gd</code></td><td>The <code>Hex</code> data record: id, row/col, center lat/lon, polygon vertices</td></tr>
+<tr><td><code>scripts/HexOwner.gd</code></td><td>Ownership labels: <code>red</code>, <code>green</code>, <code>contested</code>, <code>none</code></td></tr>
+<tr><td><code>scripts/GameData.gd</code></td><td>Loads the JSON into <code>Hex</code> objects and builds the neighbor index</td></tr>
+</table>
+
+<h2>How faithful is the port?</h2>
+<p>The map data, projection, and the general shape of the geometry layer port cleanly. But the audit
+found one serious mismatch in the coordinate system itself:</p>
+
+<div class="flag">
+<strong>🔴 Confirmed discrepancy — adjacency uses the wrong coordinate system.</strong>
+<p>The grid file stores <strong>offset (odd-r)</strong> coordinates — odd rows are nudged half a hex
+sideways. The original game computes neighbors with row-parity-aware offsets that respect that.
+HexCombat instead treats the stored numbers as plain <em>axial</em> coordinates and applies a fixed
+neighbor pattern to every hex.</p>
+<p>Measured against true geography (great-circle distance between hex centers) over the 308 interior
+hexes that have six real ~10&nbsp;km neighbors:</p>
+<ul>
+<li>Original odd-r scheme: <span class="ok">308 / 308 correct</span></li>
+<li>HexCombat axial scheme: <span class="bad">23 / 308 correct</span></li>
+</ul>
+<p>So on ~92% of interior hexes HexCombat treats a wrong hex as adjacent and misses a true neighbor.
+Because distance, pathfinding, and reachable-range all build on this, they inherit the error.
+Adjacency drives movement, combat, FEBA, and the front line — so this is foundational.</p>
+<p><strong>Status:</strong> flagged in <code>/DECISIONS.md</code> for your call, <em>not</em>
+auto-fixed — the fix changes the deterministic golden combat result the test suite is pinned to, so
+it needs a conscious re-baseline. Recommended fix: switch neighbors to odd-r and convert
+offset→cube for distance.</p>
+</div>
+
+<h2>Map bounds (projection)</h2>
+<table>
+<tr><th>Constant</th><th>Value</th></tr>
+<tr><td>Latitude</td><td>21.9° – 25.3° N</td></tr>
+<tr><td>Longitude</td><td>119.9° – 122.1° E</td></tr>
+<tr><td>Viewport margin</td><td>6% each side</td></tr>
+</table>
+
+<footer>HexCombat systems reference · generated for the TaiwanInvasionViewer port-fidelity audit.</footer>
+</body>
+</html>

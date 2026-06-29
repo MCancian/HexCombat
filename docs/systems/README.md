@@ -7,7 +7,7 @@ HTML mirrors live in `html/`. Audit status + open fidelity questions:
 
 | System | Doc | HTML |
 |---|---|---|
-| Hex grid & geometry | _pending_ | _pending_ |
+| Hex grid & geometry | [hex-grid.md](hex-grid.md) | [html](html/hex-grid.html) |
 | Ground combat (BOOTS) | _pending_ | _pending_ |
 | Amphibious offload (D1) | _pending_ | _pending_ |
 | Supply (D2 DOS) | _pending_ | _pending_ |
