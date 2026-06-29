@@ -15,5 +15,5 @@ HTML mirrors live in `html/`. Audit status + open fidelity questions:
 | IJFS (D4) | [ijfs.md](ijfs.md) | [html](html/ijfs.html) |
 | Front-line / cleanup / victory (D5) | [frontline-cleanup-victory.md](frontline-cleanup-victory.md) | [html](html/frontline-cleanup-victory.html) |
 | Turn engine & data | [turn-engine.md](turn-engine.md) | [html](html/turn-engine.html) |
-| LLM API & self-play | _pending_ | _pending_ |
-| View layer | _pending_ | _pending_ |
+| LLM API & self-play | [llm-api-selfplay.md](llm-api-selfplay.md) | [html](html/llm-api-selfplay.html) |
+| View layer | [view-layer.md](view-layer.md) | [html](html/view-layer.html) |

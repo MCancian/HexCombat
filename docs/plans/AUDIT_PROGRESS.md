@@ -28,8 +28,8 @@ fixed (obvious) or flagged in `/DECISIONS.md` (design calls).
 | 6 | IJFS (D4) | `scripts/ijfs/*` | `src/ijfs_standalone/*` | ✅ | ✅ | ✅ |
 | 7 | Front-line / cleanup / victory (D5) | `FrontLineService`, `VictoryConditions`, `HexOwner` | `services/front_line_service.py`, `cleanup_*` | ✅ | ✅ | ✅ |
 | 8 | Turn engine & data | `GameState`, `GameData`, `Dice`, `EventBus`, `Theaters` | `models/game_state.py` (adaptation) | ✅ | ✅ | ✅ |
-| 9 | LLM API & self-play | `LLMGameAPI`, `SelfPlay*`, `TurnEventLog` | (HexCombat-original) | ☐ | ☐ | ☐ |
-| 10 | View layer | `HexMap`, `GameController`, panels, symbols, `UnitManager` | (HexCombat-original UI) | ☐ | ☐ | ☐ |
+| 9 | LLM API & self-play | `LLMGameAPI`, `SelfPlay*`, `TurnEventLog` | (HexCombat-original) | ✅ | ✅ | ✅ |
+| 10 | View layer | `HexMap`, `GameController`, panels, symbols, `UnitManager` | (HexCombat-original UI) | ✅ | ✅ | ✅ |
 
 ## Log
 <!-- one line per completed step: area#, step, outcome, commit -->
@@ -83,3 +83,16 @@ fixed (obvious) or flagged in `/DECISIONS.md` (design calls).
   the same phase order (IJFS→antiship→offload→movement→combat→cleanup). `resolve_turn` stage order
   verified against STATUS. HexCombat-original: the WeGo order layer, `play_turn`/`TurnResult` AI
   entrypoint, determinism enforcement (`validate_no_global_rng`). No discrepancies / no DECISIONS.
+- Area 9 — documented (`docs/systems/llm-api-selfplay.md` + html). **HexCombat-original** (TIV has no
+  agent API). Observation/action contracts + self-play harness; cross-links the existing LLM design
+  docs. No TIV comparison applicable. No DECISIONS.
+- Area 10 — documented (`docs/systems/view-layer.md` + html). **HexCombat-original** Godot view (TIV
+  was Flask/HTML/JS). Rendering/input/panels/NATO symbols. Track 5 graphics items pending (visual, not
+  headless-gateable). No DECISIONS.
+
+## ✅ AUDIT COMPLETE — all 10 areas documented (md + html), compared, and adjudicated (2026-06-29)
+**Net outcome:** 1 foundational bug found & fixed (Area 1 hex coords, golden re-baselined); 2 design
+calls awaiting user ratification (`/DECISIONS.md`: combat strength table 12/17 types; `feba_base` 2.0
+vs 3.5); port-completeness items logged in `port_audit.md` (supply→combat link, IJFS→ground casualties,
+ship-loading + front-line simplifications, per-hull magazines, missile-pipeline depth). Everything else
+verified faithful to the TIV / TaiwanDefenseRefactor oracles. Full gate green throughout.

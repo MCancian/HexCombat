@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HexCombat — View Layer</title>
+<style>
+  body{font:16px/1.55 -apple-system,Segoe UI,Roboto,sans-serif;max-width:880px;margin:2rem auto;padding:0 1rem;color:#1c2230}
+  h1{border-bottom:3px solid #2b6cb0;padding-bottom:.3rem}
+  h2{margin-top:2rem;color:#2b6cb0}
+  table{border-collapse:collapse;width:100%;margin:1rem 0}
+  th,td{border:1px solid #cbd5e0;padding:.4rem .6rem;text-align:left;vertical-align:top}
+  th{background:#edf2f7}
+  code{background:#edf2f7;padding:.1rem .3rem;border-radius:3px;font-size:.9em}
+  .note{background:#fffaf0;border:1px solid #f6ad55;border-left:5px solid #dd6b20;padding:.8rem 1rem;border-radius:6px;margin:1rem 0}
+  footer{margin-top:3rem;color:#718096;font-size:.85em;border-top:1px solid #e2e8f0;padding-top:1rem}
+</style>
+</head>
+<body>
+<h1>View Layer — Rendering, UI &amp; Input</h1>
+<p><em>Human-readable summary. Machine reference: <code>docs/systems/view-layer.md</code>.
+Port-fidelity audit, Area 10 of 10.</em></p>
+
+<h2>What this is</h2>
+<p>Everything the player sees and clicks: the hex map, unit markers with NATO symbols, the info and
+composition panels, and the click-to-select-then-move/commit flow. It draws and routes input but holds
+no game logic — it asks <code>GameState</code> to do things and reads <code>GameData</code> to display
+them, communicating through the signal bus.</p>
+
+<h2>How it works</h2>
+<table>
+<tr><th>Piece</th><th>Does</th></tr>
+<tr><td>HexMap</td><td>Projects Taiwan's lat/lon hex grid to screen, colors hexes by owner, draws brigade markers + reachable-hex highlights, turns clicks into hex selections.</td></tr>
+<tr><td>GameController</td><td>The glue: click → select brigade → (move if reachable / commit) → end turn; wires signals to <code>GameState</code>.</td></tr>
+<tr><td>InfoPanel / CompositionPanel</td><td>Show the selected hex/brigade details, and buttons for eligible commitments.</td></tr>
+<tr><td>SymbolLibrary</td><td>Loads NATO unit symbols (11 types) from a JSON map; a validator checks every unit type has one.</td></tr>
+</table>
+
+<div class="note">
+<strong>HexCombat-original — nothing to port here.</strong> The original tool was a Flask/HTML/JS web
+app with Leaflet map overlays; this Godot view was built from scratch, so there's no line-by-line
+comparison.
+<p><strong>Still to come (graphics track):</strong> anti-ship/mine visualization, the front-line
+drawing tool, unit/HUD polish (HP bars, combat popups), and map/terrain polish. These need to be
+checked by eye in the running game, so they're outside the headless test gate.</p>
+</div>
+
+<footer>HexCombat systems reference · TaiwanInvasionViewer port-fidelity audit.</footer>
+</body>
+</html>
