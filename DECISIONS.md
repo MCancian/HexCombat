@@ -8,7 +8,20 @@ Status legend: 🔴 open · 🟡 leaning (recommendation noted) · ✅ resolved 
 
 ---
 
-## Ground combat (Area 2) — unit strength table differs from TIV for 12/17 types  🟡 (recommend: keep HexCombat's table; ratify)
+## Ground combat (Area 2) — unit strength table differs from TIV for 12/17 types  ✅ RESOLVED 2026-06-29 (keep table; helicopters verified moot)
+
+**Decision (user):** keep HexCombat's differentiated table; reconcile helicopters. **Resolution:**
+helicopters (and all `rotary_wing`/`artillery` battalions) are routed to combat **support**, not
+`maneuver_units` (`CombatForces.gd:14`), in **both** HexCombat and TIV (TIV pools `rotary_wing` as a
+support resource; `is_adjacent_combat_eligible` = maneuver+artillery only). So the helicopter
+maneuver-strength (0.5 vs TIV's 1.4) is **never used in combat** — no behavioral discrepancy. Kept 0.5
+(aviation) and documented the routing in `UnitStats.gd`. The differentiated table is ratified as the
+intended design (TIV's all-1.0 runtime is a latent mapping bug; HexCombat reflects the intent). Original
+finding below.
+
+---
+
+## Ground combat (Area 2) — unit strength table (original finding)  🟡 (recommend: keep HexCombat's table; ratify)
 
 **HexCombat:** `UnitStats.TYPE_DEFS` (`scripts/UnitStats.gd:6`) gives differentiated maneuver strengths
 keyed by full battalion name — Armor/Tank 2.0, Combined Arms/Mech Inf 1.5, Amphibious 1.2, Air Assault
@@ -39,7 +52,17 @@ to fight as maneuver units (likely they shouldn't — they're aviation). (c) Mat
 
 ---
 
-## Ground combat (Area 2) — feba_base_km 2.0 (HexCombat) vs 3.5 (TIV config)  🟡 (recommend: align or make configurable)
+## Ground combat (Area 2) — feba_base_km 2.0 vs TIV 3.5  ✅ RESOLVED 2026-06-29 (made scenario-configurable, default 3.5)
+
+**Decision (user):** make `feba_base_km` scenario-configurable, default to TIV's 3.5. **Resolution:**
+added `feba_base_km` to scenario config (`GameData.feba_base_km`, default 3.5; `scenario_default.json`),
+`GameState._resolve_combat_at` now passes it instead of the hardcoded 2.0. Golden re-baselined
+`feba=-0.55` → `feba=-0.96` (×1.75); `combat_resolution_test` FEBA-delta assertion 1.0 → 1.75. Full
+gate green. Original finding below.
+
+---
+
+## Ground combat (Area 2) — feba_base_km 2.0 (HexCombat) vs 3.5 (TIV config)  🟡 (original finding)
 
 **HexCombat:** `GameState._resolve_combat_at` hardcodes `feba_base_km = 2.0` (`scripts/GameState.gd:1071`).
 **TIV:** loads `3.5` from config (`_load_feba_base_km`; pinned by `tests/python/unit/test_boots_attack_mode.py:180`).

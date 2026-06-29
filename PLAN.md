@@ -130,6 +130,15 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-29 — Port-audit Area 2 decisions actioned (user-ratified).** (1) **Unit strength table:**
+  keep HexCombat's differentiated `UnitStats.TYPE_DEFS` (TIV's runtime flattens 12/17 maneuver types to
+  1.0 via an incomplete type→key mapping; HexCombat reflects the *intended* table). Helicopters
+  reconciled: `rotary_wing`/`artillery` battalions are combat **support**, not maneuver, in both repos —
+  so the helicopter maneuver-strength (0.5 vs TIV 1.4) is never used; kept 0.5 + documented in
+  `UnitStats.gd`. (2) **`feba_base_km`:** made scenario-configurable (`GameData.feba_base_km`, default
+  **3.5** = TIV's value; was hardcoded 2.0). Golden re-baselined `feba=-0.55`→`feba=-0.96` (×1.75);
+  `combat_resolution_test` FEBA-delta 1.0→1.75. Full gate green. See `/DECISIONS.md`.
+
 - **2026-06-29 — Hex adjacency coordinate-system bug fixed + golden re-baseline (port audit, Area 1).**
   The TIV port audit found `HexMath` treated the grid's stored **offset (odd-r)** `row`/`col` as
   **axial** coordinates. Empirically, the prior axial neighbors matched true great-circle geometry on

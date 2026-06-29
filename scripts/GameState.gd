@@ -1068,7 +1068,7 @@ func _resolve_combat_at(hex_id: String, dice: Dice) -> Dictionary:
 		attacker_support,
 		defender_support,
 		1.0,
-		2.0
+		GameData.feba_base_km
 	)
 
 	for casualty in result.attacker_casualties:

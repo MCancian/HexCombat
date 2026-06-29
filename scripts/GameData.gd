@@ -17,6 +17,9 @@ var scenario_name: String = ""
 var turn_length_days: int = 0
 var red_dos_start: int = 0
 var stacking_soft_cap: int = 0
+# Base FEBA shift (km) per combat. Defaults to TIV's configured value (3.5; see
+# TaiwanInvasionViewer tests/python/unit/test_boots_attack_mode.py::_load_feba_base_km).
+var feba_base_km: float = 3.5
 var victory_config: Dictionary = {}  # scenario 'victory' block (loss_check_arm, taiwan_hexes)
 
 var hexes: Array[Hex] = []
@@ -177,6 +180,7 @@ func load_scenario(path: String) -> void:
 	if red_dos_start <= 0:
 		push_warning("Scenario red_dos_start is <= 0; Red DOS supply pool will start empty")
 	stacking_soft_cap = int(scenario.get("stacking_soft_cap", 0))
+	feba_base_km = float(scenario.get("feba_base_km", 3.5))
 	var victory_value: Variant = scenario.get("victory", {})
 	victory_config = victory_value if victory_value is Dictionary else {}
 	_parse_red_ship_reserve(scenario.get("red_ship_reserve", []))

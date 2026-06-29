@@ -155,7 +155,10 @@ Combat sits at step 7, after all movement and before FEBA retreats/ownership cha
 
 **DIVERGENCE 2 — combat_detail shape.** TIV includes `"support_power_breakdown"` *and* `"support_unit_count"` per side. HexCombat (`CombatCalculator.gd:109`) uses key `"support_breakdown"` and omits `"support_unit_count"`. Minor shape divergence.
 
-**DIVERGENCE 3 — unit strength values (🔴 see `/DECISIONS.md`).** Verified by calling TIV's own
+**DIVERGENCE 3 — unit strength values (✅ RESOLVED 2026-06-29 — keep HexCombat's table; see `/DECISIONS.md`).**
+Ratified as the intended design. Note re helicopters: `rotary_wing` (and `artillery`) battalions are
+combat **support**, not `maneuver_units` (`CombatForces.gd:14`) — in both HexCombat and TIV — so their
+maneuver-strength value is never used; the apparent 0.5-vs-1.4 helicopter mismatch has no combat effect. Verified by calling TIV's own
 calculator: TIV's `_map_type_to_strength_key()` only maps a few lowercase short forms, so the **full
 battalion-name** `Type` strings the OOB actually carries fall through to the `1.0` default. Result —
 **12 of the 17 OOB battalion types resolve differently**: TIV gives almost every maneuver unit `1.0`
@@ -168,10 +171,10 @@ and **Attack/Utility Helicopter (1.4)** map. HexCombat's `TYPE_DEFS` instead dif
 pytest pinning strength values, so neither matches nor contradicts a TIV test. Helicopters are the one
 case where HexCombat also diverges from TIV's *intent* (0.5 vs 1.4).
 
-**DIVERGENCE 4 — feba_base_km (🔴 see `/DECISIONS.md`).** `GameState._resolve_combat_at` hardcodes
-`feba_base_km = 2.0` (`GameState.gd:1071`). TIV loads `3.5` from config (`_load_feba_base_km`; pinned
-by `test_boots_attack_mode.py`). FEBA shift scales linearly with this, so HexCombat's front moves
-~57% as far per combat as TIV's.
+**DIVERGENCE 4 — feba_base_km (✅ RESOLVED 2026-06-29 — now scenario-configurable, default 3.5).**
+Was hardcoded `2.0`; now `GameData.feba_base_km` (loaded from scenario `feba_base_km`, default **3.5**
+to match TIV's `_load_feba_base_km`) and passed by `GameState._resolve_combat_at`. Golden re-baselined
+to `feba=-0.96`.
 
 **Terrain modifiers** (`CombatCalculator.gd:4`): the `TERRAIN_MODIFIERS` dict is defined but currently
 dormant — `_resolve_combat_at()` passes `1.0` as `defender_terrain_modifier`.

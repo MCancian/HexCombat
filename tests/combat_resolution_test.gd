@@ -46,7 +46,8 @@ func test_single_hex_combat_applies_casualties_feba_and_fought_flags() -> void:
 
 	assert_int(_battalion_qty(red, "Amphibious Infantry Battalion")).is_equal(3)
 	assert_int(_battalion_qty(green, "Amphibious Infantry Battalion")).is_equal(1)
-	assert_float(float(GameData.hex_states[COMBAT_HEX]["feba_km"]) - start_feba).is_equal_approx(1.0, 0.0001)
+	# FEBA delta scales linearly with GameData.feba_base_km (3.5, TIV value): 1.0 @ base 2.0 → 1.75 @ 3.5.
+	assert_float(float(GameData.hex_states[COMBAT_HEX]["feba_km"]) - start_feba).is_equal_approx(1.75, 0.0001)
 	assert_bool(red.fought_this_turn).is_true()
 	assert_bool(green.fought_this_turn).is_true()
 

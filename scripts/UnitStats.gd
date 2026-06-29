@@ -3,6 +3,10 @@ class_name UnitStats
 
 const DEFAULT_COMBAT_STRENGTH := 1.0
 
+# NOTE: battalions tagged "artillery" or "rotary_wing" are routed to combat SUPPORT (via their support
+# multiplier) and excluded from maneuver_units (see CombatForces). Their `strength` here is therefore
+# NOT used as maneuver combat strength — helicopters (rotary_wing) contribute at the rotary_wing support
+# multiplier (1.3) in both HexCombat and TIV, so the helicopter strength value is intentionally low/dead.
 const TYPE_DEFS := {
 	"Air Assault Infantry Battalion": {"category": "Air Assault", "strength": 1.4, "tags": ["infantry", "air_assault"]},
 	"Air Defense Battalion": {"category": "Air Defense", "strength": 0.9, "tags": ["air_defense"]},
