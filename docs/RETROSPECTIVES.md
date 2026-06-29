@@ -822,3 +822,21 @@ was too sensitive for the free-model implementer):**
   agent won't reintroduce axial assumptions → record only.
 - Most fixtures cluster on one scenario pair; consider a shared test-fixture constant for the
   golden beach-1 pair instead of duplicating literals across ~10 files → act later (refactor backlog).
+
+---
+
+## 2026-06-29 — Overnight loop item 1: supply→combat wiring   (orchestrator; opencode arg-limit hit)
+
+**What would you do differently:**
+- The opencode implementer call failed with "Argument list too long" — on this Windows box a long
+  prompt passed as a CLI positional arg exceeds the exe argument limit, and the background task still
+  exits 0 (silent failure). Lesson for the loop: pass long implementer plans via a file with `-f`
+  (write the plan to a scratch .md, `opencode run -f plan.md "implement the attached plan"`), or keep
+  the inline prompt short. The orchestrator implemented item 1 directly instead — faster than retrying.
+- Design call recorded in PLAN.md before coding (pool→per-unit effectiveness): binary-at-exhaustion
+  with a scenario knob. Clean, but a graded ramp (effectiveness scales with pool adequacy vs a required-
+  tons baseline) would be more faithful to TIV's continuous 0..1 — left as a future refine.
+
+**Orchestrator triage:**
+- opencode arg-length → act now: future overnight iterations use `-f` file attachment for plans.
+- Graded supply ramp → record only (future REFINE; binary v1 is sufficient and gated).

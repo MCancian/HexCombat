@@ -42,7 +42,9 @@ offload → movement & commit → ground combat → front-line → cleanup (+ vi
 when the hex-adjacency coordinate bug was fixed, and when `feba_base_km` was set to TIV's 3.5 — see
 `PLAN.md` → Decisions).
 - **D1 Amphibious offload** — ship reserve → beach landing; lands brigades onto beach hexes.
-- **D2 Red DOS supply** — supply pool / effectiveness tracking.
+- **D2 Red DOS supply** — supply pool / effectiveness tracking. An exhausted Red pool now degrades Red
+  ground-combat strength (`red_out_of_supply_effectiveness`, default 0.5) via
+  `GameState._inject_supply_effectiveness`.
 - **D3 Anti-ship & mine warfare** — IJFS-fed firing plan → crossing damage (count-based) → **geometric
   mine model** (randomized approach path, dangerous-mine count within `danger_radius`, decoy-sponge
   transit; knobs in `data/antiship/minefields.json`). Ship losses → BNs lost at sea.

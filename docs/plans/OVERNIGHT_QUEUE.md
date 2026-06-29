@@ -23,7 +23,7 @@ unattended work.
 
 ## Queue (in priority order)
 
-- [ ] **1. Wire `supply_effectiveness` into combat.** (`port_audit.md` "Supply-effectiveness → combat
+- [x] **1. Wire `supply_effectiveness` into combat.** ✅ DONE 2026-06-29 — `GameState._inject_supply_effectiveness`; knob `red_out_of_supply_effectiveness`=0.5; tests added; gate green; golden unchanged. (`port_audit.md` "Supply-effectiveness → combat
   link".) Replace the hardcoded `1.0` in `CombatForces.maneuver_units` (`scripts/CombatForces.gd:20`)
   and `UnitManager.gd:31` with the real per-unit supply effectiveness derived from
   `GameState.supply_state` (out-of-supply Red BNs fight at reduced effectiveness, 0..1), mirroring TIV

@@ -132,13 +132,14 @@ oracle:
   sets per-brigade `moved`/`in_combat` from the brigade's flag rather than OR-accumulating across its
   BNs as TIV does — functionally identical, since the flag is per-brigade.)
 
-**🟡 Port gap — `supply_effectiveness` does not yet feed combat (→ `docs/plans/port_audit.md`).** In
-TIV, `boots_combat_service._inject_supply_effectiveness` populates each combat unit's
-`supply_effectiveness` from the supply state, and `resolve_map_attack` multiplies unit strength by it.
-HexCombat computes/decrements the DOS pool correctly but feeds combat a **hardcoded 1.0**
-(`CombatForces.gd:20`, `UnitManager.gd:31`), so pool exhaustion has **no combat consequence yet**.
-`CombatCalculator` already reads the field — only the population is missing. Deferral noted in ROADMAP
-D2 ("wired to combat / zeroed pending D4"). Logged as a PORT item.
+**✅ Supply now feeds combat (2026-06-29).** `GameState._inject_supply_effectiveness(units, team)` sets
+each Red maneuver unit's `supply_effectiveness` before `resolve_map_attack` — `1.0` while the Red DOS
+pool is positive, and `GameData.red_out_of_supply_effectiveness` (scenario knob, default `0.5`) once
+exhausted (≤0); Green is unaffected (no DOS model). This mirrors TIV
+`boots_combat_service._inject_supply_effectiveness`, adapted to HexCombat's single pool (TIV is
+per-brigade). `CombatCalculator` multiplies maneuver strength by the field. Tests:
+`tests/supply_combat_effectiveness_test.gd`. The golden 1-turn scenario never exhausts the pool, so the
+golden invariant is unchanged. v1 is binary-at-exhaustion; a graded ramp is a future refinement.
 
 **Cosmetic:** `GameState.gd:7` aliases the preload as `SupplyStateResource` while the class is
 `SupplyState`; the typed `supply_state: SupplyState` is correct — alias inconsistency only.

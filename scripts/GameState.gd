@@ -1050,6 +1050,21 @@ func _find_contested_hexes() -> Array[String]:
 	return contested
 
 
+# Set supply_effectiveness on each combat unit dict. Red maneuver units fight at full effectiveness
+# while the Red DOS pool is positive, and at GameData.red_out_of_supply_effectiveness once it is
+# exhausted (<= 0). Green has no DOS model, so its effectiveness stays 1.0.
+func _inject_supply_effectiveness(units: Array, team: int) -> void:
+	if team != Brigade.Team.RED:
+		return
+	var pool: float = supply_state.current_dos_tons if supply_state != null else 1.0
+	var eff: float = 1.0 if pool > 0.0 else GameData.red_out_of_supply_effectiveness
+	if eff == 1.0:
+		return
+	for unit in units:
+		if unit is Dictionary:
+			unit["supply_effectiveness"] = eff
+
+
 func _resolve_combat_at(hex_id: String, dice: Dice) -> Dictionary:
 	var attacker_brigades := _combat_contributors_for(Brigade.Team.RED, hex_id)
 	var defender_brigades := _combat_contributors_for(Brigade.Team.GREEN, hex_id)
@@ -1061,6 +1076,10 @@ func _resolve_combat_at(hex_id: String, dice: Dice) -> Dictionary:
 	var defender_units := CombatForces.maneuver_units(defender_brigades)
 	var attacker_support := CombatForces.support_counts(attacker_brigades)
 	var defender_support := CombatForces.support_counts(defender_brigades)
+	# Inject supply effectiveness (mirrors TIV boots_combat_service._inject_supply_effectiveness). Red
+	# is the attacker; an exhausted Red DOS pool degrades Red maneuver strength. Green has no DOS model.
+	_inject_supply_effectiveness(attacker_units, Brigade.Team.RED)
+	_inject_supply_effectiveness(defender_units, Brigade.Team.GREEN)
 	var result := CombatCalculator.resolve_map_attack(
 		dice,
 		attacker_units,

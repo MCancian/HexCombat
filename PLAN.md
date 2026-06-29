@@ -130,6 +130,15 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-29 — Supply→combat effectiveness mapping (overnight loop item 1; max-autonomy call).** TIV
+  stores per-brigade `effectiveness` (`_inject_supply_effectiveness` ← `SupplyRepo`); HexCombat has a
+  single Red DOS **pool** (`supply_state.current_dos_tons`). Chosen mapping: inject at the combat call
+  site (mirroring TIV) — Red maneuver units get `supply_effectiveness = 1.0` while the pool is positive,
+  and `red_out_of_supply_effectiveness` (scenario knob, default **0.5**) once the pool is exhausted
+  (≤0); Green unaffected (no DOS model). Binary-at-exhaustion is the v1; a graded ramp is a future
+  refinement. Note: the golden 1-turn scenario never exhausts the pool, so the golden invariant is
+  unchanged. Implemented under the overnight queue.
+
 - **2026-06-29 — Port-audit Area 2 decisions actioned (user-ratified).** (1) **Unit strength table:**
   keep HexCombat's differentiated `UnitStats.TYPE_DEFS` (TIV's runtime flattens 12/17 maneuver types to
   1.0 via an incomplete type→key mapping; HexCombat reflects the *intended* table). Helicopters

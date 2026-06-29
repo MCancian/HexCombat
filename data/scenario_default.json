@@ -4,6 +4,7 @@
   "turn_length_days": 1,
   "red_dos_start": 100,
   "feba_base_km": 3.5,
+  "red_out_of_supply_effectiveness": 0.5,
   "stacking_soft_cap": 6,
   "victory": {
     "_comment": "End-of-cleanup victory census of battalions ON TAIWAN. loss_check_arm: 'unconditional' (default) | 'after_first_landing' | 'after_turn:<N>'. taiwan_hexes: null counts ALL placed hexes (correct for this main-island scenario; offshore islands can't be distinguished until terrain/land data exists — see PLAN.md Victory conditions); set to a hex-id array to restrict the census.",
