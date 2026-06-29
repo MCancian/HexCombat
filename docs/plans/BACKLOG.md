@@ -90,7 +90,13 @@ proposes, does not change.
 
 ---
 
-## Track 3 — Victory conditions + end-to-end golden test
+## Track 3 — Victory conditions + end-to-end golden test  *(DONE 2026-06-29)*
+
+**Status:** implemented + gated. `VictoryConditions.evaluate` + end-of-cleanup census + `game_over`/
+`winner` on GameState/TurnResult/LLM observation; `tools/validate_golden_victory.gd` plays the golden
+scenario to a deterministic terminal (turn 1, China win). Two follow-ups remain: **census counts OOB,
+not present, battalions** (`refactor_audit.md` item 2b) and **main-island land-hex data** (blocked on
+the terrain phase; `taiwan_hexes` config is the hook). Detail: `PLAN.md` → Victory conditions.
 
 **Depends on:** victory conditions being *implemented* (they are designed but not built).
 

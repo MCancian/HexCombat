@@ -15,6 +15,12 @@ yet. Sources: `docs/REFACTOR_NOTES.md`, `docs/RETROSPECTIVES.md` "act later" ite
    `ships.json` (defaulting to today's category values) so designers tune per hull. Additive; the
    category table stays as the fallback. (RETROSPECTIVES 2026-06-29 mine-geometry.)
 
+2b. **Victory census counts present battalions, not OOB.** `GameState._taiwan_battalion_census()` sums
+   `Brigade.get_battalion_count()` (OOB composition) for landed brigades, so battalions lost at sea
+   before landing are still counted toward China. Count *surviving/present* battalions instead (the
+   design's "battalions on Taiwan" means present). Belongs with the offload model. (PLAN.md 2026-06-29
+   Victory conditions → OPEN.)
+
 ## High payoff, higher risk (do with attention)
 
 3. **Typed `HexState` / `CombatSummary` Resources.** Replace the plain dicts threaded through

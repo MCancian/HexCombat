@@ -51,7 +51,9 @@
     "pending_commitments": {"type": "object"},
     "last_contested_hexes": {"type": "array"},
     "last_combat": {"type": "array"},
-    "objectives": {"type": "array"}
+    "objectives": {"type": "array"},
+    "game_over": {"type": "boolean"},
+    "winner": {"enum": ["", "red", "green"]}
   },
   "additionalProperties": true
 }

@@ -38,7 +38,9 @@ static func observation(perspective_team: String = "") -> Dictionary:
 		"pending_commitments": _pending_commitments(),
 		"last_contested_hexes": _game_state().last_contested_hexes.duplicate(),
 		"last_combat": _last_combat_summaries(),
-		"objectives": []
+		"objectives": [],
+		"game_over": _game_state().game_over,
+		"winner": _game_state().winner
 	}
 
 

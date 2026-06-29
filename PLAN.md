@@ -126,6 +126,21 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-29 — Victory conditions implemented (Track 3a) + end-to-end golden test (Track 3b).** Built
+  the end-of-cleanup win/loss census per the settled design (China loses if 0 PLA battalions on Taiwan
+  when the loss check is armed; China wins if PLA battalions > ROC battalions). Pure checker
+  `VictoryConditions.evaluate` (opencode) + integration in `GameState` (census, `game_over`/`winner`
+  fields, `TurnResult` + LLM observation surfacing) + scenario `victory` config. **Key divergence
+  forced by missing data:** "on Taiwan main-island land hexes" can't be computed — the hex grid has no
+  land/island flag (terrain is a deferred ArcGIS phase) — so `taiwan_hexes: null` defaults to **all
+  placed hexes** (exact for the main-island golden scenario; the array is the future land-data hook).
+  Golden scenario armed `after_first_landing` (sea-start attacker) though the code default is
+  `unconditional`. New gate `tools/validate_golden_victory.gd` (deterministic terminal + winner⇔census).
+  Golden `casualties=2/feba=0.76` byte-stable; gate green. Census counts OOB `get_battalion_count`
+  (over-counts sea losses) — logged as an offload-track follow-up (`refactor_audit.md`). Full detail:
+  Open Questions → "Victory conditions" → IMPLEMENTED 2026-06-29; lessons: RETROSPECTIVES 2026-06-29
+  victory-conditions.
+
 - **2026-06-29 — Mine warfare: replace the geometry-free cap model with the GEOMETRIC danger model +
   decoy-sponge transit (USER design call).** After measuring that the planned `intel_locked` strike
   bonus could not reach the ~25% crossing-loss target (its whole band is ~54%→~41% mean; mines set a
@@ -1511,6 +1526,30 @@ end-of-turn cleanup**, counting Chinese (PLA) and Taiwanese (ROC) battalions **o
   confirm when implementing.
 - **(d) Precedence.** The two clauses are mutually exclusive (can't have zero Chinese *and* Chinese >
   Taiwanese), so no conflict; check order is immaterial. Recorded for completeness.
+
+**IMPLEMENTED 2026-06-29 (Track 3a + 3b).** `scripts/VictoryConditions.gd` (pure
+`evaluate(china_bn, taiwan_bn, arm, turn_number, china_has_landed)`; opencode-implemented + 9-case
+unit suite) is called at the end of `GameState.resolve_cleanup_phase` after `recompute_hex_ownership`
+(pure board read — **no dice**, golden RNG untouched). `GameState._taiwan_battalion_census()` sums
+`Brigade.get_battalion_count()` by team over placed hexes; new `game_over` / `winner` (`""`/`"red"`/
+`"green"`) GameState fields, reset in `reset_to_scenario`, threaded into `TurnResult` + the LLM
+observation (schema: optional props, `additionalProperties:true` so fixtures stay valid). Config:
+scenario `victory` block (`loss_check_arm`, `taiwan_hexes`) on `GameData.victory_config`. **Resolved
+(c):** single `winner` field + `game_over` bool, zero-sum. **Resolved (b) data source:** there is
+**no land/island flag** in the hex grid (`taiwan_hex_grid.json` is geometry-only; terrain is a deferred
+ArcGIS phase), so `taiwan_hexes: null` = **all placed hexes** count — correct for the main-island
+golden scenario (no offshore islands); the `taiwan_hexes` array is the hook for when land data exists.
+The **golden scenario uses `after_first_landing`** (PLA starts at sea; `unconditional` would declare a
+turn-1 loss before it can land) while the **code default stays `unconditional`** per the design. E2e
+gate `tools/validate_golden_victory.gd` plays the golden scenario to a deterministic, reproducible
+terminal (turn 1, China win 36>17), asserting winner ⇔ census. Gate green (32 GdUnit suites).
+
+**OPEN (census fidelity — promote to the offload track).** The census counts each landed brigade's
+**OOB** `get_battalion_count()`, not its sea-loss-/combat-reduced *present* strength, so China can be
+over-counted by battalions lost at sea before landing (the design's "battalions on Taiwan" implies
+*present* battalions). For the golden scenario the outcome is robust either way (wave 36, minus ~sea
+losses, still > 17 ROC), but the count should eventually reflect surviving battalions. See
+`docs/plans/refactor_audit.md`.
 
 ### D3-D crossing lethality calibration  *(2026-06-28: exquisite-intel path chosen; warmup wiring IN PROGRESS — see UPDATE below)*
 

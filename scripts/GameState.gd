@@ -63,6 +63,10 @@ var lost_at_sea_accumulator: float = 0.0
 var last_antiship_summary: Dictionary = {}
 var last_frontline_summary: Dictionary = {}
 var last_cleanup_summary: Dictionary = {}
+# Victory state, set in the end-of-turn cleanup census (VictoryConditions). winner: ""/"red"/"green".
+var game_over: bool = false
+var winner: String = ""
+var _china_has_landed: bool = false  # latch for the "after_first_landing" loss-check arm
 
 
 func _ready() -> void:
@@ -106,6 +110,9 @@ func reset_to_scenario() -> void:
 	last_antiship_summary = {}
 	last_frontline_summary = {}
 	last_cleanup_summary = {}
+	game_over = false
+	winner = ""
+	_china_has_landed = false
 	EventBus.phase_changed.emit(phase)
 
 
@@ -848,9 +855,53 @@ func resolve_cleanup_phase() -> Dictionary:
 	# Brigade per-turn flags (moved_this_turn / fought_this_turn / moved_admin_this_turn) are reset
 	# in begin_next_turn, so cleanup does not duplicate them.
 	GameData.recompute_hex_ownership()
-	last_cleanup_summary = {"antiship_systems_reset": reset_count}
+	# Victory census (end-of-cleanup): count PLA (RED) vs ROC (GREEN) battalions on Taiwan and evaluate
+	# win/loss. Pure board read — consumes no dice, so the golden RNG stream is unaffected.
+	var census := _taiwan_battalion_census()
+	if census["red"] > 0:
+		_china_has_landed = true
+	var arm := String(GameData.victory_config.get("loss_check_arm", "unconditional"))
+	var verdict := VictoryConditions.evaluate(
+		int(census["red"]), int(census["green"]), arm, turn_number, _china_has_landed)
+	game_over = bool(verdict["game_over"])
+	winner = String(verdict["winner"])
+	last_cleanup_summary = {
+		"antiship_systems_reset": reset_count,
+		"china_battalions_on_taiwan": int(census["red"]),
+		"taiwan_battalions_on_taiwan": int(census["green"]),
+		"game_over": game_over,
+		"winner": winner,
+		"victory_reason": String(verdict["reason"]),
+	}
 	EventBus.cleanup_resolved.emit(last_cleanup_summary)
 	return last_cleanup_summary
+
+
+## Count PLA (RED) vs ROC (GREEN) battalions on the hexes that count as "on Taiwan". taiwan_hexes is
+## null => every placed hex counts (correct for the main-island scenario; offshore islands can't be
+## distinguished until terrain/land data exists — see PLAN.md Victory conditions). Brigades still at sea
+## (no hex_id) are excluded, so China reads 0 until it lands.
+func _taiwan_battalion_census() -> Dictionary:
+	var counted: Variant = GameData.victory_config.get("taiwan_hexes", null)
+	var use_filter := counted is Array
+	var hex_filter: Dictionary = {}
+	if use_filter:
+		for h in counted:
+			hex_filter[String(h)] = true
+	var red := 0
+	var green := 0
+	for brigade_value in GameData.brigades.values():
+		var brigade: Brigade = brigade_value
+		if brigade.hex_id == "":
+			continue
+		if use_filter and not hex_filter.has(brigade.hex_id):
+			continue
+		var bn := brigade.get_battalion_count()
+		if brigade.team == Brigade.Team.RED:
+			red += bn
+		elif brigade.team == Brigade.Team.GREEN:
+			green += bn
+	return {"red": red, "green": green}
 
 
 # --- D5-A Frontline phase — redistribute Red brigades along a drawn polyline -------------------
@@ -1185,6 +1236,8 @@ func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> Tur
 	result.frontline_summary = last_frontline_summary.duplicate(true)
 	result.cleanup_summary = last_cleanup_summary.duplicate(true)
 	result.events = TurnEventLog.build(self)
+	result.game_over = game_over
+	result.winner = winner
 	return result
 
 

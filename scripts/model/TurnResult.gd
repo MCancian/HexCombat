@@ -10,6 +10,8 @@ class_name TurnResult
 @export var frontline_summary: Dictionary = {}
 @export var cleanup_summary: Dictionary = {}
 @export var events: Array = []
+@export var game_over: bool = false
+@export var winner: String = ""  # ""/"red"/"green"
 
 func to_dict() -> Dictionary:
 	var events_out: Array = []
@@ -26,4 +28,6 @@ func to_dict() -> Dictionary:
 		"frontline_summary": frontline_summary.duplicate(true),
 		"cleanup_summary": cleanup_summary.duplicate(true),
 		"events": events_out,
+		"game_over": game_over,
+		"winner": winner,
 	}

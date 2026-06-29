@@ -17,6 +17,7 @@ var scenario_name: String = ""
 var turn_length_days: int = 0
 var red_dos_start: int = 0
 var stacking_soft_cap: int = 0
+var victory_config: Dictionary = {}  # scenario 'victory' block (loss_check_arm, taiwan_hexes)
 
 var hexes: Array[Hex] = []
 var hex_lookup: Dictionary = {}  # hex_id -> Hex
@@ -176,6 +177,8 @@ func load_scenario(path: String) -> void:
 	if red_dos_start <= 0:
 		push_warning("Scenario red_dos_start is <= 0; Red DOS supply pool will start empty")
 	stacking_soft_cap = int(scenario.get("stacking_soft_cap", 0))
+	var victory_value: Variant = scenario.get("victory", {})
+	victory_config = victory_value if victory_value is Dictionary else {}
 	_parse_red_ship_reserve(scenario.get("red_ship_reserve", []))
 
 	var count := 0

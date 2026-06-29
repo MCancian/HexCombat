@@ -772,3 +772,31 @@ was too sensitive for the free-model implementer):**
   `PLAN.md 2026-06-29 — Mine warfare`.
 - Final dial-in toward exactly ~25% → **surface to user**: the model is green at ~32% baseline mean; which
   knob (mine geometry/decoy mix vs the now-working intel lever) and the exact target is a design call.
+
+## 2026-06-29 — victory-conditions: end-of-cleanup census + e2e golden test   (implementer: opencode for the pure checker; direct for integration)
+
+**What surprised me / what I'd do differently:**
+- **The data gap was the real story.** "On Taiwan main-island land hexes" sounds simple but the hex grid
+  has **no land/sea/island flag** (geometry only; terrain is a deferred ArcGIS phase). Rather than
+  fabricate a coastline, I made the census key on a `taiwan_hexes` config (null = all placed hexes) — a
+  graceful default that's exact for the golden scenario and a clean hook for future land data. Lesson:
+  when a design references data that doesn't exist, build the mechanism + a config seam, don't invent the
+  data.
+- **The arm-vs-sea-start interaction only showed up in the e2e run.** `unconditional` (the design
+  default) declares a China loss on turn 1 because the PLA starts at sea (0 ashore). The exploratory
+  multi-turn harness caught it immediately; the unit tests never would have. Lesson: an end-to-end
+  playthrough harness earns its keep — it surfaces phase-interaction bugs unit tests can't see. The fix
+  (golden scenario armed `after_first_landing`) is exactly what the design provided for.
+- **opencode was a clean fit for the pure checker** (`VictoryConditions.evaluate`): self-contained, no
+  RNG, no golden risk, fully specified by a table of cases. It produced correct code + a 9-case suite
+  first try, zero scope drift. The integration (golden-sensitive, multi-file) I kept for myself.
+- **Census fidelity tech debt:** the census counts OOB `get_battalion_count()`, not present strength, so
+  sea losses over-count China. Robust for the golden outcome but should count survivors eventually.
+
+**Orchestrator triage:**
+- Verified: 9/9 victory unit cases, `validate_golden_victory` PASS (deterministic terminal + winner⇔
+  census), golden `casualties=2/feba=0.76` byte-stable, full gate green (32 GdUnit suites). opencode diff
+  scoped to the 2 intended files. → **acted now** (committing 3a + 3b together).
+- Census OOB over-count → **act later**: count present/surviving battalions; logged in
+  `docs/plans/refactor_audit.md`. Cross-ref `PLAN.md 2026-06-29 — Victory conditions`.
+- Main-island land-hex data → **blocked on terrain phase**: `taiwan_hexes` knob is the hook; documented.
