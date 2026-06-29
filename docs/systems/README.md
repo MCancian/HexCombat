@@ -13,7 +13,7 @@ HTML mirrors live in `html/`. Audit status + open fidelity questions:
 | Supply (D2 DOS) | [supply-dos.md](supply-dos.md) | [html](html/supply-dos.html) |
 | Anti-ship & mine (D3) | [antiship-mine.md](antiship-mine.md) | [html](html/antiship-mine.html) |
 | IJFS (D4) | [ijfs.md](ijfs.md) | [html](html/ijfs.html) |
-| Front-line / cleanup / victory (D5) | _pending_ | _pending_ |
+| Front-line / cleanup / victory (D5) | [frontline-cleanup-victory.md](frontline-cleanup-victory.md) | [html](html/frontline-cleanup-victory.html) |
 | Turn engine & data | _pending_ | _pending_ |
 | LLM API & self-play | _pending_ | _pending_ |
 | View layer | _pending_ | _pending_ |

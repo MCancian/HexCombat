@@ -26,7 +26,7 @@ fixed (obvious) or flagged in `/DECISIONS.md` (design calls).
 | 4 | Supply (D2 DOS) | `DosConsumption`, `SupplyState` | `services/red_dos_consumption.py` | ✅ | ✅ | ✅ |
 | 5 | Anti-ship & mine (D3) | `Antiship*`, `MineWarfareService`, ship/mine models | TIV `antiship_crossing.py` + TaiwanDefenseRefactor `mine_warfare.py` | ✅ | ✅ | ✅ |
 | 6 | IJFS (D4) | `scripts/ijfs/*` | `src/ijfs_standalone/*` | ✅ | ✅ | ✅ |
-| 7 | Front-line / cleanup / victory (D5) | `FrontLineService`, `VictoryConditions`, `HexOwner` | `services/front_line_service.py`, `cleanup_*` | ☐ | ☐ | ☐ |
+| 7 | Front-line / cleanup / victory (D5) | `FrontLineService`, `VictoryConditions`, `HexOwner` | `services/front_line_service.py`, `cleanup_*` | ✅ | ✅ | ✅ |
 | 8 | Turn engine & data | `GameState`, `GameData`, `Dice`, `EventBus`, `Theaters` | `models/game_state.py` | ☐ | ☐ | ☐ |
 | 9 | LLM API & self-play | `LLMGameAPI`, `SelfPlay*`, `TurnEventLog` | (HexCombat-original) | ☐ | ☐ | ☐ |
 | 10 | View layer | `HexMap`, `GameController`, panels, symbols, `UnitManager` | (HexCombat-original UI) | ☐ | ☐ | ☐ |
@@ -72,3 +72,9 @@ fixed (obvious) or flagged in `/DECISIONS.md` (design calls).
   (`maneuver_casualties`) writeback is computed but (a) empty at runtime — IJFS targets lack OOB
   battalion IDs — and (b) not consumed; IJFS air/missile kills don't reduce ground brigades. Anti-ship
   half IS wired. No new DECISIONS.
+- Area 7 — documented (`docs/systems/frontline-cleanup-victory.md` + html) and compared. **✅ Front-line
+  & cleanup are faithful ports** (polyline→hex 2km sampling, arc-length interpolation, ownership
+  recompute all match `front_line_service.py`/`cleanup_hex_service.py`, verified). **Victory is
+  HexCombat-original** (no TIV BOOTS equivalent; settled 2026-06-28). REFINE (→ `port_audit.md`):
+  front-line distribution is brigade-level vs TIV battalion-level + per-hex clipping; tied to the
+  deferred draw UI (Track 5). taiwan_hexes=null census caveat is known. No new DECISIONS.

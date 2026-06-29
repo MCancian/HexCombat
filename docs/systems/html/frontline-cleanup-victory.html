@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HexCombat — Front-line, Cleanup &amp; Victory (D5)</title>
+<style>
+  body{font:16px/1.55 -apple-system,Segoe UI,Roboto,sans-serif;max-width:880px;margin:2rem auto;padding:0 1rem;color:#1c2230}
+  h1{border-bottom:3px solid #2b6cb0;padding-bottom:.3rem}
+  h2{margin-top:2rem;color:#2b6cb0}
+  table{border-collapse:collapse;width:100%;margin:1rem 0}
+  th,td{border:1px solid #cbd5e0;padding:.4rem .6rem;text-align:left;vertical-align:top}
+  th{background:#edf2f7}
+  code{background:#edf2f7;padding:.1rem .3rem;border-radius:3px;font-size:.9em}
+  .ok{background:#f0fff4;border:1px solid #68d391;border-left:5px solid #38a169;padding:.8rem 1rem;border-radius:6px;margin:1rem 0}
+  .note{background:#fffaf0;border:1px solid #f6ad55;border-left:5px solid #dd6b20;padding:.8rem 1rem;border-radius:6px;margin:1rem 0}
+  footer{margin-top:3rem;color:#718096;font-size:.85em;border-top:1px solid #e2e8f0;padding-top:1rem}
+</style>
+</head>
+<body>
+<h1>Front-line, Cleanup &amp; Victory (D5)</h1>
+<p><em>Human-readable summary. Machine reference: <code>docs/systems/frontline-cleanup-victory.md</code>.
+Port-fidelity audit, Area 7 of 10.</em></p>
+
+<h2>What these systems do</h2>
+<p>Three end-of-turn systems. <strong>Front line:</strong> a drawn line is sampled into a hex sequence
+and the attacker's maneuver brigades are spread along it. <strong>Cleanup:</strong> each hex's owner
+(red / green / contested / none) is recomputed from who occupies it. <strong>Victory:</strong> at the
+very end of cleanup, a census of battalions on Taiwan decides the game — China loses if it has zero
+battalions ashore, and wins if it outnumbers the defenders.</p>
+
+<div class="ok">
+<strong>✅ Front-line &amp; cleanup are faithful ports.</strong> Polyline→hex sampling (2 km steps,
+nearest-hex), arc-length interpolation, and ownership recomputation match TIV's
+<code>front_line_service.py</code> / <code>cleanup_hex_service.py</code> (verified). Victory conditions
+are a <strong>HexCombat-original design</strong> (settled 2026-06-28) — TIV's ground phase has no
+victory check — and surface through <code>game_over</code>/<code>winner</code> on the turn result and
+the LLM observation.</p>
+</div>
+
+<div class="note">
+<strong>Notes / deferrals:</strong>
+<ul>
+<li><strong>Victory census counts all placed hexes</strong> (<code>taiwan_hexes: null</code>) — correct
+for the main-island scenario; distinguishing offshore islands needs terrain/land data (a later phase).</li>
+<li><strong>Front-line distribution is brigade-level</strong> and snaps to hex centers; TIV places at
+battalion level with finer per-hex clipping. A refinement for when the draw UI lands.</li>
+<li><strong>The front-line drawing UI is deferred</strong> to the graphics track; the logic exists for
+headless / LLM callers but there's no in-game drawing tool yet.</li>
+</ul>
+</div>
+
+<footer>HexCombat systems reference · TaiwanInvasionViewer port-fidelity audit.</footer>
+</body>
+</html>
