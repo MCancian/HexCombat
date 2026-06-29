@@ -54,8 +54,12 @@ just implement small/contained sub-tasks directly (faster than fighting the weak
     `{brigade_id}-MU-{n}` per battalion instance + `MANEUVER_TYPE_MAP` profile + OOB metadata
     (battalion_id/brigade_id/to_number/unit_type). Added `Brigade.to_number`. `ijfs_maneuver_targets_test.gd`.
     NOT yet wired into the pipeline (2c/2d) → golden unchanged. Gate green.
-  - [ ] **2c.** Detection/lethality bias: `mobility_multiplier` (less-mobile → more detectable),
-    `posture="active"` for recently-active units, `hardness` (less-armored die more readily).
+  - [x] **2c-i.** ✅ DONE 2026-06-29 — wired `build_maneuver_targets` into `GameState._rebuild_ijfs_state`
+    (Green maneuver units now enter IJFS detection/targeting/strike via existing "Maneuver Units"
+    pairings). `maneuver_casualties` now populates (verified: 3 struck, e.g. `BDE-269-MU-3`). Golden
+    UNCHANGED (IJFS strikes maneuver units with leftover budget; anti-ship suppression unperturbed).
+  - [ ] **2c-ii.** Detection/lethality bias: `mobility_multiplier` (less-mobile → more detectable),
+    `posture="active"` for recently-active units (2a flags), `hardness` (less-armored die more readily).
   - [ ] **2d.** Consume `maneuver_casualties`: remove struck battalions from the OOB before ground
     combat. Keep golden byte-stable (IJFS substream). Suppression reporting-only at first.
   Original item below: (`port_audit.md` "Ground-casualty IJFS↔OOB linkage".)

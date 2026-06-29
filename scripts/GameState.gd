@@ -503,6 +503,15 @@ func _rebuild_ijfs_state() -> void:
 	# pair in metadata) and replace the static "Anti-Ship Systems" rows, so IJFS strikes write back by
 	# (TO, type) for the D3 firing-plan join.
 	ijfs_state.targets = IjfsLoaders.load_targets_with_antiship(IJFS_TARGETS_PATH, antiship_containers, 1)
+	# D4-H (2c): add the Green/ROC maneuver units as IJFS targets so air/missile fires can attrit ground
+	# battalions. One target per battalion instance, carrying {brigade_id}-MU-{n} in metadata, so
+	# _compute_ijfs_writeback can attribute destroyed maneuver units back to the OOB (consumed in 2d).
+	var green_brigades: Array = []
+	for brigade_value in GameData.brigades.values():
+		var brigade: Brigade = brigade_value
+		if brigade.team == Brigade.Team.GREEN and not brigade.destroyed:
+			green_brigades.append(brigade)
+	ijfs_state.targets.append_array(IjfsLoaders.build_maneuver_targets(green_brigades, 1))
 	ijfs_state.munitions = IjfsLoaders.load_munitions(IJFS_MUNITIONS_PATH)
 	ijfs_state.pairings = IjfsLoaders.load_pairings(IJFS_PAIRINGS_PATH)
 	ijfs_state.scenario = IjfsLoaders.load_scenario(IJFS_SCENARIO_PATH)
