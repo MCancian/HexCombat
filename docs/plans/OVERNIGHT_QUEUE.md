@@ -11,11 +11,15 @@ commit `.mcp.json`. **Do NOT touch Track 5 graphics** — it needs visual verifi
 unattended work.
 
 ## Known gate flakiness (retry policy)
-A few `await`-signal GdUnit tests (`offload_calculator_test::test_day1_only_maneuver_bns_land`,
-movement/`reachable_hexes_changed` awaits) intermittently time out (2s) under heavier suite load — they
-pass in isolation and on re-run. **Policy:** if `run_all_tests.ps1` fails only on such an await-timeout
-test, **re-run once**; a clean second run counts as green. A deterministic failure (same test, real
-assertion) is a real break — fix it. (Hardening these awaits is queued under "exhausted" work below.)
+A few `await`-signal GdUnit tests intermittently time out under heavier suite load — they pass in
+isolation and on re-run. **Partial hardening DONE 2026-06-29:** the signal asserts in
+`movement_ui_test`/`selection_test` now use `.wait_until(5000)` (was the 2s default) so slow-path
+timing no longer false-fails. Remaining flakes are rarer pure-test/teardown blips under the full
+pipeline (e.g. `supply_combat_effectiveness_test`, `offload_calculator_test`, `symbol_library_test`
+is_push_error) — Godot 4.7 teardown pressure, not await timeouts. **Policy:** if `run_all_tests.ps1`
+fails only on such a test (passes in isolation, shifts between runs), **re-run once** (twice if needed);
+a clean run counts as green. A deterministic failure (same test every run, real assertion) is a real
+break — fix it.
 
 ## opencode invocation (Windows arg limits)
 A long CLI prompt fails with "Argument list too long"; and `-f <file> "<msg>"` makes `--file` (an array)

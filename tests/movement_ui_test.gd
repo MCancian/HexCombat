@@ -20,7 +20,7 @@ func test_selecting_brigade_emits_reachable_hexes() -> void:
 
 	controller._on_hex_clicked(RED_START_HEX)
 
-	assert_signal(EventBus).is_emitted("reachable_hexes_changed")
+	assert_signal(EventBus).wait_until(5000).is_emitted("reachable_hexes_changed")
 	assert_array(controller.current_reachable).is_not_empty()
 
 
@@ -36,7 +36,7 @@ func test_clicking_reachable_target_issues_move_order() -> void:
 	controller._on_hex_clicked(target_hex)
 
 	assert_int(GameState.orders_for(Brigade.Team.RED).size()).is_equal(order_count_before + 1)
-	assert_signal(EventBus).is_emitted("move_order_issued", RED_BRIGADE_ID, target_hex, Movement.MODE_TACTICAL)
+	assert_signal(EventBus).wait_until(5000).is_emitted("move_order_issued", RED_BRIGADE_ID, target_hex, Movement.MODE_TACTICAL)
 
 
 func test_administrative_mode_reaches_more_hexes_than_tactical() -> void:
@@ -67,7 +67,7 @@ func test_end_turn_applies_order_and_advances_turn() -> void:
 	var brigade: Brigade = GameData.get_brigade(RED_BRIGADE_ID)
 	assert_int(GameState.turn_number).is_equal(turn_before + 1)
 	assert_str(brigade.hex_id).is_equal(target_hex)
-	assert_signal(EventBus).is_emitted("turn_advanced", GameState.turn_number)
+	assert_signal(EventBus).wait_until(5000).is_emitted("turn_advanced", GameState.turn_number)
 
 
 func _first_reachable_target(controller: GameController, current_hex: String) -> String:
