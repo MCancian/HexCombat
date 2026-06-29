@@ -148,6 +148,8 @@ func _load_oob_file(path: String) -> void:
 		brigade.id = brigade_id
 		brigade.name = brigade_data.get("name", "")
 		brigade.team = _parse_team(brigade_data.get("team", "Red"))
+		var to_number_val: Variant = brigade_data.get("to_number")  # PLA brigades store null (at sea)
+		brigade.to_number = int(to_number_val) if to_number_val != null else 0
 		brigade.nato_type = brigade_data.get("nato_type", "")
 		brigade.hex_id = String(brigade_data.get("hex_id", ""))
 

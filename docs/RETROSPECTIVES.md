@@ -840,3 +840,22 @@ was too sensitive for the free-model implementer):**
 **Orchestrator triage:**
 - opencode arg-length → act now: future overnight iterations use `-f` file attachment for plans.
 - Graded supply ramp → record only (future REFINE; binary v1 is sufficient and gated).
+
+---
+
+## 2026-06-29 — Overnight loop item 2b: maneuver-target generation   (orchestrator)
+
+**What would you do differently:**
+- `int(brigade_data.get("to_number", 0))` crashed with "Nonexistent 'int' constructor" because all 111
+  PLA brigades store `"to_number": null` — and GDScript `Dictionary.get(key, default)` returns a stored
+  `null` rather than the default when the key EXISTS with a null value. Only 32 brigades loaded → a 51-
+  error cascade across every GameData-dependent suite. Lesson: when reading optional numeric JSON that
+  may be present-but-null, guard explicitly (`var v = d.get(k); int(v) if v != null else 0`), don't rely
+  on the `.get` default. The single-line isolation run + `--import` surfaced it fast.
+- Decomposing item 2 so 2b is a PURE generator (no pipeline wiring) kept golden risk at zero and made
+  the crash trivially attributable. Good call — keep the pipeline-perturbing wiring isolated to 2c/2d.
+
+**Orchestrator triage:**
+- Dictionary.get-null gotcha → record only (fixed; pattern noted for future JSON loaders).
+- Gate flakiness reconfirmed: an unrelated `is_push_error` test flaked once under load, passed in
+  isolation + on retry — the retry policy held.

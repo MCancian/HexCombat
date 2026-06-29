@@ -29,6 +29,72 @@ const STRIKE_MODIFIER_MATCH_KEYS := ["category", "subcategory", "mobility", "har
 const SAM_CATEGORIES := ["Moveable SAMs", "Static SAMs", "Mobile SAMs"]
 
 
+# Maps a Green/ROC battalion type → IJFS "Maneuver Units" target profile
+# (subcategory, mobility, hardness, detectability_active, detectability_hiding). Faithful port of TIV
+# ijfs_standalone/default_targets.MANEUVER_TYPE_MAP. Unmapped types use MANEUVER_FALLBACK.
+const MANEUVER_TYPE_MAP := {
+	"Mechanized Infantry Battalion": ["Mechanized Infantry", "mobile", "hard", "high", "medium"],
+	"Tank Battalion": ["Armour", "mobile", "hard", "high", "medium"],
+	"Armor Battalion": ["Armour", "mobile", "hard", "high", "medium"],
+	"Combined Arms Battalion": ["Mechanized Infantry", "mobile", "hard", "high", "medium"],
+	"Mechanized Artillery Battalion": ["Field Artillery", "mobile", "soft", "high", "low"],
+	"Field Artillery Battalion": ["Field Artillery", "mobile", "soft", "high", "low"],
+	"Rocket Artillery Battalion": ["Rocket Artillery", "mobile", "soft", "high", "low"],
+	"Infantry Battalion (Reserve)": ["Light Infantry - Reserve", "mobile", "soft", "medium", "low"],
+	"Special Forces Battalion": ["Special Operations", "mobile", "soft", "low", "low"],
+	"Attack Helicopter Battalion": ["Army Aviation - Attack", "mobile", "soft", "high", "medium"],
+	"Utility Helicopter Battalion": ["Army Aviation - Transport", "mobile", "soft", "high", "medium"],
+	"Amphibious Infantry Battalion": ["Marine Corps", "mobile", "hard", "high", "medium"],
+	"Air Assault Infantry Battalion": ["Air Assault", "mobile", "soft", "high", "medium"],
+	"Air Defense Battalion": ["Command - Territorial Defense", "moveable", "soft", "medium", "low"],
+}
+const MANEUVER_FALLBACK := ["Light Infantry - Reserve", "mobile", "soft", "medium", "low"]
+
+
+## Generate "Maneuver Units" IJFS targets from a list of Green/ROC Brigade objects — one target per
+## battalion INSTANCE (HexCombat settled design 2026-06-28, finer than TIV's one-per-row), with a
+## stable per-battalion id `{brigade_id}-MU-{n}` in metadata so _compute_ijfs_writeback can attribute
+## destroyed maneuver units back to the OOB. Pure: no global state, no pipeline wiring (2c/2d consume
+## these). Profile via MANEUVER_TYPE_MAP. Service/Support and unmapped types use MANEUVER_FALLBACK
+## (targetable, soft, medium-detect) per the settled design.
+static func build_maneuver_targets(green_brigades: Array, current_day: int = 1) -> Array[IjfsTarget]:
+	var targets: Array[IjfsTarget] = []
+	for brigade_value in green_brigades:
+		var brigade: Brigade = brigade_value
+		var n := 0
+		for battalion_value in brigade.composition:
+			var battalion: Battalion = battalion_value
+			var unit_type := String(battalion.type)
+			var profile: Array = MANEUVER_TYPE_MAP.get(unit_type, MANEUVER_FALLBACK)
+			for _i in range(battalion.qty):
+				n += 1
+				var battalion_id := "%s-MU-%d" % [brigade.id, n]
+				var source_id := "maneuver_" + _maneuver_slug(battalion_id)
+				var row := {
+					"target_id": source_id,
+					"category": "Maneuver Units",
+					"subcategory": String(profile[0]),
+					"quantity": 1,
+					"mobility": String(profile[1]),
+					"hardness": String(profile[2]),
+					"detectability_active": String(profile[3]),
+					"detectability_hiding": String(profile[4]),
+					"battalion_id": battalion_id,
+					"brigade_id": brigade.id,
+					"to_number": brigade.to_number,
+					"unit_type": unit_type,
+					"team": "Green",
+					"systems_represented": 1,
+				}
+				targets.append(_runtime_target_from_master(row, source_id, source_id, 1, current_day))
+	targets.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id < b.target_id)
+	return targets
+
+
+static func _maneuver_slug(value: String) -> String:
+	return value.strip_edges().to_lower().replace(" ", "_").replace("/", "_").replace("-", "_")
+
+
 static func load_targets(path: String, current_day: int = -1) -> Array[IjfsTarget]:
 	var body: Variant = _unwrap_data(_read_json(path))
 	if body is Dictionary and body.has("targets") and body["targets"].size() > 0 and body["targets"][0].has("source_target_id"):

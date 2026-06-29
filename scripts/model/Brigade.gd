@@ -13,6 +13,7 @@ const ORG_RECOVERY_PER_TURN := 10.0     # +10% per turn when neither moving nor 
 @export var id: String = ""
 @export var name: String = ""
 @export var team: Team = Team.RED
+@export var to_number: int = 0  # theater of operations (TO) the brigade belongs to, from the OOB
 @export var nato_type: String = ""
 @export var composition: Array[Battalion] = []
 

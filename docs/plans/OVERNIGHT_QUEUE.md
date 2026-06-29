@@ -50,8 +50,10 @@ just implement small/contained sub-tasks directly (faster than fighting the weak
   - [x] **2a. Persistent prior-turn activity flags on `Brigade`** ✅ DONE 2026-06-29 —
     `moved_last_turn`/`fought_last_turn` latched in `resolve_cleanup_phase`; `brigade_activity_history_test.gd`;
     gate green; golden unchanged (latch consumes no dice).
-  - [ ] **2b.** Mint per-battalion maneuver IDs (`{brigade_id}-MU-{n}`) + generate "Maneuver Units" IJFS
-    targets from the ROC OOB (port TIV `build_maneuver_targets` + `MANEUVER_TYPE_MAP`).
+  - [x] **2b.** ✅ DONE 2026-06-29 — `IjfsLoaders.build_maneuver_targets(green_brigades)` (pure) mints
+    `{brigade_id}-MU-{n}` per battalion instance + `MANEUVER_TYPE_MAP` profile + OOB metadata
+    (battalion_id/brigade_id/to_number/unit_type). Added `Brigade.to_number`. `ijfs_maneuver_targets_test.gd`.
+    NOT yet wired into the pipeline (2c/2d) → golden unchanged. Gate green.
   - [ ] **2c.** Detection/lethality bias: `mobility_multiplier` (less-mobile → more detectable),
     `posture="active"` for recently-active units, `hardness` (less-armored die more readily).
   - [ ] **2d.** Consume `maneuver_casualties`: remove struck battalions from the OOB before ground
