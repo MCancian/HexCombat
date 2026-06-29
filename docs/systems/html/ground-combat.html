@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HexCombat — Ground Combat (BOOTS)</title>
+<style>
+  body{font:16px/1.55 -apple-system,Segoe UI,Roboto,sans-serif;max-width:880px;margin:2rem auto;padding:0 1rem;color:#1c2230}
+  h1{border-bottom:3px solid #2b6cb0;padding-bottom:.3rem}
+  h2{margin-top:2rem;color:#2b6cb0}
+  table{border-collapse:collapse;width:100%;margin:1rem 0}
+  th,td{border:1px solid #cbd5e0;padding:.4rem .6rem;text-align:left;vertical-align:top}
+  th{background:#edf2f7}
+  code{background:#edf2f7;padding:.1rem .3rem;border-radius:3px;font-size:.9em}
+  .flag{background:#fffaf0;border:1px solid #f6ad55;border-left:5px solid #dd6b20;padding:.8rem 1rem;border-radius:6px;margin:1rem 0}
+  .ok{background:#f0fff4;border:1px solid #68d391;border-left:5px solid #38a169;padding:.8rem 1rem;border-radius:6px;margin:1rem 0}
+  .formula{background:#1a202c;color:#e2e8f0;padding:.8rem 1rem;border-radius:6px;font-family:ui-monospace,Consolas,monospace;font-size:.85em;overflow-x:auto}
+  footer{margin-top:3rem;color:#718096;font-size:.85em;border-top:1px solid #e2e8f0;padding-top:1rem}
+</style>
+</head>
+<body>
+<h1>Ground Combat (BOOTS)</h1>
+<p><em>Human-readable summary. Machine reference: <code>docs/systems/ground-combat.md</code>.
+Port-fidelity audit, Area 2 of 10.</em></p>
+
+<h2>What this system does</h2>
+<p>When Red and Green brigades end a turn in the same hex, this resolves the fight: it adds up each
+side's combat strength (maneuver battalions + fire support, times a terrain factor for the defender),
+forms a force ratio, rolls for casualties on each side, and shifts the front line (FEBA) toward the
+winner. Casualties are removed, the front moves, hex ownership updates.</p>
+
+<div class="ok">
+<strong>✅ Core math is a faithful, near-line-for-line port</strong> of TIV's
+<code>boots_calculator.py → resolve_map_attack</code>: identical loss-rate formulas and clamps,
+identical fire-support multipliers, identical FEBA math, the same "at least one casualty" rule, and
+the same rule that artillery battalions can't be picked as casualties.
+</div>
+
+<h2>The combat formula</h2>
+<div class="formula">
+attacker_strength = Σ(unit strength × supply) + support<br>
+defender_strength = (Σ + support) × terrain_modifier&nbsp;&nbsp;(terrain ≥ 1.0)<br>
+ratio = attacker_strength / defender_strength<br><br>
+attacker_loss_rate = clamp(0.20 − (ratio−1)×0.08 + (roll−50)/1000, 0.05 … 0.45)<br>
+defender_loss_rate = clamp(0.20 + (ratio−1)×0.10 + (roll−50)/1000, 0.05 … 0.50)<br>
+losses = round(unit_count × loss_rate)<br><br>
+balance = (atk − def) / (atk + def)<br>
+feba_shift_km = feba_base_km × clamp(balance×2, −2 … 2) × (0.75 + roll/100×0.5)
+</div>
+
+<h2>Where the port differs from TIV</h2>
+
+<div class="flag">
+<strong>🔴 1. Unit strengths differ on 12 of 17 battalion types.</strong>
+<p>Verified by running TIV's own calculator: TIV's type→strength lookup never connects the full
+battalion names the data actually uses, so almost every maneuver unit collapses to strength
+<strong>1.0</strong> in TIV. HexCombat instead uses a differentiated table (Armor 2.0, Combined Arms
+1.5, Amphibious 1.2, Recon 0.7, …). HexCombat clearly ported TIV's <em>intended</em> table rather than
+its buggy runtime — arguably the right call, but it means HexCombat combat ≠ TIV combat output.
+One outlier goes the other way: helicopters are 0.5 in HexCombat vs 1.4 in TIV's mapping.
+<strong>Flagged in <code>/DECISIONS.md</code></strong> — recommend keeping HexCombat's table and
+ratifying it as an intentional divergence.</p>
+</div>
+
+<div class="flag">
+<strong>🔴 2. Front-line movement scale: 2.0 vs 3.5.</strong>
+<p>HexCombat uses <code>feba_base_km = 2.0</code>; TIV loads <code>3.5</code> from config. The front
+moves ~57% as far per fight in HexCombat — likely the port not carrying the config value. Flagged in
+<code>/DECISIONS.md</code> (recommend making it scenario-configurable, default 3.5).</p>
+</div>
+
+<div class="flag">
+<strong>⚠ 3. Different random-number generator.</strong>
+<p>TIV uses NumPy's RNG; HexCombat uses its own seeded dice. The <em>sequence</em> of rolls matches,
+but the algorithms differ, so HexCombat can't reproduce TIV's exact per-seed numbers — it is
+internally deterministic only. This is inherent to the engine port, not a bug.</p>
+</div>
+
+<div class="flag">
+<strong>⚠ 4. Minor: combat-detail shape.</strong>
+<p>HexCombat's per-combat detail dict uses the key <code>support_breakdown</code> and omits
+<code>support_unit_count</code>; TIV has <code>support_power_breakdown</code> + the count. Cosmetic
+unless an external consumer expects TIV's exact keys.</p>
+</div>
+
+<footer>HexCombat systems reference · TaiwanInvasionViewer port-fidelity audit.</footer>
+</body>
+</html>

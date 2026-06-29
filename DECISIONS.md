@@ -8,6 +8,54 @@ Status legend: 🔴 open · 🟡 leaning (recommendation noted) · ✅ resolved 
 
 ---
 
+## Ground combat (Area 2) — unit strength table differs from TIV for 12/17 types  🟡 (recommend: keep HexCombat's table; ratify)
+
+**HexCombat:** `UnitStats.TYPE_DEFS` (`scripts/UnitStats.gd:6`) gives differentiated maneuver strengths
+keyed by full battalion name — Armor/Tank 2.0, Combined Arms/Mech Inf 1.5, Amphibious 1.2, Air Assault
+1.4, Recon 0.7, Air Defense 0.9, Support/Service Support 0.3, Reserve 0.5; helicopters 0.5.
+
+**TIV (verified by calling `BOOTSCalculator`):** `_map_type_to_strength_key` only maps a handful of
+lowercase short forms, so the full battalion-name `Type` strings the OOB actually carries fall through
+to the `1.0` default. Net runtime values: **almost all maneuver units = 1.0**; only Field Artillery
+0.8, Mech/Rocket Artillery 1.3, SOF 1.8, **Attack/Utility Helicopter 1.4** differ. **12 of 17 OOB
+types resolve differently** from HexCombat.
+
+**Why it matters:** unit strength drives the force ratio → loss rates, FEBA, and the result label.
+HexCombat combat is materially different from TIV's actual output (e.g. an armored brigade is 2× a
+support battalion in HexCombat but equal in TIV). TIV has **no pytest pinning strengths**, so this is
+untested on the source side.
+
+**Read:** TIV's flattening is near-certainly a latent bug — its `unit_combat_strength` table exists to
+differentiate, but the type→key mapping never reaches it for real OOB names. HexCombat ported the
+*intent*. The one place HexCombat also diverges from TIV's intent is **helicopters** (0.5 vs the
+mapping's 1.4).
+
+**Options:** (a) **Keep HexCombat's differentiated table** (recommended — it's the designed behavior;
+matching TIV's all-1.0 bug would flatten the game). (b) Reconcile helicopters to 1.4 if they're meant
+to fight as maneuver units (likely they shouldn't — they're aviation). (c) Match TIV literally
+(all-1.0) — not recommended.
+
+**Recommendation:** (a) + decide (b). Ratify so it's a recorded intentional divergence, not drift.
+
+---
+
+## Ground combat (Area 2) — feba_base_km 2.0 (HexCombat) vs 3.5 (TIV config)  🟡 (recommend: align or make configurable)
+
+**HexCombat:** `GameState._resolve_combat_at` hardcodes `feba_base_km = 2.0` (`scripts/GameState.gd:1071`).
+**TIV:** loads `3.5` from config (`_load_feba_base_km`; pinned by `tests/python/unit/test_boots_attack_mode.py:180`).
+
+**Why it matters:** FEBA shift scales linearly with the base, so HexCombat's front advances/retreats
+~57% as far per combat as TIV's — a balance-relevant divergence likely from the port not carrying the
+config value.
+
+**Options:** (a) set 3.5 to match TIV; (b) read it from the scenario/config (TIV-faithful + tunable);
+(c) keep 2.0 as an intentional rebalance.
+
+**Recommendation:** (b) — surface `feba_base_km` in scenario config defaulting to TIV's 3.5. Either
+change re-baselines the golden FEBA value again, so it needs your sign-off.
+
+---
+
 <!-- Append entries below. Template:
 
 ## <area> — <short title>  🔴
