@@ -90,6 +90,10 @@ work done. The `.godot/` cache is git-ignored; `.gd.uid` files are committed wit
 - `ROADMAP.md` — long-term, sequenced milestones with acceptance criteria + forward-compat notes.
 - `PLAN.md` — the active milestone in detail + an append-only **Decisions** log + open questions.
 - `docs/ARCHITECTURE.md` — deeper design / rationale; per-phase notes under `docs/phases/`.
+- `docs/systems/` — **per-system reference for agents** (one `.md` per system: data flow, key
+  funcs, files, TIV-port fidelity notes). Start here to understand how a subsystem works.
+  Human-readable HTML mirrors in `docs/systems/html/`. Index: `docs/systems/README.md`.
+  Port-audit progress + open fidelity questions: `docs/plans/AUDIT_PROGRESS.md` / `DECISIONS.md`.
 - `docs/LLM_PLAYTESTING.md` / `docs/LLM_AGENT_PROTOCOL_PLAN.md` — LLM playtesting API,
   structured observations/actions, screenshots, and benchmark harness planning.
 
