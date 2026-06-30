@@ -130,6 +130,21 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-30 — Victory census counts PRESENT (landed) battalions (refactor_audit item 2b; max-autonomy).**
+  `GameState._taiwan_battalion_census` now subtracts each brigade's still-at-sea battalions (the
+  un-landed remainder in `ship_reserve`) from its composition count. Landing sets `hex_id` on the first
+  BN, but support BNs waiting on ships stayed counted — a partially-landed brigade was credited at full
+  OOB strength toward China. **Census shift:** golden terminal china **36→20** (4 amphibious brigades,
+  9 BNs each, with 16 support BNs still at sea on turn 1); **winner unchanged** (red, 20 > 16 ROC), so
+  the structural `validate_golden_victory` needed no edit. Golden combat invariant byte-stable (census
+  consumes no dice). Test: `victory_present_census_test`. **Investigation note:** an initial full-gate
+  run showed a non-deterministic census (20 vs 24); isolated re-runs + standalone validator + a clean
+  full re-run all gave a stable 20 — it was a **stale class-cache flake** from running the gate
+  mid-edit (the `--import` step hadn't consistently picked up the just-written files), NOT a
+  `reset_to_scenario` state bleed. `reset_to_scenario` already restores compositions via `load_brigades`
+  and rebuilds `ship_reserve` fresh. (Lesson: verify a determinism failure standalone before "fixing"
+  reset — the implementer's retro proposed a phantom reset fix that the evidence ruled out.)
+
 - **2026-06-30 — IJFS warmup_context fail-loud guard (refactor_audit item 1; max-autonomy).**
   `IjfsEngine.run_daily` reads every `warmup_context` entry via `wc.get(key, default)`, so a producer
   typo silently yields the default and the config goes dead — the bug class that left exquisite intel

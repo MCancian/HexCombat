@@ -59,8 +59,10 @@ when the hex-adjacency coordinate bug was fixed, and when `feba_base_km` was set
   whose battalions have died (IJFS or ground combat), so the air/missile campaign stops targeting units
   that no longer exist — without disturbing detection continuity for survivors.
 - **D5 Front-line / cleanup** — `FrontLineService` (polyline → hex redistribution), cleanup phase.
-- **Victory conditions** — end-of-cleanup census of PLA vs ROC battalions on Taiwan; `game_over` /
-  `winner` on `GameState`/`TurnResult`/LLM observation. Config: scenario `victory` block.
+- **Victory conditions** — end-of-cleanup census of PLA vs ROC battalions *present* on Taiwan (landed
+  only: a brigade's battalions still at sea in `ship_reserve` are excluded even after its first BN
+  lands); `game_over` / `winner` on `GameState`/`TurnResult`/LLM observation. Config: scenario `victory`
+  block.
 - **AI-readiness (Track E)** — `GameState.play_turn(red, green, dice) -> TurnResult`, per-turn event
   log, `LLMGameAPI` observation/action contract (JSON-schema-gated), headless self-play harness.
 

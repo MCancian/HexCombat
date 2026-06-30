@@ -70,7 +70,7 @@ Otherwise `{game_over: false}`.
 - `"after_turn:N"` — armed when `turn_number > N`.
 
 **Census caveat — `taiwan_hexes: null` (line 885):**
-`_taiwan_battalion_census()` counts all brigades with a non-empty `hex_id`. The scenario config hook `taiwan_hexes` can restrict to a hex-id array, but defaults to `null` (= every placed hex counts). This is correct for the main-island-only scenario because offshore islands cannot be distinguished until terrain/land classification data exists. Brigades still at sea (`hex_id == ""`) are excluded, so China reads 0 until it lands.
+`_taiwan_battalion_census()` counts the *present* (landed) battalions of brigades with a non-empty `hex_id`. The scenario config hook `taiwan_hexes` can restrict to a hex-id array, but defaults to `null` (= every placed hex counts). This is correct for the main-island-only scenario because offshore islands cannot be distinguished until terrain/land classification data exists. Brigades still wholly at sea (`hex_id == ""`) are excluded, so China reads 0 until it lands — AND for a partially-landed brigade (its `hex_id` is set once the first BN lands) the battalions still waiting on ships (tracked in `ship_reserve`) are subtracted, so neither at-sea nor lost-at-sea BNs inflate China's count.
 
 **`game_over` / `winner` propagation:**
 - `GameState.gd` lines 67–68 hold the live state; `resolve_cleanup_phase` (lines 866–867) sets them.

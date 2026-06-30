@@ -19,11 +19,13 @@ yet. Sources: `docs/REFACTOR_NOTES.md`, `docs/RETROSPECTIVES.md` "act later" ite
    `ships.json` (defaulting to today's category values) so designers tune per hull. Additive; the
    category table stays as the fallback. (RETROSPECTIVES 2026-06-29 mine-geometry.)
 
-2b. **Victory census counts present battalions, not OOB.** `GameState._taiwan_battalion_census()` sums
-   `Brigade.get_battalion_count()` (OOB composition) for landed brigades, so battalions lost at sea
-   before landing are still counted toward China. Count *surviving/present* battalions instead (the
-   design's "battalions on Taiwan" means present). Belongs with the offload model. (PLAN.md 2026-06-29
-   Victory conditions → OPEN.)
+2b. ✅ **DONE 2026-06-30 — Victory census counts present battalions, not OOB.**
+   `GameState._taiwan_battalion_census()` now subtracts each brigade's still-at-sea battalions (tracked
+   in `ship_reserve`) from its composition count, so a partially-landed brigade (hex_id set on its first
+   BN landing) is no longer credited at full strength toward China. Golden terminal census china 36→20
+   (4 amphibious brigades land 9 BNs each, 16 support BNs still at sea turn 1); winner unchanged (red).
+   `victory_present_census_test.gd`. Golden byte-stable (census consumes no dice). _Original: summed
+   `Brigade.get_battalion_count()` (full OOB) for any brigade with a hex, counting at-sea/lost BNs._
 
 ## High payoff, higher risk (do with attention)
 

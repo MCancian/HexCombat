@@ -964,3 +964,26 @@ multi-turn combat fixture). Logged as a refactor/test-infra opportunity; NOT act
   REAL producer (`GameState._build_warmup_context`) emits zero unknown keys — that pins the
   producer↔consumer contract so a future producer typo fails a unit test, not just a live run.
 - Gate green first try (38 suites); golden byte-stable (guard never trips on valid input).
+
+---
+
+## 2026-06-30 — refactor_audit item 2b: victory census counts present (landed) battalions   (orchestrator)
+
+**What would you do differently (opencode):**
+- "I'd fix the reset_to_scenario bug together with the census change, not reactively after the
+  determinism test failed — the updated census depends on ship_reserve, built from un-reset brigade
+  compositions, so two same-seed runs would diverge."
+
+**Orchestrator triage:**
+- opencode's premise was WRONG and I did not act on it. The determinism failure was a STALE CLASS-CACHE
+  FLAKE, not a reset bug: running the full gate mid-edit left the `--import` class cache inconsistent so
+  one play-through used stale code (census 20 vs 24). Proof: an isolated diagnostic mirroring the
+  validator's exact reset→play_turn→read-cleanup loop gave a stable 20/20; the standalone validator gave
+  20 + PASS; and a clean full-gate re-run was ALL PHASES GREEN. `reset_to_scenario` already restores
+  compositions (`load_brigades` clears + rebuilds fresh Brigade objects) and rebuilds `ship_reserve` from
+  them, with fresh entry dicts (no aliasing into `GameData.red_ship_reserve`). There is no bleed to fix.
+- Lesson: when a gate fails on determinism right after writing new script files, re-run/standalone-verify
+  BEFORE concluding a real state bug — the gate's import step can lag freshly-written files. Don't let the
+  implementer talk you into a phantom fix; the diff of evidence (isolated repro) decides.
+- The census change is a legitimate semantic fix (count present, not OOB); winner unchanged so the
+  structural golden victory validator stayed green without edits. Recorded census 36→20 in Decisions.
