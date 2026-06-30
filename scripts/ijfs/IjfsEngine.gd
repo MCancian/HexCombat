@@ -30,6 +30,15 @@ const EXQUISITE_INTEL_CATEGORIES := [
 	["antiship", "Anti-Ship Systems"],
 ]
 
+# Every key the engine reads out of warmup_context, via wc.get(...). The producer
+# (GameState._build_warmup_context) must emit only these; an unrecognized key means a typo that would
+# otherwise silently go dead (the class of bug that left exquisite intel dormant). Guarded in run_daily.
+const WARMUP_CONTEXT_KEYS := {
+	"x_day": true, "z_day": true, "sead_enabled": true, "ad_attrition_enabled": true,
+	"munition_filter": true, "posture_default_override": true, "release_rules": true,
+	"firing_capacity_config": true, "exquisite_intel": true,
+}
+
 
 # --- Run context (port of run_context.IJFSRunContext.from_run_args) -------------------------------
 
@@ -50,6 +59,17 @@ static func make_run_context(current_day: int, warmup_context: Variant) -> Dicti
 		"x_day": int(wc.get("x_day", 1)),
 		"is_warmup": true,
 	}
+
+
+## Returns warmup_context keys not in WARMUP_CONTEXT_KEYS — i.e. typos the engine would silently ignore.
+## Empty == healthy. run_daily asserts this is empty; also unit-testable without tripping the assert.
+static func unknown_warmup_keys(wc: Dictionary) -> Array:
+	var unknown: Array = []
+	for key in wc.keys():
+		if not WARMUP_CONTEXT_KEYS.has(key):
+			unknown.append(key)
+	unknown.sort()
+	return unknown
 
 
 # --- Daily orchestration (port of run_daily_ijfs, minus path loading + write_outputs) -------------
@@ -73,6 +93,8 @@ static func run_daily(state: IjfsDailyState, dice: Dice, current_day: int, warmu
 
 	if warmup_context != null:
 		var wc: Dictionary = warmup_context
+		var unknown_keys := unknown_warmup_keys(wc)
+		assert(unknown_keys.is_empty(), "Unknown warmup_context key(s): %s — typo? Known keys: %s" % [", ".join(unknown_keys), ", ".join(WARMUP_CONTEXT_KEYS.keys())])
 		IjfsTargeting.apply_posture_override(state.targets, wc.get("posture_default_override"))
 		var exquisite: Dictionary = wc.get("exquisite_intel", {})
 		var x_day := int(wc.get("x_day", 1))
