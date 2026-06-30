@@ -899,3 +899,28 @@ was too sensitive for the free-model implementer):**
   posture-by-activity was the gap. Lesson: when a design lists several "biases," check which are already
   realized by upstream data before writing new code — here two of three were already done.
 - Gate green first try (36 suites); golden byte-stable as predicted. Closes item 2 in full.
+
+---
+
+## 2026-06-30 — Overnight loop item 3: balance sanity pass (report-only)   (orchestrator)
+
+**What I ran:** `tools/validate_headless_selfplay.gd` (4 turns) + a temp 15-turn self-play
+(`_tmp_selfplay_long.gd`, deleted after — not committed), both seed 20260624.
+
+**Findings (report-only, no rebalance):**
+- **Deterministic + crash-free + index-clean** over both 4 and 15 turns: two runs produced byte-identical
+  final snapshots and turn digests; `validate_runtime_indexes()` reported no violations; all turns resolved.
+- **The reference `SelfPlayPolicy` never fights.** It just moves each brigade to the first reachable
+  non-current hex, so opposed ground combat never triggers (`combat_turns=0` at both 4 and 15 turns).
+  Consequence: self-play as-is does NOT exercise the supply→combat strength link (item 1) or ground-combat
+  balance — those stay covered by the golden gate (`validate_cleanup`/`validate_headless_turn`, turn 1) and
+  the GdUnit suites, not by self-play.
+- **The IJFS→ground maneuver-casualty linkage (items 2b–2d) IS exercised** because IJFS runs every turn
+  independent of orders. Over 15 turns the Green ROC maneuver-battalion count attrited **124 → 109**
+  (~1/turn), deterministically, no crash, no runaway. Sensible: IJFS strikes maneuver units with the
+  budget left after anti-ship priorities. This is the first multi-turn confirmation that the linkage
+  fires and stays stable beyond the single-turn unit tests.
+
+**Orchestrator triage (future test-infra, not a balance change):** to actually balance-test ground combat
+through self-play, the reference policy needs to advance toward and engage the enemy (or add a dedicated
+multi-turn combat fixture). Logged as a refactor/test-infra opportunity; NOT acted on (item 3 is report-only).

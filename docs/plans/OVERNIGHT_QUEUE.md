@@ -84,10 +84,12 @@ just implement small/contained sub-tasks directly (faster than fighting the weak
   Questions / `port_audit.md`; needs `moved_last_turn`/`fought_last_turn` on `Brigade`. Add gates.
   *Done when:* IJFS-destroyed maneuver battalions no longer fight in ground combat; deterministic; gate green.
 
-- [ ] **3. Balance sanity pass (after EACH item above).** Run `tools/validate_headless_selfplay.gd` and a
-  longer self-play game (extend turn count) on the changed values; confirm no crashes, deterministic,
-  sensible outcomes. **Report only** — do not rebalance unprompted. Note observations in
-  `RETROSPECTIVES.md`.
+- [x] **3. Balance sanity pass.** ✅ DONE 2026-06-30 (report-only) — `validate_headless_selfplay.gd`
+  (4 turns) + temp 15-turn self-play, both deterministic/crash-free/index-clean. Reference policy never
+  engages (combat_turns=0), so self-play doesn't exercise ground combat — but IJFS runs every turn, so
+  the 2b–2d linkage IS exercised: Green maneuver battalions attrit 124→109 over 15 turns (~1/turn),
+  deterministic, no runaway. Findings + future test-infra note (policy needs to actually fight) in
+  `RETROSPECTIVES.md`. No rebalance.
 
 ## When the queue is exhausted (still green)
 Pick the next highest-value **headless-gateable** item: ADAPT items from `port_audit.md` **only if** a
