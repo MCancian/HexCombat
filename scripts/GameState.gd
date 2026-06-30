@@ -61,7 +61,7 @@ var antiship_containers: Array = []
 # Fractional BN-equiv owed from ship losses, carried across turns (ShipLoadingModel.resolve_bn_losses).
 var lost_at_sea_accumulator: float = 0.0
 var last_antiship_summary: Dictionary = {}
-var last_frontline_summary: Dictionary = {}
+var last_frontline_summary: FrontlineSummary = null
 var last_cleanup_summary: Dictionary = {}
 # Victory state, set in the end-of-turn cleanup census (VictoryConditions). winner: ""/"red"/"green".
 var game_over: bool = false
@@ -113,7 +113,7 @@ func reset_to_scenario() -> void:
 	antiship_containers = []
 	lost_at_sea_accumulator = 0.0
 	last_antiship_summary = {}
-	last_frontline_summary = {}
+	last_frontline_summary = null
 	last_cleanup_summary = {}
 	game_over = false
 	winner = ""
@@ -1051,9 +1051,9 @@ func _frontline_hex_centers() -> Array:
 func resolve_frontline_phase(polyline_coords: Array) -> Dictionary:
 	var hex_sequence: Array = FrontLineService.find_hexes_for_polyline(polyline_coords, _frontline_hex_centers())
 	if hex_sequence.is_empty():
-		last_frontline_summary = {"hex_sequence": [], "affected_brigades": [], "moves": {}}
-		EventBus.frontline_resolved.emit(last_frontline_summary)
-		return last_frontline_summary
+		last_frontline_summary = FrontlineSummary.new()
+		EventBus.frontline_resolved.emit(last_frontline_summary.to_dict())
+		return last_frontline_summary.to_dict()
 
 	# Only the drawing side's brigades reshuffle along the line — RED here (the amphibious attacker),
 	# mirroring TIV front_line_service's single-side filter. Intentional asymmetry, not a bug; if Green
@@ -1070,9 +1070,12 @@ func resolve_frontline_phase(polyline_coords: Array) -> Dictionary:
 	for brigade_id in moves.keys():
 		GameData.set_brigade_hex(String(brigade_id), String(moves[brigade_id]))
 
-	last_frontline_summary = {"hex_sequence": hex_sequence, "affected_brigades": affected_ids, "moves": moves}
-	EventBus.frontline_resolved.emit(last_frontline_summary)
-	return last_frontline_summary
+	last_frontline_summary = FrontlineSummary.new()
+	last_frontline_summary.hex_sequence = hex_sequence
+	last_frontline_summary.affected_brigades = affected_ids
+	last_frontline_summary.moves = moves
+	EventBus.frontline_resolved.emit(last_frontline_summary.to_dict())
+	return last_frontline_summary.to_dict()
 
 
 func _active_red_battalion_units() -> Array:
@@ -1386,7 +1389,7 @@ func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> Tur
 	result.ijfs_summary = last_ijfs_summary.duplicate(true)
 	result.ijfs_writeback = last_ijfs_writeback.duplicate(true)
 	result.antiship_summary = last_antiship_summary.duplicate(true)
-	result.frontline_summary = last_frontline_summary.duplicate(true)
+	result.frontline_summary = last_frontline_summary.to_dict() if last_frontline_summary != null else {}
 	result.cleanup_summary = last_cleanup_summary.duplicate(true)
 	result.events = TurnEventLog.build(self)
 	result.game_over = game_over
