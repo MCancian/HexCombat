@@ -130,6 +130,41 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-30 — Typed phase-summary Resources (refactor_audit item 9; done directly, frontier work — NOT
+  a free-model task). 4 of 5 fields converted; the 5th left untyped by USER call.** Repeated the proven
+  item-3 pattern (typed `Resource` + `to_dict()` at the JSON edge, `null` = unresolved sentinel), one
+  field per commit, re-verifying the golden after each: **`last_frontline_summary`** → `FrontlineSummary`
+  (`b3473bd`), **`last_cleanup_summary`** → `CleanupSummary` (`360ec26`), **`last_antiship_summary`** →
+  `AntishipSummary` (`206bc5c`), **`last_ijfs_writeback`** → `IjfsWriteback` (`f0112b0`). EventBus signals,
+  `TurnResult`, the event log, and `LLMGameAPI` all emit via `to_dict()`; in-process/cross-phase consumers
+  read typed fields. **Judgment calls:** (1) **`null` not `{}`** as the "phase didn't resolve" sentinel
+  (a `Resource` has no `is_empty()`; matches item-3's CombatSummary null-sentinel). (2) **Public
+  `resolve_*` methods keep returning `Dictionary`** (via `to_dict()`) so the many validators/tools that
+  read string keys + `JSON.stringify` the return are untouched — the Resource is in-process storage, the
+  dict is the public/JSON contract. (3) **EventBus signals keep their `(summary: Dictionary)` signature and
+  emit `to_dict()`** (per the handoff: signal payloads are a JSON-ish boundary), so zero listener churn —
+  diverges slightly from item-3's combat_resolved (which carries Resources) but that signal is `Array`-typed
+  and consumed only by a test. (4) **`last_antiship_summary` resolved case IS `summary.to_dict()`** — its
+  keys/order already matched the LLM observation block exactly, so the observation became a
+  single-source-of-truth `to_dict()` call + the explicit empty-case defaults (the `mine_status:{}`-vs-`Array`
+  quirk preserved verbatim). (5) **`IjfsWriteback.from_dict()` factory added** (inverse of `to_dict()`) for
+  the three sites that snapshot-mutate-reinject a writeback to probe the IJFS→antiship coupling
+  (C2-suppression validator, mines-only sweep, maneuver-consume test); its internal reads
+  (`_apply_ijfs_maneuver_casualties`, `resolve_antiship_turn`) are now typed-field accesses with an explicit
+  null guard, so a key typo fails at parse time instead of silently breaking casualty/antiship coupling.
+  **Byte-stability:** the `JSON.stringify(…, "\t")` exporter sorts keys, so only the key *set* + value types
+  matter (both preserved); the item-8 `validate_fixtures` gate byte-compares both committed fixtures every
+  gate run and all four conversions kept them identical; golden `validate_headless_turn`
+  casualties=3/feba=-0.96 held throughout; full gate green (40 GdUnit + all validators). **`last_ijfs_summary`
+  deliberately LEFT untyped (USER design call):** unlike the other four it is not an inline GameState dict
+  but the ~21-key dynamic output of the faithful TIV-port `IjfsEngine.summarize_run` (conditional
+  `firing_capacity_utilization` key + dynamic nested histograms/logs); only 3 keys are read (once each), the
+  rest is JSON pass-through. A full-mirror Resource would be a fragile second source of truth for an engine
+  port for read-safety on 3 fields — the same tradeoff the audit already declined for `combat_detail`. The
+  `resolve_supply_turn`/`resolve_offload_turn` return dicts are out of scope for the same reason
+  (engine-output dicts, not stored `last_*` summary fields). **Item 9 is DONE; the live refactor candidate
+  is now item 10 (GameState decomposition).**
+
 - **2026-06-30 — Larger structural-refactor backlog recorded + GameState-decomposition interface decided
   (USER design call; documentation only, NOT implemented).** After item 3, proposed four larger refactors
   for legibility/testability; had them **independently verified against the actual code by a read-only

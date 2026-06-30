@@ -98,18 +98,28 @@ ordering coupling.)
    the *first* regeneration may surface further stale drift to fix (as the antiship section already did);
    "cheap" applies to the gate, not necessarily the one-time cleanup.
 
-9. **Finish typed phase-summary Resources** *(do second — proven item-3 pattern, low risk)*. Still
-   untyped `Dictionary` on `GameState`: `last_ijfs_summary`, `last_ijfs_writeback`,
-   `last_antiship_summary`, `last_frontline_summary`, `last_cleanup_summary` (`:54-65`), plus the
-   `resolve_supply_turn`/`resolve_offload_turn` return dicts. Every consumer reads via `.get(key,
-   default)`, so a producer key-rename silently degrades to a default. Convert one at a time to typed
-   Resources with `to_dict()` at the JSON edge, exactly like `CombatSummary` (item 3) — re-verify golden
-   byte-stability after each. **Verified risk order — do simplest first:** `last_frontline_summary` /
-   `last_cleanup_summary` (few keys, few consumers) → `last_antiship_summary` (many `.get()` consumers in
-   `LLMGameAPI`) → **`last_ijfs_writeback` LAST / most carefully** — it is the only summary with
-   *internal cross-phase* consumers (`_apply_ijfs_maneuver_casualties:609`, `resolve_antiship_turn:737-738`
-   read it via `.get()`), so a key typo silently breaks IJFS→casualty/antiship coupling, not just a
-   display field.
+9. ✅ **DONE 2026-06-30 — Typed phase-summary Resources (4 of the 5 fields; the 5th left untyped by USER
+   call).** Converted four inline `GameState` summary dicts to typed `Resource`s with `to_dict()` at the
+   JSON edge, one commit each, golden byte-stable after each (the `JSON.stringify(…, "\t")` exporter sorts
+   keys, so only the key *set* + value types matter — both preserved): **`last_frontline_summary`** →
+   `FrontlineSummary` (commit `b3473bd`); **`last_cleanup_summary`** → `CleanupSummary` (`360ec26`);
+   **`last_antiship_summary`** → `AntishipSummary` (`206bc5c`); **`last_ijfs_writeback`** → `IjfsWriteback`
+   (`f0112b0`, the riskiest — its internal cross-phase reads in `_apply_ijfs_maneuver_casualties` and
+   `resolve_antiship_turn` are now typed-field accesses, + a `from_dict()` factory for the
+   snapshot-mutate-reinject probe tools). `null` is the unresolved sentinel; EventBus signals + TurnResult
+   + the event log + LLMGameAPI emit via `to_dict()`. Full gate green (40 GdUnit + all validators incl. the
+   item-8 fixture-drift byte-compare); golden `validate_headless_turn` casualties=3/feba=-0.96 byte-stable
+   throughout. **`last_ijfs_summary` deliberately LEFT as an untyped `Dictionary` (USER call 2026-06-30,
+   YAGNI):** unlike the other four it is NOT an inline GameState dict but the ~21-key dynamic output of the
+   faithful TIV-port `IjfsEngine.summarize_run` (with a *conditionally-present* `firing_capacity_utilization`
+   key and many dynamic nested histograms/logs). Only 3 keys are ever read (once each, in
+   `LLMGameAPI._ijfs_observation`); the rest is pass-through to JSON. A full-mirror Resource would be a
+   fragile **second source of truth** for an engine port (silently dropping a key if `summarize_run` gains
+   one) for read-safety on 3 fields — the same tradeoff the audit already declined for `combat_detail`
+   below. The `resolve_supply_turn`/`resolve_offload_turn` return dicts are out of scope for the same
+   reason (engine-output dicts / `DosConsumption`-built, not stored `last_*` summary fields). _Original gap
+   below:_ Every consumer reads via `.get(key, default)`, so a producer key-rename silently degrades to a
+   default.
 
 10. **Decompose the `GameState` god-object** *(do last — highest payoff, highest risk; multi-session
     arc)*. `GameState.gd` is **1,414 lines** orchestrating ~10 phases plus snapshot/play_turn. Extract
@@ -145,5 +155,5 @@ the real drift risk for it is the schema boundary (item 8), not the GDScript typ
 
 Most M0–M7 "act later" extracts (pure `TurnResolver`, per-turn event log, `play_turn` façade, typed
 command/result wrappers) are **already done** via the Track-E AI-readiness arc — don't re-open them.
-Items 1–4 and **8** are **done**; the live candidates are now **item 9** (typed phase summaries) then
-**item 10** (GameState decomposition), in that order.
+Items 1–4, **8**, and **9** are **done**; the live candidate is now **item 10** (GameState
+decomposition) — a separate multi-session arc.
