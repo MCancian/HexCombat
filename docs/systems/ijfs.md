@@ -75,6 +75,10 @@ Mirrors `run_daily_ijfs.py` lines 95–218. Each stage consumes the shared `Dice
   turn by `GameState._update_maneuver_posture`: a brigade that moved or fought last turn (the
   `moved_last_turn`/`fought_last_turn` flags) presents `posture="active"` — selecting the higher
   `detectability_active` label plus the active posture/satellite multipliers above — otherwise `"hiding"`.
+  Because `ijfs_state` is built once per scenario, `GameState._sync_maneuver_targets_to_oob` also runs
+  each turn to mark `destroyed` the maneuver targets in excess of the current OOB qty (battalions killed
+  by IJFS or ground combat), so the campaign stops firing at units that no longer exist; it only sets
+  `destroyed` (never resurrects), preserving survivors' detection continuity.
 
 ### Targeting (`IjfsTargeting.gd`)
 

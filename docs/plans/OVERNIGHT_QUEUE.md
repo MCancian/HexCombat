@@ -75,7 +75,10 @@ just implement small/contained sub-tasks directly (faster than fighting the weak
     at 0; brigade marked destroyed when depleted). `ijfs_maneuver_consume_test.gd`. Golden UNCHANGED
     (struck units are BDE-269, not the golden BDE-66/BDE-77 combatants). **Closes the IJFS→ground
     linkage (port_audit ADAPT).** Limitation: ijfs_state built once/scenario so a removed battalion can
-    re-appear as a target across many turns — qty cap keeps it safe (v1).
+    re-appear as a target across many turns — qty cap keeps it safe (v1). **Limitation RESOLVED
+    2026-06-30:** `GameState._sync_maneuver_targets_to_oob` (top of `resolve_ijfs_turn`) retires the
+    excess maneuver targets over current OOB qty each turn (sync, not rebuild — preserves detection
+    continuity for survivors). `ijfs_maneuver_sync_test.gd`. Golden unchanged.
   Original item below: (`port_audit.md` "Ground-casualty IJFS↔OOB linkage".)
   Two halves: (a) **ID bridge** — ensure IJFS maneuver targets carry an OOB-matching `battalion_id`/
   `brigade_id` so `GameState._compute_ijfs_writeback` (`GameState.gd:547`) produces non-empty

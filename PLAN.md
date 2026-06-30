@@ -1862,6 +1862,18 @@ activity flags at the top of `resolve_ijfs_turn` — no math edit, so the golden
 feba=-0.96` (turn-1 flags all false → all maneuver targets stay `"hiding"`). Tests:
 `ijfs_maneuver_targets_test`, `ijfs_maneuver_consume_test`, `ijfs_maneuver_posture_test`.
 
+**2d follow-up — per-turn OOB sync (orchestrator decision, 2026-06-30).** The 2d limitation was that
+`ijfs_state` is built once per scenario, so maneuver targets for battalions killed (by IJFS or ground
+combat) lingered and kept drawing fire. The queue framed the fix as "rebuild maneuver targets per turn,"
+but `IjfsEngine.carry_to_next_day` persists `destroyed`/`known_to_red`/`last_detected_day` — a full
+rebuild would WIPE detection continuity for surviving maneuver units. **Chose SYNC over rebuild:**
+`GameState._sync_maneuver_targets_to_oob` (top of `resolve_ijfs_turn`) groups live "Maneuver Units"
+targets by `(brigade_id, unit_type)` and marks the *excess* over current OOB qty as `destroyed` (highest
+`target_id` first, deterministic). It only ever sets `destroyed` — never resurrects — so survivors keep
+their continuity, and `carry_to_next_day` keeps the flag. Golden-safe: when IJFS runs on turn 1 the OOB
+is still full (2d applies after), so live count == qty and nothing is touched. Test:
+`ijfs_maneuver_sync_test`.
+
 ### D1 — Amphibious Offload design decision  *(RESOLVED 2026-06-24)*
 
 **Decision: Option 2 — Full offload start.**

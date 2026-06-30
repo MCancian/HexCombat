@@ -924,3 +924,23 @@ was too sensitive for the free-model implementer):**
 **Orchestrator triage (future test-infra, not a balance change):** to actually balance-test ground combat
 through self-play, the reference policy needs to advance toward and engage the enemy (or add a dedicated
 multi-turn combat fixture). Logged as a refactor/test-infra opportunity; NOT acted on (item 3 is report-only).
+
+---
+
+## 2026-06-30 — Exhausted-queue: per-turn IJFS maneuver-target OOB sync (2d follow-up)   (orchestrator)
+
+**What would you do differently (opencode):**
+- "Add a dedicated test for `_sync_maneuver_targets_to_oob()` itself — set up maneuver targets,
+  decrement a brigade's battalion qty, call the method, assert only the excess get destroyed while
+  survivors keep continuity. The golden invariant catches regressions but doesn't pin this behavior;
+  it's pure data-shuffling with no dice, so trivially testable."
+
+**Orchestrator triage:**
+- Already done — I wrote `ijfs_maneuver_sync_test.gd` (no-op / full-destroy / partial-cut) before
+  gating, exactly the coverage opencode flagged. Good convergence; nothing to add.
+- The substantive call this iteration was rejecting the queue's literal "rebuild per turn" framing in
+  favor of a SYNC pass, because `carry_to_next_day` persistence means a rebuild would silently destroy
+  survivors' detection memory. Lesson: when a queued task names a mechanism ("rebuild"), check what
+  state that mechanism would discard before implementing it literally — the goal (retire dead targets)
+  had a lower-risk path (mark-excess-destroyed) that the literal framing would have missed.
+- Gate green first try (37 suites); golden byte-stable as predicted (turn-1 no-op).

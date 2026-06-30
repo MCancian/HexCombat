@@ -55,7 +55,9 @@ when the hex-adjacency coordinate bug was fixed, and when `feba_base_km` was set
   (`_apply_ijfs_maneuver_casualties`) — the D4-H ground-casualty linkage. Detectability is biased by
   unit type (mobility/hardness via the `MANEUVER_TYPE_MAP` profile) and by recent activity: a brigade
   that moved or fought last turn presents an `"active"` posture (`_update_maneuver_posture`), making its
-  maneuver units easier to detect.
+  maneuver units easier to detect. Each turn `_sync_maneuver_targets_to_oob` retires maneuver targets
+  whose battalions have died (IJFS or ground combat), so the air/missile campaign stops targeting units
+  that no longer exist — without disturbing detection continuity for survivors.
 - **D5 Front-line / cleanup** — `FrontLineService` (polyline → hex redistribution), cleanup phase.
 - **Victory conditions** — end-of-cleanup census of PLA vs ROC battalions on Taiwan; `game_over` /
   `winner` on `GameState`/`TurnResult`/LLM observation. Config: scenario `victory` block.
