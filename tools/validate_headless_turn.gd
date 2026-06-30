@@ -81,8 +81,8 @@ func _run_scripted_turn(label: String) -> Dictionary:
 
 	var after_contributor_battalions: int = _total_battalions_for(contributor_ids)
 	var after_all_battalions: int = _total_battalions_all()
-	var feba_km: float = float(GameData.hex_states[TARGET_HEX]["feba_km"])
-	var owner: String = String(GameData.hex_states[TARGET_HEX]["owner"])
+	var feba_km: float = GameData.hex_states[TARGET_HEX].feba_km
+	var owner: String = GameData.hex_states[TARGET_HEX].owner
 
 	_assert_equal_int("%s phase after resolve" % label, int(GameState.phase), PHASE_END)
 	_assert_equal_string("%s Red mover after movement/combat" % label, GameData.get_brigade(RED_MOVER_ID).hex_id, TARGET_HEX)

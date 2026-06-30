@@ -19,16 +19,16 @@ func test_feba_threshold_retreat_moves_defender_and_flips_ownership() -> void:
 	var green := _make_brigade(GREEN_ID, Brigade.Team.GREEN, [{"type": "Infantry Battalion (Reserve)", "qty": 6}])
 	_register_brigade(red, COMBAT_HEX)
 	_register_brigade(green, COMBAT_HEX)
-	GameData.hex_states[COMBAT_HEX]["feba_km"] = 9.0
+	GameData.hex_states[COMBAT_HEX].feba_km = 9.0
 	_mark_neighbors(COMBAT_HEX, HexOwner.RED)
-	GameData.hex_states[retreat_hex]["owner"] = HexOwner.GREEN
+	GameData.hex_states[retreat_hex].owner = HexOwner.GREEN
 
 	GameState.resolve_turn(ScriptedDice.new([50, 50, 100], [[0, 1, 2], [0, 1, 2]]))
 
 	assert_str(green.hex_id).is_equal(retreat_hex)
 	assert_str(red.hex_id).is_equal(COMBAT_HEX)
-	assert_float(float(GameData.hex_states[COMBAT_HEX]["feba_km"])).is_equal_approx(0.0, 0.0001)
-	assert_str(GameData.hex_states[COMBAT_HEX]["owner"]).is_equal(HexOwner.RED)
+	assert_float(float(GameData.hex_states[COMBAT_HEX].feba_km)).is_equal_approx(0.0, 0.0001)
+	assert_str(GameData.hex_states[COMBAT_HEX].owner).is_equal(HexOwner.RED)
 	assert_bool(green.destroyed).is_false()
 	assert_int(green.get_battalion_count()).is_greater(0)
 
@@ -38,15 +38,15 @@ func test_encircled_retreat_has_no_valid_hex_and_front_holds() -> void:
 	var green := _make_brigade(GREEN_ID, Brigade.Team.GREEN, [{"type": "Infantry Battalion (Reserve)", "qty": 6}])
 	_register_brigade(red, COMBAT_HEX)
 	_register_brigade(green, COMBAT_HEX)
-	GameData.hex_states[COMBAT_HEX]["feba_km"] = 9.0
+	GameData.hex_states[COMBAT_HEX].feba_km = 9.0
 	_mark_neighbors(COMBAT_HEX, HexOwner.RED)
 
 	GameState.resolve_turn(ScriptedDice.new([50, 50, 100], [[0, 1, 2], [0, 1, 2]]))
 
 	assert_str(green.hex_id).is_equal(COMBAT_HEX)
 	assert_str(red.hex_id).is_equal(COMBAT_HEX)
-	assert_str(GameData.hex_states[COMBAT_HEX]["owner"]).is_equal(HexOwner.CONTESTED)
-	assert_float(float(GameData.hex_states[COMBAT_HEX]["feba_km"])).is_greater_equal(GameStateType.FEBA_RETREAT_THRESHOLD_KM)
+	assert_str(GameData.hex_states[COMBAT_HEX].owner).is_equal(HexOwner.CONTESTED)
+	assert_float(float(GameData.hex_states[COMBAT_HEX].feba_km)).is_greater_equal(GameStateType.FEBA_RETREAT_THRESHOLD_KM)
 
 
 func test_combat_resolved_signal_emits_one_summary_for_one_contested_hex() -> void:
@@ -81,9 +81,9 @@ func test_hex_owner_constants_are_written_by_recompute_ownership() -> void:
 
 	GameData.recompute_hex_ownership()
 
-	assert_str(GameData.hex_states[red_only_hex]["owner"]).is_equal(HexOwner.RED)
-	assert_str(GameData.hex_states[green_only_hex]["owner"]).is_equal(HexOwner.GREEN)
-	assert_str(GameData.hex_states[contested_hex]["owner"]).is_equal(HexOwner.CONTESTED)
+	assert_str(GameData.hex_states[red_only_hex].owner).is_equal(HexOwner.RED)
+	assert_str(GameData.hex_states[green_only_hex].owner).is_equal(HexOwner.GREEN)
+	assert_str(GameData.hex_states[contested_hex].owner).is_equal(HexOwner.CONTESTED)
 
 
 func _make_brigade(brigade_id: String, team: Brigade.Team, battalions: Array) -> Brigade:
@@ -118,7 +118,7 @@ func _second_neighbor(hex_id: String) -> String:
 
 func _mark_neighbors(hex_id: String, owner: String) -> void:
 	for neighbor_id_value in GameData.get_neighbors(hex_id):
-		GameData.hex_states[String(neighbor_id_value)]["owner"] = owner
+		GameData.hex_states[String(neighbor_id_value)].owner = owner
 
 
 func _reset_fixture() -> void:
@@ -126,11 +126,11 @@ func _reset_fixture() -> void:
 	GameData.brigades.clear()
 	GameData.brigades_by_hex.clear()
 	for hex_id in GameData.hex_states:
-		GameData.hex_states[String(hex_id)]["owner"] = HexOwner.NONE
-		GameData.hex_states[String(hex_id)]["feba_km"] = 0.0
+		GameData.hex_states[String(hex_id)].owner = HexOwner.NONE
+		GameData.hex_states[String(hex_id)].feba_km = 0.0
 	GameState.reset_to_scenario()
 	GameData.brigades.clear()
 	GameData.brigades_by_hex.clear()
 	for hex_id in GameData.hex_states:
-		GameData.hex_states[String(hex_id)]["owner"] = HexOwner.NONE
-		GameData.hex_states[String(hex_id)]["feba_km"] = 0.0
+		GameData.hex_states[String(hex_id)].owner = HexOwner.NONE
+		GameData.hex_states[String(hex_id)].feba_km = 0.0

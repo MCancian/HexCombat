@@ -197,7 +197,7 @@ func resolve_turn(dice: Dice = null) -> void:
 	GameData.recompute_hex_ownership()
 	for summary in combat_summaries:
 		var typed_summary: Dictionary = summary
-		typed_summary["owner_after"] = String(GameData.hex_states[String(typed_summary["hex_id"])]["owner"])
+		typed_summary["owner_after"] = String(GameData.hex_states[String(typed_summary["hex_id"])].owner)
 	last_combat_summaries = combat_summaries.duplicate(true)
 	resolve_supply_turn()
 	resolve_cleanup_phase()
@@ -1230,7 +1230,7 @@ func _resolve_combat_at(hex_id: String, dice: Dice) -> Dictionary:
 	for casualty in result.defender_casualties:
 		_apply_casualty(casualty)
 
-	GameData.hex_states[hex_id]["feba_km"] = float(GameData.hex_states[hex_id]["feba_km"]) + result.feba_movement_km
+	GameData.hex_states[hex_id].feba_km = GameData.hex_states[hex_id].feba_km + result.feba_movement_km
 	for brigade_value in attacker_brigades + defender_brigades:
 		var fought_brigade: Brigade = brigade_value
 		fought_brigade.fought_this_turn = true
@@ -1240,7 +1240,7 @@ func _resolve_combat_at(hex_id: String, dice: Dice) -> Dictionary:
 		"attacker_losses": result.attacker_losses,
 		"defender_losses": result.defender_losses,
 		"feba_movement_km": result.feba_movement_km,
-		"owner_after": String(GameData.hex_states[hex_id]["owner"]),
+		"owner_after": String(GameData.hex_states[hex_id].owner),
 		"combat_detail": result.combat_detail,
 		"attacker_brigade_ids": _brigade_ids(attacker_brigades),
 		"defender_brigade_ids": _brigade_ids(defender_brigades)
@@ -1293,7 +1293,7 @@ func _brigade_has_pending_order(team: Brigade.Team, brigade_id: String) -> bool:
 
 func _apply_feba_retreats() -> void:
 	for hex_id in last_contested_hexes:
-		var feba: float = float(GameData.hex_states[hex_id]["feba_km"])
+		var feba: float = GameData.hex_states[hex_id].feba_km
 		if absf(feba) < FEBA_RETREAT_THRESHOLD_KM:
 			continue
 
@@ -1315,7 +1315,7 @@ func _apply_feba_retreats() -> void:
 
 		for brigade in retreaters:
 			GameData.set_brigade_hex(brigade.id, target)
-		GameData.hex_states[hex_id]["feba_km"] = 0.0
+		GameData.hex_states[hex_id].feba_km = 0.0
 
 
 func _find_retreat_hex(from_hex: String, team: Brigade.Team) -> String:
@@ -1336,7 +1336,7 @@ func _find_retreat_hex(from_hex: String, team: Brigade.Team) -> String:
 		if has_enemy:
 			continue
 
-		var owner := String(GameData.hex_states[neighbor_id]["owner"])
+		var owner := String(GameData.hex_states[neighbor_id].owner)
 		if owner == friendly_owner or owner == HexOwner.NONE:
 			return neighbor_id
 	return ""

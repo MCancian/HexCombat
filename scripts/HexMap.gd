@@ -156,9 +156,9 @@ func get_hex_color(hex_id: String) -> Color:
 	if hex_id not in GameData.hex_states:
 		return color_none
 
-	var state = GameData.hex_states[hex_id]
-	var owner = state.get("owner", HexOwner.GREEN)
-	var feba_km = state.get("feba_km", 0.0)
+	var state: HexState = GameData.hex_states[hex_id]
+	var owner := state.owner
+	var feba_km := state.feba_km
 
 	if owner == HexOwner.RED:
 		return color_red

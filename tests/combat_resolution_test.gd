@@ -40,14 +40,14 @@ func test_single_hex_combat_applies_casualties_feba_and_fought_flags() -> void:
 	var green: Brigade = GameData.get_brigade(GREEN_BRIGADE_ID)
 	GameData.set_brigade_hex(RED_BRIGADE_ID, COMBAT_HEX)
 	GameData.set_brigade_hex(GREEN_BRIGADE_ID, COMBAT_HEX)
-	var start_feba := float(GameData.hex_states[COMBAT_HEX]["feba_km"])
+	var start_feba := float(GameData.hex_states[COMBAT_HEX].feba_km)
 
 	GameState.resolve_turn(ScriptedDice.new([50, 100, 100], [[0], [0]]))
 
 	assert_int(_battalion_qty(red, "Amphibious Infantry Battalion")).is_equal(3)
 	assert_int(_battalion_qty(green, "Amphibious Infantry Battalion")).is_equal(1)
 	# FEBA delta scales linearly with GameData.feba_base_km (3.5, TIV value): 1.0 @ base 2.0 → 1.75 @ 3.5.
-	assert_float(float(GameData.hex_states[COMBAT_HEX]["feba_km"]) - start_feba).is_equal_approx(1.75, 0.0001)
+	assert_float(float(GameData.hex_states[COMBAT_HEX].feba_km) - start_feba).is_equal_approx(1.75, 0.0001)
 	assert_bool(red.fought_this_turn).is_true()
 	assert_bool(green.fought_this_turn).is_true()
 
@@ -62,7 +62,7 @@ func test_ownership_by_occupancy_after_combat_and_contested_presence() -> void:
 
 	assert_bool(green.destroyed).is_true()
 	assert_array(GameData.get_brigades_in_hex(EMPTY_HEX)).not_contains([green.id])
-	assert_str(GameData.hex_states[EMPTY_HEX]["owner"]).is_equal("red")
+	assert_str(GameData.hex_states[EMPTY_HEX].owner).is_equal("red")
 
 	var contested_hex := "hex_41_16"
 	var red_contested := _make_brigade("TEST-RED-CONTESTED", Brigade.Team.RED, [{"type": "Tank Battalion", "qty": 1}])
@@ -71,7 +71,7 @@ func test_ownership_by_occupancy_after_combat_and_contested_presence() -> void:
 	_register_brigade(green_contested, contested_hex)
 	GameData.recompute_hex_ownership()
 
-	assert_str(GameData.hex_states[contested_hex]["owner"]).is_equal("contested")
+	assert_str(GameData.hex_states[contested_hex].owner).is_equal("contested")
 
 
 func test_admin_moved_brigade_is_excluded_and_no_combat_occurs() -> void:
@@ -82,13 +82,13 @@ func test_admin_moved_brigade_is_excluded_and_no_combat_occurs() -> void:
 	red.moved_admin_this_turn = true
 	var red_start_qty := _battalion_qty(red, "Amphibious Infantry Battalion")
 	var green_start_qty := _battalion_qty(green, "Amphibious Infantry Battalion")
-	var start_feba := float(GameData.hex_states[COMBAT_HEX]["feba_km"])
+	var start_feba := float(GameData.hex_states[COMBAT_HEX].feba_km)
 
 	GameState.resolve_turn(ScriptedDice.new([]))
 
 	assert_int(_battalion_qty(red, "Amphibious Infantry Battalion")).is_equal(red_start_qty)
 	assert_int(_battalion_qty(green, "Amphibious Infantry Battalion")).is_equal(green_start_qty)
-	assert_float(float(GameData.hex_states[COMBAT_HEX]["feba_km"])).is_equal_approx(start_feba, 0.0001)
+	assert_float(float(GameData.hex_states[COMBAT_HEX].feba_km)).is_equal_approx(start_feba, 0.0001)
 	assert_bool(red.fought_this_turn).is_false()
 	assert_bool(green.fought_this_turn).is_false()
 
@@ -112,7 +112,7 @@ func _run_seeded_fixture(seed_value: int) -> Dictionary:
 	return {
 		"red_qty": _battalion_qty(red, "Amphibious Infantry Battalion"),
 		"green_qty": _battalion_qty(green, "Amphibious Infantry Battalion"),
-		"feba": float(GameData.hex_states[COMBAT_HEX]["feba_km"])
+		"feba": float(GameData.hex_states[COMBAT_HEX].feba_km)
 	}
 
 

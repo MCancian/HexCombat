@@ -30,7 +30,7 @@ var hexes: Array[Hex] = []
 var hex_lookup: Dictionary = {}  # hex_id -> Hex
 var coord_lookup: Dictionary = {}  # Vector2i -> hex_id
 var neighbor_lookup: Dictionary = {}  # hex_id -> Array[String]
-var hex_states: Dictionary = {}  # hex_id -> {owner, feba_km}
+var hex_states: Dictionary = {}  # hex_id -> HexState
 var red_ship_reserve: Array = []  # raw scenario dicts: {brigade_id, locked_beach, beach_hex, offset_bearing}
 
 var brigades: Dictionary = {}  # brigade_id -> Brigade
@@ -98,10 +98,7 @@ func load_hex_grid() -> void:
 		hexes.append(hex)
 		hex_lookup[hex.id] = hex
 		coord_lookup[hex.coord] = hex.id
-		hex_states[hex.id] = {
-			"owner": HexOwner.GREEN,
-			"feba_km": 0.0
-		}
+		hex_states[hex.id] = HexState.new()
 
 	print_debug("Loaded %d hexes" % hexes.size())
 
@@ -313,21 +310,21 @@ func recompute_hex_ownership() -> void:
 				Brigade.Team.GREEN:
 					has_green = true
 		if has_red and has_green:
-			hex_states[hex_id]["owner"] = HexOwner.CONTESTED
+			hex_states[hex_id].owner = HexOwner.CONTESTED
 		elif has_red:
-			hex_states[hex_id]["owner"] = HexOwner.RED
+			hex_states[hex_id].owner = HexOwner.RED
 		elif has_green:
-			hex_states[hex_id]["owner"] = HexOwner.GREEN
+			hex_states[hex_id].owner = HexOwner.GREEN
 
 
 func set_hex_owner(hex_id: String, owner: String) -> void:
 	if hex_id in hex_states:
-		hex_states[hex_id]["owner"] = owner
+		hex_states[hex_id].owner = owner
 
 
 func set_hex_feba(hex_id: String, feba_km: float) -> void:
 	if hex_id in hex_states:
-		hex_states[hex_id]["feba_km"] = feba_km
+		hex_states[hex_id].feba_km = feba_km
 
 
 func get_unit_count_in_hex(hex_id: String, team: Brigade.Team = Brigade.Team.RED) -> int:
@@ -539,10 +536,7 @@ func snapshot_state() -> Dictionary:
 	var hids := hex_states.keys()
 	hids.sort()
 	for hid in hids:
-		hex_snap[hid] = {
-			"owner": String(hex_states[hid]["owner"]),
-			"feba_km": float(hex_states[hid]["feba_km"])
-		}
+		hex_snap[hid] = hex_states[hid].to_dict()
 	return {"brigades": brigade_snap, "hexes": hex_snap}
 
 

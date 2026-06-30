@@ -202,11 +202,11 @@ static func _occupied_hex_observations() -> Array:
 		var brigade_ids: Array = _game_data().get_brigades_in_hex(hex_id)
 		if brigade_ids.is_empty():
 			continue
-		var state: Dictionary = _game_data().hex_states.get(hex_id, {})
+		var state: HexState = _game_data().hex_states.get(hex_id, null)
 		result.append({
 			"hex_id": hex_id,
-			"owner": String(state.get("owner", HexOwner.NONE)),
-			"feba_km": float(state.get("feba_km", 0.0)),
+			"owner": state.owner if state != null else HexOwner.NONE,
+			"feba_km": state.feba_km if state != null else 0.0,
 			"brigades": brigade_ids.duplicate(),
 			"neighbors": _game_data().get_neighbors(hex_id)
 		})
