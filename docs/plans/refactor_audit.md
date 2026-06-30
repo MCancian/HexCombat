@@ -5,11 +5,15 @@ yet. Sources: `docs/REFACTOR_NOTES.md`, `docs/RETROSPECTIVES.md` "act later" ite
 
 ## High payoff, low risk (do first)
 
-1. **`warmup_context` key-allowlist guard.** Every key in the IJFS `warmup_context` is read via
-   `dict.get(key)` in `IjfsEngine.run_daily`; a typo silently yields `null` → that config goes dead
-   with no error (this exact class of bug left exquisite intel dormant for the whole project). Add a
-   one-line allowlist assert (or a typed `WarmupContext`) so a bad/missing key fails loud. Localized to
-   the IJFS engine; no golden risk. (RETROSPECTIVES 2026-06-28 D3-D warmup.)
+1. ✅ **DONE 2026-06-30 — `warmup_context` key-allowlist guard.** `IjfsEngine.WARMUP_CONTEXT_KEYS` (the
+   9 keys the engine reads) + `unknown_warmup_keys()`; `run_daily` asserts no unrecognized key is present,
+   so a producer typo fails loud instead of going silently dead. `ijfs_warmup_context_guard_test.gd` pins
+   the real producer↔consumer contract. No behavior change; golden byte-stable. _Noted-not-done (future
+   refine): extend the allowlist to key→expected-type and also flag type mismatches — deferred as
+   scope-creep (the documented bug was a misspelled key, which existence-checking fully covers; the
+   producer is internal code, not user JSON)._ Original: every key read via `dict.get(key)` in
+   `run_daily`; a typo silently yielded `null` → config went dead with no error (the bug class that left
+   exquisite intel dormant for the whole project). (RETROSPECTIVES 2026-06-28 D3-D warmup.)
 2. **Per-ship-type mine neutralization likelihood.** The mine model maps likelihood by *category*, but
    the source varies within a category. Add a `mine_neutralization_likelihood` field to `ShipDef` +
    `ships.json` (defaulting to today's category values) so designers tune per hull. Additive; the

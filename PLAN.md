@@ -130,6 +130,32 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-30 — IJFS warmup_context fail-loud guard (refactor_audit item 1; max-autonomy).**
+  `IjfsEngine.run_daily` reads every `warmup_context` entry via `wc.get(key, default)`, so a producer
+  typo silently yields the default and the config goes dead — the bug class that left exquisite intel
+  dormant for the whole project. Added `WARMUP_CONTEXT_KEYS` (the 9 keys the engine reads) +
+  `unknown_warmup_keys()` and an `assert` in `run_daily`. **Judgment calls:** (1) allowlist/existence
+  check, not a full typed `WarmupContext` — minimal, no behavior change, golden byte-stable (the real
+  producer emits exactly the 9 keys so the assert never trips); (2) put the logic in a pure testable
+  helper rather than a bare `assert`, and pin the *real* producer↔consumer contract in a unit test;
+  (3) **deferred** opencode's key→type suggestion (scope-creep; the documented bug is a misspelled key,
+  which existence-checking covers; producer is internal code). Test: `ijfs_warmup_context_guard_test`.
+
+- **2026-06-30 — IJFS maneuver targets synced to live OOB each turn (2d follow-up; max-autonomy).**
+  Resolves the 2d limitation. `GameState._sync_maneuver_targets_to_oob` (top of `resolve_ijfs_turn`)
+  marks the excess of live "Maneuver Units" targets over current OOB qty `destroyed`, so IJFS stops
+  firing at dead battalions. **Chose SYNC over the queue's literal "rebuild per turn":**
+  `IjfsEngine.carry_to_next_day` persists `destroyed`/`known_to_red`/`last_detected_day`, so a full
+  rebuild would wipe survivors' detection continuity; sync only ever sets `destroyed` (never resurrects),
+  preserving continuity. Deterministic (sort by `target_id`). **Golden-safe:** turn-1 OOB is still full
+  when IJFS runs (2d applies after) so the pass is a no-op. Test: `ijfs_maneuver_sync_test`.
+
+- **2026-06-30 — IJFS posture-by-activity detectability bias (overnight 2c-ii; max-autonomy).** See the
+  D4-H section below for the full design note; in short, `GameState._update_maneuver_posture` sets a
+  maneuver target's `posture="active"` when its brigade moved/fought last turn (2a flags), feeding the
+  existing detection seam (higher `detectability_active` + active multipliers) with no math edit.
+  Golden-safe (turn-1 flags all false → all stay `"hiding"`). Test: `ijfs_maneuver_posture_test`.
+
 - **2026-06-29 — IJFS→ground maneuver-casualty linkage CLOSED (overnight loop 2b–2d).** The open D4-H
   half is done: `IjfsLoaders.build_maneuver_targets` generates per-battalion-instance "Maneuver Units"
   IJFS targets from the ROC OOB (`{brigade_id}-MU-{n}` + `MANEUVER_TYPE_MAP` profile; port of TIV

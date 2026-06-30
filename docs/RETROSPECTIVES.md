@@ -944,3 +944,23 @@ multi-turn combat fixture). Logged as a refactor/test-infra opportunity; NOT act
   state that mechanism would discard before implementing it literally — the goal (retire dead targets)
   had a lower-risk path (mark-excess-destroyed) that the literal framing would have missed.
 - Gate green first try (37 suites); golden byte-stable as predicted (turn-1 no-op).
+
+---
+
+## 2026-06-30 — refactor_audit item 1: warmup_context key-allowlist guard   (orchestrator)
+
+**What would you do differently (opencode):**
+- "Make WARMUP_CONTEXT_KEYS a Dictionary of key→expected-type and check type alongside existence, so a
+  value fed as the wrong type (string where int expected) is also caught, not just missing/typo'd keys.
+  The assert could report both unknown and type-mismatched keys."
+
+**Orchestrator triage:**
+- Deferred (noted in refactor_audit). Scope-creep beyond the requested guard, and a different failure
+  mode: the documented bug was a *misspelled key* going dormant — existence-checking covers that fully.
+  Type mismatches are rarer and the producer is internal GDScript (not user JSON), so the payoff is low
+  vs. the maintenance cost of pinning every value type. Recorded for later if it ever bites.
+- Made the guard *testable*: rather than a bare `assert` (which GdUnit can't catch), the logic lives in
+  the pure `unknown_warmup_keys()` helper that `run_daily` asserts on. The high-value test asserts the
+  REAL producer (`GameState._build_warmup_context`) emits zero unknown keys — that pins the
+  producer↔consumer contract so a future producer typo fails a unit test, not just a live run.
+- Gate green first try (38 suites); golden byte-stable (guard never trips on valid input).
