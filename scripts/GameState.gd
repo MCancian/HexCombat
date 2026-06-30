@@ -417,6 +417,8 @@ func resolve_ijfs_turn(dice: Dice) -> Dictionary:
 	assert(dice != null, "resolve_ijfs_turn requires a Dice instance")
 	if ijfs_state == null:
 		_rebuild_ijfs_state()
+	# D4-H (2d follow-up): retire maneuver targets whose battalions died (IJFS or ground combat).
+	_sync_maneuver_targets_to_oob()
 	# D4-H (2c-ii): recently-active maneuver units present an "active" posture (more detectable).
 	_update_maneuver_posture()
 	# Continuity: after the first IJFS day, carry destroyed/known/inventory/attrition forward and
@@ -543,6 +545,42 @@ func _update_maneuver_posture() -> void:
 		if brigade == null:
 			continue
 		target.posture = "active" if (brigade.moved_last_turn or brigade.fought_last_turn) else "hiding"
+
+
+## D4-H (2d follow-up): keep the live "Maneuver Units" IJFS target count in sync with the OOB each turn.
+## When battalions die (IJFS via _apply_ijfs_maneuver_casualties, or ground combat), the surviving
+## maneuver targets for those dead battalions would otherwise keep drawing IJFS fire. For each
+## (brigade_id, unit_type) group, if more targets are still alive than the brigade has battalions of
+## that type, mark the excess `destroyed` (highest target_id first, deterministic). Only ever sets
+## destroyed — never resurrects — so detection continuity (known_to_red/last_detected_day) for
+## survivors is preserved, and carry_to_next_day keeps the flag. Golden-safe: when IJFS runs on turn 1
+## the OOB is still full (2d hasn't applied yet), so live count == qty exactly → no target is touched.
+func _sync_maneuver_targets_to_oob() -> void:
+	var live_by_key: Dictionary = {}
+	for target_value in ijfs_state.targets:
+		var target: IjfsTarget = target_value
+		if target.category != "Maneuver Units" or target.destroyed:
+			continue
+		var key := "%s|%s" % [String(target.metadata.get("brigade_id", "")), String(target.metadata.get("unit_type", ""))]
+		if not live_by_key.has(key):
+			live_by_key[key] = []
+		(live_by_key[key] as Array).append(target)
+	for key in live_by_key:
+		var parts := String(key).split("|", true, 1)
+		var brigade_id := parts[0]
+		var unit_type := parts[1] if parts.size() > 1 else ""
+		var current_qty := 0
+		var brigade: Brigade = GameData.get_brigade(brigade_id)
+		if brigade != null and not brigade.destroyed:
+			for battalion in brigade.composition:
+				if battalion.type == unit_type:
+					current_qty += battalion.qty
+		var live_targets: Array = live_by_key[key]
+		var excess := live_targets.size() - current_qty
+		if excess > 0:
+			live_targets.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id > b.target_id)
+			for i in range(excess):
+				(live_targets[i] as IjfsTarget).destroyed = true
 
 
 ## Aggregates the IJFS ledgers into the writeback seam D3 (anti-ship) and future ground-casualty
