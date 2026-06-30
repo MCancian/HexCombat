@@ -64,8 +64,78 @@ yet. Sources: `docs/REFACTOR_NOTES.md`, `docs/RETROSPECTIVES.md` "act later" ite
 7. **Sweep harness shape** — `tools/sweep_antiship_crossing.gd` injects only the intel-bonus lever;
    generalize its grid to also sweep mine knobs (danger_radius, decoy mix) if calibration continues.
 
+## Larger structural refactors (legibility + testability)
+
+Proposed 2026-06-30 after the item-3 typed-Resource work, then **independently verified against the
+actual code by a read-only review** (corrections folded in below — the line refs are the reviewer's).
+Goal: a codebase a future agent can extend safely. **Sequence: 8 → 9 → 10** (cheap safety net first,
+then proven low-risk DTO work, then the big structural change last). None implemented yet.
+
+**Verified strength to PRESERVE (do not "fix"):** per-phase RNG isolation is already clean. IJFS and
+antiship draw from independent derived substreams (`dice.derive("ijfs:…")` `GameState.gd:458-475`;
+`dice.derive("antiship:…")` `:716-719`); **offload consumes no dice at all** (deterministic capacity
+ordering — the `dice` param is accepted but never read, `:318/:340`); **combat is the SOLE base-stream
+consumer** (`_resolve_combat_at` → `CombatCalculator.resolve_map_attack`, `:1217-1225`). Any extraction
+must keep this topology. (This corrects the original proposal, which wrongly feared an offload↔combat
+ordering coupling.)
+
+8. **Schema ↔ code ↔ fixture drift gate** *(do first — cheap safety net)*. Verified gap: schemas live
+   as standalone `schemas/*.schema.json` with **no runtime validator**; `REQUIRED_*_KEYS` are
+   hand-duplicated in `validate_llm_api.gd` (`:10-43`, key-set only — not shape); and **nothing in
+   `run_all_tests.ps1` or any validator regenerates-and-byte-compares the `docs/examples/*.json`
+   fixtures** — which is exactly why `llm_result_after_turn.json` rotted until the item-3 work caught it
+   by hand. Fix: a new gated validator that runs the headless turn, exports each fixture to a temp path
+   via the existing `tools/export_llm_*.gd`, and byte-compares against the committed copy (fail loud on
+   mismatch) — auto-picked-up by `run_all_tests.ps1`. **Honest caveat:** wiring the gate is cheap, but
+   the *first* regeneration may surface further stale drift to fix (as the antiship section already did);
+   "cheap" applies to the gate, not necessarily the one-time cleanup.
+
+9. **Finish typed phase-summary Resources** *(do second — proven item-3 pattern, low risk)*. Still
+   untyped `Dictionary` on `GameState`: `last_ijfs_summary`, `last_ijfs_writeback`,
+   `last_antiship_summary`, `last_frontline_summary`, `last_cleanup_summary` (`:54-65`), plus the
+   `resolve_supply_turn`/`resolve_offload_turn` return dicts. Every consumer reads via `.get(key,
+   default)`, so a producer key-rename silently degrades to a default. Convert one at a time to typed
+   Resources with `to_dict()` at the JSON edge, exactly like `CombatSummary` (item 3) — re-verify golden
+   byte-stability after each. **Verified risk order — do simplest first:** `last_frontline_summary` /
+   `last_cleanup_summary` (few keys, few consumers) → `last_antiship_summary` (many `.get()` consumers in
+   `LLMGameAPI`) → **`last_ijfs_writeback` LAST / most carefully** — it is the only summary with
+   *internal cross-phase* consumers (`_apply_ijfs_maneuver_casualties:609`, `resolve_antiship_turn:737-738`
+   read it via `.get()`), so a key typo silently breaks IJFS→casualty/antiship coupling, not just a
+   display field.
+
+10. **Decompose the `GameState` god-object** *(do last — highest payoff, highest risk; multi-session
+    arc)*. `GameState.gd` is **1,414 lines** orchestrating ~10 phases plus snapshot/play_turn. Extract
+    each phase so it is independently understandable and unit-testable.
+    - **DECIDED interface (user call 2026-06-30 — favor up-front effort for long-term legibility): pure
+      `RefCounted` resolver classes, NOT new autoloads.** Each phase becomes a class with an explicit
+      `resolve(game_data, dice, …) -> <TypedSummary>` signature; dependencies are visible in the
+      signature and the unit is headless-testable in isolation. Autoloads were rejected as hidden globals
+      that an agent must already know about — the opposite of legible. This matches AGENTS.md's existing
+      rule for logic ("`RefCounted`/`static func`, no `Node` dependency, headless-testable"). `GameState`
+      shrinks to a thin orchestrator that sequences the resolvers.
+    - **The real risk is shared mutable state, not the method bodies.** ~8 fields flow *between* phases
+      and must be threaded explicitly through the new interfaces: `ship_reserve`, `fleet`,
+      `pending_lost_at_sea`, `antiship_systems`/`antiship_containers`, `last_ijfs_writeback`,
+      `supply_state`, `game_over`/`winner`, and the per-brigade flags (`moved_this_turn`,
+      `fought_this_turn`, `moved_admin_this_turn`, latched `moved/fought_last_turn`). Map every
+      producer→consumer edge before moving code.
+    - **Verified extraction order (corrects the original "cleanup first"):** start with the **data
+      loading / rebuild helpers** (`_rebuild_ship_reserve`, `_rebuild_fleet`, `_rebuild_supply_state`,
+      `_rebuild_ijfs_state`, `_ensure_antiship_systems`) — they have the fewest cross-phase deps — then
+      the genuinely self-contained phases **`resolve_frontline_phase` (`:1051`, external polyline input
+      only)** and **`resolve_supply_turn` (`:399`)**. `resolve_cleanup_phase` (`:963`) is **more** coupled
+      than first thought (resets `antiship_systems` flags, reads `ship_reserve` for the census, latches
+      brigade flags IJFS reads next turn) — do it later, not first. Re-run the golden after every step.
+
+**Smaller item (verified YAGNI):** `combat_detail` stays an untyped `Dictionary` (`CombatResult.gd:16`,
+`CombatSummary.gd:15`). It's built once (`CombatCalculator.gd:109`) and only ever serialized whole to
+JSON — no code reads its nested fields in a typed way — so typing it would add 3-4 Resource classes of
+boilerplate for zero read-site safety. Revisit only if per-casualty granularity becomes test-relevant;
+the real drift risk for it is the schema boundary (item 8), not the GDScript type.
+
 ## Note
 
 Most M0–M7 "act later" extracts (pure `TurnResolver`, per-turn event log, `play_turn` façade, typed
 command/result wrappers) are **already done** via the Track-E AI-readiness arc — don't re-open them.
-The live candidates are items 1–4 above.
+Items 1–4 above are **done**; the live candidates are now the **Larger structural refactors (8–10)**,
+to be taken in order.

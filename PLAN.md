@@ -130,6 +130,22 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-30 — Larger structural-refactor backlog recorded + GameState-decomposition interface decided
+  (USER design call; documentation only, NOT implemented).** After item 3, proposed four larger refactors
+  for legibility/testability; had them **independently verified against the actual code by a read-only
+  review**, then folded the corrected versions into `docs/plans/refactor_audit.md` → "Larger structural
+  refactors (8–10)". Net corrections from the review: (a) RNG isolation is cleaner than first claimed —
+  offload consumes **no** dice (deterministic), combat is the sole base-stream consumer, so there is no
+  offload↔combat coupling to fear; (b) for item 9, `last_ijfs_writeback` is the riskiest summary (internal
+  cross-phase `.get()` consumers) and must go last; (c) for item 10, the genuinely safe first extractions
+  are the data-loading/rebuild helpers + `frontline`/`supply`, NOT cleanup (which is more coupled than it
+  looks). **User design call:** for item 10 (decomposing the 1,414-line `GameState`), prefer the option
+  that costs more up front but reads more clearly for future agents → **pure `RefCounted` resolver classes
+  with explicit `resolve(game_data, dice) -> TypedSummary` signatures, NOT new autoloads** (autoloads are
+  hidden globals; resolver signatures make dependencies visible and the unit headless-testable, matching
+  AGENTS.md's logic-layer rule). Sequence is fixed: **8 (fixture-drift gate) → 9 (typed phase summaries)
+  → 10 (GameState decomposition)**. Full coupling map + line refs live in `refactor_audit.md`.
+
 - **2026-06-30 — Typed `HexState` + `CombatSummary` Resources (refactor_audit item 3; done directly,
   NOT via opencode — explicitly flagged "not a free-model task").** Replaced the two plain dicts
   threaded through the model/state/API/validators with typed Resources, one type at a time, re-running
