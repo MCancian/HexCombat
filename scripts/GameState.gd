@@ -417,6 +417,8 @@ func resolve_ijfs_turn(dice: Dice) -> Dictionary:
 	assert(dice != null, "resolve_ijfs_turn requires a Dice instance")
 	if ijfs_state == null:
 		_rebuild_ijfs_state()
+	# D4-H (2c-ii): recently-active maneuver units present an "active" posture (more detectable).
+	_update_maneuver_posture()
 	# Continuity: after the first IJFS day, carry destroyed/known/inventory/attrition forward and
 	# clear per-day suppression flags (mirrors the TIV loader reload reset).
 	# On the FIRST IJFS of the game, run the multi-day prelanding warmup campaign so exquisite
@@ -522,6 +524,25 @@ func _rebuild_ijfs_state() -> void:
 	ijfs_state.squadron_force = IjfsLoaders.expand_oob_to_squadrons(IjfsLoaders.load_oob(IJFS_OOB_PATH))
 	IjfsLoaders.enrich_sam_scores(ijfs_state.targets, IjfsLoaders.load_sam_capabilities(IJFS_SAM_CAPS_PATH))
 	_ijfs_day = 0
+
+
+## D4-H (2c-ii): bias IJFS detectability toward recently-active Green maneuver units. A brigade that
+## moved or fought last turn presents an "active" posture, so its maneuver-unit IJFS targets use the
+## higher detectability_active label (and active posture/satellite multipliers) in IjfsDetection;
+## otherwise they stay "hiding". Pure data nudge — no detection-math change. Golden-safe: on turn 1 all
+## activity flags are false, so every maneuver target stays "hiding" (its build-time default).
+func _update_maneuver_posture() -> void:
+	for target_value in ijfs_state.targets:
+		var target: IjfsTarget = target_value
+		if target.category != "Maneuver Units":
+			continue
+		var brigade_id := String(target.metadata.get("brigade_id", ""))
+		if brigade_id == "":
+			continue
+		var brigade: Brigade = GameData.get_brigade(brigade_id)
+		if brigade == null:
+			continue
+		target.posture = "active" if (brigade.moved_last_turn or brigade.fought_last_turn) else "hiding"
 
 
 ## Aggregates the IJFS ledgers into the writeback seam D3 (anti-ship) and future ground-casualty
