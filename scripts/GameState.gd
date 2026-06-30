@@ -60,7 +60,7 @@ var antiship_systems: Array = []
 var antiship_containers: Array = []
 # Fractional BN-equiv owed from ship losses, carried across turns (ShipLoadingModel.resolve_bn_losses).
 var lost_at_sea_accumulator: float = 0.0
-var last_antiship_summary: Dictionary = {}
+var last_antiship_summary: AntishipSummary = null
 var last_frontline_summary: FrontlineSummary = null
 var last_cleanup_summary: CleanupSummary = null
 # Victory state, set in the end-of-turn cleanup census (VictoryConditions). winner: ""/"red"/"green".
@@ -112,7 +112,7 @@ func reset_to_scenario() -> void:
 	antiship_systems = []
 	antiship_containers = []
 	lost_at_sea_accumulator = 0.0
-	last_antiship_summary = {}
+	last_antiship_summary = null
 	last_frontline_summary = null
 	last_cleanup_summary = null
 	game_over = false
@@ -699,7 +699,7 @@ func _compute_ijfs_writeback(ledgers: Dictionary) -> Dictionary:
 ## INDEPENDENT substream so the ground-combat golden invariant stays byte-stable.
 func resolve_antiship_turn(dice: Dice) -> Dictionary:
 	_ensure_antiship_systems()
-	last_antiship_summary = {}
+	last_antiship_summary = null
 
 	# The crossing wave = BNs still at sea. No wave -> no anti-ship phase.
 	var bns_at_sea: Array = []
@@ -819,20 +819,19 @@ func resolve_antiship_turn(dice: Dice) -> Dictionary:
 	register_ship_losses(int(losses["bn_equiv_lost"]))
 	_apply_ship_losses_to_fleet(destroyed_by_type)
 
-	last_antiship_summary = {
-		"resolved_turn": turn_number,
-		"sent_by_type": sent["sent_by_type"],
-		"unliftable_bn": int(sent["unliftable_bn"]),
-		"systems_fired_count": _sum_systems_fired(systems_fired),
-		"destroyed_by_ship_type": destroyed_by_type,
-		"crossing_casualties": crossing["casualty_totals"],
-		"bns_lost_at_sea": int(losses["bn_equiv_lost"]),
-		"target_beaches": target_beaches,
-		"target_tos": target_tos,
-		"mine_status": _mine_status_summary(mine_res),
-	}
-	EventBus.antiship_resolved.emit(last_antiship_summary)
-	return last_antiship_summary
+	last_antiship_summary = AntishipSummary.new()
+	last_antiship_summary.resolved_turn = turn_number
+	last_antiship_summary.sent_by_type = sent["sent_by_type"]
+	last_antiship_summary.unliftable_bn = int(sent["unliftable_bn"])
+	last_antiship_summary.systems_fired_count = _sum_systems_fired(systems_fired)
+	last_antiship_summary.destroyed_by_ship_type = destroyed_by_type
+	last_antiship_summary.crossing_casualties = crossing["casualty_totals"]
+	last_antiship_summary.bns_lost_at_sea = int(losses["bn_equiv_lost"])
+	last_antiship_summary.target_beaches = target_beaches
+	last_antiship_summary.target_tos = target_tos
+	last_antiship_summary.mine_status = _mine_status_summary(mine_res)
+	EventBus.antiship_resolved.emit(last_antiship_summary.to_dict())
+	return last_antiship_summary.to_dict()
 
 
 ## Build the sent crossing fleet inputs from the surviving fleet: carriers (capacity > 0, non-infra)
@@ -1387,7 +1386,7 @@ func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> Tur
 	result.combat_summaries = last_combat_summaries.duplicate()
 	result.ijfs_summary = last_ijfs_summary.duplicate(true)
 	result.ijfs_writeback = last_ijfs_writeback.duplicate(true)
-	result.antiship_summary = last_antiship_summary.duplicate(true)
+	result.antiship_summary = last_antiship_summary.to_dict() if last_antiship_summary != null else {}
 	result.frontline_summary = last_frontline_summary.to_dict() if last_frontline_summary != null else {}
 	result.cleanup_summary = last_cleanup_summary.to_dict() if last_cleanup_summary != null else {}
 	result.events = TurnEventLog.build(self)

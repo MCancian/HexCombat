@@ -257,18 +257,23 @@ static func _ijfs_observation() -> Dictionary:
 # turn a crossing wave is at sea. `bns_lost_at_sea` feeds the offload reserve (BNs removed before
 # landing); `destroyed_by_ship_type` is the combined crossing + mine hull toll.
 static func _antiship_observation() -> Dictionary:
-	var summary: Dictionary = _game_state().last_antiship_summary
+	var summary: AntishipSummary = _game_state().last_antiship_summary
+	if summary != null:
+		# to_dict() keys/order match this observation block exactly (single source of truth).
+		return summary.to_dict()
+	# No crossing wave resolved yet — emit the empty-case defaults. mine_status defaults to {} here
+	# (an empty dict) while the resolved value is an Array; preserved verbatim for fixture stability.
 	return {
-		"resolved_turn": summary.get("resolved_turn", 0),
-		"sent_by_type": summary.get("sent_by_type", {}),
-		"unliftable_bn": summary.get("unliftable_bn", 0),
-		"systems_fired_count": summary.get("systems_fired_count", 0),
-		"destroyed_by_ship_type": summary.get("destroyed_by_ship_type", {}),
-		"crossing_casualties": summary.get("crossing_casualties", {}),
-		"bns_lost_at_sea": summary.get("bns_lost_at_sea", 0),
-		"target_beaches": summary.get("target_beaches", []),
-		"target_tos": summary.get("target_tos", []),
-		"mine_status": summary.get("mine_status", {}),
+		"resolved_turn": 0,
+		"sent_by_type": {},
+		"unliftable_bn": 0,
+		"systems_fired_count": 0,
+		"destroyed_by_ship_type": {},
+		"crossing_casualties": {},
+		"bns_lost_at_sea": 0,
+		"target_beaches": [],
+		"target_tos": [],
+		"mine_status": {},
 	}
 
 

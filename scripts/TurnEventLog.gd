@@ -15,8 +15,8 @@ static func build(state: GameStateType) -> Array[TurnEvent]:
 		events.append(_event(seq, "ijfs", "", "Red", state.last_ijfs_summary))
 		seq += 1
 
-	if not state.last_antiship_summary.is_empty():
-		events.append(_event(seq, "antiship", "", "Green", state.last_antiship_summary))
+	if state.last_antiship_summary != null:
+		events.append(_event(seq, "antiship", "", "Green", state.last_antiship_summary.to_dict()))
 		seq += 1
 
 	for team in [Brigade.Team.RED, Brigade.Team.GREEN]:
