@@ -79,7 +79,15 @@ consumer** (`_resolve_combat_at` → `CombatCalculator.resolve_map_attack`, `:12
 must keep this topology. (This corrects the original proposal, which wrongly feared an offload↔combat
 ordering coupling.)
 
-8. **Schema ↔ code ↔ fixture drift gate** *(do first — cheap safety net)*. Verified gap: schemas live
+8. ✅ **DONE 2026-06-30 — Schema ↔ code ↔ fixture drift gate.** Added `tools/validate_fixtures.gd`
+   (auto-picked-up by `run_all_tests.ps1`): regenerates each committed `docs/examples/*.json` in memory
+   and byte-compares (line-ending-normalized) against the committed copy, failing loud on drift. To keep
+   a single source of truth (so the gate can't itself drift from the exporter), the fixture build logic
+   was extracted into `tools/LLMFixtures.gd` and both the export tools and the gate build through it;
+   exporters verified byte-stable after the refactor. Commit `b1f7244`. _Both committed fixtures were
+   already current (the result one had just been regenerated), so no further drift cleanup was needed
+   this time. The deriving-required-keys-from-types follow-up waits on item 9._ Original gap below:
+   _Verified gap: schemas live
    as standalone `schemas/*.schema.json` with **no runtime validator**; `REQUIRED_*_KEYS` are
    hand-duplicated in `validate_llm_api.gd` (`:10-43`, key-set only — not shape); and **nothing in
    `run_all_tests.ps1` or any validator regenerates-and-byte-compares the `docs/examples/*.json`
@@ -137,5 +145,5 @@ the real drift risk for it is the schema boundary (item 8), not the GDScript typ
 
 Most M0–M7 "act later" extracts (pure `TurnResolver`, per-turn event log, `play_turn` façade, typed
 command/result wrappers) are **already done** via the Track-E AI-readiness arc — don't re-open them.
-Items 1–4 above are **done**; the live candidates are now the **Larger structural refactors (8–10)**,
-to be taken in order.
+Items 1–4 and **8** are **done**; the live candidates are now **item 9** (typed phase summaries) then
+**item 10** (GameState decomposition), in that order.
