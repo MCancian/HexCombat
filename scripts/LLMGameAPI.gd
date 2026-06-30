@@ -239,17 +239,17 @@ static func _supply_state_observation() -> Dictionary:
 ## the first turn resolves. Keeps the JSON observation contract forward-compatible for D3/AI play.
 static func _ijfs_observation() -> Dictionary:
 	var summary: Dictionary = _game_state().last_ijfs_summary
-	var writeback: Dictionary = _game_state().last_ijfs_writeback
+	var writeback: IjfsWriteback = _game_state().last_ijfs_writeback
 	return {
 		"resolved_day": _game_state()._ijfs_day,
 		"attacks": summary.get("attacks", {}),
 		"taiwan_ad_health_after": summary.get("taiwan_ad_health_after", {}),
 		"red_air_losses": summary.get("red_air_losses", 0),
-		"antiship_destroyed_by_type": writeback.get("antiship_destroyed_by_type", {}),
-		"antiship_suppressed_by_type": writeback.get("antiship_suppressed_by_type", {}),
-		"sam_destroyed": writeback.get("sam_destroyed", 0),
-		"sam_suppressed": writeback.get("sam_suppressed", 0),
-		"maneuver_casualties": writeback.get("maneuver_casualties", []),
+		"antiship_destroyed_by_type": writeback.antiship_destroyed_by_type if writeback != null else {},
+		"antiship_suppressed_by_type": writeback.antiship_suppressed_by_type if writeback != null else {},
+		"sam_destroyed": writeback.sam_destroyed if writeback != null else 0,
+		"sam_suppressed": writeback.sam_suppressed if writeback != null else 0,
+		"maneuver_casualties": writeback.maneuver_casualties if writeback != null else [],
 	}
 
 

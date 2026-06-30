@@ -52,7 +52,7 @@ var last_combat_summaries: Array[CombatSummary] = []
 var ijfs_state: IjfsDailyState = null
 var _ijfs_day: int = 0
 var last_ijfs_summary: Dictionary = {}
-var last_ijfs_writeback: Dictionary = {}
+var last_ijfs_writeback: IjfsWriteback = null
 # D3 anti-ship Green firing systems (AntishipSystem rows aggregated by (to_number, type_id)). Persist
 # across turns so launcher destruction/suppression carries forward; lazily built on first use.
 var antiship_systems: Array = []
@@ -106,7 +106,7 @@ func reset_to_scenario() -> void:
 	last_contested_hexes.clear()
 	last_combat_summaries.clear()
 	last_ijfs_summary = {}
-	last_ijfs_writeback = {}
+	last_ijfs_writeback = null
 	# Anti-ship systems are lazily (re)built on first use (resolve_ijfs_turn / resolve_antiship_turn),
 	# matching the IJFS state's lazy-load pattern; clearing here forces a fresh build per scenario.
 	antiship_systems = []
@@ -606,7 +606,7 @@ func _sync_maneuver_targets_to_oob() -> void:
 ## NOTE: ijfs_state (and its maneuver targets) is built once per scenario, so across many turns a
 ## removed battalion can still appear as a target; the qty cap keeps this safe (never negative). v1.
 func _apply_ijfs_maneuver_casualties() -> void:
-	var casualties: Array = last_ijfs_writeback.get("maneuver_casualties", [])
+	var casualties: Array = last_ijfs_writeback.maneuver_casualties if last_ijfs_writeback != null else []
 	for casualty_value in casualties:
 		var casualty: Dictionary = casualty_value
 		var brigade_id := String(casualty.get("brigade_id", ""))
@@ -629,7 +629,7 @@ func _apply_ijfs_maneuver_casualties() -> void:
 			brigade.destroyed = true
 
 
-func _compute_ijfs_writeback(ledgers: Dictionary) -> Dictionary:
+func _compute_ijfs_writeback(ledgers: Dictionary) -> IjfsWriteback:
 	var strike_log: Array = ledgers["strike_log"]
 	var engagement_log: Array = ledgers["engagement_log"]
 
@@ -683,13 +683,13 @@ func _compute_ijfs_writeback(ledgers: Dictionary) -> Dictionary:
 		if entry.get("suppressed"):
 			sam_suppressed += 1
 
-	return {
-		"antiship_destroyed_by_type": antiship_destroyed_by_type,
-		"antiship_suppressed_by_type": antiship_suppressed_by_type,
-		"maneuver_casualties": maneuver_casualties,
-		"sam_destroyed": sam_destroyed,
-		"sam_suppressed": sam_suppressed,
-	}
+	var writeback := IjfsWriteback.new()
+	writeback.antiship_destroyed_by_type = antiship_destroyed_by_type
+	writeback.antiship_suppressed_by_type = antiship_suppressed_by_type
+	writeback.maneuver_casualties = maneuver_casualties
+	writeback.sam_destroyed = sam_destroyed
+	writeback.sam_suppressed = sam_suppressed
+	return writeback
 
 
 ## D3-D: Green coastal anti-ship fires + mine warfare against the Red amphibious crossing. Threads the
@@ -734,8 +734,8 @@ func resolve_antiship_turn(dice: Dice) -> Dictionary:
 
 	# Apply the IJFS writeback to the Green firing systems: destroyed launchers are permanently removed
 	# from quantity; suppressed launchers sit out this turn (reduced firing %). Fire-all otherwise.
-	var ijfs_destroyed: Dictionary = last_ijfs_writeback.get("antiship_destroyed_by_type", {})
-	var ijfs_suppressed: Dictionary = last_ijfs_writeback.get("antiship_suppressed_by_type", {})
+	var ijfs_destroyed: Dictionary = last_ijfs_writeback.antiship_destroyed_by_type if last_ijfs_writeback != null else {}
+	var ijfs_suppressed: Dictionary = last_ijfs_writeback.antiship_suppressed_by_type if last_ijfs_writeback != null else {}
 	# TOs whose C2 (type 99) the IJFS suppressed lose over-the-horizon targeting: every surviving
 	# anti-ship system in that TO fires at C2_SUPPRESSED_FIRE_MULTIPLIER of capacity. Computed up front
 	# because C2 itself is skipped (continue) in the firing loop below and never fires.
@@ -1385,7 +1385,7 @@ func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> Tur
 	result.contested_hexes = last_contested_hexes.duplicate()
 	result.combat_summaries = last_combat_summaries.duplicate()
 	result.ijfs_summary = last_ijfs_summary.duplicate(true)
-	result.ijfs_writeback = last_ijfs_writeback.duplicate(true)
+	result.ijfs_writeback = last_ijfs_writeback.to_dict() if last_ijfs_writeback != null else {}
 	result.antiship_summary = last_antiship_summary.to_dict() if last_antiship_summary != null else {}
 	result.frontline_summary = last_frontline_summary.to_dict() if last_frontline_summary != null else {}
 	result.cleanup_summary = last_cleanup_summary.to_dict() if last_cleanup_summary != null else {}

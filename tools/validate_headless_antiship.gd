@@ -92,7 +92,7 @@ func _validate_c2_suppression_reduces_firing() -> void:
 	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
 	# Snapshot the deterministic writeback, then find the TO actually under assault.
-	var writeback: Dictionary = (GameState.last_ijfs_writeback as Dictionary).duplicate(true)
+	var writeback: Dictionary = GameState.last_ijfs_writeback.to_dict()
 	var probe: Dictionary = GameState.resolve_antiship_turn(SeededDice.new(SEED))
 	var target_tos: Array = probe.get("target_tos", [])
 	if target_tos.is_empty():
@@ -115,7 +115,7 @@ func _fired_count_with_c2(writeback: Dictionary, c2_key: String, suppressed_valu
 	var supp: Dictionary = (wb.get("antiship_suppressed_by_type", {}) as Dictionary).duplicate(true)
 	supp[c2_key] = suppressed_value
 	wb["antiship_suppressed_by_type"] = supp
-	GameState.last_ijfs_writeback = wb
+	GameState.last_ijfs_writeback = IjfsWriteback.from_dict(wb)
 	var summary: Dictionary = GameState.resolve_antiship_turn(SeededDice.new(SEED))
 	return int(summary.get("systems_fired_count", 0))
 
@@ -130,7 +130,7 @@ func _validate_cumulative_ijfs_attrition() -> void:
 	GameState.reset_to_scenario()
 	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
-	var destroyed: Dictionary = GameState.last_ijfs_writeback.get("antiship_destroyed_by_type", {})
+	var destroyed: Dictionary = GameState.last_ijfs_writeback.antiship_destroyed_by_type
 	var wb_sum := 0
 	for v in destroyed.values():
 		wb_sum += int(v)

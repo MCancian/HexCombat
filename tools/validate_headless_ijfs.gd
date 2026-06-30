@@ -63,7 +63,7 @@ func _validate_day1_run() -> void:
 		_assert_true("summary has %s" % key, summary.has(key))
 	_assert_true("attacks.executed is int >= 0", int((summary["attacks"] as Dictionary).get("executed", -1)) >= 0)
 
-	var writeback: Dictionary = GameState.last_ijfs_writeback
+	var writeback: Dictionary = GameState.last_ijfs_writeback.to_dict()
 	for key in WRITEBACK_KEYS:
 		_assert_true("writeback has %s" % key, writeback.has(key))
 	_assert_true("antiship_destroyed_by_type is a Dictionary", writeback["antiship_destroyed_by_type"] is Dictionary)
@@ -76,13 +76,13 @@ func _validate_determinism() -> void:
 	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
 	var first := JSON.stringify(GameState.last_ijfs_summary)
-	var first_wb := JSON.stringify(GameState.last_ijfs_writeback)
+	var first_wb := JSON.stringify(GameState.last_ijfs_writeback.to_dict())
 
 	GameState.reset_to_scenario()
 	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
 	var second := JSON.stringify(GameState.last_ijfs_summary)
-	var second_wb := JSON.stringify(GameState.last_ijfs_writeback)
+	var second_wb := JSON.stringify(GameState.last_ijfs_writeback.to_dict())
 
 	_assert_true("same seed -> identical IJFS summary", first == second)
 	_assert_true("same seed -> identical IJFS writeback", first_wb == second_wb)

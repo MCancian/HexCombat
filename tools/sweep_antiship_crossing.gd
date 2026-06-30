@@ -132,9 +132,9 @@ func _mines_only_run() -> Dictionary:
 		var system: AntishipSystem = system_value
 		var key: String = AntishipCalculator.encode_key(system.to_number, system.type_id)
 		destroyed_all[key] = system.original_quantity
-	var wb: Dictionary = (GameState.last_ijfs_writeback as Dictionary).duplicate(true)
+	var wb: Dictionary = GameState.last_ijfs_writeback.to_dict()
 	wb["antiship_destroyed_by_type"] = destroyed_all
-	GameState.last_ijfs_writeback = wb
+	GameState.last_ijfs_writeback = IjfsWriteback.from_dict(wb)
 	var wave_bns := _reserve_bn_count()
 	var summary: Dictionary = GameState.resolve_antiship_turn(SeededDice.new(SEED))
 	summary["_wave_bns"] = wave_bns
