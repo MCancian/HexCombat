@@ -1008,3 +1008,25 @@ multi-turn combat fixture). Logged as a refactor/test-infra opportunity; NOT act
 - Also note: an earlier `--check-only -s <test>` run reported "Identifier not found: GameData" — that's a
   FALSE alarm (autoloads aren't registered under `--check-only`), not a real error. Use the full gate (or
   a scene_runner) to compile-check tests that reference autoloads.
+
+---
+
+## 2026-06-30 — refactor_audit item 4 (scoped): debug-only end-of-turn index assert   (orchestrator)
+
+**Implemented directly (no opencode): a ~8-line debug-gated assert where I wanted the gating semantics
+exact; faster than a weak-model round-trip per the OVERNIGHT_QUEUE "implement small/contained directly"
+guidance.**
+
+**Reflection / triage:**
+- The audit marked item 4 "do with attention, not unattended" because a per-MUTATOR hot-path assert can
+  fire on benign transient desync during resolution. The unattended-safe subset is the END-OF-TURN
+  boundary (settled: cleanup just recomputed ownership, and the self-play validator already checks
+  `validate_runtime_indexes()` there and passes). Scoping to that boundary captured the value (catch
+  silent desync) while dropping the risky part. Lesson: a "needs attention" backlog item often has a
+  low-risk *subset* that IS safe unattended — split it rather than skipping or forcing the whole thing.
+- Gating choice: `if OS.is_debug_build(): var v := validate(); assert(v.is_empty(), …)` — single validator
+  call in debug, ZERO in release. Preferred over `assert(validate().is_empty(), "…%s" % join(validate()))`
+  (double-evaluates the validator in debug) and over a release-running pre-assert `var` (defeats the
+  debug-only intent). The gate (editor/tools binary) is a debug build, so it exercises the assert.
+- Held green across every turn-resolving path; no desync exists today, so the assert is pure insurance
+  against future regressions. The hot-path variant remains deferred to attended work.

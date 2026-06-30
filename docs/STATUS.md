@@ -68,7 +68,10 @@ when the hex-adjacency coordinate bug was fixed, and when `feba_base_km` was set
 
 **Verification.** `pwsh tools/run_all_tests.ps1` is the canonical gate: import → headless smoke →
 `tools/validate_*.gd` (golden turn, anti-ship, IJFS, victory e2e, data validators, no-global-RNG) →
-GdUnit4 suites under `tests/`. Must end **ALL PHASES GREEN**.
+GdUnit4 suites under `tests/`. Must end **ALL PHASES GREEN**. A debug-only assert
+(`OS.is_debug_build()`-gated) at the end of `resolve_turn` checks `GameData.validate_runtime_indexes()`,
+so any silent brigade↔hex index desync fails loud in every debug/test/headless turn (compiled out of
+release).
 
 ## What is NOT done (see `docs/plans/`)
 

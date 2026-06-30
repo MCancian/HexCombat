@@ -130,6 +130,16 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-30 — Debug-only end-of-turn index assert (refactor_audit item 4, SCOPED; max-autonomy).**
+  Wired `GameData.validate_runtime_indexes()` as an `OS.is_debug_build()`-gated assert at the END of
+  `resolve_turn`. **Judgment call:** the audit flagged item 4 as "do with attention, not unattended"
+  because a per-mutator HOT-PATH assert can trip on benign transient desync mid-resolution. I scoped it
+  to the **settled end-of-turn boundary only** (after cleanup recomputes ownership) — which the passing
+  self-play validator already proves is consistent — making it unattended-safe. Used `OS.is_debug_build()`
+  (single validator call in debug, zero in release) rather than assert-only (which double-evaluates) or a
+  bare hot-path assert. Held green across the golden turn, 4-turn self-play, 40-turn victory e2e, and all
+  GdUnit suites; golden byte-stable. The hot-path variant stays intentionally un-done (attended work).
+
 - **2026-06-30 — Per-hull mine neutralization likelihood override (refactor_audit item 2; max-autonomy).**
   Added optional `ShipDef.mine_neutralization_likelihood` (loaded from `ships.json` when present);
   `GameState._mine_ship_meta` precedence is now decoy-override > per-hull override > per-category table.

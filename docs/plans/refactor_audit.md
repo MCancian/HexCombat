@@ -37,10 +37,14 @@ yet. Sources: `docs/REFACTOR_NOTES.md`, `docs/RETROSPECTIVES.md` "act later" ite
    touches many call sites and carries golden-regression risk — do deliberately, one type at a time,
    re-running the golden invariant after each. NOT a free-model task. (Flagged across REFACTOR_NOTES M7
    and the handoff.)
-4. **Debug-gated runtime-index auto-assert.** Wire `GameData.validate_runtime_indexes()` as a
-   debug-only assert into the brigade mutators / end of `resolve_turn`. Catches index desync early, but
-   a new hot-path assert can surface a latent *benign* transient desync and turn green tests red — do it
-   with attention, not unattended. (Handoff "deliberately deferred".)
+4. ✅ **DONE 2026-06-30 (scoped) — Debug-gated runtime-index auto-assert.** Wired
+   `GameData.validate_runtime_indexes()` as a debug-only assert at the **end of `resolve_turn`** (after
+   cleanup recomputes ownership), gated on `OS.is_debug_build()` so the validator is never called in
+   release. **Deliberately NOT in the per-mutator hot path** — that's the part the audit warned could
+   surface benign transient mid-resolution desync and turn green tests red; the end-of-turn boundary is
+   settled, so the assert held green across every turn-resolving path the gate exercises (golden turn,
+   4-turn self-play, 40-turn victory e2e, all GdUnit suites). The hot-path variant remains intentionally
+   un-done.
 
 ## Low priority / opportunistic
 
