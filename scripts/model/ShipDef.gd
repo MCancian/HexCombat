@@ -11,3 +11,4 @@ class_name ShipDef
 @export var carrying_capacity_bn_equiv: float = 0.0
 @export var is_decoy: bool = false
 @export var setup_group: String = ""
+@export var mine_neutralization_likelihood: String = ""  # optional per-hull override; "" => use category

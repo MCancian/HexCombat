@@ -894,15 +894,22 @@ func _remove_bns_from_reserve(lost_ids: Array) -> void:
 
 ## Spread the available minesweepers round-robin across the target beaches (ascending beach_id).
 ## Per-ship-type metadata the geometric mine model needs: decoy flag (sponge ordering), value
-## (carrying capacity drives ascending-value transit order), and mine-neutralization likelihood
-## (by category, with a decoy override) sourced from the minefields.json transit config.
+## (carrying capacity drives ascending-value transit order), and mine-neutralization likelihood.
+## Likelihood precedence: decoy override (minefields.json transit) > per-hull `ShipDef`
+## .mine_neutralization_likelihood (optional, from ships.json) > the transit per-category table.
 func _mine_ship_meta(transit_config: Dictionary) -> Dictionary:
 	var by_category: Dictionary = transit_config.get("neutralization_likelihood_by_category", {})
 	var decoy_label := String(transit_config.get("decoy_neutralization_likelihood", "high"))
 	var meta: Dictionary = {}
 	for ship_def_value in GameData.ship_defs.values():
 		var ship_def: ShipDef = ship_def_value
-		var label := decoy_label if ship_def.is_decoy else String(by_category.get(ship_def.category, "high"))
+		var label: String
+		if ship_def.is_decoy:
+			label = decoy_label
+		elif ship_def.mine_neutralization_likelihood != "":
+			label = ship_def.mine_neutralization_likelihood  # per-hull override
+		else:
+			label = String(by_category.get(ship_def.category, "high"))  # category fallback
 		meta[ship_def.name] = {
 			"is_decoy": ship_def.is_decoy,
 			"value": ship_def.carrying_capacity_bn_equiv,

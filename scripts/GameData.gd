@@ -445,6 +445,7 @@ func load_ships() -> void:
 		ship_def.carrying_capacity_bn_equiv = float(ship_data.get("carrying_capacity_bn_equiv", 0.0))
 		ship_def.is_decoy = bool(ship_data.get("is_decoy", false))
 		ship_def.setup_group = String(ship_data.get("setup_group", ""))
+		ship_def.mine_neutralization_likelihood = String(ship_data.get("mine_neutralization_likelihood", ""))
 		if ship_def.id == 0:
 			push_error("Ship entry missing id field")
 			continue
