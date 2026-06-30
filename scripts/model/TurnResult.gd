@@ -18,10 +18,13 @@ func to_dict() -> Dictionary:
 	for e in events:
 		var te: TurnEvent = e
 		events_out.append(te.to_dict())
+	var combat_out: Array = []
+	for cs in combat_summaries:
+		combat_out.append((cs as CombatSummary).to_dict())
 	return {
 		"turn_number": turn_number,
 		"contested_hexes": contested_hexes.duplicate(),
-		"combat_summaries": combat_summaries.duplicate(true),
+		"combat_summaries": combat_out,
 		"ijfs_summary": ijfs_summary.duplicate(true),
 		"ijfs_writeback": ijfs_writeback.duplicate(true),
 		"antiship_summary": antiship_summary.duplicate(true),

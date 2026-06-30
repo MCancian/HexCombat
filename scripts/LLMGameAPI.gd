@@ -332,7 +332,10 @@ static func _pending_commitments() -> Dictionary:
 
 
 static func _last_combat_summaries() -> Array:
-	return _game_state().last_combat_summaries.duplicate(true)
+	var out: Array = []
+	for summary in _game_state().last_combat_summaries:
+		out.append((summary as CombatSummary).to_dict())
+	return out
 
 
 static func _has_pending_order(team: Brigade.Team, brigade_id: String) -> bool:

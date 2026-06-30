@@ -62,12 +62,11 @@ func test_combat_resolved_signal_emits_one_summary_for_one_contested_hex() -> vo
 	GameState.resolve_turn(ScriptedDice.new([50, 50, 50], [[0, 1, 2], [0, 1, 2]]))
 
 	assert_int(emitted_summaries.size()).is_equal(1)
-	var summary: Dictionary = emitted_summaries[0]
-	assert_str(summary["hex_id"]).is_equal(COMBAT_HEX)
-	assert_bool(summary.has("attacker_losses")).is_true()
-	assert_bool(summary.has("defender_losses")).is_true()
-	assert_bool(summary.has("feba_movement_km")).is_true()
-	assert_bool(summary.has("owner_after")).is_true()
+	var summary: CombatSummary = emitted_summaries[0]
+	assert_str(summary.hex_id).is_equal(COMBAT_HEX)
+	assert_int(summary.attacker_losses).is_greater_equal(0)
+	assert_int(summary.defender_losses).is_greater_equal(0)
+	assert_str(summary.owner_after).is_not_empty()
 
 
 func test_hex_owner_constants_are_written_by_recompute_ownership() -> void:

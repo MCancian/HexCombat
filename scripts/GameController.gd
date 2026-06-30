@@ -118,9 +118,9 @@ func _on_combat_resolved(summaries: Array) -> void:
 	var attacker_losses := 0
 	var defender_losses := 0
 	for summary_value in summaries:
-		var summary: Dictionary = summary_value
-		attacker_losses += int(summary["attacker_losses"])
-		defender_losses += int(summary["defender_losses"])
+		var summary: CombatSummary = summary_value
+		attacker_losses += summary.attacker_losses
+		defender_losses += summary.defender_losses
 	_last_combat_summary_text = "Turn %d resolved: %d combat(s), R lost %d / G lost %d" % [GameState.turn_number, summaries.size(), attacker_losses, defender_losses]
 	debug_label.text = _last_combat_summary_text
 

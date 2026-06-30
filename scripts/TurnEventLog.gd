@@ -39,8 +39,8 @@ static func build(state: GameStateType) -> Array[TurnEvent]:
 			seq += 1
 
 	for summary in state.last_combat_summaries:
-		var s: Dictionary = summary
-		events.append(_event(seq, "combat", String(s["hex_id"]), "", s))
+		var s: CombatSummary = summary
+		events.append(_event(seq, "combat", s.hex_id, "", s.to_dict()))
 		seq += 1
 
 	if not state.last_frontline_summary.is_empty():

@@ -132,11 +132,11 @@ func _validate_turn_golden_invariant_preserved() -> void:
 
 	var total_casualties := 0
 	for summary in GameState.last_combat_summaries:
-		total_casualties += int(summary.get("attacker_losses", 0))
-		total_casualties += int(summary.get("defender_losses", 0))
+		total_casualties += summary.attacker_losses
+		total_casualties += summary.defender_losses
 	var total_feba := 0.0
 	for summary in GameState.last_combat_summaries:
-		total_feba += float(summary.get("feba_movement_km", 0.0))
+		total_feba += summary.feba_movement_km
 	total_feba = snapped(total_feba, 0.01)
 	var fingerprint := "casualties=%d, feba=%.2f" % [total_casualties, total_feba]
 	_assert_equal_string("turn golden invariant preserved (%s)" % EXPECTED_COMBAT_FINGERPRINT, fingerprint, EXPECTED_COMBAT_FINGERPRINT)

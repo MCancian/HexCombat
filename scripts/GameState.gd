@@ -47,7 +47,7 @@ var fleet: Dictionary = {}  # ship name (String) -> ShipState
 var pending_lost_at_sea: int = 0
 var supply_state: SupplyState
 var last_contested_hexes: Array[String] = []
-var last_combat_summaries: Array = []
+var last_combat_summaries: Array[CombatSummary] = []
 # IJFS daily state persists across turns (carry_to_next_day advances it each turn).
 var ijfs_state: IjfsDailyState = null
 var _ijfs_day: int = 0
@@ -188,17 +188,16 @@ func resolve_turn(dice: Dice = null) -> void:
 	_apply_move_orders(Brigade.Team.RED)
 	_apply_move_orders(Brigade.Team.GREEN)
 	last_contested_hexes = _find_contested_hexes()
-	var combat_summaries: Array = []
+	var combat_summaries: Array[CombatSummary] = []
 	for hex_id in last_contested_hexes:
 		var summary := _resolve_combat_at(hex_id, dice)
-		if not summary.is_empty():
+		if summary != null:
 			combat_summaries.append(summary)
 	_apply_feba_retreats()
 	GameData.recompute_hex_ownership()
 	for summary in combat_summaries:
-		var typed_summary: Dictionary = summary
-		typed_summary["owner_after"] = String(GameData.hex_states[String(typed_summary["hex_id"])].owner)
-	last_combat_summaries = combat_summaries.duplicate(true)
+		summary.owner_after = String(GameData.hex_states[summary.hex_id].owner)
+	last_combat_summaries = combat_summaries.duplicate()
 	resolve_supply_turn()
 	resolve_cleanup_phase()
 
@@ -1200,12 +1199,12 @@ func _inject_supply_effectiveness(units: Array, team: int) -> void:
 			unit["supply_effectiveness"] = eff
 
 
-func _resolve_combat_at(hex_id: String, dice: Dice) -> Dictionary:
+func _resolve_combat_at(hex_id: String, dice: Dice) -> CombatSummary:
 	var attacker_brigades := _combat_contributors_for(Brigade.Team.RED, hex_id)
 	var defender_brigades := _combat_contributors_for(Brigade.Team.GREEN, hex_id)
 
 	if attacker_brigades.is_empty() or defender_brigades.is_empty():
-		return {}
+		return null
 
 	var attacker_units := CombatForces.maneuver_units(attacker_brigades)
 	var defender_units := CombatForces.maneuver_units(defender_brigades)
@@ -1235,16 +1234,16 @@ func _resolve_combat_at(hex_id: String, dice: Dice) -> Dictionary:
 		var fought_brigade: Brigade = brigade_value
 		fought_brigade.fought_this_turn = true
 
-	return {
-		"hex_id": hex_id,
-		"attacker_losses": result.attacker_losses,
-		"defender_losses": result.defender_losses,
-		"feba_movement_km": result.feba_movement_km,
-		"owner_after": String(GameData.hex_states[hex_id].owner),
-		"combat_detail": result.combat_detail,
-		"attacker_brigade_ids": _brigade_ids(attacker_brigades),
-		"defender_brigade_ids": _brigade_ids(defender_brigades)
-	}
+	var summary := CombatSummary.new()
+	summary.hex_id = hex_id
+	summary.attacker_losses = result.attacker_losses
+	summary.defender_losses = result.defender_losses
+	summary.feba_movement_km = result.feba_movement_km
+	summary.owner_after = String(GameData.hex_states[hex_id].owner)
+	summary.combat_detail = result.combat_detail
+	summary.attacker_brigade_ids = _brigade_ids(attacker_brigades)
+	summary.defender_brigade_ids = _brigade_ids(defender_brigades)
+	return summary
 
 
 func _combat_contributors_for(team: Brigade.Team, hex_id: String) -> Array:
@@ -1383,7 +1382,7 @@ func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> Tur
 	var result := TurnResult.new()
 	result.turn_number = turn_number
 	result.contested_hexes = last_contested_hexes.duplicate()
-	result.combat_summaries = last_combat_summaries.duplicate(true)
+	result.combat_summaries = last_combat_summaries.duplicate()
 	result.ijfs_summary = last_ijfs_summary.duplicate(true)
 	result.ijfs_writeback = last_ijfs_writeback.duplicate(true)
 	result.antiship_summary = last_antiship_summary.duplicate(true)
