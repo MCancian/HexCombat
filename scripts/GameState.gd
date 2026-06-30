@@ -74,6 +74,11 @@ func _ready() -> void:
 
 
 func reset_to_scenario() -> void:
+	# Restore brigade state (composition, hex_id, destroyed) from source data, since combat mutates
+	# Brigade resources in place and the old values carry across play-throughs.
+	GameData.load_brigades()
+	GameData.load_scenario(GameData.DEFAULT_SCENARIO_PATH)
+
 	turn_number = 1
 	phase = Phase.PLANNING
 	turn_length_days = GameData.turn_length_days
@@ -986,8 +991,10 @@ func resolve_cleanup_phase() -> Dictionary:
 
 ## Count PLA (RED) vs ROC (GREEN) battalions on the hexes that count as "on Taiwan". taiwan_hexes is
 ## null => every placed hex counts (correct for the main-island scenario; offshore islands can't be
-## distinguished until terrain/land data exists — see PLAN.md Victory conditions). Brigades still at sea
-## (no hex_id) are excluded, so China reads 0 until it lands.
+## distinguished until terrain/land data exists — see PLAN.md Victory conditions). Counts PRESENT
+## (landed) battalions only: brigades still wholly at sea (no hex_id) are excluded, AND for a
+## partially-landed brigade (hex_id set once its first BN lands) the battalions still waiting on ships
+## — tracked in `ship_reserve` — are subtracted, so at-sea BNs don't inflate China's count.
 func _taiwan_battalion_census() -> Dictionary:
 	var counted: Variant = GameData.victory_config.get("taiwan_hexes", null)
 	var use_filter := counted is Array
@@ -995,6 +1002,11 @@ func _taiwan_battalion_census() -> Dictionary:
 	if use_filter:
 		for h in counted:
 			hex_filter[String(h)] = true
+	var at_sea_by_brigade: Dictionary = {}
+	for reserve_entry_value in ship_reserve:
+		var reserve_entry: Dictionary = reserve_entry_value
+		at_sea_by_brigade[String(reserve_entry["brigade_id"])] = (reserve_entry["bns"] as Array).size()
+
 	var red := 0
 	var green := 0
 	for brigade_value in GameData.brigades.values():
@@ -1003,7 +1015,8 @@ func _taiwan_battalion_census() -> Dictionary:
 			continue
 		if use_filter and not hex_filter.has(brigade.hex_id):
 			continue
-		var bn := brigade.get_battalion_count()
+		var at_sea := int(at_sea_by_brigade.get(brigade.id, 0))
+		var bn := maxi(0, brigade.get_battalion_count() - at_sea)
 		if brigade.team == Brigade.Team.RED:
 			red += bn
 		elif brigade.team == Brigade.Team.GREEN:
