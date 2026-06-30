@@ -130,6 +130,32 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-30 — Typed `HexState` + `CombatSummary` Resources (refactor_audit item 3; done directly,
+  NOT via opencode — explicitly flagged "not a free-model task").** Replaced the two plain dicts
+  threaded through the model/state/API/validators with typed Resources, one type at a time, re-running
+  the golden invariant after each. **Type 1 `HexState`** (`{owner, feba_km}` → `scripts/model/HexState.gd`,
+  ~30 sites): `snapshot_state()` and the LLM observation emit via `HexState.to_dict()`/typed reads, so
+  serialized JSON is unchanged. **Type 2 `CombatSummary`** (the `_resolve_combat_at` dict →
+  `scripts/model/CombatSummary.gd`): `last_combat_summaries` is now `Array[CombatSummary]`; in-process
+  consumers (`GameController`, the post-recompute `owner_after` write, the `validate_cleanup` fingerprint)
+  read typed fields, and every JSON boundary (`LLMGameAPI.last_combat`, `TurnEventLog` combat events,
+  `TurnResult.to_dict`) emits via `CombatSummary.to_dict()` with the former dict's **exact key order +
+  value types** preserved. **Judgment calls:** (1) did HexState first (bounded, internal, lower-risk) to
+  establish the pattern and a green/committed baseline before the riskier CombatSummary, which crosses
+  multiple JSON-serialization boundaries; (2) `to_dict()` is the single serialization seam — typed fields
+  in-process, dict only at the JSON edge; (3) the empty-combat sentinel changed from `{}`/`is_empty()` to
+  `null`/`!= null` (a Resource has no `is_empty()`); (4) `.duplicate(true)` → `.duplicate()` on the now-
+  Resource arrays (deep-dict-copy semantics are moot for never-mutated Resources; `to_dict()` produces
+  fresh dicts at the edge anyway). **Byte-stability proof (beyond the gate):** regenerated
+  `docs/examples/llm_result_after_turn.json` with AND without the CombatSummary change → **identical
+  hash**, so the Resource serializes bit-for-bit like the old dict. Golden `validate_headless_turn`
+  casualties=3/feba=-0.96 byte-stable; full gate green (40 GdUnit suites + all validators); commits
+  `388d4ae` (HexState) + `d911010` (CombatSummary). **Side finding (surfaced to user, NOT fixed here):**
+  that fixture regeneration revealed the committed `llm_result_after_turn.json` is **stale** — its
+  antiship section predates the 2026-06-29/30 mine/antiship balance work (a 318/247-line drift that
+  reproduces on a clean tree, independent of this refactor). Left as a separate doc-hygiene regen so this
+  refactor commit stays scoped; flag it for a follow-up.
+
 - **2026-06-30 — Debug-only end-of-turn index assert (refactor_audit item 4, SCOPED; max-autonomy).**
   Wired `GameData.validate_runtime_indexes()` as an `OS.is_debug_build()`-gated assert at the END of
   `resolve_turn`. **Judgment call:** the audit flagged item 4 as "do with attention, not unattended"

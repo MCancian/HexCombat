@@ -32,11 +32,20 @@ yet. Sources: `docs/REFACTOR_NOTES.md`, `docs/RETROSPECTIVES.md` "act later" ite
 
 ## High payoff, higher risk (do with attention)
 
-3. **Typed `HexState` / `CombatSummary` Resources.** Replace the plain dicts threaded through
-   `GameState`/`LLMGameAPI`/validators with typed Resources. Big readability + drift-safety win, but
-   touches many call sites and carries golden-regression risk — do deliberately, one type at a time,
-   re-running the golden invariant after each. NOT a free-model task. (Flagged across REFACTOR_NOTES M7
-   and the handoff.)
+3. ✅ **DONE 2026-06-30 — Typed `HexState` / `CombatSummary` Resources.** Done one type at a time,
+   golden re-verified after each. **Type 1 `HexState`** (`scripts/model/HexState.gd`): replaced the
+   `{owner, feba_km}` dict in `GameData.hex_states` across ~30 sites; `snapshot_state()` + LLM
+   observation emit via `to_dict()`/typed reads, so JSON is unchanged. **Type 2 `CombatSummary`**
+   (`scripts/model/CombatSummary.gd`): replaced the `_resolve_combat_at` dict; `last_combat_summaries`
+   is `Array[CombatSummary]`, in-process consumers read typed fields, and every JSON boundary
+   (`LLMGameAPI.last_combat`, `TurnEventLog` combat events, `TurnResult.to_dict`) emits via
+   `to_dict()` with the former key order/types preserved. **Byte-stability proof:** regenerated
+   `llm_result_after_turn.json` with and without the CombatSummary change → identical hash; golden
+   `validate_headless_turn` casualties=3/feba=-0.96 byte-stable; full gate green (40 GdUnit + all
+   validators), commits `388d4ae`+`d911010`. _Side finding: the committed `llm_result_after_turn.json`
+   is **stale** — its antiship section predates the 2026-06-29/30 mine/antiship balance work (regen
+   shows a 318/247-line drift that exists independent of this refactor). Left as a separate doc-hygiene
+   fix, not bundled here._ (Flagged across REFACTOR_NOTES M7 and the handoff.)
 4. ✅ **DONE 2026-06-30 (scoped) — Debug-gated runtime-index auto-assert.** Wired
    `GameData.validate_runtime_indexes()` as a debug-only assert at the **end of `resolve_turn`** (after
    cleanup recomputes ownership), gated on `OS.is_debug_build()` so the validator is never called in
