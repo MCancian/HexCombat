@@ -202,6 +202,14 @@ func resolve_turn(dice: Dice = null) -> void:
 	resolve_supply_turn()
 	resolve_cleanup_phase()
 
+	# Debug-only invariant (refactor item 4): at the settled end of a turn the brigade↔hex indexes
+	# must be consistent. Gated on OS.is_debug_build() so the validator is never called in release;
+	# in debug/test/headless runs it fails loud on any silent index desync. End-of-turn only (a settled
+	# boundary) — NOT the per-mutator hot path, which can hold benign transient desync mid-resolution.
+	if OS.is_debug_build():
+		var index_violations := GameData.validate_runtime_indexes()
+		assert(index_violations.is_empty(), "runtime index desync at end of resolve_turn: %s" % "; ".join(index_violations))
+
 	phase = Phase.END
 	EventBus.phase_changed.emit(phase)
 	EventBus.combat_resolved.emit(combat_summaries)
