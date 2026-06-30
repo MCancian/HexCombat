@@ -9,9 +9,7 @@ const DEFAULT_OUTPUT := "reports/llm_observation.json"
 func _initialize() -> void:
 	var team := _parse_arg("--team=", "")
 	var output_path := _parse_arg("--output=", DEFAULT_OUTPUT)
-	get_root().get_node("GameData").load_all()
-	get_root().get_node("GameState").reset_to_scenario()
-	var observation := LLMGameAPI.observation(team)
+	var observation := LLMFixtures.build_observation(team)
 	var absolute_output := _absolute_output_path(output_path)
 	var dir_error := DirAccess.make_dir_recursive_absolute(absolute_output.get_base_dir())
 	if dir_error != OK:

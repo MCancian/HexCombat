@@ -8,21 +8,7 @@ const DEFAULT_OUTPUT := "reports/llm_result.json"
 
 func _initialize() -> void:
 	var output_path := _parse_arg("--output=", DEFAULT_OUTPUT)
-	get_root().get_node("GameData").load_all()
-	get_root().get_node("GameState").reset_to_scenario()
-	get_root().get_node("GameState").resolve_offload_turn(SeededDice.new(20260624))
-
-	var response := {
-		"protocol_version": LLMGameAPI.PROTOCOL_VERSION,
-		"schema": LLMGameAPI.ACTION_RESPONSE_SCHEMA,
-		"perspective_team": "Red",
-		"actions": [
-			{"type": "move", "team": "Red", "brigade_id": "PLA-71-2-Amphibious", "target_hex": "hex_43_16", "mode": Movement.MODE_TACTICAL},
-			{"type": "end_turn", "seed": 20260624}
-		]
-	}
-
-	var result := LLMGameAPI.apply_agent_response(response)
+	var result := LLMFixtures.build_result()
 	var absolute_output := _absolute_output_path(output_path)
 	var dir_error := DirAccess.make_dir_recursive_absolute(absolute_output.get_base_dir())
 	if dir_error != OK:
