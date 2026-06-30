@@ -49,8 +49,8 @@ just implement small/contained sub-tasks directly (faster than fighting the weak
   shift (record old→new in `PLAN.md` Decisions + `validate_cleanup.gd` + `STATUS.md`).
   *Done when:* a depleted supply pool measurably lowers Red combat strength; gate green.
 
-- [ ] **2. Apply IJFS→ground maneuver casualties** — large (Option B + detectability, settled
-  2026-06-28); split into gateable sub-tasks (orchestrator call 2026-06-29):
+- [x] **2. Apply IJFS→ground maneuver casualties** — ✅ DONE 2026-06-30 (all sub-tasks). Large
+  (Option B + detectability, settled 2026-06-28); split into gateable sub-tasks (orchestrator call 2026-06-29):
   - [x] **2a. Persistent prior-turn activity flags on `Brigade`** ✅ DONE 2026-06-29 —
     `moved_last_turn`/`fought_last_turn` latched in `resolve_cleanup_phase`; `brigade_activity_history_test.gd`;
     gate green; golden unchanged (latch consumes no dice).
@@ -62,8 +62,14 @@ just implement small/contained sub-tasks directly (faster than fighting the weak
     (Green maneuver units now enter IJFS detection/targeting/strike via existing "Maneuver Units"
     pairings). `maneuver_casualties` now populates (verified: 3 struck, e.g. `BDE-269-MU-3`). Golden
     UNCHANGED (IJFS strikes maneuver units with leftover budget; anti-ship suppression unperturbed).
-  - [ ] **2c-ii.** Detection/lethality bias: `mobility_multiplier` (less-mobile → more detectable),
-    `posture="active"` for recently-active units (2a flags), `hardness` (less-armored die more readily).
+  - [x] **2c-ii.** ✅ DONE 2026-06-30 — posture-by-activity bias: `GameState._update_maneuver_posture()`
+    (top of `resolve_ijfs_turn`) sets maneuver-unit targets' `posture="active"` when the source brigade
+    has `moved_last_turn`/`fought_last_turn` (2a flags), else `"hiding"` — feeding the existing
+    `IjfsDetection` posture seam (higher `detectability_active` + active posture/satellite multipliers).
+    The `mobility`/`hardness` halves of the bias were ALREADY realized via the `MANEUVER_TYPE_MAP`
+    profiles feeding the faithful detection/strike math (2b); posture was the missing piece. Pure data
+    nudge — no detection-math edit. `ijfs_maneuver_posture_test.gd`. Golden UNCHANGED (turn-1 flags all
+    false → all stay "hiding").
   - [x] **2d.** ✅ DONE 2026-06-29 — `GameState._apply_ijfs_maneuver_casualties()` (called after IJFS,
     before combat) decrements struck battalions' qty by `battalion_id`/`brigade_id`/`unit_type` (capped
     at 0; brigade marked destroyed when depleted). `ijfs_maneuver_consume_test.gd`. Golden UNCHANGED

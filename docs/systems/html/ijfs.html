@@ -50,15 +50,16 @@ adaptation: anti-ship targets are built from pre-loaded containers rather than T
 targets path. Covered by the ported IJFS tests.</p>
 </div>
 
-<div class="note">
-<strong>🟡 One real port gap — IJFS doesn't kill ground troops yet.</strong>
-<p>The "maneuver casualties" writeback (which PLA/ROC ground battalions the air/missile campaign
-destroyed) is <strong>computed</strong> but has no effect: (a) at runtime it comes out empty because
-the IJFS target list doesn't tag targets with matching battalion IDs, and (b) even if populated,
-nothing removes those battalions before ground combat. So air/missile strikes currently don't thin the
-brigades that fight on the ground. The anti-ship half of the writeback, by contrast, <em>is</em> wired
-(it suppresses coastal launchers in the naval crossing). Tracked as a port-completion item; design
-already settled.</p>
+<div class="ok">
+<strong>✅ IJFS now thins ground troops (D4-H linkage closed).</strong>
+<p>The ROC's ground battalions are themselves IJFS targets ("Maneuver Units," one per battalion
+instance, tagged with matching brigade/battalion IDs), so the air/missile campaign can find and
+destroy them. Each turn the "maneuver casualties" writeback is <strong>consumed</strong> — the struck
+battalions are removed from the order of battle <em>before</em> ground combat resolves, so strikes
+genuinely thin the brigades that fight. Detectability is biased by unit type (less-mobile/softer units
+are easier to find and kill) and by recent activity: a brigade that moved or fought last turn is more
+exposed. The anti-ship half of the writeback is likewise wired (it suppresses coastal launchers in the
+naval crossing).</p>
 </div>
 
 <footer>HexCombat systems reference · TaiwanInvasionViewer port-fidelity audit.</footer>

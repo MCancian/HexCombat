@@ -69,6 +69,12 @@ Mirrors `run_daily_ijfs.py` lines 95–218. Each stage consumes the shared `Dice
 - **Aircraft ISR raw**: `sum(alive * isr_value_per_aircraft) / reference_isr_sum` for ISR-role
   squadrons (IjfsDetection.gd:77–91)
 - Static targets and `intel_locked` targets bypass rolls (auto-detected).
+- **Green maneuver units (D4-H)**: `IjfsLoaders.build_maneuver_targets` emits one "Maneuver Units"
+  target per ROC battalion instance; its `(mobility, hardness, detectability_active/hiding)` come from
+  the `MANEUVER_TYPE_MAP` profile (less-mobile/softer → more findable/lethal). `posture` is set each
+  turn by `GameState._update_maneuver_posture`: a brigade that moved or fought last turn (the
+  `moved_last_turn`/`fought_last_turn` flags) presents `posture="active"` — selecting the higher
+  `detectability_active` label plus the active posture/satellite multipliers above — otherwise `"hiding"`.
 
 ### Targeting (`IjfsTargeting.gd`)
 
@@ -150,7 +156,7 @@ uses these to reduce `system.quantity` and `fire_pct`.
 |---|---|---|
 | `antiship_destroyed_by_type` | Cumulative `target.destroyed` on Anti-Ship Systems targets | D3 `resolve_antiship_turn`: reduces system quantity (GameState.gd:645–646) |
 | `antiship_suppressed_by_type` | Cumulative `target.suppressed` on Anti-Ship Systems targets | D3 `resolve_antiship_turn`: reduces fire percentage proportional to suppressed/available (GameState.gd:653–654) |
-| `maneuver_casualties` | Strike log entries for "Maneuver Units" with `destroyed = true` | **OPEN** — empty; needs ID bridge between IJFS target metadata and OOB brigade/battalion (see port_audit.md) |
+| `maneuver_casualties` | Strike log entries for "Maneuver Units" with `destroyed = true` (carry `brigade_id`/`battalion_id`/`unit_type` from target metadata) | **CLOSED (D4-H)** — `GameState._apply_ijfs_maneuver_casualties` decrements the struck battalions' `qty` in the OOB before ground combat |
 | `sam_destroyed` / `sam_suppressed` | Engagement log SEAD outcomes | Summary only |
 
 Anti-ship writeback keys use `AntishipCalculator.encode_key(to_number, type_id)` —

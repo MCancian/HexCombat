@@ -878,3 +878,24 @@ was too sensitive for the free-model implementer):**
 - Limitation (ijfs_state built once/scenario → removed battalions can re-appear as targets across turns;
   qty cap makes it safe) → act later: rebuild maneuver targets per turn from the live OOB (future refine).
 - 2c-ii detection/lethality bias remains; lower value than the now-working core linkage.
+
+---
+
+## 2026-06-30 — Overnight loop 2c-ii: IJFS posture-by-activity detectability bias   (orchestrator)
+
+**What would you do differently (opencode):**
+- "Placing `_update_maneuver_posture()` outside the warmup loop sets posture once for all pre-invasion
+  days rather than re-evaluating per-day. Harmless here (turn-1 flags all false), but on a turn-2+
+  warmup it would need to be called inside the loop to reflect mid-warmup activity."
+
+**Orchestrator triage:**
+- The per-day concern is a non-issue by construction: the multi-day warmup loop runs ONLY on turn 1
+  (`_ijfs_day == 0`), where every activity flag is uniformly false — so per-day re-evaluation would
+  produce identical `"hiding"` anyway. On turn 2+ there is no warmup loop (single plain day) and posture
+  is set once before it. There is no scenario where intra-warmup re-eval changes the result. Placement
+  is correct; recorded only.
+- Confirmed the 2c-ii bias is the only missing half of the settled detectability design: mobility/hardness
+  were already live via the `MANEUVER_TYPE_MAP` profiles (2b) feeding the faithful detection/strike math;
+  posture-by-activity was the gap. Lesson: when a design lists several "biases," check which are already
+  realized by upstream data before writing new code — here two of three were already done.
+- Gate green first try (36 suites); golden byte-stable as predicted. Closes item 2 in full.

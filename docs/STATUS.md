@@ -52,7 +52,10 @@ when the hex-adjacency coordinate bug was fixed, and when `feba_base_km` was set
   multi-day pre-invasion warmup (exquisite intel) on the first turn. Per-(TO,type) writeback feeds D3.
   **IJFS now also attrits ground forces:** Green/ROC maneuver battalions are IJFS targets
   (`build_maneuver_targets`); destroyed ones are removed from the OOB before ground combat
-  (`_apply_ijfs_maneuver_casualties`) — the D4-H ground-casualty linkage.
+  (`_apply_ijfs_maneuver_casualties`) — the D4-H ground-casualty linkage. Detectability is biased by
+  unit type (mobility/hardness via the `MANEUVER_TYPE_MAP` profile) and by recent activity: a brigade
+  that moved or fought last turn presents an `"active"` posture (`_update_maneuver_posture`), making its
+  maneuver units easier to detect.
 - **D5 Front-line / cleanup** — `FrontLineService` (polyline → hex redistribution), cleanup phase.
 - **Victory conditions** — end-of-cleanup census of PLA vs ROC battalions on Taiwan; `game_over` /
   `winner` on `GameState`/`TurnResult`/LLM observation. Config: scenario `victory` block.

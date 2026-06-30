@@ -1850,6 +1850,18 @@ Support & Support ≈ soft/high-detect per (2)).
 The design is now fully settled; the B port can proceed when scheduled (keep the golden invariant
 byte-stable; inject the IJFS substream).
 
+**IMPLEMENTED — full linkage closed (overnight loop, 2026-06-29 → 2026-06-30).** 2a (`Brigade.moved_last_turn`/
+`fought_last_turn` latched in cleanup), 2b (`IjfsLoaders.build_maneuver_targets` + `MANEUVER_TYPE_MAP`
+profiles realizing sub-decision 1's mobility/hardness lethality and sub-decision 2's all-types-targetable),
+2c-i (wired into `_rebuild_ijfs_state`), 2c-ii (`GameState._update_maneuver_posture` realizes
+sub-decision 3: recently-active brigades → `posture="active"` → higher `detectability_active` + active
+posture/satellite multipliers in the unchanged `IjfsDetection` math), 2d (`_apply_ijfs_maneuver_casualties`
+decrements struck battalions' `qty`, sub-decision 4). **Why 2c-ii is a pure data nudge:** the detection
+port already keys detectability off `target.posture`; the only addition is *setting* posture from the 2a
+activity flags at the top of `resolve_ijfs_turn` — no math edit, so the golden stays `casualties=3,
+feba=-0.96` (turn-1 flags all false → all maneuver targets stay `"hiding"`). Tests:
+`ijfs_maneuver_targets_test`, `ijfs_maneuver_consume_test`, `ijfs_maneuver_posture_test`.
+
 ### D1 — Amphibious Offload design decision  *(RESOLVED 2026-06-24)*
 
 **Decision: Option 2 — Full offload start.**
