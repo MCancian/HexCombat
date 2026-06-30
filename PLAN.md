@@ -130,6 +130,15 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-06-30 — Per-hull mine neutralization likelihood override (refactor_audit item 2; max-autonomy).**
+  Added optional `ShipDef.mine_neutralization_likelihood` (loaded from `ships.json` when present);
+  `GameState._mine_ship_meta` precedence is now decoy-override > per-hull override > per-category table.
+  **Judgment call:** chose the empty-default + category-fallback design and did NOT populate `ships.json`
+  with any values — that keeps the change strictly byte-stable (every hull still resolves to its category
+  label), making the field a tuning HOOK to populate when a concrete balance need arises ("tie to a need,
+  not speculative"). Adding explicit per-hull values now would either change mine results (needs a
+  re-baseline) or be no-op clutter. Test: `mine_neutralization_override_test`. Gate unchanged green.
+
 - **2026-06-30 — Victory census counts PRESENT (landed) battalions (refactor_audit item 2b; max-autonomy).**
   `GameState._taiwan_battalion_census` now subtracts each brigade's still-at-sea battalions (the
   un-landed remainder in `ship_reserve`) from its composition count. Landing sets `hex_id` on the first

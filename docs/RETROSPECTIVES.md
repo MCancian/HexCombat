@@ -987,3 +987,24 @@ multi-turn combat fixture). Logged as a refactor/test-infra opportunity; NOT act
   implementer talk you into a phantom fix; the diff of evidence (isolated repro) decides.
 - The census change is a legitimate semantic fix (count present, not OOB); winner unchanged so the
   structural golden victory validator stayed green without edits. Recorded census 36→20 in Decisions.
+
+---
+
+## 2026-06-30 — refactor_audit item 2: per-hull mine neutralization likelihood override   (orchestrator)
+
+**What would you do differently (opencode):**
+- "Verify indentation against surrounding code before applying — I copied the plan's markdown tab on the
+  GameData.gd line blindly. Cost a test cycle on a trivial parse error."
+
+**Orchestrator triage:**
+- opencode's recollection is slightly off — the delegated diff actually applied cleanly and compiled; the
+  one red cycle was MY test bug, not its indentation: `_ship()` computed `id = 9000 + ship_defs.size()`
+  for all three synthetic hulls *before* assigning the dict, so they shared an id and the
+  `{id: def}` dict collapsed to one entry → `meta["TST-BASE"]` was missing. Fixed with explicit distinct
+  ids (9001/9002/9003). Lesson for me: when keying a dict by a derived id in a test, make the ids
+  literally distinct — don't derive from a size that hasn't changed yet.
+- Design call held: empty-default + category-fallback keeps the change byte-stable (the field is a hook),
+  so no re-baseline and the anti-ship/mine validators stayed green untouched.
+- Also note: an earlier `--check-only -s <test>` run reported "Identifier not found: GameData" — that's a
+  FALSE alarm (autoloads aren't registered under `--check-only`), not a real error. Use the full gate (or
+  a scene_runner) to compile-check tests that reference autoloads.

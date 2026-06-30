@@ -14,10 +14,13 @@ yet. Sources: `docs/REFACTOR_NOTES.md`, `docs/RETROSPECTIVES.md` "act later" ite
    producer is internal code, not user JSON)._ Original: every key read via `dict.get(key)` in
    `run_daily`; a typo silently yielded `null` → config went dead with no error (the bug class that left
    exquisite intel dormant for the whole project). (RETROSPECTIVES 2026-06-28 D3-D warmup.)
-2. **Per-ship-type mine neutralization likelihood.** The mine model maps likelihood by *category*, but
-   the source varies within a category. Add a `mine_neutralization_likelihood` field to `ShipDef` +
-   `ships.json` (defaulting to today's category values) so designers tune per hull. Additive; the
-   category table stays as the fallback. (RETROSPECTIVES 2026-06-29 mine-geometry.)
+2. ✅ **DONE 2026-06-30 — Per-ship-type mine neutralization likelihood.** Optional
+   `ShipDef.mine_neutralization_likelihood` (loaded from `ships.json` when present) that
+   `GameState._mine_ship_meta` prefers over the per-category table; decoy override still wins, category
+   is the fallback. Additive + behavior-preserving — no production hull sets it yet, so results are
+   byte-identical (the field is the per-hull tuning hook; populate it when a balance need is concrete,
+   per "tie to a need"). `mine_neutralization_override_test.gd`. _Original: likelihood mapped by category
+   only, but the source varies within a category (LHD/LPD "Low" vs LST "High")._
 
 2b. ✅ **DONE 2026-06-30 — Victory census counts present battalions, not OOB.**
    `GameState._taiwan_battalion_census()` now subtracts each brigade's still-at-sea battalions (tracked
