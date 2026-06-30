@@ -66,9 +66,9 @@ func _validate_cleanup_resets_antiship_flags() -> void:
 		_assert_true("quantity untouched for %s" % system.type_name, system.quantity >= 0)
 		_assert_true("original_quantity untouched for %s" % system.type_name, system.original_quantity >= 0)
 
-	var summary: Dictionary = GameState.last_cleanup_summary
-	_assert_true("last_cleanup_summary has antiship_systems_reset", summary.has("antiship_systems_reset"))
-	_assert_true("antiship_systems_reset > 0", int(summary.get("antiship_systems_reset", 0)) > 0)
+	var summary: CleanupSummary = GameState.last_cleanup_summary
+	_assert_true("last_cleanup_summary produced", summary != null)
+	_assert_true("antiship_systems_reset > 0", summary != null and summary.antiship_systems_reset > 0)
 
 
 func _validate_cleanup_determinism() -> void:
@@ -100,9 +100,9 @@ func _validate_cleanup_produces_summary() -> void:
 	GameState.reset_to_scenario()
 	GameState.turn_number = 1
 	GameState.resolve_cleanup_phase()
-	var summary: Dictionary = GameState.last_cleanup_summary
-	_assert_true("cleanup produces summary when no anti-ship systems", not summary.is_empty())
-	_assert_true("summary has antiship_systems_reset key", summary.has("antiship_systems_reset"))
+	var summary: CleanupSummary = GameState.last_cleanup_summary
+	_assert_true("cleanup produces summary when no anti-ship systems", summary != null)
+	_assert_true("summary antiship_systems_reset is zero with no systems", summary != null and summary.antiship_systems_reset == 0)
 
 
 # Golden invariant: run the same scripted turn as validate_headless_turn.gd with seed 20260624;

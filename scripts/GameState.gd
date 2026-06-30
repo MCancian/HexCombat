@@ -62,7 +62,7 @@ var antiship_containers: Array = []
 var lost_at_sea_accumulator: float = 0.0
 var last_antiship_summary: Dictionary = {}
 var last_frontline_summary: FrontlineSummary = null
-var last_cleanup_summary: Dictionary = {}
+var last_cleanup_summary: CleanupSummary = null
 # Victory state, set in the end-of-turn cleanup census (VictoryConditions). winner: ""/"red"/"green".
 var game_over: bool = false
 var winner: String = ""
@@ -114,7 +114,7 @@ func reset_to_scenario() -> void:
 	lost_at_sea_accumulator = 0.0
 	last_antiship_summary = {}
 	last_frontline_summary = null
-	last_cleanup_summary = {}
+	last_cleanup_summary = null
 	game_over = false
 	winner = ""
 	_china_has_landed = false
@@ -991,16 +991,15 @@ func resolve_cleanup_phase() -> Dictionary:
 		var brigade: Brigade = brigade_value
 		brigade.moved_last_turn = brigade.moved_this_turn or brigade.moved_admin_this_turn
 		brigade.fought_last_turn = brigade.fought_this_turn
-	last_cleanup_summary = {
-		"antiship_systems_reset": reset_count,
-		"china_battalions_on_taiwan": int(census["red"]),
-		"taiwan_battalions_on_taiwan": int(census["green"]),
-		"game_over": game_over,
-		"winner": winner,
-		"victory_reason": String(verdict["reason"]),
-	}
-	EventBus.cleanup_resolved.emit(last_cleanup_summary)
-	return last_cleanup_summary
+	last_cleanup_summary = CleanupSummary.new()
+	last_cleanup_summary.antiship_systems_reset = reset_count
+	last_cleanup_summary.china_battalions_on_taiwan = int(census["red"])
+	last_cleanup_summary.taiwan_battalions_on_taiwan = int(census["green"])
+	last_cleanup_summary.game_over = game_over
+	last_cleanup_summary.winner = winner
+	last_cleanup_summary.victory_reason = String(verdict["reason"])
+	EventBus.cleanup_resolved.emit(last_cleanup_summary.to_dict())
+	return last_cleanup_summary.to_dict()
 
 
 ## Count PLA (RED) vs ROC (GREEN) battalions on the hexes that count as "on Taiwan". taiwan_hexes is
@@ -1390,7 +1389,7 @@ func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> Tur
 	result.ijfs_writeback = last_ijfs_writeback.duplicate(true)
 	result.antiship_summary = last_antiship_summary.duplicate(true)
 	result.frontline_summary = last_frontline_summary.to_dict() if last_frontline_summary != null else {}
-	result.cleanup_summary = last_cleanup_summary.duplicate(true)
+	result.cleanup_summary = last_cleanup_summary.to_dict() if last_cleanup_summary != null else {}
 	result.events = TurnEventLog.build(self)
 	result.game_over = game_over
 	result.winner = winner

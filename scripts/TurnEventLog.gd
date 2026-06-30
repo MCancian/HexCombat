@@ -47,8 +47,8 @@ static func build(state: GameStateType) -> Array[TurnEvent]:
 		events.append(_event(seq, "frontline", "", "", state.last_frontline_summary.to_dict()))
 		seq += 1
 
-	if not state.last_cleanup_summary.is_empty():
-		events.append(_event(seq, "cleanup", "", "", state.last_cleanup_summary))
+	if state.last_cleanup_summary != null:
+		events.append(_event(seq, "cleanup", "", "", state.last_cleanup_summary.to_dict()))
 		seq += 1
 
 	return events
