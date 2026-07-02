@@ -400,15 +400,7 @@ func resolve_supply_turn() -> Dictionary:
 		if brigade.fought_this_turn:
 			engaged_ids.append(brigade.id)
 
-	var summary := DosConsumption.calculate_consumption(units, moved_ids, engaged_ids, turn_number)
-	var pool_before := supply_state.current_dos_tons
-	var consumed := float(summary["red_dos_consumed_tons"])
-	supply_state.current_dos_tons = maxf(0.0, pool_before - consumed)
-	summary["applied"] = true
-	summary["pool_before"] = pool_before
-	summary["pool_after"] = supply_state.current_dos_tons
-	# Combat-effectiveness modifier from supply exhaustion is deferred to D4 IJFS.
-	supply_state.day_history.append(summary)
+	var summary := SupplyResolver.resolve(supply_state, units, moved_ids, engaged_ids, turn_number)
 	EventBus.supply_updated.emit(summary)
 	return summary
 
