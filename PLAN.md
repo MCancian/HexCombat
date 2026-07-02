@@ -1852,7 +1852,25 @@ Red maneuver BNs redistribute along it. Cleanup phase normalizes ownership after
 
 ## Open questions (settle at the relevant milestone)
 
-_None blocking the slice — the design is settled. Future-phase questions (supply/organization
+### B6 — LLM-player adapter: provider/spend decision  *(OPEN 2026-07-02 — needs USER)*
+
+Everything technical is ready: a policy is an object with
+`build_actions(observation) -> Array` registered by id in `PolicyCatalog`; batch records stamp
+`policy_id` and the full observation/action contract is schema-gated. What an agent cannot
+decide alone is **whose API and budget the LLM player uses**:
+
+1. **Provider/mechanism.** Recommendation: Anthropic API via a thin out-of-process adapter (a
+   Python or PowerShell sidecar the Godot policy shells out to per turn, key in an env var like
+   `ANTHROPIC_API_KEY`) — keeps HTTP/keys out of the engine and lets the adapter log every
+   observation/action pair for replayability. Alternatives: any OpenAI-compatible endpoint, or
+   a local model (free, weaker).
+2. **Budget/scale.** A 30-game batch at ~10–30 turns × 1 call/side/turn is roughly 600–1,800
+   LLM calls per condition — the user should pick model tier and N accordingly.
+3. **First matchup.** LLM-vs-scripted (cheapest, isolates one seat) vs LLM-vs-LLM.
+
+Until settled, batches run with `selfplay_default`; nothing else in Track B blocks on this.
+
+_Otherwise none blocking — the design is settled. Future-phase questions (supply/organization
 interactions, fog of war, terrain via ArcGIS, theater fires) are tracked in `ROADMAP.md`._
 
 ### Victory conditions  *(DESIGN SETTLED 2026-06-28 — user-driven; supersedes the 2026-06-23 deferral; not yet implemented)*
