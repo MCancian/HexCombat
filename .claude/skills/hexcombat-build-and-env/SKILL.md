@@ -13,8 +13,9 @@ description: Recreate or repair the HexCombat working environment — Godot bina
 - **Project root:** `C:\Users\mdogg\Desktop\HexCombat` (git repo, branch `main`).
 - **Test framework:** GdUnit4, vendored in `addons/gdUnit4/` (committed).
 - **Source oracles (read-only reference repos):**
-  - `C:\Users\mdogg\TaiwanInvasionViewer` — the original Python/Flask sim (beware: it contains a
-    stale *nested* TIV checkout; use the top-level `src/`, not a nested copy).
+  - `C:\Users\mdogg\TaiwanInvasionViewer` — the original Python/Flask sim. **Path gotcha:** the
+    real source tree is NESTED — `C:\Users\mdogg\TaiwanInvasionViewer\TaiwanInvasionViewer\src\…`.
+    Agents that look in the outer dir wrongly report "source not found"; use the nested path.
   - `C:\Users\mdogg\My Drive\Projects\TaiwanDefenseRefactor` — later Python wargame (mine model source).
 
 ## From scratch (fresh checkout)

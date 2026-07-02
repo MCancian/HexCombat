@@ -42,8 +42,9 @@ snapshot before/after the suspect phase via `GameData.snapshot_state()` and diff
 - **Assuming a dict key exists** → exquisite intel dormant for the whole project. Fail loud.
 - **Running the gate mid-edit** → half-imported cache produces phantom flakes. Finish the edit,
   import, then gate.
-- **Using the nested TIV checkout as the oracle** — `TaiwanInvasionViewer` contains a stale nested
-  copy of itself; always reference the top-level `src/`.
+- **Looking for TIV source in the outer directory** — the real TIV tree is nested
+  (`TaiwanInvasionViewer\TaiwanInvasionViewer\src\…`); the outer dir makes agents report
+  "source not found". Use the nested path.
 
 ## When genuinely stuck
 
