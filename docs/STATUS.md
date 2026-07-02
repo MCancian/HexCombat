@@ -14,7 +14,8 @@ tense, no dates (dates live only in the append-only history logs). For *future* 
 | **`PLAN.md` → Decisions** | Append-only log of *why* (one dated entry per choice) | history — dates OK |
 | **`docs/RETROSPECTIVES.md`** | Append-only per-task lessons + triage | history — dates OK |
 | **`ROADMAP.md`** | Milestone map + TIV oracle file/line refs | reference |
-| **`AGENTS.md` / `CLAUDE.md`** | Rules for agents / the orchestrator workflow | reference |
+| **`AGENTS.md` / `CLAUDE.md`** | Rules for agents (incl. the mission) / primary-agent workflow | reference |
+| **`.claude/skills/`** | Procedure library — task→skill map in its `README.md` | reference |
 
 **Tracking rules for agents:**
 1. When you **finish** a feature, update **this file** (present tense, no date) and check the item off

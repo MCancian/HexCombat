@@ -130,6 +130,31 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-07-02 — Mission ratified + skill library + workflow change (USER calls via Phase-1
+  discovery Q&A; docs/skills implemented same session).** The user answered the objective
+  questions directly: (1) **Primary use = AI-vs-AI research instrument** (Monte Carlo outcome
+  distributions, LLM players via the JSON API, human-readable narratives, parameter sensitivity
+  sweeps — all four deliverables wanted); adjudication aid is secondary, scoped to **order entry +
+  turn resolution in the UI and projector-friendly presentation** (umpire overrides and save/load
+  explicitly not requested). (2) **HexCombat is the design of record** going forward — TIV stays
+  the lineage/intent reference, divergences are user-directed and logged here. (3) **Scenario
+  scope = multiple Taiwan variants** (force mixes/timelines/postures) for comparative research —
+  scenario authoring/parameterization is first-class. (4) **The frontier agent implements
+  directly**; the orchestrator→opencode(free-model) loop is retired — opencode is reserved for
+  mechanical/exploratory chores. (5) **No deadline — do it right.** Standing rule reaffirmed: at
+  technical forks, prefer harder-up-front/cleanest-code. **Implemented on this basis:** a
+  14-skill procedure library under `.claude/skills/` (index + task→skill map in its README;
+  includes not-yet-active skills for the post-decomposition era: `add-phase-resolver`,
+  `research-runs`, `scenario-authoring`, plus the executable
+  `gamestate-decomposition-campaign`); `CLAUDE.md` rewritten (primary-agent workflow);
+  `AGENTS.md` gained the mission + design-of-record policy + skills pointer;
+  `docs/plans/BACKLOG.md` rewritten into tracks A (decomposition) / B (research harness) /
+  C (variants) / D (adjudication UI) / E (hygiene); `docs/ORCHESTRATOR_HANDOFF.md` archived to
+  `docs/archive/` (history, kept verbatim); `ROADMAP.md` re-headed as the historical TIV
+  source-oracle map; `docs/ARCHITECTURE.md` stale lines fixed (GameState "planned", M4/M5
+  "pending") + resolver-direction section added. Skills hold procedures; docs keep facts —
+  duplicated facts were avoided by pointing skills at validators/docs as the source of truth.
+
 - **2026-06-30 — Typed phase-summary Resources (refactor_audit item 9; done directly, frontier work — NOT
   a free-model task). 4 of 5 fields converted; the 5th left untyped by USER call.** Repeated the proven
   item-3 pattern (typed `Resource` + `to_dict()` at the JSON edge, `null` = unresolved sentinel), one

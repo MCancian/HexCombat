@@ -1,8 +1,9 @@
-# Orchestrator Handoff — continue the TIV port via opencode subagents
+# [ARCHIVED 2026-07-02] Orchestrator Handoff — TIV-port era session log
 
-> **Start here now:** **`docs/STATUS.md`** = what works today; **`docs/plans/BACKLOG.md`** = the active
-> forward plan (audit-first tracks). The long session log in *this* file is **history** — kept for
-> context, not the current plan. (Pending cleanup pass: prune this file into STATUS + plans.)
+> **This file is history, kept verbatim for archaeology.** It described the retired
+> orchestrator→opencode workflow (superseded by `CLAUDE.md` + `.claude/skills/`) and the TIV-port
+> build sessions. Current state: `docs/STATUS.md`. Current plan: `docs/plans/BACKLOG.md`.
+> Older docs may reference this file at its old path `docs/ORCHESTRATOR_HANDOFF.md`.
 
 **Audience:** the next Claude orchestrator session. Read `AGENTS.md` → `CLAUDE.md` → `ROADMAP.md`
 → `PLAN.md` first; this doc is the *active build plan* for finishing the TaiwanInvasionViewer

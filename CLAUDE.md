@@ -1,75 +1,54 @@
-# CLAUDE.md — Orchestrator Guide
+# CLAUDE.md — Primary Agent Guide
 
-**Read `AGENTS.md` first.** It holds the canonical rules (architecture, run/verify, testing,
-conventions, guardrails) for all agents. This file is Claude-specific: your role as orchestrator
-and how to drive the `opencode` implementer subagent.
+**Read `AGENTS.md` first** — canonical rules (mission, architecture, run/verify, testing,
+conventions, guardrails) for all agents. Then use the skill library: task→skill map in
+`.claude/skills/README.md`. This file is Claude-harness-specific: your role, the work loop, and
+the auxiliary tools.
 
 ## Your role
 
-You are the **orchestrator**. The loop: you plan → `opencode` reviews/implements → it
-reports → **you independently verify** → you commit. Treat the implementer as a peer, not a
-junior — but the default model (`opencode/deepseek-v4-flash-free`) is a small free model, weaker
-than a frontier model, so keep your verification bar high and review its diffs closely.
+You are the **primary agent**: you plan, **implement directly**, verify, and commit.
+(User call 2026-07-02: the old plan→opencode-implements→verify loop is retired — the frontier
+model writes the code. `opencode` remains available for cheap mechanical or read-only exploratory
+chores; verify anything it reports independently.)
 
-## Using opencode
+The user is a solo, non-coding wargame designer. Design intent comes from them; everything
+technical is yours. When a technical fork arises, **choose the option that is harder up front but
+yields the cleanest, most legible code** (standing user instruction). Genuine design questions go
+to the user (record in `PLAN.md` → Open Questions); do not guess game design.
 
-`Bash(opencode *)` is allowed in `.claude/settings.json`. The default model is
-`opencode/deepseek-v4-flash-free` (set via `/fast`-style model selection); pass `-m` to override.
-The headless entrypoint is `opencode run`.
+## The work loop (each coherent unit)
 
-```bash
-# review (read-only — the explore subagent has no write tools)
-opencode run -m opencode/deepseek-v4-flash-free --agent explore "task — see scripts/foo.gd"
-# implement (read/write — the build agent auto-allows its tools)
-opencode run -m opencode/deepseek-v4-flash-free "task" -f scripts/foo.gd
-# multi-step with continuity (reuse the session)
-opencode run -m opencode/deepseek-v4-flash-free -s hexcombat-<topic> "step 1"
-opencode run -m opencode/deepseek-v4-flash-free -s hexcombat-<topic> "step 2"   # or -c to continue last
-```
+1. Orient: `docs/STATUS.md` (what works) → `docs/plans/BACKLOG.md` (what's next) → the relevant
+   skill(s) for the task type.
+2. Classify the change and its gate per `.claude/skills/hexcombat-change-control`.
+3. Implement in the smallest verifiable steps; golden-touching work = one extraction/conversion
+   per commit.
+4. Verify yourself: `pwsh -File tools/run_all_tests.ps1` → **ALL PHASES GREEN** (verdict rules in
+   `hexcombat-validation-and-qa`; flake handling in `hexcombat-debugging-playbook`).
+5. Record per `hexcombat-docs-and-writing` (STATUS / Decisions / RETROSPECTIVES / backlog
+   check-off), then commit. **Push at milestones**, not every micro-commit.
+6. Pause and surface to the user on: a genuine design decision, a gate you can't get green after
+   a couple of focused attempts, or anything destructive/irreversible.
 
-Reference files inline by path (it has a Read tool) or attach with `-f`. Add
-`--dangerously-skip-permissions` only if a write task stalls on a permission prompt. Hand it a
-self-contained plan each time (it starts cold unless you reuse `-s`): context, exact files, the
-change, constraints, and required verification. Tell it to follow `AGENTS.md`.
+Commit messages end with the `Co-Authored-By` trailer + session link the harness specifies for
+the acting model. Never commit `.mcp.json`.
 
-> Note: `pi` (the previous implementer CLI) is broken on this Windows box — it spawns the
-> `opencode` backend via `spawn('opencode')`, which can't resolve the `.cmd`/`.ps1` shim and dies
-> with `ENOENT`. Call `opencode` directly instead.
+## Auxiliary tools
 
-## Verification split
+- **opencode** (`Bash(opencode *)` is allowed): `opencode run -m opencode/deepseek-v4-flash-free
+  "task"` (add `-s <session>` for continuity, `--agent explore` for read-only). Small free model —
+  suitable for broad file surveys, mechanical renames, log mining; NOT for golden-touching,
+  RNG-adjacent, or architectural work. Hand it a self-contained brief; review its diff for scope
+  drift; re-run all verification yourself.
+- **Godot MCP** (`mcp__godot__*`, config in `.mcp.json`): launch/run the project, read debug
+  output — for visual/runtime verification that headless gates can't cover
+  (`hexcombat-run-and-operate` has the screenshot path).
+- **`pi` CLI is dead on this box** (ENOENT spawning the opencode shim) — call `opencode` directly.
 
-- **You (orchestrator):** headless gates — `--import` if needed, the smoke test, `tools/`
-  validation scripts, and `tools/run_all_tests.ps1`. Read captured stdout/stderr. Don't trust
-  the implementer's report; re-run it yourself.
-- **opencode:** **visual / runtime judgment** when it has the Godot MCP configured (via
-  `opencode mcp` / its config) — it can launch and inspect the running game. Ask it to confirm the
-  scene renders correctly, units/markers appear, and interaction behaves, and to report what it
-  observed. Absent the MCP, fall back to headless `scene_runner` checks.
+## Known harness facts
 
-## Commit policy (autonomous loop)
-
-- **Auto-commit** each change once it passes your headless gates + relevant tests.
-- **Push at milestones** (a roadmap/plan item fully done and green), not every micro-commit.
-- Review the implementer's diff for **scope drift** (it has touched settings/tooling before);
-  exclude unrelated changes.
-- **Never commit `.mcp.json`.** End commit messages with
-  `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
-
-## Loop operation
-
-For the active TIV-port build, follow `docs/ORCHESTRATOR_HANDOFF.md` (backlog + the full
-per-sub-task loop). Each iteration:
-1. Read `AGENTS.md`, `ROADMAP.md`, and `PLAN.md`.
-2. Pick the next unchecked `PLAN.md` item (consult `ROADMAP.md` so your choices stay
-   forward-compatible with later phases).
-3. Do one coherent, verified unit of work via opencode.
-4. **Retrospective:** in the same opencode session, after implementation + gating, ask the
-   implementer "knowing what you know now, what would you do differently?" Capture it.
-5. Verify (your gates), then review **both** the diff (scope/fidelity) **and** the retrospective —
-   acting now on the lessons worth fixing before commit. Commit; push at milestones.
-6. Record: **design decisions** → `PLAN.md` → Decisions (check the item off); **retrospective +
-   your triage** → `docs/RETROSPECTIVES.md`. Cross-link.
-
-**Pause and surface to the user** on: a genuine design decision not answerable from the source
-repo (record it in PLAN.md → Open Questions), a verification you can't get green after a couple
-of focused attempts, or anything destructive/irreversible.
+- Windows 11; gates run under `pwsh`. Godot at `C:\Godot_v4.7-stable_win64.exe`
+  (`hexcombat-build-and-env` for environment recovery).
+- Long autonomous runs: prefer finishing a unit and committing over batching; the golden gate is
+  cheap — run it often.

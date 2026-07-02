@@ -1,23 +1,35 @@
 # AGENTS.md — HexCombat Agent Guide
 
-Canonical rules for **every** agent working in this repo (Claude, the opencode implementer, and any other).
-Read this first. Claude-specific orchestration material lives in `CLAUDE.md`.
+Claude-specific orchestration material lives in `CLAUDE.md`.
 
-> **Orient fast:** **`docs/STATUS.md`** = what works today + how the docs are organized and the tracking
-> rules; **`docs/plans/BACKLOG.md`** = the forward plan. Update STATUS.md (no dates) when you finish a
-> feature.
+**`docs/STATUS.md`** = what works today + how the docs are organized and the tracking rules; 
+**`docs/plans/BACKLOG.md`** = the forward plan. Update STATUS.md (no dates) when you finish a feature.
 
 ## Project
 
-Godot 4.7 / GDScript hex-grid wargame, ported from the **BOOTS** (Boots On The Ground)
-ground-combat phase of **TaiwanInvasionViewer** (`C:\Users\mdogg\TaiwanInvasionViewer`), a
-Python/Flask simulation. Long-term goal: bring the other phases of that sim — joint/air-missile
-fires ("IJFS"), anti-ship & mine warfare, amphibious offload/logistics, supply consumption,
-front-line tracking — into the same Godot game.
+Godot 4.7 / GDScript hex-grid wargame of a PLA invasion of Taiwan, ported from
+**TaiwanInvasionViewer** (`C:\Users\mdogg\TaiwanInvasionViewer`), a Python/Flask simulation.
 
-The source logic is ~1:1 portable to GDScript. **Before writing new game logic, check
-TaiwanInvasionViewer for an existing implementation and its `tests/python/` cases** — those
-tests are the behavioral oracle for the port.
+**Mission (user-ratified 2026-07-02; see PLAN.md → Decisions):**
+1. **Primary — AI-vs-AI research instrument:** headless batch games → Monte Carlo outcome
+   distributions, LLM players via the JSON API, human-readable narratives, parameter sweeps.
+2. **Secondary — live-adjudication aid:** a facilitator enters both sides' orders in the UI and
+   the sim resolves; projector-friendly display.
+Scenario variants (same theater, different force mixes/timelines/postures) are first-class
+content. The user is a non-coder; agents do all coding — legibility to future agents is a design
+requirement, not a nicety.
+
+**Design of record:** HexCombat itself. TIV was the port oracle — when adapting existing TIV
+mechanics, read its source and `tests/python/` cases first and preserve ported math unless a
+change is directed; but new design and rebalances are USER calls recorded in PLAN.md → Decisions,
+not bound to TIV.
+
+## Skills (read before acting)
+
+`.claude/skills/` holds the procedure library — task→skill map in `.claude/skills/README.md`.
+Minimum path for any change: `hexcombat-architecture-contract` (design rules) →
+`hexcombat-change-control` (gating/commit) → the task-specific skill. Debugging starts at
+`hexcombat-debugging-playbook`; settled battles live in `hexcombat-failure-archaeology`.
 
 ## Architecture (keep new code inside these layers)
 
@@ -103,6 +115,7 @@ HexCombat has a built-in JSON action API so LLM agents (including the orchestrat
 gates and future AI-vs-AI play) can drive the game without a UI:
 
 **Core tools** (`scripts/LLMGameAPI.gd` autoload):
+
 - `get_observation(team)` → JSON dict: `turn`, `phase`, `map_cells`, `brigades`, `legal_moves`,
   `pending_orders`, `last_combat_summary`
 - `apply_action(action_json)` → routes to `GameState`:
@@ -114,6 +127,7 @@ gates and future AI-vs-AI play) can drive the game without a UI:
 asserts observation keys, legal moves exposed, examples parse/apply, missing seeds rejected.
 
 **One-shot tools:**
+
 ```powershell
 # Run LLM API validation
 "C:\Godot_v4.7-stable_win64.exe" --headless --path "C:\Users\mdogg\Desktop\HexCombat" -s "res://tools/validate_llm_api.gd"
@@ -138,8 +152,11 @@ See `docs/LLM_PLAYTESTING.md`, `docs/LLM_OBSERVATION_SCHEMA.md`, and
 ## Guardrails
 
 - Preserve ported combat math exactly (formulas, dice, clamps, FEBA, casualty ordering,
-  `combat_detail` shape) unless a rebalance is explicitly requested.
-- Check TaiwanInvasionViewer before writing new logic.
-- **Git: only the orchestrator commits** (see `CLAUDE.md`). Other agents leave changes for the
-  orchestrator to verify and commit.
+  `combat_detail` shape) unless a rebalance is explicitly requested by the user; record every
+  deliberate divergence in PLAN.md → Decisions (HexCombat is the design of record).
+- Adapting a TIV-lineage mechanic? Read the TIV source and its `tests/python/` cases first.
+- Refactors keep the golden invariant **byte-stable**; re-baselines are user-aware change-control
+  events (`.claude/skills/hexcombat-change-control`).
+- **Git: only the primary (orchestrating) agent commits.** Subagents/auxiliary tools leave
+  changes for it to verify and commit.
 - `.mcp.json` is intentionally modified locally (machine-specific Godot path) — never commit it.

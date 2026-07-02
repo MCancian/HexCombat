@@ -1,138 +1,69 @@
 # HexCombat — Forward Backlog
 
-The active forward plan. Five tracks, in **audit-first** order. Each track has a scope, its
-dependencies, and how "done" is verified. Pick the next unstarted track; finish one coherent unit at
-a time; verify before moving on.
+The active forward plan, sequenced for the ratified mission (PLAN.md → Decisions 2026-07-02):
+**primary** = AI-vs-AI research instrument (Monte Carlo, LLM players, narratives, sweeps);
+**secondary** = live-adjudication aid (order entry + projector-friendly view). Pick the next
+unstarted item in order; one coherent, verified unit at a time.
 
-> **Doc-structure intent (Track 1 will formalize this).** Going forward: documentation of *what is
-> already implemented* lives under `docs/`; *future plans* live under `docs/plans/` (this file);
-> per-task lessons in `docs/RETROSPECTIVES.md`. The goal is **agent readability** — a new agent should
-> orient and start a task (feature, playtest, graphics) with minimal archaeology.
-
----
-
-## Sequencing
-
-1. **Track 2 — Port-leftover audit** (read-only)
-2. **Track 4 — Refactor/cleanup audit** (read-only)
-3. **Track 1 — Documentation restructure** (folds in the audit findings)
-4. **Track 3 — Victory conditions + end-to-end golden test**
-5. **Track 5 — Graphics**
-
-Rationale (user call): the two audits are read-only and surface findings that the doc restructure
-(Track 1) should absorb and that Track 3/5 build on — so audit first, then reorganize, then build.
+Completed tracks from the previous backlog (port audit, refactor audit items 1–9, victory
+conditions, doc-restructure first pass) are recorded in `PLAN.md` → Decisions and
+`docs/plans/refactor_audit.md` / `port_audit.md` — not repeated here.
 
 ---
 
-## Track 1 — Documentation restructure (agent readability)  *(first pass DONE 2026-06-29)*
+## Track A — GameState decomposition *(the enabler — do first)*
 
-**Done (conservative, additive pass):** `docs/STATUS.md` is now the single dateless current-state entry
-point and states the doc-organization + tracking rules; `AGENTS.md`, `PLAN.md`, and
-`ORCHESTRATOR_HANDOFF.md` point to it; forward work lives in `docs/plans/`. **Remaining (deferred — do
-with the user / attention):** the *destructive* prune — collapsing the long `ORCHESTRATOR_HANDOFF.md`
-session log and the historical milestone task-lists in `PLAN.md` into STATUS + the Decisions log. Left
-undone unattended to avoid churning docs the user reads.
+Execute `.claude/skills/hexcombat-gamestate-decomposition-campaign` (refactor_audit item 10):
+pure `RefCounted` resolvers in `scripts/resolvers/`, thin delegating wrappers, golden byte-stable
+at every step. Phases A–B (builders + dice-free resolvers) are committable independently;
+C (coupled middle) and D (combat core) are attended work.
 
-**Goal:** make the docs efficient for *new agents*, not historians. The current planning docs
-(`ORCHESTRATOR_HANDOFF.md`, `PLAN.md`) mix completed history, live state, and future intent with heavy
-date-stamping — high archaeology cost per task.
+**Done when:** `GameState` is a thin sequencer; every phase's logic in a tested resolver;
+campaign skill marked complete; `hexcombat-add-phase-resolver` activated.
 
-**Scope:**
-- **Separate implemented from planned.** Move "what has been built / how it works" into `docs/`
-  (per-system or a single `IMPLEMENTED.md` map); keep forward intent in `docs/plans/`.
-- **Drop dates from implemented-feature docs.** Once something is done, the date is noise; describe the
-  *current* behavior in present tense. (Dates stay useful only in append-only logs like
-  `RETROSPECTIVES.md` / the Decisions log, which are history by design.)
-- **Establish tracking rules** — a short, explicit convention for: where a new feature gets recorded,
-  how an item is marked done, and where the single "current state" summary lives (one source of truth,
-  not three). Write the rules down so agents follow them without re-deriving.
-- **Prune & consolidate** the long-lived planning docs: archive completed sections, dedupe overlapping
-  status text, and leave one authoritative current-state entry point.
-- Fold in the findings from Tracks 2 and 4 (do this track *after* the audits).
+## Track B — Research harness *(primary mission)*
 
-**Done when:** a new agent can answer "what works today?" and "what's next?" from one short doc each,
-with no date spelunking.
+Methodology contract: `.claude/skills/hexcombat-research-runs`. Build order:
 
----
+- **B1 — Scenario selection.** `GameData` loads a scenario by path/id (default unchanged so all
+  pins hold); `data/scenarios/` directory; `validate_scenario_data.gd` covers every scenario.
+- **B2 — Batch runner.** N seeded headless games (process-per-run) over a scenario × policy
+  matrix; per-game JSON records (seed, commit, terminal state, per-turn digests) checkpointed to
+  `reports/`; deterministic re-run of any single game.
+- **B3 — Outcome reports.** Aggregate batch records → win rates, casualty/duration
+  distributions, census margins; Markdown report per the skill's report shape.
+- **B4 — Narrative renderer.** `TurnResult.to_dict().events` → readable turn-by-turn account of
+  a selected game (median/extreme picks).
+- **B5 — Sweep generalization.** The `sweep_antiship_crossing` pattern generalized to any
+  scenario knob (refactor_audit item 7), reporting per-knob outcome deltas.
+- **B6 — LLM-player adapter.** A `SelfPlayPolicy`-contract policy that calls an LLM with the
+  observation and parses the action response; full observation/action logging so games are
+  replayable; policy-identity stamped into batch records.
 
-## Track 2 — Port-leftover audit (TIV + TaiwanDefenseRefactor)
+**Done when:** one command produces a reproducible multi-condition study report from scenario
+variants, with narratives, and an LLM policy can be swapped in for either side.
 
-**Goal:** a categorized list of features still unported from the two source repos, each tagged
-*port / adapt / skip* with a one-line rationale.
+## Track C — Scenario variants *(with Track B)*
 
-**Sources:**
-- TIV (the original BOOTS oracle — see `ROADMAP.md` for file/line refs).
-- `C:\Users\mdogg\My Drive\Projects\TaiwanDefenseRefactor` (the Python wargame; anti-ship missile
-  pipeline mapped in `docs/antiship_missile_pipeline_ref.md`).
+First real variant (user picks the research question; see
+`.claude/skills/hexcombat-scenario-authoring`), proving the authoring recipe end-to-end:
+variant file → validation → headless self-play → registered in the batch runner.
 
-**Known candidates to evaluate (not exhaustive — the audit produces the full list):**
-- Anti-ship **missile pipeline** depth (launches → allocate → leakers → missile_damage), tied to the
-  deferred **strike-coverage** calibration lever (memory `antiship-strike-coverage-lever`).
-- **Ground-casualty IJFS↔OOB linkage** (open half of the D4-H writeback — no shared ID bridge yet).
-- **Per-hull escort magazines** for the crossing (D3-B3 open question — needs a ship ammo/readiness
-  subsystem HexCombat lacks).
-- **Per-ship-type mine neutralization likelihood** (current model uses a per-category table; the source
-  data varies within a category — see RETROSPECTIVES 2026-06-29 mine-geometry).
-- Any TIV mechanics not in the BOOTS scope that the playtest (Track 3) shows are needed.
+## Track D — Adjudication aid (graphics/UI) *(secondary — after A/B or on user request)*
 
-**Done when:** `docs/plans/` has a port-audit list the user can triage into concrete backlog items.
+Scope per user 2026-07-02: facilitator **order entry + turn resolution in the UI** and
+**projector-friendly presentation**. (Umpire overrides and save/load were explicitly NOT
+requested.) Sub-areas, priority to be set with the user when the track starts:
 
----
+- Order-entry flow polish (select → move/commit → end turn) usable by a non-developer facilitator.
+- Projector-readable map: markers, ownership colors, phase/turn/combat HUD, camera fit/zoom/pan.
+- D5-D front-line polyline-draw UI (the one remaining D5 piece).
+- Anti-ship/mine crossing visualization (makes D3 mechanics legible to a room).
 
-## Track 4 — Refactor / cleanup audit
+All need visual verification (screenshot / Godot MCP / user) — headless gates don't cover pixels.
 
-**Goal:** a prioritized list of code refactors and cleanups, with risk/payoff notes. Read-only —
-proposes, does not change.
+## Track E — Doc & code hygiene *(opportunistic)*
 
-**Seed inputs:** `docs/REFACTOR_NOTES.md` and the RETROSPECTIVES "act later" items. Known candidates:
-- Typed `Resource` migrations for `HexState` / `CombatSummary` (touches many call sites — golden-
-  regression risk; do with attention).
-- Typed `WarmupContext` (or a key-allowlist assert) to kill the `warmup_context` silent-dead-config
-  fragility (RETROSPECTIVES 2026-06-28 D3-D warmup).
-- Debug-gated runtime-index auto-assert in the mutators / end of `resolve_turn` (deliberately deferred —
-  can surface benign desyncs).
-- Mine geometry: per-ship-type likelihood field on `ShipDef`; optional closed-form dangerous-count.
-
-**Done when:** a triaged refactor list exists; the user picks which to action.
-
----
-
-## Track 3 — Victory conditions + end-to-end golden test  *(DONE 2026-06-29)*
-
-**Status:** implemented + gated. `VictoryConditions.evaluate` + end-of-cleanup census + `game_over`/
-`winner` on GameState/TurnResult/LLM observation; `tools/validate_golden_victory.gd` plays the golden
-scenario to a deterministic terminal (turn 1, China win). Two follow-ups remain: **census counts OOB,
-not present, battalions** (`refactor_audit.md` item 2b) and **main-island land-hex data** (blocked on
-the terrain phase; `taiwan_hexes` config is the hook). Detail: `PLAN.md` → Victory conditions.
-
-**Depends on:** victory conditions being *implemented* (they are designed but not built).
-
-**3a — Implement victory conditions** (per the settled 2026-06-28 design, `PLAN.md` → Open Questions →
-"Victory conditions"): two end-of-cleanup checks on **Taiwan main-island land hexes** — **China loses**
-if 0 Chinese BNs remain on Taiwan; **China wins** if Chinese BNs > Taiwanese BNs. Loss check
-**unconditional by default**, with a configurable arm (`unconditional` / `after_first_landing` /
-`after_turn:N`). Confirm the `winner` / `game_over` field shape at implementation; surface it through
-`TurnResult` + the LLM observation.
-
-**3b — End-to-end golden test:** a deterministic headless validator that runs the golden scenario
-(seed 20260624) **from first landing through to a terminal win/loss**, asserting the game reaches a
-victory state and that the run is reproducible. Extends the existing self-play harness
-(`tools/validate_headless_selfplay.gd`) past a fixed turn count to a terminal condition.
-
-**Done when:** the golden scenario plays to a deterministic, asserted victory/defeat in the gate.
-
----
-
-## Track 5 — Graphics
-
-Broad track — **all four sub-areas** are in scope (priority to be set when we start). Graphics need
-**visual verification** (Godot MCP / opencode visual judgment per `CLAUDE.md`), not headless-only gates.
-
-- **Anti-ship / mine visualization** — the naval crossing, minefields, swept lanes, decoy/screen losses,
-  BNs lost at sea (makes the new D3 mechanics legible).
-- **Front-line UI (D5-D)** — the deferred polyline-draw front-line tool (the one remaining D5 piece;
-  needs human visual verification).
-- **Units & HUD polish** — brigade markers, unit info panels, turn/phase/combat HUD, ownership coloring.
-- **Map / terrain polish** — hex grid rendering, terrain/theater visuals, beaches, overall readability.
-
-**Done when:** each sub-area renders correctly in the running game and is confirmed visually.
+- ROADMAP.md refresh: milestone/phase sections are historical (all built) — archive or annotate.
+- Remaining `refactor_audit.md` low-priority items (5–7) as needs arise.
+- `docs/systems/html/` mirrors regenerated when their `.md` sources change materially.

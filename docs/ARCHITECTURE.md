@@ -13,7 +13,7 @@ data/*.json ──► GameData (autoload)        typed model (scripts/model/)
         pure logic libs │ (scripts/, static / RefCounted, headless-testable)
         HexMath · CombatCalculator · UnitStats · MapProjection
                         │
-   GameState (planned autoload): turn / phase / active side
+   GameState (autoload): turn / phase / order buffers / phase sequencing
                         │
         view / control: HexMap (Node2D renderer) · GameController · Main.tscn
 ```
@@ -80,4 +80,15 @@ Port traceability (extend per phase under `docs/phases/` as work proceeds):
 | --- | --- | --- |
 | Hex grid / pathfinding | `src/core/hex_grid.py` | `scripts/HexMath.gd`, `GameData` |
 | Ground combat | `src/services/boots_calculator.py` | `scripts/CombatCalculator.gd`, `UnitStats.gd` |
-| Movement / front | `src/services/boots_hex_service.py` | *(pending — M4/M5)* |
+| Movement / front | `src/services/boots_hex_service.py` | `scripts/Movement.gd`, `GameState` move orders; front-line in `scripts/FrontLineService.gd` |
+
+The full per-system source map (all D1–D5 phases, IJFS, anti-ship/mine) lives in
+`docs/systems/*.md` — that reference supersedes this table for ported detail.
+
+## Direction: resolver decomposition
+
+`GameState` is being decomposed into pure `RefCounted` resolver classes under
+`scripts/resolvers/` with explicit `resolve(<inputs>, dice) -> <TypedSummary>` signatures
+(USER-decided interface; no new autoloads). Contract and campaign:
+`.claude/skills/hexcombat-architecture-contract` and
+`.claude/skills/hexcombat-gamestate-decomposition-campaign`.
