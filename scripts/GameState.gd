@@ -1016,31 +1016,18 @@ func _frontline_hex_centers() -> Array:
 
 
 func resolve_frontline_phase(polyline_coords: Array) -> Dictionary:
-	var hex_sequence: Array = FrontLineService.find_hexes_for_polyline(polyline_coords, _frontline_hex_centers())
-	if hex_sequence.is_empty():
-		last_frontline_summary = FrontlineSummary.new()
-		EventBus.frontline_resolved.emit(last_frontline_summary.to_dict())
-		return last_frontline_summary.to_dict()
-
 	# Only the drawing side's brigades reshuffle along the line — RED here (the amphibious attacker),
 	# mirroring TIV front_line_service's single-side filter. Intentional asymmetry, not a bug; if Green
-	# ever draws front lines this needs a team parameter. Snapshot the affected set BEFORE moving anyone
-	# (no mid-iteration mutation); sort so distribute_units_along_hexes is deterministic.
-	var affected_ids: Array[String] = []
+	# ever draws front lines, pass its brigades instead.
+	var candidate_brigades: Array = []
 	for brigade_value in GameData.brigades.values():
 		var brigade: Brigade = brigade_value
-		if brigade.team == Brigade.Team.RED and not brigade.destroyed and brigade.hex_id in hex_sequence:
-			affected_ids.append(brigade.id)
-	affected_ids.sort()
+		if brigade.team == Brigade.Team.RED and not brigade.destroyed:
+			candidate_brigades.append(brigade)
 
-	var moves: Dictionary = FrontLineService.distribute_units_along_hexes(affected_ids, hex_sequence)
-	for brigade_id in moves.keys():
-		GameData.set_brigade_hex(String(brigade_id), String(moves[brigade_id]))
-
-	last_frontline_summary = FrontlineSummary.new()
-	last_frontline_summary.hex_sequence = hex_sequence
-	last_frontline_summary.affected_brigades = affected_ids
-	last_frontline_summary.moves = moves
+	last_frontline_summary = FrontlineResolver.resolve(polyline_coords, _frontline_hex_centers(), candidate_brigades)
+	for brigade_id in last_frontline_summary.moves.keys():
+		GameData.set_brigade_hex(String(brigade_id), String(last_frontline_summary.moves[brigade_id]))
 	EventBus.frontline_resolved.emit(last_frontline_summary.to_dict())
 	return last_frontline_summary.to_dict()
 
