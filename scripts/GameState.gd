@@ -1093,34 +1093,7 @@ func _active_red_battalion_units() -> Array:
 
 
 func _rebuild_ship_reserve() -> void:
-	ship_reserve.clear()
-	for reserve_entry_value in GameData.red_ship_reserve:
-		var reserve_entry: Dictionary = reserve_entry_value
-		var brigade_id := String(reserve_entry["brigade_id"])
-		var brigade: Brigade = GameData.get_brigade(brigade_id)
-		if brigade == null:
-			push_error("Ship reserve references unknown brigade_id: %s" % brigade_id)
-			continue
-
-		var bns: Array = []
-		var battalion_index := 1
-		for battalion in brigade.composition:
-			var typed_battalion: Battalion = battalion
-			var type_slug := typed_battalion.type.to_lower().replace(" ", "_")
-			for _qty_index in range(typed_battalion.qty):
-				bns.append({
-					"id": "%s-%s-%d" % [brigade_id, type_slug, battalion_index],
-					"type": typed_battalion.type
-				})
-				battalion_index += 1
-
-		ship_reserve.append({
-			"brigade_id": brigade_id,
-			"locked_beach": int(reserve_entry["locked_beach"]),
-			"beach_hex": String(reserve_entry["beach_hex"]),
-			"offset_bearing": float(reserve_entry["offset_bearing"]),
-			"bns": bns
-		})
+	ship_reserve = ShipReserveBuilder.build(GameData.red_ship_reserve, GameData.brigades)
 
 
 func _rebuild_supply_state() -> void:
