@@ -87,6 +87,11 @@ when the hex-adjacency coordinate bug was fixed, and when `feba_base_km` was set
   resumes (existing valid records skipped); `manifest.json` stamps commit + per-game re-run
   command lines. Policies are named in `PolicyCatalog` (`selfplay_default` today; unknown ids
   fail loud).
+- **Outcome reports (research harness B3)** — `tools/make_batch_report.gd -- --batch=<study>`
+  aggregates a batch's records into `report.md`: per-condition (scenario × policy) win rates,
+  turn/census/margin distributions, per-game loss means, a methods line (commit, mixed-commit
+  and dirty-tree warnings), and standing caveats. Aggregation/rendering is pure `BatchReport`
+  statics (GdUnit-tested).
 
 **Verification.** `pwsh tools/run_all_tests.ps1` is the canonical gate: import → headless smoke →
 `tools/validate_*.gd` (golden turn, anti-ship, IJFS, victory e2e, data validators, no-global-RNG) →

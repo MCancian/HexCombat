@@ -14,7 +14,11 @@ description: Running HexCombat as a research instrument — Monte Carlo batches 
 > `godot --headless --path . -s res://tools/run_selfplay_game.gd -- --seed=S --scenario=X
 > --policy=P --turns=T --out=file.json`). Verdicts are ARTIFACT-based (record exists + parses +
 > all_resolved + no index_violations), never exit-code-based — the Godot teardown flake corrupts
-> exit codes. The report/aggregation layer (B3) is still to build.
+> exit codes. Then aggregate:
+> `godot --headless --path . -s res://tools/make_batch_report.gd -- --batch=<study>` →
+> `reports/batches/<study>/report.md` (per-condition win rates, turn/census/margin
+> distributions, loss means, methods + caveats; logic in `BatchReport.gd`, GdUnit-tested).
+> Narrative vignettes (B4) are still to build.
 
 ## The methodology (this is the contract, whatever the tooling)
 

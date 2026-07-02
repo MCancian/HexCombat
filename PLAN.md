@@ -130,6 +130,20 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-07-02 — Research harness B3: outcome reports (`BatchReport` + `make_batch_report`).**
+  Aggregation and Markdown rendering live in pure `scripts/BatchReport.gd` statics
+  (`aggregate(records)` → per-condition dict keyed `scenario|policy`; `render_markdown`)
+  with `tests/batch_report_test.gd` over synthetic records; `tools/make_batch_report.gd` is the
+  thin file-I/O wrapper (`--batch=<name-or-dir>` → `report.md`). Report shape per the
+  research-runs skill: methods line (commit list with a mixed-commit warning, dirty-tree
+  warning from the manifest), per-condition win rates + turns/census/margin distributions,
+  per-game loss means (red/green ground BNs from combat summaries — red is always the ground
+  attacker; ships + BNs lost at sea from antiship summaries), standing caveats (policy-identity
+  caution, no-terrain model limit). **Judgment call:** Green ground losses count combat
+  defender losses only — IJFS maneuver-unit kills show up in the terminal census, not the
+  ground-loss column (stated in the report's caveats so a reader can't misread the column).
+  Verified on the real 3-game smoke batch + full gate ALL PHASES GREEN (43 suites).
+
 - **2026-07-02 — Research harness B2: batch runner (process-per-run, artifact-verdict).**
   `tools/run_selfplay_game.gd` plays ONE seeded headless game (`SelfPlayRunner.play_game` with
   new optional `stop_on_game_over := true` — default false preserves the pinned self-play-gate

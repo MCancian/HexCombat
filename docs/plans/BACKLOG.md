@@ -31,8 +31,10 @@ Methodology contract: `.claude/skills/hexcombat-research-runs`. Build order:
   set, process-per-run, artifact-based verdicts, checkpoint/resume, manifest with commit +
   re-run command lines) + `tools/run_selfplay_game.gd` (byte-reproducible per-game JSON record)
   + `PolicyCatalog` (policy ids fail loud) + `SelfPlayRunner` optional stop_on_game_over.
-- **B3 — Outcome reports.** Aggregate batch records → win rates, casualty/duration
-  distributions, census margins; Markdown report per the skill's report shape.
+- ✅ **B3 — Outcome reports** (2026-07-02). `BatchReport` (pure aggregation + Markdown render,
+  GdUnit-tested) + `tools/make_batch_report.gd`: batch records → per-condition win rates,
+  turn/census/margin distributions, loss means, methods line (commit/mixed-commit/dirty
+  warnings), caveats.
 - **B4 — Narrative renderer.** `TurnResult.to_dict().events` → readable turn-by-turn account of
   a selected game (median/extreme picks).
 - **B5 — Sweep generalization.** The `sweep_antiship_crossing` pattern generalized to any
