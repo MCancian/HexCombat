@@ -1097,9 +1097,7 @@ func _rebuild_ship_reserve() -> void:
 
 
 func _rebuild_supply_state() -> void:
-	supply_state = SupplyStateResource.new()
-	supply_state.current_dos_tons = float(GameData.red_dos_start) * DosConsumption.TONS_PER_DOS
-	supply_state.day_history = []
+	supply_state = SupplyStateBuilder.build(float(GameData.red_dos_start))
 
 
 func register_ship_losses(bn_equiv_lost: int) -> void:
