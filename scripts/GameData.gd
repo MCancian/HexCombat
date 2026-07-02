@@ -8,12 +8,15 @@ const BeachDefResource = preload("res://scripts/model/BeachDef.gd")
 const ShipDefResource = preload("res://scripts/model/ShipDef.gd")
 
 const OOB_PATHS := ["res://data/pla_ground_forces.json", "res://data/roc_ground_forces.json"]
-const DEFAULT_SCENARIO_PATH := "res://data/scenario_default.json"
+const DEFAULT_SCENARIO_PATH := ScenarioCatalog.DEFAULT_SCENARIO_PATH
 const BEACHES_PATH := "res://data/beaches.json"
 const THEATERS_PATH := "res://data/theaters.json"
 const SHIPS_PATH := "res://data/ships.json"
 
 var scenario_name: String = ""
+# Path of the currently loaded scenario (set by load_scenario). GameState.reset_to_scenario
+# reloads THIS, not the default, so a process-level scenario selection survives resets.
+var scenario_path: String = ""
 var turn_length_days: int = 0
 var red_dos_start: int = 0
 var stacking_soft_cap: int = 0
@@ -52,7 +55,7 @@ func load_all() -> void:
 	load_hex_grid()
 	build_neighbor_lookup()
 	load_brigades()
-	load_scenario(DEFAULT_SCENARIO_PATH)
+	load_scenario(ScenarioCatalog.selected_path())
 	load_theaters()
 	load_beaches()
 	load_ships()
@@ -163,6 +166,7 @@ func _load_oob_file(path: String) -> void:
 
 
 func load_scenario(path: String) -> void:
+	scenario_path = path
 	var json = _read_json(path)
 	if json == null:
 		push_error("Could not load scenario %s" % path)

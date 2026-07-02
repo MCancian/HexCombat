@@ -73,6 +73,12 @@ when the hex-adjacency coordinate bug was fixed, and when `feba_base_km` was set
   block.
 - **AI-readiness (Track E)** — `GameState.play_turn(red, green, dice) -> TurnResult`, per-turn event
   log, `LLMGameAPI` observation/action contract (JSON-schema-gated), headless self-play harness.
+- **Scenario selection (research harness B1)** — any headless process picks its scenario via the
+  `--scenario=<id-or-path>` user arg or `HEXCOMBAT_SCENARIO` env var (`ScenarioCatalog`; arg wins,
+  no selection = `data/scenario_default.json` so all pins hold). Variant files live in
+  `data/scenarios/` (id = filename stem, enumerated by `ScenarioCatalog.list_scenario_paths()`);
+  the selection survives `GameState.reset_to_scenario()`; `validate_scenario_data.gd` checks every
+  scenario generically + the default's pinned shape.
 
 **Verification.** `pwsh tools/run_all_tests.ps1` is the canonical gate: import → headless smoke →
 `tools/validate_*.gd` (golden turn, anti-ship, IJFS, victory e2e, data validators, no-global-RNG) →

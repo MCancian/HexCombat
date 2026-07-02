@@ -22,8 +22,11 @@ complete (kept as the record of method); `hexcombat-add-phase-resolver` activate
 
 Methodology contract: `.claude/skills/hexcombat-research-runs`. Build order:
 
-- **B1 — Scenario selection.** `GameData` loads a scenario by path/id (default unchanged so all
-  pins hold); `data/scenarios/` directory; `validate_scenario_data.gd` covers every scenario.
+- ✅ **B1 — Scenario selection** (2026-07-02). `ScenarioCatalog` (pure statics):
+  `--scenario=<id-or-path>` user arg / `HEXCOMBAT_SCENARIO` env var per process, ids resolve to
+  `data/scenarios/<id>.json`, default unchanged so all pins hold, selection survives
+  `reset_to_scenario`; `validate_scenario_data.gd` now covers every scenario (generic checks) +
+  default pins.
 - **B2 — Batch runner.** N seeded headless games (process-per-run) over a scenario × policy
   matrix; per-game JSON records (seed, commit, terminal state, per-turn digests) checkpointed to
   `reports/`; deterministic re-run of any single game.

@@ -130,6 +130,29 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-07-02 — Research harness B1: scenario selection (`ScenarioCatalog`).** New pure-static
+  `scripts/ScenarioCatalog.gd`: `--scenario=<id-or-path>` cmdline user arg (after Godot's `--`)
+  beats `HEXCOMBAT_SCENARIO` env var; bare ids resolve to `data/scenarios/<id>.json`; `default`
+  and paths (res:// / absolute) pass through; no selection → the default so every pin holds.
+  `GameData.load_all()` reads the selection once at boot; new `GameData.scenario_path` records
+  what was loaded, and `GameState.reset_to_scenario()` reloads THAT (not the default) so a
+  process-level selection survives resets — required for batch runs (B2) where reset happens per
+  game. **Judgment calls:** (1) selection lives at process level (arg/env), not as a
+  `load_all(path)` parameter — the boot path runs through autoload `_ready` before any caller
+  could pass an argument, and process-per-run is the parallelization unit anyway; (2) a typo'd
+  selection **fails loud** (`push_error` in `select_path` + the loader's own error), never
+  silently falls back to the default — for a research instrument, silently running the wrong
+  scenario is the worst failure; (3) `validate_scenario_data.gd` split into generic
+  authoring-contract checks (every scenario in the catalog: brigades resolve + team match, hexes
+  exist/unique, reserve brigades Red with real locked beaches, no brigade both placed and
+  at-sea, victory arm/taiwan_hexes valid, knob sanity) vs pinned default-only checks (4/4
+  counts, all-Green, index-paired beach adjacency — the default's designed geometry, not an
+  engine invariant); (4) `GameData.DEFAULT_SCENARIO_PATH` kept as an alias of
+  `ScenarioCatalog.DEFAULT_SCENARIO_PATH` (public surface stability). Verified: env-var
+  selection of a renamed default copy loads it through `load_all` AND every reset (name visible
+  in all loads) and the golden still passes byte-identical (content-identical scenario → same
+  behavior); full gate ALL PHASES GREEN (42 suites, incl. new `tests/scenario_catalog_test.gd`).
+
 - **2026-07-02 — GameState decomposition COMPLETE (refactor_audit item 10, campaign Phases C+D;
   frontier agent direct, attended).** Extracted, one commit each, import + golden
   (`casualties=3, feba=-0.96` byte-stable) + full gate green after every step: **Phase C**

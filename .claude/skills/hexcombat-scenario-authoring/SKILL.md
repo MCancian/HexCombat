@@ -14,9 +14,11 @@ change; if authoring one forces a code change, that's a parameterization gap —
 
 1. **Copy the baseline:** `data/scenario_default.json` → `data/scenarios/<slug>.json`
    (keep `scenario_default.json` untouched — the golden gate and every pinned test load it).
-   *(First variant ever: `GameData.load_scenario()` currently loads the default path — add a
-   scenario-path parameter/selection mechanism as part of that first task, keeping the default
-   exactly as-is so all pins hold.)*
+   The variant's **id is the filename stem**; any headless process selects it with the
+   `--scenario=<id>` user arg (after Godot's `--` separator) or `HEXCOMBAT_SCENARIO=<id>` env
+   var (arg wins; ids, `res://`/absolute paths, and `default` all resolve via
+   `ScenarioCatalog.resolve_path`). The selection survives `GameState.reset_to_scenario()`;
+   no selection → the default, so all pins hold.
 2. **Vary the axes** (full key reference: `hexcombat-config-and-knobs`):
    - Forces: `red_ship_reserve` entries (brigade IDs from `data/pla_ground_forces.json`),
      `placements` (from `roc_ground_forces.json`); beach assignments + bearings.
@@ -28,15 +30,18 @@ change; if authoring one forces a code change, that's a parameterization gap —
    - Victory: `loss_check_arm`, `taiwan_hexes`.
 3. **Name and describe:** `name` + `description` state the variant's *research question* — what
    comparison it exists to make.
-4. **Validate:** brigade IDs resolve in the OOBs; hexes exist; beach hexes are real beaches;
-   green placements are genuine odd-r neighbors of their beach (use `HexMath`, never eyeball —
-   a scenario once had a non-adjacent "neighbor" that masked the adjacency bug). Extend
-   `validate_scenario_data.gd` to cover every scenario file, not just the default.
+4. **Validate:** `tools/validate_scenario_data.gd` already covers **every** file in
+   `data/scenarios/` (generic authoring-contract checks) plus pinned expectations on the
+   default — run it (it's also in the full gate). Beach/placement adjacency is only pinned for
+   the default's designed geometry; if your variant wants defenders adjacent to beaches, check
+   with `HexMath.neighbor_coords`, never by eyeball — a scenario once had a non-adjacent
+   "neighbor" that masked the adjacency bug.
 5. **Prove it plays:** headless self-play for N turns (`SelfPlayRunner`) — it must run to a
    terminal or turn-limit with no errors, deterministically (same seed twice → identical
    snapshot). A scenario that can't self-play headless is not done.
-6. **Register:** add the variant to the scenario index/manifest (once the research harness
-   exists — see `hexcombat-research-runs`) so batch runs can enumerate it.
+6. **Register:** nothing manual — `ScenarioCatalog.list_scenario_paths()` enumerates the
+   default + every `data/scenarios/*.json` for the validator and batch runs
+   (see `hexcombat-research-runs`).
 
 ## Design cautions
 

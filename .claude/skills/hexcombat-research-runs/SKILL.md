@@ -27,6 +27,11 @@ description: Running HexCombat as a research instrument — Monte Carlo batches 
 
 ## Building blocks (all live today)
 
+- **Scenario selection (B1):** `--scenario=<id-or-path>` user arg (after `--`) or
+  `HEXCOMBAT_SCENARIO` env var per process — arg wins, no selection = default, selection
+  survives `reset_to_scenario`. `ScenarioCatalog.list_scenario_paths()` enumerates the default +
+  `data/scenarios/*.json`; `scenario_id()` gives the reporting identity;
+  `GameData.scenario_path` records what a process actually loaded (stamp it into run records).
 - `SelfPlayRunner.play_game(policy, turns, base_seed)` → `{final_snapshot, turn_digests,
   all_resolved, final_turn, index_violations}` — deterministic full games, headless.
 - **Policy contract:** an object with `build_actions(observation) -> Array` (see

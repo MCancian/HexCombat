@@ -1078,3 +1078,23 @@ guidance.**
   campaign skill (Phase D note) + `add-phase-resolver` reference list (CombatResolver).
 - Isolation tests for the Phase C/D resolvers → **act later** (backlog Track E hygiene;
   campaign says don't gold-plate — `resolvers_test.gd` already proves the pattern).
+
+## 2026-07-02 — B1 scenario selection: ScenarioCatalog + validator generalization   (frontier agent, direct)
+
+**What would you do differently (self-retro):**
+- The cheapest end-to-end proof turned out to be the best one: select a byte-identical-except-name
+  copy of the default via the env var and run the GOLDEN validator — one run simultaneously proved
+  the selection reaches load_all and every reset_to_scenario (name printed on each load) and that
+  a content-identical scenario reproduces the golden exactly. Reusable trick for any "plumbing
+  changed but behavior must not" change: route the pinned check THROUGH the new plumbing.
+- Splitting the validator into generic-vs-pinned checks required deciding which existing checks
+  were engine invariants vs default-scenario design artifacts (all-Green placements and the
+  index-paired beach adjacency are the latter). Worth doing that classification explicitly before
+  generalizing any pinned validator, or variants inherit pins that were never rules.
+
+**Triage:**
+- Route-the-golden-through-new-plumbing verification pattern → **record only** (this entry).
+- Scenario selection surface documented → **done** in `hexcombat-research-runs` (building blocks),
+  `hexcombat-scenario-authoring` (recipe step 1/4/6), `hexcombat-config-and-knobs` (loader note).
+- B2 must stamp `GameData.scenario_path` + `ScenarioCatalog.scenario_id()` into every run record
+  → **act next** (noted in the research-runs skill).

@@ -52,7 +52,9 @@ func reset_to_scenario() -> void:
 	# Restore brigade state (composition, hex_id, destroyed) from source data, since combat mutates
 	# Brigade resources in place and the old values carry across play-throughs.
 	GameData.load_brigades()
-	GameData.load_scenario(GameData.DEFAULT_SCENARIO_PATH)
+	# Reload the CURRENT scenario (a process-level --scenario/HEXCOMBAT_SCENARIO selection must
+	# survive resets); before any load_all it falls back to the default.
+	GameData.load_scenario(GameData.scenario_path if not GameData.scenario_path.is_empty() else GameData.DEFAULT_SCENARIO_PATH)
 
 	turn_number = 1
 	phase = Phase.PLANNING

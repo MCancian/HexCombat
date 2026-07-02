@@ -9,9 +9,12 @@ Everything tunable comes from `data/*.json` + the scenario file — adding conte
 not a code change. Verify a knob is actually read before relying on it (grep the consumer;
 "knob does nothing" = silent-default bug class, see `hexcombat-debugging-playbook`).
 
-## The scenario file (`data/scenario_default.json`)
+## The scenario file (`data/scenario_default.json` + `data/scenarios/*.json` variants)
 
-Loaded by `GameData.load_scenario()`. Current axes:
+Loaded by `GameData.load_scenario()`; which file a process loads is decided by
+`ScenarioCatalog.selected_path()` (`--scenario=<id-or-path>` user arg beats
+`HEXCOMBAT_SCENARIO` env var; no selection → the default, so all pins hold; selection survives
+`reset_to_scenario`). Variant authoring recipe: `hexcombat-scenario-authoring`. Current axes:
 
 | Key | Default | Consumed by |
 |---|---|---|
@@ -55,7 +58,8 @@ carries a stale `feba_base_km=2.0` default param; real callers pass the scenario
 2. Read it in `GameData.load_scenario()` into a typed field — **fail loud** if malformed;
    a genuinely optional key gets an explicit, documented default in ONE place.
 3. Thread it to the consumer explicitly (signature param or typed field — no `.get()` chains).
-4. Extend `validate_scenario_data.gd` to assert presence/type/range.
+4. Extend `validate_scenario_data.gd` to assert presence/type/range (its generic checks run
+   against EVERY scenario in `data/scenarios/` — new keys must hold for variants too).
 5. If it affects resolution: golden impact expected? If the golden scenario uses the default,
    keep the default = old behavior so the golden stays byte-stable; the variant exercises the
    new value (per "tie to a need" — `hexcombat-change-control`).
