@@ -556,46 +556,33 @@ func _find_contested_hexes() -> Array[String]:
 	return contested
 
 
-# Set supply_effectiveness on each combat unit dict. Red maneuver units fight at full effectiveness
-# while the Red DOS pool is positive, and at GameData.red_out_of_supply_effectiveness once it is
-# exhausted (<= 0). Green has no DOS model, so its effectiveness stays 1.0.
+# Delegating wrapper (test-called surface) — pure logic lives in CombatResolver.
 func _inject_supply_effectiveness(units: Array, team: int) -> void:
-	if team != Brigade.Team.RED:
-		return
 	var pool: float = supply_state.current_dos_tons if supply_state != null else 1.0
-	var eff: float = 1.0 if pool > 0.0 else GameData.red_out_of_supply_effectiveness
-	if eff == 1.0:
-		return
-	for unit in units:
-		if unit is Dictionary:
-			unit["supply_effectiveness"] = eff
+	CombatResolver.inject_supply_effectiveness(units, team, pool, GameData.red_out_of_supply_effectiveness)
 
 
+# Thin wrapper: gathers contributors (board/commitment state), delegates the dice-consuming combat
+# core to CombatResolver.resolve_at, then applies the result — casualties, FEBA accumulation,
+# fought flags — and stamps owner_after. Application stays here because combat at one hex mutates
+# state the next hex's contributor gathering reads (ported interleaving semantics).
 func _resolve_combat_at(hex_id: String, dice: Dice) -> CombatSummary:
 	var attacker_brigades := _combat_contributors_for(Brigade.Team.RED, hex_id)
 	var defender_brigades := _combat_contributors_for(Brigade.Team.GREEN, hex_id)
-
-	if attacker_brigades.is_empty() or defender_brigades.is_empty():
+	var pool: float = supply_state.current_dos_tons if supply_state != null else 1.0
+	var outcome := CombatResolver.resolve_at(
+		hex_id,
+		attacker_brigades,
+		defender_brigades,
+		dice,
+		GameData.feba_base_km,
+		pool,
+		GameData.red_out_of_supply_effectiveness
+	)
+	if outcome["summary"] == null:
 		return null
 
-	var attacker_units := CombatForces.maneuver_units(attacker_brigades)
-	var defender_units := CombatForces.maneuver_units(defender_brigades)
-	var attacker_support := CombatForces.support_counts(attacker_brigades)
-	var defender_support := CombatForces.support_counts(defender_brigades)
-	# Inject supply effectiveness (mirrors TIV boots_combat_service._inject_supply_effectiveness). Red
-	# is the attacker; an exhausted Red DOS pool degrades Red maneuver strength. Green has no DOS model.
-	_inject_supply_effectiveness(attacker_units, Brigade.Team.RED)
-	_inject_supply_effectiveness(defender_units, Brigade.Team.GREEN)
-	var result := CombatCalculator.resolve_map_attack(
-		dice,
-		attacker_units,
-		defender_units,
-		attacker_support,
-		defender_support,
-		1.0,
-		GameData.feba_base_km
-	)
-
+	var result: CombatResult = outcome["result"]
 	for casualty in result.attacker_casualties:
 		_apply_casualty(casualty)
 	for casualty in result.defender_casualties:
@@ -606,15 +593,8 @@ func _resolve_combat_at(hex_id: String, dice: Dice) -> CombatSummary:
 		var fought_brigade: Brigade = brigade_value
 		fought_brigade.fought_this_turn = true
 
-	var summary := CombatSummary.new()
-	summary.hex_id = hex_id
-	summary.attacker_losses = result.attacker_losses
-	summary.defender_losses = result.defender_losses
-	summary.feba_movement_km = result.feba_movement_km
+	var summary: CombatSummary = outcome["summary"]
 	summary.owner_after = String(GameData.hex_states[hex_id].owner)
-	summary.combat_detail = result.combat_detail
-	summary.attacker_brigade_ids = _brigade_ids(attacker_brigades)
-	summary.defender_brigade_ids = _brigade_ids(defender_brigades)
 	return summary
 
 
@@ -642,12 +622,9 @@ func _combat_contributors_for(team: Brigade.Team, hex_id: String) -> Array:
 	return contributors
 
 
+# Delegating wrapper (test-called surface) — pure logic lives in CombatResolver.
 func _brigade_ids(brigades: Array) -> Array[String]:
-	var ids: Array[String] = []
-	for brigade_value in brigades:
-		var brigade: Brigade = brigade_value
-		ids.append(brigade.id)
-	return ids
+	return CombatResolver.brigade_ids(brigades)
 
 
 func _brigade_has_pending_order(team: Brigade.Team, brigade_id: String) -> bool:
