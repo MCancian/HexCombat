@@ -1,9 +1,12 @@
 ---
 name: hexcombat-gamestate-decomposition-campaign
-description: The executable, decision-gated campaign for decomposing the ~1,400-line GameState god-object into pure resolver classes (refactor_audit item 10) — exact extraction order, per-step gates with expected values, fenced-off wrong paths, and the stop conditions. Use when working on GameState decomposition or any extraction of phase logic out of GameState.
+description: COMPLETE 2026-07-02 — kept as the record of HOW the ~1,400-line GameState god-object was decomposed into pure resolver classes (refactor_audit item 10) — extraction order, per-step gates, fenced-off wrong paths. Consult when extracting further logic out of GameState or when a resolver-boundary question arises; for ADDING a new phase use hexcombat-add-phase-resolver instead.
 ---
 
-# Campaign: GameState decomposition (refactor_audit item 10)
+# Campaign: GameState decomposition (refactor_audit item 10) — ✅ COMPLETE 2026-07-02
+
+> All four phases (A–D) executed and green. This file is the permanent record of the method.
+> The "what deliberately stayed in GameState" list is in `docs/plans/refactor_audit.md` item 10.
 
 **Objective:** `GameState.gd` (~1,415 lines, 52 methods) becomes a thin orchestrator that
 sequences pure `RefCounted` resolver classes in `scripts/resolvers/`, each headless-testable with
@@ -60,7 +63,8 @@ Extract in this order, one commit each (line refs may drift — locate by name):
 **Gate B (decision point):** Phases A–B green + committed → the pattern is proven. Continue only
 with full attention (not as unattended overnight filler).
 
-### Phase C — the coupled middle (attended) — ⬅ RESUME HERE
+### Phase C — the coupled middle (attended) — ✅ DONE 2026-07-02
+(CleanupResolver 16a1951, OffloadResolver 4d2be7a, AntishipResolver c7dc344, IjfsResolver 248ba6d)
 8. **Map first, move second:** write down (in the PR/Decisions entry) the producer→consumer table
    for the state each target touches.
 9. `resolve_cleanup_phase` — deceptively coupled: resets antiship per-turn flags, reads
@@ -71,11 +75,14 @@ with full attention (not as unattended overnight filler).
 12. `resolve_ijfs_turn` + its cluster (`_build_warmup_context`, `_update_maneuver_posture`,
     `_sync_maneuver_targets_to_oob`, `_apply_ijfs_maneuver_casualties`, `_compute_ijfs_writeback`).
 
-### Phase D — combat core (last; sole base-stream consumer)
-13. `_resolve_combat_at` + `_combat_contributors_for` + `_apply_casualty` + `_apply_feba_retreats`
-    + `_find_retreat_hex` → `CombatResolver`. The golden watches every draw here. Smallest steps.
-14. Final: `resolve_turn` reads as a legible sequence of resolver calls; consider then (and only
-    then, attended) whether any wrapper can be retired by migrating callers.
+### Phase D — combat core (last; sole base-stream consumer) — ✅ DONE 2026-07-02 (ac20077)
+13. `_resolve_combat_at`'s dice-consuming core → `CombatResolver.resolve_at` (pure). **Scope
+    judgment made here:** `_combat_contributors_for`, `_apply_casualty`, `_apply_feba_retreats`,
+    `_find_retreat_hex` deliberately STAYED in GameState — they are state gathering/application,
+    and per-hex casualty application interleaves with the next hex's contributor gathering
+    (ported semantics), so a batch-pure combat phase would change behavior.
+14. Final: `resolve_turn` reads as a legible sequence of resolver calls; wrapper retirement was
+    deferred (test-called surfaces stay as delegating wrappers).
 
 Each new resolver gets a focused GdUnit isolation test — that's the payoff of the interface.
 

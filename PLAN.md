@@ -130,6 +130,38 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-07-02 — GameState decomposition COMPLETE (refactor_audit item 10, campaign Phases C+D;
+  frontier agent direct, attended).** Extracted, one commit each, import + golden
+  (`casualties=3, feba=-0.96` byte-stable) + full gate green after every step: **Phase C**
+  `CleanupResolver` (`16a1951`), `OffloadResolver` (`4d2be7a`), `AntishipResolver` + helper
+  cluster (`c7dc344`), `IjfsResolver` + cluster (`248ba6d`); **Phase D** `CombatResolver`
+  (`ac20077`). **The producer→consumer state map written first (campaign step 8):**
+  `ship_reserve` (antiship removes sunk BNs → offload lands/removes → cleanup census subtracts
+  at-sea); `fleet` (lazy rebuild → antiship losses → sent-fleet reads); `pending_lost_at_sea`
+  (antiship registers → offload threads + resets; the NO-wave early-return must NOT reset it);
+  `lost_at_sea_accumulator` (antiship-owned running total); `antiship_systems` (lazy build →
+  antiship quantity writes → cleanup per-turn flag reset); `last_ijfs_writeback` (IJFS →
+  maneuver-casualty apply + antiship firing plan; running TOTAL, not per-turn delta); brigade
+  activity flags (moves/combat set → supply reads → cleanup latches `*_last_turn` → next-turn
+  IJFS posture reads). **Judgment calls:** (1) **Phase D purity stops at the summary** — the
+  dice-consuming core (`CombatForces` build, supply-effectiveness injection,
+  `CombatCalculator.resolve_map_attack`, `CombatSummary` construction) is pure in
+  `CombatResolver.resolve_at`, but `_combat_contributors_for`, `_apply_casualty`,
+  `_apply_feba_retreats`/`_find_retreat_hex` stay in GameState: per-hex casualty application
+  interleaves with the NEXT hex's contributor gathering (ported semantics), so a batch-pure
+  combat phase would change behavior; (2) resolvers receive TO maps (`beach_to_to`,
+  `active_tos`, `to_adjacency`) as plain data materialized in the wrapper because `Theaters` is
+  NOT pure (reads GameData internally); (3) deriving IJFS/antiship substreams before empty-checks
+  is safe — `SeededDice.derive()` is a pure hash consuming no parent state (verified
+  `SeededDice.gd`); (4) `CleanupResolver` recompute-vs-flag-reset order proven independent before
+  reordering into the wrapper; (5) offload landings applied deferred in the wrapper (each brigade
+  in exactly one reserve entry; the loop reads nothing `set_brigade_hex` changes); (6) wrapper
+  retirement (migrating test callers onto resolvers) considered and DEFERRED — wrappers are 1–5
+  lines and keep the public surface stable. **Campaign closed:** skill marked COMPLETE (kept as
+  the record of method), `hexcombat-add-phase-resolver` activated with the three live reference
+  resolvers, refactor_audit item 10 marked done (with the deliberate stays-in-GameState list) —
+  the refactor audit is fully discharged; forward plan = BACKLOG Track B.
+
 - **2026-07-02 — GameState decomposition FIRST SLICE done (refactor_audit item 10, campaign Phases
   A+B; frontier agent direct, per the same-day workflow decision).** Extracted, one commit each with
   import + golden + full gate green after every step: **Phase A builders** `AntishipSystemsBuilder`

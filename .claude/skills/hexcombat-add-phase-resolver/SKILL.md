@@ -1,13 +1,12 @@
 ---
 name: hexcombat-add-phase-resolver
-description: Template for adding a NEW game phase or mechanic to the decomposed turn engine — resolver class, typed summary, GameState wiring, data files, validators, tests, observation surfacing. Use when implementing any new gameplay system (e.g. terrain, naval reinforcement, air defense expansion). NOTE - assumes the resolver architecture from the GameState decomposition campaign; while that campaign is in progress, match whichever pattern the target phase currently uses.
+description: Template for adding a NEW game phase or mechanic to the decomposed turn engine — resolver class, typed summary, GameState wiring, data files, validators, tests, observation surfacing. Use when implementing any new gameplay system (e.g. terrain, naval reinforcement, air defense expansion). ACTIVE as of 2026-07-02 — the decomposition campaign is complete; all phases follow this template.
 ---
 
 # Adding a phase / mechanic (per-phase template, resolver era)
 
-> **Activation status:** fully applicable once `hexcombat-gamestate-decomposition-campaign` is
-> complete. Until then, `GameState` is mid-decomposition — new work must still follow THIS
-> template (resolver-first); never add a new inline phase body to `GameState`.
+> **Activation status: ACTIVE** (decomposition campaign complete 2026-07-02). Every phase's
+> logic now lives in `scripts/resolvers/`; never add a new inline phase body to `GameState`.
 
 ## The checklist (every box, in order)
 
@@ -19,7 +18,9 @@ description: Template for adding a NEW game phase or mechanic to the decomposed 
 3. **Pure resolver** — `scripts/resolvers/<Phase>Resolver.gd`, `RefCounted`, explicit
    `static func resolve(<inputs>, dice) -> <TypedSummary>`. No autoload access, no EventBus, no
    Node. If it needs randomness: a **derived substream** (`dice.derive("<phase>:<context>")`),
-   never the base stream.
+   never the base stream. **Check the body of any helper you pull in for hidden autoload reads**
+   (e.g. `Theaters` reads `GameData` internally) — if found, materialize what it returns as plain
+   data in the wrapper and pass that in instead.
 4. **Content data** — `data/<phase>/*.json` (+ scenario keys per `hexcombat-config-and-knobs`).
    Loaders fail loud on unknown/missing keys.
 5. **GameState wiring** — a thin `resolve_<phase>_turn()` wrapper: gathers inputs from state,
@@ -44,5 +45,10 @@ description: Template for adding a NEW game phase or mechanic to the decomposed 
 ## Reference implementations
 
 Ground combat (BOOTS) is the original template; the D1–D5 systems each followed it (see
-`docs/systems/`). After the decomposition campaign, point at the cleanest resolver in
-`scripts/resolvers/` as the live example.
+`docs/systems/`). Live resolver examples in `scripts/resolvers/`:
+- **`OffloadResolver.gd`** — cleanest dice-free case: pure resolve + explicit
+  wrapper split (state application, EventBus emit, and autoload access stay in GameState).
+- **`IjfsResolver.gd`** — the derived-substream pattern (`dice.derive("ijfs:%d:%d")`) plus
+  sanctioned in-place mutation of passed Resources.
+- **`CombatResolver.gd`** — a pure dice-consuming core whose application deliberately stays in
+  the wrapper (interleaving semantics); the model for when purity must stop at the summary.

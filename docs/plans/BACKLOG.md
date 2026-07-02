@@ -11,16 +11,12 @@ conditions, doc-restructure first pass) are recorded in `PLAN.md` → Decisions 
 
 ---
 
-## Track A — GameState decomposition *(the enabler — do first)*
+## Track A — GameState decomposition *(the enabler)* — ✅ COMPLETE 2026-07-02
 
-Execute `.claude/skills/hexcombat-gamestate-decomposition-campaign` (refactor_audit item 10):
-pure `RefCounted` resolvers in `scripts/resolvers/`, thin delegating wrappers, golden byte-stable
-at every step. **Phases A–B done (2026-07-02):** 5 builders + `SupplyResolver`/`FrontlineResolver`
-extracted, isolation test suite added. **Next:** Phase C (coupled middle — cleanup, offload,
-antiship, IJFS; map the cross-phase state edges first), then Phase D (combat core).
-
-**Done when:** `GameState` is a thin sequencer; every phase's logic in a tested resolver;
-campaign skill marked complete; `hexcombat-add-phase-resolver` activated.
+All four campaign phases done: 5 builders + 8 resolvers in `scripts/resolvers/`, thin delegating
+wrappers, golden byte-stable at every step, isolation test suite added. Campaign skill marked
+complete (kept as the record of method); `hexcombat-add-phase-resolver` activated. Record:
+`docs/plans/refactor_audit.md` item 10 + PLAN.md → Decisions 2026-07-02.
 
 ## Track B — Research harness *(primary mission)*
 

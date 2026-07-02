@@ -20,7 +20,7 @@ Frontmatter descriptions are the triggers — read the skill before doing its ki
 | Author a scenario variant | `hexcombat-scenario-authoring` |
 | Run Monte Carlo batches, sweeps, LLM-vs-LLM games, outcome reports | `hexcombat-research-runs` |
 | Add a whole new phase/mechanic | `hexcombat-add-phase-resolver` |
-| Work on the GameState decomposition | `hexcombat-gamestate-decomposition-campaign` |
+| Extract logic out of GameState / resolver-boundary questions | `hexcombat-gamestate-decomposition-campaign` (campaign COMPLETE — kept as the record of method) |
 | Finish/plan/record anything (docs of record) | `hexcombat-docs-and-writing` |
 
 Diagnostics/measurement guidance is folded into `validation-and-qa` (evidence),
@@ -30,7 +30,6 @@ diagnostics skill.
 ## Activation states
 
 Some skills describe capabilities that are partly future (noted in their bodies):
-`hexcombat-add-phase-resolver` (fully applies after the decomposition campaign),
 `hexcombat-research-runs` (batch-runner layer is an active build track),
 `hexcombat-scenario-authoring` (scenario-path selection lands with the first variant).
 When you complete the enabling work, **update the skill** — remove the activation note and

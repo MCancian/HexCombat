@@ -1050,3 +1050,31 @@ guidance.**
   own change, not inside an extraction).
 - Phase C prerequisite → **act next session**: write the producer→consumer table for
   cleanup/offload/antiship/IJFS shared state BEFORE moving any of them (campaign step 8).
+
+## 2026-07-02 — item-10 Phases C+D: coupled middle + combat core (campaign COMPLETE)   (frontier agent, direct)
+
+**What would you do differently (self-retro):**
+- The step-8 discipline (write the full producer→consumer table BEFORE moving any coupled phase)
+  paid for itself repeatedly — three subtle traps were caught on paper, not in a red gate: the
+  offload NO-wave early-return must not reset `pending_lost_at_sea`; `last_ijfs_writeback`'s
+  antiship counts are a running TOTAL (not a per-turn delta) that AntishipResolver decrements
+  idempotently; cleanup's flag-reset vs recompute order had to be proven independent before
+  reordering it into the wrapper. Would do nothing differently there.
+- `Theaters` not being pure (reads GameData internally) was the one mid-flight surprise; the fix
+  (materialize the TO maps as plain data in the wrapper, pass them in) is the right general
+  pattern for any "looks like a static helper, secretly reads an autoload" dependency — worth
+  checking a helper's body for autoload reads BEFORE putting it inside a resolver.
+- Phase D turned out SMALLER than feared once the scope question was answered honestly: only the
+  dice-consuming core is extractable; contributor gathering and casualty/FEBA/retreat application
+  interleave with the next hex's gathering and must stay. Deciding that boundary first (and
+  writing it into the resolver's doc comment) made the extraction a one-commit job.
+- One syntax slip (stray newline+colon in AntishipResolver) was caught by the import step, not by
+  eyeballing — reaffirms never skipping gate step 1 even for "trivial" files.
+
+**Triage:**
+- Autoload-read check before wrapping a helper into a resolver → **recorded** in
+  `hexcombat-add-phase-resolver` (Theaters example).
+- Purity-stops-at-the-summary pattern (pure core, application in wrapper) → **recorded** in the
+  campaign skill (Phase D note) + `add-phase-resolver` reference list (CombatResolver).
+- Isolation tests for the Phase C/D resolvers → **act later** (backlog Track E hygiene;
+  campaign says don't gold-plate — `resolvers_test.gd` already proves the pattern).
