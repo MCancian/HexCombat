@@ -17,8 +17,7 @@ const IJFS_OOB_PATH := "res://data/ijfs/red_air_oob.json"
 const IJFS_SAM_CAPS_PATH := "res://data/ijfs/sam_capabilities.json"
 
 # D3 anti-ship / mine-warfare data (Green coastal anti-ship fires vs the Red crossing).
-const ANTISHIP_TYPES_PATH := "res://data/antiship/antiship_systems_consolidated.json"
-const ANTISHIP_GROUPING_PATH := "res://data/antiship/antiship_grouping_spec.json"
+# The system-types + grouping paths live on AntishipSystemsBuilder (its single concern).
 const ANTISHIP_CATALOG_PATH := "res://data/antiship/antiship_combat_catalog.json"
 const ANTISHIP_CROSSING_PATH := "res://data/antiship/antiship_crossing_config.json"
 const ANTISHIP_MINEFIELDS_PATH := "res://data/antiship/minefields.json"
@@ -510,9 +509,9 @@ func _build_warmup_context(
 func _ensure_antiship_systems() -> void:
 	if not antiship_systems.is_empty():
 		return
-	var types := AntishipLoaders.load_system_types(ANTISHIP_TYPES_PATH)
-	antiship_systems = AntishipLoaders.load_systems(ANTISHIP_GROUPING_PATH, types)
-	antiship_containers = AntishipLoaders.load_containers(ANTISHIP_GROUPING_PATH, types)
+	var built := AntishipSystemsBuilder.build()
+	antiship_systems = built["systems"]
+	antiship_containers = built["containers"]
 
 
 func _rebuild_ijfs_state() -> void:
