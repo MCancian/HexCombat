@@ -3,18 +3,9 @@ class_name GameStateType
 
 const MoveOrderResource = preload("res://scripts/model/MoveOrder.gd")
 const CommitOrderResource = preload("res://scripts/model/CommitOrder.gd")
-const ShipStateResource = preload("res://scripts/model/ShipState.gd")
-const SupplyStateResource = preload("res://scripts/model/SupplyState.gd")
 const FEBA_RETREAT_THRESHOLD_KM := 10.0
 
-# IJFS (D4) data sources — Red joint/air-missile fires phase.
-const IJFS_TARGETS_PATH := "res://data/ijfs/targets_master.json"
-const IJFS_MUNITIONS_PATH := "res://data/ijfs/red_munitions.json"
-const IJFS_PAIRINGS_PATH := "res://data/ijfs/munition_target_pairings.json"
-const IJFS_SCENARIO_PATH := "res://data/ijfs/ijfs_scenario.json"
-const IJFS_AIR_CLASSES_PATH := "res://data/ijfs/air_classes.json"
-const IJFS_OOB_PATH := "res://data/ijfs/red_air_oob.json"
-const IJFS_SAM_CAPS_PATH := "res://data/ijfs/sam_capabilities.json"
+# IJFS (D4) data-source paths live on IjfsStateBuilder (their only consumer).
 
 # D3 anti-ship / mine-warfare data (Green coastal anti-ship fires vs the Red crossing).
 # The system-types + grouping paths live on AntishipSystemsBuilder (its single concern).
@@ -515,27 +506,14 @@ func _ensure_antiship_systems() -> void:
 
 
 func _rebuild_ijfs_state() -> void:
+	# Anti-ship systems must exist first (their containers seed the per-(TO,type) IJFS targets).
 	_ensure_antiship_systems()
-	ijfs_state = IjfsDailyState.new()
-	# D3-D (1-A): anti-ship targets are generated per-(TO,type) from antiship_systems (carrying that
-	# pair in metadata) and replace the static "Anti-Ship Systems" rows, so IJFS strikes write back by
-	# (TO, type) for the D3 firing-plan join.
-	ijfs_state.targets = IjfsLoaders.load_targets_with_antiship(IJFS_TARGETS_PATH, antiship_containers, 1)
-	# D4-H (2c): add the Green/ROC maneuver units as IJFS targets so air/missile fires can attrit ground
-	# battalions. One target per battalion instance, carrying {brigade_id}-MU-{n} in metadata, so
-	# _compute_ijfs_writeback can attribute destroyed maneuver units back to the OOB (consumed in 2d).
 	var green_brigades: Array = []
 	for brigade_value in GameData.brigades.values():
 		var brigade: Brigade = brigade_value
 		if brigade.team == Brigade.Team.GREEN and not brigade.destroyed:
 			green_brigades.append(brigade)
-	ijfs_state.targets.append_array(IjfsLoaders.build_maneuver_targets(green_brigades, 1))
-	ijfs_state.munitions = IjfsLoaders.load_munitions(IJFS_MUNITIONS_PATH)
-	ijfs_state.pairings = IjfsLoaders.load_pairings(IJFS_PAIRINGS_PATH)
-	ijfs_state.scenario = IjfsLoaders.load_scenario(IJFS_SCENARIO_PATH)
-	ijfs_state.air_classes = IjfsLoaders.load_air_classes(IJFS_AIR_CLASSES_PATH)
-	ijfs_state.squadron_force = IjfsLoaders.expand_oob_to_squadrons(IjfsLoaders.load_oob(IJFS_OOB_PATH))
-	IjfsLoaders.enrich_sam_scores(ijfs_state.targets, IjfsLoaders.load_sam_capabilities(IJFS_SAM_CAPS_PATH))
+	ijfs_state = IjfsStateBuilder.build(antiship_containers, green_brigades)
 	_ijfs_day = 0
 
 
