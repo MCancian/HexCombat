@@ -130,6 +130,20 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-07-02 — Research harness B4: narrative renderer (`GameNarrative` +
+  `make_game_narrative`).** Pure `scripts/GameNarrative.gd` renders one per-game record's
+  turn_digests/event log into a turn-by-turn Markdown account for a wargaming researcher (IJFS
+  strikes + destroyed-by-category + integrated-air-defense degradation before→after, the
+  crossing with ships sailed/destroyed + BNs lost at sea, maneuver/commitment orders, per-hex
+  ground combat with losses/FEBA direction/resulting owner, end-of-turn census, outcome).
+  `tools/make_game_narrative.gd` selects the game: `--record=<file>` direct, or
+  `--batch=<name> --pick=median|longest|shortest` by turns_played (deterministic tie-break on
+  filename). **Judgment call:** move/commit events are buffered and flushed before the first
+  combat/frontline/cleanup line so the prose reads chronologically even though the event log
+  lists orders after the phase summaries. GdUnit-tested over a synthetic record
+  (`tests/game_narrative_test.gd`); verified against a real smoke-batch record; full gate ALL
+  PHASES GREEN (44 suites).
+
 - **2026-07-02 — Research harness B3: outcome reports (`BatchReport` + `make_batch_report`).**
   Aggregation and Markdown rendering live in pure `scripts/BatchReport.gd` statics
   (`aggregate(records)` → per-condition dict keyed `scenario|policy`; `render_markdown`)

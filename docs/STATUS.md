@@ -92,6 +92,11 @@ when the hex-adjacency coordinate bug was fixed, and when `feba_base_km` was set
   turn/census/margin distributions, per-game loss means, a methods line (commit, mixed-commit
   and dirty-tree warnings), and standing caveats. Aggregation/rendering is pure `BatchReport`
   statics (GdUnit-tested).
+- **Narrative renderer (research harness B4)** — `tools/make_game_narrative.gd`
+  (`--record=<file>` or `--batch=<study> --pick=median|longest|shortest`) renders a game
+  record's event log into a turn-by-turn Markdown account (IJFS strikes + air-defense
+  degradation, the crossing, maneuver/commitments, per-hex ground combat with FEBA movement,
+  end-of-turn census, outcome). Pure `GameNarrative` statics (GdUnit-tested).
 
 **Verification.** `pwsh tools/run_all_tests.ps1` is the canonical gate: import → headless smoke →
 `tools/validate_*.gd` (golden turn, anti-ship, IJFS, victory e2e, data validators, no-global-RNG) →

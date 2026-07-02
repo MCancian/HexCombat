@@ -35,8 +35,9 @@ Methodology contract: `.claude/skills/hexcombat-research-runs`. Build order:
   GdUnit-tested) + `tools/make_batch_report.gd`: batch records → per-condition win rates,
   turn/census/margin distributions, loss means, methods line (commit/mixed-commit/dirty
   warnings), caveats.
-- **B4 — Narrative renderer.** `TurnResult.to_dict().events` → readable turn-by-turn account of
-  a selected game (median/extreme picks).
+- ✅ **B4 — Narrative renderer** (2026-07-02). `GameNarrative` (pure render of a game record's
+  event log → turn-by-turn Markdown account, GdUnit-tested) + `tools/make_game_narrative.gd`
+  (`--record=<path>` or `--batch=<name> --pick=median|longest|shortest`).
 - **B5 — Sweep generalization.** The `sweep_antiship_crossing` pattern generalized to any
   scenario knob (refactor_audit item 7), reporting per-knob outcome deltas.
 - **B6 — LLM-player adapter.** A `SelfPlayPolicy`-contract policy that calls an LLM with the

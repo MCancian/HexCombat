@@ -18,7 +18,11 @@ description: Running HexCombat as a research instrument — Monte Carlo batches 
 > `godot --headless --path . -s res://tools/make_batch_report.gd -- --batch=<study>` →
 > `reports/batches/<study>/report.md` (per-condition win rates, turn/census/margin
 > distributions, loss means, methods + caveats; logic in `BatchReport.gd`, GdUnit-tested).
-> Narrative vignettes (B4) are still to build.
+> Narrative vignettes:
+> `godot --headless --path . -s res://tools/make_game_narrative.gd -- --batch=<study>
+> --pick=median|longest|shortest` (or `--record=<file>`) → `<record>.narrative.md`, a
+> turn-by-turn account rendered from the event log (`GameNarrative.gd`). Still to build:
+> sweep generalization (B5), LLM-player adapter (B6).
 
 ## The methodology (this is the contract, whatever the tooling)
 
