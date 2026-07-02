@@ -1030,3 +1030,23 @@ guidance.**
   debug-only intent). The gate (editor/tools binary) is a debug build, so it exercises the assert.
 - Held green across every turn-resolving path; no desync exists today, so the assert is pure insurance
   against future regressions. The hot-path variant remains deferred to attended work.
+
+## 2026-07-02 — item-10 first slice: 5 builders + 2 dice-free resolvers   (frontier agent, direct)
+
+**What would you do differently (self-retro):**
+- Nothing structural — the campaign brief (extraction order, purity boundary, per-step gates) was
+  followed verbatim and every step went green first try. The prep that made it smooth: writing all
+  new class files BEFORE touching GameState (they parse at import while unreferenced), and running
+  a full baseline gate before the first edit so any later red was attributable to the change.
+- The serial edit→import→golden→gate→commit loop is slow (~5 min/extraction) but is the correct
+  price: at no point was there more than one uncommitted change to reason about.
+- Deferred, deliberately: typing the builder two-value return ({systems, containers}) and the
+  ship_reserve entry shape — that is the known weak point recorded in the architecture contract,
+  and typing it mid-extraction would have widened the diff beyond a pure move.
+
+**Triage:**
+- Prep pattern (files-first, baseline-first) → **record only** (now also in the campaign skill).
+- ship_reserve typing → **already in backlog** (architecture-contract known weak points; do as its
+  own change, not inside an extraction).
+- Phase C prerequisite → **act next session**: write the producer→consumer table for
+  cleanup/offload/antiship/IJFS shared state BEFORE moving any of them (campaign step 8).

@@ -121,9 +121,20 @@ ordering coupling.)
    below:_ Every consumer reads via `.get(key, default)`, so a producer key-rename silently degrades to a
    default.
 
-10. **Decompose the `GameState` god-object** *(do last — highest payoff, highest risk; multi-session
-    arc)*. `GameState.gd` is **1,414 lines** orchestrating ~10 phases plus snapshot/play_turn. Extract
+10. **Decompose the `GameState` god-object** *(multi-session arc — FIRST SLICE DONE 2026-07-02)*.
+    `GameState.gd` was **1,414 lines** orchestrating ~10 phases plus snapshot/play_turn. Extract
     each phase so it is independently understandable and unit-testable.
+    - ✅ **First slice (Phases A+B of the campaign) DONE 2026-07-02:** 5 builders
+      (`AntishipSystemsBuilder`, `ShipReserveBuilder`, `FleetBuilder`, `SupplyStateBuilder`,
+      `IjfsStateBuilder`) + 2 dice-free resolvers (`SupplyResolver`, `FrontlineResolver`) extracted
+      into pure `scripts/resolvers/` classes, one commit each, golden byte-stable + full gate green
+      after every step; `GameState` methods are thin delegating wrappers (public surface unchanged);
+      data-path consts moved onto their only consumers; `tests/resolvers_test.gd` proves the
+      isolation payoff (5 cases, no autoloads). **Remaining (attended):** Phase C — the coupled
+      middle (`resolve_cleanup_phase`, `resolve_offload_turn`, `resolve_antiship_turn` + helper
+      cluster, `resolve_ijfs_turn` + cluster, with the producer→consumer state map written first);
+      Phase D — the combat core (sole base-stream RNG consumer; smallest steps). The executable
+      plan is `.claude/skills/hexcombat-gamestate-decomposition-campaign`.
     - **DECIDED interface (user call 2026-06-30 — favor up-front effort for long-term legibility): pure
       `RefCounted` resolver classes, NOT new autoloads.** Each phase becomes a class with an explicit
       `resolve(game_data, dice, …) -> <TypedSummary>` signature; dependencies are visible in the

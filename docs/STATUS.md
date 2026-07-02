@@ -32,7 +32,10 @@ tense, no dates (dates live only in the append-only history logs). For *future* 
 **Engine.** Godot 4 / GDScript. WeGo turn model in `GameState` (autoload): plan orders →
 `resolve_turn(dice)` → `begin_next_turn`. Deterministic via an injectable `Dice` (seeded; no global
 RNG — enforced by a validator). `GameData` (autoload) loads hexes, both OOBs (PLA + ROC brigades),
-ships, theaters, beaches. `EventBus` for signals.
+ships, theaters, beaches. `EventBus` for signals. Phase construction/logic is migrating into pure
+`RefCounted` classes under `scripts/resolvers/` (builders + the supply/front-line resolvers are
+there today; `GameState` methods delegate as thin wrappers) — the decomposition campaign
+(`.claude/skills/hexcombat-gamestate-decomposition-campaign`) continues with the coupled phases.
 
 **Turn resolution order** (`resolve_turn`): IJFS air/missile fires → anti-ship crossing → amphibious
 offload → movement & commit → ground combat → front-line → cleanup (+ victory census).

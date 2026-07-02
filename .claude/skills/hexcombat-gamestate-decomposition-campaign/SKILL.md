@@ -42,7 +42,7 @@ PLAN.md → Open Questions, surface to the user.
 
 ## Phases
 
-### Phase A — builders (pure constructors; safest; no dice)
+### Phase A — builders (pure constructors; safest; no dice) — ✅ DONE 2026-07-02
 Extract in this order, one commit each (line refs may drift — locate by name):
 1. `_ensure_antiship_systems` → builder returns `{systems, containers}`; lazy-guard stays in wrapper.
 2. `_rebuild_ship_reserve` → returns the Array; wrapper assigns.
@@ -51,7 +51,7 @@ Extract in this order, one commit each (line refs may drift — locate by name):
 5. `_rebuild_ijfs_state` → takes `antiship_containers` + Green brigades as params, returns
    `IjfsDailyState`; wrapper keeps `_ensure_antiship_systems()` ordering + `_ijfs_day = 0` reset.
 
-### Phase B — dice-free resolvers
+### Phase B — dice-free resolvers — ✅ DONE 2026-07-02 (see `tests/resolvers_test.gd` for the isolation-test pattern)
 6. `resolve_supply_turn` → `SupplyResolver.resolve(supply_state, units, moved_ids, engaged_ids,
    turn_number)`; mutating the passed `SupplyState` Resource is allowed; EventBus emit stays out.
 7. `resolve_frontline_phase` → `FrontlineResolver` over the already-pure `FrontLineService`;
@@ -60,7 +60,7 @@ Extract in this order, one commit each (line refs may drift — locate by name):
 **Gate B (decision point):** Phases A–B green + committed → the pattern is proven. Continue only
 with full attention (not as unattended overnight filler).
 
-### Phase C — the coupled middle (attended)
+### Phase C — the coupled middle (attended) — ⬅ RESUME HERE
 8. **Map first, move second:** write down (in the PR/Decisions entry) the producer→consumer table
    for the state each target touches.
 9. `resolve_cleanup_phase` — deceptively coupled: resets antiship per-turn flags, reads

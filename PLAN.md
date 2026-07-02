@@ -130,6 +130,28 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-07-02 — GameState decomposition FIRST SLICE done (refactor_audit item 10, campaign Phases
+  A+B; frontier agent direct, per the same-day workflow decision).** Extracted, one commit each with
+  import + golden + full gate green after every step: **Phase A builders** `AntishipSystemsBuilder`
+  (`fc3dde9`), `ShipReserveBuilder` (`34aa74b`), `FleetBuilder` (`ed9c9e4`), `SupplyStateBuilder`
+  (`e38efdc`), `IjfsStateBuilder` (`59c7abd`); **Phase B dice-free resolvers** `SupplyResolver`
+  (`b245dc7`), `FrontlineResolver` (`cbdb89d`); plus `tests/resolvers_test.gd` (`dd17e38`, 5
+  isolation cases, no autoloads — gate now 41 GdUnit suites). **Judgment calls:** (1) delegating
+  wrappers keep every public/`_`-prefixed GameState method name (tests/tools call them directly) —
+  zero call-site churn; (2) data-path consts moved onto their ONLY consumer (7 IJFS paths →
+  `IjfsStateBuilder`, types/grouping → `AntishipSystemsBuilder`; the catalog/crossing/minefields
+  paths stay on GameState with `resolve_antiship_turn`); (3) `_rebuild_*` wrappers reassign the
+  field rather than clear-and-fill — no consumer aliases the old containers (field access is always
+  through GameState) and the gate confirms; (4) `FrontlineResolver` returns the summary and moves
+  NOTHING — `GameData.set_brigade_hex` application + EventBus emits stay in the wrapper, per the
+  campaign's purity boundary; (5) dead `ShipStateResource`/`SupplyStateResource` preloads removed
+  with extraction 5. Golden `casualties=3, feba=-0.96` byte-stable throughout (verified standalone
+  after each extraction + in every full gate). **Stopped at the campaign's Gate B decision point by
+  design** — Phase C (coupled middle: cleanup/offload/antiship/IJFS, needs the producer→consumer
+  state map written first) and Phase D (combat core, sole base-stream RNG consumer) are the
+  attended follow-up; resume via `.claude/skills/hexcombat-gamestate-decomposition-campaign`
+  (marked "RESUME HERE" at Phase C).
+
 - **2026-07-02 — Mission ratified + skill library + workflow change (USER calls via Phase-1
   discovery Q&A; docs/skills implemented same session).** The user answered the objective
   questions directly: (1) **Primary use = AI-vs-AI research instrument** (Monte Carlo outcome
