@@ -929,80 +929,22 @@ func _mine_status_summary(mine_res: Array) -> Array:
 # --- D5-C Cleanup phase — end-of-turn per-system flag reset ------------------------------------
 
 func resolve_cleanup_phase() -> Dictionary:
-	var reset_count := 0
-	for system_value in antiship_systems:
-		var system: AntishipSystem = system_value
-		system.fired = 0
-		system.expended = 0
-		system.destroyed_this_turn = 0
-		system.suppressed = false
-		system.active = false
-		reset_count += 1
-	# NOTE: TIV's Quantity_Moved/Quantity_Unavailable->Quantity_Available restore has no HexCombat
-	# equivalent (AntishipSystem has no moved/unavailable split; quantity is recomputed each turn).
-	# Brigade per-turn flags (moved_this_turn / fought_this_turn / moved_admin_this_turn) are reset
-	# in begin_next_turn, so cleanup does not duplicate them.
 	GameData.recompute_hex_ownership()
-	# Victory census (end-of-cleanup): count PLA (RED) vs ROC (GREEN) battalions on Taiwan and evaluate
-	# win/loss. Pure board read — consumes no dice, so the golden RNG stream is unaffected.
-	var census := _taiwan_battalion_census()
-	if census["red"] > 0:
-		_china_has_landed = true
-	var arm := String(GameData.victory_config.get("loss_check_arm", "unconditional"))
-	var verdict := VictoryConditions.evaluate(
-		int(census["red"]), int(census["green"]), arm, turn_number, _china_has_landed)
-	game_over = bool(verdict["game_over"])
-	winner = String(verdict["winner"])
-	# Latch this turn's activity into prior-turn flags (for next turn's IJFS detection posture) BEFORE
-	# begin_next_turn resets the per-turn flags. Pure board read; consumes no dice.
-	for brigade_value in GameData.brigades.values():
-		var brigade: Brigade = brigade_value
-		brigade.moved_last_turn = brigade.moved_this_turn or brigade.moved_admin_this_turn
-		brigade.fought_last_turn = brigade.fought_this_turn
-	last_cleanup_summary = CleanupSummary.new()
-	last_cleanup_summary.antiship_systems_reset = reset_count
-	last_cleanup_summary.china_battalions_on_taiwan = int(census["red"])
-	last_cleanup_summary.taiwan_battalions_on_taiwan = int(census["green"])
-	last_cleanup_summary.game_over = game_over
-	last_cleanup_summary.winner = winner
-	last_cleanup_summary.victory_reason = String(verdict["reason"])
+	# Pure work (flag reset, victory census + verdict, activity latch) lives in CleanupResolver;
+	# consumes no dice, so the golden RNG stream is unaffected.
+	var outcome := CleanupResolver.resolve(
+		antiship_systems, GameData.brigades, ship_reserve, GameData.victory_config,
+		turn_number, _china_has_landed)
+	_china_has_landed = bool(outcome["china_has_landed"])
+	last_cleanup_summary = outcome["summary"]
+	game_over = last_cleanup_summary.game_over
+	winner = last_cleanup_summary.winner
 	EventBus.cleanup_resolved.emit(last_cleanup_summary.to_dict())
 	return last_cleanup_summary.to_dict()
 
 
-## Count PLA (RED) vs ROC (GREEN) battalions on the hexes that count as "on Taiwan". taiwan_hexes is
-## null => every placed hex counts (correct for the main-island scenario; offshore islands can't be
-## distinguished until terrain/land data exists — see PLAN.md Victory conditions). Counts PRESENT
-## (landed) battalions only: brigades still wholly at sea (no hex_id) are excluded, AND for a
-## partially-landed brigade (hex_id set once its first BN lands) the battalions still waiting on ships
-## — tracked in `ship_reserve` — are subtracted, so at-sea BNs don't inflate China's count.
 func _taiwan_battalion_census() -> Dictionary:
-	var counted: Variant = GameData.victory_config.get("taiwan_hexes", null)
-	var use_filter := counted is Array
-	var hex_filter: Dictionary = {}
-	if use_filter:
-		for h in counted:
-			hex_filter[String(h)] = true
-	var at_sea_by_brigade: Dictionary = {}
-	for reserve_entry_value in ship_reserve:
-		var reserve_entry: Dictionary = reserve_entry_value
-		at_sea_by_brigade[String(reserve_entry["brigade_id"])] = (reserve_entry["bns"] as Array).size()
-
-	var red := 0
-	var green := 0
-	for brigade_value in GameData.brigades.values():
-		var brigade: Brigade = brigade_value
-		if brigade.hex_id == "":
-			continue
-		if use_filter and not hex_filter.has(brigade.hex_id):
-			continue
-		var at_sea := int(at_sea_by_brigade.get(brigade.id, 0))
-		var bn := maxi(0, brigade.get_battalion_count() - at_sea)
-		if brigade.team == Brigade.Team.RED:
-			red += bn
-		elif brigade.team == Brigade.Team.GREEN:
-			green += bn
-	return {"red": red, "green": green}
+	return CleanupResolver.census(GameData.brigades, ship_reserve, GameData.victory_config)
 
 
 # --- D5-A Frontline phase — redistribute Red brigades along a drawn polyline -------------------
