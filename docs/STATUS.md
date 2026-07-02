@@ -97,6 +97,11 @@ when the hex-adjacency coordinate bug was fixed, and when `feba_base_km` was set
   record's event log into a turn-by-turn Markdown account (IJFS strikes + air-defense
   degradation, the crossing, maneuver/commitments, per-hex ground combat with FEBA movement,
   end-of-turn census, outcome). Pure `GameNarrative` statics (GdUnit-tested).
+- **Knob sweeps (research harness B5)** — `pwsh -File tools/run_sweep.ps1 -Name <study>
+  -Knob <dot.path> -Values a,b,c` generates one-knob scenario variants (as generated artifacts
+  in the sweep's report dir), batches them over a common seed set, and reports per-value
+  outcome rows. Array params to the ps1 tools may be comma-joined strings (normalized inside —
+  `pwsh -File` does not split them).
 
 **Verification.** `pwsh tools/run_all_tests.ps1` is the canonical gate: import → headless smoke →
 `tools/validate_*.gd` (golden turn, anti-ship, IJFS, victory e2e, data validators, no-global-RNG) →

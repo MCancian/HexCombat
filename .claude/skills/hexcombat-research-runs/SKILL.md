@@ -21,8 +21,12 @@ description: Running HexCombat as a research instrument — Monte Carlo batches 
 > Narrative vignettes:
 > `godot --headless --path . -s res://tools/make_game_narrative.gd -- --batch=<study>
 > --pick=median|longest|shortest` (or `--record=<file>`) → `<record>.narrative.md`, a
-> turn-by-turn account rendered from the event log (`GameNarrative.gd`). Still to build:
-> sweep generalization (B5), LLM-player adapter (B6).
+> turn-by-turn account rendered from the event log (`GameNarrative.gd`). Sensitivity sweeps:
+> `pwsh -File tools/run_sweep.ps1 -Name <study> -Knob <dot.path> -Values a,b,c -N 30` —
+> generates one-knob variants of the base scenario, batches them on a common seed set, and
+> reports (condition rows are the sweep axis). Sweeps only cover scenario-FILE knobs; a knob
+> living in a phase data file needs promoting to a scenario key first. Still to build:
+> LLM-player adapter (B6).
 
 ## The methodology (this is the contract, whatever the tooling)
 

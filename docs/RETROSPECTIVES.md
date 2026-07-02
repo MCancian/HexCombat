@@ -1123,3 +1123,22 @@ guidance.**
 - Artifact-verdict pattern → **recorded** in `hexcombat-research-runs` (activation header).
 - Turn-1 endings under trivial policies → **expected**; first real study should pair a variant
   with a defensively competent policy (Track C + B6).
+
+## 2026-07-02 — B3–B5: reports, narratives, sweeps   (frontier agent, direct)
+
+**What would you do differently (self-retro):**
+- Composition paid off: B5 (sweeps) needed almost no new machinery because B1 (scenario paths
+  pass through resolve_path verbatim) and B2 (conditions = scenarios) were built as orthogonal
+  axes. The only change run_batch needed was record-filename derivation from the scenario stem.
+- Two Windows/pwsh traps cost a debug cycle each and are now in the Decisions entry: (1)
+  `pwsh -File` passes "a,b" as one string — array params must self-normalize; (2)
+  `$a[0..($n-2)]` with $n=1 enumerates indexes 0 AND -1 — never use range slices for possibly
+  -empty prefixes.
+- Verifying renderers against BOTH a synthetic record (GdUnit) and a real batch record caught
+  issues unit tests alone would not have (float-typed JSON ints; event-log ordering reading
+  unnaturally in prose).
+
+**Triage:**
+- pwsh traps → **recorded** (Decisions + STATUS note); promote to build-and-env if hit again.
+- Turn-1 endings make sweep deltas invisible under trivial policies → **known**; first real
+  study needs Track C variants and/or B6 policies with longer games.

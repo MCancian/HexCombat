@@ -21,7 +21,7 @@ param(
     [string[]]$Scenarios = @("default"),
     [string[]]$Policies = @("selfplay_default"),
     # Seed set: explicit -Seeds wins; otherwise BaseSeed..BaseSeed+N-1.
-    [int[]]$Seeds = @(),
+    [string[]]$Seeds = @(),
     [int]$N = 30,
     [int]$BaseSeed = 20260624,
     [int]$Turns = 30,
@@ -30,6 +30,10 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+# `pwsh -File` passes "a,b" as ONE string — normalize comma-joined array params.
+$Scenarios = @($Scenarios | ForEach-Object { $_ -split ',' })
+$Policies = @($Policies | ForEach-Object { $_ -split ',' })
+$Seeds = @($Seeds | ForEach-Object { "$_" -split ',' } | ForEach-Object { [int]$_ })
 $repo = Split-Path -Parent $PSScriptRoot
 if ($Seeds.Count -eq 0) { $Seeds = $BaseSeed..($BaseSeed + $N - 1) }
 
@@ -41,7 +45,10 @@ New-Item -ItemType Directory -Force $gamesDir | Out-Null
 $jobs = foreach ($scenario in $Scenarios) {
     foreach ($policy in $Policies) {
         foreach ($seed in $Seeds) {
-            $record = Join-Path $gamesDir ("{0}__{1}__seed{2}.json" -f $scenario, $policy, $seed)
+            # Record filename uses the scenario's id (filename stem) — -Scenarios may carry full
+            # variant file paths (e.g. from run_sweep.ps1), which are not valid in filenames.
+            $scenarioId = [System.IO.Path]::GetFileNameWithoutExtension($scenario)
+            $record = Join-Path $gamesDir ("{0}__{1}__seed{2}.json" -f $scenarioId, $policy, $seed)
             $gameArgs = @(
                 "--headless", "--path", $repo,
                 "-s", "res://tools/run_selfplay_game.gd", "--",

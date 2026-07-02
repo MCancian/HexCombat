@@ -38,8 +38,12 @@ Methodology contract: `.claude/skills/hexcombat-research-runs`. Build order:
 - ✅ **B4 — Narrative renderer** (2026-07-02). `GameNarrative` (pure render of a game record's
   event log → turn-by-turn Markdown account, GdUnit-tested) + `tools/make_game_narrative.gd`
   (`--record=<path>` or `--batch=<name> --pick=median|longest|shortest`).
-- **B5 — Sweep generalization.** The `sweep_antiship_crossing` pattern generalized to any
-  scenario knob (refactor_audit item 7), reporting per-knob outcome deltas.
+- ✅ **B5 — Sweep generalization** (2026-07-02). `tools/run_sweep.ps1 -Knob <dot.path>
+  -Values a,b,c`: generates one-knob scenario variants (generated artifacts under the sweep's
+  report dir, never `data/scenarios/`), runs the common-seed batch across them, and reports —
+  condition rows ARE the sweep axis. Covers refactor_audit item 7's generalization for
+  scenario-file knobs; phase-data-file knobs (e.g. minefield geometry) still need
+  scenario-selectable data files (parameterization-gap rule).
 - **B6 — LLM-player adapter.** A `SelfPlayPolicy`-contract policy that calls an LLM with the
   observation and parses the action response; full observation/action logging so games are
   replayable; policy-identity stamped into batch records.

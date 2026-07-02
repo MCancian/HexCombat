@@ -130,6 +130,22 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-07-02 — Research harness B5: knob sweeps (`run_sweep.ps1`).** One-knob sensitivity
+  sweeps compose the existing pieces: generate variant scenario files (base scenario with one
+  dot-path key changed, `name` suffixed with the knob=value), run `run_batch.ps1` across them
+  on a COMMON seed set, aggregate with `make_batch_report.gd` — the report's condition rows are
+  the sweep axis. **Judgment calls:** (1) generated variants live under the sweep's
+  `reports/batches/<name>/scenarios/` (git-ignored artifacts), never `data/scenarios/` —
+  committed scenarios are authored, generated ones are outputs; (2) sweeps deliberately cover
+  scenario-FILE knobs only — a knob living in a phase data file (e.g. minefield geometry) must
+  first be promoted to a scenario key per the parameterization-gap rule (config-and-knobs);
+  (3) `run_batch.ps1` record filenames now use the scenario id (filename stem), since
+  `-Scenarios` can carry full variant paths. **Windows/pwsh finding:** `pwsh -File` passes
+  `a,b` as ONE string (no array binding) — both ps1 tools normalize comma-joined array params
+  internally (and `-Seeds` is typed `[string[]]` for that reason); also `$array[0..($n-2)]`
+  with n=1 enumerates indexes 0 and -1 — replaced with an explicit for-loop for the dot-path
+  walk. Verified: 2-value × 2-common-seed smoke sweep → 4/4 games, one report row per value.
+
 - **2026-07-02 — Research harness B4: narrative renderer (`GameNarrative` +
   `make_game_narrative`).** Pure `scripts/GameNarrative.gd` renders one per-game record's
   turn_digests/event log into a turn-by-turn Markdown account for a wargaming researcher (IJFS
