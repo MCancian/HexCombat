@@ -7,11 +7,8 @@ const FEBA_RETREAT_THRESHOLD_KM := 10.0
 
 # IJFS (D4) data-source paths live on IjfsStateBuilder (their only consumer).
 
-# D3 anti-ship data paths + fire-percentage knobs live on AntishipResolver /
-# AntishipSystemsBuilder (their only consumers).
-const PRE_INVASION_IJFS_DAYS := 4
-# Number of IJFS daily cycles run on the FIRST IJFS of the game (the pre-invasion air campaign:
-# several days attriting anti-ship platforms + a final suppression day). Later turns run one cycle.
+# D3/D4 data paths + phase knobs live on their resolvers (AntishipResolver, IjfsResolver,
+# AntishipSystemsBuilder, IjfsStateBuilder) — each const sits with its only consumer.
 
 enum Phase { PLANNING, RESOLUTION, END }
 
@@ -345,60 +342,15 @@ func resolve_ijfs_turn(dice: Dice) -> Dictionary:
 	assert(dice != null, "resolve_ijfs_turn requires a Dice instance")
 	if ijfs_state == null:
 		_rebuild_ijfs_state()
-	# D4-H (2d follow-up): retire maneuver targets whose battalions died (IJFS or ground combat).
-	_sync_maneuver_targets_to_oob()
-	# D4-H (2c-ii): recently-active maneuver units present an "active" posture (more detectable).
-	_update_maneuver_posture()
-	# Continuity: after the first IJFS day, carry destroyed/known/inventory/attrition forward and
-	# clear per-day suppression flags (mirrors the TIV loader reload reset).
-	# On the FIRST IJFS of the game, run the multi-day prelanding warmup campaign so exquisite
-	# intel, posture override, SEAD/AD rules, and munition filter are applied (port of TIV's
-	# ijfs_prewarmup._run_warmup_locked). Later turns run one plain cycle.
-	var ledgers: Dictionary = {}
-	if _ijfs_day == 0:
-		# First IJFS: prelanding warmup from scenario config (port of TIV warmup driver).
-		var scenario_data: Dictionary = ijfs_state.scenario
-		var prelanding: Dictionary = scenario_data.get("prelanding", {})
-		var warmup_days := int(prelanding.get("days", PRE_INVASION_IJFS_DAYS))
-		var rules: Dictionary = prelanding.get("rules", {})
-		var exquisite_intel: Dictionary = prelanding.get("intel", {}).get("exquisite_intel", {})
-		var attrition_profile: String = prelanding.get("attrition_profile", "even")
-		var firing_capacity_config: Dictionary = scenario_data.get("red_firing_capacity", {})
-		var release_rules: Array = scenario_data.get("target_release", [])
-		for i in range(warmup_days):
-			# carry_to_next_day persists destroyed/known/inventory and clears per-day suppression
-			# flags (so only the final pre-invasion day's suppression survives; destruction
-			# accumulates).
-			if i > 0:
-				IjfsEngine.carry_to_next_day(ijfs_state)
-			# Independent IJFS substream per day — NEVER consume the combat dice.
-			var ijfs_dice: Dice
-			if dice is SeededDice:
-				ijfs_dice = dice.derive("ijfs:%d:%d" % [turn_number, i])
-			else:
-				ijfs_dice = SeededDice.new(hash("ijfs:%d:%d" % [turn_number, i]))
-			var x_day := i + 1
-			var z_day := x_day - warmup_days - 1
-			var warmup := _build_warmup_context(x_day, z_day, warmup_days, rules, exquisite_intel, attrition_profile, firing_capacity_config, release_rules)
-			ledgers = IjfsEngine.run_daily(ijfs_state, ijfs_dice, z_day, warmup)
-	else:
-		# Subsequent turns: single plain day (no warmup context).
-		IjfsEngine.carry_to_next_day(ijfs_state)
-		var ijfs_dice: Dice
-		if dice is SeededDice:
-			ijfs_dice = dice.derive("ijfs:%d:%d" % [turn_number, 0])
-		else:
-			ijfs_dice = SeededDice.new(hash("ijfs:%d:%d" % [turn_number, 0]))
-		ledgers = IjfsEngine.run_daily(ijfs_state, ijfs_dice, turn_number)
+	var outcome := IjfsResolver.resolve(ijfs_state, GameData.brigades, turn_number, _ijfs_day, dice)
 	_ijfs_day = turn_number
+	var ledgers: Dictionary = outcome["ledgers"]
 	last_ijfs_summary = ledgers["summary"]
-	last_ijfs_writeback = _compute_ijfs_writeback(ledgers)
+	last_ijfs_writeback = outcome["writeback"]
 	EventBus.ijfs_resolved.emit(last_ijfs_summary)
 	return ledgers
 
 
-## Build the warmup_context dict for one prelanding day (port of TIV
-## ijfs_prewarmup._run_warmup_locked's per-day context construction). ZERO dice consumed.
 func _build_warmup_context(
 	x_day: int, z_day: int, total_days: int,
 	rules: Dictionary, exquisite_intel: Dictionary,
@@ -406,19 +358,9 @@ func _build_warmup_context(
 	firing_capacity_config: Dictionary,
 	release_rules: Array,
 ) -> Dictionary:
-	var mult := IjfsWarmup.profile_multiplier(attrition_profile, x_day, total_days)
-	var day_firing := IjfsWarmup.scale_firing_capacity(firing_capacity_config, mult)
-	return {
-		"x_day": x_day,
-		"z_day": z_day,
-		"sead_enabled": rules.get("sead_enabled", false),
-		"ad_attrition_enabled": rules.get("ad_attrition_enabled", false),
-		"munition_filter": rules.get("munition_filter", {}),
-		"posture_default_override": rules.get("posture_default_override"),
-		"release_rules": release_rules,
-		"firing_capacity_config": day_firing,
-		"exquisite_intel": exquisite_intel,
-	}
+	return IjfsResolver.build_warmup_context(
+		x_day, z_day, total_days, rules, exquisite_intel, attrition_profile,
+		firing_capacity_config, release_rules)
 
 
 ## Lazily build the persistent anti-ship Green firing systems (aggregated by (to_number, type_id)).
@@ -443,156 +385,17 @@ func _rebuild_ijfs_state() -> void:
 	_ijfs_day = 0
 
 
-## D4-H (2c-ii): bias IJFS detectability toward recently-active Green maneuver units. A brigade that
-## moved or fought last turn presents an "active" posture, so its maneuver-unit IJFS targets use the
-## higher detectability_active label (and active posture/satellite multipliers) in IjfsDetection;
-## otherwise they stay "hiding". Pure data nudge — no detection-math change. Golden-safe: on turn 1 all
-## activity flags are false, so every maneuver target stays "hiding" (its build-time default).
 func _update_maneuver_posture() -> void:
-	for target_value in ijfs_state.targets:
-		var target: IjfsTarget = target_value
-		if target.category != "Maneuver Units":
-			continue
-		var brigade_id := String(target.metadata.get("brigade_id", ""))
-		if brigade_id == "":
-			continue
-		var brigade: Brigade = GameData.get_brigade(brigade_id)
-		if brigade == null:
-			continue
-		target.posture = "active" if (brigade.moved_last_turn or brigade.fought_last_turn) else "hiding"
+	IjfsResolver.update_maneuver_posture(ijfs_state, GameData.brigades)
 
 
-## D4-H (2d follow-up): keep the live "Maneuver Units" IJFS target count in sync with the OOB each turn.
-## When battalions die (IJFS via _apply_ijfs_maneuver_casualties, or ground combat), the surviving
-## maneuver targets for those dead battalions would otherwise keep drawing IJFS fire. For each
-## (brigade_id, unit_type) group, if more targets are still alive than the brigade has battalions of
-## that type, mark the excess `destroyed` (highest target_id first, deterministic). Only ever sets
-## destroyed — never resurrects — so detection continuity (known_to_red/last_detected_day) for
-## survivors is preserved, and carry_to_next_day keeps the flag. Golden-safe: when IJFS runs on turn 1
-## the OOB is still full (2d hasn't applied yet), so live count == qty exactly → no target is touched.
 func _sync_maneuver_targets_to_oob() -> void:
-	var live_by_key: Dictionary = {}
-	for target_value in ijfs_state.targets:
-		var target: IjfsTarget = target_value
-		if target.category != "Maneuver Units" or target.destroyed:
-			continue
-		var key := "%s|%s" % [String(target.metadata.get("brigade_id", "")), String(target.metadata.get("unit_type", ""))]
-		if not live_by_key.has(key):
-			live_by_key[key] = []
-		(live_by_key[key] as Array).append(target)
-	for key in live_by_key:
-		var parts := String(key).split("|", true, 1)
-		var brigade_id := parts[0]
-		var unit_type := parts[1] if parts.size() > 1 else ""
-		var current_qty := 0
-		var brigade: Brigade = GameData.get_brigade(brigade_id)
-		if brigade != null and not brigade.destroyed:
-			for battalion in brigade.composition:
-				if battalion.type == unit_type:
-					current_qty += battalion.qty
-		var live_targets: Array = live_by_key[key]
-		var excess := live_targets.size() - current_qty
-		if excess > 0:
-			live_targets.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id > b.target_id)
-			for i in range(excess):
-				(live_targets[i] as IjfsTarget).destroyed = true
+	IjfsResolver.sync_maneuver_targets_to_oob(ijfs_state, GameData.brigades)
 
 
-## Aggregates the IJFS ledgers into the writeback seam D3 (anti-ship) and future ground-casualty
-## linkage consume. D3-D (1-A) closed the anti-ship side: targets are generated per-(TO,type) from
-## antiship_systems, so anti-ship writeback is keyed by encode_key("<to>:<type>"). Maneuver casualties
-## still depend on per-battalion target metadata (see PLAN.md Open Question, D4-H maneuver linkage).
-## Consume IJFS maneuver casualties: remove each struck Green/ROC battalion from the OOB before ground
-## combat. Each casualty (battalion_id/brigade_id/unit_type from _compute_ijfs_writeback) decrements one
-## qty of the matching battalion type in that brigade's composition (capped at 0). A brigade whose
-## composition is fully depleted is marked destroyed so it no longer fights or holds a hex.
-## NOTE: ijfs_state (and its maneuver targets) is built once per scenario, so across many turns a
-## removed battalion can still appear as a target; the qty cap keeps this safe (never negative). v1.
 func _apply_ijfs_maneuver_casualties() -> void:
 	var casualties: Array = last_ijfs_writeback.maneuver_casualties if last_ijfs_writeback != null else []
-	for casualty_value in casualties:
-		var casualty: Dictionary = casualty_value
-		var brigade_id := String(casualty.get("brigade_id", ""))
-		var unit_type := String(casualty.get("unit_type", ""))
-		if brigade_id == "" or unit_type == "":
-			continue
-		var brigade: Brigade = GameData.get_brigade(brigade_id)
-		if brigade == null:
-			continue
-		for battalion in brigade.composition:
-			if battalion.type == unit_type and battalion.qty > 0:
-				battalion.qty -= 1
-				break
-		var any_left := false
-		for battalion in brigade.composition:
-			if battalion.qty > 0:
-				any_left = true
-				break
-		if not any_left:
-			brigade.destroyed = true
-
-
-func _compute_ijfs_writeback(ledgers: Dictionary) -> IjfsWriteback:
-	var strike_log: Array = ledgers["strike_log"]
-	var engagement_log: Array = ledgers["engagement_log"]
-
-	var antiship_destroyed_by_type: Dictionary = {}
-	var antiship_suppressed_by_type: Dictionary = {}
-	var maneuver_casualties: Array = []
-
-	# Anti-ship attrition is read from the CUMULATIVE target state (target.destroyed persists across
-	# days; target.suppressed reflects the latest day) so the multi-day pre-invasion campaign feeds
-	# the firing plan. Keyed by encode_key("<to>:<type>"); a struck container removes its whole bin.
-	# INVARIANT: antiship_destroyed_by_type is a running TOTAL (all days so far), NOT a per-turn delta
-	# — resolve_antiship_turn relies on this to decrement from original_quantity idempotently.
-	# (Reads ijfs_state directly, not `ledgers`, because cumulative state spans multiple run_daily days.)
-	for target_value in ijfs_state.targets:
-		var target: IjfsTarget = target_value
-		if String(target.category) != "Anti-Ship Systems":
-			continue
-		var asm: Dictionary = target.metadata
-		if not (asm.has("to_number") and asm.has("type_id")):
-			continue
-		var rep := int(asm.get("systems_represented", 1))
-		var ask := AntishipCalculator.encode_key(int(asm["to_number"]), int(asm["type_id"]))
-		if target.destroyed:
-			antiship_destroyed_by_type[ask] = int(antiship_destroyed_by_type.get(ask, 0)) + rep
-		elif target.suppressed:
-			antiship_suppressed_by_type[ask] = int(antiship_suppressed_by_type.get(ask, 0)) + rep
-
-	for entry in strike_log:
-		if not entry.get("attack_executed"):
-			continue
-		var category := String(entry.get("category", ""))
-		if category == "Maneuver Units" and entry.get("destroyed"):
-			# Faithful port of ijfs_maneuver_writeback_service.compute_maneuver_writeback.
-			var metadata: Dictionary = entry.get("metadata", {})
-			var unit_id: Variant = metadata.get("battalion_id", metadata.get("unit_id", null))
-			if unit_id == null or String(unit_id) == "":
-				continue
-			maneuver_casualties.append({
-				"battalion_id": unit_id,
-				"brigade_id": metadata.get("brigade_id", null),
-				"to": metadata.get("to_number", null),
-				"unit_type": metadata.get("unit_type", null),
-				"subcategory": entry.get("subcategory", null),
-			})
-
-	var sam_destroyed := 0
-	var sam_suppressed := 0
-	for entry in engagement_log:
-		if entry.get("destroyed"):
-			sam_destroyed += 1
-		if entry.get("suppressed"):
-			sam_suppressed += 1
-
-	var writeback := IjfsWriteback.new()
-	writeback.antiship_destroyed_by_type = antiship_destroyed_by_type
-	writeback.antiship_suppressed_by_type = antiship_suppressed_by_type
-	writeback.maneuver_casualties = maneuver_casualties
-	writeback.sam_destroyed = sam_destroyed
-	writeback.sam_suppressed = sam_suppressed
-	return writeback
+	IjfsResolver.apply_maneuver_casualties(casualties, GameData.brigades)
 
 
 ## D3-D: Green coastal anti-ship fires + mine warfare against the Red amphibious crossing. Threads the
