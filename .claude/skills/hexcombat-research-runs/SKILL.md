@@ -5,10 +5,16 @@ description: Running HexCombat as a research instrument — Monte Carlo batches 
 
 # Research runs (AI-vs-AI as an instrument)
 
-> **Activation status:** the building blocks exist and are gated (headless self-play,
-> deterministic seeds, TurnResult event logs, scenario knobs). The batch-runner/report layer is
-> the active build track — until it lands, runs are composed from the blocks below; once it
-> lands, replace this note with the concrete runner commands.
+> **Activation status:** batch layer LIVE (B2, 2026-07-02). Run a batch:
+> `pwsh -File tools/run_batch.ps1 -Name <study> -Scenarios default,<variant> -N 30 [-Turns 30]
+> [-Policies selfplay_default] [-Parallel 4]` → per-game JSON records + `manifest.json` under
+> `reports/batches/<study>/` (git-ignored). Checkpoint/resume: re-run the same command — games
+> with an existing valid record are skipped. Re-run any single game byte-identically via the
+> command line stamped in its manifest result row (or
+> `godot --headless --path . -s res://tools/run_selfplay_game.gd -- --seed=S --scenario=X
+> --policy=P --turns=T --out=file.json`). Verdicts are ARTIFACT-based (record exists + parses +
+> all_resolved + no index_violations), never exit-code-based — the Godot teardown flake corrupts
+> exit codes. The report/aggregation layer (B3) is still to build.
 
 ## The methodology (this is the contract, whatever the tooling)
 
@@ -32,10 +38,17 @@ description: Running HexCombat as a research instrument — Monte Carlo batches 
   survives `reset_to_scenario`. `ScenarioCatalog.list_scenario_paths()` enumerates the default +
   `data/scenarios/*.json`; `scenario_id()` gives the reporting identity;
   `GameData.scenario_path` records what a process actually loaded (stamp it into run records).
-- `SelfPlayRunner.play_game(policy, turns, base_seed)` → `{final_snapshot, turn_digests,
-  all_resolved, final_turn, index_violations}` — deterministic full games, headless.
+- `SelfPlayRunner.play_game(policy, turns, base_seed, stop_on_game_over := false)` →
+  `{final_snapshot, turn_digests, all_resolved, final_turn, index_violations}` — deterministic
+  full games, headless. Batch runs pass `stop_on_game_over = true` (decided games stop).
 - **Policy contract:** an object with `build_actions(observation) -> Array` (see
-  `SelfPlayPolicy.gd` for the reference; instance-method Callables, not static).
+  `SelfPlayPolicy.gd` for the reference; instance-method Callables, not static). Policies are
+  registered by id in `PolicyCatalog` (unknown ids fail loud) — batch records stamp the
+  `policy_id`, so a new policy = a `PolicyCatalog.create` branch + id.
+- **Per-game record** (`tools/run_selfplay_game.gd`): commit, scenario id/path/name, policy_id,
+  seed, turns played/requested, game_over/winner/victory_reason, terminal census, final
+  snapshot, full turn_digests (the B4 narrative source). Deliberately timestamp-free so records
+  are byte-reproducible; per-game stdout lands in a sibling `.log`.
 - **LLM players** plug in at the same seam: a policy that sends the observation JSON to a model
   and parses the action JSON back (contract: `schemas/*.schema.json`,
   `docs/LLM_OBSERVATION_SCHEMA.md`). Determinism caveat: LLM decisions aren't seed-reproducible —

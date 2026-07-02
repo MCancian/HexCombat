@@ -79,6 +79,14 @@ when the hex-adjacency coordinate bug was fixed, and when `feba_base_km` was set
   `data/scenarios/` (id = filename stem, enumerated by `ScenarioCatalog.list_scenario_paths()`);
   the selection survives `GameState.reset_to_scenario()`; `validate_scenario_data.gd` checks every
   scenario generically + the default's pinned shape.
+- **Batch runner (research harness B2)** — `pwsh -File tools/run_batch.ps1 -Name <study>` plays a
+  scenario × policy × common-seed matrix, one headless Godot process per game, up to `-Parallel`
+  at a time. Each game (`tools/run_selfplay_game.gd`) writes a timestamp-free, byte-reproducible
+  JSON record (commit, scenario/policy identity, seed, terminal state + census, turn digests) to
+  `reports/batches/<study>/games/`; verdicts are artifact-based; re-running the batch command
+  resumes (existing valid records skipped); `manifest.json` stamps commit + per-game re-run
+  command lines. Policies are named in `PolicyCatalog` (`selfplay_default` today; unknown ids
+  fail loud).
 
 **Verification.** `pwsh tools/run_all_tests.ps1` is the canonical gate: import → headless smoke →
 `tools/validate_*.gd` (golden turn, anti-ship, IJFS, victory e2e, data validators, no-global-RNG) →

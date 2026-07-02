@@ -1098,3 +1098,28 @@ guidance.**
   `hexcombat-scenario-authoring` (recipe step 1/4/6), `hexcombat-config-and-knobs` (loader note).
 - B2 must stamp `GameData.scenario_path` + `ScenarioCatalog.scenario_id()` into every run record
   → **act next** (noted in the research-runs skill).
+
+## 2026-07-02 — B2 batch runner: run_selfplay_game + run_batch   (frontier agent, direct)
+
+**What would you do differently (self-retro):**
+- Environment landmine worth remembering: on this box, a native process launched inside
+  PowerShell `ForEach-Object -Parallel` runs fine but its stdout AND $LASTEXITCODE are silently
+  lost to the runspace (minimal repro: godot in a 1-item parallel loop → 0 output lines, null
+  exit). First batch attempt "failed" while all three game records sat on disk, correct. Fix was
+  architectural, not a workaround: judge games by their record artifacts (the repo's existing
+  teardown-flake policy applied consistently) and launch via Start-Process with per-game log
+  redirection. Artifact-based verdicts should be the default for ANY future multi-process tooling
+  here.
+- Making the per-game record timestamp-free bought two properties for one decision: byte-hash
+  reproducibility checks, and trivially correct checkpoint/resume (existing record = done).
+  Batch-level timestamps live in the manifest where they belong.
+- The default scenario ends turn 1 (red, ~20:16) under trivial policies — known, pinned behavior
+  (validate_golden_victory documents it). Fine for harness verification; real studies need
+  variants/policies with longer games, which is exactly Tracks B3+/C.
+
+**Triage:**
+- Parallel-runspace stdout/exit loss → **recorded** in `hexcombat-build-and-env`? Not yet — noted
+  HERE and in the Decisions entry; promote to build-and-env if it bites again outside batch work.
+- Artifact-verdict pattern → **recorded** in `hexcombat-research-runs` (activation header).
+- Turn-1 endings under trivial policies → **expected**; first real study should pair a variant
+  with a defensively competent policy (Track C + B6).

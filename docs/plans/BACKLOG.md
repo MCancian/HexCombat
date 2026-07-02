@@ -27,9 +27,10 @@ Methodology contract: `.claude/skills/hexcombat-research-runs`. Build order:
   `data/scenarios/<id>.json`, default unchanged so all pins hold, selection survives
   `reset_to_scenario`; `validate_scenario_data.gd` now covers every scenario (generic checks) +
   default pins.
-- **B2 — Batch runner.** N seeded headless games (process-per-run) over a scenario × policy
-  matrix; per-game JSON records (seed, commit, terminal state, per-turn digests) checkpointed to
-  `reports/`; deterministic re-run of any single game.
+- ✅ **B2 — Batch runner** (2026-07-02). `tools/run_batch.ps1` (scenario × policy × common seed
+  set, process-per-run, artifact-based verdicts, checkpoint/resume, manifest with commit +
+  re-run command lines) + `tools/run_selfplay_game.gd` (byte-reproducible per-game JSON record)
+  + `PolicyCatalog` (policy ids fail loud) + `SelfPlayRunner` optional stop_on_game_over.
 - **B3 — Outcome reports.** Aggregate batch records → win rates, casualty/duration
   distributions, census margins; Markdown report per the skill's report shape.
 - **B4 — Narrative renderer.** `TurnResult.to_dict().events` → readable turn-by-turn account of

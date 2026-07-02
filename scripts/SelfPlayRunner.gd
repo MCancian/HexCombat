@@ -11,6 +11,10 @@ class_name SelfPlayRunner
 ##
 ## Returns a dict with final_snapshot, turn_digests, all_resolved, final_turn,
 ## and index_violations. Deterministic given a deterministic policy + fixed base_seed.
+##
+## stop_on_game_over (default false, preserving the pinned always-play-N-turns behavior the
+## self-play gate asserts): batch research runs pass true so a decided game stops consuming
+## turns — turn_digests is then shorter than `turns`.
 
 static func _gd():
 	return Engine.get_main_loop().root.get_node("GameData")
@@ -19,7 +23,7 @@ static func _gs():
 	return Engine.get_main_loop().root.get_node("GameState")
 
 
-static func play_game(policy: Callable, turns: int, base_seed: int) -> Dictionary:
+static func play_game(policy: Callable, turns: int, base_seed: int, stop_on_game_over: bool = false) -> Dictionary:
 	_gd().load_all()
 	_gs().reset_to_scenario()
 
@@ -40,6 +44,8 @@ static func play_game(policy: Callable, turns: int, base_seed: int) -> Dictionar
 		if not bool(result.get("resolved", false)):
 			all_resolved = false
 		turn_digests.append((result.get("turn_result", {}) as Dictionary).duplicate(true))
+		if stop_on_game_over and _gs().game_over:
+			break
 
 	return {
 		"final_snapshot": _gd().snapshot_state(),

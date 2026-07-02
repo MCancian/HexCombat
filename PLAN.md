@@ -130,6 +130,29 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-07-02 — Research harness B2: batch runner (process-per-run, artifact-verdict).**
+  `tools/run_selfplay_game.gd` plays ONE seeded headless game (`SelfPlayRunner.play_game` with
+  new optional `stop_on_game_over := true` — default false preserves the pinned self-play-gate
+  behavior) and writes a per-game JSON record: commit, scenario id/path/name, `policy_id`,
+  seed, turns played/requested, terminal victory state + census, final snapshot, full
+  turn_digests. `tools/run_batch.ps1` runs the scenario × policy × seed matrix (COMMON seed set
+  across conditions — common random numbers), launching up to `-Parallel` Godot processes.
+  New `PolicyCatalog` maps policy ids → policy objects (unknown id fails loud; B6's LLM adapter
+  registers there). **Judgment calls:** (1) **records are deliberately timestamp-free** so a
+  re-run of the same commit+scenario+policy+seed is byte-identical — verified by hash; that IS
+  the reproducibility contract, and checkpoint/resume rests on it (existing valid record →
+  game skipped; a crashed batch loses at most one game); (2) **verdicts are artifact-based**
+  (record exists + parses + `all_resolved` + no `index_violations`), never exit-code-based —
+  same policy as the gate, since the Godot 4.7 teardown flake corrupts exit codes; forced also
+  by an environment finding: native-process stdout/exit codes are silently lost inside
+  `ForEach-Object -Parallel` runspaces on this box (minimal repro confirmed), so the runner
+  uses `Start-Process` + per-game `.log`/`.err.log` redirection and reads verdicts from the
+  records; (3) per-game wall-clock/timestamps live only in `manifest.json` (batch metadata,
+  incl. commit + dirty flag + exact re-run command lines per game). Verified: 3-seed smoke
+  batch 3/3 OK with per-seed outcome variation (census 20:16, 20:16, 19:17), resume run skips
+  all 3, single-game re-run byte-identical, full gate ALL PHASES GREEN (42 suites — selfplay
+  gate proves the default `play_game` path unchanged).
+
 - **2026-07-02 — Research harness B1: scenario selection (`ScenarioCatalog`).** New pure-static
   `scripts/ScenarioCatalog.gd`: `--scenario=<id-or-path>` cmdline user arg (after Godot's `--`)
   beats `HEXCOMBAT_SCENARIO` env var; bare ids resolve to `data/scenarios/<id>.json`; `default`
