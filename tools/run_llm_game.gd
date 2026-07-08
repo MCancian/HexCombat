@@ -36,7 +36,9 @@ func _initialize() -> void:
 
 	var base_url := OS.get_environment("HEXCOMBAT_LLM_BASE_URL")
 	if base_url.is_empty():
-		base_url = "http://localhost:8088/v1"
+		# 127.0.0.1, not localhost: a rootless-container pasta forward may only serve IPv4, and
+		# localhost can resolve to ::1 first (connection reset).
+		base_url = "http://127.0.0.1:8088/v1"
 	var model := OS.get_environment("HEXCOMBAT_LLM_MODEL")
 
 	if not log_path.is_empty():

@@ -25,8 +25,12 @@ import sys
 import urllib.error
 import urllib.request
 
-DEFAULT_BASE_URL = "http://localhost:8088/v1"
-HTTP_TIMEOUT_SECONDS = 120
+DEFAULT_BASE_URL = "http://127.0.0.1:8088/v1"
+HTTP_TIMEOUT_SECONDS = 300
+# Reasoning models burn output tokens on a chain-of-thought BEFORE emitting the answer, so the
+# budget must cover reasoning + the action JSON or `content` comes back null (finish_reason=length).
+DEFAULT_MAX_TOKENS = 8192
+DEFAULT_TEMPERATURE = 0.7
 
 # Observation keys worth sending to the model — the big static fields (rules text lives in the
 # system prompt; map geometry, ship data, etc.) are omitted to keep the prompt small.
@@ -72,19 +76,22 @@ def build_messages(observation, perspective):
 
 
 def call_model(messages):
-    """POST to the chat-completions endpoint. Returns the assistant content string, or raises on a
-    hard failure (unreachable / HTTP error / malformed envelope)."""
+    """POST to the chat-completions endpoint. Returns (text, model), where text is the assistant's
+    answer — `content`, falling back to `reasoning`/`reasoning_content` for reasoning models that
+    leave `content` null. Raises on a hard failure (unreachable / HTTP error / malformed envelope)."""
     base_url = os.environ.get("HEXCOMBAT_LLM_BASE_URL", DEFAULT_BASE_URL).rstrip("/")
     model = os.environ.get("HEXCOMBAT_LLM_MODEL", "")
     api_key = os.environ.get("HEXCOMBAT_LLM_API_KEY", "EMPTY")
     if not model:
         raise RuntimeError("HEXCOMBAT_LLM_MODEL is not set")
+    max_tokens = int(os.environ.get("HEXCOMBAT_LLM_MAX_TOKENS", DEFAULT_MAX_TOKENS))
+    temperature = float(os.environ.get("HEXCOMBAT_LLM_TEMPERATURE", DEFAULT_TEMPERATURE))
 
     body = json.dumps({
         "model": model,
         "messages": messages,
-        "temperature": 0.7,
-        "max_tokens": 1024,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
     }).encode("utf-8")
     request = urllib.request.Request(
         base_url + "/chat/completions",
@@ -94,7 +101,13 @@ def call_model(messages):
     )
     with urllib.request.urlopen(request, timeout=HTTP_TIMEOUT_SECONDS) as response:
         payload = json.load(response)
-    return payload["choices"][0]["message"]["content"], model
+    choice = payload["choices"][0]
+    message = choice.get("message", {})
+    text = message.get("content") or message.get("reasoning") or message.get("reasoning_content") or ""
+    if choice.get("finish_reason") == "length":
+        log("llm_sidecar: finish_reason=length — model hit the token budget; raise "
+            "HEXCOMBAT_LLM_MAX_TOKENS if actions are missing")
+    return text, model
 
 
 def extract_actions(content):
