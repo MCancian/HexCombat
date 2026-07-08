@@ -51,10 +51,11 @@ Methodology contract: `.claude/skills/hexcombat-research-runs`. Build order:
   replay. `SelfPlayRunner.play_game_seats` drives two independent seats (Red vs Green) to a
   simultaneous WeGo resolve; `tools/run_llm_game.gd` plays one full LLM-vs-LLM game.
   Deterministically gated with no network by `tools/validate_llm_policy.gd` (stub sidecar
-  `tools/llm_sidecar_stub.py`); `HEXCOMBAT_LLM_SIDECAR` swaps the sidecar. **Remaining:** live
-  smoke against a running local model (pending server reachability); per-seat policies in the B2
-  batch runner (`run_batch.ps1`/`run_selfplay_game.gd` are still single-policy) so LLM seats flow
-  into multi-condition *studies*.
+  `tools/llm_sidecar_stub.py`); `HEXCOMBAT_LLM_SIDECAR` swaps the sidecar. **Live-verified**
+  2026-07-08 against local vLLM (model `jarvis`): full two-seat game to a decision, record +
+  JSONL replay log. **Remaining:** per-seat policies in the B2 batch runner
+  (`run_batch.ps1`/`run_selfplay_game.gd` are still single-policy) so LLM seats flow into
+  multi-condition *studies*.
 
 **Done when:** one command produces a reproducible multi-condition study report from scenario
 variants, with narratives, and an LLM policy can be swapped in for either side. *(Single

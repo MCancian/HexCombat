@@ -94,7 +94,11 @@ Routes an action response object. Returns an action-result Dictionary (`ok`, `er
 
 `LLMPolicy` is the decider for a seat: it marshals the perspective observation to `tools/llm_sidecar.py`, which calls a **local** OpenAI-compatible model (vLLM by default, `HEXCOMBAT_LLM_BASE_URL`/`_MODEL`/`_API_KEY`), validates the actions against the legal sets, and logs each observation/action pair. `tools/run_llm_game.gd` wires both seats to `llm_local` and plays a full game.
 
-**Determinism caveat.** The RESOLVER stays deterministic (the `end_turn` seed), but the LLM DECIDER is not seed-reproducible — so LLM-game records are NOT byte-stable. The JSONL obs/action log is the replay artifact: re-feeding the logged actions through `apply_agent_response` with the recorded seeds reproduces the game. The plumbing (not the model) is gated deterministically by `validate_llm_policy.gd` via the network-free stub sidecar.
+**Determinism caveat.** The RESOLVER stays deterministic (the `end_turn` seed), but the LLM DECIDER is not seed-reproducible — so LLM-game records are NOT byte-stable. The JSONL obs/action log is the replay artifact: re-feeding the logged actions through `apply_agent_response` with the recorded seeds reproduces the game (the resolver's determinism given a fixed action list + seed is what the self-play gate already proves). The plumbing (not the model) is gated deterministically by `validate_llm_policy.gd` via the network-free stub sidecar.
+
+**Provider notes (from the 2026-07-08 vLLM `jarvis` bring-up).**
+- Default endpoint is `http://127.0.0.1:8088/v1` — use **IPv4**, not `localhost`: a rootless-container `pasta` forward may serve only IPv4 and `localhost` can resolve to `::1` (connection reset).
+- **Reasoning models** emit a chain-of-thought before the answer; the sidecar reads `message.content` and falls back to `message.reasoning`/`reasoning_content`. Give them room: `HEXCOMBAT_LLM_MAX_TOKENS` defaults to 8192 — too small a budget is spent entirely on reasoning (`finish_reason=length`, `content=null`, no actions). `HEXCOMBAT_LLM_TEMPERATURE` is also env-tunable.
 
 ## 6. Determinism & gates
 

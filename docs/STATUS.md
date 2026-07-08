@@ -112,8 +112,10 @@ when the hex-adjacency coordinate bug was fixed, and when `feba_base_km` was set
   [--out=f.json] [--log=f.jsonl]` plays one full LLM-vs-LLM game and writes a record + replay log.
   `HEXCOMBAT_LLM_SIDECAR` overrides the sidecar (e.g. `tools/llm_sidecar_stub.py`, the network-free
   stub used by the gate). LLM decisions are NOT seed-reproducible; the JSONL log is the replay
-  artifact. (The B2 batch runner is still single-policy — LLM seats run via `run_llm_game.gd`, not
-  yet inside multi-condition batches.)
+  artifact. Use IPv4 (`127.0.0.1`, default) not `localhost`; reasoning models need
+  `HEXCOMBAT_LLM_MAX_TOKENS` headroom (default 8192) or the budget is spent on reasoning before any
+  action. Live-verified against local vLLM (model `jarvis`). (The B2 batch runner is still
+  single-policy — LLM seats run via `run_llm_game.gd`, not yet inside multi-condition batches.)
 - **`roc_full_defense` scenario** — variant placing all 32 ROC brigades (124 battalions) at their
   real garrison hexes vs the default's 4 PLA amphibious brigades; select with
   `--scenario=roc_full_defense`. Gives AI-vs-AI games a multi-turn fight instead of the default
