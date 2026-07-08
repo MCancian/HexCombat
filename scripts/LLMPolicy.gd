@@ -25,6 +25,14 @@ var log_path: String = ""               ## JSONL obs/action log; empty = sidecar
 var _python_bin: String = ""            ## resolved lazily & cached on first build_actions.
 
 
+func _init() -> void:
+	# HEXCOMBAT_LLM_SIDECAR overrides which sidecar to shell out to (e.g. the network-free stub for
+	# tests, or an alternative provider adapter) without touching this class.
+	var sidecar_env := OS.get_environment("HEXCOMBAT_LLM_SIDECAR")
+	if not sidecar_env.is_empty():
+		sidecar_path = sidecar_env
+
+
 static func for_seat(seat: String, jsonl_log_path: String = "") -> LLMPolicy:
 	var p := LLMPolicy.new()
 	p.perspective = seat
