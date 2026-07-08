@@ -11,3 +11,7 @@ data_*/
 
 # GdUnit4 generated test reports
 /reports/
+
+# Python bytecode (tools/llm_sidecar*.py)
+__pycache__/
+*.pyc
