@@ -1142,3 +1142,26 @@ guidance.**
 - pwsh traps → **recorded** (Decisions + STATUS note); promote to build-and-env if hit again.
 - Turn-1 endings make sweep deltas invisible under trivial policies → **known**; first real
   study needs Track C variants and/or B6 policies with longer games.
+
+## 2026-07-08 b6-llm-adapter-and-full-roc-scenario
+- **Lesson:** The B6 seam was better than the plan assumed — `LLMGameAPI.observation(team)` already
+  perspective-filters and `apply_agent_response` only resolves on `end_turn`, so LLM-vs-LLM needed
+  just a two-seat runner (buffer Red, buffer Green, one seeded resolve), not any API change. Verify
+  the seam before scoping.
+- **Lesson:** Gate a nondeterministic decider by gating its PLUMBING with a network-free stub, not
+  the model; the JSONL obs/action log (not a golden) is the replay artifact. `validate_*.gd` is
+  auto-discovered by the Phase-3 glob, so a new validator needs no `run_all_tests.ps1` edit.
+- **Lesson:** "All Taiwanese brigades" was fully derivable — the ROC OOB carries real lat/lon and
+  every hex has a center, so nearest-unoccupied-hex placement beats guessing; the scenario
+  validator enforces UNIQUE placement hexes (collisions the game engine tolerates), so dedupe up
+  front.
+- **Triage:**
+  - opencode (`deepseek-v4-flash-free`) **timed out twice producing nothing** (a ~40-line stub at
+    300s, the sidecar at 600s). → **acted now:** wrote both sidecars directly. Lesson **recorded**:
+    for small, fully-specified files the free model is not worth the wall-clock; reserve opencode
+    for bulk mechanical passes and set a short timeout with a self-write fallback.
+  - Godot `FileAccess` writes to `/tmp` were not visible to sibling processes in this sandbox
+    (path redirection). → **recorded**; write headless artifacts under the project `reports/` when
+    a later step must read them.
+  - Live vLLM unreachable from the agent's network namespace (pasta port-forward resets). →
+    **handed to USER** (run `run_llm_game.gd` in their own shell); not a code issue.

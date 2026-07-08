@@ -44,18 +44,35 @@ Methodology contract: `.claude/skills/hexcombat-research-runs`. Build order:
   condition rows ARE the sweep axis. Covers refactor_audit item 7's generalization for
   scenario-file knobs; phase-data-file knobs (e.g. minefield geometry) still need
   scenario-selectable data files (parameterization-gap rule).
-- **B6 — LLM-player adapter.** A `SelfPlayPolicy`-contract policy that calls an LLM with the
-  observation and parses the action response; full observation/action logging so games are
-  replayable; policy-identity stamped into batch records.
+- ✅ **B6 — LLM-player adapter** (2026-07-08). `LLMPolicy` (SelfPlayPolicy-contract, id
+  `llm_local`) marshals the perspective observation to an out-of-process Python sidecar
+  (`tools/llm_sidecar.py`, OpenAI-compatible local model via `HEXCOMBAT_LLM_*`), validates the
+  returned actions against the legal sets, and logs every observation/action pair as JSONL for
+  replay. `SelfPlayRunner.play_game_seats` drives two independent seats (Red vs Green) to a
+  simultaneous WeGo resolve; `tools/run_llm_game.gd` plays one full LLM-vs-LLM game.
+  Deterministically gated with no network by `tools/validate_llm_policy.gd` (stub sidecar
+  `tools/llm_sidecar_stub.py`); `HEXCOMBAT_LLM_SIDECAR` swaps the sidecar. **Remaining:** live
+  smoke against a running local model (pending server reachability); per-seat policies in the B2
+  batch runner (`run_batch.ps1`/`run_selfplay_game.gd` are still single-policy) so LLM seats flow
+  into multi-condition *studies*.
 
 **Done when:** one command produces a reproducible multi-condition study report from scenario
-variants, with narratives, and an LLM policy can be swapped in for either side.
+variants, with narratives, and an LLM policy can be swapped in for either side. *(Single
+LLM-vs-LLM games ship via `run_llm_game.gd`; the batch-runner per-seat wiring is the last step for
+LLM policies inside multi-condition studies.)*
 
 ## Track C — Scenario variants *(with Track B)*
 
 First real variant (user picks the research question; see
 `.claude/skills/hexcombat-scenario-authoring`), proving the authoring recipe end-to-end:
 variant file → validation → headless self-play → registered in the batch runner.
+
+- ✅ **First variant — `roc_full_defense`** (2026-07-08, USER-requested). All 32 ROC brigades
+  (124 battalions) from `data/roc_ground_forces.json` placed at their nearest-unoccupied hex by
+  real lat/lon, vs the same 4 PLA amphibious brigades as the default. Proves the recipe end-to-end
+  (validated + deterministic 8-turn self-play, census r:g 36:112, no early finish) and gives
+  LLM-vs-LLM games a meaningful multi-turn fight instead of the default's turn-1 census decision.
+  Select with `--scenario=roc_full_defense`.
 
 ## Track D — Adjudication aid (graphics/UI) *(secondary — after A/B or on user request)*
 

@@ -102,6 +102,22 @@ when the hex-adjacency coordinate bug was fixed, and when `feba_base_km` was set
   in the sweep's report dir), batches them over a common seed set, and reports per-value
   outcome rows. Array params to the ps1 tools may be comma-joined strings (normalized inside —
   `pwsh -File` does not split them).
+- **LLM players (research harness B6)** — policy id `llm_local` (`LLMPolicy`) marshals a seat's
+  perspective observation to an out-of-process Python sidecar (`tools/llm_sidecar.py`) that calls a
+  local OpenAI-compatible model (`HEXCOMBAT_LLM_BASE_URL`/`_MODEL`/`_API_KEY`, default vLLM at
+  `localhost:8088/v1`), validates the returned actions against the legal sets, and appends every
+  observation/action pair to a JSONL replay log. `SelfPlayRunner.play_game_seats` runs two
+  independent seats to a simultaneous WeGo resolve; `godot --headless --path . -s
+  res://tools/run_llm_game.gd -- --seed=S [--scenario=X] [--turns=N] [--model=M]
+  [--out=f.json] [--log=f.jsonl]` plays one full LLM-vs-LLM game and writes a record + replay log.
+  `HEXCOMBAT_LLM_SIDECAR` overrides the sidecar (e.g. `tools/llm_sidecar_stub.py`, the network-free
+  stub used by the gate). LLM decisions are NOT seed-reproducible; the JSONL log is the replay
+  artifact. (The B2 batch runner is still single-policy — LLM seats run via `run_llm_game.gd`, not
+  yet inside multi-condition batches.)
+- **`roc_full_defense` scenario** — variant placing all 32 ROC brigades (124 battalions) at their
+  real garrison hexes vs the default's 4 PLA amphibious brigades; select with
+  `--scenario=roc_full_defense`. Gives AI-vs-AI games a multi-turn fight instead of the default
+  4-defender beachhead's turn-1 census decision.
 
 **Verification.** `pwsh tools/run_all_tests.ps1` is the canonical gate: import → headless smoke →
 `tools/validate_*.gd` (golden turn, anti-ship, IJFS, victory e2e, data validators, no-global-RNG) →

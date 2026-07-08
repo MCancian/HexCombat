@@ -12,7 +12,13 @@ Structured JSON action API so LLM agents (and the self-play harness) can drive H
 |---|---|
 | `scripts/LLMGameAPI.gd:1` | Autoload `LLMGameAPI`. `observation(team)` builds a JSON observation; `apply_agent_response(dict)` routes `move`/`commit`/`end_turn` into `GameState`. `RefCounted`, all `static func`. |
 | `scripts/SelfPlayPolicy.gd:1` | `RefCounted` with `build_actions(observation) -> Array`. Deterministic reference policy: each brigade tactical-moves to the first non-self hex in its `legal_moves`. Pluggable — any `Callable` matching the contract works. |
-| `scripts/SelfPlayRunner.gd:1` | `RefCounted` with `play_game(policy, turns, base_seed) -> Dictionary`. Runs a headless loop: `observation → policy.build_actions → append end_turn → apply_agent_response`. Returns `final_snapshot`, `turn_digests`, `all_resolved`, `final_turn`, `index_violations`. |
+| `scripts/SelfPlayRunner.gd:1` | `RefCounted`. `play_game(policy, turns, base_seed)` — single-policy loop over the omniscient observation. `play_game_seats(red_policy, green_policy, turns, base_seed)` — TWO-SEAT loop: each seat decides from its own perspective observation, both buffers apply, one seeded `end_turn` resolves them simultaneously (WeGo). Both return `final_snapshot`, `turn_digests`, `all_resolved`, `final_turn`, `index_violations`. |
+| `scripts/LLMPolicy.gd:1` | `RefCounted`, `build_actions(observation) -> Array` (id `llm_local` in `PolicyCatalog`). THIN marshaller: writes the observation to a temp file, shells out (`OS.execute`) to a Python sidecar, parses the returned JSON action array, strips `end_turn`, `[]` on any failure. No engine networking. Sidecar path defaults to `res://tools/llm_sidecar.py`, overridable via `HEXCOMBAT_LLM_SIDECAR`. |
+| `scripts/PolicyCatalog.gd:1` | Policy registry (`selfplay_default`, `llm_local`); unknown ids fail loud. |
+| `tools/llm_sidecar.py:1` | Out-of-process, stdlib-only local-LLM adapter. Reads `--obs`, builds a prompt (rules + legal sets), POSTs to an OpenAI-compatible endpoint (`HEXCOMBAT_LLM_BASE_URL`/`_MODEL`/`_API_KEY`), tolerantly extracts the first JSON array, validates against `legal_moves`/`legal_commits`, appends a JSONL obs/action line (`--log`), prints the validated actions. |
+| `tools/llm_sidecar_stub.py:1` | Network-free test double with the same contract (`HEXCOMBAT_STUB_MODE`: `first_move`/`empty`/`malformed`/`garbage`). Used by the plumbing gate. |
+| `tools/run_llm_game.gd:1` | Entrypoint: plays one full LLM-vs-LLM game via `play_game_seats` (both seats `llm_local`), writes a record + provenance + JSONL replay-log path. `--seed --scenario --turns --model --out --log`. |
+| `tools/validate_llm_policy.gd:1` | Deterministic gate (no network): exercises `LLMPolicy` against the stub — marshalling, parse/strip helpers, malformed-output fallback, obs/action log. |
 | `scripts/TurnEventLog.gd:1` | `build(state) -> Array[TurnEvent]`. Derives an ordered per-turn event log (ijfs, antiship, move, commit, combat, frontline, cleanup) from `GameState`. Called by `play_turn` and included in `turn_result`. |
 | `tools/validate_llm_api.gd:1` | Headless gate: asserts observation keys, action application, missing-seed rejection, example/schema conformance. |
 | `tools/validate_headless_selfplay.gd:1` | Runs 4-turn self-play twice with same seed; asserts identical snapshots + index health. |
@@ -78,6 +84,18 @@ Routes an action response object. Returns an action-result Dictionary (`ok`, `er
 
 **Pluggable:** The policy argument is a `Callable(observation: Dictionary) -> Array`. Replace `SelfPlayPolicy.build_actions` with any function matching the contract (e.g., an LLM proxy).
 
+### 5b. LLM players — two-seat LLM-vs-LLM (harness B6)
+
+`play_game_seats(red_policy, green_policy, turns, base_seed)` at `SelfPlayRunner.gd` runs two INDEPENDENT deciders:
+
+1. `observation("Red")` → `red_policy.build_actions` → buffer (move/commit only, no `end_turn`).
+2. `observation("Green")` → `green_policy.build_actions` → buffer.
+3. `apply_agent_response({actions:[{type:end_turn, seed: base_seed + t}]})` — one simultaneous WeGo resolve of both sides.
+
+`LLMPolicy` is the decider for a seat: it marshals the perspective observation to `tools/llm_sidecar.py`, which calls a **local** OpenAI-compatible model (vLLM by default, `HEXCOMBAT_LLM_BASE_URL`/`_MODEL`/`_API_KEY`), validates the actions against the legal sets, and logs each observation/action pair. `tools/run_llm_game.gd` wires both seats to `llm_local` and plays a full game.
+
+**Determinism caveat.** The RESOLVER stays deterministic (the `end_turn` seed), but the LLM DECIDER is not seed-reproducible — so LLM-game records are NOT byte-stable. The JSONL obs/action log is the replay artifact: re-feeding the logged actions through `apply_agent_response` with the recorded seeds reproduces the game. The plumbing (not the model) is gated deterministically by `validate_llm_policy.gd` via the network-free stub sidecar.
+
 ## 6. Determinism & gates
 
 - **Seed required.** `end_turn` must carry an explicit `seed` integer (`LLMGameAPI.gd:74-76`). The seed is passed to `SeededDice.new(seed)` inside `play_turn`.
@@ -109,4 +127,12 @@ TaiwanInvasionViewer has no LLM agent API — it is a Python/Flask web app with 
 
 # Export an observation fixture
 "C:\Godot_v4.7-stable_win64.exe" --headless --path "C:\Users\mdogg\Desktop\HexCombat" -s "res://tools/export_llm_observation.gd" -- --team=Red --output="reports/llm_observation_red.json"
+
+# Gate the LLM-policy plumbing (no network — uses the stub sidecar)
+"C:\Godot_v4.7-stable_win64.exe" --headless --path "C:\Users\mdogg\Desktop\HexCombat" -s "res://tools/validate_llm_policy.gd"
+
+# Play one full LLM-vs-LLM game against a local model (vLLM). Requires the server reachable and
+# HEXCOMBAT_LLM_MODEL set (env or --model). Best on the full-defense scenario.
+#   $env:HEXCOMBAT_LLM_BASE_URL="http://localhost:8088/v1"; $env:HEXCOMBAT_LLM_MODEL="<served-id>"
+"C:\Godot_v4.7-stable_win64.exe" --headless --path "C:\Users\mdogg\Desktop\HexCombat" -s "res://tools/run_llm_game.gd" -- --seed=20260624 --scenario=roc_full_defense --turns=30 --out="reports/llm/game.json"
 ```

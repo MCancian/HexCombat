@@ -130,6 +130,28 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-07-08 — Research harness B6: LLM-player adapter + `roc_full_defense` scenario (USER call
+  on provider; agent judgment on architecture).** USER settled the B6 open question: provider is a
+  LOCAL model on vLLM (`localhost:8088/v1`, OpenAI-compatible), same model both seats, matchup is
+  LLM-vs-LLM, Python sidecar. Built `LLMPolicy` (id `llm_local`) as a thin marshaller shelling out
+  to `tools/llm_sidecar.py`; `SelfPlayRunner.play_game_seats` (per-seat perspective observations →
+  buffer both → one seeded `end_turn` WeGo resolve, existing `play_game` untouched);
+  `tools/run_llm_game.gd` entrypoint. **Judgment calls:** (1) out-of-process sidecar not in-engine
+  HTTP — keeps HTTP/prompt/retry/replay-logging out of GDScript and testable; (2) provider config
+  via ENV read by the sidecar (not argv) so the key never hits the process list;
+  `HEXCOMBAT_LLM_SIDECAR` swaps sidecars; (3) gate the plumbing DETERMINISTICALLY with a
+  network-free stub (`tools/llm_sidecar_stub.py` + `tools/validate_llm_policy.gd`, auto-discovered
+  by Phase 3) since a real model can't be a golden — the JSONL obs/action log is the replay
+  artifact instead; (4) USER-requested "all Taiwanese brigades" → new additive scenario
+  `data/scenarios/roc_full_defense.json` (all 32 ROC brigades placed at nearest-unoccupied hex by
+  real lat/lon), NOT an edit to the golden default (calibration pin), which also fixes the default's
+  turn-1 census finish. **Verification:** full local gate green (import + 25 validators incl. the
+  new one + GdUnit 261 cases); `run_llm_game.gd` proven end-to-end through the stub (record +
+  provenance + JSONL log, one line per side per turn); scenario validated + deterministic 8-turn
+  self-play (census r:g 36:112). **Not done:** live vLLM smoke (server unreachable from the agent's
+  network namespace — hand-off to USER); batch-runner per-seat policies for LLM studies. Commits on
+  `main`; see `docs/systems/llm-api-selfplay.md`, `.claude/skills/hexcombat-research-runs`.
+
 - **2026-07-02 — Research harness B5: knob sweeps (`run_sweep.ps1`).** One-knob sensitivity
   sweeps compose the existing pieces: generate variant scenario files (base scenario with one
   dot-path key changed, `name` suffixed with the knob=value), run `run_batch.ps1` across them
@@ -1852,23 +1874,19 @@ Red maneuver BNs redistribute along it. Cleanup phase normalizes ownership after
 
 ## Open questions (settle at the relevant milestone)
 
-### B6 — LLM-player adapter: provider/spend decision  *(OPEN 2026-07-02 — needs USER)*
+### B6 — LLM-player adapter: provider/spend decision  *(RESOLVED 2026-07-08 — USER; see Decisions log)*
 
-Everything technical is ready: a policy is an object with
-`build_actions(observation) -> Array` registered by id in `PolicyCatalog`; batch records stamp
-`policy_id` and the full observation/action contract is schema-gated. What an agent cannot
-decide alone is **whose API and budget the LLM player uses**:
+**Resolved (USER, 2026-07-08):** provider is a **local model on vLLM** (`localhost:8088/v1`,
+OpenAI-compatible), **same model both seats**, matchup **LLM-vs-LLM**, **Python sidecar**. Budget
+is moot (local = free). Built accordingly: `LLMPolicy` (id `llm_local`) → `tools/llm_sidecar.py`;
+two-seat `SelfPlayRunner.play_game_seats`; `tools/run_llm_game.gd`. Config via
+`HEXCOMBAT_LLM_BASE_URL`/`_MODEL`/`_API_KEY` (and `HEXCOMBAT_LLM_SIDECAR` to swap adapters).
+See the 2026-07-08 Decisions-log entry and `docs/systems/llm-api-selfplay.md`.
 
-1. **Provider/mechanism.** Recommendation: Anthropic API via a thin out-of-process adapter (a
-   Python or PowerShell sidecar the Godot policy shells out to per turn, key in an env var like
-   `ANTHROPIC_API_KEY`) — keeps HTTP/keys out of the engine and lets the adapter log every
-   observation/action pair for replayability. Alternatives: any OpenAI-compatible endpoint, or
-   a local model (free, weaker).
-2. **Budget/scale.** A 30-game batch at ~10–30 turns × 1 call/side/turn is roughly 600–1,800
-   LLM calls per condition — the user should pick model tier and N accordingly.
-3. **First matchup.** LLM-vs-scripted (cheapest, isolates one seat) vs LLM-vs-LLM.
-
-Until settled, batches run with `selfplay_default`; nothing else in Track B blocks on this.
+_Original open question (kept for the record):_ what an agent could not decide alone was whose API
+and budget the LLM player uses — provider/mechanism, budget/scale, and first matchup. All settled
+above. Remaining engineering (not a user question): live smoke against a reachable local model, and
+per-seat policies in the B2 batch runner so LLM seats flow into multi-condition studies.
 
 _Otherwise none blocking — the design is settled. Future-phase questions (supply/organization
 interactions, fog of war, terrain via ArcGIS, theater fires) are tracked in `ROADMAP.md`._
