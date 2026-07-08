@@ -1,0 +1,210 @@
+#!/usr/bin/env python3
+"""Out-of-process LLM sidecar for HexCombat (harness B6).
+
+Reads a game observation, asks a LOCAL OpenAI-compatible model (vLLM by default) for this side's
+orders, validates every returned action against the observation's authoritative legal sets, logs
+the observation/action pair for replay, and prints the validated action array to stdout. Standard
+library only (no pip dependencies) so the engine can shell out to it with nothing installed.
+
+Contract mirrors tools/llm_sidecar_stub.py so both are interchangeable behind scripts/LLMPolicy.gd:
+  stdin/args:  --obs <file>  --perspective Red|Green  [--log <jsonl>]
+  stdout:      a JSON array of validated action objects (never any prose)
+  exit code:   0 on success (including "model gave nothing usable" -> []),
+               non-zero ONLY on hard failure (model unreachable / HTTP error).
+
+Provider config from the environment (inherited from the Godot process):
+  HEXCOMBAT_LLM_BASE_URL  default http://localhost:8088/v1
+  HEXCOMBAT_LLM_MODEL     required (the vLLM served model id)
+  HEXCOMBAT_LLM_API_KEY   default "EMPTY"  (sent as Authorization: Bearer <key>)
+"""
+import argparse
+import json
+import os
+import re
+import sys
+import urllib.error
+import urllib.request
+
+DEFAULT_BASE_URL = "http://localhost:8088/v1"
+HTTP_TIMEOUT_SECONDS = 120
+
+# Observation keys worth sending to the model — the big static fields (rules text lives in the
+# system prompt; map geometry, ship data, etc.) are omitted to keep the prompt small.
+COMPACT_KEYS = [
+    "turn", "perspective_team", "brigades", "occupied_hexes",
+    "legal_moves", "legal_commits", "pending_orders", "last_combat",
+]
+
+
+def log(message):
+    print(message, file=sys.stderr)
+
+
+def load_observation(path):
+    with open(path, "r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def build_messages(observation, perspective):
+    rules = observation.get("rules_summary", {})
+    glossary = observation.get("field_glossary", {})
+    system = (
+        "You are the commander of the {side} side in a WeGo hex wargame (HexCombat: a PLA "
+        "amphibious assault on Taiwan). Each planning turn you issue orders; then both sides' "
+        "orders resolve simultaneously.\n\n"
+        "RULES:\n{rules}\n\nGLOSSARY:\n{glossary}\n\n"
+        "You may ONLY use brigade IDs and hex IDs that appear in this turn's legal_moves and "
+        "legal_commits — never invent an ID. If a brigade is not listed it cannot act this turn.\n"
+        "Reply with ONLY a JSON array of action objects and nothing else (no prose, no markdown "
+        "code fences). An empty array [] is a valid reply meaning 'no orders'."
+    ).format(side=perspective, rules=json.dumps(rules, indent=2), glossary=json.dumps(glossary, indent=2))
+
+    compact = {k: observation[k] for k in COMPACT_KEYS if k in observation}
+    user = (
+        "Current situation (your perspective). Choose this side's orders for the turn.\n"
+        "Action shapes:\n"
+        '  {"type":"move","team":"' + perspective + '","brigade_id":<id>,"target_hex":<hex>,'
+        '"mode":"tactical"|"administrative"}\n'
+        '  {"type":"commit","team":"' + perspective + '","brigade_id":<id>,"target_hex":<hex>}\n\n'
+        + json.dumps(compact)
+    )
+    return [{"role": "system", "content": system}, {"role": "user", "content": user}]
+
+
+def call_model(messages):
+    """POST to the chat-completions endpoint. Returns the assistant content string, or raises on a
+    hard failure (unreachable / HTTP error / malformed envelope)."""
+    base_url = os.environ.get("HEXCOMBAT_LLM_BASE_URL", DEFAULT_BASE_URL).rstrip("/")
+    model = os.environ.get("HEXCOMBAT_LLM_MODEL", "")
+    api_key = os.environ.get("HEXCOMBAT_LLM_API_KEY", "EMPTY")
+    if not model:
+        raise RuntimeError("HEXCOMBAT_LLM_MODEL is not set")
+
+    body = json.dumps({
+        "model": model,
+        "messages": messages,
+        "temperature": 0.7,
+        "max_tokens": 1024,
+    }).encode("utf-8")
+    request = urllib.request.Request(
+        base_url + "/chat/completions",
+        data=body,
+        headers={"Content-Type": "application/json", "Authorization": "Bearer " + api_key},
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=HTTP_TIMEOUT_SECONDS) as response:
+        payload = json.load(response)
+    return payload["choices"][0]["message"]["content"], model
+
+
+def extract_actions(content):
+    """Pull the first JSON array out of the model reply. Returns a list, or None if nothing parses."""
+    if content is None:
+        return None
+    text = content.strip()
+    for candidate in _candidate_json_arrays(text):
+        try:
+            parsed = json.loads(candidate)
+        except (ValueError, TypeError):
+            continue
+        if isinstance(parsed, list):
+            return parsed
+    return None
+
+
+def _candidate_json_arrays(text):
+    # 1) the whole reply; 2) inside ```json ... ``` / ``` ... ``` fences; 3) the first [...] block.
+    yield text
+    fence = re.search(r"```(?:json)?\s*(.*?)```", text, re.DOTALL)
+    if fence:
+        yield fence.group(1).strip()
+    bracket = re.search(r"\[.*\]", text, re.DOTALL)
+    if bracket:
+        yield bracket.group(0)
+
+
+def validate_actions(actions, observation, perspective):
+    """Keep only actions this side may legally issue; force team = perspective; drop end_turn."""
+    legal_moves = observation.get("legal_moves", {})
+    legal_commits = observation.get("legal_commits", {})
+    kept = []
+    for action in actions:
+        if not isinstance(action, dict):
+            continue
+        atype = action.get("type")
+        if atype == "move" and _is_legal_move(action, legal_moves, perspective):
+            kept.append(_with_team(action, perspective, ["brigade_id", "target_hex", "mode"], "move"))
+        elif atype == "commit" and _is_legal_commit(action, legal_commits, perspective):
+            kept.append(_with_team(action, perspective, ["brigade_id", "target_hex"], "commit"))
+        # anything else (end_turn, unknown, illegal, wrong team) is dropped.
+    return kept
+
+
+def _is_legal_move(action, legal_moves, perspective):
+    brigade_id = action.get("brigade_id")
+    entry = legal_moves.get(brigade_id)
+    if not isinstance(entry, dict) or entry.get("team") != perspective:
+        return False
+    mode = action.get("mode", "tactical")
+    return action.get("target_hex") in entry.get(mode, [])
+
+
+def _is_legal_commit(action, legal_commits, perspective):
+    by_team = legal_commits.get(action.get("target_hex"), {})
+    return action.get("brigade_id") in by_team.get(perspective, [])
+
+
+def _with_team(action, perspective, keys, atype):
+    out = {"type": atype, "team": perspective}
+    for key in keys:
+        if key in action:
+            out[key] = action[key]
+    if atype == "move":
+        out.setdefault("mode", "tactical")
+    return out
+
+
+def append_log(log_path, perspective, observation, model, raw_reply, actions):
+    os.makedirs(os.path.dirname(os.path.abspath(log_path)), exist_ok=True)
+    record = {
+        "perspective": perspective,
+        "turn": observation.get("turn"),
+        "model": model,
+        "raw_reply": raw_reply,
+        "actions": actions,
+    }
+    with open(log_path, "a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record) + "\n")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Local-LLM sidecar for HexCombat.")
+    parser.add_argument("--obs", required=True, help="Path to the observation JSON file.")
+    parser.add_argument("--perspective", required=True, choices=["Red", "Green"])
+    parser.add_argument("--log", default="", help="Optional JSONL obs/action log to append to.")
+    args = parser.parse_args()
+
+    observation = load_observation(args.obs)
+    messages = build_messages(observation, args.perspective)
+
+    try:
+        raw_reply, model = call_model(messages)
+    except (urllib.error.URLError, OSError, RuntimeError, KeyError, ValueError) as error:
+        log("llm_sidecar: hard failure calling model: %s" % error)
+        return 1
+
+    parsed = extract_actions(raw_reply)
+    if parsed is None:
+        log("llm_sidecar: model reply had no parseable JSON array; issuing no orders")
+        actions = []
+    else:
+        actions = validate_actions(parsed, observation, args.perspective)
+
+    if args.log:
+        append_log(args.log, args.perspective, observation, model, raw_reply, actions)
+    sys.stdout.write(json.dumps(actions))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
