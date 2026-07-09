@@ -3,10 +3,12 @@
 extends SceneTree
 
 const BEACHES_PATH := "res://data/beaches.json"
+const HEX_GRID_PATH := "res://data/taiwan_hex_grid.json"
 const EXPECTED_BEACH_COUNT := 9
 const KNOWN_TO_NUMBERS := [2, 3, 4, 5]
 
 var _failures: Array[String] = []
+var _hex_ids: Array = []
 
 
 func _initialize() -> void:
@@ -16,10 +18,27 @@ func _initialize() -> void:
 		_finish()
 		return
 
+	_hex_ids = _load_hex_ids()
+
 	var beaches_data: Array = json.get("beaches", [])
 	_validate_count(beaches_data)
 	_validate_beach_contracts(beaches_data)
 	_finish()
+
+
+func _load_hex_ids() -> Array:
+	var json: Variant = _read_json(HEX_GRID_PATH)
+	if json == null:
+		return []
+	var hexes_data: Array = []
+	if json is Array:
+		hexes_data = json
+	elif json is Dictionary and json.has("hexes"):
+		hexes_data = json["hexes"]
+	var ids: Array = []
+	for hex_data in hexes_data:
+		ids.append(String(hex_data.get("id", "")))
+	return ids
 
 
 func _read_json(path: String) -> Variant:
@@ -56,6 +75,12 @@ func _validate_beach_contracts(beaches_data: Array) -> void:
 		var name_en := String(beach_data.get("name_en", ""))
 		if name_en.is_empty():
 			_fail("Beach %d missing name_en" % beach_id)
+
+		var hex_id := String(beach_data.get("hex_id", ""))
+		if hex_id.is_empty():
+			_fail("Beach %d missing hex_id" % beach_id)
+		elif hex_id not in _hex_ids:
+			_fail("Beach %d hex_id '%s' not present in taiwan_hex_grid.json" % [beach_id, hex_id])
 
 		var to_number := int(beach_data.get("to_number", -1))
 		if to_number not in KNOWN_TO_NUMBERS:

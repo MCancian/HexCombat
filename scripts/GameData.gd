@@ -474,6 +474,7 @@ func load_beaches() -> void:
 		var beach: BeachDef = BeachDefResource.new()
 		beach.id = int(beach_data.get("id", 0))
 		beach.name_en = String(beach_data.get("name_en", ""))
+		beach.hex_id = String(beach_data.get("hex_id", ""))
 		beach.category = String(beach_data.get("category", ""))
 		beach.to_number = int(beach_data.get("to_number", 0))
 		beach.offload_rate = float(beach_data.get("offload_rate", 0.0))
@@ -485,6 +486,9 @@ func load_beaches() -> void:
 		beach.lng = float(beach_data.get("lng", 0.0))
 		if beach.id == 0:
 			push_error("Beach entry missing id field")
+			continue
+		if beach.hex_id == "" or beach.hex_id not in hex_lookup:
+			push_error("beaches.json beach %d hex_id '%s' missing or not in grid" % [beach.id, beach.hex_id])
 			continue
 		beaches[beach.id] = beach
 	print_debug("Loaded %d beaches" % beaches.size())

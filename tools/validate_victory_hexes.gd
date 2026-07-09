@@ -6,7 +6,9 @@
 extends SceneTree
 
 const HEX_GRID_PATH := "res://data/taiwan_hex_grid.json"
-const OFFSHORE_IDS: Array[String] = ["hex_11_16", "hex_12_16", "hex_12_17", "hex_4_18"]
+# Offshore hexes outside the main-island component (Green Island cluster + Orchid Island)
+# after the 2026-07-09 coastline reconciliation (>=5% land rule).
+const OFFSHORE_IDS: Array[String] = ["hex_12_17", "hex_4_17", "hex_4_18", "hex_5_17"]
 
 var _failures: Array[String] = []
 

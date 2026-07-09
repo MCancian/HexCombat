@@ -120,7 +120,7 @@ godot_exit=$?
 echo "$out"
 
 smoke_ok=true
-for marker in "Loaded 455 hexes" "Loaded 143 brigades" "Spawned 455 hex cells" "Rendered 4 brigade markers"; do
+for marker in "Loaded 466 hexes" "Loaded 143 brigades" "Spawned 466 hex cells" "Rendered 4 brigade markers"; do
     if ! echo "$out" | grep -F -q "$marker"; then
         failures+=("Smoke: missing expected marker '$marker'")
         smoke_ok=false

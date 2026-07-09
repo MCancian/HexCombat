@@ -1,9 +1,10 @@
 {
-  "description": "Beach landing sites ported from TaiwanInvasionViewer defaults/beaches.json. offload_rate in short tons/day. Minefield data deferred to anti-ship phase.",
+  "description": "Beach landing sites ported from TaiwanInvasionViewer defaults/beaches.json. offload_rate in short tons/day. Minefield data deferred to anti-ship phase. hex_id = the grid hex containing the beach lat/lng point.",
   "beaches": [
     {
       "id": 1,
       "name_en": "New Taipei Bali",
+      "hex_id": "hex_44_16",
       "category": "Exercise Site",
       "to_number": 3,
       "offload_rate": 4400,
@@ -17,6 +18,7 @@
     {
       "id": 2,
       "name_en": "Linkou Baodoucuo",
+      "hex_id": "hex_44_15",
       "category": "Main Landing Site",
       "to_number": 3,
       "offload_rate": 8800,
@@ -30,6 +32,7 @@
     {
       "id": 3,
       "name_en": "Taoyuan Zhuwei",
+      "hex_id": "hex_43_14",
       "category": "Exercise Site",
       "to_number": 3,
       "offload_rate": 4400,
@@ -43,6 +46,7 @@
     {
       "id": 4,
       "name_en": "Taoyuan Haihu",
+      "hex_id": "hex_43_13",
       "category": "Main Landing Site",
       "to_number": 3,
       "offload_rate": 8800,
@@ -56,6 +60,7 @@
     {
       "id": 5,
       "name_en": "Taichung Jianan",
+      "hex_id": "hex_34_8",
       "category": "Main Landing Site",
       "to_number": 5,
       "offload_rate": 8800,
@@ -69,6 +74,7 @@
     {
       "id": 6,
       "name_en": "Tainan Xishu",
+      "hex_id": "hex_16_4",
       "category": "Main Landing Site",
       "to_number": 4,
       "offload_rate": 8800,
@@ -82,6 +88,7 @@
     {
       "id": 7,
       "name_en": "Pingtung Jialutang",
+      "hex_id": "hex_8_8",
       "category": "Exercise Site",
       "to_number": 4,
       "offload_rate": 4400,
@@ -95,6 +102,7 @@
     {
       "id": 8,
       "name_en": "Taitung Zhiben",
+      "hex_id": "hex_12_13",
       "category": "Exercise Site",
       "to_number": 2,
       "offload_rate": 4400,
@@ -108,6 +116,7 @@
     {
       "id": 9,
       "name_en": "Hualien Beipu",
+      "hex_id": "hex_29_18",
       "category": "Exercise Site",
       "to_number": 2,
       "offload_rate": 4400,

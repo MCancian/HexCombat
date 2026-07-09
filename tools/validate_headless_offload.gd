@@ -6,7 +6,7 @@ const DICE_SEED := 12345
 const EXPECTED_BEACH_HEX_BY_BRIGADE := {
 	"PLA-71-2-Amphibious": "hex_44_16",
 	"PLA-72-5-Amphibious": "hex_44_15",
-	"PLA-73-14-Amphibious": "hex_44_14",
+	"PLA-73-14-Amphibious": "hex_43_14",
 	"PLA-74-1-Amphibious": "hex_43_13",
 }
 

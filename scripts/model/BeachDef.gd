@@ -3,6 +3,7 @@ class_name BeachDef
 
 @export var id: int = 0
 @export var name_en: String = ""
+@export var hex_id: String = ""
 @export var category: String = ""
 @export var to_number: int = 0
 @export var offload_rate: float = 0.0  # short tons/day
