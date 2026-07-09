@@ -42,12 +42,17 @@ func test_single_hex_combat_applies_casualties_feba_and_fought_flags() -> void:
 	GameData.set_brigade_hex(GREEN_BRIGADE_ID, COMBAT_HEX)
 	var start_feba := float(GameData.hex_states[COMBAT_HEX].feba_km)
 
-	GameState.resolve_turn(ScriptedDice.new([50, 100, 100], [[0], [0]]))
+	# COMBAT_HEX (hex_43_16) is "urban" (defender_modifier 2.0, Track F, activated 2026-07-09).
+	# Green's defended strength doubles, so at these same rolls the attacker now loses 2 battalions
+	# (was 1) and the defender still loses 1 (unchanged) — re-pinned below.
+	GameState.resolve_turn(ScriptedDice.new([50, 100, 100], [[0, 1], [0]]))
 
-	assert_int(_battalion_qty(red, "Amphibious Infantry Battalion")).is_equal(3)
+	# Was 3 (attacker_losses 1 -> 2 battalions destroyed out of the starting 4).
+	assert_int(_battalion_qty(red, "Amphibious Infantry Battalion")).is_equal(2)
 	assert_int(_battalion_qty(green, "Amphibious Infantry Battalion")).is_equal(1)
-	# FEBA delta scales linearly with GameData.feba_base_km (3.5, TIV value): 1.0 @ base 2.0 → 1.75 @ 3.5.
-	assert_float(float(GameData.hex_states[COMBAT_HEX].feba_km) - start_feba).is_equal_approx(1.75, 0.0001)
+	# FEBA delta was +1.75 (attacker advance) with the terrain modifier dormant (effectively 1.0).
+	# With the urban defender doubled, the balance flips to a defender advantage: -1.25.
+	assert_float(float(GameData.hex_states[COMBAT_HEX].feba_km) - start_feba).is_equal_approx(-1.25, 0.0001)
 	assert_bool(red.fought_this_turn).is_true()
 	assert_bool(green.fought_this_turn).is_true()
 

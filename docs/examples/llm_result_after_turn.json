@@ -66,7 +66,7 @@
 		},
 		"brigades": [
 			{
-				"battalions": 8,
+				"battalions": 7,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_43_16",
@@ -131,7 +131,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 3,
+				"battalions": 4,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_43_16",
@@ -274,7 +274,7 @@
 				"attacker_brigade_ids": [
 					"PLA-71-2-Amphibious"
 				],
-				"attacker_losses": 1,
+				"attacker_losses": 2,
 				"combat_detail": {
 					"attacker": {
 						"maneuver_combat_power": 7.0,
@@ -314,26 +314,26 @@
 							"rocket_artillery": 0,
 							"rotary_wing": 0
 						},
-						"terrain_modifier": 1.0,
-						"total_combat_power_terrain_modified": 5.2,
+						"terrain_modifier": 2.0,
+						"total_combat_power_terrain_modified": 10.4,
 						"total_combat_power_unmodified": 5.2
 					},
 					"feba": {
 						"base_km": 3.5,
-						"movement_km": 1.337,
+						"movement_km": -0.955,
 						"roll_factor": 0.955
 					},
 					"losses": {
-						"attacker": 1,
-						"attacker_loss_rate": 0.184,
-						"defender": 1,
-						"defender_loss_rate": 0.241
+						"attacker": 2,
+						"attacker_loss_rate": 0.244,
+						"defender": 0,
+						"defender_loss_rate": 0.166
 					},
 					"ratios": {
-						"terrain_modified": 1.5,
+						"terrain_modified": 0.75,
 						"unmodified": 1.5
 					},
-					"result": "Attacker Advantage",
+					"result": "Defender Advantage",
 					"rolls": {
 						"attacker_loss_roll": 74,
 						"defender_loss_roll": 41,
@@ -343,8 +343,8 @@
 				"defender_brigade_ids": [
 					"BDE-66"
 				],
-				"defender_losses": 1,
-				"feba_movement_km": 1.337,
+				"defender_losses": 0,
+				"feba_movement_km": -0.955,
 				"hex_id": "hex_43_16",
 				"owner_after": "contested"
 			}
@@ -780,7 +780,7 @@
 					"BDE-66",
 					"PLA-71-2-Amphibious"
 				],
-				"feba_km": 1.337,
+				"feba_km": -0.955,
 				"hex_id": "hex_43_16",
 				"neighbors": [
 					"hex_42_16",
@@ -790,7 +790,8 @@
 					"hex_44_16",
 					"hex_44_17"
 				],
-				"owner": "contested"
+				"owner": "contested",
+				"terrain": "urban"
 			},
 			{
 				"brigades": [
@@ -806,7 +807,8 @@
 					"hex_44_15",
 					"hex_44_16"
 				],
-				"owner": "green"
+				"owner": "green",
+				"terrain": "urban"
 			},
 			{
 				"brigades": [
@@ -822,7 +824,8 @@
 					"hex_43_14",
 					"hex_43_15"
 				],
-				"owner": "green"
+				"owner": "green",
+				"terrain": "metropolis"
 			},
 			{
 				"brigades": [
@@ -838,7 +841,8 @@
 					"hex_43_13",
 					"hex_43_14"
 				],
-				"owner": "green"
+				"owner": "green",
+				"terrain": "urban"
 			},
 			{
 				"brigades": [
@@ -851,7 +855,8 @@
 					"hex_43_15",
 					"hex_44_16"
 				],
-				"owner": "red"
+				"owner": "red",
+				"terrain": "plains"
 			},
 			{
 				"brigades": [
@@ -866,7 +871,8 @@
 					"hex_43_15",
 					"hex_44_15"
 				],
-				"owner": "red"
+				"owner": "red",
+				"terrain": "urban"
 			},
 			{
 				"brigades": [
@@ -879,7 +885,8 @@
 					"hex_42_14",
 					"hex_43_14"
 				],
-				"owner": "red"
+				"owner": "red",
+				"terrain": "plains"
 			}
 		],
 		"pending_commitments": {
@@ -932,8 +939,8 @@
 			}
 		],
 		"supply_state": {
-			"current_dos_equivalent": 74.0,
-			"current_dos_tons": 11100.0,
+			"current_dos_equivalent": 76.0,
+			"current_dos_tons": 11400.0,
 			"day_count": 1
 		},
 		"turn": 2,
@@ -1011,9 +1018,9 @@
 		},
 		"cleanup_summary": {
 			"antiship_systems_reset": 50,
-			"china_battalions_on_taiwan": 20,
+			"china_battalions_on_taiwan": 19,
 			"game_over": true,
-			"taiwan_battalions_on_taiwan": 15,
+			"taiwan_battalions_on_taiwan": 16,
 			"victory_reason": "china_majority",
 			"winner": "red"
 		},
@@ -1022,7 +1029,7 @@
 				"attacker_brigade_ids": [
 					"PLA-71-2-Amphibious"
 				],
-				"attacker_losses": 1,
+				"attacker_losses": 2,
 				"combat_detail": {
 					"attacker": {
 						"maneuver_combat_power": 7.0,
@@ -1062,26 +1069,26 @@
 							"rocket_artillery": 0,
 							"rotary_wing": 0
 						},
-						"terrain_modifier": 1.0,
-						"total_combat_power_terrain_modified": 5.2,
+						"terrain_modifier": 2.0,
+						"total_combat_power_terrain_modified": 10.4,
 						"total_combat_power_unmodified": 5.2
 					},
 					"feba": {
 						"base_km": 3.5,
-						"movement_km": 1.337,
+						"movement_km": -0.955,
 						"roll_factor": 0.955
 					},
 					"losses": {
-						"attacker": 1,
-						"attacker_loss_rate": 0.184,
-						"defender": 1,
-						"defender_loss_rate": 0.241
+						"attacker": 2,
+						"attacker_loss_rate": 0.244,
+						"defender": 0,
+						"defender_loss_rate": 0.166
 					},
 					"ratios": {
-						"terrain_modified": 1.5,
+						"terrain_modified": 0.75,
 						"unmodified": 1.5
 					},
-					"result": "Attacker Advantage",
+					"result": "Defender Advantage",
 					"rolls": {
 						"attacker_loss_roll": 74,
 						"defender_loss_roll": 41,
@@ -1091,8 +1098,8 @@
 				"defender_brigade_ids": [
 					"BDE-66"
 				],
-				"defender_losses": 1,
-				"feba_movement_km": 1.337,
+				"defender_losses": 0,
+				"feba_movement_km": -0.955,
 				"hex_id": "hex_43_16",
 				"owner_after": "contested"
 			}
@@ -1424,7 +1431,7 @@
 					"attacker_brigade_ids": [
 						"PLA-71-2-Amphibious"
 					],
-					"attacker_losses": 1,
+					"attacker_losses": 2,
 					"combat_detail": {
 						"attacker": {
 							"maneuver_combat_power": 7.0,
@@ -1464,26 +1471,26 @@
 								"rocket_artillery": 0,
 								"rotary_wing": 0
 							},
-							"terrain_modifier": 1.0,
-							"total_combat_power_terrain_modified": 5.2,
+							"terrain_modifier": 2.0,
+							"total_combat_power_terrain_modified": 10.4,
 							"total_combat_power_unmodified": 5.2
 						},
 						"feba": {
 							"base_km": 3.5,
-							"movement_km": 1.337,
+							"movement_km": -0.955,
 							"roll_factor": 0.955
 						},
 						"losses": {
-							"attacker": 1,
-							"attacker_loss_rate": 0.184,
-							"defender": 1,
-							"defender_loss_rate": 0.241
+							"attacker": 2,
+							"attacker_loss_rate": 0.244,
+							"defender": 0,
+							"defender_loss_rate": 0.166
 						},
 						"ratios": {
-							"terrain_modified": 1.5,
+							"terrain_modified": 0.75,
 							"unmodified": 1.5
 						},
-						"result": "Attacker Advantage",
+						"result": "Defender Advantage",
 						"rolls": {
 							"attacker_loss_roll": 74,
 							"defender_loss_roll": 41,
@@ -1493,8 +1500,8 @@
 					"defender_brigade_ids": [
 						"BDE-66"
 					],
-					"defender_losses": 1,
-					"feba_movement_km": 1.337,
+					"defender_losses": 0,
+					"feba_movement_km": -0.955,
 					"hex_id": "hex_43_16",
 					"owner_after": "contested"
 				},
@@ -1506,9 +1513,9 @@
 			{
 				"data": {
 					"antiship_systems_reset": 50,
-					"china_battalions_on_taiwan": 20,
+					"china_battalions_on_taiwan": 19,
 					"game_over": true,
-					"taiwan_battalions_on_taiwan": 15,
+					"taiwan_battalions_on_taiwan": 16,
 					"victory_reason": "china_majority",
 					"winner": "red"
 				},

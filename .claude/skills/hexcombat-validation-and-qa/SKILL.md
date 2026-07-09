@@ -35,7 +35,7 @@ teardown *after* everything passed (see `hexcombat-debugging-playbook`). Green o
 
 | Artifact | Pins | Where |
 |---|---|---|
-| Golden turn | seed 20260624 → `casualties=3, feba=-0.96` | `tools/validate_headless_turn.gd` |
+| Golden turn | seed 20260624 → `casualties=6, feba=-3.04` (re-baselined 2026-07-09, Track F terrain) | `tools/validate_headless_turn.gd` |
 | Cleanup fingerprint | post-turn ownership/state hash | `tools/validate_cleanup.gd` |
 | Golden victory e2e | deterministic terminal (turn 1, red win, census 20v16) | `tools/validate_golden_victory.gd` |
 | Self-play | 4-turn full-game determinism + index health | `tools/validate_headless_selfplay.gd` |

@@ -19,8 +19,9 @@ When unsure, treat it as the higher class.
 
 ## The golden invariant
 
-`tools/validate_headless_turn.gd`, seed **20260624**, must print **casualties=3, feba=-0.96**
-(current baseline — read the validator, don't trust this file, if they disagree).
+`tools/validate_headless_turn.gd`, seed **20260624**, must print **casualties=6, feba=-3.04**
+(current baseline, re-baselined 2026-07-09 for the Track F defender terrain modifier — read the
+validator, don't trust this file, if they disagree).
 
 - A refactor/cleanup/extraction must keep it **byte-stable**. If it moves, your change consumed or
   reordered RNG draws, or changed math — that is a bug in the change, not a new baseline.

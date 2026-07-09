@@ -98,6 +98,7 @@ Each item in `occupied_hexes`:
 | `feba_km` | number | Forward edge of battle progress in kilometers. |
 | `brigades` | array[string] | Brigade IDs currently in the hex. |
 | `neighbors` | array[string] | Adjacent hex IDs. |
+| `terrain` | string | Terrain class (`GameData.get_terrain` class name, e.g. `urban`, `plains`); empty string if unclassified. Drives the defender combat modifier (Track F). |
 
 ## `legal_moves`
 

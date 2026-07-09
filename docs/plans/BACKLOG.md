@@ -92,15 +92,16 @@ All need visual verification (screenshot / Godot MCP / user) — headless gates 
 
 From the 2026-07-08 external map review (items 1 and 4; items 2/3/5 fixed same day):
 
-- **Terrain/sea model** — the map's biggest gap: every hex is identical land; the Central
-  Mountain Range (which funnels any invasion onto the west plain), urban/plains classes, and the
-  strait itself are unrepresented, so movement and combat are terrain-blind. The combat API hook
-  already exists dormant (`CombatCalculator.gd` `defender_terrain_modifier`, always 1.0); a
-  terrain class per hex in `data/taiwan_hex_grid.json` (or a sidecar file) would feed it plus a
-  movement-cost layer. Needs elevation/land-cover sourcing (ArcGIS per `docs/plans/port_audit.md`)
-  and USER design calls on classes + modifiers. Follow
-  `.claude/skills/hexcombat-add-phase-resolver` for the mechanic wiring. Done when: hexes carry a
-  terrain class rendered on the map, combat/movement consume it, golden re-baselined deliberately.
+- **Terrain/sea model** — DONE except map rendering (2026-07-09): hexes carry a terrain class
+  (`data/terrain/hex_terrain.json` + `data/terrain/terrain_types.json`, USER design calls on
+  classes + modifiers), movement consumes `move_cost`/`impassable` (`GameData._terrain_entry_cost`,
+  `_with_impassable`), and ground combat now consumes `defender_modifier`
+  (`CombatResolver.resolve_at` → `GameState._defender_combat_modifier`; golden re-baselined —
+  seed 20260624 casualties=6, feba=-3.04; see PLAN.md → Decisions 2026-07-09). `terrain` is also
+  surfaced per-hex in the LLM `occupied_hexes` observation. **Still open:** terrain is not yet
+  rendered on the map view (`HexMap.gd` colors hexes by ownership only); the Central Mountain
+  Range / strait are represented as data (mountain terrain class, impassable) but not visually
+  distinguished on the projector display.
 - **East-coast hex fidelity** — the Hualien–Taitung shore is under-covered (visible concavity);
   fixing it means regenerating `data/taiwan_hex_grid.json` from better coastline data — a
   golden-touching grid change; bundle it with the terrain-data sourcing above, not alone.

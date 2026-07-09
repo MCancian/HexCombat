@@ -43,6 +43,7 @@ static func resolve_at(
 	feba_base_km: float,
 	red_supply_pool: float,
 	red_out_of_supply_effectiveness: float,
+	defender_terrain_modifier: float = 1.0,
 ) -> Dictionary:
 	if attacker_brigades.is_empty() or defender_brigades.is_empty():
 		return {"result": null, "summary": null}
@@ -59,7 +60,7 @@ static func resolve_at(
 		defender_units,
 		attacker_support,
 		defender_support,
-		1.0,
+		defender_terrain_modifier,
 		feba_base_km
 	)
 

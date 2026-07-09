@@ -558,6 +558,16 @@ func _find_contested_hexes() -> Array[String]:
 	return contested
 
 
+# Defender combat modifier for hex_id: terrain.defender_modifier (1.0 if the hex has no terrain
+# classification) times a situational multiplier, currently always 1.0. The `* 1.0` is a
+# deliberate seam — a future situational modifier (e.g. a first-landing beach-assault penalty on
+# the defender, see BACKLOG) multiplies in here without touching CombatResolver or GameData.
+func _defender_combat_modifier(hex_id: String) -> float:
+	var terrain := GameData.get_terrain(hex_id)
+	var terrain_modifier: float = terrain.defender_modifier if terrain != null else 1.0
+	return terrain_modifier * 1.0
+
+
 # Delegating wrapper (test-called surface) — pure logic lives in CombatResolver.
 func _inject_supply_effectiveness(units: Array, team: int) -> void:
 	var pool: float = supply_state.current_dos_tons if supply_state != null else 1.0
@@ -572,6 +582,9 @@ func _resolve_combat_at(hex_id: String, dice: Dice) -> CombatSummary:
 	var attacker_brigades := _combat_contributors_for(Brigade.Team.RED, hex_id)
 	var defender_brigades := _combat_contributors_for(Brigade.Team.GREEN, hex_id)
 	var pool: float = supply_state.current_dos_tons if supply_state != null else 1.0
+	# Terrain resolves at hex_id (the defended/contested hex), not the attacker's origin — the
+	# defender_modifier models fortification/cover of the ground being held, which belongs to the
+	# hex under attack regardless of which side started there.
 	var outcome := CombatResolver.resolve_at(
 		hex_id,
 		attacker_brigades,
@@ -579,7 +592,8 @@ func _resolve_combat_at(hex_id: String, dice: Dice) -> CombatSummary:
 		dice,
 		GameData.feba_base_km,
 		pool,
-		GameData.red_out_of_supply_effectiveness
+		GameData.red_out_of_supply_effectiveness,
+		_defender_combat_modifier(hex_id)
 	)
 	if outcome["summary"] == null:
 		return null

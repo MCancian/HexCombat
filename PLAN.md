@@ -130,6 +130,45 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-07-09 — Track F: activate the defender terrain modifier in ground combat + surface
+  terrain in the LLM observation (USER call on rebalance values 2026-07-09; agent judgment on
+  wiring).** The combat API hook was dormant since the port: `CombatCalculator.resolve_map_attack`
+  always accepted `defender_terrain_modifier` but `CombatResolver.resolve_at` passed a hardcoded
+  1.0. Wired it through: `CombatResolver.resolve_at` gained a `defender_terrain_modifier: float =
+  1.0` parameter (resolver stays pure, no GameData access); `GameState._defender_combat_modifier
+  (hex_id)` (new helper) reads `GameData.get_terrain(hex_id).defender_modifier` (1.0 if
+  unclassified) and passes it at the `_resolve_combat_at` call site — terrain resolves at the
+  *defended* hex, not the attacker's origin. `defender_modifier` values (already in
+  `data/terrain/terrain_types.json`, USER call same day): urban 2.0, metropolis 3.0, hills 1.5,
+  plains 1.0. **Judgment calls:** (1) the wrapper multiplies by a literal `* 1.0` "situational
+  modifier" seam, commented as the future first-landing beach-assault penalty hook (see
+  BACKLOG), not populated speculatively per the non-speculative-knobs rule; (2) LLM observation:
+  added `terrain` (the `GameData.get_terrain` class-name string, e.g. `"urban"`) to each
+  `occupied_hexes` entry in `LLMGameAPI.observation()`, documented in
+  `docs/LLM_OBSERVATION_SCHEMA.md`'s Occupied hex object table — no schema/REQUIRED_KEYS change
+  needed since `occupied_hexes` is an untyped array in `schemas/llm_observation.schema.json`.
+  **Golden re-baseline** (hex_43_16 is "urban", the golden scenario's contested hex): seed
+  20260624 — `validate_headless_turn.gd` casualties=3→6, feba=-0.96→-3.04;
+  `validate_cleanup.gd`'s `EXPECTED_COMBAT_FINGERPRINT` casualties=3→3 (unchanged; it counts only
+  the one contested hex, not the whole game), feba=-0.96→-3.04. Direction confirmed causal: the
+  doubled urban defender flips the golden fight from "Attacker Advantage" (ratio 1.5, feba
+  +1.337) to "Defender Advantage" (ratio 0.75, feba -0.955) in the regenerated
+  `docs/examples/llm_result_after_turn.json` — attacker_losses 1→2, defender_losses 1→0, FEBA
+  moves toward Red (the line retreats), exactly the "stronger defender" shape expected. New test
+  `tests/combat_terrain_modifier_test.gd` calls `CombatResolver.resolve_at` directly at modifiers
+  1.0/2.0/3.0 with a fixed 20-vs-5 Tank Battalion mismatch (hand-verified against the
+  loss-rate/feba formulas, then confirmed by running); `tests/combat_resolution_test.gd`'s
+  `test_single_hex_combat_applies_casualties_feba_and_fought_flags` re-pinned (comment carries
+  old→new + why); the other 4 tests in that suite and `test_ownership_by_occupancy...` (hex_40_16
+  is "hills", 1.5×, but the tie-break rule already forced defender_losses=1 both before and after)
+  needed no change — verified by running, not assumed. **Verification:** full local gate green
+  (import + 26 validators + GdUnit 254 cases across 47 suites, all passed); `validate_headless_turn`
+  and `validate_cleanup` re-run twice each, byte-identical. Not committed/pushed per this session's
+  instruction. **Deferred:** `CombatCalculator.TERRAIN_MODIFIERS` (an old unused string-keyed
+  const, lines 4-12) is dead code superseded by `data/terrain/terrain_types.json` +
+  `GameData.get_terrain` — left untouched, out of this task's scope; terrain is still not
+  rendered on the map view (Track F's "rendered on the map" sub-item remains open).
+
 - **2026-07-08 — Map review fixes: census, beach 3, marker legibility + Linux bash gate (USER
   calls on scope; agent judgment on mechanics).** From an external map review (5 findings). USER
   calls: fix the inland beach in BOTH the golden default and `roc_full_defense` (accepting a

@@ -125,7 +125,8 @@
 				"hex_44_16",
 				"hex_44_17"
 			],
-			"owner": "green"
+			"owner": "green",
+			"terrain": "urban"
 		},
 		{
 			"brigades": [
@@ -141,7 +142,8 @@
 				"hex_44_15",
 				"hex_44_16"
 			],
-			"owner": "green"
+			"owner": "green",
+			"terrain": "urban"
 		},
 		{
 			"brigades": [
@@ -157,7 +159,8 @@
 				"hex_43_14",
 				"hex_43_15"
 			],
-			"owner": "green"
+			"owner": "green",
+			"terrain": "metropolis"
 		},
 		{
 			"brigades": [
@@ -173,7 +176,8 @@
 				"hex_43_13",
 				"hex_43_14"
 			],
-			"owner": "green"
+			"owner": "green",
+			"terrain": "urban"
 		}
 	],
 	"pending_commitments": {

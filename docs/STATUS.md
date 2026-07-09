@@ -46,9 +46,12 @@ offload → movement & commit → ground combat → front-line → cleanup (+ vi
 
 **Phases / subsystems implemented:**
 - **Ground combat** (BOOTS slice M0–M7): movement, commit, combat resolution, FEBA, casualties,
-  retreat, hex ownership. Golden invariant: seed 20260624 → `casualties=3, feba=-0.96` (byte-stable gate; re-baselined twice —
-when the hex-adjacency coordinate bug was fixed, and when `feba_base_km` was set to TIV's 3.5 — see
-`PLAN.md` → Decisions).
+  retreat, hex ownership. Defender terrain modifier (Track F) is active: `CombatResolver.resolve_at`
+  now receives the defended hex's `GameData.get_terrain(hex_id).defender_modifier` from
+  `GameState._defender_combat_modifier` instead of a hardcoded 1.0. Golden invariant: seed
+  20260624 → `casualties=6, feba=-3.04` (byte-stable gate; re-baselined three times — when the
+  hex-adjacency coordinate bug was fixed, when `feba_base_km` was set to TIV's 3.5, and 2026-07-09
+  when the terrain modifier was activated — see `PLAN.md` → Decisions).
 - **D1 Amphibious offload** — ship reserve → beach landing; lands brigades onto beach hexes.
   Every scenario's `red_ship_reserve.beach_hex` must be coastal (< 6 land neighbors) —
   `validate_scenario_data.gd` rejects fully-inland landing hexes.
