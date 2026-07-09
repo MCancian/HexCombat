@@ -21,6 +21,7 @@ COAST_SHP = CACHE / "coastline" / "GSHHS_shp" / "f" / "GSHHS_f_L1.shp"
 
 TERRAIN_COLORS = {
     "mountain": "#8B7355",
+    "metropolis": "#6E6E6E",
     "hills": "#C4A96A",
     "urban": "#9E9E9E",
     "plains": "#DCE8C0",

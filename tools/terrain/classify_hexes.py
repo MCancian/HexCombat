@@ -111,12 +111,14 @@ def hex_builtup_frac(poly: Polygon, cache_dir: Path) -> float:
 # Classification
 # ---------------------------------------------------------------------------
 
-_VALID_CLASSES = {"mountain", "urban", "hills", "plains"}
+_VALID_CLASSES = {"mountain", "metropolis", "urban", "hills", "plains"}
 
 
 def classify_hex(mean_elev_m: float, _elev_std_m: float, builtup_frac: float) -> str:
     if mean_elev_m >= 1000:
         return "mountain"
+    if builtup_frac >= 0.50:
+        return "metropolis"
     if builtup_frac >= 0.20:
         return "urban"
     if 200 <= mean_elev_m < 1000:
