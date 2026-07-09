@@ -31,11 +31,12 @@ cos(lat) longitude compression and 6% margin (`MapProjection.gd:3-11`). `project
 
 **Hex cells.** `spawn_hex_cells()` (HexMap.gd:37) iterates `GameData.hexes`, projects each hex's
 lat/lon vertex array into a `Polygon2D` + `Line2D` outline, and stores them in `hex_cells` /
-`projected_vertices`. Color is set by `get_hex_color()`: the hex's terrain class tints the base
-fill (`TerrainType.color` from `data/terrain/terrain_types.json`), and the ownership color
-(red/green/contested-ramp from `GameData.hex_states[hex_id]`, `_ownership_color()`) is lerped over
-it at 0.35 so terrain stays dominant while ownership still reads; unclassified hexes fall back to
-ownership-only. Beaches
+`projected_vertices`. Color is set by `get_hex_color()`: the hex's terrain class
+(`TerrainType.color` from `data/terrain/terrain_types.json`) is the base fill. Green-held and
+unowned hexes render pure terrain color (the whole island starts Green — tinting it washed out
+the palette); only RED or CONTESTED hexes get the ownership color (`_ownership_color()`,
+red/contested-ramp) lerped over the terrain at 0.35, so the invasion front reads against an
+otherwise pure-terrain map. Unclassified hexes fall back to ownership-only. Beaches
 render as numbered dark-blue triangle glyphs anchored bottom-left in their `BeachDef.hex_id` hex
 (`render_beach_markers()`, z between hex fills and brigade markers).
 

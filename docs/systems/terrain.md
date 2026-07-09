@@ -181,16 +181,17 @@ loss-rate/FEBA formulas).
 
 ## 7. Rendering
 
-`HexMap.get_hex_color(hex_id)` (`scripts/HexMap.gd:351-363`) tints the hex fill by
-`TerrainType.color`, then lerps the ownership color over it at weight 0.35
-(`terrain_color.lerp(ownership_color, 0.35)` — 65% terrain / 35% ownership, terrain-dominant) for
-owned/contested hexes, or toward mid-gray at weight 0.15 for unowned hexes. Unclassified hexes
-(empty `TerrainType.color`) fall back to ownership-only fill — the pre-Track-F behavior. The 0.35
-weight is a **USER call** made by comparing rendered screenshots at 0.65 vs 0.35 ownership weight
-(`reports/terrain_view.png` vs `reports/terrain_view_035.png`); terrain-dominant won because the
-projector needs the terrain class to read at a glance, with ownership still visible as a color
-cast. Full rendering detail (beach glyphs, brigade markers, projection, input) lives in
-`docs/systems/view-layer.md` §3.
+`HexMap.get_hex_color(hex_id)` (`scripts/HexMap.gd`) fills each hex with its pure
+`TerrainType.color`; only RED-owned or CONTESTED hexes get the ownership color lerped over the
+terrain at weight 0.35 (`terrain_color.lerp(ownership_color, 0.35)`). Green-held and unowned
+hexes render untinted — **USER call 2026-07-09**: the whole island starts Green-held, so blending
+green over everything washed the palette out; the in-game map should match the untinted
+`tools/terrain/out/terrain_preview.png` palette, with only the deviation from ROC control (the
+invasion) tinted. This superseded the earlier same-day 0.65-vs-0.35 screenshot comparison, which
+kept a green cast on friendly terrain; the 0.35 weight survives as the red/contested tint
+strength. Unclassified hexes (empty `TerrainType.color`) fall back to ownership-only fill — the
+pre-Track-F behavior. Full rendering detail (beach glyphs, brigade markers, projection, input)
+lives in `docs/systems/view-layer.md` §3.
 
 ## 8. Validators & tests
 

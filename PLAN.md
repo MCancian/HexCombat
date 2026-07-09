@@ -130,6 +130,19 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-07-09 — Map palette: friendly territory renders pure terrain color; only RED/CONTESTED
+  hexes get an ownership tint (USER call, superseding the same-day 0.65-vs-0.35 blend
+  comparison).** The stage-6 render blended ownership over terrain on every owned hex — but the
+  whole island starts Green-held, so even the terrain-dominant 0.35 weight washed the palette
+  green. USER call: the in-game map should match the untinted
+  `tools/terrain/out/terrain_preview.png` palette (which uses the same per-class hex values as
+  `data/terrain/terrain_types.json` — no data change needed). `HexMap.get_hex_color` now returns
+  pure `TerrainType.color` for Green-held/unowned hexes and lerps the ownership color in at 0.35
+  only for RED or CONTESTED hexes — the invasion front is the tinted deviation on a pure-terrain
+  map. The earlier 0.35 pick survives as that tint's strength. **Verification:** screenshot
+  (`reports/terrain_view_pure.png`) matches the preview palette; full local gate ALL PHASES
+  GREEN.
+
 - **2026-07-09 — Beach 6 (Tainan Xishu) re-pointed to coastal `hex_16_3` (USER call that the
   beach must sit on the coast; agent judgment on the target hex).** The grid reconciliation left
   beach 6's containing hex `hex_16_4` landlocked (all 6 odd-r neighbors in-grid — it is also the

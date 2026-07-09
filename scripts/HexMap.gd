@@ -336,18 +336,13 @@ func _ownership_color(hex_id: String) -> Color:
 	return color_none
 
 
-func _is_hex_owned(hex_id: String) -> bool:
-	if hex_id not in GameData.hex_states:
-		return false
-	return GameData.hex_states[hex_id].owner != HexOwner.NONE
-
-
-# Terrain (data/terrain/terrain_types.json, via GameData.get_terrain) tints the base fill;
-# ownership is blended over it so ownership always reads instantly. Unowned hexes show
-# ~full terrain color (nudged toward mid-gray so fills don't look flat/saturated); owned or
-# contested hexes lerp terrain->ownership at a weight that keeps ownership clearly dominant.
-# Hexes with no terrain classification (empty TerrainType.color) fall back to the ownership-only
-# color — pre-Track-F behavior.
+# Terrain (data/terrain/terrain_types.json, via GameData.get_terrain) is the base fill. Green
+# (ROC) territory renders as PURE terrain color — the whole island starts Green-held, so tinting
+# it green washed out the terrain palette (USER call 2026-07-09: match the untinted
+# tools/terrain/out/terrain_preview.png look). Only deviation from ROC control is tinted: RED or
+# CONTESTED hexes lerp terrain->ownership at 0.35 (the user-picked weight), so the invasion
+# front reads against an otherwise pure-terrain map. Hexes with no terrain classification
+# (empty TerrainType.color) fall back to the ownership-only color — pre-Track-F behavior.
 func get_hex_color(hex_id: String) -> Color:
 	var ownership_color := _ownership_color(hex_id)
 
@@ -357,10 +352,12 @@ func get_hex_color(hex_id: String) -> Color:
 
 	var terrain_color := Color(terrain.color)
 
-	if _is_hex_owned(hex_id):
-		return terrain_color.lerp(ownership_color, 0.35)
+	if hex_id in GameData.hex_states:
+		var hex_owner: String = GameData.hex_states[hex_id].owner
+		if hex_owner == HexOwner.RED or hex_owner == HexOwner.CONTESTED:
+			return terrain_color.lerp(ownership_color, 0.35)
 
-	return terrain_color.lerp(Color(0.5, 0.5, 0.5), 0.15)
+	return terrain_color
 
 
 func refresh_hex(hex_id: String) -> void:
