@@ -88,23 +88,37 @@ requested.) Sub-areas, priority to be set with the user when the track starts:
 
 All need visual verification (screenshot / Godot MCP / user) — headless gates don't cover pixels.
 
-## Track F — Map & terrain model *(bigger effort; design + data sourcing with the user)*
+## Track F — Map & terrain model *(bigger effort; design + data sourcing with the user)* — ✅ COMPLETE 2026-07-09
 
 From the 2026-07-08 external map review (items 1 and 4; items 2/3/5 fixed same day):
 
-- **Terrain/sea model** — DONE except map rendering (2026-07-09): hexes carry a terrain class
+- ✅ **Terrain/sea model, including map rendering** (2026-07-09). Hexes carry a terrain class
   (`data/terrain/hex_terrain.json` + `data/terrain/terrain_types.json`, USER design calls on
   classes + modifiers), movement consumes `move_cost`/`impassable` (`GameData._terrain_entry_cost`,
-  `_with_impassable`), and ground combat now consumes `defender_modifier`
+  `_with_impassable`), and ground combat consumes `defender_modifier`
   (`CombatResolver.resolve_at` → `GameState._defender_combat_modifier`; golden re-baselined —
   seed 20260624 casualties=6, feba=-3.04; see PLAN.md → Decisions 2026-07-09). `terrain` is also
-  surfaced per-hex in the LLM `occupied_hexes` observation. **Still open:** terrain is not yet
-  rendered on the map view (`HexMap.gd` colors hexes by ownership only); the Central Mountain
-  Range / strait are represented as data (mountain terrain class, impassable) but not visually
-  distinguished on the projector display.
-- **East-coast hex fidelity** — the Hualien–Taitung shore is under-covered (visible concavity);
-  fixing it means regenerating `data/taiwan_hex_grid.json` from better coastline data — a
-  golden-touching grid change; bundle it with the terrain-data sourcing above, not alone.
+  surfaced per-hex in the LLM `occupied_hexes` observation. Map rendering landed stage 6:
+  `HexMap.get_hex_color` tints hex fill by terrain, ownership lerped over it at weight 0.35
+  (terrain-dominant, USER call after screenshot comparison), numbered beach glyphs. Full detail:
+  `docs/systems/terrain.md`.
+- ✅ **East-coast hex fidelity** (2026-07-09, bundled with the terrain-data sourcing above per
+  plan). `data/taiwan_hex_grid.json` regenerated against the real GSHHG coastline
+  (`tools/terrain/reconcile_grid.py`): ≥5% land-fraction inclusion rule + odd-r contiguity filter,
+  404 hexes kept byte-identical, 51 dropped, 62 added (Hualien–Taitung shore concavity fixed by
+  the added east-coast hexes) — net 466 hexes. See PLAN.md → Decisions 2026-07-09.
+
+**Deferred out of this track:**
+
+- **Beach first-landing ×2 defender penalty** — deferred design call (2026-07-09): should a
+  defender get a temporary combat bonus on the turn an amphibious brigade first lands on their
+  hex, modeling the chaos/vulnerability of an unopposed or lightly-opposed landing? Needs a USER
+  decision on trigger condition (first landing only? every landing turn?) and whether it stacks
+  with terrain. Implementation seam is already in place and unused: the composite-modifier
+  structure of `GameState._defender_combat_modifier` (`scripts/GameState.gd:561-568`) multiplies
+  the terrain modifier by a literal `* 1.0` situational-modifier slot specifically reserved for
+  this — a beach-first-landing multiplier plugs in there without touching `CombatResolver` or
+  `GameData`.
 
 ## Track E — Doc & code hygiene *(opportunistic)*
 

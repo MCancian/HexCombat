@@ -127,5 +127,6 @@ Godot view was built from scratch.
 - Anti-ship & mine visualization (ship icons, minefield hex overlays, transit animations)
 - Front-line draw UI (D5-D): polyline → hex redistribution needs a visible front-line renderer
 - Unit/HUD polish: brigade HP bars, AP counters, combat-result popups
-- Map/terrain polish: elevation tint, terrain-class overlay, labels
+- Map/terrain polish: terrain-class overlay is done (§3, Track F stage 6); elevation tint and
+  additional labels remain open
 - All visual items are not headless-gateable and deferred to Track 5

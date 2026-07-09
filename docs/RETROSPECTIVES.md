@@ -1180,3 +1180,26 @@ guidance.**
   in BACKLOG.md rather than starting it — it needs USER design calls and data sourcing. The
   flatpak Godot sandbox cannot read scripts outside the project (`/tmp` scratch scripts fail
   with 'File not found') — copy scratch scripts into the repo, run, delete.
+
+## 2026-07-09 track-f-terrain-model (orchestrator/subagent trial across stages 0-6)
+- **Lesson (what went well):** staged, one-verifiable-unit-per-commit gating held up across 7
+  stages of a genuinely large track (grid regen touching 466 hexes, 5 terrain classes, movement +
+  combat + rendering wiring). Every stage got its own Sonnet-subagent brief, orchestrator
+  line-by-line diff review, and a standalone golden gate run before commit — no stage needed to be
+  unwound. Screenshot-driven UI signoff (stage 6: rendering two candidate ownership-blend weights,
+  0.65 vs 0.35, to actual PNGs before picking) resolved a design call in one round-trip instead of
+  a back-and-forth description of colors in prose — worth doing for any further map-visual change.
+- **Lesson (what didn't go well):** `opencode` (`deepseek-v4-flash-free`), the standing default
+  implementer per `CLAUDE.md`, was the wrong tool for this track's briefs — it hung outright on
+  any brief of realistic Track-F length/complexity, and across the stages it did complete needed 4
+  bug fixes spanning 9 files (scope drift + signature mismatches the diff review had to catch).
+  Switched to Sonnet-5 subagents (`Agent` tool, `model: sonnet`) after Stage 2; no hangs and a
+  materially lower fix-up rate for the remaining stages.
+- **Triage:** acted now — implementer switched mid-track (see `PLAN.md` → Decisions 2026-07-09
+  "Process: Track F implementer switched..."). Recorded for later: opencode's failure mode here
+  (hang on long/complex briefs) is now a known data point, not just this track's — future
+  orchestrator/implementer splits on non-trivial work should default to Sonnet subagents and only
+  reach for opencode on short, fully-specified, mechanical briefs (consistent with the 2026-06-26
+  D4-A…F retro's caution about brief tightness for the free model). This is a Track-F-scoped trial
+  result, not a change to the 2026-07-02 "frontier model implements directly" default for other
+  work.

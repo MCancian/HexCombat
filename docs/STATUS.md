@@ -129,6 +129,21 @@ offload → movement & commit → ground combat → front-line → cleanup (+ vi
   `--scenario=roc_full_defense`. Gives AI-vs-AI games a multi-turn fight instead of the default
   4-defender beachhead's turn-1 census decision. Its victory census is restricted to the 451-hex
   main island (see Victory conditions above).
+- **Terrain model (Track F)** — every hex in the 466-hex grid (`data/taiwan_hex_grid.json`,
+  reconciled against the real GSHHG coastline) carries one of 5 terrain classes
+  (`data/terrain/terrain_types.json` + `data/terrain/hex_terrain.json`, loaded by
+  `GameData.load_terrain()`): plains, hills, urban, mountain, metropolis (≥50% built-up cover, 9
+  metro-core hexes). Movement consumes per-class entry cost via weighted Dijkstra
+  (`GameData._terrain_entry_cost`, `HexMath.find_path`/`find_reachable`: hills/metropolis cost 2,
+  plains/urban/mountain cost 1) with a min-one-step guarantee (a unit that hasn't moved may always
+  take one step into an adjacent passable hex); mountains are impassable
+  (`GameData._with_impassable`). Ground combat's defender gets a per-class strength modifier
+  (`GameState._defender_combat_modifier` → `CombatResolver.resolve_at`): plains ×1.0, hills ×1.5,
+  urban ×2.0, mountain ×2.0, metropolis ×3.0 — golden re-baselined to seed 20260624
+  `casualties=6, feba=-3.04`. Terrain is surfaced per-hex in the LLM `occupied_hexes` observation
+  and tints the map view fill (`HexMap.get_hex_color`, ownership lerped over the terrain tint at
+  weight 0.35, terrain-dominant — USER call after screenshot comparison), with numbered beach
+  glyphs. Full detail: `docs/systems/terrain.md`.
 - **Brigade marker rendering (`HexMap`)** — brigades are grouped per hex: same-hex stacks render
   as a 0.62× ring with a ×N count badge at 3+; a lone brigade shrinks to 0.75× and pins to the
   hex center when any neighbor hex is occupied (full-size markers are wider than the hex spacing
@@ -145,10 +160,11 @@ release).
 
 ## What is NOT done (see `docs/plans/`)
 
-- **Graphics** (Track 5): anti-ship/mine visualization, front-line draw UI (D5-D), unit/HUD polish,
-  map/terrain polish. Needs visual verification (not headless-gateable).
-- **Terrain / land classification** — the hex grid is geometry-only; a later ArcGIS-sourced phase.
-  (Blocks the precise "main-island land hex" victory census; `taiwan_hexes` config is the hook.)
+- **Graphics** (Track 5): anti-ship/mine visualization, front-line draw UI (D5-D), unit/HUD polish.
+  Needs visual verification (not headless-gateable).
+- **Beach first-landing ×2 defender penalty** — deferred design call (2026-07-09); the seam is
+  `GameState._defender_combat_modifier`'s `* 1.0` situational-modifier slot. See
+  `docs/plans/BACKLOG.md`.
 - **Deferred ports** — anti-ship missile pipeline depth (strike-coverage lever), ground-casualty
   IJFS↔OOB linkage, per-hull escort magazines. See `docs/plans/port_audit.md`.
 - **Refactors** — see `docs/plans/refactor_audit.md` (e.g. victory census should count *present*, not

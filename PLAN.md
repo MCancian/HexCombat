@@ -130,6 +130,17 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-07-09 — Beach 6 (Tainan Xishu) re-pointed to coastal `hex_16_3` (USER call that the
+  beach must sit on the coast; agent judgment on the target hex).** The grid reconciliation left
+  beach 6's containing hex `hex_16_4` landlocked (all 6 odd-r neighbors in-grid — it is also the
+  Tainan metro-core hex); its beach lat/lon point sits near the hex's western edge with the sea
+  one hex west. `data/beaches.json` `hex_id` moved `hex_16_4` → `hex_16_3` — the coastal hex due
+  west on the same row, matching the beach point's latitude (`hex_15_3` is coastal but a full row
+  south of the point). BDE-564's Green garrison in `data/scenarios/roc_full_defense.json` moved
+  with it, matching the beach-3/BDE-99 precedent (entry below). **Verification:** golden unchanged
+  (beach 6 is not on the golden scenario's landing path); full local gate ALL PHASES GREEN;
+  re-rendered screenshot confirms the glyph on the coastline.
+
 - **2026-07-09 — Track F: activate the defender terrain modifier in ground combat + surface
   terrain in the LLM observation (USER call on rebalance values 2026-07-09; agent judgment on
   wiring).** The combat API hook was dormant since the port: `CombatCalculator.resolve_map_attack`
@@ -168,6 +179,72 @@ caveat is resolved.
   const, lines 4-12) is dead code superseded by `data/terrain/terrain_types.json` +
   `GameData.get_terrain` — left untouched, out of this task's scope; terrain is still not
   rendered on the map view (Track F's "rendered on the map" sub-item remains open).
+
+- **2026-07-09 — Track F: metropolis as a 5th terrain class (USER call on the class + its
+  modifier/cost values; agent judgment on the classification threshold's mechanics).** Added
+  `metropolis` to the 4 existing classes (`data/terrain/terrain_types.json`):
+  `defender_modifier` 3.0, `move_cost` 2, `impassable` false, tint `#6E6E6E`.
+  `tools/terrain/classify_hexes.py`'s `classify_hex()` reclassifies a hex from `urban` to
+  `metropolis` when `builtup_frac >= 0.50` (vs `>= 0.20` for `urban`). Exactly 9 hexes qualify:
+  the Taipei (`hex_42_15`, `hex_42_17`, `hex_43_17`), Taichung (`hex_31_8`, `hex_32_9`), Tainan
+  (`hex_16_4`, `hex_17_4`), and Kaohsiung (`hex_11_5`, `hex_12_5`) metro cores. New class counts:
+  mountain 131 / hills 141 / urban 54 / metropolis 9 / plains 131. **Judgment call:** the
+  movement-cost effect (`move_cost` 2, same as `hills`) landed this stage; the combat-modifier
+  effect landed with stage 5's wiring (see the entry above) — the two hooks were dormant/active
+  independently, so metropolis's combat weight had no golden impact until the modifier itself went
+  live. **Verification:** `tests/terrain_data_test.gd` updated for the 5-class set;
+  `tools/validate_terrain_data.gd`'s `EXPECTED_CLASSES` updated;
+  `docs/examples/llm_result_after_turn.json` regenerated (metropolis's cost-2 shrinks
+  administrative movement reach through the reclassified hexes). Golden byte-stable
+  (`casualties=3, feba=-0.96` — unchanged at this stage, the combat modifier was still dormant).
+  Full local gate ALL PHASES GREEN. Commit `3e5f5c2`.
+
+- **2026-07-09 — Track F: reconcile the hex grid against the real GSHHG coastline; 466 hexes
+  (USER call on the ≥5% inclusion threshold; agent judgment on the contiguity-filter mechanics).**
+  `tools/terrain/reconcile_grid.py` computes each hex's land fraction against the GSHHG
+  full-resolution coastline shapefile and applies two rules: (1) **inclusion** — keep an existing
+  hex, or add a new lattice hex, only if `land_frac >= 0.05` (`_LAND_FRAC_THRESHOLD`); (2)
+  **contiguity filter** — flood-fills odd-r adjacency from the kept hexes and rejects any
+  threshold-passing candidate not reachable from that set, which cut 6 off-theater candidates
+  (mainland-China/Matsu-coast slivers that clear 5% land but aren't part of the Taiwan landmass).
+  Net result: 404 of the prior 455 hexes kept byte-identical, 51 dropped (now pure sea/sliver
+  under the real coastline), 62 added (eastern Central Range, Rift Valley, east coast) = 466.
+  Provenance recorded in `data/terrain/hex_land_frac.json`; terrain classes regenerated on the new
+  grid (mountain 131 / hills 141 / urban 63 / plains 131, pre-metropolis). User approved the
+  rendered preview (`tools/terrain/preview_terrain.py`) before this landed. **Consequence:**
+  `roc_full_defense`'s main-island victory census hex list regenerated 451 → 462 (4 newly
+  in-scope offshore hexes: `hex_4_17`, `hex_4_18`, `hex_5_17`, `hex_12_17` — excluded from that
+  scenario's census the same way Green/Orchid Island always were). **Verification:** golden
+  unchanged (`casualties=3, feba=-0.96` — the reconciled grid and the unopposed beach-3 landing
+  consume no additional RNG); smoke hex-count marker 455 → 466. Full local gate ALL PHASES GREEN.
+  Commit `bf75d9f`.
+
+- **2026-07-09 — Track F: beach 3 (Zhuwei) re-pointed to `hex_43_14`, reversing commit `5fc675f`
+  (consequence of the grid reconciliation above; USER call on the resulting placement).** Under
+  the reconciled coastline, `hex_44_14` — where `5fc675f` had pointed beach 3's landing — came
+  back pure sea (no longer a valid amphibious landing hex). Re-pointed
+  `red_ship_reserve[...].beach_hex` in `data/scenario_default.json`: `hex_44_14` → `hex_43_14`.
+  BDE-99's defender start moved inland with it, `hex_43_14` → `hex_42_15`, preserving the
+  red-lands-coastal / green-defends-adjacent pattern the scenario relies on.
+  `data/beaches.json` gained a canonical `hex_id` per beach entry (the grid hex containing the
+  beach's lat/lon point) at the same time, enforced by `BeachDef` + loader +
+  `tools/validate_beaches_data.gd`. **Verification:** part of the same gate run as the grid
+  reconciliation above (golden unchanged, `casualties=3, feba=-0.96`). Commit `bf75d9f`.
+
+- **2026-07-09 — Process: Track F implementer switched from opencode to Sonnet-5 subagents after
+  Stage 2 (USER call on the orchestrator/implementer split and the switch; recorded at Stage 7 per
+  the trial's own instruction).** For Track F only, the user directed an orchestrator/implementer
+  split — the primary agent plans and reviews, subagents implement from tight briefs — overriding
+  the 2026-07-02 "frontier model implements directly" default in `CLAUDE.md`. The implementer
+  started as `opencode` (per that default's stated fallback for mechanical/read-only chores) but
+  was switched to Sonnet-5 subagents (the `Agent` tool, `model: sonnet`) after Stage 2: opencode
+  hung on any long brief and, across the stages it did complete, needed 4 bug fixes spanning 9
+  files. Mitigations retained across the switch: line-by-line diff review on every golden-touching
+  step, a standalone golden gate run before and after each stage's commit. **Rationale:** the user
+  wanted the orchestrator/implementer split trialed on a track big enough to show whether it holds
+  up; opencode's failure mode (hangs + high fix-up rate) made it the wrong implementer for that
+  trial, not evidence against the split itself. **Scope:** Track F only — the 2026-07-02
+  frontier-implements default stands for all other work; this is not a standing policy change.
 
 - **2026-07-08 — Map review fixes: census, beach 3, marker legibility + Linux bash gate (USER
   calls on scope; agent judgment on mechanics).** From an external map review (5 findings). USER
