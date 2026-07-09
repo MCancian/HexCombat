@@ -121,7 +121,8 @@ when the hex-adjacency coordinate bug was fixed, and when `feba_base_km` was set
   `--scenario=roc_full_defense`. Gives AI-vs-AI games a multi-turn fight instead of the default
   4-defender beachhead's turn-1 census decision.
 
-**Verification.** `pwsh tools/run_all_tests.ps1` is the canonical gate: import → headless smoke →
+**Verification.** The canonical gate — `bash tools/run_all_tests.sh` (Linux; resolves Godot via
+`$GODOT_BIN` else `godot` on PATH) or `pwsh tools/run_all_tests.ps1` (Windows) — runs: import → headless smoke →
 `tools/validate_*.gd` (golden turn, anti-ship, IJFS, victory e2e, data validators, no-global-RNG) →
 GdUnit4 suites under `tests/`. Must end **ALL PHASES GREEN**. A debug-only assert
 (`OS.is_debug_build()`-gated) at the end of `resolve_turn` checks `GameData.validate_runtime_indexes()`,
