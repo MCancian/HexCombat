@@ -48,7 +48,10 @@ the acting model. Never commit `.mcp.json`.
 
 ## Known harness facts
 
-- Windows 11; gates run under `pwsh`. Godot at `C:\Godot_v4.7-stable_win64.exe`
-  (`hexcombat-build-and-env` for environment recovery).
+- Two boxes. Windows 11: gates run under `pwsh -File tools/run_all_tests.ps1`, Godot at
+  `C:\Godot_v4.7-stable_win64.exe`. Linux (Fedora, flatpak Godot 4.7 as `godot` on PATH): gates
+  run under `bash tools/run_all_tests.sh`; the flatpak sandbox cannot read scripts outside the
+  project dir (copy scratch `-s` scripts into the repo, run, delete). (`hexcombat-build-and-env`
+  for environment recovery.)
 - Long autonomous runs: prefer finishing a unit and committing over batching; the golden gate is
   cheap — run it often.

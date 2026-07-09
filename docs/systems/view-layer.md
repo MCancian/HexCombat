@@ -34,10 +34,16 @@ lat/lon vertex array into a `Polygon2D` + `Line2D` outline, and stores them in `
 `projected_vertices`. Color is set by `get_hex_color()` which reads `GameData.hex_states[hex_id]`
 (owner + feba_km) and returns red/green/contested-ramp colors (`HexMap.gd:13-20, 155-176`).
 
-**Brigade markers.** `render_brigade_markers()` (HexMap.gd:63) clears existing markers, then for
-each placed brigade: gets the NATO symbol texture from `symbol_library`, projects the hex center,
-estimates hex radius, offsets the marker by `entry_bearing`, and builds a `Node2D` with a team-
-colored `Polygon2D` backing + `Sprite2D` for the symbol (`_build_brigade_marker`, line 110).
+**Brigade markers.** `render_brigade_markers()` (HexMap.gd:64) clears existing markers and stack
+badges, groups placed brigades by hex (sorted by brigade id for a deterministic layout), then
+renders per hex: a single brigade with no occupied neighbor hex gets the classic full-size marker
+offset by `entry_bearing`; a single brigade with any occupied neighbor shrinks to 0.75× and pins
+to the hex center (a full-size marker is ~1.9× hex radius wide vs ~1.73× hex spacing — adjacent
+full-size markers always overlap); 2+ brigades on one hex render as a 0.62× ring around the
+center, plus a ×N count badge disc (`_build_stack_badge`) at 3+. Each marker is a `Node2D` with a
+team-colored `Polygon2D` backing + `Sprite2D` symbol (`_build_brigade_marker`). Scenario authoring
+cannot create same-hex stacks (placement hexes must be unique) — stacks arise mid-game from
+movement and landings.
 
 **Reachable-hex highlight.** The `_on_reachable_hexes_changed` callback stores `_reachable_hexes`
 and calls `_refresh_highlights()` (line 272). This first calls `clear_highlights()`, then draws

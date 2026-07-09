@@ -130,6 +130,32 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-07-08 — Map review fixes: census, beach 3, marker legibility + Linux bash gate (USER
+  calls on scope; agent judgment on mechanics).** From an external map review (5 findings). USER
+  calls: fix the inland beach in BOTH the golden default and `roc_full_defense` (accepting a
+  re-baseline if needed); defer terrain and east-coast fidelity to backlog (new Track F);
+  fan-out + count badge for markers; port the gate to bash for this Linux box. What landed:
+  (1) `tools/run_all_tests.sh` — faithful port of the ps1 gate (kept for Windows), teardown-flake
+  codes mapped to Linux signal exits 139/134/138/132; Godot = flatpak 4.7 via `$GODOT_BIN`/PATH.
+  (2) `roc_full_defense` `victory.taiwan_hexes` = the 451-hex main island (largest odd-r connected
+  component; generator `tools/gen_main_island_hexes.py`, guard `tools/validate_victory_hexes.gd`,
+  census Array-filter path now unit-tested). Offshore hexes: `hex_11_16/12_16/12_17` (Green Is.),
+  `hex_4_18` (Orchid Is.). Golden default deliberately keeps `taiwan_hexes: null`.
+  (3) Beach 3 (Zhuwei) `beach_hex` `hex_43_14` → `hex_44_14`: the old hex has 6 land neighbors
+  (fully inland — an amphibious brigade landed one hex from any coast); `hex_44_14` is the nearest
+  free coastal hex (7.2 km from the real Zhuwei site). **Judgment calls:** paired defender BDE-99
+  moved `hex_42_15` → `hex_43_14` (directly inland of the new beach, preserving the default's
+  designed defender-inland-of-beach geometry and its adjacency pin); the single-axis northern
+  landing stands as USER design intent. Golden fingerprint (seed 20260624: casualties=3,
+  feba=-0.96) was verified UNCHANGED — no re-baseline consumed; LLM example fixtures regenerated
+  (landing-hex/occupancy diffs only). New guard: `validate_scenario_data.gd` rejects fully-inland
+  `beach_hex` in any scenario (proven to fire on the old data).
+  (4) Marker legibility: same-hex stacks ring at 0.62× + ×N badge (3+); crowded-neighborhood
+  singles 0.75× pinned to center — full-size markers (1.9× hex radius) exceed hex spacing (1.73×),
+  which was the actual clutter mechanism in `roc_full_defense` (all placements are unique-hex).
+  Verification: `bash tools/run_all_tests.sh` ALL PHASES GREEN after each step; visual screenshot
+  checks for the marker work. Commits 084495d, dc61660, 5fc675f, ef45739.
+
 - **2026-07-08 — Research harness B6: LLM-player adapter + `roc_full_defense` scenario (USER call
   on provider; agent judgment on architecture).** USER settled the B6 open question: provider is a
   LOCAL model on vLLM (`localhost:8088/v1`, OpenAI-compatible), same model both seats, matchup is

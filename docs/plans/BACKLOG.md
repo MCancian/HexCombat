@@ -88,6 +88,23 @@ requested.) Sub-areas, priority to be set with the user when the track starts:
 
 All need visual verification (screenshot / Godot MCP / user) — headless gates don't cover pixels.
 
+## Track F — Map & terrain model *(bigger effort; design + data sourcing with the user)*
+
+From the 2026-07-08 external map review (items 1 and 4; items 2/3/5 fixed same day):
+
+- **Terrain/sea model** — the map's biggest gap: every hex is identical land; the Central
+  Mountain Range (which funnels any invasion onto the west plain), urban/plains classes, and the
+  strait itself are unrepresented, so movement and combat are terrain-blind. The combat API hook
+  already exists dormant (`CombatCalculator.gd` `defender_terrain_modifier`, always 1.0); a
+  terrain class per hex in `data/taiwan_hex_grid.json` (or a sidecar file) would feed it plus a
+  movement-cost layer. Needs elevation/land-cover sourcing (ArcGIS per `docs/plans/port_audit.md`)
+  and USER design calls on classes + modifiers. Follow
+  `.claude/skills/hexcombat-add-phase-resolver` for the mechanic wiring. Done when: hexes carry a
+  terrain class rendered on the map, combat/movement consume it, golden re-baselined deliberately.
+- **East-coast hex fidelity** — the Hualien–Taitung shore is under-covered (visible concavity);
+  fixing it means regenerating `data/taiwan_hex_grid.json` from better coastline data — a
+  golden-touching grid change; bundle it with the terrain-data sourcing above, not alone.
+
 ## Track E — Doc & code hygiene *(opportunistic)*
 
 - ROADMAP.md refresh: milestone/phase sections are historical (all built) — archive or annotate.

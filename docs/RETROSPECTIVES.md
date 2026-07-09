@@ -1165,3 +1165,18 @@ guidance.**
     a later step must read them.
   - Live vLLM unreachable from the agent's network namespace (pasta port-forward resets). →
     **handed to USER** (run `run_llm_game.gd` in their own shell); not a code issue.
+
+## 2026-07-08 map-review-fixes (census, beach, markers, bash gate)
+- **Lesson:** the reported symptom ("32 brigades stacking in metro areas") named the wrong
+  mechanism — every `roc_full_defense` placement is on a unique hex; the overlap came from marker
+  width (1.9× hex radius) exceeding hex spacing (1.73×). The same-hex stacking code was still
+  worth building (stacks arise mid-game), but the one-line neighbor-aware shrink is what actually
+  fixed the screenshot. Render a before screenshot and identify the mechanism before coding a UI
+  fix.
+- **Lesson:** a golden-adjacent data fix (beach 3 + defender move) turned out byte-stable —
+  the golden turn scripts beach 1 only. Running `validate_headless_turn`/`validate_cleanup`
+  standalone FIRST showed no re-baseline was needed and kept the change small.
+- **Triage:** acted now on all of the above; recorded Track F (terrain + east-coast grid regen)
+  in BACKLOG.md rather than starting it — it needs USER design calls and data sourcing. The
+  flatpak Godot sandbox cannot read scripts outside the project (`/tmp` scratch scripts fail
+  with 'File not found') — copy scratch scripts into the repo, run, delete.
