@@ -343,13 +343,34 @@ func get_distance(hex_id_a: String, hex_id_b: String) -> int:
 func find_path(start_id: String, goal_id: String, blocked: Array = []) -> Array:
 	if start_id not in hex_lookup or goal_id not in hex_lookup:
 		return []
-	return HexMath.find_path(start_id, goal_id, Callable(self, "get_neighbors"), blocked)
+	return HexMath.find_path(start_id, goal_id, Callable(self, "get_neighbors"), _with_impassable(blocked), Callable(self, "_terrain_entry_cost"))
 
 
 func find_reachable(start_id: String, max_distance: int, blocked: Array = []) -> Array:
 	if start_id not in hex_lookup:
 		return []
-	return HexMath.find_reachable(start_id, max_distance, Callable(self, "get_neighbors"), blocked)
+	return HexMath.find_reachable(start_id, max_distance, Callable(self, "get_neighbors"), _with_impassable(blocked), Callable(self, "_terrain_entry_cost"))
+
+
+# Merges the caller-supplied blocked list with every hex whose terrain is impassable (mountains
+# today). Ground movement must never select an impassable hex as a destination or waypoint.
+func _with_impassable(blocked: Array) -> Array:
+	var merged: Array = blocked.duplicate()
+	for hex_id in hex_lookup.keys():
+		var terrain := get_terrain(hex_id)
+		if terrain != null and terrain.impassable and hex_id not in merged:
+			merged.append(hex_id)
+	return merged
+
+
+# Movement-point cost to ENTER hex_id, per its TerrainType.move_cost. Missing/unclassified
+# terrain costs 1 (fail-loud-adjacent: load_terrain already errors on unclassified hexes, so this
+# fallback only guards call sites that run before terrain finishes loading).
+func _terrain_entry_cost(hex_id) -> int:
+	var terrain := get_terrain(String(hex_id))
+	if terrain == null:
+		return 1
+	return terrain.move_cost
 
 
 func get_brigade(brigade_id: String) -> Brigade:

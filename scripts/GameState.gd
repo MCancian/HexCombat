@@ -677,6 +677,10 @@ func _find_retreat_hex(from_hex: String, team: Brigade.Team) -> String:
 
 	for neighbor_id_value in GameData.get_neighbors(from_hex):
 		var neighbor_id := String(neighbor_id_value)
+		var neighbor_terrain := GameData.get_terrain(neighbor_id)
+		if neighbor_terrain != null and neighbor_terrain.impassable:
+			continue
+
 		var has_enemy := false
 		for brigade_id_value in GameData.get_brigades_in_hex(neighbor_id):
 			var brigade: Brigade = GameData.get_brigade(String(brigade_id_value))
