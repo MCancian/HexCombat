@@ -55,7 +55,7 @@
 			"battalions": 4,
 			"destroyed": false,
 			"fought_this_turn": false,
-			"hex_id": "hex_42_15",
+			"hex_id": "hex_43_14",
 			"id": "BDE-99",
 			"moved_admin_this_turn": false,
 			"moved_this_turn": false,
@@ -148,14 +148,14 @@
 				"BDE-99"
 			],
 			"feba_km": 0.0,
-			"hex_id": "hex_42_15",
+			"hex_id": "hex_43_14",
 			"neighbors": [
-				"hex_41_14",
-				"hex_41_15",
 				"hex_42_14",
-				"hex_42_16",
-				"hex_43_14",
-				"hex_43_15"
+				"hex_42_15",
+				"hex_43_13",
+				"hex_43_15",
+				"hex_44_14",
+				"hex_44_15"
 			],
 			"owner": "green"
 		},
@@ -213,7 +213,7 @@
 			"locked_beach": 2
 		},
 		{
-			"beach_hex": "hex_43_14",
+			"beach_hex": "hex_44_14",
 			"bns_remaining": 9,
 			"brigade_id": "PLA-73-14-Amphibious",
 			"locked_beach": 3

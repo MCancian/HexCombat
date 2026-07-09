@@ -16,6 +16,7 @@ const EXPECTED_DEFAULT_RED_SHIP_RESERVE := 4
 const VALID_LOSS_CHECK_ARMS := ["unconditional", "after_first_landing"]  # + "after_turn:<N>"
 
 var _failures: Array[String] = []
+var _coord_set: Dictionary = {}  # Vector2i -> true, for land-neighbor counts
 
 
 func _initialize() -> void:
@@ -25,6 +26,8 @@ func _initialize() -> void:
 	var hex_grid_data := _read_hex_grid()
 	var brigade_teams := _build_brigade_team_lookup([pla_data, roc_data])
 	var hex_coords := _build_hex_coord_lookup(hex_grid_data)
+	for coord in hex_coords.values():
+		_coord_set[coord] = true
 	var beach_ids := _read_beach_ids()
 
 	var scenario_paths := ScenarioCatalog.list_scenario_paths()
@@ -86,6 +89,8 @@ func _validate_scenario(path: String, scenario_data: Dictionary, brigade_teams: 
 			_fail("%s: red_ship_reserve locked_beach %d is not a beach in %s (for %s)" % [label, locked_beach, BEACHES_PATH, brigade_id])
 		if not hex_coords.has(beach_hex):
 			_fail("%s: red_ship_reserve references unknown beach_hex: %s" % [label, beach_hex])
+		elif _land_neighbor_count(hex_coords[beach_hex], _coord_set) == 6:
+			_fail("%s: red_ship_reserve beach_hex %s is fully inland (6 land neighbors) — an amphibious landing must target a coastal hex (for %s)" % [label, beach_hex, brigade_id])
 		if used_brigades.has(brigade_id):
 			_fail("%s: brigade is both placed and in red_ship_reserve (it would never land): %s" % [label, brigade_id])
 		used_brigades[brigade_id] = true
@@ -146,6 +151,14 @@ func _validate_default_pins(scenario_data: Dictionary, hex_coords: Dictionary) -
 			if green_coord not in HexMath.neighbor_coords(beach_coord):
 				_fail("Default red_ship_reserve entry %d beach_hex %s is not adjacent to Green placement hex %s" % [index, beach_hex, green_hex])
 	print("Default pins checked: %d placements (all Green), %d reserve entries, beach adjacency" % [EXPECTED_DEFAULT_PLACEMENTS, EXPECTED_DEFAULT_RED_SHIP_RESERVE])
+
+
+func _land_neighbor_count(coord: Vector2i, coord_set: Dictionary) -> int:
+	var count := 0
+	for neighbor in HexMath.neighbor_coords(coord):
+		if coord_set.has(neighbor):
+			count += 1
+	return count
 
 
 # --- shared readers ---

@@ -27,7 +27,7 @@
     {
       "brigade_id": "PLA-73-14-Amphibious",
       "locked_beach": 3,
-      "beach_hex": "hex_43_14",
+      "beach_hex": "hex_44_14",
       "offset_bearing": 0
     },
     {
@@ -56,7 +56,7 @@
       "brigade_id": "BDE-99",
       "team": "Green",
       "beach": 3,
-      "hex": "hex_42_15",
+      "hex": "hex_43_14",
       "offset_bearing": 330
     },
     {

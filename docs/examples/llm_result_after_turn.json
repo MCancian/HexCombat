@@ -95,7 +95,7 @@
 				"battalions": 9,
 				"destroyed": false,
 				"fought_this_turn": false,
-				"hex_id": "hex_43_14",
+				"hex_id": "hex_44_14",
 				"id": "PLA-73-14-Amphibious",
 				"moved_admin_this_turn": false,
 				"moved_this_turn": false,
@@ -160,7 +160,7 @@
 				"battalions": 4,
 				"destroyed": false,
 				"fought_this_turn": false,
-				"hex_id": "hex_42_15",
+				"hex_id": "hex_43_14",
 				"id": "BDE-99",
 				"moved_admin_this_turn": false,
 				"moved_this_turn": false,
@@ -355,13 +355,7 @@
 		"legal_commits": {
 			"hex_42_14": {
 				"Red": [
-					"PLA-73-14-Amphibious",
 					"PLA-74-1-Amphibious"
-				]
-			},
-			"hex_42_15": {
-				"Red": [
-					"PLA-73-14-Amphibious"
 				]
 			},
 			"hex_43_13": {
@@ -372,14 +366,20 @@
 			"hex_43_14": {
 				"Red": [
 					"PLA-72-5-Amphibious",
+					"PLA-73-14-Amphibious",
 					"PLA-74-1-Amphibious"
 				]
 			},
 			"hex_43_15": {
 				"Red": [
 					"PLA-71-2-Amphibious",
+					"PLA-72-5-Amphibious"
+				]
+			},
+			"hex_44_14": {
+				"Red": [
 					"PLA-72-5-Amphibious",
-					"PLA-73-14-Amphibious"
+					"PLA-74-1-Amphibious"
 				]
 			},
 			"hex_44_15": {
@@ -677,51 +677,56 @@
 			},
 			"PLA-73-14-Amphibious": {
 				"administrative": [
-					"hex_43_14",
-					"hex_42_14",
-					"hex_42_15",
-					"hex_43_13",
-					"hex_43_15",
 					"hex_44_14",
+					"hex_43_13",
+					"hex_43_14",
 					"hex_44_15",
-					"hex_41_13",
-					"hex_41_14",
 					"hex_42_13",
+					"hex_42_14",
+					"hex_43_12",
+					"hex_42_15",
+					"hex_43_15",
+					"hex_44_16",
+					"hex_41_12",
+					"hex_41_13",
+					"hex_42_12",
+					"hex_41_14",
 					"hex_41_15",
 					"hex_42_16",
-					"hex_43_12",
 					"hex_43_16",
-					"hex_44_16",
+					"hex_44_17",
+					"hex_45_16",
+					"hex_40_12",
 					"hex_40_13",
+					"hex_41_11",
 					"hex_40_14",
-					"hex_41_12",
 					"hex_40_15",
-					"hex_42_12",
 					"hex_40_16",
 					"hex_41_16",
 					"hex_42_17",
 					"hex_43_17",
-					"hex_44_17",
-					"hex_45_16",
+					"hex_44_18",
+					"hex_45_17",
+					"hex_46_17",
+					"hex_39_11",
 					"hex_39_12",
+					"hex_40_11",
 					"hex_39_13",
-					"hex_40_12",
 					"hex_39_14",
-					"hex_41_11",
 					"hex_39_15",
 					"hex_39_16",
 					"hex_40_17",
 					"hex_41_17",
 					"hex_42_18",
 					"hex_43_18",
-					"hex_44_18",
-					"hex_45_17",
-					"hex_46_17",
+					"hex_44_19",
+					"hex_45_18",
+					"hex_46_18",
+					"hex_38_11",
 					"hex_38_12",
+					"hex_39_10",
 					"hex_38_13",
-					"hex_39_11",
 					"hex_38_14",
-					"hex_40_11",
 					"hex_38_15",
 					"hex_38_16",
 					"hex_38_17",
@@ -730,14 +735,13 @@
 					"hex_41_18",
 					"hex_42_19",
 					"hex_43_19",
-					"hex_44_19",
-					"hex_45_18",
-					"hex_46_18",
+					"hex_44_20",
+					"hex_45_19",
+					"hex_37_10",
 					"hex_37_11",
+					"hex_38_10",
 					"hex_37_12",
-					"hex_38_11",
 					"hex_37_13",
-					"hex_39_10",
 					"hex_37_14",
 					"hex_37_15",
 					"hex_37_16",
@@ -748,13 +752,13 @@
 					"hex_41_19",
 					"hex_42_20",
 					"hex_43_20",
-					"hex_44_20",
-					"hex_45_19",
+					"hex_44_21",
+					"hex_36_10",
 					"hex_36_11",
+					"hex_37_9",
 					"hex_36_12",
-					"hex_37_10",
+					"hex_38_9",
 					"hex_36_13",
-					"hex_38_10",
 					"hex_36_14",
 					"hex_36_15",
 					"hex_36_16",
@@ -767,14 +771,13 @@
 					"hex_41_20",
 					"hex_42_21",
 					"hex_43_21",
-					"hex_44_21",
+					"hex_35_9",
 					"hex_35_10",
+					"hex_36_9",
 					"hex_35_11",
-					"hex_36_10",
+					"hex_37_8",
 					"hex_35_12",
-					"hex_37_9",
 					"hex_35_13",
-					"hex_38_9",
 					"hex_35_14",
 					"hex_35_15",
 					"hex_35_16",
@@ -786,13 +789,13 @@
 					"hex_40_21",
 					"hex_41_21",
 					"hex_42_22",
+					"hex_34_9",
 					"hex_34_10",
+					"hex_35_8",
 					"hex_34_11",
-					"hex_35_9",
+					"hex_36_8",
 					"hex_34_12",
-					"hex_36_9",
 					"hex_34_13",
-					"hex_37_8",
 					"hex_34_14",
 					"hex_34_15",
 					"hex_34_16",
@@ -800,29 +803,13 @@
 					"hex_34_18",
 					"hex_40_22",
 					"hex_41_22",
-					"hex_42_23",
-					"hex_33_9",
-					"hex_33_10",
-					"hex_34_9",
-					"hex_33_11",
-					"hex_35_8",
-					"hex_33_12",
-					"hex_36_8",
-					"hex_33_13",
-					"hex_33_14",
-					"hex_33_15",
-					"hex_33_16",
-					"hex_33_17",
-					"hex_33_18"
+					"hex_42_23"
 				],
-				"from_hex": "hex_43_14",
+				"from_hex": "hex_44_14",
 				"tactical": [
-					"hex_43_14",
-					"hex_42_14",
-					"hex_42_15",
-					"hex_43_13",
-					"hex_43_15",
 					"hex_44_14",
+					"hex_43_13",
+					"hex_43_14",
 					"hex_44_15"
 				],
 				"team": "Red"
@@ -1040,14 +1027,14 @@
 					"BDE-99"
 				],
 				"feba_km": 0.0,
-				"hex_id": "hex_42_15",
+				"hex_id": "hex_43_14",
 				"neighbors": [
-					"hex_41_14",
-					"hex_41_15",
 					"hex_42_14",
-					"hex_42_16",
-					"hex_43_14",
-					"hex_43_15"
+					"hex_42_15",
+					"hex_43_13",
+					"hex_43_15",
+					"hex_44_14",
+					"hex_44_15"
 				],
 				"owner": "green"
 			},
@@ -1086,13 +1073,10 @@
 					"PLA-73-14-Amphibious"
 				],
 				"feba_km": 0.0,
-				"hex_id": "hex_43_14",
+				"hex_id": "hex_44_14",
 				"neighbors": [
-					"hex_42_14",
-					"hex_42_15",
 					"hex_43_13",
-					"hex_43_15",
-					"hex_44_14",
+					"hex_43_14",
 					"hex_44_15"
 				],
 				"owner": "red"
@@ -1150,7 +1134,7 @@
 				"locked_beach": 2
 			},
 			{
-				"beach_hex": "hex_43_14",
+				"beach_hex": "hex_44_14",
 				"bns_remaining": 4,
 				"brigade_id": "PLA-73-14-Amphibious",
 				"locked_beach": 3
