@@ -7,3 +7,4 @@ class_name Hex
 @export var col: int = 0
 @export var center: Vector2 = Vector2.ZERO  # x = lat, y = lon
 @export var vertices: PackedVector2Array = PackedVector2Array()  # x = lat, y = lon
+@export var terrain: String = ""  # terrain class name (see data/terrain/terrain_types.json); empty until GameData loads it

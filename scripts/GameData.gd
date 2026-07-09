@@ -6,6 +6,7 @@ const BrigadeResource = preload("res://scripts/model/Brigade.gd")
 const BattalionResource = preload("res://scripts/model/Battalion.gd")
 const BeachDefResource = preload("res://scripts/model/BeachDef.gd")
 const ShipDefResource = preload("res://scripts/model/ShipDef.gd")
+const TerrainTypeResource = preload("res://scripts/model/TerrainType.gd")
 
 const OOB_PATHS := ["res://data/pla_ground_forces.json", "res://data/roc_ground_forces.json"]
 const DEFAULT_SCENARIO_PATH := ScenarioCatalog.DEFAULT_SCENARIO_PATH
@@ -31,6 +32,7 @@ var victory_config: Dictionary = {}  # scenario 'victory' block (loss_check_arm,
 
 var hexes: Array[Hex] = []
 var hex_lookup: Dictionary = {}  # hex_id -> Hex
+var terrain_types: Dictionary = {}  # class name -> TerrainType
 var coord_lookup: Dictionary = {}  # Vector2i -> hex_id
 var neighbor_lookup: Dictionary = {}  # hex_id -> Array[String]
 var hex_states: Dictionary = {}  # hex_id -> HexState
@@ -53,6 +55,7 @@ func _ready() -> void:
 
 func load_all() -> void:
 	load_hex_grid()
+	load_terrain()
 	build_neighbor_lookup()
 	load_brigades()
 	load_scenario(ScenarioCatalog.selected_path())
@@ -244,6 +247,81 @@ func _parse_red_ship_reserve(entries) -> void:
 			"beach_hex": beach_hex,
 			"offset_bearing": float(entry.get("offset_bearing", 0.0))
 		})
+
+
+func load_terrain() -> void:
+	terrain_types.clear()
+
+	var types_json = _read_json("res://data/terrain/terrain_types.json")
+	if types_json == null or not (types_json is Dictionary):
+		push_error("terrain_types.json format not recognized")
+		return
+	var types_data = types_json.get("types", null)
+	if not (types_data is Dictionary):
+		push_error("terrain_types.json missing 'types' key")
+		return
+
+	for class_name_key in types_data.keys():
+		var data: Dictionary = types_data[class_name_key]
+		if not (data is Dictionary):
+			push_error("terrain_types.json types.%s: expected Dictionary" % class_name_key)
+			return
+		if not data.has("defender_modifier"):
+			push_error("terrain_types.json types.%s missing defender_modifier" % class_name_key)
+			return
+		if not data.has("move_cost"):
+			push_error("terrain_types.json types.%s missing move_cost" % class_name_key)
+			return
+		if not data.has("impassable"):
+			push_error("terrain_types.json types.%s missing impassable" % class_name_key)
+			return
+		if not data.has("color"):
+			push_error("terrain_types.json types.%s missing color" % class_name_key)
+			return
+		var t: TerrainType = TerrainTypeResource.new()
+		t.name = class_name_key
+		t.defender_modifier = float(data.get("defender_modifier", 1.0))
+		t.move_cost = int(data.get("move_cost", 1))
+		t.impassable = bool(data.get("impassable", false))
+		t.color = String(data.get("color", ""))
+		terrain_types[class_name_key] = t
+
+	var hex_json = _read_json("res://data/terrain/hex_terrain.json")
+	if hex_json == null or not (hex_json is Dictionary):
+		push_error("hex_terrain.json format not recognized")
+		return
+	var class_map = hex_json.get("classes", {})
+	if not (class_map is Dictionary):
+		push_error("hex_terrain.json missing classes key")
+		return
+
+	var missing_count := 0
+	for hex_id in hex_lookup.keys():
+		if hex_id in class_map:
+			var terrain_class := String(class_map[hex_id])
+			if terrain_class not in terrain_types:
+				push_error("hex_terrain.json: hex %s references unknown terrain class '%s'" % [hex_id, terrain_class])
+				return
+			hex_lookup[hex_id].terrain = terrain_class
+		else:
+			missing_count += 1
+
+	if missing_count > 0:
+		push_error("hex_terrain.json: %d hexes in grid have no terrain class" % missing_count)
+		return
+
+	for hex_id in class_map.keys():
+		if hex_id not in hex_lookup:
+			push_error("hex_terrain.json references unknown hex_id: %s" % hex_id)
+			return
+
+	print_debug("Loaded %d terrain types, %d classified hexes" % [terrain_types.size(), hex_lookup.size()])
+
+
+func get_terrain(hex_id: String) -> TerrainType:
+	if hex_id not in hex_lookup:
+		return null
+	return terrain_types.get(hex_lookup[hex_id].terrain, null)
 
 
 func get_hex(hex_id: String) -> Hex:
