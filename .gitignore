@@ -15,3 +15,7 @@ data_*/
 # Python bytecode (tools/llm_sidecar*.py)
 __pycache__/
 *.pyc
+
+# Terrain pipeline venv + local outputs (tools/terrain)
+tools/terrain/.venv/
+tools/terrain/out/
