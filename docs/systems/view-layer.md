@@ -31,8 +31,13 @@ cos(lat) longitude compression and 6% margin (`MapProjection.gd:3-11`). `project
 
 **Hex cells.** `spawn_hex_cells()` (HexMap.gd:37) iterates `GameData.hexes`, projects each hex's
 lat/lon vertex array into a `Polygon2D` + `Line2D` outline, and stores them in `hex_cells` /
-`projected_vertices`. Color is set by `get_hex_color()` which reads `GameData.hex_states[hex_id]`
-(owner + feba_km) and returns red/green/contested-ramp colors (`HexMap.gd:13-20, 155-176`).
+`projected_vertices`. Color is set by `get_hex_color()`: the hex's terrain class tints the base
+fill (`TerrainType.color` from `data/terrain/terrain_types.json`), and the ownership color
+(red/green/contested-ramp from `GameData.hex_states[hex_id]`, `_ownership_color()`) is lerped over
+it at 0.35 so terrain stays dominant while ownership still reads; unclassified hexes fall back to
+ownership-only. Beaches
+render as numbered dark-blue triangle glyphs anchored bottom-left in their `BeachDef.hex_id` hex
+(`render_beach_markers()`, z between hex fills and brigade markers).
 
 **Brigade markers.** `render_brigade_markers()` (HexMap.gd:64) clears existing markers and stack
 badges, groups placed brigades by hex (sorted by brigade id for a deterministic layout), then

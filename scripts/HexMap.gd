@@ -6,6 +6,7 @@ var symbol_library: SymbolLibrary
 var hex_cells: Dictionary = {}  # hex_id -> Polygon2D
 var projected_vertices: Dictionary = {}  # hex_id -> PackedVector2Array
 var brigade_markers: Dictionary = {}  # brigade_id -> Node2D
+var beach_markers: Dictionary = {}  # beach_id (int) -> Node2D
 var _highlight_overlays: Array[Node2D] = []
 var _stack_badges: Array[Node2D] = []
 var _selected_hex: String = ""
@@ -32,6 +33,7 @@ func _ready() -> void:
 	EventBus.selection_cleared.connect(_on_selection_cleared)
 	EventBus.turn_advanced.connect(_on_turn_advanced)
 	spawn_hex_cells()
+	render_beach_markers()
 	render_brigade_markers()
 
 
@@ -59,6 +61,80 @@ func spawn_hex_cells() -> void:
 		projected_vertices[hex.id] = vertices
 
 	print_debug("Spawned %d hex cells" % hex_cells.size())
+
+
+# Beaches are static (fixed hex_id per data/beaches.json) so this only needs to run once at
+# startup, unlike brigade markers which re-render every turn. Glyphs anchor toward the hex's
+# bottom-left rather than the center, so they never collide with the entry-bearing offset or
+# center-pinned placements render_brigade_markers() uses for brigades landed on the same hex.
+func render_beach_markers() -> void:
+	for beach_id in GameData.beaches:
+		var beach: BeachDef = GameData.beaches[beach_id]
+		var hex := GameData.get_hex(beach.hex_id)
+		if hex == null:
+			push_error("Beach '%d' references unknown hex_id '%s'" % [beach.id, beach.hex_id])
+			continue
+
+		var center := projection.project(hex.center)
+		var vertices := projected_vertices.get(beach.hex_id, PackedVector2Array()) as PackedVector2Array
+		var radius := _estimate_hex_radius(center, vertices)
+
+		var marker := _build_beach_marker(beach, radius)
+		marker.position = center + Vector2(-0.55, 0.55).normalized() * (radius * 0.62)
+		add_child(marker)
+		beach_markers[beach.id] = marker
+
+	print_debug("Rendered %d beach markers" % beach_markers.size())
+
+
+func _build_beach_marker(beach: BeachDef, radius: float) -> Node2D:
+	var marker := Node2D.new()
+	marker.name = "BeachMarker_%d" % beach.id
+	# Above hex fills (z 0) and the highlight overlay tint (z 5), below brigade markers (z 10).
+	marker.z_index = 6
+
+	var glyph_size := radius * 0.7
+	var points := PackedVector2Array([
+		Vector2(0, -glyph_size),
+		Vector2(glyph_size * 0.87, glyph_size * 0.5),
+		Vector2(-glyph_size * 0.87, glyph_size * 0.5),
+	])
+
+	var triangle := Polygon2D.new()
+	triangle.name = "BeachGlyph"
+	triangle.polygon = points
+	triangle.color = Color(0.05, 0.15, 0.55, 0.95)  # dark blue
+	marker.add_child(triangle)
+
+	var outline := Line2D.new()
+	outline.name = "BeachGlyphOutline"
+	outline.points = points
+	outline.closed = true
+	outline.width = 1.5
+	outline.default_color = Color.WHITE
+	triangle.add_child(outline)
+
+	# Number sits inside the triangle (white on dark blue) — beside/below it the digit
+	# disappears against light terrain fills. Centered slightly below the glyph centroid,
+	# where the triangle is widest.
+	var label := Label.new()
+	label.name = "BeachLabel"
+	label.text = str(beach.id)
+	label.add_theme_color_override("font_color", Color.WHITE)
+	label.add_theme_color_override("font_outline_color", Color(0.05, 0.15, 0.55))
+	label.add_theme_constant_override("outline_size", 1)
+	label.add_theme_font_size_override("font_size", maxi(10, int(radius * 0.55)))
+	# Box must exceed the Label's minimum size or Godot clamps it and the centered text
+	# drifts; oversize it and center it on the widest part of the triangle (just below
+	# the centroid).
+	var label_size := Vector2(glyph_size * 4.0, glyph_size * 3.0)
+	label.size = label_size
+	label.position = Vector2(-label_size.x / 2.0, -label_size.y / 2.0 + glyph_size * 0.05)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	marker.add_child(label)
+
+	return marker
 
 
 func render_brigade_markers() -> void:
@@ -236,7 +312,8 @@ func _team_marker_color(team: Brigade.Team) -> Color:
 			return Color(1.0, 0.0, 1.0, 0.82)
 
 
-func get_hex_color(hex_id: String) -> Color:
+# Ownership-only color (pre-Track-F behavior): red/green/contested-ramp, gray when unowned.
+func _ownership_color(hex_id: String) -> Color:
 	if hex_id not in GameData.hex_states:
 		return color_none
 
@@ -257,6 +334,33 @@ func get_hex_color(hex_id: String) -> Color:
 			return color_contested_heavy
 
 	return color_none
+
+
+func _is_hex_owned(hex_id: String) -> bool:
+	if hex_id not in GameData.hex_states:
+		return false
+	return GameData.hex_states[hex_id].owner != HexOwner.NONE
+
+
+# Terrain (data/terrain/terrain_types.json, via GameData.get_terrain) tints the base fill;
+# ownership is blended over it so ownership always reads instantly. Unowned hexes show
+# ~full terrain color (nudged toward mid-gray so fills don't look flat/saturated); owned or
+# contested hexes lerp terrain->ownership at a weight that keeps ownership clearly dominant.
+# Hexes with no terrain classification (empty TerrainType.color) fall back to the ownership-only
+# color — pre-Track-F behavior.
+func get_hex_color(hex_id: String) -> Color:
+	var ownership_color := _ownership_color(hex_id)
+
+	var terrain: TerrainType = GameData.get_terrain(hex_id)
+	if terrain == null or terrain.color.is_empty():
+		return ownership_color
+
+	var terrain_color := Color(terrain.color)
+
+	if _is_hex_owned(hex_id):
+		return terrain_color.lerp(ownership_color, 0.35)
+
+	return terrain_color.lerp(Color(0.5, 0.5, 0.5), 0.15)
 
 
 func refresh_hex(hex_id: String) -> void:
