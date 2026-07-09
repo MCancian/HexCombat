@@ -7,6 +7,7 @@ var hex_cells: Dictionary = {}  # hex_id -> Polygon2D
 var projected_vertices: Dictionary = {}  # hex_id -> PackedVector2Array
 var brigade_markers: Dictionary = {}  # brigade_id -> Node2D
 var _highlight_overlays: Array[Node2D] = []
+var _stack_badges: Array[Node2D] = []
 var _selected_hex: String = ""
 var _reachable_hexes: Array = []
 
@@ -70,33 +71,80 @@ func render_brigade_markers() -> void:
 			existing_marker.free()
 	brigade_markers.clear()
 
+	for badge in _stack_badges:
+		if badge != null:
+			var badge_parent := badge.get_parent()
+			if badge_parent != null:
+				badge_parent.remove_child(badge)
+			badge.free()
+	_stack_badges.clear()
+
+	var hex_groups: Dictionary = {}
 	for brigade_id in GameData.brigades:
 		var brigade := GameData.brigades[brigade_id] as Brigade
 		if brigade.hex_id.is_empty():
 			continue
+		if not hex_groups.has(brigade.hex_id):
+			hex_groups[brigade.hex_id] = []
+		hex_groups[brigade.hex_id].append(brigade)
 
-		var hex := GameData.get_hex(brigade.hex_id)
+	for hex_id in hex_groups:
+		var brigades_on_hex: Array = hex_groups[hex_id]
+		brigades_on_hex.sort_custom(func(a: Brigade, b: Brigade): return a.id < b.id)
+
+		var hex := GameData.get_hex(hex_id)
 		if hex == null:
-			push_error("Placed brigade '%s' references unknown hex_id '%s'" % [brigade.id, brigade.hex_id])
-			continue
-
-		var texture := symbol_library.texture_for_nato_type(brigade.nato_type)
-		assert(texture != null, "Placed brigade '%s' nato_type '%s' has no renderable NATO symbol" % [brigade.id, brigade.nato_type])
-		if texture == null:
+			for brigade in brigades_on_hex:
+				push_error("Placed brigade '%s' references unknown hex_id '%s'" % [brigade.id, hex_id])
 			continue
 
 		var center := projection.project(hex.center)
-		var vertices := projected_vertices.get(hex.id, PackedVector2Array()) as PackedVector2Array
+		var vertices := projected_vertices.get(hex_id, PackedVector2Array()) as PackedVector2Array
 		var radius := _estimate_hex_radius(center, vertices)
-		var bearing_radians := deg_to_rad(brigade.entry_bearing)
-		var offset := Vector2(sin(bearing_radians), -cos(bearing_radians)) * (0.4 * radius)
+		var n := brigades_on_hex.size()
 
-		var marker := _build_brigade_marker(brigade, texture, radius)
-		marker.position = center + offset
-		add_child(marker)
-		brigade_markers[brigade.id] = marker
+		for i in range(n):
+			var brigade := brigades_on_hex[i] as Brigade
+			var texture := symbol_library.texture_for_nato_type(brigade.nato_type)
+			assert(texture != null, "Placed brigade '%s' nato_type '%s' has no renderable NATO symbol" % [brigade.id, brigade.nato_type])
+			if texture == null:
+				continue
+
+			var marker := _build_brigade_marker(brigade, texture, radius)
+
+			if n == 1:
+				# A full-size marker (1.9×radius wide) overflows into adjacent hexes (1.73×radius
+				# apart), so in crowded neighborhoods (any occupied neighbor hex) shrink it and
+				# pin it to the hex center instead of the entry-bearing offset.
+				if _has_occupied_neighbor(hex_id, hex_groups):
+					marker.scale = Vector2.ONE * 0.75
+					marker.position = center
+				else:
+					var bearing_radians := deg_to_rad(brigade.entry_bearing)
+					var offset := Vector2(sin(bearing_radians), -cos(bearing_radians)) * (0.4 * radius)
+					marker.position = center + offset
+			else:
+				marker.scale = Vector2.ONE * 0.62
+				var angle := -PI / 2.0 + TAU * i / n
+				marker.position = center + Vector2(cos(angle), sin(angle)) * (0.45 * radius)
+
+			add_child(marker)
+			brigade_markers[brigade.id] = marker
+
+		if n >= 3:
+			var badge := _build_stack_badge(n, radius)
+			badge.position = center
+			add_child(badge)
+			_stack_badges.append(badge)
 
 	print_debug("Rendered %d brigade markers" % brigade_markers.size())
+
+
+func _has_occupied_neighbor(hex_id: String, hex_groups: Dictionary) -> bool:
+	for neighbor_id in GameData.get_neighbors(hex_id):
+		if hex_groups.has(neighbor_id):
+			return true
+	return false
 
 
 func _estimate_hex_radius(center: Vector2, vertices: PackedVector2Array) -> float:
@@ -139,6 +187,42 @@ func _build_brigade_marker(brigade: Brigade, texture: Texture2D, radius: float) 
 	marker.add_child(sprite)
 
 	return marker
+
+
+func _build_stack_badge(n: int, radius: float) -> Node2D:
+	var badge := Node2D.new()
+	badge.z_index = 12
+
+	var disc_radius := radius * 0.28
+	var disc := Polygon2D.new()
+	var points: PackedVector2Array = []
+	var num_points := 16
+	for i in range(num_points):
+		var a := TAU * i / num_points
+		points.append(Vector2(cos(a), sin(a)) * disc_radius)
+	disc.polygon = points
+	disc.color = Color(1, 1, 1, 0.92)
+	badge.add_child(disc)
+
+	var outline := Line2D.new()
+	outline.points = points
+	outline.closed = true
+	outline.width = 1.5
+	outline.default_color = Color.BLACK
+	disc.add_child(outline)
+
+	var label := Label.new()
+	label.text = "×%d" % n
+	label.add_theme_color_override("font_color", Color(0.1, 0.1, 0.1))
+	var font_size := maxi(10, int(radius * 0.45))
+	label.add_theme_font_size_override("font_size", font_size)
+	label.position = Vector2(-disc_radius, -disc_radius)
+	label.size = Vector2(disc_radius * 2, disc_radius * 2)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	badge.add_child(label)
+
+	return badge
 
 
 func _team_marker_color(team: Brigade.Team) -> Color:
