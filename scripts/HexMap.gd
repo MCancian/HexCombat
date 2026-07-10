@@ -9,6 +9,7 @@ var brigade_markers: Dictionary = {}  # brigade_id -> Node2D
 var beach_markers: Dictionary = {}  # beach_id (int) -> Node2D
 var _highlight_overlays: Array[Node2D] = []
 var _stack_badges: Array[Node2D] = []
+var _ownership_borders: Array[Node2D] = []
 var _selected_hex: String = ""
 var _reachable_hexes: Array = []
 
@@ -33,6 +34,7 @@ func _ready() -> void:
 	EventBus.selection_cleared.connect(_on_selection_cleared)
 	EventBus.turn_advanced.connect(_on_turn_advanced)
 	spawn_hex_cells()
+	_build_ownership_borders()
 	render_beach_markers()
 	render_brigade_markers()
 
@@ -336,28 +338,145 @@ func _ownership_color(hex_id: String) -> Color:
 	return color_none
 
 
-# Terrain (data/terrain/terrain_types.json, via GameData.get_terrain) is the base fill. Green
-# (ROC) territory renders as PURE terrain color — the whole island starts Green-held, so tinting
-# it green washed out the terrain palette (USER call 2026-07-09: match the untinted
-# tools/terrain/out/terrain_preview.png look). Only deviation from ROC control is tinted: RED or
-# CONTESTED hexes lerp terrain->ownership at 0.35 (the user-picked weight), so the invasion
-# front reads against an otherwise pure-terrain map. Hexes with no terrain classification
-# (empty TerrainType.color) fall back to the ownership-only color — pre-Track-F behavior.
+# Terrain (data/terrain/terrain_types.json, via GameData.get_terrain) is the base fill. Every
+# terrain-classified hex renders PURE terrain color regardless of owner — the whole island starts
+# Green-held, so tinting it green washed out the terrain palette, and ownership is now shown as
+# a region-outline border instead of a fill tint (USER call 2026-07-09; see
+# _build_ownership_borders()). Hexes with no terrain classification (empty TerrainType.color)
+# still fall back to the ownership-only color — pre-Track-F behavior.
 func get_hex_color(hex_id: String) -> Color:
-	var ownership_color := _ownership_color(hex_id)
-
 	var terrain: TerrainType = GameData.get_terrain(hex_id)
 	if terrain == null or terrain.color.is_empty():
-		return ownership_color
+		return _ownership_color(hex_id)
 
-	var terrain_color := Color(terrain.color)
+	return Color(terrain.color)
 
-	if hex_id in GameData.hex_states:
-		var hex_owner: String = GameData.hex_states[hex_id].owner
-		if hex_owner == HexOwner.RED or hex_owner == HexOwner.CONTESTED:
-			return terrain_color.lerp(ownership_color, 0.35)
 
-	return terrain_color
+# Ownership renders as a perimeter outline around each connected red/contested pocket rather
+# than a fill tint (USER call 2026-07-09): every RED/CONTESTED hex contributes its polygon
+# edges, but an edge is skipped when the neighbor across it is also RED/CONTESTED — the two
+# owners count as one region, so no line draws between them. z 4 sits above hex fills (z 0) and
+# below the reachable/selection overlays (z 5).
+func _build_ownership_borders() -> void:
+	for border in _ownership_borders:
+		if border != null:
+			border.queue_free()
+	_ownership_borders.clear()
+
+	for hex_id in hex_cells:
+		var typed_hex_id := String(hex_id)
+		if typed_hex_id not in GameData.hex_states:
+			continue
+		var owner: String = GameData.hex_states[typed_hex_id].owner
+		if owner != HexOwner.RED and owner != HexOwner.CONTESTED:
+			continue
+
+		var vertices := projected_vertices.get(typed_hex_id, PackedVector2Array()) as PackedVector2Array
+		if vertices.size() != 6:
+			continue
+
+		_spawn_hex_border(typed_hex_id, vertices, _edges_to_draw(typed_hex_id, vertices))
+
+
+# An edge draws unless the neighbor across it exists and is also RED/CONTESTED. Which of the 6
+# HexMath.neighbor_coords() entries sits across which polygon edge isn't a fixed index (the
+# projection can distort a hex's regularity), so match geometrically: each on-grid neighbor
+# claims whichever edge's midpoint its projected center is nearest to. Off-grid neighbors (sea,
+# outside the loaded grid) never claim an edge, so that edge stays drawn.
+func _edges_to_draw(hex_id: String, vertices: PackedVector2Array) -> Array:
+	var draw_edge: Array = [true, true, true, true, true, true]
+
+	var hex := GameData.get_hex(hex_id)
+	if hex == null:
+		return draw_edge
+
+	for coord in HexMath.neighbor_coords(hex.coord):
+		var neighbor_id: String = GameData.coord_lookup.get(coord, "")
+		if neighbor_id == "":
+			continue  # off-grid/sea -> no claim, edge stays drawn
+
+		var neighbor_owner := HexOwner.NONE
+		if neighbor_id in GameData.hex_states:
+			neighbor_owner = GameData.hex_states[neighbor_id].owner
+		if neighbor_owner != HexOwner.RED and neighbor_owner != HexOwner.CONTESTED:
+			continue  # neighbor isn't part of the same region -> edge stays drawn
+
+		var neighbor_hex := GameData.get_hex(neighbor_id)
+		if neighbor_hex == null:
+			continue
+		var neighbor_center := projection.project(neighbor_hex.center)
+
+		var best_edge := 0
+		var best_dist := INF
+		for e in range(6):
+			var midpoint := (vertices[e] + vertices[(e + 1) % 6]) / 2.0
+			var d := midpoint.distance_to(neighbor_center)
+			if d < best_dist:
+				best_dist = d
+				best_edge = e
+		draw_edge[best_edge] = false
+
+	return draw_edge
+
+
+# Merges consecutive drawn edges into single polylines (round joints hide the interior seams
+# where runs meet). A hex fully enclosed by its own region on every side draws nothing; one open
+# on every side draws a closed hexagon outline.
+func _spawn_hex_border(hex_id: String, vertices: PackedVector2Array, draw_edge: Array) -> void:
+	var all_drawn := true
+	for d in draw_edge:
+		if not d:
+			all_drawn = false
+			break
+
+	var color := _border_color(hex_id)
+
+	if all_drawn:
+		_add_border_line(vertices, color, true)
+		return
+
+	var start := -1
+	for e in range(6):
+		if draw_edge[e] and not draw_edge[(e + 5) % 6]:
+			start = e
+			break
+	if start == -1:
+		return  # every edge borders the same region -> nothing to draw
+
+	var i := 0
+	while i < 6:
+		var e := (start + i) % 6
+		if not draw_edge[e]:
+			i += 1
+			continue
+		var run_points: PackedVector2Array = [vertices[e]]
+		while i < 6 and draw_edge[(start + i) % 6]:
+			var ee := (start + i) % 6
+			run_points.append(vertices[(ee + 1) % 6])
+			i += 1
+		_add_border_line(run_points, color, false)
+
+
+func _add_border_line(points: PackedVector2Array, color: Color, closed: bool) -> void:
+	var line := Line2D.new()
+	line.points = points
+	line.closed = closed
+	line.width = 3.0
+	line.default_color = color
+	line.joint_mode = Line2D.LINE_JOINT_ROUND
+	line.begin_cap_mode = Line2D.LINE_CAP_ROUND
+	line.end_cap_mode = Line2D.LINE_CAP_ROUND
+	line.z_index = 4
+	add_child(line)
+	_ownership_borders.append(line)
+
+
+# Full-alpha version of _ownership_color's red / contested-ramp color (both are already opaque,
+# but force it so a future alpha tweak there can't silently fade the border).
+func _border_color(hex_id: String) -> Color:
+	var color := _ownership_color(hex_id)
+	color.a = 1.0
+	return color
 
 
 func refresh_hex(hex_id: String) -> void:
@@ -369,6 +488,7 @@ func refresh_all_hex_colors() -> void:
 	for hex_id in hex_cells:
 		var typed_hex_id := String(hex_id)
 		hex_cells[typed_hex_id].color = get_hex_color(typed_hex_id)
+	_build_ownership_borders()
 
 
 func set_hex_owner(hex_id: String, owner: String) -> void:
