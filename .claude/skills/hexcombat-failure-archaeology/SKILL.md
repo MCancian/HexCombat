@@ -54,6 +54,22 @@ Settled battles. Primary sources: `PLAN.md` → Decisions (why) and `docs/RETROS
   run through the shared `tools/LLMFixtures.gd` builder (single source of truth so the gate can't
   drift from the exporters).
 
+### "2,500 Mobile SAMs destroyed on turn 2" is real, not double-counting (2026-07-10)
+- **Symptom:** every game's turn-2 IJFS digest reports ~2,500 Mobile SAMs destroyed
+  (`sead_destroyed` ≈ 2,506); looks like an engagement-log double-count.
+- **Root cause:** NOT a counting bug. `targets_master.json` quantity-expands four Stinger MANPADS
+  rows (500/1000/500/500) into ~2,500 individual Mobile-SAM instances; SEAD engages all
+  non-destroyed SAM targets regardless of detection, and null `sam_score` → score 1 →
+  `p_destroy ≈ 1`. Data + behavior verified identical in the TIV oracle
+  (`ijfs_standalone/engagement.py`, TIV `targets_master.json`).
+- **Evidence:** category instance counts from `data/ijfs/targets_master.json` (Mobile SAMs: 8
+  rows → 2,550 instances); side-by-side oracle diff; both LLM games (seeds 20260710/20260711)
+  reproduce 2,49x at turn 2 and ≤24 (the remainder) at turn 3.
+- **Fenced off:** "fixing" the engagement-log counting or the digest sum — they are correct.
+- **Status:** mechanically near-inert (Mobile SAMs excluded from AD health; score-0 return fire;
+  SEAD kills cost no munitions) but poisons report legibility. USER design call pending — see
+  PLAN.md Open Questions → "MANPADS modeling".
+
 ### Mine/crossing calibration: the lever that couldn't reach 25% (2026-06-28→29)
 - **Symptom:** USER target ~25% crossing loss; the planned `intel_locked` strike-bonus lever
   topped out ~41% (band ~54→41%) because mines set a ~22% floor.

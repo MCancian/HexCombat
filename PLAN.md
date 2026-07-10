@@ -2107,6 +2107,31 @@ Red maneuver BNs redistribute along it. Cleanup phase normalizes ownership after
 
 ## Open questions (settle at the relevant milestone)
 
+### MANPADS modeling: SEAD annihilates ~2,500 Stingers on turn 2 of every game  *(OPEN 2026-07-10 — USER design call)*
+
+**Symptom (found reviewing the game-20260711 HTML report):** turn-2 adjudication reads
+"~2,500 Mobile SAMs destroyed"; SITREPs repeat it. Reproduces in both LLM games (2,497 / 2,496).
+
+**Diagnosis (investigated 2026-07-10, NOT a bug in the port):** `targets_master.json` expands
+`sam_mobile_stinger_to2..to5` (`quantity` 500/1000/500/500) into ~2,500 individual Mobile-SAM
+target instances — data and behavior inherited verbatim from the TIV oracle
+(`ijfs_standalone/engagement.py` + its `targets_master.json`, verified side by side). SEAD engages
+every non-destroyed SAM-category target regardless of detection; Stingers' `sam_score` is null →
+score 1 → `p_destroy ≈ 1` against massed SEAD power → wholesale annihilation the first air-phase
+turn. Mechanical impact is near-zero: Mobile SAMs are excluded from AD-health (`IjfsAdHealth.
+AD_CATEGORIES`), null score contributes 0 return fire, and the kills are aircraft-SEAD (no
+munition rounds; only ~80–90 small-UAV rounds ever strike MANPADS). The harm is legibility:
+absurd headline numbers in every report/digest/SITREP, and 2,550 Stingers dominating detection
+counts.
+
+**USER design options (militarily: SEAD hunts radar emitters; passive-IR MANPADS are not
+SEAD-targetable, but do threaten low-flying aircraft — currently they contribute nothing):**
+(a) exclude MANPADS-subcategory targets from SEAD engagement (and optionally give them a
+low-altitude return-fire role); (b) collapse Stingers to container-level targets
+(`systems_represented`, like the anti-ship bins); (c) keep mechanics, re-bucket MANPADS out of
+"Mobile SAMs" in digests/reports so headlines stay sane. Any of these diverges from the TIV
+oracle — record the divergence in the Decisions log when settled.
+
 ### B6 — LLM-player adapter: provider/spend decision  *(RESOLVED 2026-07-08 — USER; see Decisions log)*
 
 **Resolved (USER, 2026-07-08):** provider is a **local model on vLLM** (`localhost:8088/v1`,
