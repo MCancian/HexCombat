@@ -24,6 +24,17 @@ routing but never game-logic state.
 
 ## 3. Rendering — HexMap
 
+**Z-order registry.** Every layer's `z_index` in one place — check here before adding a layer,
+and update this table when one changes:
+
+| z | Layer | Built by |
+|---|-------|----------|
+| 0 | Hex fills (+ black hex outlines as children) | `spawn_hex_cells()` |
+| 4 | Red/contested region borders | `_build_ownership_borders()` |
+| 5 | Reachable-hex overlays + selected-hex border | `highlight_hexes()` |
+| 6 | Numbered beach glyphs | `render_beach_markers()` |
+| 10 | Brigade markers + stack badges | `render_brigade_markers()` |
+
 **Projection.** `HexMap` creates `MapProjection.new(get_viewport_rect().size)` in `_ready` (`HexMap.gd:27`).
 `MapProjection` fits the Taiwan lat/lon box (21.9–25.3°N, 119.9–122.1°E) into the viewport with a
 cos(lat) longitude compression and 6% margin (`MapProjection.gd:3-11`). `project(lat_lon)` maps a

@@ -1,9 +1,9 @@
 extends GdUnitTestSuite
 
-# hex_44_15 (beach 2) is ungarrisoned under the full-defense laydown; hex_44_16 now hosts
-# BDE-GDU, which would shadow the red brigade in click-selection.
-const RED_BRIGADE_ID := "PLA-72-5-Amphibious"
-const RED_START_HEX := "hex_44_15"
+# Shape shared with the golden validators (tools/GoldenScript.gd): the mover starts on an
+# ungarrisoned hex — a garrisoned one would shadow the red brigade in click-selection.
+const RED_BRIGADE_ID := GoldenScript.RED_MOVER_ID
+const RED_START_HEX := GoldenScript.START_HEX
 
 
 func test_selecting_placed_hex_emits_hex_and_brigade_signals() -> void:

@@ -2,14 +2,12 @@
 # C:\Godot_v4.7-stable_win64.exe --headless --path C:\Users\mdogg\Desktop\HexCombat -s res://tools/validate_headless_turn.gd
 extends SceneTree
 
-# Under the full ROC defense laydown (2026-07-09) beach 1 (hex_44_16) is garrisoned by BDE-GDU,
-# so the beach-1 lander is in contact at its landing hex; the scripted mover is the beach-2
-# lander (hex_44_15, ungarrisoned) moving one hex east to join that fight.
-const RED_MOVER_ID := "PLA-72-5-Amphibious"
-const GREEN_DEFENDER_ID := "BDE-GDU"
-const START_HEX := "hex_44_15"
-const TARGET_HEX := "hex_44_16"
-const DICE_SEED := 20260624
+# Scripted-turn shape lives in tools/GoldenScript.gd (shared by all golden validators).
+const RED_MOVER_ID := GoldenScript.RED_MOVER_ID
+const GREEN_DEFENDER_ID := GoldenScript.GREEN_DEFENDER_ID
+const START_HEX := GoldenScript.START_HEX
+const TARGET_HEX := GoldenScript.TARGET_HEX
+const DICE_SEED := GoldenScript.SEED
 const PHASE_PLANNING := 0
 const PHASE_END := 2
 

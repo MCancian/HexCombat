@@ -13,7 +13,7 @@ Defines the hex-grid coordinate system, geometric computations (distance, neighb
 | `scripts/model/Hex.gd` | `Hex` Resource — id, axial coord, center lat/lon, vertex array |
 | `scripts/HexOwner.gd` | Ownership string constants: `RED`, `GREEN`, `CONTESTED`, `NONE` |
 | `scripts/GameData.gd` | Loads JSON into `Hex` objects, builds neighbor index, exposes `get_distance`/`find_path`/`find_reachable` wrappers |
-| `data/taiwan_hex_grid.json` | Pre-generated grid snapshot (~17K lines, 455 hexes) |
+| `data/taiwan_hex_grid.json` | Pre-generated grid snapshot (466 hexes, GSHHG-coastline-reconciled 2026-07-09) |
 
 ## 3. Data Model
 

@@ -5,17 +5,17 @@
 # is deterministic. Also validates that the existing resolve_turn golden invariant (byte-stable
 # ground-combat output under seed 20260624) is preserved — cleanup runs after combat and consumes no
 # RNG, so the pinned fingerprint must be unchanged.
-# Re-baselined 2026-07-09 twice (both user-approved): first for the Track F defender terrain
-# modifier, then for the full ROC defense laydown — beach 1 (hex_44_16) is now garrisoned by
-# BDE-GDU, so the scripted turn is the beach-2 lander (hex_44_15) moving east to join the
-# beach-1 fight; this fingerprint counts only that one contested hex's combat.
+# Scripted-turn shape lives in tools/GoldenScript.gd; only the OUTCOME fingerprint is pinned
+# here (no-commit variant — differs from validate_headless_turn's committed-defender pin).
+# Re-baselined 2026-07-09 twice (both user-approved): Track F defender terrain modifier, then
+# the full ROC defense laydown.
 extends SceneTree
 
-const SEED := 20260624
-const RED_MOVER_ID := "PLA-72-5-Amphibious"
-const GREEN_DEFENDER_ID := "BDE-GDU"
-const START_HEX := "hex_44_15"
-const TARGET_HEX := "hex_44_16"
+const SEED := GoldenScript.SEED
+const RED_MOVER_ID := GoldenScript.RED_MOVER_ID
+const GREEN_DEFENDER_ID := GoldenScript.GREEN_DEFENDER_ID
+const START_HEX := GoldenScript.START_HEX
+const TARGET_HEX := GoldenScript.TARGET_HEX
 const EXPECTED_COMBAT_FINGERPRINT := "casualties=6, feba=0.40"
 
 var _failures: Array[String] = []

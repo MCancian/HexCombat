@@ -178,7 +178,9 @@ caveat is resolved.
   orchestrator line-by-line reviewed. **Verification:** turn-1 screenshot renders pure terrain
   with no script errors (no red pockets exist yet to outline); full local gate ALL PHASES GREEN.
 
-- **2026-07-09 — Map palette: friendly territory renders pure terrain color; only RED/CONTESTED
+- **[PARTIALLY SUPERSEDED same day — the red/contested 0.35 fill tint described below was
+  replaced by region borders (entry above); the pure-terrain-fill half stands.]**
+  **2026-07-09 — Map palette: friendly territory renders pure terrain color; only RED/CONTESTED
   hexes get an ownership tint (USER call, superseding the same-day 0.65-vs-0.35 blend
   comparison).** The stage-6 render blended ownership over terrain on every owned hex — but the
   whole island starts Green-held, so even the terrain-dominant 0.35 weight washed the palette
@@ -188,8 +190,8 @@ caveat is resolved.
   pure `TerrainType.color` for Green-held/unowned hexes and lerps the ownership color in at 0.35
   only for RED or CONTESTED hexes — the invasion front is the tinted deviation on a pure-terrain
   map. The earlier 0.35 pick survives as that tint's strength. **Verification:** screenshot
-  (`reports/terrain_view_pure.png`) matches the preview palette; full local gate ALL PHASES
-  GREEN.
+  matched the preview palette (reports/ is gitignored — regenerate via
+  `tools/capture_screenshot.gd`); full local gate ALL PHASES GREEN.
 
 - **2026-07-09 — Beach 6 (Tainan Xishu) re-pointed to coastal `hex_16_3` (USER call that the
   beach must sit on the coast; agent judgment on the target hex).** The grid reconciliation left

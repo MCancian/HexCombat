@@ -12,7 +12,7 @@
 # that would move the pins and must be a deliberate re-baseline.
 extends SceneTree
 
-const SEED := 20260624
+const SEED := GoldenScript.SEED
 const MAX_TURNS := 40
 # Golden pins for the empty-orders self-play at MAX_TURNS (re-baselined 2026-07-09 for the full
 # ROC defense laydown; see PLAN.md -> Decisions).

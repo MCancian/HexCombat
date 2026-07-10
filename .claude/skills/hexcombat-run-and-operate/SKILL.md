@@ -10,8 +10,8 @@ Godot binary: `C:\Godot_v4.7-stable_win64.exe` (below: `$G`). Project: this repo
 ## Run modes
 
 ```powershell
-# Headless smoke (boots Main.tscn, quits): expect "Loaded 455 hexes", "Loaded 143 brigades",
-# "Spawned 455 hex cells", "Rendered 4 brigade markers", zero SCRIPT ERRORs
+# Headless smoke (boots Main.tscn, quits): expect "Loaded 466 hexes", "Loaded 143 brigades",
+# "Spawned 466 hex cells", "Rendered 32 brigade markers", zero SCRIPT ERRORs
 & $G --headless --path $P --quit-after 30
 
 # Windowed (visual run — the adjudication-aid view)

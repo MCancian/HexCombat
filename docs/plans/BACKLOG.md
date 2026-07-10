@@ -97,10 +97,10 @@ From the 2026-07-08 external map review (items 1 and 4; items 2/3/5 fixed same d
   classes + modifiers), movement consumes `move_cost`/`impassable` (`GameData._terrain_entry_cost`,
   `_with_impassable`), and ground combat consumes `defender_modifier`
   (`CombatResolver.resolve_at` → `GameState._defender_combat_modifier`; golden re-baselined —
-  seed 20260624 casualties=6, feba=-3.04; see PLAN.md → Decisions 2026-07-09). `terrain` is also
-  surfaced per-hex in the LLM `occupied_hexes` observation. Map rendering landed stage 6:
-  `HexMap.get_hex_color` tints hex fill by terrain, ownership lerped over it at weight 0.35
-  (terrain-dominant, USER call after screenshot comparison), numbered beach glyphs. Full detail:
+  current pins live in `tools/validate_headless_turn.gd`; see PLAN.md → Decisions 2026-07-09).
+  `terrain` is also surfaced per-hex in the LLM `occupied_hexes` observation. Map rendering
+  landed stage 6 and iterated same-day to its final form: pure terrain fills + red/contested
+  region borders (`HexMap._build_ownership_borders`), numbered beach glyphs. Full detail:
   `docs/systems/terrain.md`.
 - ✅ **East-coast hex fidelity** (2026-07-09, bundled with the terrain-data sourcing above per
   plan). `data/taiwan_hex_grid.json` regenerated against the real GSHHG coastline

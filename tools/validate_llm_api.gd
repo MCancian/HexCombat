@@ -3,10 +3,11 @@
 # C:\Godot_v4.7-stable_win64.exe --headless --path C:\Users\mdogg\Desktop\HexCombat -s res://tools/validate_llm_api.gd
 extends SceneTree
 
-const RED_MOVER_ID := "PLA-72-5-Amphibious"
-const START_HEX := "hex_44_15"
-const TARGET_HEX := "hex_44_16"
-const DICE_SEED := 20260624
+# Scripted-turn shape lives in tools/GoldenScript.gd (shared by all golden validators).
+const RED_MOVER_ID := GoldenScript.RED_MOVER_ID
+const START_HEX := GoldenScript.START_HEX
+const TARGET_HEX := GoldenScript.TARGET_HEX
+const DICE_SEED := GoldenScript.SEED
 const REQUIRED_RESULT_KEYS := [
 	"protocol_version",
 	"schema",

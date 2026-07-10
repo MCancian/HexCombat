@@ -11,7 +11,7 @@ description: What counts as evidence in HexCombat — the canonical gate's anato
 
 1. **Import** — class-cache build; fails on SCRIPT/Parse/Compile errors in output.
 2. **Smoke** — headless boot of `Main.tscn`; asserts the data-load markers
-   (455 hexes / 143 brigades / 455 cells / 4 brigade markers) and no SCRIPT ERROR.
+   (466 hexes / 143 brigades / 466 cells / 32 brigade markers) and no SCRIPT ERROR.
 3. **Validators** — every `tools/validate_*.gd`, auto-discovered by filename (drop a new one in
    `tools/` and it's in the gate — no registration). Each prints `PASS:`/`FAIL:` and `quit()`s 0/1.
 4. **GdUnit4** — all suites under `tests/`; verdict from the per-suite `Statistics:` lines.
