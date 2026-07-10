@@ -130,6 +130,15 @@ func load_brigades() -> void:
 	print_debug("Loaded %d brigades" % brigades.size())
 
 
+# Restore every hex to the HexState defaults (GREEN owner, feba 0) without re-parsing the grid
+# JSON. Combat/frontline mutate HexState in place across a play-through, so a reset that skips
+# this leaks run 1's ownership/FEBA map into run 2 (surfaced 2026-07-09: in-process replay of
+# the 40-turn golden diverged 24/88 -> 25/90 on the second run).
+func reset_hex_states() -> void:
+	for hex_id in hex_states:
+		hex_states[hex_id] = HexState.new()
+
+
 func _load_oob_file(path: String) -> void:
 	var json = _read_json(path)
 	if json == null or not (json is Dictionary):
