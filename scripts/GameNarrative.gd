@@ -93,13 +93,27 @@ static func _render_ijfs(lines: Array[String], data: Dictionary) -> void:
 		destroyed_bits.append("%d %s" % [int(destroyed[category]), String(category)])
 	var before: Dictionary = data.get("taiwan_ad_health_before", {})
 	var after: Dictionary = data.get("taiwan_ad_health_after", {})
-	lines.append("- **Red joint fires (IJFS)**: %d strike(s) executed (%d skipped)%s.%s" % [
+	var manpads: Dictionary = data.get("manpads", {})
+	var manpads_bit := ""
+	var interceptions := int(manpads.get("interceptions", 0))
+	var air_losses := int(data.get("red_air_losses", 0))
+	if interceptions > 0 or air_losses > 0:
+		var pieces: Array[String] = []
+		if air_losses > 0:
+			# All channels: SEAD return fire + SAM free shot + MANPADS contest.
+			pieces.append("%d Red aircraft lost to air defenses" % air_losses)
+		if interceptions > 0:
+			pieces.append("%d strike(s) intercepted by MANPADS" % interceptions)
+		manpads_bit = " %s (%d MANPADS ready)." % [
+			"; ".join(pieces), int(manpads.get("ready_systems_by_to", {}).get("total", 0))]
+	lines.append("- **Red joint fires (IJFS)**: %d strike(s) executed (%d skipped)%s.%s%s" % [
 		int(attacks.get("executed", 0)), int(attacks.get("skipped", 0)),
 		", destroying " + ", ".join(destroyed_bits) if not destroyed_bits.is_empty() else "",
 		" Taiwan integrated air defense degraded %d%% → %d%% effective." % [
 			int(round(100.0 * float(before.get("effective_ad_health", 0.0)))),
 			int(round(100.0 * float(after.get("effective_ad_health", 0.0)))),
 		] if not before.is_empty() else "",
+		manpads_bit,
 	])
 
 

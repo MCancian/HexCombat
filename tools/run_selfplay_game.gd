@@ -9,10 +9,16 @@
 # policy + seed must reproduce it byte-for-byte — that IS the reproducibility contract, and
 # tools/run_batch.ps1 relies on it for checkpoint/resume.
 # Without --out the record prints to stdout between RECORD-BEGIN/RECORD-END markers.
+# --log=<path.jsonl> additionally writes one observation/actions entry per turn (perspective
+# "Red" — the omniscient observation carries both teams' occupied_hexes), making the record
+# consumable by tools/make_game_bundle.py --html (map rendering needs per-turn observations).
 extends SceneTree
 
 const DEFAULT_TURNS := 30
 const DEFAULT_POLICY := "selfplay_default"
+
+var _log_path := ""
+var _policy: Object = null
 
 
 func _initialize() -> void:
@@ -25,13 +31,22 @@ func _initialize() -> void:
 	var turns := int(args.get("turns", DEFAULT_TURNS))
 	var policy_id := String(args.get("policy", DEFAULT_POLICY))
 	var out_path := String(args.get("out", ""))
+	_log_path = String(args.get("log", ""))
 
-	var policy: Object = PolicyCatalog.create(policy_id)
-	if policy == null:
+	_policy = PolicyCatalog.create(policy_id)
+	if _policy == null:
 		quit(1)
 		return
+	if not _log_path.is_empty():
+		DirAccess.make_dir_recursive_absolute(
+			ProjectSettings.globalize_path(_log_path).get_base_dir())
+		var fresh := FileAccess.open(_log_path, FileAccess.WRITE)  # truncate any stale log
+		if fresh != null:
+			fresh.close()
 
-	var game: Dictionary = SelfPlayRunner.play_game(Callable(policy, "build_actions"), turns, base_seed, true)
+	var driver: Callable = Callable(_policy, "build_actions") if _log_path.is_empty() \
+		else Callable(self, "_logged_build_actions")
+	var game: Dictionary = SelfPlayRunner.play_game(driver, turns, base_seed, true)
 
 	var game_state := get_root().get_node("GameState")
 	var game_data := get_root().get_node("GameData")
@@ -83,6 +98,31 @@ func _initialize() -> void:
 		record["census"]["red"], record["census"]["green"],
 	])
 	quit(0 if ok else 1)
+
+
+## Policy pass-through that appends one JSONL entry per turn: the omniscient observation under
+## perspective "Red" (the viewer prefers Red's observation for the map and the observation holds
+## both teams), plus each team's actions as its own entry so per-side attribution survives.
+func _logged_build_actions(observation: Dictionary) -> Array:
+	var actions: Array = _policy.build_actions(observation)
+	var by_team := {"Red": [], "Green": []}
+	for action in actions:
+		var team := String((action as Dictionary).get("team", ""))
+		if by_team.has(team):
+			(by_team[team] as Array).append(action)
+	var file := FileAccess.open(_log_path, FileAccess.READ_WRITE)
+	if file != null:
+		file.seek_end()
+		file.store_line(JSON.stringify({
+			"perspective": "Red", "turn": observation.get("turn"),
+			"actions": by_team["Red"], "observation": observation,
+		}))
+		file.store_line(JSON.stringify({
+			"perspective": "Green", "turn": observation.get("turn"),
+			"actions": by_team["Green"],
+		}))
+		file.close()
+	return actions
 
 
 func _parse_user_args() -> Dictionary:
