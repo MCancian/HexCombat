@@ -13,10 +13,36 @@
 	},
 	"brigades": [
 		{
+			"battalions": 3,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_44_17",
+			"id": "BDE-21",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "21st Artillery Command",
+			"nato_type": "artillery",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
 			"battalions": 5,
 			"destroyed": false,
 			"fought_this_turn": false,
-			"hex_id": "hex_42_14",
+			"hex_id": "hex_31_8",
+			"id": "BDE-234",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "234th Mechanized Infantry Brigade",
+			"nato_type": "mech-infantry",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 5,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_42_15",
 			"id": "BDE-269",
 			"moved_admin_this_turn": false,
 			"moved_this_turn": false,
@@ -26,10 +52,140 @@
 			"team": "Green"
 		},
 		{
+			"battalions": 5,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_11_5",
+			"id": "BDE-333",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "333rd Mechanized Infantry Brigade",
+			"nato_type": "mech-infantry",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 5,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_12_7",
+			"id": "BDE-43",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "43rd Artillery Command",
+			"nato_type": "artillery",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 5,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_40_12",
+			"id": "BDE-542",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "542nd Armored Brigade",
+			"nato_type": "armor",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 5,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_16_3",
+			"id": "BDE-564",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "564th Armored Brigade",
+			"nato_type": "armor",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 5,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_32_8",
+			"id": "BDE-58",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "58th Artillery Command",
+			"nato_type": "artillery",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 5,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_43_14",
+			"id": "BDE-584",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "584th Armored Brigade",
+			"nato_type": "armor",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 5,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_30_7",
+			"id": "BDE-586",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "586th Armored Brigade",
+			"nato_type": "armor",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 3,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_40_14",
+			"id": "BDE-601",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "601st Aviation Brigade",
+			"nato_type": "aviation",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 3,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_32_9",
+			"id": "BDE-602",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "602nd Aviation Brigade",
+			"nato_type": "aviation",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 7,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_43_17",
+			"id": "BDE-621",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "621st Artillery Command",
+			"nato_type": "artillery",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
 			"battalions": 4,
 			"destroyed": false,
 			"fought_this_turn": false,
-			"hex_id": "hex_43_16",
+			"hex_id": "hex_12_5",
 			"id": "BDE-66",
 			"moved_admin_this_turn": false,
 			"moved_this_turn": false,
@@ -42,7 +198,7 @@
 			"battalions": 4,
 			"destroyed": false,
 			"fought_this_turn": false,
-			"hex_id": "hex_43_15",
+			"hex_id": "hex_13_4",
 			"id": "BDE-77",
 			"moved_admin_this_turn": false,
 			"moved_this_turn": false,
@@ -52,15 +208,223 @@
 			"team": "Green"
 		},
 		{
+			"battalions": 5,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_40_15",
+			"id": "BDE-862",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "862nd Special Warfare Brigade",
+			"nato_type": "special-forces",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 3,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_44_20",
+			"id": "BDE-911",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "911th Infantry Brigade",
+			"nato_type": "reserve",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 3,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_42_17",
+			"id": "BDE-912",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "912th Infantry Brigade",
+			"nato_type": "reserve",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 3,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_41_16",
+			"id": "BDE-913",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "913th Infantry Brigade",
+			"nato_type": "reserve",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 3,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_39_11",
+			"id": "BDE-914",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "914th Infantry Brigade",
+			"nato_type": "reserve",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 3,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_31_7",
+			"id": "BDE-921",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "921th Infantry Brigade",
+			"nato_type": "reserve",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 3,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_30_8",
+			"id": "BDE-922",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "922th Infantry Brigade",
+			"nato_type": "reserve",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 3,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_28_9",
+			"id": "BDE-923",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "923th Infantry Brigade",
+			"nato_type": "reserve",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 3,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_25_7",
+			"id": "BDE-924",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "924th Infantry Brigade",
+			"nato_type": "reserve",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 3,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_13_6",
+			"id": "BDE-931",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "931th Infantry Brigade",
+			"nato_type": "reserve",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 3,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_39_19",
+			"id": "BDE-941",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "941th Infantry Brigade",
+			"nato_type": "reserve",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 3,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_29_18",
+			"id": "BDE-942",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "942th Infantry Brigade",
+			"nato_type": "reserve",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 3,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_13_13",
+			"id": "BDE-943",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "943th Infantry Brigade",
+			"nato_type": "reserve",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
 			"battalions": 4,
 			"destroyed": false,
 			"fought_this_turn": false,
-			"hex_id": "hex_42_15",
+			"hex_id": "hex_13_5",
 			"id": "BDE-99",
 			"moved_admin_this_turn": false,
 			"moved_this_turn": false,
 			"name": "99th Marine Brigade",
 			"nato_type": "amphibious",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 5,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_44_16",
+			"id": "BDE-GDU",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "Guandu Area Command",
+			"nato_type": "area-command",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 2,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_28_18",
+			"id": "BDE-HD",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "Huadong Defense Command",
+			"nato_type": "infantry",
+			"organization": 100.0,
+			"team": "Green"
+		},
+		{
+			"battalions": 3,
+			"destroyed": false,
+			"fought_this_turn": false,
+			"hex_id": "hex_38_20",
+			"id": "BDE-LY",
+			"moved_admin_this_turn": false,
+			"moved_this_turn": false,
+			"name": "Lanyang Area Command",
+			"nato_type": "area-command",
 			"organization": 100.0,
 			"team": "Green"
 		}
@@ -103,7 +467,7 @@
 			"contested",
 			"none"
 		],
-		"placed_brigade_count": 4,
+		"placed_brigade_count": 32,
 		"teams": [
 			"Red",
 			"Green"
@@ -113,41 +477,41 @@
 	"occupied_hexes": [
 		{
 			"brigades": [
-				"BDE-66"
+				"BDE-21"
 			],
 			"feba_km": 0.0,
-			"hex_id": "hex_43_16",
+			"hex_id": "hex_44_17",
 			"neighbors": [
-				"hex_42_16",
-				"hex_42_17",
-				"hex_43_15",
+				"hex_43_16",
 				"hex_43_17",
 				"hex_44_16",
-				"hex_44_17"
+				"hex_44_18",
+				"hex_45_16",
+				"hex_45_17"
 			],
 			"owner": "green",
-			"terrain": "urban"
+			"terrain": "hills"
 		},
 		{
 			"brigades": [
-				"BDE-77"
+				"BDE-234"
 			],
 			"feba_km": 0.0,
-			"hex_id": "hex_43_15",
+			"hex_id": "hex_31_8",
 			"neighbors": [
-				"hex_42_15",
-				"hex_42_16",
-				"hex_43_14",
-				"hex_43_16",
-				"hex_44_15",
-				"hex_44_16"
+				"hex_30_8",
+				"hex_30_9",
+				"hex_31_7",
+				"hex_31_9",
+				"hex_32_8",
+				"hex_32_9"
 			],
 			"owner": "green",
-			"terrain": "urban"
+			"terrain": "metropolis"
 		},
 		{
 			"brigades": [
-				"BDE-99"
+				"BDE-269"
 			],
 			"feba_km": 0.0,
 			"hex_id": "hex_42_15",
@@ -164,17 +528,475 @@
 		},
 		{
 			"brigades": [
-				"BDE-269"
+				"BDE-333"
 			],
 			"feba_km": 0.0,
-			"hex_id": "hex_42_14",
+			"hex_id": "hex_11_5",
 			"neighbors": [
-				"hex_41_13",
-				"hex_41_14",
-				"hex_42_13",
+				"hex_10_5",
+				"hex_10_6",
+				"hex_11_4",
+				"hex_11_6",
+				"hex_12_5",
+				"hex_12_6"
+			],
+			"owner": "green",
+			"terrain": "metropolis"
+		},
+		{
+			"brigades": [
+				"BDE-43"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_12_7",
+			"neighbors": [
+				"hex_11_6",
+				"hex_11_7",
+				"hex_12_6",
+				"hex_12_8",
+				"hex_13_6",
+				"hex_13_7"
+			],
+			"owner": "green",
+			"terrain": "urban"
+		},
+		{
+			"brigades": [
+				"BDE-542"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_40_12",
+			"neighbors": [
+				"hex_39_11",
+				"hex_39_12",
+				"hex_40_11",
+				"hex_40_13",
+				"hex_41_11",
+				"hex_41_12"
+			],
+			"owner": "green",
+			"terrain": "urban"
+		},
+		{
+			"brigades": [
+				"BDE-564"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_16_3",
+			"neighbors": [
+				"hex_15_3",
+				"hex_16_4",
+				"hex_17_2",
+				"hex_17_3"
+			],
+			"owner": "green",
+			"terrain": "plains"
+		},
+		{
+			"brigades": [
+				"BDE-58"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_32_8",
+			"neighbors": [
+				"hex_31_7",
+				"hex_31_8",
+				"hex_32_7",
+				"hex_32_9",
+				"hex_33_7",
+				"hex_33_8"
+			],
+			"owner": "green",
+			"terrain": "urban"
+		},
+		{
+			"brigades": [
+				"BDE-584"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_43_14",
+			"neighbors": [
+				"hex_42_14",
 				"hex_42_15",
 				"hex_43_13",
-				"hex_43_14"
+				"hex_43_15",
+				"hex_44_15"
+			],
+			"owner": "green",
+			"terrain": "urban"
+		},
+		{
+			"brigades": [
+				"BDE-586"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_30_7",
+			"neighbors": [
+				"hex_29_6",
+				"hex_29_7",
+				"hex_30_6",
+				"hex_30_8",
+				"hex_31_6",
+				"hex_31_7"
+			],
+			"owner": "green",
+			"terrain": "urban"
+		},
+		{
+			"brigades": [
+				"BDE-601"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_40_14",
+			"neighbors": [
+				"hex_39_13",
+				"hex_39_14",
+				"hex_40_13",
+				"hex_40_15",
+				"hex_41_13",
+				"hex_41_14"
+			],
+			"owner": "green",
+			"terrain": "hills"
+		},
+		{
+			"brigades": [
+				"BDE-602"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_32_9",
+			"neighbors": [
+				"hex_31_8",
+				"hex_31_9",
+				"hex_32_8",
+				"hex_32_10",
+				"hex_33_8",
+				"hex_33_9"
+			],
+			"owner": "green",
+			"terrain": "metropolis"
+		},
+		{
+			"brigades": [
+				"BDE-621"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_43_17",
+			"neighbors": [
+				"hex_42_17",
+				"hex_42_18",
+				"hex_43_16",
+				"hex_43_18",
+				"hex_44_17",
+				"hex_44_18"
+			],
+			"owner": "green",
+			"terrain": "metropolis"
+		},
+		{
+			"brigades": [
+				"BDE-66"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_12_5",
+			"neighbors": [
+				"hex_11_4",
+				"hex_11_5",
+				"hex_12_6",
+				"hex_13_4",
+				"hex_13_5"
+			],
+			"owner": "green",
+			"terrain": "metropolis"
+		},
+		{
+			"brigades": [
+				"BDE-77"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_13_4",
+			"neighbors": [
+				"hex_12_5",
+				"hex_13_5",
+				"hex_14_4",
+				"hex_14_5"
+			],
+			"owner": "green",
+			"terrain": "urban"
+		},
+		{
+			"brigades": [
+				"BDE-862"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_40_15",
+			"neighbors": [
+				"hex_39_14",
+				"hex_39_15",
+				"hex_40_14",
+				"hex_40_16",
+				"hex_41_14",
+				"hex_41_15"
+			],
+			"owner": "green",
+			"terrain": "hills"
+		},
+		{
+			"brigades": [
+				"BDE-911"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_44_20",
+			"neighbors": [
+				"hex_43_19",
+				"hex_43_20",
+				"hex_44_19",
+				"hex_44_21"
+			],
+			"owner": "green",
+			"terrain": "plains"
+		},
+		{
+			"brigades": [
+				"BDE-912"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_42_17",
+			"neighbors": [
+				"hex_41_16",
+				"hex_41_17",
+				"hex_42_16",
+				"hex_42_18",
+				"hex_43_16",
+				"hex_43_17"
+			],
+			"owner": "green",
+			"terrain": "metropolis"
+		},
+		{
+			"brigades": [
+				"BDE-913"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_41_16",
+			"neighbors": [
+				"hex_40_16",
+				"hex_40_17",
+				"hex_41_15",
+				"hex_41_17",
+				"hex_42_16",
+				"hex_42_17"
+			],
+			"owner": "green",
+			"terrain": "hills"
+		},
+		{
+			"brigades": [
+				"BDE-914"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_39_11",
+			"neighbors": [
+				"hex_38_11",
+				"hex_38_12",
+				"hex_39_12",
+				"hex_40_11",
+				"hex_40_12"
+			],
+			"owner": "green",
+			"terrain": "urban"
+		},
+		{
+			"brigades": [
+				"BDE-921"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_31_7",
+			"neighbors": [
+				"hex_30_7",
+				"hex_30_8",
+				"hex_31_6",
+				"hex_31_8",
+				"hex_32_7",
+				"hex_32_8"
+			],
+			"owner": "green",
+			"terrain": "urban"
+		},
+		{
+			"brigades": [
+				"BDE-922"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_30_8",
+			"neighbors": [
+				"hex_29_7",
+				"hex_29_8",
+				"hex_30_7",
+				"hex_30_9",
+				"hex_31_7",
+				"hex_31_8"
+			],
+			"owner": "green",
+			"terrain": "urban"
+		},
+		{
+			"brigades": [
+				"BDE-923"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_28_9",
+			"neighbors": [
+				"hex_27_8",
+				"hex_27_9",
+				"hex_28_8",
+				"hex_28_10",
+				"hex_29_8",
+				"hex_29_9"
+			],
+			"owner": "green",
+			"terrain": "urban"
+		},
+		{
+			"brigades": [
+				"BDE-924"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_25_7",
+			"neighbors": [
+				"hex_24_7",
+				"hex_24_8",
+				"hex_25_6",
+				"hex_25_8",
+				"hex_26_7",
+				"hex_26_8"
+			],
+			"owner": "green",
+			"terrain": "plains"
+		},
+		{
+			"brigades": [
+				"BDE-931"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_13_6",
+			"neighbors": [
+				"hex_12_6",
+				"hex_12_7",
+				"hex_13_5",
+				"hex_13_7",
+				"hex_14_6",
+				"hex_14_7"
+			],
+			"owner": "green",
+			"terrain": "plains"
+		},
+		{
+			"brigades": [
+				"BDE-941"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_39_19",
+			"neighbors": [
+				"hex_38_19",
+				"hex_38_20",
+				"hex_39_18",
+				"hex_39_20",
+				"hex_40_19",
+				"hex_40_20"
+			],
+			"owner": "green",
+			"terrain": "plains"
+		},
+		{
+			"brigades": [
+				"BDE-942"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_29_18",
+			"neighbors": [
+				"hex_28_18",
+				"hex_29_17",
+				"hex_30_18"
+			],
+			"owner": "green",
+			"terrain": "urban"
+		},
+		{
+			"brigades": [
+				"BDE-943"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_13_13",
+			"neighbors": [
+				"hex_12_13",
+				"hex_13_12",
+				"hex_14_13",
+				"hex_14_14"
+			],
+			"owner": "green",
+			"terrain": "plains"
+		},
+		{
+			"brigades": [
+				"BDE-99"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_13_5",
+			"neighbors": [
+				"hex_12_5",
+				"hex_12_6",
+				"hex_13_4",
+				"hex_13_6",
+				"hex_14_5",
+				"hex_14_6"
+			],
+			"owner": "green",
+			"terrain": "urban"
+		},
+		{
+			"brigades": [
+				"BDE-GDU"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_44_16",
+			"neighbors": [
+				"hex_43_15",
+				"hex_43_16",
+				"hex_44_15",
+				"hex_44_17",
+				"hex_45_16"
+			],
+			"owner": "green",
+			"terrain": "plains"
+		},
+		{
+			"brigades": [
+				"BDE-HD"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_28_18",
+			"neighbors": [
+				"hex_27_17",
+				"hex_28_17",
+				"hex_29_17",
+				"hex_29_18"
+			],
+			"owner": "green",
+			"terrain": "plains"
+		},
+		{
+			"brigades": [
+				"BDE-LY"
+			],
+			"feba_km": 0.0,
+			"hex_id": "hex_38_20",
+			"neighbors": [
+				"hex_37_19",
+				"hex_37_20",
+				"hex_38_19",
+				"hex_39_19",
+				"hex_39_20"
 			],
 			"owner": "green",
 			"terrain": "urban"

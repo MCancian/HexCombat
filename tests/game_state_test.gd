@@ -1,9 +1,12 @@
 extends GdUnitTestSuite
 
-const RED_BRIGADE_ID := "PLA-71-2-Amphibious"
-const GREEN_BRIGADE_ID := "BDE-66"
-const RED_START_HEX := "hex_44_16"
-const GREEN_START_HEX := "hex_43_16"
+# Full-defense laydown (2026-07-09): beach 1 (hex_44_16) is garrisoned by BDE-GDU, so the
+# scripted mover is the beach-2 lander starting on its own (ungarrisoned) landing hex — the
+# same shape the golden validators use.
+const RED_BRIGADE_ID := "PLA-72-5-Amphibious"
+const GREEN_BRIGADE_ID := "BDE-GDU"
+const RED_START_HEX := "hex_44_15"
+const GREEN_START_HEX := "hex_44_16"
 
 
 func before_test() -> void:
@@ -54,7 +57,7 @@ func test_add_move_order_collects_valid_orders_and_rejects_invalid_orders() -> v
 
 	await assert_error(func() -> void:
 		GameState.add_move_order(Brigade.Team.GREEN, RED_BRIGADE_ID, GREEN_START_HEX, "tactical")
-	).is_push_error("Move order team mismatch for PLA-71-2-Amphibious: order=Green brigade=Red")
+	).is_push_error("Move order team mismatch for PLA-72-5-Amphibious: order=Green brigade=Red")
 	assert_int(GameState.orders_for(Brigade.Team.GREEN).size()).is_equal(0)
 
 	await assert_error(func() -> void:

@@ -1,17 +1,24 @@
-# Track 3b — end-to-end golden victory test. Plays the golden scenario (seed 20260624) forward from
-# PLANNING with empty orders (offload / anti-ship / combat / cleanup all run automatically), and
-# asserts it reaches a deterministic, reproducible terminal victory whose winner is consistent with the
-# final battalion census. This exercises the full pipeline: offload landing -> on-Taiwan census ->
-# VictoryConditions. Run by the gate (tools/validate_*.gd).
+# Track 3b — end-to-end golden self-play test. Plays the golden scenario (seed 20260624) forward
+# from PLANNING with empty orders (offload / anti-ship / combat / cleanup all run automatically)
+# and pins the deterministic MAX_TURNS outcome. This exercises the full pipeline: offload landing
+# -> on-Taiwan census -> VictoryConditions. Run by the gate (tools/validate_*.gd).
 #
-# NOTE: under the current offload model + empty orders the golden slice resolves on turn 1 (the PLA
-# lands its wave, 36 > 17 ROC battalions -> China win). The harness supports a longer run (MAX_TURNS)
-# for richer scenarios/policies; the assertions are structural (termination + determinism + winner ⇔
-# census) rather than pinned to that exact turn, so they survive offload/scenario tuning.
+# NOTE: since the full ROC defense laydown (2026-07-09, 32 Green brigades) the default scenario
+# CANNOT terminate under empty orders — the census red-win (36 landed PLA battalions vs 88 ROC)
+# can never fire, and two of the four landed brigades sit on uncontested beaches so china never
+# attrites to 0. The pinned outcome is therefore the turn-40 stalemate census. Victory FIRING
+# (both win paths + arming) is covered by tests/victory_conditions_test.gd; the winner ⇔ census
+# consistency check below stays armed in case a future rebalance makes the run terminal again —
+# that would move the pins and must be a deliberate re-baseline.
 extends SceneTree
 
 const SEED := 20260624
 const MAX_TURNS := 40
+# Golden pins for the empty-orders self-play at MAX_TURNS (re-baselined 2026-07-09 for the full
+# ROC defense laydown; see PLAN.md -> Decisions).
+const EXPECTED_GAME_OVER := false
+const EXPECTED_CHINA := 24
+const EXPECTED_TAIWAN := 88
 
 var _failures: Array[String] = []
 var GameData: Node = null
@@ -27,9 +34,12 @@ func _initialize() -> void:
 	var first := _play_to_terminal()
 	var second := _play_to_terminal()
 
-	_assert_true("game reached a terminal victory within %d turns" % MAX_TURNS, first["game_over"])
-	_assert_true("winner is red or green", first["winner"] == "red" or first["winner"] == "green")
-	# Winner must be consistent with the final on-Taiwan census.
+	_assert_true("game_over matches golden pin (expected %s, got %s)" % [EXPECTED_GAME_OVER, first["game_over"]],
+		first["game_over"] == EXPECTED_GAME_OVER)
+	_assert_true("census matches golden pin (expected %d/%d, got %d/%d)" % [EXPECTED_CHINA, EXPECTED_TAIWAN, first["china"], first["taiwan"]],
+		first["china"] == EXPECTED_CHINA and first["taiwan"] == EXPECTED_TAIWAN)
+	# Winner must be consistent with the final on-Taiwan census (armed only if a rebalance ever
+	# makes the run terminal — that also trips the game_over pin above and forces a re-baseline).
 	if first["winner"] == "red":
 		_assert_true("red win => china (%d) > taiwan (%d)" % [first["china"], first["taiwan"]],
 			first["china"] > first["taiwan"])

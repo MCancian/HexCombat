@@ -149,3 +149,8 @@ func _battalion_qty(brigade: Brigade, battalion_type: String) -> int:
 func _reset_fixture() -> void:
 	GameData.load_all()
 	GameState.reset_to_scenario()
+	# This suite pins exact ScriptedDice sequences against ONE hand-built combat per test. Under
+	# the full-defense laydown (2026-07-09) the turn-1 wave lands on garrisoned beaches, spawning
+	# extra combats that would consume the scripted rolls first — empty the reserve so the only
+	# combat is the test's own.
+	GameState.ship_reserve.clear()

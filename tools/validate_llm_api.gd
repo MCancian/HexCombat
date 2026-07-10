@@ -3,9 +3,9 @@
 # C:\Godot_v4.7-stable_win64.exe --headless --path C:\Users\mdogg\Desktop\HexCombat -s res://tools/validate_llm_api.gd
 extends SceneTree
 
-const RED_MOVER_ID := "PLA-71-2-Amphibious"
-const START_HEX := "hex_44_16"
-const TARGET_HEX := "hex_43_16"
+const RED_MOVER_ID := "PLA-72-5-Amphibious"
+const START_HEX := "hex_44_15"
+const TARGET_HEX := "hex_44_16"
 const DICE_SEED := 20260624
 const REQUIRED_RESULT_KEYS := [
 	"protocol_version",
@@ -123,11 +123,11 @@ func _validate_action_application() -> void:
 		var tr: Dictionary = result["turn_result"]
 		_assert_equal_int("turn_result turn_number", int(tr.get("turn_number", 0)), 1)
 		var contested: Array = tr.get("contested_hexes", [])
-		_assert_true("hex_43_16 in contested_hexes", TARGET_HEX in contested)
+		_assert_true("%s in contested_hexes" % TARGET_HEX, TARGET_HEX in contested)
 		var events: Array = tr.get("events", [])
 		_assert_true("turn_result events non-empty", not events.is_empty())
-		_assert_true("events has move for PLA-71-2-Amphibious to hex_43_16", _find_event(events, "move", "hex_43_16", RED_MOVER_ID))
-		_assert_true("events has combat at hex_43_16", _find_combat_event(events, "hex_43_16"))
+		_assert_true("events has move for %s to %s" % [RED_MOVER_ID, TARGET_HEX], _find_event(events, "move", TARGET_HEX, RED_MOVER_ID))
+		_assert_true("events has combat at %s" % TARGET_HEX, _find_combat_event(events, TARGET_HEX))
 
 
 func _validate_missing_seed_rejected() -> void:

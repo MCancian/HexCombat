@@ -11,7 +11,8 @@ const ROC_OOB_PATH := "res://data/roc_ground_forces.json"
 const HEX_GRID_PATH := "res://data/taiwan_hex_grid.json"
 const BEACHES_PATH := "res://data/beaches.json"
 # Pinned default-scenario expectations (change deliberately, never to make a red gate pass).
-const EXPECTED_DEFAULT_PLACEMENTS := 4
+# 32 = the full ROC OOB (2026-07-09 USER call: the default carries the complete defense laydown).
+const EXPECTED_DEFAULT_PLACEMENTS := 32
 const EXPECTED_DEFAULT_RED_SHIP_RESERVE := 4
 const VALID_LOSS_CHECK_ARMS := ["unconditional", "after_first_landing"]  # + "after_turn:<N>"
 
@@ -140,16 +141,27 @@ func _validate_default_pins(scenario_data: Dictionary, hex_coords: Dictionary) -
 	if green_count != EXPECTED_DEFAULT_PLACEMENTS:
 		_fail("Default scenario expected %d Green placements, got %d" % [EXPECTED_DEFAULT_PLACEMENTS, green_count])
 
-	# Each reserve entry's beach_hex must be odd-r adjacent to its index-paired Green placement
-	# (the default's designed geometry: defenders sit inland of their beach).
-	for index in range(mini(reserve.size(), placements.size())):
+	# Every reserve entry's beach_hex must be defended: a Green placement ON the hex or on an
+	# odd-r neighbor (the full-defense geometry — beaches garrisoned on-hex or covered from
+	# beside; replaces the pre-2026-07-09 index-paired rule from the 4-placement starter laydown).
+	var green_hex_coords: Dictionary = {}  # Vector2i -> true
+	for placement in placements:
+		var green_hex := String((placement as Dictionary).get("hex", ""))
+		if hex_coords.has(green_hex):
+			green_hex_coords[hex_coords[green_hex]] = true
+	for index in range(reserve.size()):
 		var beach_hex := String((reserve[index] as Dictionary).get("beach_hex", ""))
-		var green_hex := String((placements[index] as Dictionary).get("hex", ""))
-		if hex_coords.has(beach_hex) and hex_coords.has(green_hex):
-			var beach_coord: Vector2i = hex_coords[beach_hex]
-			var green_coord: Vector2i = hex_coords[green_hex]
-			if green_coord not in HexMath.neighbor_coords(beach_coord):
-				_fail("Default red_ship_reserve entry %d beach_hex %s is not adjacent to Green placement hex %s" % [index, beach_hex, green_hex])
+		if not hex_coords.has(beach_hex):
+			continue  # unknown beach hexes already fail the per-scenario checks
+		var beach_coord: Vector2i = hex_coords[beach_hex]
+		var defended: bool = green_hex_coords.has(beach_coord)
+		if not defended:
+			for neighbor_coord in HexMath.neighbor_coords(beach_coord):
+				if green_hex_coords.has(neighbor_coord):
+					defended = true
+					break
+		if not defended:
+			_fail("Default red_ship_reserve entry %d beach_hex %s has no Green placement on it or adjacent to it" % [index, beach_hex])
 	print("Default pins checked: %d placements (all Green), %d reserve entries, beach adjacency" % [EXPECTED_DEFAULT_PLACEMENTS, EXPECTED_DEFAULT_RED_SHIP_RESERVE])
 
 

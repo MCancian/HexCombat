@@ -38,6 +38,13 @@ Settled battles. Primary sources: `PLAN.md` → Decisions (why) and `docs/RETROS
   it out; reset already rebuilds compositions and `ship_reserve` correctly.
 - **Status:** closed. Rule: verify a determinism failure standalone (after re-import) before
   touching reset/state code.
+- **Amendment (2026-07-09):** a REAL reset leak did exist in a field that incident never
+  checked — `GameData.hex_states` (ownership/FEBA) was only rebuilt by `load_hex_grid`, never by
+  `reset_to_scenario`. Surfaced when the full-defense laydown made the 40-turn golden self-play's
+  in-process second replay diverge (24/88 vs 25/90 — reproducible after fresh `--import`, stable
+  across processes: the discriminating evidence vs. this entry's cache flake). Fixed by
+  `GameData.reset_hex_states()`. The 2026-06-30 verdict stands for compositions/ship_reserve;
+  its blanket "reset is already correct" did not.
 
 ### Fixture rot: `llm_result_after_turn.json` (2026-06-30)
 - **Symptom:** committed example fixture silently 318/247 lines stale vs regeneration.

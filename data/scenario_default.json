@@ -7,7 +7,7 @@
   "red_out_of_supply_effectiveness": 0.5,
   "stacking_soft_cap": 6,
   "victory": {
-    "_comment": "End-of-cleanup victory census of battalions ON TAIWAN. loss_check_arm: 'unconditional' (default) | 'after_first_landing' | 'after_turn:<N>'. taiwan_hexes: null counts ALL placed hexes (correct for this main-island scenario; offshore islands can't be distinguished until terrain/land data exists — see PLAN.md Victory conditions); set to a hex-id array to restrict the census.",
+    "_comment": "End-of-cleanup victory census of battalions ON TAIWAN. loss_check_arm: 'unconditional' (default) | 'after_first_landing' | 'after_turn:<N>'. taiwan_hexes: null counts ALL placed hexes (correct for this main-island scenario; offshore islands can't be distinguished until terrain/land data exists \u2014 see PLAN.md Victory conditions); set to a hex-id array to restrict the census.",
     "loss_check_arm": "after_first_landing",
     "taiwan_hexes": null
   },
@@ -39,32 +39,164 @@
   ],
   "placements": [
     {
-      "brigade_id": "BDE-66",
+      "brigade_id": "BDE-21",
       "team": "Green",
-      "beach": 1,
-      "hex": "hex_43_16",
-      "offset_bearing": 300
+      "hex": "hex_44_17"
     },
     {
-      "brigade_id": "BDE-77",
+      "brigade_id": "BDE-234",
       "team": "Green",
-      "beach": 2,
-      "hex": "hex_43_15",
-      "offset_bearing": 330
-    },
-    {
-      "brigade_id": "BDE-99",
-      "team": "Green",
-      "beach": 3,
-      "hex": "hex_42_15",
-      "offset_bearing": 330
+      "hex": "hex_31_8"
     },
     {
       "brigade_id": "BDE-269",
       "team": "Green",
-      "beach": 4,
-      "hex": "hex_42_14",
-      "offset_bearing": 330
+      "hex": "hex_42_15"
+    },
+    {
+      "brigade_id": "BDE-333",
+      "team": "Green",
+      "hex": "hex_11_5"
+    },
+    {
+      "brigade_id": "BDE-43",
+      "team": "Green",
+      "hex": "hex_12_7"
+    },
+    {
+      "brigade_id": "BDE-542",
+      "team": "Green",
+      "hex": "hex_40_12"
+    },
+    {
+      "brigade_id": "BDE-564",
+      "team": "Green",
+      "hex": "hex_16_3"
+    },
+    {
+      "brigade_id": "BDE-58",
+      "team": "Green",
+      "hex": "hex_32_8"
+    },
+    {
+      "brigade_id": "BDE-584",
+      "team": "Green",
+      "hex": "hex_43_14"
+    },
+    {
+      "brigade_id": "BDE-586",
+      "team": "Green",
+      "hex": "hex_30_7"
+    },
+    {
+      "brigade_id": "BDE-601",
+      "team": "Green",
+      "hex": "hex_40_14"
+    },
+    {
+      "brigade_id": "BDE-602",
+      "team": "Green",
+      "hex": "hex_32_9"
+    },
+    {
+      "brigade_id": "BDE-621",
+      "team": "Green",
+      "hex": "hex_43_17"
+    },
+    {
+      "brigade_id": "BDE-66",
+      "team": "Green",
+      "hex": "hex_12_5"
+    },
+    {
+      "brigade_id": "BDE-77",
+      "team": "Green",
+      "hex": "hex_13_4"
+    },
+    {
+      "brigade_id": "BDE-862",
+      "team": "Green",
+      "hex": "hex_40_15"
+    },
+    {
+      "brigade_id": "BDE-911",
+      "team": "Green",
+      "hex": "hex_44_20"
+    },
+    {
+      "brigade_id": "BDE-912",
+      "team": "Green",
+      "hex": "hex_42_17"
+    },
+    {
+      "brigade_id": "BDE-913",
+      "team": "Green",
+      "hex": "hex_41_16"
+    },
+    {
+      "brigade_id": "BDE-914",
+      "team": "Green",
+      "hex": "hex_39_11"
+    },
+    {
+      "brigade_id": "BDE-921",
+      "team": "Green",
+      "hex": "hex_31_7"
+    },
+    {
+      "brigade_id": "BDE-922",
+      "team": "Green",
+      "hex": "hex_30_8"
+    },
+    {
+      "brigade_id": "BDE-923",
+      "team": "Green",
+      "hex": "hex_28_9"
+    },
+    {
+      "brigade_id": "BDE-924",
+      "team": "Green",
+      "hex": "hex_25_7"
+    },
+    {
+      "brigade_id": "BDE-931",
+      "team": "Green",
+      "hex": "hex_13_6"
+    },
+    {
+      "brigade_id": "BDE-941",
+      "team": "Green",
+      "hex": "hex_39_19"
+    },
+    {
+      "brigade_id": "BDE-942",
+      "team": "Green",
+      "hex": "hex_29_18"
+    },
+    {
+      "brigade_id": "BDE-943",
+      "team": "Green",
+      "hex": "hex_13_13"
+    },
+    {
+      "brigade_id": "BDE-99",
+      "team": "Green",
+      "hex": "hex_13_5"
+    },
+    {
+      "brigade_id": "BDE-GDU",
+      "team": "Green",
+      "hex": "hex_44_16"
+    },
+    {
+      "brigade_id": "BDE-HD",
+      "team": "Green",
+      "hex": "hex_28_18"
+    },
+    {
+      "brigade_id": "BDE-LY",
+      "team": "Green",
+      "hex": "hex_38_20"
     }
   ]
 }

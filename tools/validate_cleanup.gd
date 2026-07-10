@@ -4,19 +4,19 @@
 # Validates D2-C: GameState.resolve_cleanup_phase resets per-turn anti-ship flags and that the result
 # is deterministic. Also validates that the existing resolve_turn golden invariant (byte-stable
 # ground-combat output under seed 20260624) is preserved — cleanup runs after combat and consumes no
-# RNG, so casualties=3, feba=-3.04 must be unchanged.
-# Re-baselined 2026-07-09 (Track F terrain rebalance, user-approved): activating the defender
-# terrain modifier (hex_43_16 is "urban", defender_modifier 2.0) makes the defender much stronger
-# relative to the same dice rolls, so FEBA moves -0.96 -> -3.04 (bigger Green/defender advantage);
-# casualties (3) unchanged because this fingerprint counts only this one contested hex's combat.
+# RNG, so the pinned fingerprint must be unchanged.
+# Re-baselined 2026-07-09 twice (both user-approved): first for the Track F defender terrain
+# modifier, then for the full ROC defense laydown — beach 1 (hex_44_16) is now garrisoned by
+# BDE-GDU, so the scripted turn is the beach-2 lander (hex_44_15) moving east to join the
+# beach-1 fight; this fingerprint counts only that one contested hex's combat.
 extends SceneTree
 
 const SEED := 20260624
-const RED_MOVER_ID := "PLA-71-2-Amphibious"
-const GREEN_DEFENDER_ID := "BDE-66"
-const START_HEX := "hex_44_16"
-const TARGET_HEX := "hex_43_16"
-const EXPECTED_COMBAT_FINGERPRINT := "casualties=3, feba=-3.04"
+const RED_MOVER_ID := "PLA-72-5-Amphibious"
+const GREEN_DEFENDER_ID := "BDE-GDU"
+const START_HEX := "hex_44_15"
+const TARGET_HEX := "hex_44_16"
+const EXPECTED_COMBAT_FINGERPRINT := "casualties=6, feba=0.40"
 
 var _failures: Array[String] = []
 var GameData: Node = null
@@ -109,9 +109,9 @@ func _validate_cleanup_produces_summary() -> void:
 	_assert_true("summary antiship_systems_reset is zero with no systems", summary != null and summary.antiship_systems_reset == 0)
 
 
-# Golden invariant: run the same scripted turn as validate_headless_turn.gd with seed 20260624;
-# must still yield casualties=3, feba=-3.04 (re-baselined 2026-07-09, Track F terrain) — cleanup
-# runs after combat, consumes no RNG, so ground-combat output is byte-stable given this baseline.
+# Golden invariant: run the scripted move (no commit) with seed 20260624; must still yield
+# EXPECTED_COMBAT_FINGERPRINT (re-baselined 2026-07-09, full ROC defense laydown) — cleanup runs
+# after combat, consumes no RNG, so ground-combat output is byte-stable given this baseline.
 func _validate_turn_golden_invariant_preserved() -> void:
 	GameState.reset_to_scenario()
 	GameState.resolve_offload_turn(SeededDice.new(SEED))

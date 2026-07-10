@@ -156,16 +156,14 @@ Per-class defender modifier table: plains ×1.0, hills ×1.5, urban ×2.0, mount
 (mountain is impassable to movement but can still be a combat modifier if reached by other means —
 currently moot since nothing can enter it), metropolis ×3.0.
 
-**Golden invariant:** seed `20260624` → whole-game `casualties=6, feba=-3.04` (was
-`casualties=3, feba=-0.96` before the modifier activated) — byte-stable gate pin
-(`tools/validate_headless_turn.gd`; `tools/validate_cleanup.gd`'s single-contested-hex
-`EXPECTED_COMBAT_FINGERPRINT` keeps `casualties=3` but also moves to `feba=-3.04`). The golden
-scenario's contested hex is `hex_43_16` (urban, ×2.0) — activating the modifier (stage 5, commit
-`4bc9e6c`) flipped that fight from "Attacker Advantage" (ratio 1.5, feba +1.337, attacker_losses 1,
-defender_losses 1) to "Defender Advantage" (ratio 0.75, feba -0.955, attacker_losses 2,
-defender_losses 0) in `docs/examples/llm_result_after_turn.json` — the FEBA line retreats, exactly
-the "stronger defender" shape expected. Full re-baseline rationale: `PLAN.md` → Decisions,
-2026-07-09 "Track F: activate the defender terrain modifier..." entry.
+**Golden invariant:** seed `20260624` → `casualties=9, feba=1.98` in
+`tools/validate_headless_turn.gd`'s scripted turn (`tools/validate_cleanup.gd`'s no-commit
+variant pins `casualties=6, feba=0.40`). Re-baselined twice on 2026-07-09: first when the
+defender modifier activated (stage 5, commit `4bc9e6c` — the then-scripted `hex_43_16` urban
+fight flipped from attacker to defender advantage, `casualties=3→6, feba=-0.96→-3.04`), then
+again for the full ROC defense laydown, which garrisons beach 1 (`hex_44_16`, plains) with
+BDE-GDU and moves the scripted combat there (beach-2 lander joins the beach-1 fight; contested
+set `[hex_43_14, hex_44_16]`). Full rationale: `PLAN.md` → Decisions, 2026-07-09 entries.
 
 Tests: `tests/combat_terrain_modifier_test.gd` — `test_modifier_1_0_no_terrain_bonus`,
 `test_modifier_2_0_urban_defender_bonus`, `test_modifier_3_0_metropolis_defender_bonus` (call
@@ -181,15 +179,13 @@ loss-rate/FEBA formulas).
 
 ## 7. Rendering
 
-`HexMap.get_hex_color(hex_id)` (`scripts/HexMap.gd`) fills each hex with its pure
-`TerrainType.color`; only RED-owned or CONTESTED hexes get the ownership color lerped over the
-terrain at weight 0.35 (`terrain_color.lerp(ownership_color, 0.35)`). Green-held and unowned
-hexes render untinted — **USER call 2026-07-09**: the whole island starts Green-held, so blending
-green over everything washed the palette out; the in-game map should match the untinted
-`tools/terrain/out/terrain_preview.png` palette, with only the deviation from ROC control (the
-invasion) tinted. This superseded the earlier same-day 0.65-vs-0.35 screenshot comparison, which
-kept a green cast on friendly terrain; the 0.35 weight survives as the red/contested tint
-strength. Unclassified hexes (empty `TerrainType.color`) fall back to ownership-only fill — the
+`HexMap.get_hex_color(hex_id)` (`scripts/HexMap.gd`) fills every classified hex with its pure
+`TerrainType.color` — **USER call 2026-07-09**: the in-game map matches the untinted
+`tools/terrain/out/terrain_preview.png` palette (blending ownership over the whole Green-held
+starting island washed the palette out). Ownership renders as region borders instead: RED or
+CONTESTED hexes get a 3px perimeter outline around each connected pocket, interior edges
+suppressed (`_build_ownership_borders`; superseded the same-day fill-tint iterations).
+Unclassified hexes (empty `TerrainType.color`) fall back to ownership-only fill — the
 pre-Track-F behavior. Full rendering detail (beach glyphs, brigade markers, projection, input)
 lives in `docs/systems/view-layer.md` §3.
 

@@ -130,6 +130,54 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-07-09 — Default scenario carries the full ROC defense laydown; golden re-baselined
+  (USER call: "make sure the default scenario has all Taiwanese brigades on it and correctly
+  placed"; agent judgment on mechanics).** `data/scenario_default.json` placements went 4 → all
+  32 ROC brigades, copied verbatim from `roc_full_defense` (the vetted B6 laydown; beaches
+  1/3/6/9 garrisoned on-hex, every landing beach covered on-hex or adjacent). Consequences, each
+  re-pinned deliberately: (a) the scripted golden turn moved — beach 1 (`hex_44_16`) is now
+  garrisoned by BDE-GDU, so `validate_headless_turn`/`validate_cleanup`/`validate_llm_api`/
+  `validate_play_turn` script the beach-2 lander (`PLA-72-5-Amphibious`, `hex_44_15`) moving
+  east into that fight; new pins `casualties=9, feba=1.98` (headless turn), `casualties=6,
+  feba=0.40` (cleanup's no-commit variant), contested `[hex_43_14, hex_44_16]`. (b) empty-orders
+  self-play can no longer terminate (36 landed PLA battalions can never out-census 88 ROC;
+  two landers sit on uncontested beaches so china never attrites to 0) —
+  `validate_golden_victory` now pins the 40-turn stalemate census 24/88 instead of demanding a
+  terminal victory; victory FIRING coverage lives in `tests/victory_conditions_test.gd`. (c)
+  `validate_scenario_data`'s index-paired beach-adjacency rule (an artifact of the 4-placement
+  laydown) replaced by "every reserve beach_hex has a Green placement on it or adjacent";
+  placement-count pin 4 → 32; smoke marker "Rendered 4 brigade markers" → 32 (both gate
+  scripts). (d) GdUnit suites re-keyed to the same beach-2→beach-1 shape;
+  `combat_resolution_test` now clears `GameState.ship_reserve` in its fixture so its
+  ScriptedDice duels stay hermetic (turn-1 landings on garrisoned beaches would consume the
+  scripted rolls). (e) LLM example fixtures regenerated. **Verification:** full local gate ALL
+  PHASES GREEN; headless turn + cleanup each internally run twice byte-identical.
+
+- **2026-07-09 — Bug fix: `reset_to_scenario` leaked hex ownership/FEBA across in-process
+  play-throughs (agent correctness call; amends the 2026-06-30 census-flake verdict).**
+  `GameData.hex_states` is only rebuilt by `load_hex_grid()`, which reset does not call —
+  combat/frontline mutate `HexState` in place, so run 2 of any in-process replay started on run
+  1's ownership map. Invisible until now: the old default's empty-orders self-play ended turn 1;
+  the full-defense laydown's 40-turn run made `validate_golden_victory`'s second replay diverge
+  (24/88 vs 25/90 — reproducible after a fresh `--import`, stable across processes, so NOT the
+  2026-06-30 stale-class-cache flake; that incident's verdict stands for its own evidence, but
+  its "reset is already correct" generalization is now amended — it had only checked
+  compositions and ship_reserve). Fix: `GameData.reset_hex_states()` (fresh `HexState.new()` per
+  hex — GREEN/0.0 defaults) called from `reset_to_scenario` beside `load_brigades()`.
+  **Verification:** `validate_golden_victory` runs 1 and 2 now byte-identical (24/88 == 24/88).
+
+- **2026-07-09 — Map ownership rendering: red/contested REGION BORDERS replace fill tints
+  entirely (USER call, superseding the same-day pure-palette + 0.35 red-tint decision below).**
+  Every hex now renders pure terrain color; hexes owned RED or CONTESTED contribute their
+  polygon edges as 3px full-alpha Line2D outlines (z 4), with edges between two red/contested
+  hexes suppressed — red and contested count as one region, so each connected pocket reads as a
+  single perimeter trace (a front line) on an untinted terrain map. Implemented in
+  `HexMap._build_ownership_borders`/`_edges_to_draw`/`_spawn_hex_border` (edge→neighbor mapping
+  via `HexMath.neighbor_coords` + nearest-edge-midpoint geometry; off-grid/sea neighbors never
+  suppress an edge); rebuilt on `refresh_all_hex_colors()`. Sonnet-subagent implemented,
+  orchestrator line-by-line reviewed. **Verification:** turn-1 screenshot renders pure terrain
+  with no script errors (no red pockets exist yet to outline); full local gate ALL PHASES GREEN.
+
 - **2026-07-09 — Map palette: friendly territory renders pure terrain color; only RED/CONTESTED
   hexes get an ownership tint (USER call, superseding the same-day 0.65-vs-0.35 blend
   comparison).** The stage-6 render blended ownership over terrain on every owned hex — but the

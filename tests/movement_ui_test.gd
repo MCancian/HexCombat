@@ -1,7 +1,9 @@
 extends GdUnitTestSuite
 
-const RED_BRIGADE_ID := "PLA-71-2-Amphibious"
-const RED_START_HEX := "hex_44_16"
+# hex_44_15 (beach 2) is ungarrisoned under the full-defense laydown; hex_44_16 now hosts
+# BDE-GDU, which would shadow the red brigade in click-selection.
+const RED_BRIGADE_ID := "PLA-72-5-Amphibious"
+const RED_START_HEX := "hex_44_15"
 
 
 func before_test() -> void:

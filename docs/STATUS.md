@@ -49,9 +49,10 @@ offload → movement & commit → ground combat → front-line → cleanup (+ vi
   retreat, hex ownership. Defender terrain modifier (Track F) is active: `CombatResolver.resolve_at`
   now receives the defended hex's `GameData.get_terrain(hex_id).defender_modifier` from
   `GameState._defender_combat_modifier` instead of a hardcoded 1.0. Golden invariant: seed
-  20260624 → `casualties=6, feba=-3.04` (byte-stable gate; re-baselined three times — when the
-  hex-adjacency coordinate bug was fixed, when `feba_base_km` was set to TIV's 3.5, and 2026-07-09
-  when the terrain modifier was activated — see `PLAN.md` → Decisions).
+  20260624 → `casualties=9, feba=1.98` at the scripted beach-1 fight (byte-stable gate;
+  re-baselined four times — hex-adjacency coordinate fix, `feba_base_km` 3.5, the 2026-07-09
+  terrain-modifier activation, and the same-day full ROC defense laydown which moved the scripted
+  combat from hex_43_16 to the garrisoned beach 1 (hex_44_16) — see `PLAN.md` → Decisions).
 - **D1 Amphibious offload** — ship reserve → beach landing; lands brigades onto beach hexes.
   Every scenario's `red_ship_reserve.beach_hex` must be coastal (< 6 land neighbors) —
   `validate_scenario_data.gd` rejects fully-inland landing hexes.
@@ -139,11 +140,19 @@ offload → movement & commit → ground combat → front-line → cleanup (+ vi
   take one step into an adjacent passable hex); mountains are impassable
   (`GameData._with_impassable`). Ground combat's defender gets a per-class strength modifier
   (`GameState._defender_combat_modifier` → `CombatResolver.resolve_at`): plains ×1.0, hills ×1.5,
-  urban ×2.0, mountain ×2.0, metropolis ×3.0 — golden re-baselined to seed 20260624
-  `casualties=6, feba=-3.04`. Terrain is surfaced per-hex in the LLM `occupied_hexes` observation
-  and tints the map view fill (`HexMap.get_hex_color`, ownership lerped over the terrain tint at
-  weight 0.35, terrain-dominant — USER call after screenshot comparison), with numbered beach
-  glyphs. Full detail: `docs/systems/terrain.md`.
+  urban ×2.0, mountain ×2.0, metropolis ×3.0 — golden currently seed 20260624
+  `casualties=9, feba=1.98` (re-baselined 2026-07-09 for the full-defense laydown). Terrain is
+  surfaced per-hex in the LLM `occupied_hexes` observation and IS the map fill: every classified
+  hex renders pure `TerrainType.color` (USER call — match `terrain_preview.png`); RED/CONTESTED
+  ownership renders as a 3px perimeter border around each connected pocket, no interior lines
+  (`HexMap._build_ownership_borders`), with numbered beach glyphs. Full detail:
+  `docs/systems/terrain.md`.
+- **Default scenario = full ROC defense (2026-07-09 USER call)** — `data/scenario_default.json`
+  places all 32 ROC brigades (laydown shared with `roc_full_defense`; beaches 1/3/6/9 garrisoned
+  on-hex, every landing beach covered on-hex or adjacent — pinned by `validate_scenario_data.gd`).
+  Under empty-orders self-play the default now runs to the 40-turn stalemate census 24/88 pinned
+  in `validate_golden_victory.gd` (the 4-brigade landing wave cannot out-census 88 ROC battalions;
+  victory FIRING stays covered by `tests/victory_conditions_test.gd`).
 - **Brigade marker rendering (`HexMap`)** — brigades are grouped per hex: same-hex stacks render
   as a 0.62× ring with a ×N count badge at 3+; a lone brigade shrinks to 0.75× and pins to the
   hex center when any neighbor hex is occupied (full-size markers are wider than the hex spacing

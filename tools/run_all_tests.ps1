@@ -87,7 +87,7 @@ if ($out -match "SCRIPT ERROR" -or $out -match "Parse Error" -or $out -match "Co
 Write-Phase "Phase 2/4 — Smoke (boot main scene headless)"
 $out = Invoke-Godot @("--quit-after", "30")
 $smokeOk = $true
-foreach ($marker in @("Loaded 466 hexes", "Loaded 143 brigades", "Spawned 466 hex cells", "Rendered 4 brigade markers")) {
+foreach ($marker in @("Loaded 466 hexes", "Loaded 143 brigades", "Spawned 466 hex cells", "Rendered 32 brigade markers")) {
     if ($out -notmatch [regex]::Escape($marker)) {
         $failures.Add("Smoke: missing expected marker '$marker'")
         $smokeOk = $false

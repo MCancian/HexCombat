@@ -2,10 +2,10 @@
 # C:\Godot_v4.7-stable_win64.exe --headless --path C:\Users\mdogg\Desktop\HexCombat -s res://tools/validate_play_turn.gd
 extends SceneTree
 
-const RED_MOVER_ID := "PLA-71-2-Amphibious"
-const GREEN_DEFENDER_ID := "BDE-66"
-const START_HEX := "hex_44_16"
-const TARGET_HEX := "hex_43_16"
+const RED_MOVER_ID := "PLA-72-5-Amphibious"
+const GREEN_DEFENDER_ID := "BDE-GDU"
+const START_HEX := "hex_44_15"
+const TARGET_HEX := "hex_44_16"
 const DICE_SEED := 20260624
 const PHASE_PLANNING := 0
 const PHASE_END := 2

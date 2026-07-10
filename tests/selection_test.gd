@@ -1,7 +1,9 @@
 extends GdUnitTestSuite
 
-const RED_BRIGADE_ID := "PLA-71-2-Amphibious"
-const RED_START_HEX := "hex_44_16"
+# hex_44_15 (beach 2) is ungarrisoned under the full-defense laydown; hex_44_16 now hosts
+# BDE-GDU, which would shadow the red brigade in click-selection.
+const RED_BRIGADE_ID := "PLA-72-5-Amphibious"
+const RED_START_HEX := "hex_44_15"
 
 
 func test_selecting_placed_hex_emits_hex_and_brigade_signals() -> void:
@@ -12,12 +14,12 @@ func test_selecting_placed_hex_emits_hex_and_brigade_signals() -> void:
 	controller.hex_map.render_brigade_markers()
 	monitor_signals(EventBus, false)
 
-	controller._on_hex_clicked("hex_44_16")
+	controller._on_hex_clicked(RED_START_HEX)
 
-	assert_signal(EventBus).wait_until(5000).is_emitted("hex_selected", "hex_44_16")
-	assert_signal(EventBus).wait_until(5000).is_emitted("brigade_selected", "PLA-71-2-Amphibious")
-	assert_str(controller.selected_hex).is_equal("hex_44_16")
-	assert_str(controller.selected_brigade).is_equal("PLA-71-2-Amphibious")
+	assert_signal(EventBus).wait_until(5000).is_emitted("hex_selected", RED_START_HEX)
+	assert_signal(EventBus).wait_until(5000).is_emitted("brigade_selected", RED_BRIGADE_ID)
+	assert_str(controller.selected_hex).is_equal(RED_START_HEX)
+	assert_str(controller.selected_brigade).is_equal(RED_BRIGADE_ID)
 
 
 func test_selecting_empty_hex_emits_hex_but_not_brigade_signal() -> void:
