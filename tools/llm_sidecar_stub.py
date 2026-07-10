@@ -59,7 +59,8 @@ def _build_actions(observation, perspective, mode):
 
 def _append_log(log_path, perspective, observation, actions):
     os.makedirs(os.path.dirname(os.path.abspath(log_path)), exist_ok=True)
-    record = {"perspective": perspective, "turn": observation.get("turn"), "actions": actions}
+    record = {"perspective": perspective, "turn": observation.get("turn"), "actions": actions,
+              "observation": observation}
     with open(log_path, "a", encoding="utf-8") as handle:
         handle.write(json.dumps(record) + "\n")
 

@@ -29,7 +29,9 @@ DEFAULT_BASE_URL = "http://127.0.0.1:8088/v1"
 HTTP_TIMEOUT_SECONDS = 300
 # Reasoning models burn output tokens on a chain-of-thought BEFORE emitting the answer, so the
 # budget must cover reasoning + the action JSON or `content` comes back null (finish_reason=length).
-DEFAULT_MAX_TOKENS = 8192
+# 16384 chosen against DeepSeek-V4-Flash's 131072-token context: observed CoT overruns at 8192
+# (game 20260710, 5 forfeited turns) and the prompt is only a few K tokens, so headroom is cheap.
+DEFAULT_MAX_TOKENS = 16384
 DEFAULT_TEMPERATURE = 0.7
 
 # Observation keys worth sending to the model — the big static fields (rules text lives in the
@@ -40,8 +42,15 @@ COMPACT_KEYS = [
 ]
 
 
+# Diagnostics collected for the JSONL record — stderr is DROPPED by the engine's OS.execute
+# (read_stderr=false so it can't corrupt the stdout action array), so the replay log is the only
+# place warnings reliably surface.
+WARNINGS = []
+
+
 def log(message):
     print(message, file=sys.stderr)
+    WARNINGS.append(message)
 
 
 def load_observation(path):
@@ -137,18 +146,30 @@ def _candidate_json_arrays(text):
 
 
 def validate_actions(actions, observation, perspective):
-    """Keep only actions this side may legally issue; force team = perspective; drop end_turn."""
+    """Keep only actions this side may legally issue; force team = perspective; drop end_turn.
+
+    One order per brigade per turn (engine rule, GameState.queue_move): later duplicates in the
+    same reply are dropped here so the logged actions match what the engine actually applies.
+    """
     legal_moves = observation.get("legal_moves", {})
     legal_commits = observation.get("legal_commits", {})
     kept = []
+    ordered_brigades = set()
     for action in actions:
         if not isinstance(action, dict):
             continue
         atype = action.get("type")
+        brigade_id = action.get("brigade_id")
+        if brigade_id in ordered_brigades:
+            log("llm_sidecar: dropping duplicate order for %s (one order per brigade per turn)"
+                % brigade_id)
+            continue
         if atype == "move" and _is_legal_move(action, legal_moves, perspective):
             kept.append(_with_team(action, perspective, ["brigade_id", "target_hex", "mode"], "move"))
+            ordered_brigades.add(brigade_id)
         elif atype == "commit" and _is_legal_commit(action, legal_commits, perspective):
             kept.append(_with_team(action, perspective, ["brigade_id", "target_hex"], "commit"))
+            ordered_brigades.add(brigade_id)
         # anything else (end_turn, unknown, illegal, wrong team) is dropped.
     return kept
 
@@ -185,6 +206,9 @@ def append_log(log_path, perspective, observation, model, raw_reply, actions):
         "model": model,
         "raw_reply": raw_reply,
         "actions": actions,
+        "warnings": list(WARNINGS),
+        # Full observation makes the JSONL the replay artifact (LLM games are not seed-reproducible).
+        "observation": observation,
     }
     with open(log_path, "a", encoding="utf-8") as handle:
         handle.write(json.dumps(record) + "\n")
@@ -208,7 +232,25 @@ def main():
 
     parsed = extract_actions(raw_reply)
     if parsed is None:
-        log("llm_sidecar: model reply had no parseable JSON array; issuing no orders")
+        # Reasoning models can burn the whole token budget thinking out loud (finish_reason=length
+        # leaves content null; the reasoning fallback is truncated prose, no JSON). One strict
+        # retry rescues the turn instead of forfeiting it.
+        log("llm_sidecar: model reply had no parseable JSON array; retrying once with a strict nudge")
+        retry_messages = messages + [
+            {"role": "assistant", "content": raw_reply[:500] + "…[cut off]"},
+            {"role": "user", "content": (
+                "Your reply was cut off before any JSON appeared. Do NOT reason out loud. "
+                "Output ONLY the JSON array of action objects now — nothing else. "
+                "[] if no orders.")},
+        ]
+        try:
+            raw_reply, model = call_model(retry_messages)
+            parsed = extract_actions(raw_reply)
+        except (urllib.error.URLError, OSError, RuntimeError, KeyError, ValueError) as error:
+            log("llm_sidecar: retry hard failure: %s" % error)
+            parsed = None
+    if parsed is None:
+        log("llm_sidecar: no parseable JSON array after retry; issuing no orders")
         actions = []
     else:
         actions = validate_actions(parsed, observation, args.perspective)
