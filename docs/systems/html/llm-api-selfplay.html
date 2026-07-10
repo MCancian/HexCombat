@@ -35,6 +35,17 @@ runs both sides automatically for deterministic regression testing.</p>
 <tr><td>Self-play</td><td><code>SelfPlayRunner.play_game(policy, turns, seed)</code> loops observe → decide → end-turn; the default policy is a zero-randomness reference. The policy is pluggable (swap in an LLM).</td></tr>
 </table>
 
+<h2>After the game: the briefing report</h2>
+<p><code>tools/make_game_bundle.py</code> merges a finished game's record and replay log into one
+<code>.viewer.json</code> bundle (optionally adding 3-line commander SITREPs written by a local
+LLM) and can bake it into a single shareable <code>game.html</code>.
+<code>tools/viewer/game_viewer.html</code> presents it as a <strong>briefing</strong>: start at
+turn 1 and step forward with the mouse wheel, the ◀ ▶ buttons, or arrow keys — each step
+re-renders the hex map, reveals more of the trend charts (the full game's shape stays visible as
+a faint ghost), and swaps in that turn's SITREPs and adjudication. Charts: battalion census,
+cumulative PLA ship losses, and battalion losses per side per turn (China's split into ground
+combat vs drowned crossing).</p>
+
 <h2>Why it's solid</h2>
 <p>Two headless gates back it: one checks the observation keys, action application, and that a missing
 seed is rejected; another runs self-play twice with the same seed and asserts the two runs are

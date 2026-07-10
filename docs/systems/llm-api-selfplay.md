@@ -24,6 +24,8 @@ Structured JSON action API so LLM agents (and the self-play harness) can drive H
 | `tools/validate_headless_selfplay.gd` | Runs 4-turn self-play twice with same seed; asserts identical snapshots + index health. |
 | `tools/export_llm_observation.gd` | CLI: writes a fresh observation JSON to disk (`--team=Red --output=reports/obs.json`). |
 | `tools/export_llm_result.gd` | CLI: writes a fresh action-result JSON to disk. |
+| `tools/make_game_bundle.py` | Post-game bundler (stdlib-only): record + JSONL → `<name>.viewer.json` (+ optional per-side LLM SITREPs); `--html` bakes a single-file `game.html` report; `--from-bundle` re-bakes the HTML from an existing bundle without sitrep calls. Bundle schema lives in its module docstring. |
+| `tools/viewer/game_viewer.html` | Self-contained briefing-mode report viewer (no libraries, works offline). Opens a dropped `.viewer.json` or runs baked inside `game.html`. See §7. |
 
 ## 3. Observation contract — `LLMGameAPI.observation(perspective_team: String = "")`
 
@@ -107,7 +109,44 @@ Routes an action response object. Returns an action-result Dictionary (`ok`, `er
 - **API gate.** `validate_llm_api.gd` exits 0 on pass, 1 on fail. Auto-picked up by `run_all_tests.ps1`.
 - **Self-play gate.** `validate_headless_selfplay.gd` same pass/fail pattern.
 
-## 7. Relationship to existing docs
+## 7. Post-game report: bundle & briefing viewer
+
+`tools/make_game_bundle.py` merges a game record with its JSONL replay log into one
+`.viewer.json` bundle — `{meta, turns[], sitreps, map_static}`; the authoritative shape is the
+bundler's module docstring. SITREPs (3-line first-person commander summaries per side per turn)
+are written at bundle time by a local LLM (same endpoint env vars as `tools/llm_sidecar.py`);
+`--skip-summaries` or any model failure yields null sitreps, never a bundling failure.
+
+`tools/viewer/game_viewer.html` renders the bundle as a **briefing**: it opens at turn 1 and
+the reader advances one turn at a time (mouse wheel with a momentum guard, ◀ ▶ / ⏮ ⏭ buttons,
+arrow keys / n / p, Home/End). Each advance re-renders the SVG hex map, extends the chart
+reveal, and swaps the turn's narrative (SITREPs, collapsible transcripts, adjudication prose,
+phase-detail tables) in place. The wheel scrolls the narrative instead of stepping when its
+content overflows. If a turn lacks an observation (older logs), the map falls back to the
+nearest earlier observed turn and flags it.
+
+Charts draw ghost-future — the full game's shape in faint gray, turns up to the current one in
+color: battalion census, cumulative PLA ship losses, and per-turn battalion losses per side.
+The casualty series is derived client-side from the digests, nothing extra in the bundle:
+Taiwan = `combat_summaries` losses attributed via a brigade→team index built from the
+observations, plus one battalion per `ijfs_writeback.maneuver_casualties` entry (fires kills);
+China = `combat_summaries` losses plus `antiship_summary.bns_lost_at_sea` (battalions drowned
+crossing, rendered as a stacked at-sea segment). `crossing_casualties` counts SHIPS and stays
+in the ship chart only.
+
+```bash
+# Full bundle from a game record (sitreps need the local model up; --skip-summaries to skip)
+python3 tools/make_game_bundle.py --record reports/llm/game_20260711.json --html
+
+# Re-bake only the game.html after a viewer change (no sitrep calls)
+python3 tools/make_game_bundle.py --from-bundle reports/llm/game_20260711.viewer.json
+```
+
+Viewer and bundler are tooling, not gated engine code: no headless validator covers them.
+Verify viewer changes with a headless-Chromium (Playwright) pass over a rebuilt `game.html` —
+assert turn stepping, narrative swap, chart reveal — plus light/dark screenshots.
+
+## 8. Relationship to existing docs
 
 | Doc | What it covers | Relationship |
 |---|---|---|
@@ -116,7 +155,7 @@ Routes an action response object. Returns an action-result Dictionary (`ok`, `er
 | `docs/LLM_AGENT_PROTOCOL_PLAN.md` | Implementation phases, near-term tasks, known gaps, protocol evolution | Forward plan; this doc captures the current implementation |
 | `docs/systems/README.md` | Index of all system docs | Entry point for agents; this doc fills the `_pending_` row |
 
-## 8. Note: HexCombat-original
+## 9. Note: HexCombat-original
 
 TaiwanInvasionViewer has no LLM agent API — it is a Python/Flask web app with a browser-based UI, not a headless JSON protocol. This subsystem was designed from scratch for HexCombat's Godot engine.
 

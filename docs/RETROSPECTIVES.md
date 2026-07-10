@@ -1204,3 +1204,16 @@ guidance.**
   D4-A…F retro's caution about brief tightness for the free model). This is a Track-F-scoped trial
   result, not a change to the 2026-07-02 "frontier model implements directly" default for other
   work.
+
+## 2026-07-10 viewer-briefing-mode
+- **Lesson:** Playwright headless Chromium is the right verification harness for the repo's
+  HTML tooling (viewer/report pages): dispatching real wheel/keyboard/click events caught
+  interaction bugs no static check could, and screenshots covered the visual pass. One test
+  initially asserted the domain outcome ("GAME OVER badge on the final turn") instead of the
+  invariant (badge iff `digest.game_over`) — the reference game ended undecided at the turn
+  limit, so the assertion was wrong, not the viewer. Assert invariants against the data, not
+  outcomes assumed from one game.
+- **Triage:** acted now — verification procedure recorded in `docs/systems/llm-api-selfplay.md`
+  §7 (script itself stays ephemeral; no browser dependency added to the gate). Rejected:
+  committing a Playwright suite — the viewer changes rarely and the gate must stay
+  Godot-only-deterministic.

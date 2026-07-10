@@ -19,6 +19,13 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-10 — Viewer briefing mode + casualty charts (USER).** Game-report viewer rebuilt
+  from scrollytelling to turn-at-a-time briefing (wheel/buttons/keys, in-place narrative swap,
+  ghost-future chart reveal) with a new per-side battalion-loss bar chart; bundler gained
+  `--from-bundle` re-bake. USER picked the interaction model (wheel+buttons+keys, ghost reveal,
+  turn-1 start, paired bars). Facts: `docs/systems/llm-api-selfplay.md` → §7. Verified by
+  headless-Chromium (Playwright) pass — new precedent for browser-tool verification.
+
 - **2026-07-10 — Doc-rot guard: dead anchors fail the gate (USER asked for a guard; agent
   design).** `tools/validate_doc_anchors.gd` (auto-globbed into the gate) rejects dead
   paths/scripts/members and `file.gd:123` citations in `docs/systems/*.md`; `(historical)` marks

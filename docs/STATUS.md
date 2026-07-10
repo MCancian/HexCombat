@@ -149,17 +149,24 @@ offload → movement & commit → ground combat → front-line → cleanup (+ vi
   hex center when any neighbor hex is occupied (full-size markers are wider than the hex spacing
   and would overlap); an isolated brigade renders full-size with its entry-bearing offset.
   Visual-only — headless gates don't cover it; verify by screenshot.
-- **Post-game reconstruction viewer** — `tools/make_game_bundle.py` (stdlib-only) merges an
+- **Post-game briefing viewer** — `tools/make_game_bundle.py` (stdlib-only) merges an
   AI-vs-AI game record (`reports/llm/<name>.json`) with its JSONL replay log into one
   `<name>.viewer.json` bundle (meta / per-turn digest+actions+observation / per-side 3-line LLM
-  SITREPs / embedded map data); `tools/viewer/game_viewer.html` is a single self-contained
-  scrollytelling page (open directly, no server) — SVG hex map on the left (terrain fill +
-  red/contested perimeter borders + beach glyphs + brigade markers, ported from `HexMap.gd`'s
-  projection/border logic) synced via `IntersectionObserver` to a per-turn narrative (SITREPs,
-  collapsible transcripts, adjudication prose, phase-detail tables) on the right, plus small
-  inline census/ship-loss trend charts. Tolerates older JSONL logs that lack `observation`
-  (degrades to text-only / "no map data this turn" for those turns). Visual-only tool, not part
-  of the canonical gate — verify by opening a bundle in a browser.
+  SITREPs / embedded map data); `--html` bakes it into a single shareable `<name>.game.html`,
+  and `--from-bundle` re-bakes that HTML from an existing bundle without re-running sitrep LLM
+  calls. `tools/viewer/game_viewer.html` is a single self-contained briefing page (open
+  directly, no server): opens at turn 1 and advances one turn at a time (mouse wheel with a
+  momentum guard, ◀ ▶ / ⏮ ⏭-Final buttons, arrow keys, Home/End) — each advance re-renders the
+  SVG hex map (terrain fill + red/contested perimeter borders + beach glyphs + brigade markers,
+  ported from `HexMap.gd`'s projection/border logic), extends the chart reveal, and swaps the
+  turn's narrative (SITREPs, collapsible transcripts, adjudication prose, phase-detail tables)
+  in place; the wheel scrolls an overflowing narrative instead of stepping. Charts render
+  ghost-future (full game faint, turns ≤ current in color): census, cumulative ship losses,
+  and per-turn battalion losses per side (China stacked ground / drowned-at-sea) derived
+  client-side from the digests. Tolerates older JSONL logs that lack `observation` (map falls
+  back to the nearest earlier observed turn / "no map data this turn"). Visual-only tool, not
+  part of the canonical gate — verify with a headless-Chromium (Playwright) pass over a rebuilt
+  `game.html` plus screenshots.
 
 **Verification.** The canonical gate — `bash tools/run_all_tests.sh` (Linux; resolves Godot via
 `$GODOT_BIN` else `godot` on PATH) or `pwsh tools/run_all_tests.ps1` (Windows) — runs: import → headless smoke →
