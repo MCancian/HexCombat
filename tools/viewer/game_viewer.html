@@ -55,11 +55,9 @@
     margin: 0; padding: 0;
     background: var(--bg); color: var(--ink);
     font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    /* NOTE: deliberately no overflow-x:hidden here. Setting only overflow-x without overflow-y
-       makes browsers implicitly promote overflow-y to "auto" too (the CSS overflow-pairing
-       rule), which turns html/body into their own scroll container and breaks #mapPane's
-       position:sticky (observed empirically: the map scrolled away with the page instead of
-       sticking). Nothing in this layout should overflow horizontally anyway. */
+    /* Fixed full-viewport briefing layout: the page itself never scrolls — the only scroll
+       container is #narrative (the current turn's text). */
+    overflow: hidden;
   }
   #dropzone {
     position: fixed; inset: 0; z-index: 50;
@@ -81,10 +79,10 @@
   }
 
   #app { display: none; }
-  #app.ready { display: flex; align-items: flex-start; }
+  #app.ready { display: flex; align-items: stretch; height: 100vh; }
 
   #mapPane {
-    position: sticky; top: 0; width: 55%; height: 100vh;
+    width: 55%; height: 100vh;
     display: flex; flex-direction: column;
     border-right: 1px solid var(--line);
     background: var(--panel-bg);
@@ -110,15 +108,23 @@
   .chart-svg { width: 100%; height: 70px; display: block; }
   .legend-dot { display: inline-block; width: 0.6rem; height: 0.6rem; border-radius: 50%; margin-right: 0.3rem; }
 
-  /* Top/bottom padding ~= half a viewport height: without it, the first/last section can't be
-     scrolled to true vertical center (the browser clamps scrollTop at the document edges), so
-     setupScrollSync's center-distance heuristic would favor a neighboring section instead. */
-  #turnsPane { width: 45%; padding: 48vh 1.4rem 60vh; }
-  section.turn {
-    border-bottom: 1px solid var(--line);
-    padding: 1.2rem 0 1.6rem;
+  #turnsPane { width: 45%; height: 100vh; display: flex; flex-direction: column; }
+  #turnControls {
+    display: flex; align-items: center; gap: 0.4rem;
+    padding: 0.5rem 1rem; border-bottom: 1px solid var(--line);
+    background: var(--panel-bg); flex: none;
   }
-  section.turn:first-child { padding-top: 0.2rem; }
+  #turnControls button {
+    padding: 0.25rem 0.7rem; font-size: 0.85rem; cursor: pointer;
+    border: 1px solid var(--line); background: var(--panel-bg); color: var(--ink);
+    border-radius: 6px;
+  }
+  #turnControls button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  #turnControls button:disabled { opacity: 0.35; cursor: default; }
+  #turnReadout { font-size: 0.9rem; font-weight: 600; margin: 0 0.4rem; min-width: 7.5rem; text-align: center; }
+  #btnLast { margin-left: auto; }
+  #narrative { flex: 1; overflow-y: auto; padding: 0.8rem 1.4rem 2rem; }
+  section.turn { padding: 0.2rem 0 1.6rem; }
   section.turn h2 {
     font-size: 1.1rem; margin: 0 0 0.6rem;
     display: flex; align-items: baseline; gap: 0.6rem;
@@ -175,8 +181,8 @@
 
   @media (max-width: 900px) {
     #app.ready { flex-direction: column; }
-    #mapPane { position: relative; width: 100%; height: 70vh; }
-    #turnsPane { width: 100%; }
+    #mapPane { width: 100%; height: 55vh; }
+    #turnsPane { width: 100%; height: auto; flex: 1; min-height: 0; }
   }
 </style>
 </head>
@@ -216,9 +222,18 @@
       </div>
     </div>
   </div>
-  <div id="turnsPane"></div>
+  <div id="turnsPane">
+    <div id="turnControls">
+      <button id="btnFirst" type="button" title="First turn">⏮</button>
+      <button id="btnPrev" type="button" title="Previous turn">◀</button>
+      <span id="turnReadout">Turn — / —</span>
+      <button id="btnNext" type="button" title="Next turn">▶</button>
+      <button id="btnLast" type="button" title="Final turn">⏭ Final</button>
+    </div>
+    <div id="narrative"></div>
+  </div>
 </div>
-<div class="kbd-hint">n / p or ↑ / ↓ — jump turns</div>
+<div class="kbd-hint">←/→ or n/p — step turn · Home/End — first/final · wheel steps turns</div>
 
 <script>
 "use strict";
@@ -227,8 +242,10 @@
  * HexCombat post-game viewer.
  *
  * Reads one *.viewer.json bundle (produced by tools/make_game_bundle.py — meta / turns[] /
- * sitreps / map_static) and renders a scrollytelling view: an SVG hex map on the left that
- * re-renders per turn, and a scrolling turn-by-turn narrative on the right.
+ * sitreps / map_static) and renders a briefing view: one turn at a time, advanced by wheel /
+ * arrow keys / the ◀ ▶ controls. Each advance re-renders the SVG hex map on the left, extends
+ * the chart reveal, and swaps the turn's narrative (SITREPs + adjudication) in place on the
+ * right.
  *
  * Map projection is a straight port of scripts/MapProjection.gd (equirectangular fit with a
  * fixed margin) — NOT the odd-r axial math in scripts/HexMath.gd (that file is pure grid/graph
@@ -369,24 +386,23 @@ if (embedded) {
 // ============================================================================================
 let GEO = null;      // static geometry: per-hex projected vertices, terrain colors, neighbor->edge index
 let TURNS = null;     // bundle.turns, sorted
-let LAST_GOOD = -1;   // index into TURNS of the last turn that had observation data
+let SITREPS = null;   // bundle.sitreps — {"<turn_number>": {Red, Green}}
+let CURRENT = -1;     // index into TURNS of the turn currently on screen
 
 function initViewer(bundle) {
   renderMetaBar(bundle.meta || {});
   GEO = buildGeometry(bundle.map_static || {});
   TURNS = (bundle.turns || []).slice().sort((a, b) => a.turn_number - b.turn_number);
+  SITREPS = bundle.sitreps || {};
 
   spawnHexFills();
   spawnBeachMarkers();
-  buildTurnSections(bundle);
   buildCharts();
-  setupScrollSync();
-  setupKeyboardNav();
+  buildControls();
+  setupBriefingNav();
+  setupWheelNav();
 
-  if (TURNS.length > 0) {
-    renderTurn(0);
-    document.querySelector("section.turn")?.scrollIntoView({ block: "start" });
-  }
+  if (TURNS.length > 0) showTurn(0);
 }
 
 function renderMetaBar(meta) {
@@ -664,52 +680,58 @@ function renderBrigadeMarkers(observation) {
 function renderTurn(turnIndex) {
   const turn = TURNS[turnIndex];
   const noMapNote = document.getElementById("noMapNote");
-  const observation = pickObservation(turn);
 
-  if (observation) {
-    const ownerMap = ownerMapFromObservation(observation, turn.digest || {});
-    renderOwnershipBorders(ownerMap);
+  // Backward scan to the nearest turn (at or before this one) with observation data. Random
+  // access (jump-to-final, Home) means "keep whatever is already drawn" would show stale
+  // positions from wherever the user happened to be before, so the fallback must be recomputed
+  // from the target turn, not carried over.
+  let obsIndex = turnIndex;
+  while (obsIndex >= 0 && !pickObservation(TURNS[obsIndex])) obsIndex--;
+  if (obsIndex >= 0) {
+    const obsTurn = TURNS[obsIndex];
+    const observation = pickObservation(obsTurn);
+    renderOwnershipBorders(ownerMapFromObservation(observation, obsTurn.digest || {}));
     renderBrigadeMarkers(observation);
-    LAST_GOOD = turnIndex;
-    noMapNote.classList.remove("show");
   } else {
-    // Keep whatever borders/markers are already drawn (from LAST_GOOD) and just flag it.
-    noMapNote.classList.add("show");
+    document.getElementById("borderLayer")?.replaceChildren();
+    document.getElementById("brigadeLayer")?.replaceChildren();
   }
+  noMapNote.classList.toggle("show", obsIndex !== turnIndex);
 
   document.getElementById("turnIndicator").textContent = "Turn " + turn.turn_number;
+  renderNarrative(turnIndex);
+  updateControls(turnIndex);
   updateChartMarker(turnIndex);
 }
 
 // ============================================================================================
-// Right-column turn sections
+// Right-column narrative (single turn, swapped in place on advance)
 // ============================================================================================
-function buildTurnSections(bundle) {
-  const pane = document.getElementById("turnsPane");
-  pane.innerHTML = "";
-  const sitreps = bundle.sitreps || {};
+function buildTurnSection(turn, idx) {
+  const section = el("section", { class: "turn" });
+  section.dataset.turnIndex = String(idx);
+  section.id = "turn-" + turn.turn_number;
 
-  TURNS.forEach((turn, idx) => {
-    const section = el("section", { class: "turn" });
-    section.dataset.turnIndex = String(idx);
-    section.id = "turn-" + turn.turn_number;
+  const h2 = el("h2", {});
+  h2.appendChild(document.createTextNode("Turn " + turn.turn_number));
+  const badge = el("span", { class: "turn-badge" });
+  const digest = turn.digest || {};
+  if (digest.game_over) badge.textContent = "GAME OVER — " + (digest.winner || "?") + " (" + (digest.victory_reason || "") + ")";
+  h2.appendChild(badge);
+  section.appendChild(h2);
 
-    const h2 = el("h2", {});
-    h2.appendChild(document.createTextNode("Turn " + turn.turn_number));
-    const badge = el("span", { class: "turn-badge" });
-    const digest = turn.digest || {};
-    if (digest.game_over) badge.textContent = "GAME OVER — " + (digest.winner || "?") + " (" + (digest.victory_reason || "") + ")";
-    h2.appendChild(badge);
-    section.appendChild(h2);
+  const turnSitreps = SITREPS[String(turn.turn_number)] || {};
+  section.appendChild(buildSitrepBlock("Red", turn.sides.Red, turnSitreps.Red));
+  section.appendChild(buildSitrepBlock("Green", turn.sides.Green, turnSitreps.Green));
 
-    const turnSitreps = sitreps[String(turn.turn_number)] || {};
-    section.appendChild(buildSitrepBlock("Red", turn.sides.Red, turnSitreps.Red));
-    section.appendChild(buildSitrepBlock("Green", turn.sides.Green, turnSitreps.Green));
+  section.appendChild(buildAdjudicationBlock(digest));
+  return section;
+}
 
-    section.appendChild(buildAdjudicationBlock(digest));
-
-    pane.appendChild(section);
-  });
+function renderNarrative(idx) {
+  const narrative = document.getElementById("narrative");
+  narrative.replaceChildren(buildTurnSection(TURNS[idx], idx));
+  narrative.scrollTop = 0;
 }
 
 function buildSitrepBlock(sideName, sideEntry, sitrepText) {
@@ -957,73 +979,75 @@ function updateChartMarker(turnIndex) {
 }
 
 // ============================================================================================
-// Scroll sync + keyboard nav
+// Briefing navigation — turn stepping via buttons / keys / wheel
 // ============================================================================================
-let ACTIVE_TURN_INDEX = -1;
-
-// Picks whichever intersecting section's vertical center is closest to the viewport's vertical
-// center — the standard scrollytelling heuristic. (An earlier version picked the section with
-// the highest intersectionRatio, but that disagrees with short sections: a section shorter than
-// the viewport reads ratio=1.0 for a wide range of scroll positions, so ties resolved
-// arbitrarily and jump-navigation could visibly "stick" on the wrong section. Center-distance
-// doesn't have that failure mode, and agrees with scrollIntoView({block:"center"}) by
-// construction — see setupKeyboardNav.)
-function setupScrollSync() {
-  const sections = Array.from(document.querySelectorAll("section.turn"));
-  if (sections.length === 0) return;
-  const visible = new Set();
-
-  const observer = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      if (entry.isIntersecting) visible.add(entry.target);
-      else visible.delete(entry.target);
-    }
-    if (visible.size === 0) return;
-    const viewportCenter = window.innerHeight / 2;
-    let best = null, bestDist = Infinity;
-    for (const target of visible) {
-      const rect = target.getBoundingClientRect();
-      const dist = Math.abs((rect.top + rect.bottom) / 2 - viewportCenter);
-      if (dist < bestDist) { bestDist = dist; best = target; }
-    }
-    if (best) {
-      const idx = Number(best.dataset.turnIndex);
-      if (idx !== ACTIVE_TURN_INDEX) {
-        ACTIVE_TURN_INDEX = idx;
-        renderTurn(idx);
-      }
-    }
-  }, { threshold: [0, 0.25, 0.5, 0.75, 1] });
-
-  for (const s of sections) observer.observe(s);
+function showTurn(idx) {
+  if (!TURNS || TURNS.length === 0) return;
+  const next = Math.min(TURNS.length - 1, Math.max(0, idx));
+  if (next === CURRENT) return;
+  CURRENT = next;
+  renderTurn(next);
 }
 
-function setupKeyboardNav() {
+function stepTurn(delta) {
+  showTurn((CURRENT >= 0 ? CURRENT : 0) + delta);
+}
+
+function buildControls() {
+  document.getElementById("btnFirst").addEventListener("click", () => showTurn(0));
+  document.getElementById("btnPrev").addEventListener("click", () => stepTurn(-1));
+  document.getElementById("btnNext").addEventListener("click", () => stepTurn(1));
+  document.getElementById("btnLast").addEventListener("click", () => showTurn(TURNS.length - 1));
+}
+
+function updateControls(idx) {
+  document.getElementById("turnReadout").textContent =
+    "Turn " + TURNS[idx].turn_number + " / " + TURNS[TURNS.length - 1].turn_number;
+  document.getElementById("btnFirst").disabled = idx === 0;
+  document.getElementById("btnPrev").disabled = idx === 0;
+  document.getElementById("btnNext").disabled = idx === TURNS.length - 1;
+  document.getElementById("btnLast").disabled = idx === TURNS.length - 1;
+}
+
+function setupBriefingNav() {
   window.addEventListener("keydown", (e) => {
     if (!TURNS || TURNS.length === 0) return;
-    let delta = 0;
-    if (e.key === "n" || e.key === "ArrowDown") delta = 1;
-    else if (e.key === "p" || e.key === "ArrowUp") delta = -1;
+    // Deliberately not PageUp/PageDown — those stay free for scrolling a long narrative.
+    if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === "n") stepTurn(1);
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "p") stepTurn(-1);
+    else if (e.key === "End") showTurn(TURNS.length - 1);
+    else if (e.key === "Home") showTurn(0);
     else return;
     e.preventDefault();
-    const current = ACTIVE_TURN_INDEX >= 0 ? ACTIVE_TURN_INDEX : 0;
-    const next = Math.min(TURNS.length - 1, Math.max(0, current + delta));
-    const target = document.getElementById("turn-" + TURNS[next].turn_number);
-    if (!target) return;
-    // Update state immediately rather than waiting on the IntersectionObserver: a single-turn
-    // scroll jump often lands the section at a ratio that doesn't cross one of its threshold
-    // buckets, so the observer can plateau instead of firing. The observer still re-confirms
-    // (or corrects, if the jump overlaps another section) once scrolling settles.
-    ACTIVE_TURN_INDEX = next;
-    renderTurn(next);
-    // block:"center" (not "start") so the target section's center lands at the viewport
-    // center — exactly what setupScrollSync's center-distance heuristic looks for, so the
-    // observer's next callback agrees with this jump instead of picking a neighboring section.
-    // Instant, not smooth: an animation leaves a window where the observer fires against
-    // mid-flight geometry first (observed empirically with smooth scroll — rapid n/p presses
-    // could race the animation).
-    target.scrollIntoView({ block: "center", behavior: "instant" });
   });
+}
+
+// Wheel steps turns everywhere EXCEPT over a narrative that overflows — there it scrolls the
+// text natively (long SITREPs/transcripts must stay readable; buttons/keys still step). The
+// accumulator + cooldown swallow trackpad momentum tails so one flick = one turn.
+function setupWheelNav() {
+  const WHEEL_STEP_THRESHOLD = 50;   // accumulated deltaY per step
+  const WHEEL_COOLDOWN_MS = 250;     // min gap between steps
+  const WHEEL_IDLE_RESET_MS = 300;   // gap that starts a fresh gesture
+  let acc = 0, lockUntil = 0, lastEvent = 0;
+
+  window.addEventListener("wheel", (e) => {
+    if (!TURNS || TURNS.length === 0) return;
+    const narrative = document.getElementById("narrative");
+    if (narrative.contains(e.target) && narrative.scrollHeight > narrative.clientHeight) return;
+    e.preventDefault();
+
+    const now = performance.now();
+    const delta = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY; // lines -> px-ish
+    if (Math.sign(delta) !== Math.sign(acc) || now - lastEvent > WHEEL_IDLE_RESET_MS) acc = 0;
+    lastEvent = now;
+    acc += delta;
+    if (Math.abs(acc) >= WHEEL_STEP_THRESHOLD && now >= lockUntil) {
+      stepTurn(Math.sign(acc));
+      acc = 0;
+      lockUntil = now + WHEEL_COOLDOWN_MS;
+    }
+  }, { passive: false }); // passive:false or preventDefault() silently no-ops
 }
 </script>
 </body>
