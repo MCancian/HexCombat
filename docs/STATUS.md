@@ -126,8 +126,9 @@ offload → movement & commit → ground combat → front-line → cleanup (+ vi
   diagnostics surface). Hardening from the 2026-07-10 live runs: duplicate orders for one brigade
   are deduped in the sidecar (engine rule mirrored, first order wins); an unparseable reply gets
   ONE strict "JSON only" retry before forfeiting the turn (rescues reasoning-model token-budget
-  overruns); `HEXCOMBAT_LLM_MAX_TOKENS` default raised 8192→16384 (observed CoT overruns at 8192;
-  DeepSeek-V4-Flash context is 131072 so headroom is cheap). Use IPv4 (`127.0.0.1`, default) not
+  overruns); `HEXCOMBAT_LLM_MAX_TOKENS` default raised 8192→32768 (observed CoT overruns at 8192;
+  worst prompt ≈21K tokens vs DeepSeek-V4-Flash's 131072 context, so headroom is cheap — the
+  budget's real cost is wall-clock on rambling turns). Use IPv4 (`127.0.0.1`, default) not
   `localhost`. Live-verified against local vLLM (model `jarvis`): seeds 20260710/20260711, both
   30/30 turns GAME OK; the second (post-fix) run had zero forfeited turns. (The B2 batch runner is
   still single-policy — LLM seats run via `run_llm_game.gd`, not yet inside multi-condition

@@ -29,9 +29,12 @@ DEFAULT_BASE_URL = "http://127.0.0.1:8088/v1"
 HTTP_TIMEOUT_SECONDS = 300
 # Reasoning models burn output tokens on a chain-of-thought BEFORE emitting the answer, so the
 # budget must cover reasoning + the action JSON or `content` comes back null (finish_reason=length).
-# 16384 chosen against DeepSeek-V4-Flash's 131072-token context: observed CoT overruns at 8192
-# (game 20260710, 5 forfeited turns) and the prompt is only a few K tokens, so headroom is cheap.
-DEFAULT_MAX_TOKENS = 16384
+# Sized against DeepSeek-V4-Flash's 131072-token context: worst observed prompt ≈21K tokens
+# (Green seat, 32 brigades), so 32768 output still leaves ~60% of context unused. Overruns were
+# observed at 8192 (game 20260710, 5 forfeited turns). The budget is also the cap on how long one
+# rambling turn can grind on the local GPU before the parse-failure retry — that wall-clock cost,
+# not context, is the reason this isn't higher.
+DEFAULT_MAX_TOKENS = 32768
 DEFAULT_TEMPERATURE = 0.7
 
 # Observation keys worth sending to the model — the big static fields (rules text lives in the
