@@ -288,6 +288,9 @@ def main() -> int:
                          help="Output bundle path (default: <record-basename>.viewer.json).")
     parser.add_argument("--skip-summaries", action="store_true",
                          help="Skip the per-turn LLM SITREP calls (sitreps are all null).")
+    parser.add_argument("--html", action="store_true",
+                         help="Also write <record-basename>.game.html: the viewer with the bundle "
+                              "baked in — a single shareable report file, no drag-drop needed.")
     args = parser.parse_args()
 
     record_path = Path(args.record)
@@ -316,7 +319,28 @@ def main() -> int:
         out_path, out_path.stat().st_size, len(turns),
         "skipped" if args.skip_summaries else "generated",
     ), file=sys.stderr)
+
+    if args.html:
+        html_path = Path(stem + ".game.html")
+        write_html_report(bundle, html_path)
+        print("make_game_bundle: wrote %s (%d bytes)" % (html_path, html_path.stat().st_size),
+              file=sys.stderr)
     return 0
+
+
+def write_html_report(bundle: dict, html_path: Path) -> None:
+    """Bake the bundle into the viewer as a <script type=application/json> tag (data, not code —
+    the viewer JSON.parses it; it is never executed). `</` must be escaped so model text
+    containing `</script>` cannot close the tag early — `<\\/` is a valid JSON string escape."""
+    viewer_path = REPO_ROOT / "tools" / "viewer" / "game_viewer.html"
+    viewer = viewer_path.read_text(encoding="utf-8")
+    payload = json.dumps(bundle, separators=(",", ":")).replace("</", "<\\/")
+    tag = '<script type="application/json" id="embedded-bundle">%s</script>\n' % payload
+    marker = "<script>"
+    if marker not in viewer:
+        raise RuntimeError("viewer HTML has no <script> tag to inject before: %s" % viewer_path)
+    with open(html_path, "w", encoding="utf-8") as handle:
+        handle.write(viewer.replace(marker, tag + marker, 1))
 
 
 if __name__ == "__main__":

@@ -345,6 +345,25 @@ function loadFile(file) {
   reader.readAsText(file);
 }
 
+// Single-file report mode: make_game_bundle.py --html bakes the bundle into a JSON script tag
+// (data, not code — parsed, never executed). When present, skip the picker entirely.
+// Deferred one microtask: initViewer captures consts (GEO, …) declared further down this script,
+// which are uninitialized until the whole script has executed (the drag-drop path never hits
+// this because FileReader callbacks are inherently async).
+const embedded = document.getElementById("embedded-bundle");
+if (embedded) {
+  queueMicrotask(() => {
+    try {
+      initViewer(JSON.parse(embedded.textContent));
+      dropzone.classList.add("hidden");
+      app.classList.add("ready");
+    } catch (err) {
+      loadError.textContent = "Embedded bundle failed to render: " + err.message;
+      console.error(err);
+    }
+  });
+}
+
 // ============================================================================================
 // Viewer state + geometry index (built once per bundle)
 // ============================================================================================
