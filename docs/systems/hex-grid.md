@@ -17,14 +17,14 @@ Defines the hex-grid coordinate system, geometric computations (distance, neighb
 
 ## 3. Data Model
 
-**`Hex`** (`scripts/model/Hex.gd:1-9`) — a typed `Resource`:
+**`Hex`** (`scripts/model/Hex.gd`) — a typed `Resource`:
 - `id: String` — e.g. `"hex_3_9"`
 - `coord: Vector2i` — axial coordinate `(row, col)` where `row` is q and `col` is r
 - `row: int`, `col: int` — redundant with `coord`
 - `center: Vector2` — `(lat, lon)` of hex center
 - `vertices: PackedVector2Array` — 7 `(lat, lon)` pairs (first == last, closed polygon)
 
-**Coordinate system:** Pointy-top axial (q = row, r = col). `AXIAL_DIRECTIONS` order at `scripts/HexMath.gd:4-11`:
+**Coordinate system:** Pointy-top axial (q = row, r = col). `AXIAL_DIRECTIONS` order at `scripts/HexMath.gd`:
 ```
 (0,-1), (1,-1), (1,0), (0,1), (-1,1), (-1,0)
 ```
@@ -33,24 +33,24 @@ Defines the hex-grid coordinate system, geometric computations (distance, neighb
 
 | Signature | Line | Purpose |
 |---|---|---|
-| `static func distance(a: Vector2i, b: Vector2i) -> int` | `HexMath.gd:21` | Cube-distance formula on axial coords |
-| `static func neighbor_coords(coord: Vector2i) -> Array[Vector2i]` | `HexMath.gd:14` | Returns all 6 axial neighbors |
-| `static func find_path(start_id, goal_id, get_neighbors: Callable, blocked: Array = []) -> Array` | `HexMath.gd:27` | BFS shortest path by hex ID (returns `[start, ..., goal]` or `[]`) |
-| `static func find_reachable(start_id, max_distance: int, get_neighbors: Callable, blocked: Array = []) -> Array` | `HexMath.gd:54` | BFS within radius (inclusive of start) |
-| `func project(lat_lon: Vector2) -> Vector2` | `MapProjection.gd:40` | Single lat/lon → pixel (y inverted: north = lower y) |
-| `func project_vertices(lat_lon_vertices: PackedVector2Array) -> PackedVector2Array` | `MapProjection.gd:48` | Batch vertex projection for hex polygon drawing |
+| `static func distance(a: Vector2i, b: Vector2i) -> int` | `HexMath.gd` | Cube-distance formula on axial coords |
+| `static func neighbor_coords(coord: Vector2i) -> Array[Vector2i]` | `HexMath.gd` | Returns all 6 axial neighbors |
+| `static func find_path(start_id, goal_id, get_neighbors: Callable, blocked: Array = []) -> Array` | `HexMath.gd` | BFS shortest path by hex ID (returns `[start, ..., goal]` or `[]`) |
+| `static func find_reachable(start_id, max_distance: int, get_neighbors: Callable, blocked: Array = []) -> Array` | `HexMath.gd` | BFS within radius (inclusive of start) |
+| `func project(lat_lon: Vector2) -> Vector2` | `MapProjection.gd` | Single lat/lon → pixel (y inverted: north = lower y) |
+| `func project_vertices(lat_lon_vertices: PackedVector2Array) -> PackedVector2Array` | `MapProjection.gd` | Batch vertex projection for hex polygon drawing |
 
 ## 5. Data Flow
 
-1. **`GameData.load_hex_grid()`** (`GameData.gd:55-99`) reads `data/taiwan_hex_grid.json`. Each entry is parsed into a `Hex` Resource: `id`, `coord = Vector2i(row, col)`, `center = Vector2(lat, lon)`, `vertices` as `PackedVector2Array` of `(lat, lon)` pairs. Stored in `hexes: Array[Hex]`, `hex_lookup: Dictionary` (id→Hex), and `coord_lookup: Dictionary` (Vector2i→id).
+1. **`GameData.load_hex_grid()`** (`GameData.gd`) reads `data/taiwan_hex_grid.json`. Each entry is parsed into a `Hex` Resource: `id`, `coord = Vector2i(row, col)`, `center = Vector2(lat, lon)`, `vertices` as `PackedVector2Array` of `(lat, lon)` pairs. Stored in `hexes: Array[Hex]`, `hex_lookup: Dictionary` (id→Hex), and `coord_lookup: Dictionary` (Vector2i→id).
 
-2. **`GameData.build_neighbor_lookup()`** (`GameData.gd:102-110`) iterates all hexes, calls `HexMath.neighbor_coords(hex.coord)`, filters against `coord_lookup`, and stores `neighbor_lookup: Dictionary` (id→Array[String]).
+2. **`GameData.build_neighbor_lookup()`** (`GameData.gd`) iterates all hexes, calls `HexMath.neighbor_coords(hex.coord)`, filters against `coord_lookup`, and stores `neighbor_lookup: Dictionary` (id→Array[String]).
 
-3. **`GameData` wrappers** (`GameData.gd:245-262`) — `get_distance`, `find_path`, `find_reachable` — forward to `HexMath` static methods using the pre-built neighbor index.
+3. **`GameData` wrappers** (`GameData.gd`) — `get_distance`, `find_path`, `find_reachable` — forward to `HexMath` static methods using the pre-built neighbor index.
 
 4. **`HexMap.gd`** creates a `MapProjection` in `_ready()` and calls `project_vertices(hex.vertices)` / `project(hex.center)` to convert every hex's lat/lon data to screen-space pixel coordinates for rendering.
 
-## 6. Constants (`MapProjection.gd:4-10`)
+## 6. Constants (`MapProjection.gd`)
 
 | Constant | Value | Meaning |
 |---|---|---|

@@ -75,7 +75,7 @@ Otherwise `{game_over: false}`.
 **`game_over` / `winner` propagation:**
 - `GameState.gd` lines 67–68 hold the live state; `resolve_cleanup_phase` (lines 866–867) sets them.
 - `TurnResult` (lines 13–14) copies them for the `play_turn` return value.
-- `LLMGameAPI.get_observation()` exposes them (lines 42–43).
+- `LLMGameAPI.observation()` exposes them.
 
 ## 6. Turn flow placement
 
@@ -88,7 +88,7 @@ RESOLUTION: resolve_turn → ... → resolve_cleanup_phase
 END: game_over check →  begin_next_turn or stop
 ```
 
-Cleanup runs last in resolve_turn (GameState.gd:195). Victory census is the tail of cleanup — no further turn mechanics run after it.
+Cleanup runs last in resolve_turn (GameState.gd). Victory census is the tail of cleanup — no further turn mechanics run after it.
 
 ## 7. TIV-port fidelity notes
 

@@ -205,17 +205,17 @@ whole count from the firing plan.
    combat). Tests: `ijfs_maneuver_targets_test.gd`, `ijfs_maneuver_consume_test.gd`. The 2c-ii
    detection/lethality bias is the remaining refinement. _Historical (now resolved) description:_
    (a) **No ID bridge** — `maneuver_casualties` is accumulated in `_compute_ijfs_writeback`
-   (`GameState.gd:547–563`, a faithful port of `ijfs_maneuver_writeback_service`), but at runtime it is
+   (`GameState.gd`, a faithful port of `ijfs_maneuver_writeback_service`), but at runtime it is
    **empty** because IJFS maneuver targets carry no `battalion_id`/`brigade_id` matching the PLA/ROC OOB.
    (b) **No consumer** — even when populated, nothing applies it: only `antiship_destroyed_by_type` is
-   consumed (`GameState.gd:624`, feeds the D3 firing plan); `maneuver_casualties` is merely exposed in
-   the LLM observation (`LLMGameAPI.gd:252`). So IJFS air/missile kills do **not** reduce the brigades
+   consumed (`GameState.gd`, feeds the D3 firing plan); `maneuver_casualties` is merely exposed in
+   the LLM observation (`LLMGameAPI.gd`). So IJFS air/missile kills do **not** reduce the brigades
    that fight in ground combat. (See `docs/archive/port_audit.md` — "Ground-casualty IJFS↔OOB linkage",
    status ADAPT; design settled 2026-06-28.)
 
 2. **Squadron force shape**: HexCombat passes `Array[IjfsSquadron]` directly where TIV wraps it in
    a `SquadronForce` dataclass with a `.squadrons` attribute. All call sites handle both
-   (`_force_squadrons` in IjfsDetection.gd:237–246), but the dual-path is a divergence surface.
+   (`_force_squadrons` in IjfsDetection.gd), but the dual-path is a divergence surface.
 
 3. **Category groups**: `category_groups.py` (operational_chart_categories,
    static_chart_categories) is not ported — these are chart-filtering constants only, not part of

@@ -10,28 +10,28 @@ Structured JSON action API so LLM agents (and the self-play harness) can drive H
 
 | File | Role |
 |---|---|
-| `scripts/LLMGameAPI.gd:1` | Autoload `LLMGameAPI`. `observation(team)` builds a JSON observation; `apply_agent_response(dict)` routes `move`/`commit`/`end_turn` into `GameState`. `RefCounted`, all `static func`. |
-| `scripts/SelfPlayPolicy.gd:1` | `RefCounted` with `build_actions(observation) -> Array`. Deterministic reference policy: each brigade tactical-moves to the first non-self hex in its `legal_moves`. Pluggable — any `Callable` matching the contract works. |
-| `scripts/SelfPlayRunner.gd:1` | `RefCounted`. `play_game(policy, turns, base_seed)` — single-policy loop over the omniscient observation. `play_game_seats(red_policy, green_policy, turns, base_seed)` — TWO-SEAT loop: each seat decides from its own perspective observation, both buffers apply, one seeded `end_turn` resolves them simultaneously (WeGo). Both return `final_snapshot`, `turn_digests`, `all_resolved`, `final_turn`, `index_violations`. |
-| `scripts/LLMPolicy.gd:1` | `RefCounted`, `build_actions(observation) -> Array` (id `llm_local` in `PolicyCatalog`). THIN marshaller: writes the observation to a temp file, shells out (`OS.execute`) to a Python sidecar, parses the returned JSON action array, strips `end_turn`, `[]` on any failure. No engine networking. Sidecar path defaults to `res://tools/llm_sidecar.py`, overridable via `HEXCOMBAT_LLM_SIDECAR`. |
-| `scripts/PolicyCatalog.gd:1` | Policy registry (`selfplay_default`, `llm_local`); unknown ids fail loud. |
+| `scripts/LLMGameAPI.gd` | Autoload `LLMGameAPI`. `observation(team)` builds a JSON observation; `apply_agent_response(dict)` routes `move`/`commit`/`end_turn` into `GameState`. `RefCounted`, all `static func`. |
+| `scripts/SelfPlayPolicy.gd` | `RefCounted` with `build_actions(observation) -> Array`. Deterministic reference policy: each brigade tactical-moves to the first non-self hex in its `legal_moves`. Pluggable — any `Callable` matching the contract works. |
+| `scripts/SelfPlayRunner.gd` | `RefCounted`. `play_game(policy, turns, base_seed)` — single-policy loop over the omniscient observation. `play_game_seats(red_policy, green_policy, turns, base_seed)` — TWO-SEAT loop: each seat decides from its own perspective observation, both buffers apply, one seeded `end_turn` resolves them simultaneously (WeGo). Both return `final_snapshot`, `turn_digests`, `all_resolved`, `final_turn`, `index_violations`. |
+| `scripts/LLMPolicy.gd` | `RefCounted`, `build_actions(observation) -> Array` (id `llm_local` in `PolicyCatalog`). THIN marshaller: writes the observation to a temp file, shells out (`OS.execute`) to a Python sidecar, parses the returned JSON action array, strips `end_turn`, `[]` on any failure. No engine networking. Sidecar path defaults to `res://tools/llm_sidecar.py`, overridable via `HEXCOMBAT_LLM_SIDECAR`. |
+| `scripts/PolicyCatalog.gd` | Policy registry (`selfplay_default`, `llm_local`); unknown ids fail loud. |
 | `tools/llm_sidecar.py:1` | Out-of-process, stdlib-only local-LLM adapter. Reads `--obs`, builds a prompt (rules + legal sets), POSTs to an OpenAI-compatible endpoint (`HEXCOMBAT_LLM_BASE_URL`/`_MODEL`/`_API_KEY`), tolerantly extracts the first JSON array, validates against `legal_moves`/`legal_commits`, appends a JSONL obs/action line (`--log`), prints the validated actions. |
 | `tools/llm_sidecar_stub.py:1` | Network-free test double with the same contract (`HEXCOMBAT_STUB_MODE`: `first_move`/`empty`/`malformed`/`garbage`). Used by the plumbing gate. |
-| `tools/run_llm_game.gd:1` | Entrypoint: plays one full LLM-vs-LLM game via `play_game_seats` (both seats `llm_local`), writes a record + provenance + JSONL replay-log path. `--seed --scenario --turns --model --out --log`. |
-| `tools/validate_llm_policy.gd:1` | Deterministic gate (no network): exercises `LLMPolicy` against the stub — marshalling, parse/strip helpers, malformed-output fallback, obs/action log. |
-| `scripts/TurnEventLog.gd:1` | `build(state) -> Array[TurnEvent]`. Derives an ordered per-turn event log (ijfs, antiship, move, commit, combat, frontline, cleanup) from `GameState`. Called by `play_turn` and included in `turn_result`. |
-| `tools/validate_llm_api.gd:1` | Headless gate: asserts observation keys, action application, missing-seed rejection, example/schema conformance. |
-| `tools/validate_headless_selfplay.gd:1` | Runs 4-turn self-play twice with same seed; asserts identical snapshots + index health. |
-| `tools/export_llm_observation.gd:1` | CLI: writes a fresh observation JSON to disk (`--team=Red --output=reports/obs.json`). |
-| `tools/export_llm_result.gd:1` | CLI: writes a fresh action-result JSON to disk. |
+| `tools/run_llm_game.gd` | Entrypoint: plays one full LLM-vs-LLM game via `play_game_seats` (both seats `llm_local`), writes a record + provenance + JSONL replay-log path. `--seed --scenario --turns --model --out --log`. |
+| `tools/validate_llm_policy.gd` | Deterministic gate (no network): exercises `LLMPolicy` against the stub — marshalling, parse/strip helpers, malformed-output fallback, obs/action log. |
+| `scripts/TurnEventLog.gd` | `build(state) -> Array[TurnEvent]`. Derives an ordered per-turn event log (ijfs, antiship, move, commit, combat, frontline, cleanup) from `GameState`. Called by `play_turn` and included in `turn_result`. |
+| `tools/validate_llm_api.gd` | Headless gate: asserts observation keys, action application, missing-seed rejection, example/schema conformance. |
+| `tools/validate_headless_selfplay.gd` | Runs 4-turn self-play twice with same seed; asserts identical snapshots + index health. |
+| `tools/export_llm_observation.gd` | CLI: writes a fresh observation JSON to disk (`--team=Red --output=reports/obs.json`). |
+| `tools/export_llm_result.gd` | CLI: writes a fresh action-result JSON to disk. |
 
 ## 3. Observation contract — `LLMGameAPI.observation(perspective_team: String = "")`
 
-Returns a Dictionary. Verified keys (from `tools/validate_llm_api.gd:20-44`):
+Returns a Dictionary. Verified keys (from `tools/validate_llm_api.gd`):
 
 `protocol_version`, `schema`, `scenario`, `turn`, `phase`, `turn_length_days`, `perspective_team`, `rules_summary`, `field_glossary`, `map_summary`, `brigades`, `occupied_hexes`, `ship_reserve`, `supply_state`, `ijfs`, `antiship`, `legal_moves`, `legal_commits`, `pending_orders`, `pending_commitments`, `last_contested_hexes`, `last_combat`, `objectives`.
 
-Additionally, the live `observation()` at `scripts/LLMGameAPI.gd:42-43` includes `game_over` and `winner`.
+Additionally, the live `observation()` at `scripts/LLMGameAPI.gd` includes `game_over` and `winner`.
 
 **Cross-link:** Full field-level schema, types, enums, and action examples → `docs/LLM_OBSERVATION_SCHEMA.md`.
 
@@ -39,38 +39,38 @@ Additionally, the live `observation()` at `scripts/LLMGameAPI.gd:42-43` includes
 
 | Key | Builder method | File:line |
 |---|---|---|
-| `brigades` | `_brigade_observations()` | `LLMGameAPI.gd:176` |
-| `occupied_hexes` | `_occupied_hex_observations()` | `LLMGameAPI.gd:198` |
-| `legal_moves` | `_legal_move_observations(team)` | `LLMGameAPI.gd:275` |
-| `legal_commits` | `_legal_commit_observations(team)` | `LLMGameAPI.gd:294` |
-| `pending_orders` | `_pending_orders()` | `LLMGameAPI.gd:312` |
-| `pending_commitments` | `_pending_commitments()` | `LLMGameAPI.gd:323` |
-| `last_combat` | `_last_combat_summaries()` | `LLMGameAPI.gd:334` |
-| `ship_reserve` | `_ship_reserve_observations()` | `LLMGameAPI.gd:216` |
-| `supply_state` | `_supply_state_observation()` | `LLMGameAPI.gd:229` |
-| `ijfs` | `_ijfs_observation()` | `LLMGameAPI.gd:240` (includes `maneuver_casualties` inside writeback) |
-| `antiship` | `_antiship_observation()` | `LLMGameAPI.gd:259` |
+| `brigades` | `_brigade_observations()` | `LLMGameAPI.gd` |
+| `occupied_hexes` | `_occupied_hex_observations()` | `LLMGameAPI.gd` |
+| `legal_moves` | `_legal_move_observations(team)` | `LLMGameAPI.gd` |
+| `legal_commits` | `_legal_commit_observations(team)` | `LLMGameAPI.gd` |
+| `pending_orders` | `_pending_orders()` | `LLMGameAPI.gd` |
+| `pending_commitments` | `_pending_commitments()` | `LLMGameAPI.gd` |
+| `last_combat` | `_last_combat_summaries()` | `LLMGameAPI.gd` |
+| `ship_reserve` | `_ship_reserve_observations()` | `LLMGameAPI.gd` |
+| `supply_state` | `_supply_state_observation()` | `LLMGameAPI.gd` |
+| `ijfs` | `_ijfs_observation()` | `LLMGameAPI.gd` (includes `maneuver_casualties` inside writeback) |
+| `antiship` | `_antiship_observation()` | `LLMGameAPI.gd` |
 
 ## 4. Action contract — `LLMGameAPI.apply_agent_response(response: Dictionary)`
 
 Routes an action response object. Returns an action-result Dictionary (`ok`, `errors`, `resolved`, `seed`, `turn_result`, `observation`).
 
-**Action types** (routed in `LLMGameAPI.gd:68-86`):
+**Action types** (routed in `LLMGameAPI.gd`):
 
 | `type` | Required fields | Routes to | Line |
 |---|---|---|---|
-| `move` | `team`, `brigade_id`, `target_hex`, `mode` | `GameState.add_move_order` | `LLMGameAPI.gd:130` |
-| `commit` | `team`, `brigade_id`, `target_hex` | `GameState.add_commit_order` | `LLMGameAPI.gd:144` |
-| `end_turn` | **`seed`** (required) | `GameState.play_turn([], [], SeededDice.new(seed))` then `begin_next_turn()` | `LLMGameAPI.gd:78` |
+| `move` | `team`, `brigade_id`, `target_hex`, `mode` | `GameState.add_move_order` | `LLMGameAPI.gd` |
+| `commit` | `team`, `brigade_id`, `target_hex` | `GameState.add_commit_order` | `LLMGameAPI.gd` |
+| `end_turn` | **`seed`** (required) | `GameState.play_turn([], [], SeededDice.new(seed))` then `begin_next_turn()` | `LLMGameAPI.gd` |
 
-- Missing `end_turn.seed` is rejected at `LLMGameAPI.gd:74` — the gate (`validate_llm_api.gd:133`) asserts this.
-- Protocol/schema version mismatch is checked at `LLMGameAPI.gd:53-56`.
+- Missing `end_turn.seed` is rejected at `LLMGameAPI.gd` — the gate (`validate_llm_api.gd`) asserts this.
+- Protocol/schema version mismatch is checked at `LLMGameAPI.gd`.
 
-**Validation gate:** `tools/validate_llm_api.gd:70-75` runs in order: observation shape → action application (move + end_turn, checks brigade advanced and turn incremented) → missing-seed rejection → example parse/apply → result-schema conformance.
+**Validation gate:** `tools/validate_llm_api.gd` runs in order: observation shape → action application (move + end_turn, checks brigade advanced and turn incremented) → missing-seed rejection → example parse/apply → result-schema conformance.
 
 ## 5. Self-play — AI-vs-AI loop
 
-`SelfPlayRunner.play_game(policy, turns, base_seed)` at `SelfPlayRunner.gd:22`:
+`SelfPlayRunner.play_game(policy, turns, base_seed)` at `SelfPlayRunner.gd`:
 
 1. `load_all()` / `reset_to_scenario()`
 2. For each turn *t*:
@@ -80,7 +80,7 @@ Routes an action response object. Returns an action-result Dictionary (`ok`, `er
    - Collect `turn_result` digest
 3. Return final snapshot + turn digests + index health
 
-`SelfPlayPolicy.build_actions(obs)` at `SelfPlayPolicy.gd:11`: for each brigade in `legal_moves`, pick the first hex in its `tactical` array that is not its current hex. Zero randomness.
+`SelfPlayPolicy.build_actions(obs)` at `SelfPlayPolicy.gd`: for each brigade in `legal_moves`, pick the first hex in its `tactical` array that is not its current hex. Zero randomness.
 
 **Pluggable:** The policy argument is a `Callable(observation: Dictionary) -> Array`. Replace `SelfPlayPolicy.build_actions` with any function matching the contract (e.g., an LLM proxy).
 
@@ -102,10 +102,10 @@ Routes an action response object. Returns an action-result Dictionary (`ok`, `er
 
 ## 6. Determinism & gates
 
-- **Seed required.** `end_turn` must carry an explicit `seed` integer (`LLMGameAPI.gd:74-76`). The seed is passed to `SeededDice.new(seed)` inside `play_turn`.
-- **Two-run determinism.** `validate_headless_selfplay.gd:19-34` runs `SelfPlayRunner.play_game` twice with the same policy and `BASE_SEED`, then asserts `final_snapshot` and `turn_digests` are identical. Also checks index consistency via `GameData.validate_runtime_indexes`.
-- **API gate.** `validate_llm_api.gd:286-295` exits 0 on pass, 1 on fail. Auto-picked up by `run_all_tests.ps1`.
-- **Self-play gate.** `validate_headless_selfplay.gd:66-75` same pass/fail pattern.
+- **Seed required.** `end_turn` must carry an explicit `seed` integer (`LLMGameAPI.gd`). The seed is passed to `SeededDice.new(seed)` inside `play_turn`.
+- **Two-run determinism.** `validate_headless_selfplay.gd` runs `SelfPlayRunner.play_game` twice with the same policy and `BASE_SEED`, then asserts `final_snapshot` and `turn_digests` are identical. Also checks index consistency via `GameData.validate_runtime_indexes`.
+- **API gate.** `validate_llm_api.gd` exits 0 on pass, 1 on fail. Auto-picked up by `run_all_tests.ps1`.
+- **Self-play gate.** `validate_headless_selfplay.gd` same pass/fail pattern.
 
 ## 7. Relationship to existing docs
 

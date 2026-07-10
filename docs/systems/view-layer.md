@@ -35,12 +35,12 @@ and update this table when one changes:
 | 6 | Numbered beach glyphs | `render_beach_markers()` |
 | 10 | Brigade markers + stack badges | `render_brigade_markers()` |
 
-**Projection.** `HexMap` creates `MapProjection.new(get_viewport_rect().size)` in `_ready` (`HexMap.gd:27`).
+**Projection.** `HexMap` creates `MapProjection.new(get_viewport_rect().size)` in `_ready` (`HexMap.gd`).
 `MapProjection` fits the Taiwan lat/lon box (21.9–25.3°N, 119.9–122.1°E) into the viewport with a
-cos(lat) longitude compression and 6% margin (`MapProjection.gd:3-11`). `project(lat_lon)` maps a
+cos(lat) longitude compression and 6% margin (`MapProjection.gd`). `project(lat_lon)` maps a
 `Vector2(lat, lon)` to pixel-space; `project_vertices(...)` batch-maps `PackedVector2Array`.
 
-**Hex cells.** `spawn_hex_cells()` (HexMap.gd:37) iterates `GameData.hexes`, projects each hex's
+**Hex cells.** `spawn_hex_cells()` (HexMap.gd) iterates `GameData.hexes`, projects each hex's
 lat/lon vertex array into a `Polygon2D` + `Line2D` outline, and stores them in `hex_cells` /
 `projected_vertices`. Color is set by `get_hex_color()`: every terrain-classified hex renders
 pure `TerrainType.color` (from `data/terrain/terrain_types.json`); unclassified hexes fall back
@@ -53,7 +53,7 @@ superseding the earlier fill-tint blends). Beaches
 render as numbered dark-blue triangle glyphs anchored bottom-left in their `BeachDef.hex_id` hex
 (`render_beach_markers()`, z between hex fills and brigade markers).
 
-**Brigade markers.** `render_brigade_markers()` (HexMap.gd:64) clears existing markers and stack
+**Brigade markers.** `render_brigade_markers()` (HexMap.gd) clears existing markers and stack
 badges, groups placed brigades by hex (sorted by brigade id for a deterministic layout), then
 renders per hex: a single brigade with no occupied neighbor hex gets the classic full-size marker
 offset by `entry_bearing`; a single brigade with any occupied neighbor shrinks to 0.75× and pins
@@ -71,11 +71,11 @@ border on the selected hex (`highlight_hexes`, line 243).
 
 ## 4. Input & control — GameController
 
-**Click flow.** `HexMap._input` (HexMap.gd:199) converts left-click →
+**Click flow.** `HexMap._input` (HexMap.gd) converts left-click →
 `get_hex_by_point(local_mouse)` (point-in-polygon via `Geometry2D.is_point_in_polygon`, line 234)
 and emits `hex_clicked(hex_id)`. Right-click emits `selection_cancelled`.
 
-**GameController._on_hex_clicked** (GameController.gd:32):
+**GameController._on_hex_clicked** (GameController.gd):
 1. If a brigade is selected and clicked hex is in `current_reachable` → issues a move order via
    `GameState.add_move_order`, emits `EventBus.move_order_issued`, clears reachable hexes.
 2. Otherwise → sets `selected_hex`, emits `EventBus.hex_selected`, then looks up brigades in
@@ -86,7 +86,7 @@ and emits `hex_clicked(hex_id)`. Right-click emits `selection_cancelled`.
 `Movement.MODE_TACTICAL` / `Movement.MODE_ADMINISTRATIVE`. `set_move_mode` emits
 `EventBus.move_mode_changed` and recalculates reachable hexes.
 
-**Commit flow.** `_emit_commit_options` (GameController.gd:138) queries
+**Commit flow.** `_emit_commit_options` (GameController.gd) queries
 `GameState.eligible_commit_brigades(team, target_hex)` for both teams and emits
 `EventBus.commit_options_changed`. `CompositionPanel` receives this, draws buttons; each button
 emits `commit_requested` which `GameController.commit_brigade` (line 93) routes to
@@ -118,7 +118,7 @@ children and adds a title plus one `Button` per eligible-commit brigade. Each bu
 
 ## 6. NATO symbols
 
-**SymbolLibrary** loads `data/nato_symbol_map.json` at `_init()` (SymbolLibrary.gd:11). The JSON
+**SymbolLibrary** loads `data/nato_symbol_map.json` at `_init()` (SymbolLibrary.gd). The JSON
 has `symbol_dir` (default `res://assets/symbols/`) and `nato_type_to_symbol` dict (11 types:
 air-defense, amphibious, area-command, armor, artillery, aviation, infantry, mech-infantry,
 motorized-infantry, reserve, special-forces → SVG filenames). `texture_for_nato_type(nato_type)`

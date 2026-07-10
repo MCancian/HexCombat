@@ -19,6 +19,12 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-10 — Doc-rot guard: dead anchors fail the gate (USER asked for a guard; agent
+  design).** `tools/validate_doc_anchors.gd` (auto-globbed into the gate) rejects dead
+  paths/scripts/members and `file.gd:123` citations in `docs/systems/*.md`; `(historical)` marks
+  intentional dead names. Checkable diff→owning-doc procedure + ownership table:
+  `hexcombat-docs-and-writing` step 2. First run caught 89 line-citations + 1 real rename.
+
 - **2026-07-10 — Docs architecture B: one home per fact (USER).** PLAN.md (2,525 lines, ~84%
   historical by its own admission) and six dead docs archived to `docs/archive/`; lore-style
   `docs/plans/` index + numbered ephemeral plans with a closeout rule; this changelog replaces

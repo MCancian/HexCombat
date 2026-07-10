@@ -36,7 +36,7 @@ HexCombat uses a **WeGo** (write-orders-then-resolve) turn model with three phas
 PLANNING  ── resolve_turn() ──►  RESOLUTION  ── begin_next_turn() ──►  END ──► PLANNING
 ```
 
-**Planning phase** (`Phase.PLANNING`, GameState.gd:38):
+**Planning phase** (`Phase.PLANNING`, GameState.gd):
 - `add_move_order()` (line 119) — validates brigade exists, team matches, hex exists, within movement allowance, no double-order
 - `add_commit_order()` (line 203) — validates adjacency, not destroyed/admin-moved, no double-order
 - `eligible_commit_brigades()` (line 248) — returns brigades adjacent to a hex that can commit
@@ -51,7 +51,7 @@ PLANNING  ── resolve_turn() ──►  RESOLUTION  ── begin_next_turn() 
 - Clears both order and commitment buffers for both teams
 - Increments `turn_number`, sets phase to `PLANNING`, emits `phase_changed`
 
-## 4. `resolve_turn` Stage Order (GameState.gd:162–200)
+## 4. `resolve_turn` Stage Order (GameState.gd)
 
 The resolution runs exactly this pipeline:
 
@@ -87,7 +87,7 @@ func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> Tur
 - `game_over` / `winner` — from end-of-turn victory census
 - `to_dict()` for JSON serialization (LLM API output)
 
-**TurnEventLog** (`scripts/TurnEventLog.gd:10`):
+**TurnEventLog** (`scripts/TurnEventLog.gd`):
 - Pure derivation from GameState's post-resolve buffers (reads order buffers, last_* summaries)
 - Ordered sequence: IJFS → anti-ship → moves → commits → combats → frontline → cleanup
 - Events are `TurnEvent` resources with `seq`, `kind`, `hex_id`, `team`, `data`

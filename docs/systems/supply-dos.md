@@ -66,7 +66,7 @@ A unit that **both moved and fought** burns the full base (300 or 150). Each omi
 
 ## 5. Consumption summary — `calculate_consumption(units, moved_brigade_ids, engaged_brigade_ids, day)` (line 68)
 
-Iterates all landed Red battalions (`_active_red_battalion_units()` — `GameState.gd:944`), classifies each, sums per-unit tons, and builds a by-brigade breakdown.
+Iterates all landed Red battalions (`_active_red_battalion_units()` — `GameState.gd`), classifies each, sums per-unit tons, and builds a by-brigade breakdown.
 
 Returns a Dictionary with fields (see lines 127–142):
 
@@ -100,7 +100,7 @@ Called at the end of each combat turn (line 194, after `_apply_feba_retreats()` 
 
 **Initial pool:** `_rebuild_supply_state()` (line 992) sets `current_dos_tons = GameData.red_dos_start * TONS_PER_DOS` (100 × 150 = 15 000 tons in `scenario_default.json` line 5).
 
-**Supply effectiveness:** `CombatCalculator._unit_supply_effectiveness()` (line 227) reads `supply_effectiveness` from the unit Dictionary (defaults to 1.0). Currently, `supply_effectiveness` is **always 1.0** — the pool-depletion → modifier linkage is deferred to the D4 IJFS phase (see comment at `GameState.gd:405`). The field is present on every BN (`Brigade.gd:42`, `UnitManager.gd:31`, `CombatForces.gd:20`) but currently unused in resolution.
+**Supply effectiveness:** `CombatCalculator._unit_supply_effectiveness()` (line 227) reads `supply_effectiveness` from the unit Dictionary (defaults to 1.0). Currently, `supply_effectiveness` is **always 1.0** — the pool-depletion → modifier linkage is deferred to the D4 IJFS phase (see comment at `GameState.gd`). The field is present on every BN (`Brigade.gd`, `UnitManager.gd`, `CombatForces.gd`) but currently unused in resolution.
 
 **Flow summary (GameState.gd):**
 
@@ -141,7 +141,7 @@ per-brigade). `CombatCalculator` multiplies maneuver strength by the field. Test
 `tests/supply_combat_effectiveness_test.gd`. The golden 1-turn scenario never exhausts the pool, so the
 golden invariant is unchanged. v1 is binary-at-exhaustion; a graded ramp is a future refinement.
 
-**Cosmetic:** `GameState.gd:7` aliases the preload as `SupplyStateResource` while the class is
+**Cosmetic:** `GameState.gd` aliases the preload as `SupplyStateResource` while the class is
 `SupplyState`; the typed `supply_state: SupplyState` is correct — alias inconsistency only.
 
-**Name mismatch:** `GameState.gd:7` uses `const SupplyStateResource = preload(...)` but the class is named `SupplyState` (line 2 of its file). The declared type `supply_state: SupplyState` (line 48) is correct; the preload alias is a cosmetic inconsistency only.
+**Name mismatch:** `GameState.gd` uses `const SupplyStateResource = preload(...)` but the class is named `SupplyState` (line 2 of its file). The declared type `supply_state: SupplyState` (line 48) is correct; the preload alias is a cosmetic inconsistency only.

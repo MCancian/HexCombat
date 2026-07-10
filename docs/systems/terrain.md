@@ -38,13 +38,13 @@ runtime).
 **`data/terrain/hex_land_frac.json`** — per-hex fraction of area over GSHHG land, written by the
 grid-reconciliation pipeline (§3); provenance record, not consumed at runtime.
 
-**Loader — `GameData.load_terrain()`** (`scripts/GameData.gd:252-318`): reads
+**Loader — `GameData.load_terrain()`** (`scripts/GameData.gd`): reads
 `terrain_types.json` into `terrain_types: Dictionary` (class name → `TerrainType` resource,
 `scripts/model/TerrainType.gd`), then reads `hex_terrain.json` and stamps `hex_lookup[hex_id].terrain`
 per hex. Fails loud (`push_error` + early return) on: a missing required field, an
 unrecognized class referenced by a hex, an unclassified grid hex, or a classified hex not in the
 grid — every hex must resolve to exactly one of the 5 classes before the game can run.
-`GameData.get_terrain(hex_id) -> TerrainType` (`scripts/GameData.gd:321-324`) is the read API;
+`GameData.get_terrain(hex_id) -> TerrainType` (`scripts/GameData.gd`) is the read API;
 returns `null` for an unknown hex_id.
 
 ## 3. Assignment pipeline
@@ -110,18 +110,18 @@ change; not part of the runtime or the gate.
 ## 4. Movement effects
 
 `GameData` threads terrain into `HexMath`'s pathfinding via two callables passed at every
-`find_path`/`find_reachable` call site (`scripts/GameData.gd:343-352`):
+`find_path`/`find_reachable` call site (`scripts/GameData.gd`):
 
-- **Entry cost** — `_terrain_entry_cost(hex_id)` (`GameData.gd:369-373`) returns
+- **Entry cost** — `_terrain_entry_cost(hex_id)` (`GameData.gd`) returns
   `get_terrain(hex_id).move_cost`, defaulting to 1 for an unclassified hex (load-time validation
   already guarantees every grid hex is classified; this is a defensive fallback for call sites
   that might run before `load_terrain()`).
-- **Impassability** — `_with_impassable(blocked)` (`GameData.gd:357-363`) merges the caller's
+- **Impassability** — `_with_impassable(blocked)` (`GameData.gd`) merges the caller's
   explicit `blocked` list with every hex whose `TerrainType.impassable` is true (mountains today)
   before calling into `HexMath`.
 
-`HexMath.find_path` (`scripts/HexMath.gd:63-96`) is a plain cost-aware Dijkstra shortest path —
-no min-one-step guarantee. `HexMath.find_reachable` (`scripts/HexMath.gd:102-137`) computes the
+`HexMath.find_path` (`scripts/HexMath.gd`) is a plain cost-aware Dijkstra shortest path —
+no min-one-step guarantee. `HexMath.find_reachable` (`scripts/HexMath.gd`) computes the
 Dijkstra reachable set (cumulative entry cost ≤ `max_distance`) **plus** every passable direct
 neighbor of the start hex regardless of its cost — the min-one-step guarantee: a unit that has not
 yet moved this turn may always take one step into an adjacent passable hex even if that hex's
@@ -134,10 +134,10 @@ Tests: `tests/terrain_movement_test.gd` — `test_slow_brigade_min_one_step_and_
 
 ## 5. Combat effects
 
-`CombatResolver.resolve_at` (`scripts/resolvers/CombatResolver.gd:38-65`, pure — no `GameData`
+`CombatResolver.resolve_at` (`scripts/resolvers/CombatResolver.gd`, pure — no `GameData`
 access) takes `defender_terrain_modifier: float = 1.0` as its last parameter and forwards it
 straight into `CombatCalculator.resolve_map_attack`. `GameState._defender_combat_modifier(hex_id)`
-(`scripts/GameState.gd:561-568`) computes the value passed in:
+(`scripts/GameState.gd`) computes the value passed in:
 
 ```gdscript
 func _defender_combat_modifier(hex_id: String) -> float:
@@ -149,8 +149,8 @@ func _defender_combat_modifier(hex_id: String) -> float:
 The `* 1.0` is a **deliberate seam**, not dead code: a future situational multiplier (the
 backlogged beach first-landing ×2 defender penalty) plugs in there without touching
 `CombatResolver` or `GameData`. Terrain resolves at `hex_id` — the *defended* hex — regardless of
-which side started there (`GameState.gd:585-587`), called from `_resolve_combat_at`
-(`GameState.gd:581-597`).
+which side started there (`GameState.gd`), called from `_resolve_combat_at`
+(`GameState.gd`).
 
 Per-class defender modifier table: plains ×1.0, hills ×1.5, urban ×2.0, mountain ×2.0
 (mountain is impassable to movement but can still be a combat modifier if reached by other means —
@@ -172,7 +172,7 @@ loss-rate/FEBA formulas).
 
 ## 6. Observation surfacing
 
-`LLMGameAPI._occupied_hex_observations()` (`scripts/LLMGameAPI.gd:198-215`) adds a `"terrain"` key
+`LLMGameAPI._occupied_hex_observations()` (`scripts/LLMGameAPI.gd`) adds a `"terrain"` key
 (the class name string, `""` if unclassified) to every `occupied_hexes` entry — documented in
 `docs/LLM_OBSERVATION_SCHEMA.md`'s Occupied hex object table. No JSON-schema change was needed:
 `occupied_hexes` is an untyped array in `schemas/llm_observation.schema.json`.

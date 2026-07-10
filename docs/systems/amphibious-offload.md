@@ -26,8 +26,8 @@ anti-ship crossing model and converts ship losses into BN casualties.
 
 ## 3. Constants
 
-- **`OffloadRates.TONS_PER_BN := 2200.0`** — `scripts/OffloadRates.gd:9`
-- **Maneuver BN whitelist** — `scripts/OffloadCalculator.gd:15`:
+- **`OffloadRates.TONS_PER_BN := 2200.0`** — `scripts/OffloadRates.gd`
+- **Maneuver BN whitelist** — `scripts/OffloadCalculator.gd`:
   ```
   "Combined Arms Battalion", "Amphibious Infantry Battalion",
   "Mechanized Infantry Battalion", "Air Assault Infantry Battalion",
@@ -115,7 +115,7 @@ two `ShipLoadingModel` simplifications below diverge, and both are intentional/c
 - **Status per ROADMAP.md:143:** D1 is **COMPLETE** (2026-06-24) with 8 validators + 54 GdUnit4 tests.
 - **Known simplifications (logged in PLAN.md):**
   - `ShipLoadingModel` ignores per-type transport weight (every BN = 1.0 BN-equiv; TIV uses
-    `configurator.get_unit_transport_weight()`). Documented at `ShipLoadingModel.gd:14-16`.
+    `configurator.get_unit_transport_weight()`). Documented at `ShipLoadingModel.gd`.
   - `ShipLoadingModel` drops the amphibious-vs-cargo ship-eligibility split (TIV's
     `_ship_can_carry_battalion`; HexCombat: any carrier ships any BN). Line 17-19.
   - HexCombat has no ship-cycle (no ready/offloading/returning state machine); fleet derivation

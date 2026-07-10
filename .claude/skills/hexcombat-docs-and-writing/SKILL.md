@@ -32,7 +32,29 @@ code headers were correct.
 **When you finish a feature/change:**
 1. Update `docs/STATUS.md` — present tense, no date, behavior not history.
 2. Update the module's `docs/systems/*.md` if subsystem behavior changed (fidelity notes for any
-   TIV divergence).
+   TIV divergence). **Checkable procedure, not a vibe:** run `git diff --name-only`, map each
+   touched code path through the ownership table below — each owning doc must either be in your
+   diff too, or you verify nothing it asserts changed (and can say so if asked).
+
+   | Touched code | Owning doc (`docs/systems/`) |
+   |---|---|
+   | `scripts/ijfs/**`, `IjfsResolver`, `data/ijfs/**` | `ijfs.md` |
+   | `AntishipCalculator`, `MineWarfareService`, `AntishipResolver`, `data/antiship/**` | `antiship-mine.md` |
+   | `CombatCalculator`, `CombatForces`, `CombatResolver`, `Movement`, `UnitStats` | `ground-combat.md` |
+   | `Offload*`, `ShipLoadingModel` | `amphibious-offload.md` |
+   | `Supply*` | `supply-dos.md` |
+   | `FrontLineService`, `FrontlineResolver`, `CleanupResolver`, `VictoryConditions` | `frontline-cleanup-victory.md` |
+   | `HexMath`, `MapProjection`, `data/taiwan_hex_grid.json` | `hex-grid.md` |
+   | `data/terrain/**`, terrain hooks in GameData/CombatResolver | `terrain.md` |
+   | `LLMGameAPI`, `LLMPolicy`, `llm_sidecar*`, `SelfPlayRunner`, batch/report/bundle tools | `llm-api-selfplay.md` |
+   | `HexMap`, `GameController`, scenes | `view-layer.md` |
+   | `GameState.resolve_turn` wiring, `EventBus`, cross-phase fields | `turn-engine.md` |
+
+   **Mechanical backstop:** `tools/validate_doc_anchors.gd` (in the gate) fails RED when a
+   systems doc cites a dead path/script/member or uses a `file.gd:123` line citation — so a
+   rename/move that orphans a doc anchor cannot pass the gate. It cannot catch semantically
+   wrong prose over valid anchors; that's what this checklist is for. Historical passages that
+   cite dead names on purpose: mark the line `(historical)`.
 3. Append 3–5 lines to `docs/DECISIONS.md` — what + who decided + POINTERS to where the facts
    landed. **A DECISIONS entry is a changelog, never a reference**: if a future agent would need
    the entry to act, the fact is filed in the wrong place — move it, then point.
