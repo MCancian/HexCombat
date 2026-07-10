@@ -11,11 +11,17 @@ Usage:
     python3 tools/make_game_bundle.py --record reports/llm/game_20260710.json \\
         --jsonl reports/llm/game_20260710.jsonl --out reports/llm/game_20260710.viewer.json
     python3 tools/make_game_bundle.py --record reports/llm/game_20260710.json --skip-summaries
+    python3 tools/make_game_bundle.py --from-bundle reports/llm/game_20260710.viewer.json
 
 --jsonl defaults to the record's sibling <basename>.jsonl; --out defaults to
 <basename>.viewer.json. --skip-summaries omits the per-turn-per-side LLM SITREP call (fast,
 useful for CI / offline bundling — the viewer falls back to a raw_reply excerpt when a sitrep
 is null).
+
+--from-bundle rebuilds ONLY the baked <basename>.game.html from an existing .viewer.json —
+no record/JSONL reading, no sitrep model calls, no map reassembly. This is the cheap path for
+re-baking a report after a viewer HTML change. --jsonl/--skip-summaries/--html are meaningless
+with it (HTML output is its whole point); --out overrides the HTML path.
 
 Bundle shape (see tools/viewer/game_viewer.html for the consumer):
   meta        — scenario_id/name, model, base_seed, turns_played, winner/game_over/victory_reason,
@@ -281,7 +287,11 @@ def generate_sitreps(turns: list, skip: bool) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--record", required=True, help="Path to the game record JSON.")
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--record", help="Path to the game record JSON.")
+    source.add_argument("--from-bundle", dest="from_bundle",
+                        help="Path to an existing .viewer.json — rebuild only the baked "
+                             ".game.html from it (no record/JSONL/sitrep work).")
     parser.add_argument("--jsonl", default=None,
                          help="Path to the JSONL replay log (default: record's sibling .jsonl).")
     parser.add_argument("--out", default=None,
@@ -292,6 +302,17 @@ def main() -> int:
                          help="Also write <record-basename>.game.html: the viewer with the bundle "
                               "baked in — a single shareable report file, no drag-drop needed.")
     args = parser.parse_args()
+
+    if args.from_bundle:
+        bundle_path = Path(args.from_bundle)
+        stem = str(bundle_path.with_suffix(""))
+        if stem.endswith(".viewer"):
+            stem = stem[: -len(".viewer")]
+        html_path = Path(args.out) if args.out else Path(stem + ".game.html")
+        write_html_report(load_json(bundle_path), html_path)
+        print("make_game_bundle: wrote %s (%d bytes) from existing bundle %s" % (
+            html_path, html_path.stat().st_size, bundle_path), file=sys.stderr)
+        return 0
 
     record_path = Path(args.record)
     stem = str(record_path.with_suffix(""))
