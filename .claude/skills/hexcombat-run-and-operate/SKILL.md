@@ -41,7 +41,7 @@ resolved turn out:
   `build_actions(observation) -> Array` — full deterministic games headless.
 
 Schemas: `schemas/*.schema.json`. Contract docs: `docs/LLM_OBSERVATION_SCHEMA.md`,
-`docs/LLM_PLAYTESTING.md`, `docs/systems/llm-api-selfplay.md`.
+`docs/systems/llm-api-selfplay.md`.
 
 ```powershell
 # Ready-made drivers

@@ -98,7 +98,7 @@ Cleanup runs last in resolve_turn (GameState.gd:195). Victory census is the tail
 | Unit distribution | `distribute_units_along_hexes` — brigade-level even spacing | `distribute_battalions_along_line` — battalion-level, per-hex clipping + support offset | Simplified (brigade-level, no sub-hex positioning) |
 | Hex ownership | `recompute_hex_ownership()` — bulk scan, in-memory | `cleanup_hex_service.update_hex_ownership()` — per-hex DB write | In-memory equivalent |
 | Anti-ship reset | `resolve_cleanup_phase` — clears fired/expended/destroyed_this_turn flags | `cleanup_calculator.reset_systems` — also restores Quantity_Moved/Quantity_Unavailable → Available | HexCombat skips restore (no moved/unavailable split) |
-| Victory conditions | `VictoryConditions.evaluate()` — majority or elimination | No TIV equivalent | HexCombat design (settled 2026-06-28, PLAN.md entry) |
+| Victory conditions | `VictoryConditions.evaluate()` — majority or elimination | No TIV equivalent | HexCombat design (settled 2026-06-28, docs/archive/PLAN.md entry) |
 | Victory persistence | `game_over`/`winner` on `GameState`, `TurnResult`, LLM observation | N/A | N/A |
 
 **What I cannot verify:** Whether the 2.0 km `sample_interval` produces identical hex sequences to TIV (the TIV oracle uses 2.0 km but sampling is sensitive to the exact hex grid data). Brigade-level distribution skips TIV's per-hex polygon clipping (`_get_polyline_coords_in_hex`) — the hex sequence approach snaps to hex centers, which may assign a brigade to a hex the polyline barely grazes.

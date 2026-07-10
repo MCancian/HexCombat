@@ -1,31 +1,10 @@
 # HexCombat — Current State
 
-**The single orientation doc.** Read this first to know what works today and where it lives. Present
-tense, no dates (dates live only in the append-only history logs). For *future* work see
-`docs/plans/BACKLOG.md`; for *why* a choice was made see `PLAN.md` → Decisions; for *lessons* see
-`docs/RETROSPECTIVES.md`.
-
-## How the docs are organized (and the tracking rules)
-
-| Doc | Holds | Tense / dates |
-|---|---|---|
-| **`docs/STATUS.md`** (this) | What is implemented today + where | present tense, **no dates** |
-| **`docs/plans/`** | Forward work: `BACKLOG.md` (tracks), `port_audit.md`, `refactor_audit.md` | future intent |
-| **`PLAN.md` → Decisions** | Append-only log of *why* (one dated entry per choice) | history — dates OK |
-| **`docs/RETROSPECTIVES.md`** | Append-only per-task lessons + triage | history — dates OK |
-| **`ROADMAP.md`** | Milestone map + TIV oracle file/line refs | reference |
-| **`AGENTS.md` / `CLAUDE.md`** | Rules for agents (incl. the mission) / primary-agent workflow | reference |
-| **`.claude/skills/`** | Procedure library — task→skill map in its `README.md` | reference |
-
-**Tracking rules for agents:**
-1. When you **finish** a feature, update **this file** (present tense, no date) and check the item off
-   in `docs/plans/BACKLOG.md`. Record the *why* in `PLAN.md` → Decisions (dated) and *lessons* in
-   `RETROSPECTIVES.md` (dated).
-2. When you **plan** new work, add it to `docs/plans/` — never to STATUS.md.
-3. **Don't date implemented-state text.** Once something works, describe the behavior, not when it
-   landed. Dates belong only in the two append-only logs above.
-4. One source of truth for "what works": this file. If another doc disagrees, this file wins (and fix
-   the other doc).
+**What works today, present tense, no dates.** This is the only home for current behavior: if
+another doc disagrees, this file wins (fix the other doc). The full one-home-per-fact map and
+task-shaped reading lists live in `AGENTS.md` → Orientation; recording rules in
+`hexcombat-docs-and-writing`. Forward work: `docs/plans/`. Why/history: `docs/DECISIONS.md` →
+`docs/archive/`. Lessons: `docs/RETROSPECTIVES.md`.
 
 ## What works today
 
@@ -46,13 +25,11 @@ offload → movement & commit → ground combat → front-line → cleanup (+ vi
 
 **Phases / subsystems implemented:**
 - **Ground combat** (BOOTS slice M0–M7): movement, commit, combat resolution, FEBA, casualties,
-  retreat, hex ownership. Defender terrain modifier (Track F) is active: `CombatResolver.resolve_at`
-  now receives the defended hex's `GameData.get_terrain(hex_id).defender_modifier` from
-  `GameState._defender_combat_modifier` instead of a hardcoded 1.0. Golden invariant: seed
-  20260624 → `casualties=9, feba=1.98` at the scripted beach-1 fight (byte-stable gate;
-  re-baselined four times — hex-adjacency coordinate fix, `feba_base_km` 3.5, the 2026-07-09
-  terrain-modifier activation, and the same-day full ROC defense laydown which moved the scripted
-  combat from hex_43_16 to the garrisoned beach 1 (hex_44_16) — see `PLAN.md` → Decisions).
+  retreat, hex ownership. Defender terrain modifier is active: `CombatResolver.resolve_at`
+  receives the defended hex's `defender_modifier` via `GameState._defender_combat_modifier`.
+  Golden invariant: the scripted beach-1 fight is byte-stable per gate; the pinned values live in
+  `tools/validate_headless_turn.gd` (re-baseline history: `docs/DECISIONS.md` →
+  `docs/archive/PLAN.md`).
 - **D1 Amphibious offload** — ship reserve → beach landing; lands brigades onto beach hexes.
   Every scenario's `red_ship_reserve.beach_hex` must be coastal (< 6 land neighbors) —
   `validate_scenario_data.gd` rejects fully-inland landing hexes.
@@ -200,6 +177,7 @@ release).
   `GameState._defender_combat_modifier`'s `* 1.0` situational-modifier slot. See
   `docs/plans/BACKLOG.md`.
 - **Deferred ports** — anti-ship missile pipeline depth (strike-coverage lever), ground-casualty
-  IJFS↔OOB linkage, per-hull escort magazines. See `docs/plans/port_audit.md`.
-- **Refactors** — see `docs/plans/refactor_audit.md` (e.g. victory census should count *present*, not
+  IJFS↔OOB linkage, per-hull escort magazines. See `docs/plans/README.md` (plan index) and
+  `docs/archive/port_audit.md`.
+- **Refactors** — see `docs/archive/refactor_audit.md` (e.g. victory census should count *present*, not
   OOB, battalions; typed `WarmupContext`/`HexState`).

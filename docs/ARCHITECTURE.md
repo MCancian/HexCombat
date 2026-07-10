@@ -85,10 +85,14 @@ Port traceability (extend per phase under `docs/phases/` as work proceeds):
 The full per-system source map (all D1–D5 phases, IJFS, anti-ship/mine) lives in
 `docs/systems/*.md` — that reference supersedes this table for ported detail.
 
-## Direction: resolver decomposition
+## Resolver decomposition (shipped 2026-07-02)
 
-`GameState` is being decomposed into pure `RefCounted` resolver classes under
-`scripts/resolvers/` with explicit `resolve(<inputs>, dice) -> <TypedSummary>` signatures
-(USER-decided interface; no new autoloads). Contract and campaign:
-`.claude/skills/hexcombat-architecture-contract` and
-`.claude/skills/hexcombat-gamestate-decomposition-campaign`.
+`GameState` was decomposed into pure `RefCounted` resolver classes under `scripts/resolvers/`
+(`CombatResolver`, `FrontlineResolver`, `CleanupResolver`, `OffloadResolver`, `AntishipResolver`,
+`IjfsResolver`, `SupplyResolver`, plus the Phase-A builders), each with an explicit
+`resolve(<inputs>, dice) -> <TypedSummary>` signature (USER-decided interface; no new autoloads).
+`GameState` is now the thin orchestrator that sequences them and owns EventBus emits, autoload
+access, and cross-phase state. New phases follow this shape going forward. Contract and campaign
+record: `.claude/skills/hexcombat-architecture-contract` and
+`.claude/skills/hexcombat-gamestate-decomposition-campaign`; the template for adding the next
+phase is `.claude/skills/hexcombat-add-phase-resolver`.

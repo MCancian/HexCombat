@@ -5,7 +5,8 @@ description: The chronicle of HexCombat's major investigations, bugs, dead ends,
 
 # Failure archaeology
 
-Settled battles. Primary sources: `PLAN.md` → Decisions (why) and `docs/RETROSPECTIVES.md`
+Settled battles. Primary sources: `docs/DECISIONS.md` (+ pre-2026-07-10 history in
+`docs/archive/PLAN.md` → Decisions) and `docs/RETROSPECTIVES.md`
 (lessons, dated entries). Newest lessons get APPENDED here when they close an investigation.
 
 ### Hex adjacency: offset coords treated as axial (2026-06-29)
@@ -76,7 +77,7 @@ Settled battles. Primary sources: `PLAN.md` → Decisions (why) and `docs/RETROS
   topped out ~41% (band ~54→41%) because mines set a ~22% floor.
 - **Root cause:** the geometry-free mine model made *every* mine dangerous — the wrong knob was
   being turned.
-- **Evidence:** measured knob-band sweep (recorded in PLAN.md Open Questions "D3-D crossing
+- **Evidence:** measured knob-band sweep (recorded in docs/archive/PLAN.md Open Questions "D3-D crossing
   lethality calibration"); knob map `docs/antiship_lethality_knobs.html`.
 - **Fenced off:** continuing to force the strike bonus toward 25% (deferred as a lever, memory:
   strike-coverage); re-tuning the geometry-free model.

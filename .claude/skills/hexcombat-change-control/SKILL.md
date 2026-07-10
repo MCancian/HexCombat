@@ -23,14 +23,14 @@ When unsure, treat it as the higher class.
 values. The validator's PASS line is the source of truth — this file deliberately does NOT
 repeat the numbers (they rotted here twice on 2026-07-09 alone). The scripted turn's SHAPE
 (mover/defender/hexes) lives in `tools/GoldenScript.gd`, shared by all golden validators;
-re-baseline history is in `PLAN.md` → Decisions.
+re-baseline history is in `docs/DECISIONS.md` (pre-2026-07-10: `docs/archive/PLAN.md`).
 
 - A refactor/cleanup/extraction must keep it **byte-stable**. If it moves, your change consumed or
   reordered RNG draws, or changed math — that is a bug in the change, not a new baseline.
 - A **re-baseline is legitimate only** when a deliberate, user-visible behavior change is the
   point (a rebalance the user asked for, a fixed correctness bug like the odd-r adjacency fix).
   Re-baselining requires: (1) the user's call or an explicit correctness argument recorded in
-  PLAN.md → Decisions, (2) updating the pinned values everywhere (`validate_headless_turn`,
+  docs/DECISIONS.md, (2) updating the pinned values everywhere (`validate_headless_turn`,
   `validate_cleanup` fingerprint, `docs/STATUS.md`, fixtures, tests keyed to the old values).
 - The item-8 gate (`tools/validate_fixtures.gd`) byte-compares committed `docs/examples/*.json`
   every run — serialization drift fails loud. If it fires, regenerate via `tools/export_llm_*.gd`
@@ -53,7 +53,7 @@ re-baseline history is in `PLAN.md` → Decisions.
    touching reset/state code.
 5. **Design changes are the user's; divergences get documented.** HexCombat is the design of
    record (TIV was the port oracle — divergences from it are allowed when the user directs them),
-   but every behavior divergence/rebalance lands in PLAN.md → Decisions with the why.
+   but every behavior divergence/rebalance lands in docs/DECISIONS.md with pointers to the why.
 6. **Never commit `.mcp.json`** (machine-specific Godot path, intentionally locally modified).
 7. **Tie tuning hooks to a need.** Don't populate optional knobs speculatively — an unused field
    is byte-stable; a populated one silently re-baselines results.
@@ -73,7 +73,9 @@ re-baseline history is in `PLAN.md` → Decisions.
 - Commit each verified unit; **push at milestones** (a coherent item fully done and green).
 - Message style: `<type>: <what> (<tracking ref>)` matching `git log`; end with the
   `Co-Authored-By` / session trailer the harness specifies.
-- Record: the **why** → PLAN.md → Decisions (dated, append-only); **status** → `docs/STATUS.md`
+- Record per `hexcombat-docs-and-writing`: canonical homes updated (STATUS, systems doc), 3–5-line
+  `docs/DECISIONS.md` entry with pointers, plan closeout (checklist + archive move) if a
+  `docs/plans/NNNN-*` plan drove the work; **status** → `docs/STATUS.md`
   (present tense, no dates); **lessons** → `docs/RETROSPECTIVES.md`; check off the backlog item.
   Details: `hexcombat-docs-and-writing`.
 - **Pause and surface to the user** on: a genuine design decision the docs don't answer, a gate

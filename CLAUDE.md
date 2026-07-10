@@ -15,7 +15,8 @@ chores; verify anything it reports independently.)
 The user is a solo, non-coding wargame designer. Design intent comes from them; everything
 technical is yours. When a technical fork arises, **choose the option that is harder up front but
 yields the cleanest, most legible code** (standing user instruction). Genuine design questions go
-to the user (record in `PLAN.md` → Open Questions); do not guess game design.
+to the user (open a `Sketch` plan in `docs/plans/` — index in its README — or ask directly); do
+not guess game design.
 
 ## The work loop (each coherent unit)
 

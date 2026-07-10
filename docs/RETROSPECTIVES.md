@@ -2,8 +2,9 @@
 
 Per-sub-task "what would you do differently, knowing what you know now" notes, captured **after**
 implementation and gating (see `docs/ORCHESTRATOR_HANDOFF.md` §3 step 4), plus the orchestrator's
-triage. This is **process/quality feedback** — design rationale lives in `PLAN.md` → Decisions.
-Append-only; newest at the bottom of each section. Cross-link decisions as `PLAN.md <date>`.
+triage. This is **process/quality feedback** — design rationale lives in `docs/DECISIONS.md`.
+Append-only; newest at the bottom of each section. Cross-link decisions by date (pre-2026-07-10
+entries resolve in `docs/archive/PLAN.md`).
 
 ## Entry format
 
@@ -14,7 +15,7 @@ Append-only; newest at the bottom of each section. Cross-link decisions as `PLAN
 - <specific, concrete lesson — fragility, tech debt, surprise, what'd make the next task easier>
 
 **Orchestrator triage:**
-- <lesson> → act now | act later (→ PLAN.md Open Question / backlog) | record only — <note>
+- <lesson> → act now | act later (→ docs/plans/ plan or backlog) | record only — <note>
 ```
 
 ---

@@ -128,7 +128,7 @@ validation/golden tests. Every later phase copies that template.
 
 ### M7 — Slice completion
 
-- Full `run_all_tests.ps1` green; **Definition of done** (see `PLAN.md`) met; slice summarized
+- Full `run_all_tests.ps1` green; **Definition of done** (see `docs/archive/PLAN.md`) met; slice summarized
   for the user.
 
 ---
@@ -174,7 +174,7 @@ exactly unless a rebalance is explicitly requested.
 - `OffloadCalculator.gd` + `OffloadRates.gd` + `BeachDef.gd` + `data/beaches.json` +
   `data/offload_rates.json` all green; 8 validators + 54 GdUnit4 tests passing
 
-**Remaining (D1-D/E blocked — see PLAN.md Open Questions):**
+**Remaining (D1-D/E blocked — see docs/archive/PLAN.md Open Questions):**
 
 - `scripts/model/ShipFleet.gd` — ship fleet Resource; `GameState.ship_reserve`
 - `GameState.resolve_offload_turn(dice)` — runs OffloadCalculator → `GameData.set_brigade_hex()`

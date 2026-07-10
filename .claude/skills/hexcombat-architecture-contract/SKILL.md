@@ -6,14 +6,14 @@ description: The load-bearing design decisions of HexCombat, the invariants that
 # HexCombat architecture contract
 
 The decisions below are settled. Do not relitigate them in a task; if one genuinely blocks you,
-surface it to the user (PLAN.md → Open Questions) instead of quietly diverging.
+surface it to the user (open a Sketch plan in docs/plans/) instead of quietly diverging.
 
 ## The mission shapes the architecture
 
 HexCombat is (1) primarily a **headless AI-vs-AI research engine** (Monte Carlo outcome
 distributions, LLM players via the JSON API, narrative event logs, parameter sweeps) and
 (2) secondarily a **live-adjudication aid** (facilitator enters orders in a UI, projector-friendly
-display). Ratified 2026-07-02 (PLAN.md → Decisions). Consequences:
+display). Ratified 2026-07-02 (docs/archive/PLAN.md → Decisions). Consequences:
 
 - **Everything must run headless.** The view is optional. Any feature that only works with a
   window is broken by design (screenshot capture is the one sanctioned windowed-only tool).
@@ -46,7 +46,7 @@ with an explicit signature like `resolve(<inputs>, dice) -> <TypedSummary>`:
 - No `EventBus` emits, no `GameData`/`GameState` autoload reads inside the class. Signal emits and
   autoload access stay in the thin `GameState` wrapper method that delegates to the resolver.
 - `GameState` shrinks toward a thin orchestrator that sequences resolvers and owns cross-phase
-  state. (Decomposition status: `docs/plans/refactor_audit.md` item 10.)
+  state. (Decomposition record: `docs/archive/refactor_audit.md` item 10.)
 
 ## Turn engine facts
 
@@ -110,5 +110,6 @@ silently absorbing a config that never arrived — see `hexcombat-failure-archae
 ## Where deeper detail lives
 
 - Per-system data flow + TIV fidelity notes: `docs/systems/*.md` (start at the README index).
-- Rationale for past choices: `PLAN.md` → Decisions log (append-only, dated).
+- Rationale for past choices: `docs/DECISIONS.md` (changelog with pointers); pre-2026-07-10
+  history verbatim in `docs/archive/PLAN.md` → Decisions.
 - What works today: `docs/STATUS.md`. Forward plan: `docs/plans/BACKLOG.md`.

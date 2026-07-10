@@ -3,7 +3,7 @@
 One doc per subsystem — how it works in HexCombat today, the key functions/files, and how
 faithfully it tracks its **TaiwanInvasionViewer** (TIV) oracle. Written for agents; human-readable
 HTML mirrors live in `html/`. Audit status + open fidelity questions:
-`../plans/AUDIT_PROGRESS.md` and `/DECISIONS.md`.
+`../archive/AUDIT_PROGRESS.md` and `../archive/PORT_FIDELITY_DECISIONS.md` (both discharged).
 
 | System | Doc | HTML |
 |---|---|---|

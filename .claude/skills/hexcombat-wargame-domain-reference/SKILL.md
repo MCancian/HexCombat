@@ -71,7 +71,7 @@ geometry goes through `HexMath`; never hand-roll adjacency.
   the geometric mine model (`mine_warfare.py`).
 - **Fidelity policy (user call 2026-07-02):** HexCombat is now the **design of record**. TIV
   remains useful for understanding intent, but the user directs design changes; document every
-  divergence in PLAN.md → Decisions. Known deliberate divergences are recorded per system in
+  divergence in docs/DECISIONS.md. Known deliberate divergences are recorded per system in
   `docs/systems/*.md`.
 
 ## Research framing (primary use)

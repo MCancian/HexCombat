@@ -104,7 +104,7 @@ func _rebuild_fleet() -> void                                # line 1002
 whitelist is **identical** to TIV's `maneuver_bn_types` set in `beach_throughput_factory.py` (same 5
 types). The day-1 redesign behavior is mirrored by 54 GdUnit4 tests against the TIV pytests. Only the
 two `ShipLoadingModel` simplifications below diverge, and both are intentional/code-documented (→
-`docs/plans/port_audit.md`), not bugs.
+`docs/archive/port_audit.md`), not bugs.
 
 - **Oracle source:** `TaiwanInvasionViewer/src/services/offload_calculator.py`,
   `src/services/offload/beach_throughput.py`, `src/services/offload/beach_throughput_factory.py`,

@@ -6,13 +6,13 @@ description: COMPLETE 2026-07-02 — kept as the record of HOW the ~1,400-line G
 # Campaign: GameState decomposition (refactor_audit item 10) — ✅ COMPLETE 2026-07-02
 
 > All four phases (A–D) executed and green. This file is the permanent record of the method.
-> The "what deliberately stayed in GameState" list is in `docs/plans/refactor_audit.md` item 10.
+> The "what deliberately stayed in GameState" list is in `docs/archive/refactor_audit.md` item 10.
 
 **Objective:** `GameState.gd` (~1,415 lines, 52 methods) becomes a thin orchestrator that
 sequences pure `RefCounted` resolver classes in `scripts/resolvers/`, each headless-testable with
 an explicit `resolve(<inputs>, dice) -> <TypedSummary>` signature. Highest-payoff, highest-risk
-refactor in the backlog. Full spec: `docs/plans/refactor_audit.md` item 10; interface decided by
-USER 2026-06-30 (PLAN.md → Decisions) — **do not relitigate: pure RefCounted resolvers, NOT
+refactor in the backlog. Full spec: `docs/archive/refactor_audit.md` item 10; interface decided by
+USER 2026-06-30 (docs/archive/PLAN.md → Decisions) — **do not relitigate: pure RefCounted resolvers, NOT
 autoloads.**
 
 ## Success is measured, never judged by eye
@@ -20,14 +20,15 @@ autoloads.**
 After EVERY extraction, all three, in order:
 
 1. `--import` → zero SCRIPT/Parse errors.
-2. `tools/validate_headless_turn.gd` standalone → **casualties=3, feba=-0.96** (seed 20260624;
-   re-verify the pinned values in the validator itself if this file is old). Byte-stable — if it
-   moved, the extraction changed behavior: **revert and re-derive, never re-baseline.**
+2. `tools/validate_headless_turn.gd` standalone (seed 20260624) — its `PASS:` line is the source
+   of truth for the golden casualties/FEBA values, never a number copied into this doc.
+   Byte-stable — if the validator's output moved, the extraction changed behavior: **revert and
+   re-derive, never re-baseline.**
 3. `pwsh -File tools/run_all_tests.ps1` → ALL PHASES GREEN (incl. `validate_fixtures`
-   byte-compare and `validate_golden_victory`'s terminal census 20v16).
+   byte-compare and `validate_golden_victory`'s `PASS:` line for the terminal census).
 
 One extraction per commit. If a step can't go green in two focused attempts → stop, record in
-PLAN.md → Open Questions, surface to the user.
+a Sketch plan in docs/plans/, surface to the user.
 
 ## The load-bearing constraints (why steps are ordered as they are)
 

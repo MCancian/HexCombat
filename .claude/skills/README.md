@@ -1,7 +1,7 @@
 # HexCombat skill library
 
 Procedures for agents working in this repo. **Facts live in docs** (`docs/STATUS.md`,
-`docs/systems/`, `PLAN.md` Decisions); **skills tell you how to act** and where the traps are.
+`docs/systems/`, `docs/DECISIONS.md`); **skills tell you how to act** and where the traps are.
 Frontmatter descriptions are the triggers — read the skill before doing its kind of work.
 
 ## Task → skill map

@@ -12,7 +12,7 @@ description: Template for adding a NEW game phase or mechanic to the decomposed 
 
 1. **Design before code.** Is this a port/adaptation (read the source oracle + its tests first —
    `hexcombat-wargame-domain-reference` has the map) or new design (settle the design with the
-   user; record in PLAN.md → Decisions)? Scope big phases into sub-tasks.
+   user; record in docs/DECISIONS.md)? Scope big phases into sub-tasks.
 2. **Typed model** — new state shapes become `Resource` classes in `scripts/model/` with typed
    fields and `to_dict()` (exact key set/types = the JSON contract; `null` = unresolved sentinel).
 3. **Pure resolver** — `scripts/resolvers/<Phase>Resolver.gd`, `RefCounted`, explicit

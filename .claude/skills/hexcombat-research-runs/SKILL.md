@@ -25,8 +25,15 @@ description: Running HexCombat as a research instrument — Monte Carlo batches 
 > `pwsh -File tools/run_sweep.ps1 -Name <study> -Knob <dot.path> -Values a,b,c -N 30` —
 > generates one-knob variants of the base scenario, batches them on a common seed set, and
 > reports (condition rows are the sweep axis). Sweeps only cover scenario-FILE knobs; a knob
-> living in a phase data file needs promoting to a scenario key first. Still to build:
-> LLM-player adapter (B6).
+> living in a phase data file needs promoting to a scenario key first. **LLM-player adapter (B6)
+> shipped and live-verified 2026-07-08** — policy id `llm_local` (`LLMPolicy`), sidecar
+> `tools/llm_sidecar.py`, two-seat entrypoint `tools/run_llm_game.gd` (`docs/STATUS.md` → "LLM
+> players" has the full contract). Remaining gap: the batch runner (`run_batch.ps1`) still takes
+> one `-Policies` value for both sides — per-seat policy assignment in a batch is not yet wired.
+> Single-file HTML game reports: `python3 tools/make_game_bundle.py --record <record.json>
+> --html` writes `<record>.game.html`, a shareable report with the viewer bundle baked in — works
+> for LLM games (`run_llm_game.gd` output) and for self-play games run with `--log` (the JSONL
+> replay/event log `make_game_bundle.py` reads alongside the record).
 
 ## The methodology (this is the contract, whatever the tooling)
 
@@ -68,7 +75,7 @@ description: Running HexCombat as a research instrument — Monte Carlo batches 
 - Victory state: `game_over`/`winner` on GameState/TurnResult/observation; census in
   `_taiwan_battalion_census` terms (present battalions).
 - Sweep pattern: `tools/sweep_antiship_crossing.gd` (fixed-seed grid + multi-seed means) — the
-  shape to generalize, per `refactor_audit.md` item 7.
+  shape to generalize, per `docs/archive/refactor_audit.md` item 7.
 - Godot process-per-run is the parallelization unit (headless runs are cheap; separate processes
   also guarantee cross-process determinism, which is asserted by `validate_headless_selfplay.gd`).
 
@@ -76,9 +83,9 @@ description: Running HexCombat as a research instrument — Monte Carlo batches 
 
 Markdown (+ optional HTML mirror) under `reports/`: research question → conditions table →
 methods line (commit, scenario, seeds, N, policy) → headline distributions (tables; plots
-optional) → sensitivity ranking if swept → 1–3 narrative vignettes → caveats (model limits:
-no terrain, secondary-use divergences — pull from `docs/systems/` fidelity notes). Write for a
-wargaming researcher, not a programmer.
+optional) → sensitivity ranking if swept → 1–3 narrative vignettes → caveats (model limits and
+secondary-use divergences — pull from `docs/systems/` fidelity notes). Write for a wargaming
+researcher, not a programmer.
 
 ## Cautions
 

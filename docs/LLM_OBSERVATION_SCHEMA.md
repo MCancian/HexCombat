@@ -61,8 +61,8 @@ Top-level object returned by `LLMGameAPI.observation(perspective_team)`.
 
 ```json
 {
-  "hex_count": 455,
-  "placed_brigade_count": 8,
+  "hex_count": 466,
+  "placed_brigade_count": 32,
   "owner_values": ["red", "green", "contested", "none"],
   "movement_modes": ["tactical", "administrative"],
   "teams": ["Red", "Green"]

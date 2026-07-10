@@ -1,162 +1,105 @@
 # AGENTS.md — HexCombat Agent Guide
 
-Claude-specific orchestration material lives in `CLAUDE.md`.
-
-**`docs/STATUS.md`** = what works today + how the docs are organized and the tracking rules; 
-**`docs/plans/BACKLOG.md`** = the forward plan. Update STATUS.md (no dates) when you finish a feature.
-
-## Project
-
 Godot 4.7 / GDScript hex-grid wargame of a PLA invasion of Taiwan, ported from
-**TaiwanInvasionViewer** (`C:\Users\mdogg\TaiwanInvasionViewer`), a Python/Flask simulation.
+**TaiwanInvasionViewer** (TIV, Python/Flask). Claude-harness specifics live in `CLAUDE.md`.
 
-**Mission (user-ratified 2026-07-02; see PLAN.md → Decisions):**
+**Mission (USER-ratified 2026-07-02):**
 1. **Primary — AI-vs-AI research instrument:** headless batch games → Monte Carlo outcome
-   distributions, LLM players via the JSON API, human-readable narratives, parameter sweeps.
+   distributions, LLM players via the JSON API, human-readable narratives + HTML game reports,
+   parameter sweeps.
 2. **Secondary — live-adjudication aid:** a facilitator enters both sides' orders in the UI and
    the sim resolves; projector-friendly display.
-Scenario variants (same theater, different force mixes/timelines/postures) are first-class
-content. The user is a non-coder; agents do all coding — legibility to future agents is a design
-requirement, not a nicety.
 
-**Design of record:** HexCombat itself. TIV was the port oracle — when adapting existing TIV
-mechanics, read its source and `tests/python/` cases first and preserve ported math unless a
-change is directed; but new design and rebalances are USER calls recorded in PLAN.md → Decisions,
-not bound to TIV.
+The USER is a non-coding wargame designer; agents do all coding — **legibility to future agents
+is a design requirement**. Design of record is HexCombat itself: TIV was the port oracle
+(preserve ported math unless a change is directed; read TIV source + `tests/python/` before
+adapting its mechanics), but new design and rebalances are USER calls.
 
-## Skills (read before acting)
+## Orientation — read this, then ONLY your task's list
 
-`.claude/skills/` holds the procedure library — task→skill map in `.claude/skills/README.md`.
-Minimum path for any change: `hexcombat-architecture-contract` (design rules) →
-`hexcombat-change-control` (gating/commit) → the task-specific skill. Debugging starts at
-`hexcombat-debugging-playbook`; settled battles live in `hexcombat-failure-archaeology`.
+Every fact has exactly one home. Don't hunt for it elsewhere:
+
+| You need… | Go to |
+|---|---|
+| What works today | `docs/STATUS.md` |
+| What's next / work in flight | `docs/plans/BACKLOG.md` + `docs/plans/README.md` (plan index) |
+| How a module works | its `docs/systems/<module>.md` (data flow, files, TIV divergences) |
+| Module internals / boundaries | the code header: `scripts/resolvers/*.gd`, `GameState.gd` |
+| A procedure (build, debug, author, verify…) | `.claude/skills/README.md` task→skill map |
+| Exact expected numbers (goldens) | the validator (`tools/validate_*.gd`) — its PASS line is truth |
+| Why something is the way it is | `docs/DECISIONS.md` (changelog → pointers); deep history `docs/archive/` |
+| A problem that feels familiar | `hexcombat-failure-archaeology` |
+
+**Task-shaped minimum reads** (skills via `.claude/skills/`):
+
+- **Bug fix / small change:** `docs/STATUS.md` → `hexcombat-change-control` →
+  `hexcombat-debugging-playbook` (if a gate is red) → the module's systems doc or resolver header.
+- **New mechanic / phase:** the above + `hexcombat-architecture-contract` →
+  `hexcombat-add-phase-resolver` → `hexcombat-validation-and-qa`.
+- **Research question (outcomes, sweeps, AI-vs-AI):** `hexcombat-research-runs` →
+  `hexcombat-run-and-operate`.
+- **Scenario/balance content:** `hexcombat-scenario-authoring` → `hexcombat-config-and-knobs`.
+
+When you finish: update the canonical homes you touched (STATUS bullet, systems doc, 3–5-line
+`docs/DECISIONS.md` entry), close out any plan per `docs/plans/README.md`, then commit. Rules:
+`hexcombat-docs-and-writing`.
 
 ## Architecture (keep new code inside these layers)
 
-- **Model — typed `Resource` classes** (`scripts/model/`): `Hex`, `Brigade`, `Battalion`,
-  `CombatResult`. Plain typed data; no engine/scene/screen concerns. Prefer adding fields here
-  over passing untyped `Dictionary` blobs.
-- **Logic — pure libraries** (`scripts/`): `HexMath`, `CombatCalculator`, `UnitStats`,
-  `MapProjection`. `RefCounted` / `static func`; no `Node` dependency; headless-testable.
-- **Data service — one autoload** (`scripts/GameData.gd`, autoload `GameData`): loads JSON into
-  typed objects once and holds lookups (hexes, neighbors, brigades, hex states). Autoloads init
-  before the main scene.
-- **Runtime state** (planned `GameState` autoload): turn / phase / active side. Game progression
-  lives here, not in the view.
-- **View / control**: `HexMap.gd` (Node2D renderer; owns projection, reads `GameData`),
-  `GameController.gd` (scene root), `scenes/Main.tscn`.
-- Compatibility wrappers `HexGrid.gd`, `UnitManager.gd`, `BOOTSCalculator.gd` forward to the new
-  code — don't add logic to them.
-
-Data: `data/*.json`. Custom validation scripts: `tools/`. GdUnit4 tests: `tests/`.
+- **Model — typed `Resource` classes** (`scripts/model/`): plain typed data; no engine/scene
+  concerns. Prefer adding fields over passing untyped `Dictionary` blobs.
+- **Logic — pure libraries** (`scripts/`, `scripts/ijfs/`, …): `RefCounted` / `static func`;
+  no `Node` dependency; headless-testable.
+- **Resolvers** (`scripts/resolvers/`): one pure class per turn phase; `GameState` methods are
+  thin delegating wrappers. Each resolver's header states its purity boundary — read it before
+  editing. New phases follow `hexcombat-add-phase-resolver`.
+- **Data service — `GameData` autoload**: loads `data/*.json` into typed objects once.
+- **Runtime state — `GameState` autoload**: turn/phase/orders; owns `resolve_turn` (its inline
+  comments carry the phase-order and RNG-substream rationale).
+- **View / control**: `HexMap.gd`, `GameController.gd`, `scenes/Main.tscn`. No sim logic here.
+- Deeper rationale + invariants: `docs/ARCHITECTURE.md` and `hexcombat-architecture-contract`.
 
 ## Running & verifying
 
-Godot binary: `C:\Godot_v4.7-stable_win64.exe`.
+Two boxes; full environment recipes (paths, class-cache import, flatpak sandbox traps) in
+`hexcombat-build-and-env`:
 
-```bash
-# build the class cache (after adding scripts / fresh checkout)
-"C:\Godot_v4.7-stable_win64.exe" --headless --path "C:\Users\mdogg\Desktop\HexCombat" --import
-# headless smoke test (expect 466 hexes / 143 brigades / 466 cells / 32 brigade markers, zero errors)
-"C:\Godot_v4.7-stable_win64.exe" --headless --path "C:\Users\mdogg\Desktop\HexCombat" --quit-after 30
-# one validation/test script
-"C:\Godot_v4.7-stable_win64.exe" --headless --path "C:\Users\mdogg\Desktop\HexCombat" -s "res://tools/<script>.gd"
-# windowed (visual run)
-"C:\Godot_v4.7-stable_win64.exe" --path "C:\Users\mdogg\Desktop\HexCombat"
-```
+- **Linux (this box):** Godot = flatpak `godot` on PATH; canonical gate =
+  `bash tools/run_all_tests.sh`. The sandbox can't read/write outside the project dir.
+- **Windows:** Godot = `C:\Godot_v4.7-stable_win64.exe`; gate = `pwsh -File tools/run_all_tests.ps1`.
 
-**Canonical gate:** `tools/run_all_tests.ps1` runs import → smoke test → every `tools/`
-validation script → the GdUnit4 suite, exiting nonzero on any failure. Run it before declaring
-work done. The `.godot/` cache is git-ignored; `.gd.uid` files are committed with their scripts.
+The gate (import → smoke → every `tools/validate_*.gd` → GdUnit4) must be **ALL PHASES GREEN**
+before declaring work done — verdict by marker lines, never exit codes (known teardown flake).
+After adding a `class_name` script, run `godot --headless --path . --import` or it won't resolve.
 
-## Testing strategy (additive, two layers)
+## Testing
 
-1. **Custom headless scripts** (`tools/validate_*.gd`): data-contract checks, startup smoke,
-   Python-port equivalence. Dependency-light and agent-friendly. Keep these.
-2. **GdUnit4** (`tests/`): structured unit tests, scene loading, input simulation, UI behavior,
-   integration. The framework for the interactive-game side.
-
-- **Seeded RNG.** Pure logic must not call global `randi()`/`randf()` directly — inject a
-  seedable RNG/dice abstraction so combat and sim outcomes are reproducible. Required before
-  writing golden tests.
-- **Golden/regression tests:** with a fixed seed, ported math must match values from the source
-  `tests/python/` cases.
-- New behavior ships with a test; when a source pytest exists for it, mirror that case.
+1. **Headless validators** (`tools/validate_*.gd`) — data contracts, smoke, port equivalence,
+   golden pins. 2. **GdUnit4** (`tests/`) — unit/integration.
+- **Seeded RNG only** — inject `Dice`; never global `randi()`/`randf()` in logic.
+- New behavior ships with a test; mirror the source pytest when one exists.
+- Golden re-baselines are deliberate change-control events (`hexcombat-change-control`).
 
 ## Conventions
 
-- Typed GDScript throughout (`var x: Type`, typed params/returns, `class_name`).
-- **Single source of truth** — no duplicated tables/constants (e.g. unit strengths live only in
-  `UnitStats`).
-- **Fail loud, not silent.** This is a **solo-developer tool**: a loud crash you fix at the root
-  beats defensive error-handling that hides bugs. Don't wrap things in try/guards for hypothetical
-  inputs — let it break visibly (`push_error`/assert) and fix the cause. Unknown/missing data →
-  `push_warning`/`push_error`, never a silent default fallback.
-- Pure logic = `static func` in `RefCounted` libs; runtime state = autoloads; visuals = view
-  layer. Don't leak screen/pixel concerns into the model.
+- Typed GDScript throughout (`class_name`, typed params/returns).
+- **Single source of truth** — no duplicated tables/constants (unit strengths live in `UnitStats`).
+- **Fail loud, not silent** — solo-developer tool: `push_error`/assert at the root cause beats
+  defensive guards that hide bugs. No silent default fallbacks.
+- Pure logic = static `RefCounted` libs; runtime state = autoloads; visuals = view layer.
 
-## Documentation map
+## LLM play / headless JSON API
 
-- `AGENTS.md` (this file) — shared rules, canonical.
-- `CLAUDE.md` — orchestrator role + how to use the opencode implementer (Claude-only).
-- `ROADMAP.md` — long-term, sequenced milestones with acceptance criteria + forward-compat notes.
-- `PLAN.md` — the active milestone in detail + an append-only **Decisions** log + open questions.
-- `docs/ARCHITECTURE.md` — deeper design / rationale; per-phase notes under `docs/phases/`.
-- `docs/systems/` — **per-system reference for agents** (one `.md` per system: data flow, key
-  funcs, files, TIV-port fidelity notes). Start here to understand how a subsystem works.
-  Human-readable HTML mirrors in `docs/systems/html/`. Index: `docs/systems/README.md`.
-  Port-audit progress + open fidelity questions: `docs/plans/AUDIT_PROGRESS.md` / `DECISIONS.md`.
-- `docs/LLM_PLAYTESTING.md` / `docs/LLM_AGENT_PROTOCOL_PLAN.md` — LLM playtesting API,
-  structured observations/actions, screenshots, and benchmark harness planning.
-
-## LLM playtesting / headless JSON API
-
-HexCombat has a built-in JSON action API so LLM agents (including the orchestrator's headless
-gates and future AI-vs-AI play) can drive the game without a UI:
-
-**Core tools** (`scripts/LLMGameAPI.gd` autoload):
-
-- `get_observation(team)` → JSON dict: `turn`, `phase`, `map_cells`, `brigades`, `legal_moves`,
-  `pending_orders`, `last_combat_summary`
-- `apply_action(action_json)` → routes to `GameState`:
-  - `{"type":"move","team":"Red","brigade_id":"…","target_hex":"…","mode":"tactical"}`
-  - `{"type":"commit","team":"Green","brigade_id":"…","target_hex":"…"}`
-  - `{"type":"end_turn","seed":1234}` — seed required for reproducibility
-
-**Validation gate** (`tools/validate_llm_api.gd`): auto-picked up by `run_all_tests.ps1`;
-asserts observation keys, legal moves exposed, examples parse/apply, missing seeds rejected.
-
-**One-shot tools:**
-
-```powershell
-# Run LLM API validation
-"C:\Godot_v4.7-stable_win64.exe" --headless --path "C:\Users\mdogg\Desktop\HexCombat" -s "res://tools/validate_llm_api.gd"
-
-# Export an observation fixture (Red turn 1)
-"C:\Godot_v4.7-stable_win64.exe" --headless --path "C:\Users\mdogg\Desktop\HexCombat" -s "res://tools/export_llm_observation.gd" -- --team=Red --output="reports/llm_observation_red.json"
-
-# Full headless turn validation (move → combat → reset, seeded)
-"C:\Godot_v4.7-stable_win64.exe" --headless --path "C:\Users\mdogg\Desktop\HexCombat" -s "res://tools/validate_headless_turn.gd"
-
-# Screenshot (windowed session only — not --headless)
-"C:\Godot_v4.7-stable_win64.exe" --path "C:\Users\mdogg\Desktop\HexCombat" -s "res://tools/capture_screenshot.gd" -- --output="reports/current.png"
-```
-
-New phases must not break the JSON observation contract. When a phase adds new state (supply pool,
-ship reserve, anti-ship systems), extend `get_observation()` with that state so LLM agents and
-headless validation scripts can read it.
-
-See `docs/LLM_PLAYTESTING.md`, `docs/LLM_OBSERVATION_SCHEMA.md`, and
-`docs/LLM_AGENT_PROTOCOL_PLAN.md` for the full design.
+`LLMGameAPI` (autoload) exposes observation/action JSON; contract reference =
+`docs/LLM_OBSERVATION_SCHEMA.md` + `schemas/*.schema.json`; gate = `tools/validate_llm_api.gd`.
+New phases must extend the observation with their state — never break the contract. Running
+games, self-play, LLM seats, exporters, HTML reports: `hexcombat-run-and-operate` and
+`docs/systems/llm-api-selfplay.md`.
 
 ## Guardrails
 
-- Preserve ported combat math exactly (formulas, dice, clamps, FEBA, casualty ordering,
-  `combat_detail` shape) unless a rebalance is explicitly requested by the user; record every
-  deliberate divergence in PLAN.md → Decisions (HexCombat is the design of record).
-- Adapting a TIV-lineage mechanic? Read the TIV source and its `tests/python/` cases first.
-- Refactors keep the golden invariant **byte-stable**; re-baselines are user-aware change-control
-  events (`.claude/skills/hexcombat-change-control`).
-- **Git: only the primary (orchestrating) agent commits.** Subagents/auxiliary tools leave
-  changes for it to verify and commit.
-- `.mcp.json` is intentionally modified locally (machine-specific Godot path) — never commit it.
+- Preserve ported combat math exactly unless the USER directs a change; record every deliberate
+  divergence in `docs/DECISIONS.md` (pointer) + the module's systems-doc fidelity notes.
+- Refactors keep goldens **byte-stable**; re-baselines are USER-aware change-control events.
+- **Only the primary agent commits.** Subagents leave changes for it to verify and commit.
+- Never commit `.mcp.json` (machine-specific).

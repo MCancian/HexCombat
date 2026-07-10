@@ -1,7 +1,8 @@
 # Anti-ship missile pipeline — reference map (TaiwanDefenseRefactor)
 
 Reference for the **deferred** anti-ship strike-coverage calibration lever (see
-`PLAN.md` → Open Question "D3-D crossing lethality calibration" → UPDATE 2026-06-29, and memory
+`docs/archive/PLAN.md` → Open Question "D3-D crossing lethality calibration" (live plan:
+`docs/plans/0001-crossing-lethality-calibration.md`), and memory
 `antiship-strike-coverage-lever`). Source: `C:\Users\mdogg\My Drive\Projects\TaiwanDefenseRefactor`
 (external Python wargame). Surveyed 2026-06-29 (opencode, via `-f`). **Not ported** — map only.
 

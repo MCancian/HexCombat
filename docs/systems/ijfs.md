@@ -27,32 +27,31 @@ fires) and ground-casualty accumulation (open half).
 | `scripts/model/ijfs/IjfsMunition.gd` | Resource model: munition inventory row | `state.py` (MunitionInventory dataclass) |
 | `scripts/model/ijfs/IjfsPairing.gd` | Resource model: munition-target effect pairing | `state.py` (PairingRule dataclass) |
 | `scripts/model/ijfs/IjfsSquadron.gd` | Resource model: squadron state (class, role, alive, losses) | `state.py` (SquadronState dataclass) |
-| `scripts/GameState.gd` | Warmup driver (`_build_warmup_context`), `resolve_ijfs_turn`, `_compute_ijfs_writeback` | TIV warmup driver + write-outputs aggregation |
+| `scripts/resolvers/IjfsResolver.gd` | Pure resolver (Phase C): `resolve()` orchestrates the daily pipeline call (warmup loop or single plain day), `build_warmup_context()`, `compute_writeback()`, maneuver-target sync/posture/consume. Read its header for the purity boundary with `GameState`. | TIV warmup driver + write-outputs aggregation |
+| `scripts/GameState.gd` | Thin wrapper: `resolve_ijfs_turn()` lazily builds `ijfs_state` then delegates to `IjfsResolver.resolve()`; `_build_warmup_context()` delegates to `IjfsResolver.build_warmup_context()`. Owns the `EventBus.ijfs_resolved` emit and cross-turn field writes (`_ijfs_day`, `last_ijfs_summary`, `last_ijfs_writeback`). | — |
 
 ## 3. Daily Pipeline — Stage Order in `IjfsEngine.run_daily`
 
-Mirrors `run_daily_ijfs.py` lines 95–218. Each stage consumes the shared `Dice` in sequence:
+Mirrors `run_daily_ijfs.py`. Each stage consumes the shared `Dice` in sequence (order documented
+in `IjfsEngine.run_daily`'s header comment — read it for the authoritative draw sequence):
 
 1. **Warmup setup** (if warmup_context): posture override → exquisite-intel auto-detects → firing
-   capacity scaling + release rules + munition filter (IjfsEngine.gd:74–90)
-2. **AD health snapshot 1** (`taiwan_ad_health_before`; IjfsEngine.gd:94)
+   capacity scaling + release rules + munition filter
+2. **AD health snapshot 1** (`taiwan_ad_health_before`)
 3. **Satellite detection (phase 1)**: static/intel-locked targets auto-detected; other targets roll
-   vs satellite-floor probability (IjfsEngine.gd:96–98)
+   vs satellite-floor probability
 4. **Pre-AD strike phase**: iterate `targets_to_attack`, select munition via doctrine, resolve
-   strike, consume firing capacity (IjfsEngine.gd:100–102)
-5. **AD health snapshot 2** (`taiwan_ad_health_after_missile_phase`; IjfsEngine.gd:104)
+   strike, consume firing capacity
+5. **AD health snapshot 2** (`taiwan_ad_health_after_missile_phase`)
 6. **SEAD engagement**: resolve SAM destruction/suppression + return-fire contest
-   (IjfsEngine.gd:109–111)
-7. **AD health snapshot 3** (`taiwan_ad_health_after_sead`; IjfsEngine.gd:113)
+7. **AD health snapshot 3** (`taiwan_ad_health_after_sead`)
 8. **Aircraft detection (phase 2)**: ISR score = non-air sources + alive ISR aircraft ISR value /
-   reference, clamped (IjfsEngine.gd:119–121)
+   reference, clamped
 9. **Post-AD strike phase**: repeat targeting with organic (strike-aircraft) budget added
-   (IjfsEngine.gd:123)
-10. **Append final skips**: targets not attacked get a skip-log entry (IjfsEngine.gd:124)
-11. **AD health snapshot 4** (`taiwan_ad_health_after`; IjfsEngine.gd:126)
+10. **Append final skips**: targets not attacked get a skip-log entry
+11. **AD health snapshot 4** (`taiwan_ad_health_after`)
 12. **Free shot**: remaining SAM health inflicts post-phase-2 attrition
-    (IjfsEngine.gd:128–134)
-13. **Summarize + build ledgers** (IjfsEngine.gd:136–140)
+13. **Summarize + build ledgers**
 
 ## 4. Detection / Targeting / Engagement / Strike — Key Formulas
 
@@ -60,82 +59,79 @@ Mirrors `run_daily_ijfs.py` lines 95–218. Each stage consumes the shared `Dice
 
 - **ISR source capability**: `floor + (initial - floor) * exp(-d * ln2 / half_life)` (exp_decay);
   also supports linear, weibull, logistic, gompertz, from_attrition, piecewise
-  (IjfsDetection.gd:22–57)
+  (`IjfsDetection.evaluate_isr_source`)
 - **Satellite detection (phase 1)**: `p_detect = clamp(satellite_floor[mobility][posture])` — no ISR
-  score contribution (IjfsDetection.gd:142)
+  score contribution
 - **Aircraft detection (phase 2)**: `p_detect = clamp(satellite_floor + base_prob * mobility_mult *
   posture_mult * weighted_isr)` where `weighted_isr = max(0, (non_air_score + aircraft_score) *
-  contest_adjustment)` (IjfsDetection.gd:168–171)
+  contest_adjustment)`
 - **Aircraft ISR raw**: `sum(alive * isr_value_per_aircraft) / reference_isr_sum` for ISR-role
-  squadrons (IjfsDetection.gd:77–91)
+  squadrons
 - Static targets and `intel_locked` targets bypass rolls (auto-detected).
 - **Green maneuver units (D4-H)**: `IjfsLoaders.build_maneuver_targets` emits one "Maneuver Units"
   target per ROC battalion instance; its `(mobility, hardness, detectability_active/hiding)` come from
   the `MANEUVER_TYPE_MAP` profile (less-mobile/softer → more findable/lethal). `posture` is set each
-  turn by `GameState._update_maneuver_posture`: a brigade that moved or fought last turn (the
-  `moved_last_turn`/`fought_last_turn` flags) presents `posture="active"` — selecting the higher
-  `detectability_active` label plus the active posture/satellite multipliers above — otherwise `"hiding"`.
-  Because `ijfs_state` is built once per scenario, `GameState._sync_maneuver_targets_to_oob` also runs
-  each turn to mark `destroyed` the maneuver targets in excess of the current OOB qty (battalions killed
-  by IJFS or ground combat), so the campaign stops firing at units that no longer exist; it only sets
-  `destroyed` (never resurrects), preserving survivors' detection continuity.
+  turn by `IjfsResolver.update_maneuver_posture` (called via `GameState._update_maneuver_posture`):
+  a brigade that moved or fought last turn (the `moved_last_turn`/`fought_last_turn` flags) presents
+  `posture="active"` — selecting the higher `detectability_active` label plus the active
+  posture/satellite multipliers above — otherwise `"hiding"`. Because `ijfs_state` is built once
+  per scenario, `IjfsResolver.sync_maneuver_targets_to_oob` (called via
+  `GameState._sync_maneuver_targets_to_oob`) also runs each turn to mark `destroyed` the maneuver
+  targets in excess of the current OOB qty (battalions killed by IJFS or ground combat), so the
+  campaign stops firing at units that no longer exist; it only sets `destroyed` (never
+  resurrects), preserving survivors' detection continuity.
 
 ### Targeting (`IjfsTargeting.gd`)
 
 - `targets_to_attack`: not destroyed AND detected_this_turn AND (if z_day/release_rules) release
-  day met (IjfsTargeting.gd:8–17)
+  day met
 - Pairing match: by source_target_id or (category, subcategory*, mobility*, hardness*) wildcard
-  match (IjfsTargeting.gd:20–31)
+  match
 - Doctrine priority: `match_doctrine_rule` matched on category/subcategory/mobility/hardness →
-  munition_priority list → fallback to compatibility order (IjfsTargeting.gd:128–159)
+  munition_priority list → fallback to compatibility order
 - Exquisite intel: config-driven `initial_count * decay fraction` targets randomly selected (or
-  deterministically) and `intel_locked = true` (IjfsTargeting.gd:227–266)
+  deterministically) and `intel_locked = true`
 
 ### Engagement / SEAD (`IjfsEngagement.gd`)
 
 - **SEAD power**: `total_sead_eff * (1 + avg_wvr * 0.1) * (1 - avg_rcs * 0.05)`
-  (IjfsEngagement.gd:59–61)
 - **SAM destroy**: `p_destroy = clamp(effective_power / (effective_power + sam_score), 0, 1)`
-  (IjfsEngagement.gd:67)
-- **SAM suppress** (if not destroyed): `p_suppress = p_destroy * 0.4` (IjfsEngagement.gd:80)
+- **SAM suppress** (if not destroyed): `p_suppress = p_destroy * 0.4`
 - **Return fire**: `loss_rate = clamp(surviving_sam_score * 0.02, 0, 1)` per squadron with RCS
-  survival mod `max(0.2, 1 + rcs * 0.1)` (IjfsEngagement.gd:109–116)
+  survival mod `max(0.2, 1 + rcs * 0.1)`
 - **Free shot** (post-phase-2): `loss_rate = clamp(raw_sam_health * 0.05, 0, 1)` with same RCS
-  survival mod (IjfsEngagement.gd:145, 151–152)
+  survival mod
 
 ### Strike (`IjfsStrike.gd`)
 
 - **Probability model**: `final = clamp((base + add_sum) * mult_product)` from
-  `strike_probability_modifiers` in scenario config (IjfsStrike.gd:87). Falls back to legacy
-  mobile-target cap system (IjfsStrike.gd:208–223)
+  `strike_probability_modifiers` in scenario config. Falls back to legacy mobile-target cap system.
 - **Suppression** (if not destroyed): roll `probability_suppressed_if_not_destroyed` from pairing
-  (IjfsStrike.gd:140–153)
 - Data tables used: `pairings.json` (base probabilities per munition-target pair),
   `scenario.json` (`strike_probability_modifiers`, `mobile_target_destroy_caps`)
 
 ## 5. Warmup — Multi-Day Capability Ramp
 
-The warmup runs before D-Day in `GameState.resolve_ijfs_turn` when `_ijfs_day == 0`
-(scripts/GameState.gd:423–448). Over `prelanding.days` (typically 4, via
-`PRE_INVASION_IJFS_DAYS`):
+The warmup runs before D-Day inside `IjfsResolver.resolve()` when `ijfs_day == 0` (the first call
+`GameState.resolve_ijfs_turn` makes). Over `prelanding.days` (typically 4, falling back to
+`IjfsResolver.PRE_INVASION_DAYS_FALLBACK` if the scenario omits it):
 
-- Each day `i` (1-indexed) calls `_build_warmup_context` (GameState.gd:467–486) which:
-  - Computes `profile_multiplier` via `IjfsWarmup` (even/front_loaded/back_loaded):
+- Each day `i` (1-indexed) calls `IjfsResolver.build_warmup_context()` which:
+  - Computes `profile_multiplier` via `IjfsWarmup.profile_multiplier` (even/front_loaded/back_loaded):
     `(2 * weight) / (total_days + 1)` where weight = total_days - x_day + 1 (front) or x_day (back)
-    (IjfsWarmup.gd:15–21)
-  - Scales `red_firing_capacity` sorties per day by multiplier (IjfsWarmup.gd:24–32)
+  - Scales `red_firing_capacity` sorties per day by multiplier (`IjfsWarmup.scale_firing_capacity`)
   - Applies `posture_default_override`, `sead_enabled`, `ad_attrition_enabled`, `munition_filter`
     from scenario `prelanding.rules`
 - Exquisite intel on day 1 (x_day) auto-detects a configurable count of Maneuver Units and
   Anti-Ship Systems, marking them `intel_locked` for that day. Decay reduces that count over
-  subsequent warmup days (IjfsTargeting.gd:227–266).
+  subsequent warmup days (`IjfsTargeting.apply_exquisite_intel`).
 - A fresh `SeededDice` substream per warmup day preserves reproducibility
-  (GameState.gd:440–444).
+  (`IjfsResolver._derive_day_dice`).
 - Post-warmup turns run one plain `run_daily` call with `warmup_context = null`.
 
 ## 6. AD Health / Suppression
 
-`IjfsAdHealth.compute_taiwan_ad_health` (IjfsAdHealth.gd:12–34) computes:
+`IjfsAdHealth.compute_taiwan_ad_health` computes:
 
 - **Category health** per AD type: `alive_unsuppressed / total` for each of Moveable SAMs, Static
   SAMs, Static Radars, Mobile Radars
@@ -147,20 +143,20 @@ Snapshot before engagement: used by the pre-AD strike phase. Snapshot after miss
 SEAD return-fire. Snapshot after SEAD: used by post-AD strike. Final snapshot: used by free shot.
 
 **Impact on D3 (anti-ship)**: suppressed Green systems are excluded from the AD health calculation.
-`_compute_ijfs_writeback` (GameState.gd:519–579) reads cumulative `target.suppressed` from
-`ijfs_state.targets` for each "Anti-Ship Systems" category target, producing
-`antiship_suppressed_by_type` by (TO,type) key. `resolve_antiship_turn` (GameState.gd:587–669)
-uses these to reduce `system.quantity` and `fire_pct`.
+`IjfsResolver.compute_writeback` reads cumulative `target.suppressed` from `ijfs_state.targets`
+for each "Anti-Ship Systems" category target, producing `antiship_suppressed_by_type` by
+(TO,type) key. `AntishipResolver.resolve` (called by `GameState.resolve_antiship_turn`) applies
+these to reduce `system.quantity` and `fire_pct`.
 
 ## 7. Writeback — Per-(TO,type) Outputs
 
-`_compute_ijfs_writeback` (GameState.gd:519–579) aggregates:
+`IjfsResolver.compute_writeback` aggregates:
 
 | Ledger key | Source | Consumers |
 |---|---|---|
-| `antiship_destroyed_by_type` | Cumulative `target.destroyed` on Anti-Ship Systems targets | D3 `resolve_antiship_turn`: reduces system quantity (GameState.gd:645–646) |
-| `antiship_suppressed_by_type` | Cumulative `target.suppressed` on Anti-Ship Systems targets | D3 `resolve_antiship_turn`: reduces fire percentage proportional to suppressed/available (GameState.gd:653–654) |
-| `maneuver_casualties` | Strike log entries for "Maneuver Units" with `destroyed = true` (carry `brigade_id`/`battalion_id`/`unit_type` from target metadata) | **CLOSED (D4-H)** — `GameState._apply_ijfs_maneuver_casualties` decrements the struck battalions' `qty` in the OOB before ground combat |
+| `antiship_destroyed_by_type` | Cumulative `target.destroyed` on Anti-Ship Systems targets | D3 `AntishipResolver.resolve`: reduces system quantity |
+| `antiship_suppressed_by_type` | Cumulative `target.suppressed` on Anti-Ship Systems targets | D3 `AntishipResolver.resolve`: reduces fire percentage proportional to suppressed/available |
+| `maneuver_casualties` | Strike log entries for "Maneuver Units" with `destroyed = true` (carry `brigade_id`/`battalion_id`/`unit_type` from target metadata) | **CLOSED (D4-H)** — `IjfsResolver.apply_maneuver_casualties` (called by `GameState._apply_ijfs_maneuver_casualties`) decrements the struck battalions' `qty` in the OOB before ground combat |
 | `sam_destroyed` / `sam_suppressed` | Engagement log SEAD outcomes | Summary only |
 
 Anti-ship writeback keys use `AntishipCalculator.encode_key(to_number, type_id)` —
@@ -184,7 +180,7 @@ whole count from the firing plan.
 
 | Stage | HexCombat file | TIV file | Fidelity |
 |---|---|---|---|
-| **Orchestrator** | `IjfsEngine.gd` | `run_daily_ijfs.py` | **1:1** — identical 6-phase pipeline, same draw order comment block (IjfsEngine.gd:12–17). Replaces file `write_outputs` with in-memory `_build_ledgers` returning dict. `summarize_run` is explicit (not delegated to logging_utils). `EXQUISITE_INTEL_CATEGORIES` changed from dict to Array of pairs to preserve insertion order (RNG draw-order guarantee). |
+| **Orchestrator** | `IjfsEngine.gd` | `run_daily_ijfs.py` | **1:1** — identical 6-phase pipeline, same draw-order comment block at the top of the file. Replaces file `write_outputs` with in-memory `_build_ledgers` returning dict. `summarize_run` is explicit (not delegated to logging_utils). `EXQUISITE_INTEL_CATEGORIES` changed from dict to Array of pairs to preserve insertion order (RNG draw-order guarantee). |
 | **Run context** | `IjfsEngine.make_run_context` | `run_context.IJFSRunContext.from_run_args` | **1:1** — same field logic (current_day, isr_day, z_day, x_day, is_warmup). |
 | **Detection** | `IjfsDetection.gd` | `detection.py` + `isr_sources.py` | **1:1** — every `evaluate_isr_source` curve mode (exp_decay, linear, weibull, logistic, gompertz, from_attrition, piecewise) matches; `_apply_antiship_exposure_modifier` inlined rather than importing from `antiship_exposure.py`. |
 | **Targeting** | `IjfsTargeting.gd` | `targeting.py` | **1:1** — `targets_to_attack`, `pairing_matches_target`, `select_munition_with_doctrine`, doctrine matching, `apply_exquisite_intel` all match signature-for-signature. |
@@ -197,8 +193,8 @@ whole count from the firing plan.
 | **Daily state** | `IjfsDailyState.gd` | `state.py` | **Close** — same fields minus `rng` (caller passes Dice) and metadata/file paths moved to caller. `squadron_force` is `Array[IjfsSquadron]` rather than `SquadronForce` dataclass. |
 | **Loaders** | `IjfsLoaders.gd` | `loaders.py` | **1:1** — same JSON shapes, expansion guard, target row→instance logic, pairing profile flattening, OOB→squadron expansion. |
 | **Anti-ship target builder** | `IjfsLoaders.build_antiship_targets` | `default_targets.py` | **Adapted** — TIV uses `default_targets.py` + `services.antiship_containers`; HexCombat receives pre-built `containers` array (from `AntishipLoaders.load_containers`) and generates one target per (TO,type) container with `systems_represented` in metadata. |
-| **Warmup driver** | `GameState.gd:resolve_ijfs_turn` | TIV warmup driver (standalone) | **1:1** — multi-day loop, `carry_to_next_day` between days, SeededDice substream per day. |
-| **Writeback** | `GameState.gd:_compute_ijfs_writeback` | TIV `write_outputs` aggregation | **1:1** — anti-ship writeback reads cumulative target state (not per-day delta), keyed by (TO,type). |
+| **Warmup driver** | `IjfsResolver.resolve` (called by `GameState.resolve_ijfs_turn`) | TIV warmup driver (standalone) | **1:1** — multi-day loop, `carry_to_next_day` between days, SeededDice substream per day. |
+| **Writeback** | `IjfsResolver.compute_writeback` | TIV `write_outputs` aggregation | **1:1** — anti-ship writeback reads cumulative target state (not per-day delta), keyed by (TO,type). |
 
 ### Open Questions
 
@@ -214,7 +210,7 @@ whole count from the firing plan.
    (b) **No consumer** — even when populated, nothing applies it: only `antiship_destroyed_by_type` is
    consumed (`GameState.gd:624`, feeds the D3 firing plan); `maneuver_casualties` is merely exposed in
    the LLM observation (`LLMGameAPI.gd:252`). So IJFS air/missile kills do **not** reduce the brigades
-   that fight in ground combat. (See `docs/plans/port_audit.md` — "Ground-casualty IJFS↔OOB linkage",
+   that fight in ground combat. (See `docs/archive/port_audit.md` — "Ground-casualty IJFS↔OOB linkage",
    status ADAPT; design settled 2026-06-28.)
 
 2. **Squadron force shape**: HexCombat passes `Array[IjfsSquadron]` directly where TIV wraps it in

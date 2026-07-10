@@ -35,15 +35,16 @@ teardown *after* everything passed (see `hexcombat-debugging-playbook`). Green o
 
 | Artifact | Pins | Where |
 |---|---|---|
-| Golden turn | seed 20260624 → `casualties=6, feba=-3.04` (re-baselined 2026-07-09, Track F terrain) | `tools/validate_headless_turn.gd` |
+| Golden turn | seed 20260624 → fixed casualties/FEBA at the scripted beach-1 fight | `tools/validate_headless_turn.gd` — its PASS line is truth |
 | Cleanup fingerprint | post-turn ownership/state hash | `tools/validate_cleanup.gd` |
-| Golden victory e2e | deterministic terminal (turn 1, red win, census 20v16) | `tools/validate_golden_victory.gd` |
+| Golden victory e2e | deterministic terminal outcome (turn, winner, census) | `tools/validate_golden_victory.gd` — its PASS line is truth |
 | Self-play | 4-turn full-game determinism + index health | `tools/validate_headless_selfplay.gd` |
 | JSON fixtures | byte-compare of `docs/examples/*.json` | `tools/validate_fixtures.gd` + `tools/LLMFixtures.gd` |
 | API contract | observation/action/result required keys ↔ schemas | `tools/validate_llm_api.gd` + `schemas/*.schema.json` |
 | RNG purity | no global `randi()`/`randf()` in logic | `tools/validate_no_global_rng.gd` |
 
-The pinned values in the validators are the source of truth, not any doc. Re-baselining is a
+Never quote a pinned value in a doc — the validator's `PASS:` line is the source of truth; a
+number copied into prose is stale the next time the golden re-baselines. Re-baselining is a
 change-control event (`hexcombat-change-control`).
 
 ## Adding a validator (`tools/validate_<thing>.gd`)
