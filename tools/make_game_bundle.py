@@ -47,7 +47,9 @@ DATA_DIR = REPO_ROOT / "data"
 # caveat. Budget/temperature differ on purpose — a 3-line SITREP needs far less headroom than a
 # policy decision and should read terse and consistent, not creative.
 DEFAULT_BASE_URL = "http://127.0.0.1:8088/v1"
-SITREP_MAX_TOKENS = 2048
+# 6144, not 2048: DeepSeek-V4-Flash burned 2048 entirely on chain-of-thought for 3/60 sitreps in
+# the first bundling run (game 20260711) — the budget must cover reasoning + the 3 lines.
+SITREP_MAX_TOKENS = 6144
 SITREP_TEMPERATURE = 0.3
 HTTP_TIMEOUT_SECONDS = 120
 
