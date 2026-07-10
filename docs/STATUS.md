@@ -72,6 +72,12 @@ offload → movement & commit → ground combat → front-line → cleanup (+ vi
   maneuver units easier to detect. Each turn `_sync_maneuver_targets_to_oob` retires maneuver targets
   whose battalions have died (IJFS or ground combat), so the air/missile campaign stops targeting units
   that no longer exist — without disturbing detection continuity for survivors.
+  **MANPADS layer (2026-07-10, USER design call — TIV-oracle divergence):** the ~2,500 Stingers are
+  per-TO container bins (category `MANPADS`, excluded from SEAD/AD-health) that intercept
+  low-altitude strikes (UAV/OWA/strike-aircraft munitions; ballistic/cruise immune) and contest
+  SEAD/strike squadrons island-wide, deteriorating via usage, bombardment, and TO ground losses
+  (`IjfsManpads.gd`; spec in `docs/systems/ijfs.md` → "MANPADS layer"; surfaced as
+  `ijfs_summary.manpads`).
 - **D5 Front-line / cleanup** — `FrontLineService` (polyline → hex redistribution), cleanup phase.
 - **Victory conditions** — end-of-cleanup census of PLA vs ROC battalions *present* on Taiwan (landed
   only: a brigade's battalions still at sea in `ship_reserve` are excluded even after its first BN

@@ -371,7 +371,8 @@
       ],
       "notes": "Useful as a low-cost suppression or saturation tool. Destruction probabilities are deliberately conservative, especially for hard or mobile targets.",
       "inventory_remaining_default": 1200,
-      "inventory_is_clean_multiple_of_engagement_size": true
+      "inventory_is_clean_multiple_of_engagement_size": true,
+      "manpads_vulnerability": 1.0
     },
     {
       "munition_id": "attack_uav_small",
@@ -409,7 +410,8 @@
       ],
       "notes": "Organic sensor-shooter package that performs better than delayed munitions against active mobile targets, but air-defense losses are handled separately. Platform-backed (capacity from OrganicStrikeBudget); this inventory pool no longer depletes.",
       "inventory_remaining_default": 600,
-      "inventory_is_clean_multiple_of_engagement_size": true
+      "inventory_is_clean_multiple_of_engagement_size": true,
+      "manpads_vulnerability": 1.0
     },
     {
       "munition_id": "strike_aircraft_medium",
@@ -447,7 +449,8 @@
       ],
       "notes": "Represents manned aircraft delivering guided munitions. Platform-backed: daily capacity is derived from surviving OOB manned strike-role squadrons (OrganicStrikeBudget), not from this inventory pool, which no longer depletes. Effects are conditional on reaching the target; air-defense attrition and air superiority are modeled elsewhere.",
       "inventory_remaining_default": 400,
-      "inventory_is_clean_multiple_of_engagement_size": true
+      "inventory_is_clean_multiple_of_engagement_size": true,
+      "manpads_vulnerability": 0.4
     }
   ]
 }

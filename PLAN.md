@@ -130,6 +130,27 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-07-10 — MANPADS layer: excluded from SEAD, contests low-altitude air ops, three-channel
+  deterioration (USER design call; deliberate divergence from the TIV oracle).** Resolves Open
+  Questions → "MANPADS modeling", option (a) extended per USER: MANPADS also contest SEAD flights
+  (not just UAVs/strike aircraft); cruise/ballistic stay immune; ground-combat degradation included
+  in the same build. Shape: 2,500 Stinger instances → 50 per-TO bins of 50 (category `MANPADS`,
+  outside SEAD/AD-health categories), new `scripts/ijfs/IjfsManpads.gd` (strike interception rolled
+  before each vulnerable strike's own rolls; island-wide squadron contest for sead/strike roles
+  after the post-AD phase; usage/bombardment/ground-loss drains — full spec in
+  `docs/systems/ijfs.md` → "MANPADS layer"). Data: `targets_master.json` (4 rows re-binned),
+  `munition_target_pairings.json` (6 rows re-categorized), `red_munitions.json`
+  (`manpads_vulnerability`: UAV/OWA 1.0, strike aircraft 0.4). **Golden re-baseline** (IJFS
+  substream draw order changed): cleanup fingerprint "casualties=6, feba=0.40" →
+  "casualties=7, feba=-0.16"; golden-victory 40-turn census 24/88 → 22/101 (interception preserves
+  more ROC battalions); `docs/examples/llm_result_after_turn.json` regenerated. Observed on the
+  golden seed: Red air losses ~5–9/turn (was ~0), pools 2,500→~460 by turn 4, "Mobile SAMs"
+  headline now counts only real SAM vehicles (49 Antelope kills turn 2, not 2,496 Stingers).
+  Constants in `IjfsManpads.gd` are the calibration levers — magnitudes are first-cut, to be tuned
+  from batch distributions on USER review. **Verification:** full gate ALL PHASES GREEN (48 GdUnit
+  suites incl. new `ijfs_manpads_test.gd`; data guards in `validate_ijfs_data.gd`); 4-turn
+  self-play probe confirmed every channel live.
+
 - **2026-07-10 — LLM-sidecar hardening from the first two full DeepSeek-V4-Flash self-play runs
   (agent judgment; USER call on the token budget).** Live game 20260710 (roc_full_defense, 30/30
   turns) surfaced four defects, each fixed in `tools/llm_sidecar.py` and verified live in game
@@ -2107,7 +2128,7 @@ Red maneuver BNs redistribute along it. Cleanup phase normalizes ownership after
 
 ## Open questions (settle at the relevant milestone)
 
-### MANPADS modeling: SEAD annihilates ~2,500 Stingers on turn 2 of every game  *(OPEN 2026-07-10 — USER design call)*
+### MANPADS modeling: SEAD annihilates ~2,500 Stingers on turn 2 of every game  *(RESOLVED 2026-07-10 — USER chose option (a) extended; see Decisions log)*
 
 **Symptom (found reviewing the game-20260711 HTML report):** turn-2 adjudication reads
 "~2,500 Mobile SAMs destroyed"; SITREPs repeat it. Reproduces in both LLM games (2,497 / 2,496).

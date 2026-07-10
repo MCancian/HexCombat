@@ -16,7 +16,9 @@ const RED_MOVER_ID := GoldenScript.RED_MOVER_ID
 const GREEN_DEFENDER_ID := GoldenScript.GREEN_DEFENDER_ID
 const START_HEX := GoldenScript.START_HEX
 const TARGET_HEX := GoldenScript.TARGET_HEX
-const EXPECTED_COMBAT_FINGERPRINT := "casualties=6, feba=0.40"
+# Re-baselined 2026-07-10 for the MANPADS layer (Stinger reclassification changed the IJFS
+# substream draw order; see PLAN.md -> Decisions). Was "casualties=6, feba=0.40".
+const EXPECTED_COMBAT_FINGERPRINT := "casualties=7, feba=-0.16"
 
 var _failures: Array[String] = []
 var GameData: Node = null

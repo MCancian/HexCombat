@@ -202,6 +202,7 @@ static func load_munitions(path: String) -> Dictionary:
 			munition.inventory_remaining = int(row.get("inventory_remaining_default", row.get("inventory_default", 0)))
 			munition.rounds_per_engagement_default = int(row.get("rounds_per_engagement_default", 0))
 			munition.display_label = String(row.get("display_label", ""))
+			munition.manpads_vulnerability = float(row.get("manpads_vulnerability", 0.0))
 			result[munition.munition_id] = munition
 		return result
 	if body is Dictionary and body.has("inventory"):
@@ -217,6 +218,7 @@ static func load_munitions(path: String) -> Dictionary:
 					m.inventory_remaining = int(value.get("inventory_remaining", value.get("remaining", 0)))
 					m.rounds_per_engagement_default = int(value.get("rounds_per_engagement_default", 0))
 					m.display_label = String(value.get("display_label", ""))
+					m.manpads_vulnerability = float(value.get("manpads_vulnerability", 0.0))
 				else:
 					m.inventory_remaining = int(value)
 				result[m.munition_id] = m
@@ -406,6 +408,7 @@ static func _munition_from_dict(data: Dictionary) -> IjfsMunition:
 	munition.inventory_remaining = int(data.get("inventory_remaining", data.get("remaining", 0)))
 	munition.rounds_per_engagement_default = int(data.get("rounds_per_engagement_default", 0))
 	munition.display_label = String(data.get("display_label", ""))
+	munition.manpads_vulnerability = float(data.get("manpads_vulnerability", 0.0))
 	return munition
 
 

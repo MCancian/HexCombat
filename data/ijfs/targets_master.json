@@ -2316,9 +2316,9 @@
     {
       "target_id": "sam_mobile_stinger_to2",
       "name": "FIM-92 Stinger MANPADS – TO 2",
-      "category": "Mobile SAMs",
+      "category": "MANPADS",
       "subcategory": "MANPADS – Stinger",
-      "quantity": 500,
+      "quantity": 10,
       "to_number": 2,
       "country": "Taiwan",
       "service_or_agency": "ROC Army / ROC Marines",
@@ -2354,14 +2354,17 @@
           "claim_supported": "FIM-92 Stinger MANPADS in ROC Army and Marine Corps inventory"
         }
       ],
-      "notes": "Stinger MANPADS represents individual shoulder-launched units distributed across ground forces in TO 2. High mobility; nearly impossible to track at individual-launcher level. Quantity 500 is estimated TO-level count based on assessed ground force density. As point defense weapons, their primary effect is deterrence against low-flying aircraft."
+      "notes": "Stinger MANPADS represents individual shoulder-launched units distributed across ground forces in TO 2. High mobility; nearly impossible to track at individual-launcher level. Modeled as container bins of 50 launchers (category MANPADS, outside SEAD/AD-health SAM categories): SEAD cannot hunt passive-IR shoulder launchers, but pools contest low-altitude air ops via IjfsManpads and deteriorate through usage, bombardment, and TO ground losses (2026-07-10 USER design call; divergence from TIV oracle).",
+      "metadata": {
+        "systems_represented": 50
+      }
     },
     {
       "target_id": "sam_mobile_stinger_to3",
       "name": "FIM-92 Stinger MANPADS – TO 3",
-      "category": "Mobile SAMs",
+      "category": "MANPADS",
       "subcategory": "MANPADS – Stinger",
-      "quantity": 1000,
+      "quantity": 20,
       "to_number": 3,
       "country": "Taiwan",
       "service_or_agency": "ROC Army / ROC Marines",
@@ -2397,14 +2400,17 @@
           "claim_supported": "FIM-92 Stinger MANPADS in ROC Army and Marine Corps inventory"
         }
       ],
-      "notes": "Stinger MANPADS represents individual shoulder-launched units distributed across ground forces in TO 3. High mobility; nearly impossible to track at individual-launcher level. Quantity 1000 is estimated TO-level count based on assessed ground force density. As point defense weapons, their primary effect is deterrence against low-flying aircraft."
+      "notes": "Stinger MANPADS represents individual shoulder-launched units distributed across ground forces in TO 3. High mobility; nearly impossible to track at individual-launcher level. Modeled as container bins of 50 launchers (category MANPADS, outside SEAD/AD-health SAM categories): SEAD cannot hunt passive-IR shoulder launchers, but pools contest low-altitude air ops via IjfsManpads and deteriorate through usage, bombardment, and TO ground losses (2026-07-10 USER design call; divergence from TIV oracle).",
+      "metadata": {
+        "systems_represented": 50
+      }
     },
     {
       "target_id": "sam_mobile_stinger_to4",
       "name": "FIM-92 Stinger MANPADS – TO 4",
-      "category": "Mobile SAMs",
+      "category": "MANPADS",
       "subcategory": "MANPADS – Stinger",
-      "quantity": 500,
+      "quantity": 10,
       "to_number": 4,
       "country": "Taiwan",
       "service_or_agency": "ROC Army / ROC Marines",
@@ -2440,14 +2446,17 @@
           "claim_supported": "FIM-92 Stinger MANPADS in ROC Army and Marine Corps inventory"
         }
       ],
-      "notes": "Stinger MANPADS represents individual shoulder-launched units distributed across ground forces in TO 4. High mobility; nearly impossible to track at individual-launcher level. Quantity 500 is estimated TO-level count based on assessed ground force density. As point defense weapons, their primary effect is deterrence against low-flying aircraft."
+      "notes": "Stinger MANPADS represents individual shoulder-launched units distributed across ground forces in TO 4. High mobility; nearly impossible to track at individual-launcher level. Modeled as container bins of 50 launchers (category MANPADS, outside SEAD/AD-health SAM categories): SEAD cannot hunt passive-IR shoulder launchers, but pools contest low-altitude air ops via IjfsManpads and deteriorate through usage, bombardment, and TO ground losses (2026-07-10 USER design call; divergence from TIV oracle).",
+      "metadata": {
+        "systems_represented": 50
+      }
     },
     {
       "target_id": "sam_mobile_stinger_to5",
       "name": "FIM-92 Stinger MANPADS – TO 5",
-      "category": "Mobile SAMs",
+      "category": "MANPADS",
       "subcategory": "MANPADS – Stinger",
-      "quantity": 500,
+      "quantity": 10,
       "to_number": 5,
       "country": "Taiwan",
       "service_or_agency": "ROC Army / ROC Marines",
@@ -2483,7 +2492,10 @@
           "claim_supported": "FIM-92 Stinger MANPADS in ROC Army and Marine Corps inventory"
         }
       ],
-      "notes": "Stinger MANPADS represents individual shoulder-launched units distributed across ground forces in TO 5. High mobility; nearly impossible to track at individual-launcher level. Quantity 500 is estimated TO-level count based on assessed ground force density. As point defense weapons, their primary effect is deterrence against low-flying aircraft."
+      "notes": "Stinger MANPADS represents individual shoulder-launched units distributed across ground forces in TO 5. High mobility; nearly impossible to track at individual-launcher level. Modeled as container bins of 50 launchers (category MANPADS, outside SEAD/AD-health SAM categories): SEAD cannot hunt passive-IR shoulder launchers, but pools contest low-altitude air ops via IjfsManpads and deteriorate through usage, bombardment, and TO ground losses (2026-07-10 USER design call; divergence from TIV oracle).",
+      "metadata": {
+        "systems_represented": 50
+      }
     }
   ]
 }

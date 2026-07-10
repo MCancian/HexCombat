@@ -80,6 +80,8 @@ static func run_daily(state: IjfsDailyState, dice: Dice, current_day: int, warmu
 	state.engagement_log = []
 	state.contest_log = []
 	state.free_shot_log = []
+	state.manpads_intercept_log = []
+	state.manpads_contest_log = []
 	state.exquisite_intel_overrides = []
 
 	var ctx := make_run_context(current_day, warmup_context)
@@ -147,6 +149,11 @@ static func run_daily(state: IjfsDailyState, dice: Dice, current_day: int, warmu
 
 	state.taiwan_ad_health_after = IjfsAdHealth.compute_taiwan_ad_health(state.targets, state.scenario)
 
+	# MANPADS contest low-altitude squadrons (SEAD + strike) island-wide, same attrition gate as
+	# the SAM layers. Draw order: after post-AD strikes, before the free shot.
+	if ad_attrition_enabled:
+		state.manpads_contest_log = IjfsManpads.contest_squadrons(state.targets, squadron_force, air_classes, dice)
+
 	state.free_shot_log = IjfsEngagement.apply_post_phase_2_free_shot(
 		squadron_force,
 		air_classes,
@@ -196,6 +203,23 @@ static func _run_strike_phase(
 		if budget != null and not budget.try_consume(pairing.munition_id):
 			skip_reasons[target.target_id] = [reason_key, doctrine_name, doctrine_selection]
 			continue
+		# MANPADS interception (see IjfsManpads): rolled BEFORE the strike's own rolls, only for
+		# rounds that will actually fly (mirrors resolve_strike's inventory sufficiency check).
+		if mun != null:
+			var rounds := int(pairing.rounds_expended_per_engagement)
+			var will_fly: bool = is_organic or (mun as IjfsMunition).inventory_remaining >= rounds
+			if will_fly:
+				var intercept: Variant = IjfsManpads.roll_strike_interception(target, mun, state.targets, dice)
+				if intercept != null:
+					state.manpads_intercept_log.append(intercept)
+					if intercept["intercepted"]:
+						# Round spent, nothing delivered — mirror resolve_strike's inventory decrement.
+						if not is_organic:
+							(mun as IjfsMunition).inventory_remaining -= rounds
+						state.strike_log.append(IjfsManpads.intercepted_strike_log(
+							target, pairing, current_day, phase, doctrine_name, doctrine_selection))
+						attacked[target.target_id] = true
+						continue
 		state.strike_log.append(IjfsStrike.resolve_strike(
 			target, pairing, state.munitions, state.scenario, current_day, dice, phase, doctrine_name, doctrine_selection))
 		attacked[target.target_id] = true
@@ -280,7 +304,13 @@ static func summarize_run(state: IjfsDailyState) -> Dictionary:
 		"destroyed_targets_by_category": destroyed_by_category,
 		"suppressed_targets_by_category": suppressed_by_category,
 		"rounds_expended_by_munition": rounds_expended,
-		"red_air_losses": _sum_losses(state.contest_log) + _sum_losses(state.free_shot_log),
+		"red_air_losses": _sum_losses(state.contest_log) + _sum_losses(state.free_shot_log) + _sum_losses(state.manpads_contest_log),
+		"manpads": {
+			"ready_systems_by_to": IjfsManpads.ready_systems_by_to(state.targets),
+			"interception_attempts": state.manpads_intercept_log.size(),
+			"interceptions": _count_flag(state.manpads_intercept_log, "intercepted"),
+			"squadron_losses": _sum_losses(state.manpads_contest_log),
+		},
 		"taiwan_ad_health_before": state.taiwan_ad_health_before,
 		"taiwan_ad_health_after_missile_phase": state.taiwan_ad_health_after_missile_phase,
 		"taiwan_ad_health_after_sead": state.taiwan_ad_health_after_sead,
@@ -348,6 +378,8 @@ static func _build_ledgers(state: IjfsDailyState, current_day: int, summary: Dic
 		"engagement_log": state.engagement_log,
 		"contest_log": state.contest_log,
 		"free_shot_log": state.free_shot_log,
+		"manpads_intercept_log": state.manpads_intercept_log,
+		"manpads_contest_log": state.manpads_contest_log,
 		"air_oob_after": air_oob_after,
 		"summary": summary,
 	}

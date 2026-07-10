@@ -66,9 +66,10 @@ Settled battles. Primary sources: `PLAN.md` → Decisions (why) and `docs/RETROS
   rows → 2,550 instances); side-by-side oracle diff; both LLM games (seeds 20260710/20260711)
   reproduce 2,49x at turn 2 and ≤24 (the remainder) at turn 3.
 - **Fenced off:** "fixing" the engagement-log counting or the digest sum — they are correct.
-- **Status:** mechanically near-inert (Mobile SAMs excluded from AD health; score-0 return fire;
-  SEAD kills cost no munitions) but poisons report legibility. USER design call pending — see
-  PLAN.md Open Questions → "MANPADS modeling".
+- **Status:** RESOLVED 2026-07-10 — USER chose to exclude MANPADS from SEAD and give them a real
+  role: per-TO container bins, low-altitude strike interception + squadron contest, deterioration
+  via usage/bombardment/ground losses (`IjfsManpads.gd`; docs/systems/ijfs.md → "MANPADS layer";
+  Decisions log 2026-07-10). Golden pins re-baselined accordingly.
 
 ### Mine/crossing calibration: the lever that couldn't reach 25% (2026-06-28→29)
 - **Symptom:** USER target ~25% crossing loss; the planned `intel_locked` strike-bonus lever

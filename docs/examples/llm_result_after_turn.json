@@ -2,19 +2,19 @@
 	"errors": [],
 	"observation": {
 		"antiship": {
-			"bns_lost_at_sea": 5,
+			"bns_lost_at_sea": 7,
 			"crossing_casualties": {
-				"damaged": 23,
-				"destroyed": 39
+				"damaged": 18,
+				"destroyed": 38
 			},
 			"destroyed_by_ship_type": {
-				"CG": 7,
+				"CG": 4,
 				"Container_Ship": 4,
-				"DDG": 5,
-				"Decoys": 31,
-				"FFG": 12,
-				"FFL": 10,
-				"Fast_Transport": 1
+				"DDG": 6,
+				"Decoys": 27,
+				"FFG": 9,
+				"FFL": 12,
+				"Fast_Transport": 3
 			},
 			"mine_status": [
 				{
@@ -26,13 +26,13 @@
 				{
 					"beach_id": 2,
 					"lane_cleared": true,
-					"ships_destroyed": 10,
+					"ships_destroyed": 8,
 					"status_color": "green"
 				},
 				{
 					"beach_id": 3,
 					"lane_cleared": true,
-					"ships_destroyed": 8,
+					"ships_destroyed": 6,
 					"status_color": "green"
 				},
 				{
@@ -52,7 +52,7 @@
 				"FFL": 24,
 				"Fast_Transport": 5
 			},
-			"systems_fired_count": 139,
+			"systems_fired_count": 122,
 			"target_beaches": [
 				1,
 				2,
@@ -144,7 +144,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 4,
+				"battalions": 5,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_42_15",
@@ -157,7 +157,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 5,
+				"battalions": 4,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_11_5",
@@ -170,7 +170,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 5,
+				"battalions": 4,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_12_7",
@@ -209,7 +209,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 4,
+				"battalions": 5,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_32_8",
@@ -222,7 +222,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 4,
+				"battalions": 3,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_43_14",
@@ -235,7 +235,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 5,
+				"battalions": 4,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_30_7",
@@ -521,7 +521,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 3,
+				"battalions": 2,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_38_20",
@@ -547,71 +547,90 @@
 		"game_over": false,
 		"ijfs": {
 			"antiship_destroyed_by_type": {
+				"2:16": 3,
 				"2:18": 1,
 				"2:19": 1,
 				"2:20": 1,
 				"2:21": 1,
 				"2:22": 1,
 				"2:3": 74,
-				"2:5": 8,
-				"3:17": 5,
+				"2:5": 24,
+				"3:16": 12,
+				"3:18": 5,
 				"3:19": 1,
 				"3:20": 4,
 				"3:21": 2,
 				"3:22": 2,
-				"3:23": 10,
-				"3:3": 149,
+				"3:3": 130,
+				"3:5": 16,
 				"4:16": 12,
 				"4:18": 5,
 				"4:19": 1,
 				"4:20": 4,
 				"4:21": 2,
 				"4:22": 2,
+				"4:23": 10,
 				"4:3": 74,
+				"5:16": 3,
 				"5:17": 1,
-				"5:18": 1,
 				"5:19": 1,
+				"5:20": 1,
 				"5:21": 1,
 				"5:22": 1,
-				"5:3": 37
+				"5:23": 3,
+				"5:24": 10,
+				"5:3": 19,
+				"5:5": 8
 			},
 			"antiship_suppressed_by_type": {
-				"2:5": 8,
-				"3:5": 24,
+				"2:99": 1,
+				"3:3": 19,
 				"3:99": 1,
-				"4:6": 1,
-				"4:99": 1,
-				"5:99": 1
+				"4:5": 8,
+				"5:3": 18
 			},
 			"attacks": {
-				"executed": 309,
-				"skipped": 107,
+				"executed": 149,
+				"skipped": 30,
 				"skipped_by_reason": {
-					"firing_capacity_exhausted": 84,
-					"no_compatible_pairing": 23
+					"no_compatible_pairing": 30
 				}
 			},
 			"maneuver_casualties": [
 				{
-					"battalion_id": "BDE-269-MU-3",
-					"brigade_id": "BDE-269",
-					"subcategory": "Mechanized Infantry",
-					"to": 3,
-					"unit_type": "Mechanized Infantry Battalion"
-				},
-				{
-					"battalion_id": "BDE-584-MU-3",
-					"brigade_id": "BDE-584",
-					"subcategory": "Armour",
-					"to": 3,
-					"unit_type": "Tank Battalion"
-				},
-				{
-					"battalion_id": "BDE-58-MU-1",
-					"brigade_id": "BDE-58",
+					"battalion_id": "BDE-586-MU-5",
+					"brigade_id": "BDE-586",
 					"subcategory": "Field Artillery",
 					"to": 5,
 					"unit_type": "Mechanized Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-333-MU-5",
+					"brigade_id": "BDE-333",
+					"subcategory": "Field Artillery",
+					"to": 4,
+					"unit_type": "Mechanized Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-43-MU-3",
+					"brigade_id": "BDE-43",
+					"subcategory": "Field Artillery",
+					"to": 4,
+					"unit_type": "Field Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-584-MU-5",
+					"brigade_id": "BDE-584",
+					"subcategory": "Field Artillery",
+					"to": 3,
+					"unit_type": "Mechanized Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-LY-MU-1",
+					"brigade_id": "BDE-LY",
+					"subcategory": "Mechanized Infantry",
+					"to": 3,
+					"unit_type": "Mechanized Infantry Battalion"
 				}
 			],
 			"red_air_losses": 0,
@@ -620,16 +639,16 @@
 			"sam_suppressed": 0,
 			"taiwan_ad_health_after": {
 				"category_health": {
-					"Mobile Radars": 0.6,
+					"Mobile Radars": 1.0,
 					"Moveable SAMs": 0.208333333333333,
 					"Static Radars": 0.0,
-					"Static SAMs": 0.25
+					"Static SAMs": 0.0
 				},
-				"effective_ad_health": 0.1171875,
-				"effective_sam_health": 0.0453125,
-				"radar_health": 0.225,
+				"effective_ad_health": 0.18125,
+				"effective_sam_health": 0.0520833333333333,
+				"radar_health": 0.375,
 				"radar_weight_total": 0.4,
-				"raw_sam_health": 0.201388888888889,
+				"raw_sam_health": 0.138888888888889,
 				"sam_weight_total": 0.6
 			}
 		},
@@ -661,41 +680,41 @@
 						"total_combat_power_unmodified": 7.8
 					},
 					"defender": {
-						"maneuver_combat_power": 5.5,
-						"maneuver_unit_count": 3,
+						"maneuver_combat_power": 7.5,
+						"maneuver_unit_count": 4,
 						"support_breakdown": {
-							"artillery": 0.8,
+							"artillery": 0.0,
 							"cas": 0.0,
 							"crbm": 0.0,
 							"rocket_artillery": 0.0,
 							"rotary_wing": 0.0
 						},
-						"support_combat_power": 0.8,
+						"support_combat_power": 0.0,
 						"support_counts": {
-							"artillery": 1,
+							"artillery": 0,
 							"cas": 0,
 							"crbm": 0,
 							"rocket_artillery": 0,
 							"rotary_wing": 0
 						},
 						"terrain_modifier": 2.0,
-						"total_combat_power_terrain_modified": 12.6,
-						"total_combat_power_unmodified": 6.3
+						"total_combat_power_terrain_modified": 15.0,
+						"total_combat_power_unmodified": 7.5
 					},
 					"feba": {
 						"base_km": 3.5,
-						"movement_km": -1.57294117647059,
+						"movement_km": -2.11105263157895,
 						"roll_factor": 0.955
 					},
 					"losses": {
 						"attacker": 2,
-						"attacker_loss_rate": 0.254476190476191,
-						"defender": 0,
-						"defender_loss_rate": 0.152904761904762
+						"attacker_loss_rate": 0.2624,
+						"defender": 1,
+						"defender_loss_rate": 0.143
 					},
 					"ratios": {
-						"terrain_modified": 0.619047619047619,
-						"unmodified": 1.23809523809524
+						"terrain_modified": 0.52,
+						"unmodified": 1.04
 					},
 					"result": "Defender Advantage",
 					"rolls": {
@@ -707,8 +726,8 @@
 				"defender_brigade_ids": [
 					"BDE-584"
 				],
-				"defender_losses": 0,
-				"feba_movement_km": -1.57294117647059,
+				"defender_losses": 1,
+				"feba_movement_km": -2.11105263157895,
 				"hex_id": "hex_43_14",
 				"owner_after": "contested"
 			}
@@ -1280,7 +1299,7 @@
 					"BDE-584",
 					"PLA-73-14-Amphibious"
 				],
-				"feba_km": -1.57294117647059,
+				"feba_km": -2.11105263157895,
 				"hex_id": "hex_43_14",
 				"neighbors": [
 					"hex_42_14",
@@ -1740,25 +1759,25 @@
 		"ship_reserve": [
 			{
 				"beach_hex": "hex_44_16",
-				"bns_remaining": 5,
+				"bns_remaining": 4,
 				"brigade_id": "PLA-71-2-Amphibious",
 				"locked_beach": 1
 			},
 			{
 				"beach_hex": "hex_44_15",
-				"bns_remaining": 3,
+				"bns_remaining": 1,
 				"brigade_id": "PLA-72-5-Amphibious",
 				"locked_beach": 2
 			},
 			{
 				"beach_hex": "hex_43_14",
-				"bns_remaining": 4,
+				"bns_remaining": 3,
 				"brigade_id": "PLA-73-14-Amphibious",
 				"locked_beach": 3
 			},
 			{
 				"beach_hex": "hex_43_13",
-				"bns_remaining": 3,
+				"bns_remaining": 5,
 				"brigade_id": "PLA-74-1-Amphibious",
 				"locked_beach": 4
 			}
@@ -1779,19 +1798,19 @@
 	"seed": 20260624,
 	"turn_result": {
 		"antiship_summary": {
-			"bns_lost_at_sea": 5,
+			"bns_lost_at_sea": 7,
 			"crossing_casualties": {
-				"damaged": 23,
-				"destroyed": 39
+				"damaged": 18,
+				"destroyed": 38
 			},
 			"destroyed_by_ship_type": {
-				"CG": 7,
+				"CG": 4,
 				"Container_Ship": 4,
-				"DDG": 5,
-				"Decoys": 31,
-				"FFG": 12,
-				"FFL": 10,
-				"Fast_Transport": 1
+				"DDG": 6,
+				"Decoys": 27,
+				"FFG": 9,
+				"FFL": 12,
+				"Fast_Transport": 3
 			},
 			"mine_status": [
 				{
@@ -1803,13 +1822,13 @@
 				{
 					"beach_id": 2,
 					"lane_cleared": true,
-					"ships_destroyed": 10,
+					"ships_destroyed": 8,
 					"status_color": "green"
 				},
 				{
 					"beach_id": 3,
 					"lane_cleared": true,
-					"ships_destroyed": 8,
+					"ships_destroyed": 6,
 					"status_color": "green"
 				},
 				{
@@ -1829,7 +1848,7 @@
 				"FFL": 24,
 				"Fast_Transport": 5
 			},
-			"systems_fired_count": 139,
+			"systems_fired_count": 122,
 			"target_beaches": [
 				1,
 				2,
@@ -1843,9 +1862,9 @@
 		},
 		"cleanup_summary": {
 			"antiship_systems_reset": 50,
-			"china_battalions_on_taiwan": 19,
+			"china_battalions_on_taiwan": 21,
 			"game_over": false,
-			"taiwan_battalions_on_taiwan": 121,
+			"taiwan_battalions_on_taiwan": 118,
 			"victory_reason": "",
 			"winner": ""
 		},
@@ -1877,41 +1896,41 @@
 						"total_combat_power_unmodified": 7.8
 					},
 					"defender": {
-						"maneuver_combat_power": 5.5,
-						"maneuver_unit_count": 3,
+						"maneuver_combat_power": 7.5,
+						"maneuver_unit_count": 4,
 						"support_breakdown": {
-							"artillery": 0.8,
+							"artillery": 0.0,
 							"cas": 0.0,
 							"crbm": 0.0,
 							"rocket_artillery": 0.0,
 							"rotary_wing": 0.0
 						},
-						"support_combat_power": 0.8,
+						"support_combat_power": 0.0,
 						"support_counts": {
-							"artillery": 1,
+							"artillery": 0,
 							"cas": 0,
 							"crbm": 0,
 							"rocket_artillery": 0,
 							"rotary_wing": 0
 						},
 						"terrain_modifier": 2.0,
-						"total_combat_power_terrain_modified": 12.6,
-						"total_combat_power_unmodified": 6.3
+						"total_combat_power_terrain_modified": 15.0,
+						"total_combat_power_unmodified": 7.5
 					},
 					"feba": {
 						"base_km": 3.5,
-						"movement_km": -1.57294117647059,
+						"movement_km": -2.11105263157895,
 						"roll_factor": 0.955
 					},
 					"losses": {
 						"attacker": 2,
-						"attacker_loss_rate": 0.254476190476191,
-						"defender": 0,
-						"defender_loss_rate": 0.152904761904762
+						"attacker_loss_rate": 0.2624,
+						"defender": 1,
+						"defender_loss_rate": 0.143
 					},
 					"ratios": {
-						"terrain_modified": 0.619047619047619,
-						"unmodified": 1.23809523809524
+						"terrain_modified": 0.52,
+						"unmodified": 1.04
 					},
 					"result": "Defender Advantage",
 					"rolls": {
@@ -1923,8 +1942,8 @@
 				"defender_brigade_ids": [
 					"BDE-584"
 				],
-				"defender_losses": 0,
-				"feba_movement_km": -1.57294117647059,
+				"defender_losses": 1,
+				"feba_movement_km": -2.11105263157895,
 				"hex_id": "hex_43_14",
 				"owner_after": "contested"
 			}
@@ -1936,55 +1955,60 @@
 			{
 				"data": {
 					"attacks": {
-						"executed": 309,
-						"skipped": 107,
+						"executed": 149,
+						"skipped": 30,
 						"skipped_by_reason": {
-							"firing_capacity_exhausted": 84,
-							"no_compatible_pairing": 23
+							"no_compatible_pairing": 30
 						}
 					},
 					"contest_losses": 0,
 					"destroyed_targets_by_category": {
-						"Anti-Ship Systems": 7,
-						"Maneuver Units": 3,
+						"Anti-Ship Systems": 9,
+						"Government Buildings": 3,
+						"Maneuver Units": 5,
 						"Military Headquarters": 1,
-						"Mobile SAMs": 11,
-						"Moveable SAMs": 3,
-						"ROCAF Airbases": 2
+						"Moveable SAMs": 5,
+						"ROCAF Airbases": 1,
+						"ROCN Bases": 1,
+						"Static Radars": 2,
+						"Static SAMs": 1
 					},
 					"detections_by_category": {
-						"Anti-Ship Systems": 51,
-						"Maneuver Units": 113,
+						"Anti-Ship Systems": 46,
+						"Government Buildings": 3,
+						"MANPADS": 4,
+						"Maneuver Units": 118,
 						"Military Headquarters": 3,
-						"Mobile Radars": 3,
-						"Mobile SAMs": 269,
-						"Moveable SAMs": 35,
-						"ROCAF Airbases": 8,
-						"ROCN Bases": 4,
-						"Static SAMs": 2
+						"Mobile Radars": 4,
+						"Mobile SAMs": 17,
+						"Moveable SAMs": 29,
+						"ROCAF Airbases": 3,
+						"ROCN Bases": 3,
+						"Static Radars": 2,
+						"Static SAMs": 1
 					},
 					"detections_by_mobility": {
-						"mobile": 392,
-						"moveable": 55,
-						"static": 41
+						"mobile": 150,
+						"moveable": 51,
+						"static": 32
 					},
 					"exquisite_intel_overrides": [
-						"maneuver_bde_77_mu_4",
-						"maneuver_bde_602_mu_2",
-						"maneuver_bde_621_mu_7",
-						"maneuver_bde_584_mu_5",
-						"maneuver_bde_862_mu_1",
-						"antiship_to5_type16_c000",
-						"antiship_to4_type17_c000",
-						"antiship_to3_type3_c001",
-						"antiship_to2_type3_c003",
-						"antiship_to3_type99_c000"
+						"maneuver_bde_gdu_mu_4",
+						"maneuver_bde_gdu_mu_5",
+						"maneuver_bde_gdu_mu_3",
+						"maneuver_bde_58_mu_3",
+						"maneuver_bde_942_mu_3",
+						"antiship_to4_type24_c000",
+						"antiship_to2_type99_c000",
+						"antiship_to5_type18_c000",
+						"antiship_to3_type23_c000",
+						"antiship_to3_type3_c003"
 					],
 					"firing_capacity_utilization": {
 						"cj10_lacm_glcm": {
 							"budget": 18,
-							"remaining": 0,
-							"used": 18
+							"remaining": 12,
+							"used": 6
 						},
 						"cm401_asbm": {
 							"budget": 20,
@@ -1998,8 +2022,8 @@
 						},
 						"owa_drone_small": {
 							"budget": 90,
-							"remaining": 0,
-							"used": 90
+							"remaining": 90,
+							"used": 0
 						},
 						"pch191_bre6_crbm": {
 							"budget": 60,
@@ -2013,104 +2037,116 @@
 						},
 						"pla_srbm_large_generic": {
 							"budget": 30,
-							"remaining": 22,
-							"used": 8
+							"remaining": 19,
+							"used": 11
 						},
 						"yj_12_ascm": {
 							"budget": 15,
-							"remaining": 15,
-							"used": 0
+							"remaining": 13,
+							"used": 2
 						},
 						"yj_62_ascm": {
 							"budget": 30,
-							"remaining": 23,
-							"used": 7
+							"remaining": 27,
+							"used": 3
 						}
 					},
 					"free_shot_losses": 0,
+					"manpads": {
+						"interception_attempts": 49,
+						"interceptions": 3,
+						"ready_systems_by_to": {
+							"2": 452,
+							"3": 809,
+							"4": 446,
+							"5": 455,
+							"total": 2162
+						},
+						"squadron_losses": 0
+					},
 					"red_air_losses": 0,
 					"rounds_expended_by_munition": {
-						"attack_uav_small": 80,
-						"cj10_lacm_glcm": 33,
-						"owa_drone_small": 90,
+						"attack_uav_small": 21,
+						"cj10_lacm_glcm": 24,
 						"pch191_bre6_crbm": 2880,
 						"pch191_bre8_crbm": 216,
-						"pla_srbm_large_generic": 64,
+						"pla_srbm_large_generic": 88,
 						"strike_aircraft_medium": 112,
-						"yj_62_ascm": 28
+						"yj_12_ascm": 8,
+						"yj_62_ascm": 12
 					},
 					"sead_destroyed": 0,
 					"sead_engagements": 0,
 					"sead_pressure": {},
 					"sead_suppressed": 0,
 					"suppressed_targets_by_category": {
-						"Anti-Ship Systems": 8,
-						"Maneuver Units": 11,
-						"Mobile SAMs": 35,
-						"Moveable SAMs": 12,
-						"ROCAF Airbases": 2,
+						"Anti-Ship Systems": 5,
+						"Maneuver Units": 8,
+						"Mobile SAMs": 4,
+						"Moveable SAMs": 8,
+						"ROCAF Airbases": 1,
 						"ROCN Bases": 1
 					},
 					"taiwan_ad_health_after": {
 						"category_health": {
-							"Mobile Radars": 0.6,
+							"Mobile Radars": 1.0,
 							"Moveable SAMs": 0.208333333333333,
 							"Static Radars": 0.0,
-							"Static SAMs": 0.25
+							"Static SAMs": 0.0
 						},
-						"effective_ad_health": 0.1171875,
-						"effective_sam_health": 0.0453125,
-						"radar_health": 0.225,
+						"effective_ad_health": 0.18125,
+						"effective_sam_health": 0.0520833333333333,
+						"radar_health": 0.375,
 						"radar_weight_total": 0.4,
-						"raw_sam_health": 0.201388888888889,
+						"raw_sam_health": 0.138888888888889,
 						"sam_weight_total": 0.6
 					},
 					"taiwan_ad_health_after_missile_phase": {
 						"category_health": {
-							"Mobile Radars": 0.6,
-							"Moveable SAMs": 0.25,
+							"Mobile Radars": 1.0,
+							"Moveable SAMs": 0.208333333333333,
 							"Static Radars": 0.0,
-							"Static SAMs": 0.25
+							"Static SAMs": 0.0
 						},
-						"effective_ad_health": 0.1209375,
-						"effective_sam_health": 0.0515625,
-						"radar_health": 0.225,
+						"effective_ad_health": 0.18125,
+						"effective_sam_health": 0.0520833333333333,
+						"radar_health": 0.375,
 						"radar_weight_total": 0.4,
-						"raw_sam_health": 0.229166666666667,
+						"raw_sam_health": 0.138888888888889,
 						"sam_weight_total": 0.6
 					},
 					"taiwan_ad_health_after_sead": {
 						"category_health": {
-							"Mobile Radars": 0.6,
-							"Moveable SAMs": 0.25,
+							"Mobile Radars": 1.0,
+							"Moveable SAMs": 0.208333333333333,
 							"Static Radars": 0.0,
-							"Static SAMs": 0.25
+							"Static SAMs": 0.0
 						},
-						"effective_ad_health": 0.1209375,
-						"effective_sam_health": 0.0515625,
-						"radar_health": 0.225,
+						"effective_ad_health": 0.18125,
+						"effective_sam_health": 0.0520833333333333,
+						"radar_health": 0.375,
 						"radar_weight_total": 0.4,
-						"raw_sam_health": 0.229166666666667,
+						"raw_sam_health": 0.138888888888889,
 						"sam_weight_total": 0.6
 					},
 					"taiwan_ad_health_before": {
 						"category_health": {
-							"Mobile Radars": 0.6,
-							"Moveable SAMs": 0.833333333333333,
-							"Static Radars": 0.0,
+							"Mobile Radars": 1.0,
+							"Moveable SAMs": 0.75,
+							"Static Radars": 0.111111111111111,
 							"Static SAMs": 0.25
 						},
-						"effective_ad_health": 0.1734375,
-						"effective_sam_health": 0.1390625,
-						"radar_health": 0.225,
+						"effective_ad_health": 0.327777777777778,
+						"effective_sam_health": 0.25,
+						"radar_health": 0.444444444444444,
 						"radar_weight_total": 0.4,
-						"raw_sam_health": 0.618055555555555,
+						"raw_sam_health": 0.5625,
 						"sam_weight_total": 0.6
 					},
 					"target_counts_by_category_status": {
 						"Anti-Ship Systems": {
-							"destroyed": 41,
-							"surviving": 32,
+							"destroyed": 49,
+							"surviving": 24,
 							"total": 73
 						},
 						"Government Buildings": {
@@ -2118,9 +2154,14 @@
 							"surviving": 0,
 							"total": 10
 						},
+						"MANPADS": {
+							"destroyed": 1,
+							"surviving": 49,
+							"total": 50
+						},
 						"Maneuver Units": {
-							"destroyed": 5,
-							"surviving": 119,
+							"destroyed": 8,
+							"surviving": 116,
 							"total": 124
 						},
 						"Military Headquarters": {
@@ -2129,28 +2170,28 @@
 							"total": 5
 						},
 						"Mobile Radars": {
-							"destroyed": 2,
-							"surviving": 3,
+							"destroyed": 0,
+							"surviving": 5,
 							"total": 5
 						},
 						"Mobile SAMs": {
-							"destroyed": 40,
-							"surviving": 2510,
-							"total": 2550
+							"destroyed": 1,
+							"surviving": 49,
+							"total": 50
 						},
 						"Moveable SAMs": {
-							"destroyed": 7,
-							"surviving": 17,
+							"destroyed": 11,
+							"surviving": 13,
 							"total": 24
 						},
 						"ROCAF Airbases": {
-							"destroyed": 7,
-							"surviving": 3,
+							"destroyed": 9,
+							"surviving": 1,
 							"total": 10
 						},
 						"ROCN Bases": {
-							"destroyed": 2,
-							"surviving": 2,
+							"destroyed": 3,
+							"surviving": 1,
 							"total": 4
 						},
 						"Static Radars": {
@@ -2159,8 +2200,8 @@
 							"total": 18
 						},
 						"Static SAMs": {
-							"destroyed": 3,
-							"surviving": 1,
+							"destroyed": 4,
+							"surviving": 0,
 							"total": 4
 						}
 					},
@@ -2173,19 +2214,19 @@
 			},
 			{
 				"data": {
-					"bns_lost_at_sea": 5,
+					"bns_lost_at_sea": 7,
 					"crossing_casualties": {
-						"damaged": 23,
-						"destroyed": 39
+						"damaged": 18,
+						"destroyed": 38
 					},
 					"destroyed_by_ship_type": {
-						"CG": 7,
+						"CG": 4,
 						"Container_Ship": 4,
-						"DDG": 5,
-						"Decoys": 31,
-						"FFG": 12,
-						"FFL": 10,
-						"Fast_Transport": 1
+						"DDG": 6,
+						"Decoys": 27,
+						"FFG": 9,
+						"FFL": 12,
+						"Fast_Transport": 3
 					},
 					"mine_status": [
 						{
@@ -2197,13 +2238,13 @@
 						{
 							"beach_id": 2,
 							"lane_cleared": true,
-							"ships_destroyed": 10,
+							"ships_destroyed": 8,
 							"status_color": "green"
 						},
 						{
 							"beach_id": 3,
 							"lane_cleared": true,
-							"ships_destroyed": 8,
+							"ships_destroyed": 6,
 							"status_color": "green"
 						},
 						{
@@ -2223,7 +2264,7 @@
 						"FFL": 24,
 						"Fast_Transport": 5
 					},
-					"systems_fired_count": 139,
+					"systems_fired_count": 122,
 					"target_beaches": [
 						1,
 						2,
@@ -2279,41 +2320,41 @@
 							"total_combat_power_unmodified": 7.8
 						},
 						"defender": {
-							"maneuver_combat_power": 5.5,
-							"maneuver_unit_count": 3,
+							"maneuver_combat_power": 7.5,
+							"maneuver_unit_count": 4,
 							"support_breakdown": {
-								"artillery": 0.8,
+								"artillery": 0.0,
 								"cas": 0.0,
 								"crbm": 0.0,
 								"rocket_artillery": 0.0,
 								"rotary_wing": 0.0
 							},
-							"support_combat_power": 0.8,
+							"support_combat_power": 0.0,
 							"support_counts": {
-								"artillery": 1,
+								"artillery": 0,
 								"cas": 0,
 								"crbm": 0,
 								"rocket_artillery": 0,
 								"rotary_wing": 0
 							},
 							"terrain_modifier": 2.0,
-							"total_combat_power_terrain_modified": 12.6,
-							"total_combat_power_unmodified": 6.3
+							"total_combat_power_terrain_modified": 15.0,
+							"total_combat_power_unmodified": 7.5
 						},
 						"feba": {
 							"base_km": 3.5,
-							"movement_km": -1.57294117647059,
+							"movement_km": -2.11105263157895,
 							"roll_factor": 0.955
 						},
 						"losses": {
 							"attacker": 2,
-							"attacker_loss_rate": 0.254476190476191,
-							"defender": 0,
-							"defender_loss_rate": 0.152904761904762
+							"attacker_loss_rate": 0.2624,
+							"defender": 1,
+							"defender_loss_rate": 0.143
 						},
 						"ratios": {
-							"terrain_modified": 0.619047619047619,
-							"unmodified": 1.23809523809524
+							"terrain_modified": 0.52,
+							"unmodified": 1.04
 						},
 						"result": "Defender Advantage",
 						"rolls": {
@@ -2325,8 +2366,8 @@
 					"defender_brigade_ids": [
 						"BDE-584"
 					],
-					"defender_losses": 0,
-					"feba_movement_km": -1.57294117647059,
+					"defender_losses": 1,
+					"feba_movement_km": -2.11105263157895,
 					"hex_id": "hex_43_14",
 					"owner_after": "contested"
 				},
@@ -2338,9 +2379,9 @@
 			{
 				"data": {
 					"antiship_systems_reset": 50,
-					"china_battalions_on_taiwan": 19,
+					"china_battalions_on_taiwan": 21,
 					"game_over": false,
-					"taiwan_battalions_on_taiwan": 121,
+					"taiwan_battalions_on_taiwan": 118,
 					"victory_reason": "",
 					"winner": ""
 				},
@@ -2354,55 +2395,60 @@
 		"game_over": false,
 		"ijfs_summary": {
 			"attacks": {
-				"executed": 309,
-				"skipped": 107,
+				"executed": 149,
+				"skipped": 30,
 				"skipped_by_reason": {
-					"firing_capacity_exhausted": 84,
-					"no_compatible_pairing": 23
+					"no_compatible_pairing": 30
 				}
 			},
 			"contest_losses": 0,
 			"destroyed_targets_by_category": {
-				"Anti-Ship Systems": 7,
-				"Maneuver Units": 3,
+				"Anti-Ship Systems": 9,
+				"Government Buildings": 3,
+				"Maneuver Units": 5,
 				"Military Headquarters": 1,
-				"Mobile SAMs": 11,
-				"Moveable SAMs": 3,
-				"ROCAF Airbases": 2
+				"Moveable SAMs": 5,
+				"ROCAF Airbases": 1,
+				"ROCN Bases": 1,
+				"Static Radars": 2,
+				"Static SAMs": 1
 			},
 			"detections_by_category": {
-				"Anti-Ship Systems": 51,
-				"Maneuver Units": 113,
+				"Anti-Ship Systems": 46,
+				"Government Buildings": 3,
+				"MANPADS": 4,
+				"Maneuver Units": 118,
 				"Military Headquarters": 3,
-				"Mobile Radars": 3,
-				"Mobile SAMs": 269,
-				"Moveable SAMs": 35,
-				"ROCAF Airbases": 8,
-				"ROCN Bases": 4,
-				"Static SAMs": 2
+				"Mobile Radars": 4,
+				"Mobile SAMs": 17,
+				"Moveable SAMs": 29,
+				"ROCAF Airbases": 3,
+				"ROCN Bases": 3,
+				"Static Radars": 2,
+				"Static SAMs": 1
 			},
 			"detections_by_mobility": {
-				"mobile": 392,
-				"moveable": 55,
-				"static": 41
+				"mobile": 150,
+				"moveable": 51,
+				"static": 32
 			},
 			"exquisite_intel_overrides": [
-				"maneuver_bde_77_mu_4",
-				"maneuver_bde_602_mu_2",
-				"maneuver_bde_621_mu_7",
-				"maneuver_bde_584_mu_5",
-				"maneuver_bde_862_mu_1",
-				"antiship_to5_type16_c000",
-				"antiship_to4_type17_c000",
-				"antiship_to3_type3_c001",
-				"antiship_to2_type3_c003",
-				"antiship_to3_type99_c000"
+				"maneuver_bde_gdu_mu_4",
+				"maneuver_bde_gdu_mu_5",
+				"maneuver_bde_gdu_mu_3",
+				"maneuver_bde_58_mu_3",
+				"maneuver_bde_942_mu_3",
+				"antiship_to4_type24_c000",
+				"antiship_to2_type99_c000",
+				"antiship_to5_type18_c000",
+				"antiship_to3_type23_c000",
+				"antiship_to3_type3_c003"
 			],
 			"firing_capacity_utilization": {
 				"cj10_lacm_glcm": {
 					"budget": 18,
-					"remaining": 0,
-					"used": 18
+					"remaining": 12,
+					"used": 6
 				},
 				"cm401_asbm": {
 					"budget": 20,
@@ -2416,8 +2462,8 @@
 				},
 				"owa_drone_small": {
 					"budget": 90,
-					"remaining": 0,
-					"used": 90
+					"remaining": 90,
+					"used": 0
 				},
 				"pch191_bre6_crbm": {
 					"budget": 60,
@@ -2431,104 +2477,116 @@
 				},
 				"pla_srbm_large_generic": {
 					"budget": 30,
-					"remaining": 22,
-					"used": 8
+					"remaining": 19,
+					"used": 11
 				},
 				"yj_12_ascm": {
 					"budget": 15,
-					"remaining": 15,
-					"used": 0
+					"remaining": 13,
+					"used": 2
 				},
 				"yj_62_ascm": {
 					"budget": 30,
-					"remaining": 23,
-					"used": 7
+					"remaining": 27,
+					"used": 3
 				}
 			},
 			"free_shot_losses": 0,
+			"manpads": {
+				"interception_attempts": 49,
+				"interceptions": 3,
+				"ready_systems_by_to": {
+					"2": 452,
+					"3": 809,
+					"4": 446,
+					"5": 455,
+					"total": 2162
+				},
+				"squadron_losses": 0
+			},
 			"red_air_losses": 0,
 			"rounds_expended_by_munition": {
-				"attack_uav_small": 80,
-				"cj10_lacm_glcm": 33,
-				"owa_drone_small": 90,
+				"attack_uav_small": 21,
+				"cj10_lacm_glcm": 24,
 				"pch191_bre6_crbm": 2880,
 				"pch191_bre8_crbm": 216,
-				"pla_srbm_large_generic": 64,
+				"pla_srbm_large_generic": 88,
 				"strike_aircraft_medium": 112,
-				"yj_62_ascm": 28
+				"yj_12_ascm": 8,
+				"yj_62_ascm": 12
 			},
 			"sead_destroyed": 0,
 			"sead_engagements": 0,
 			"sead_pressure": {},
 			"sead_suppressed": 0,
 			"suppressed_targets_by_category": {
-				"Anti-Ship Systems": 8,
-				"Maneuver Units": 11,
-				"Mobile SAMs": 35,
-				"Moveable SAMs": 12,
-				"ROCAF Airbases": 2,
+				"Anti-Ship Systems": 5,
+				"Maneuver Units": 8,
+				"Mobile SAMs": 4,
+				"Moveable SAMs": 8,
+				"ROCAF Airbases": 1,
 				"ROCN Bases": 1
 			},
 			"taiwan_ad_health_after": {
 				"category_health": {
-					"Mobile Radars": 0.6,
+					"Mobile Radars": 1.0,
 					"Moveable SAMs": 0.208333333333333,
 					"Static Radars": 0.0,
-					"Static SAMs": 0.25
+					"Static SAMs": 0.0
 				},
-				"effective_ad_health": 0.1171875,
-				"effective_sam_health": 0.0453125,
-				"radar_health": 0.225,
+				"effective_ad_health": 0.18125,
+				"effective_sam_health": 0.0520833333333333,
+				"radar_health": 0.375,
 				"radar_weight_total": 0.4,
-				"raw_sam_health": 0.201388888888889,
+				"raw_sam_health": 0.138888888888889,
 				"sam_weight_total": 0.6
 			},
 			"taiwan_ad_health_after_missile_phase": {
 				"category_health": {
-					"Mobile Radars": 0.6,
-					"Moveable SAMs": 0.25,
+					"Mobile Radars": 1.0,
+					"Moveable SAMs": 0.208333333333333,
 					"Static Radars": 0.0,
-					"Static SAMs": 0.25
+					"Static SAMs": 0.0
 				},
-				"effective_ad_health": 0.1209375,
-				"effective_sam_health": 0.0515625,
-				"radar_health": 0.225,
+				"effective_ad_health": 0.18125,
+				"effective_sam_health": 0.0520833333333333,
+				"radar_health": 0.375,
 				"radar_weight_total": 0.4,
-				"raw_sam_health": 0.229166666666667,
+				"raw_sam_health": 0.138888888888889,
 				"sam_weight_total": 0.6
 			},
 			"taiwan_ad_health_after_sead": {
 				"category_health": {
-					"Mobile Radars": 0.6,
-					"Moveable SAMs": 0.25,
+					"Mobile Radars": 1.0,
+					"Moveable SAMs": 0.208333333333333,
 					"Static Radars": 0.0,
-					"Static SAMs": 0.25
+					"Static SAMs": 0.0
 				},
-				"effective_ad_health": 0.1209375,
-				"effective_sam_health": 0.0515625,
-				"radar_health": 0.225,
+				"effective_ad_health": 0.18125,
+				"effective_sam_health": 0.0520833333333333,
+				"radar_health": 0.375,
 				"radar_weight_total": 0.4,
-				"raw_sam_health": 0.229166666666667,
+				"raw_sam_health": 0.138888888888889,
 				"sam_weight_total": 0.6
 			},
 			"taiwan_ad_health_before": {
 				"category_health": {
-					"Mobile Radars": 0.6,
-					"Moveable SAMs": 0.833333333333333,
-					"Static Radars": 0.0,
+					"Mobile Radars": 1.0,
+					"Moveable SAMs": 0.75,
+					"Static Radars": 0.111111111111111,
 					"Static SAMs": 0.25
 				},
-				"effective_ad_health": 0.1734375,
-				"effective_sam_health": 0.1390625,
-				"radar_health": 0.225,
+				"effective_ad_health": 0.327777777777778,
+				"effective_sam_health": 0.25,
+				"radar_health": 0.444444444444444,
 				"radar_weight_total": 0.4,
-				"raw_sam_health": 0.618055555555555,
+				"raw_sam_health": 0.5625,
 				"sam_weight_total": 0.6
 			},
 			"target_counts_by_category_status": {
 				"Anti-Ship Systems": {
-					"destroyed": 41,
-					"surviving": 32,
+					"destroyed": 49,
+					"surviving": 24,
 					"total": 73
 				},
 				"Government Buildings": {
@@ -2536,9 +2594,14 @@
 					"surviving": 0,
 					"total": 10
 				},
+				"MANPADS": {
+					"destroyed": 1,
+					"surviving": 49,
+					"total": 50
+				},
 				"Maneuver Units": {
-					"destroyed": 5,
-					"surviving": 119,
+					"destroyed": 8,
+					"surviving": 116,
 					"total": 124
 				},
 				"Military Headquarters": {
@@ -2547,28 +2610,28 @@
 					"total": 5
 				},
 				"Mobile Radars": {
-					"destroyed": 2,
-					"surviving": 3,
+					"destroyed": 0,
+					"surviving": 5,
 					"total": 5
 				},
 				"Mobile SAMs": {
-					"destroyed": 40,
-					"surviving": 2510,
-					"total": 2550
+					"destroyed": 1,
+					"surviving": 49,
+					"total": 50
 				},
 				"Moveable SAMs": {
-					"destroyed": 7,
-					"surviving": 17,
+					"destroyed": 11,
+					"surviving": 13,
 					"total": 24
 				},
 				"ROCAF Airbases": {
-					"destroyed": 7,
-					"surviving": 3,
+					"destroyed": 9,
+					"surviving": 1,
 					"total": 10
 				},
 				"ROCN Bases": {
-					"destroyed": 2,
-					"surviving": 2,
+					"destroyed": 3,
+					"surviving": 1,
 					"total": 4
 				},
 				"Static Radars": {
@@ -2577,8 +2640,8 @@
 					"total": 18
 				},
 				"Static SAMs": {
-					"destroyed": 3,
-					"surviving": 1,
+					"destroyed": 4,
+					"surviving": 0,
 					"total": 4
 				}
 			},
@@ -2586,63 +2649,83 @@
 		},
 		"ijfs_writeback": {
 			"antiship_destroyed_by_type": {
+				"2:16": 3,
 				"2:18": 1,
 				"2:19": 1,
 				"2:20": 1,
 				"2:21": 1,
 				"2:22": 1,
 				"2:3": 74,
-				"2:5": 8,
-				"3:17": 5,
+				"2:5": 24,
+				"3:16": 12,
+				"3:18": 5,
 				"3:19": 1,
 				"3:20": 4,
 				"3:21": 2,
 				"3:22": 2,
-				"3:23": 10,
-				"3:3": 149,
+				"3:3": 130,
+				"3:5": 16,
 				"4:16": 12,
 				"4:18": 5,
 				"4:19": 1,
 				"4:20": 4,
 				"4:21": 2,
 				"4:22": 2,
+				"4:23": 10,
 				"4:3": 74,
+				"5:16": 3,
 				"5:17": 1,
-				"5:18": 1,
 				"5:19": 1,
+				"5:20": 1,
 				"5:21": 1,
 				"5:22": 1,
-				"5:3": 37
+				"5:23": 3,
+				"5:24": 10,
+				"5:3": 19,
+				"5:5": 8
 			},
 			"antiship_suppressed_by_type": {
-				"2:5": 8,
-				"3:5": 24,
+				"2:99": 1,
+				"3:3": 19,
 				"3:99": 1,
-				"4:6": 1,
-				"4:99": 1,
-				"5:99": 1
+				"4:5": 8,
+				"5:3": 18
 			},
 			"maneuver_casualties": [
 				{
-					"battalion_id": "BDE-269-MU-3",
-					"brigade_id": "BDE-269",
-					"subcategory": "Mechanized Infantry",
-					"to": 3,
-					"unit_type": "Mechanized Infantry Battalion"
-				},
-				{
-					"battalion_id": "BDE-584-MU-3",
-					"brigade_id": "BDE-584",
-					"subcategory": "Armour",
-					"to": 3,
-					"unit_type": "Tank Battalion"
-				},
-				{
-					"battalion_id": "BDE-58-MU-1",
-					"brigade_id": "BDE-58",
+					"battalion_id": "BDE-586-MU-5",
+					"brigade_id": "BDE-586",
 					"subcategory": "Field Artillery",
 					"to": 5,
 					"unit_type": "Mechanized Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-333-MU-5",
+					"brigade_id": "BDE-333",
+					"subcategory": "Field Artillery",
+					"to": 4,
+					"unit_type": "Mechanized Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-43-MU-3",
+					"brigade_id": "BDE-43",
+					"subcategory": "Field Artillery",
+					"to": 4,
+					"unit_type": "Field Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-584-MU-5",
+					"brigade_id": "BDE-584",
+					"subcategory": "Field Artillery",
+					"to": 3,
+					"unit_type": "Mechanized Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-LY-MU-1",
+					"brigade_id": "BDE-LY",
+					"subcategory": "Mechanized Infantry",
+					"to": 3,
+					"unit_type": "Mechanized Infantry Battalion"
 				}
 			],
 			"sam_destroyed": 0,

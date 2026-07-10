@@ -44,7 +44,10 @@ func _validate_target_expansion(raw: Dictionary, targets: Array[IjfsTarget]) -> 
 		expected_instances += int(row.get("quantity", 1))
 	_check(raw_targets.size() == 54, "Source target count expected 54, got %d" % raw_targets.size())
 	_check(targets.size() == expected_instances, "Expanded target count expected %d, got %d" % [expected_instances, targets.size()])
-	_check(targets.size() == 2862, "Expanded target count expected oracle 2862, got %d" % targets.size())
+	# 412, not the oracle's 2862: the 2,500 individual Stinger instances became 50 MANPADS bins of
+	# 50 launchers (2026-07-10 USER design call — deliberate divergence; see PLAN.md Decisions).
+	_check(targets.size() == 412, "Expanded target count expected 412, got %d" % targets.size())
+	_validate_manpads_bins(targets)
 	var anti_ship_007: Array[IjfsTarget] = []
 	for target in targets:
 		_check(target.quantity == 1, "Expanded target %s quantity should be 1" % target.target_id)
@@ -53,6 +56,26 @@ func _validate_target_expansion(raw: Dictionary, targets: Array[IjfsTarget]) -> 
 	_check(anti_ship_007.size() == 152, "anti_ship_007 expected 152 instances, got %d" % anti_ship_007.size())
 	_check(not anti_ship_007.is_empty() and anti_ship_007[0].target_id == "anti_ship_007#001", "anti_ship_007 first id should be #001")
 	print("Target expansion: %d source targets -> %d instances" % [raw_targets.size(), targets.size()])
+
+
+## MANPADS bins (2026-07-10): category outside the SAM/SEAD categories, every bin carries
+## to_number + systems_represented, and the four TO pools total 2,500 launchers.
+func _validate_manpads_bins(targets: Array[IjfsTarget]) -> void:
+	var bins := 0
+	var launchers := 0
+	for target in targets:
+		if target.category != "MANPADS":
+			continue
+		bins += 1
+		_check(target.metadata.has("to_number"), "MANPADS bin %s missing to_number" % target.target_id)
+		var rep := int(target.metadata.get("systems_represented", 0))
+		_check(rep == 50, "MANPADS bin %s systems_represented expected 50, got %d" % [target.target_id, rep])
+		launchers += rep
+	_check(bins == 50, "MANPADS bins expected 50, got %d" % bins)
+	_check(launchers == 2500, "MANPADS launcher total expected 2500, got %d" % launchers)
+	_check("MANPADS" not in IjfsEngagement.SAM_CATEGORIES, "MANPADS must stay outside SEAD's SAM_CATEGORIES")
+	_check("MANPADS" not in IjfsAdHealth.AD_CATEGORIES, "MANPADS must stay outside AD-health categories")
+	print("MANPADS bins: %d bins / %d launchers validated" % [bins, launchers])
 
 
 func _validate_munitions(raw: Dictionary, munitions: Dictionary) -> void:

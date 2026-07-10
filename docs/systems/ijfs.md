@@ -224,3 +224,45 @@ whole count from the firing plan.
 3. **Category groups**: `category_groups.py` (operational_chart_categories,
    static_chart_categories) is not ported — these are chart-filtering constants only, not part of
    the simulation pipeline. Port if a reporting view needs them.
+
+## MANPADS layer (2026-07-10 — deliberate divergence from the TIV oracle)
+
+USER design call (2026-07-10) after the "2,496 Mobile SAMs destroyed" finding (see
+`hexcombat-failure-archaeology`): the oracle modeled ~2,500 individual Stinger MANPADS as
+SEAD-engageable Mobile-SAM targets — SEAD annihilated them all on the first air-phase turn with
+p≈1 each, poisoning every report while contributing nothing (excluded from AD health, score-0
+return fire).
+
+**Model now:** Stingers are 50 container bins of 50 launchers each (category `MANPADS`,
+`data/ijfs/targets_master.json`, per-TO: TO2 500 / TO3 1000 / TO4 500 / TO5 500; mutable
+`systems_remaining` seeded from `systems_represented`). The category sits OUTSIDE
+`IjfsEngagement.SAM_CATEGORIES` and `IjfsAdHealth.AD_CATEGORIES`: SEAD cannot hunt passive-IR
+shoulder launchers. Instead (`scripts/ijfs/IjfsManpads.gd`, wired in `IjfsEngine.run_daily`):
+
+1. **Strike interception** — each about-to-execute strike whose munition has
+   `manpads_vulnerability > 0` (`red_munitions.json`: attack UAV 1.0, OWA drone 1.0, strike
+   aircraft 0.4; ballistic/cruise 0 — they fly above MANPADS) rolls interception against the
+   ready launchers in the TARGET's TO before its own strike rolls: `p = threat × 0.15 × vuln`,
+   `threat = clamp(ready/500)` (saturating — coverage, not headcount). An intercepted strike
+   spends its round and delivers nothing (`intercepted_by_manpads` in the strike log).
+2. **Squadron contest** — SEAD + strike squadrons (ISR flies high) take island-wide per-aircraft
+   bernoulli losses after the post-AD strike phase (`p = threat × 0.01 × rcs_survival`), folded
+   into `red_air_losses` (`source: "manpads"` in `manpads_contest_log`); gated by
+   `ad_attrition_enabled` like the SAM layers.
+3. **Deterioration** — three drains: usage (3 missiles per interception attempt, 1 per contested
+   aircraft, lowest `target_id` bins first), bombardment (bins stay strikeable through the normal
+   pairing path — 6 pairings retargeted to category `MANPADS`), and ground losses
+   (`IjfsResolver.sync_manpads_to_oob`: each TO's pool is capped at
+   `systems_represented × alive/total` of that TO's Maneuver-Unit targets — MANPADS ride with the
+   infantry; zero dice, idempotent, monotonic).
+
+Summary surface: `ijfs_summary.manpads` (`ready_systems_by_to`, `interception_attempts`,
+`interceptions`, `squadron_losses`); ledgers export `manpads_intercept_log`/`manpads_contest_log`.
+Draw-order note: interception draws sit inside the strike phases; the contest sits between the
+post-AD strike phase and the free shot — re-baselining pins was part of landing this
+(validate_cleanup fingerprint, validate_golden_victory census, llm_result fixture).
+Tests: `tests/ijfs/ijfs_manpads_test.gd`; data guards in `tools/validate_ijfs_data.gd`
+(50 bins / 2,500 launchers / category exclusions). Calibration levers (constants in
+`IjfsManpads.gd`): `SATURATION_SYSTEMS`, `INTERCEPT_FACTOR`, `SQUADRON_LOSS_FACTOR`,
+`EXPEND_PER_INTERCEPT`, `EXPEND_PER_CONTEST_AIRCRAFT` — observed magnitudes on the golden seed:
+~5–9 Red aircraft lost/turn at full threat, pools 2,500→~460 by turn 4.

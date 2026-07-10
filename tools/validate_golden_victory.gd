@@ -15,10 +15,11 @@ extends SceneTree
 const SEED := GoldenScript.SEED
 const MAX_TURNS := 40
 # Golden pins for the empty-orders self-play at MAX_TURNS (re-baselined 2026-07-09 for the full
-# ROC defense laydown; see PLAN.md -> Decisions).
+# ROC defense laydown, then 2026-07-10 for the MANPADS layer — interception + the changed IJFS
+# draw order preserve more ROC battalions (88 -> 101); see PLAN.md -> Decisions).
 const EXPECTED_GAME_OVER := false
-const EXPECTED_CHINA := 24
-const EXPECTED_TAIWAN := 88
+const EXPECTED_CHINA := 22
+const EXPECTED_TAIWAN := 101
 
 var _failures: Array[String] = []
 var GameData: Node = null

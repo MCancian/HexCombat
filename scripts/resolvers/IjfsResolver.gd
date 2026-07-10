@@ -20,6 +20,9 @@ const PRE_INVASION_DAYS_FALLBACK := 4
 static func resolve(ijfs_state: IjfsDailyState, brigades: Dictionary, turn_number: int, ijfs_day: int, dice: Dice) -> Dictionary:
 	# D4-H (2d follow-up): retire maneuver targets whose battalions died (IJFS or ground combat).
 	sync_maneuver_targets_to_oob(ijfs_state, brigades)
+	# MANPADS ride with the infantry: ground losses in a TO shrink its MANPADS pools (after the
+	# maneuver sync so this turn's ground casualties are already reflected). Zero dice.
+	sync_manpads_to_oob(ijfs_state)
 	# D4-H (2c-ii): recently-active maneuver units present an "active" posture (more detectable).
 	update_maneuver_posture(ijfs_state, brigades)
 	# On the FIRST IJFS of the game, run the multi-day prelanding warmup campaign so exquisite
@@ -101,6 +104,35 @@ static func update_maneuver_posture(ijfs_state: IjfsDailyState, brigades: Dictio
 		if brigade == null:
 			continue
 		target.posture = "active" if (brigade.moved_last_turn or brigade.fought_last_turn) else "hiding"
+
+
+## MANPADS layer (2026-07-10): Stingers are distributed across TO ground forces, so a TO's pool
+## cannot outlive its infantry. Per TO, survival fraction = alive / total "Maneuver Units" IJFS
+## targets (the engine's own ledger of ground battalions — no new state); each MANPADS bin's
+## systems_remaining is capped at round(systems_represented × fraction). Monotonic (cap only
+## shrinks, usage/bombardment may already hold stock lower — min keeps), idempotent, zero dice.
+static func sync_manpads_to_oob(ijfs_state: IjfsDailyState) -> void:
+	var total_by_to: Dictionary = {}
+	var alive_by_to: Dictionary = {}
+	for target_value in ijfs_state.targets:
+		var target: IjfsTarget = target_value
+		if target.category != "Maneuver Units":
+			continue
+		var to_key := int(target.metadata.get("to_number", 0))
+		total_by_to[to_key] = int(total_by_to.get(to_key, 0)) + 1
+		if not target.destroyed:
+			alive_by_to[to_key] = int(alive_by_to.get(to_key, 0)) + 1
+	for target_value in ijfs_state.targets:
+		var target: IjfsTarget = target_value
+		if target.category != IjfsManpads.CATEGORY or target.destroyed:
+			continue
+		var to_key := int(target.metadata.get("to_number", 0))
+		var total := int(total_by_to.get(to_key, 0))
+		if total == 0:
+			continue
+		var fraction := float(int(alive_by_to.get(to_key, 0))) / float(total)
+		var cap := int(roundf(float(int(target.metadata.get("systems_represented", 0))) * fraction))
+		target.metadata["systems_remaining"] = mini(IjfsManpads.systems_remaining(target), cap)
 
 
 ## D4-H (2d follow-up): keep the live "Maneuver Units" IJFS target count in sync with the OOB
