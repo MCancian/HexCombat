@@ -19,6 +19,13 @@
     --accent: #2a4d8f;
     --code-bg: #f0eee8;
     --shadow: 0 1px 3px rgba(0,0,0,0.12);
+    /* Chart-scoped series colors (validated with the dataviz palette checker against the panel
+       surface; the global --red/--green also paint sitrep borders and map markers, so chart
+       fixes must not touch them). --chart-ghost is deliberately low-contrast: it encodes
+       "future / not yet briefed". */
+    --chart-green: #1f6f43;
+    --chart-red-sea: #d4756f;
+    --chart-ghost: #c9c6be;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -35,6 +42,11 @@
       --accent: #7ea6e0;
       --code-bg: #1a1a19;
       --shadow: 0 1px 4px rgba(0,0,0,0.5);
+      /* Dark chart green is NOT the global --green (#57b98a fails the dataviz lightness band
+         on this surface); #45a97a passes all checks incl. CVD separation vs --red. */
+      --chart-green: #45a97a;
+      --chart-red-sea: #ad5450;
+      --chart-ghost: #4a4945;
     }
   }
   :root[data-theme="dark"] {
@@ -42,12 +54,14 @@
     --line: #3c3b37; --red: #e0605f; --red-fill: #b3413f; --green: #57b98a;
     --green-fill: #2e6b4c; --amber: #d9a441; --accent: #7ea6e0; --code-bg: #1a1a19;
     --shadow: 0 1px 4px rgba(0,0,0,0.5);
+    --chart-green: #45a97a; --chart-red-sea: #ad5450; --chart-ghost: #4a4945;
   }
   :root[data-theme="light"] {
     --bg: #f6f5f2; --panel-bg: #ffffff; --ink: #1c1c1c; --ink-dim: #5a5a5a;
     --line: #d8d5cd; --red: #b3272c; --red-fill: #b3272c; --green: #1f6f43;
     --green-fill: #1f6f43; --amber: #b9860a; --accent: #2a4d8f; --code-bg: #f0eee8;
     --shadow: 0 1px 3px rgba(0,0,0,0.12);
+    --chart-green: #1f6f43; --chart-red-sea: #d4756f; --chart-ghost: #c9c6be;
   }
 
   * { box-sizing: border-box; }
@@ -106,6 +120,8 @@
   .chart-block { margin-bottom: 0.5rem; }
   .chart-title { font-size: 0.75rem; color: var(--ink-dim); margin-bottom: 0.15rem; }
   .chart-svg { width: 100%; height: 70px; display: block; }
+  #casualtyChart { height: 80px; }
+  #casualtyChart g.ghost rect { fill: var(--chart-ghost); }
   .legend-dot { display: inline-block; width: 0.6rem; height: 0.6rem; border-radius: 50%; margin-right: 0.3rem; }
 
   #turnsPane { width: 45%; height: 100vh; display: flex; flex-direction: column; }
@@ -212,13 +228,24 @@
         <div class="chart-title">
           <span class="legend-dot" style="background:var(--red)"></span>China battalions on Taiwan
           &nbsp;vs&nbsp;
-          <span class="legend-dot" style="background:var(--green)"></span>Taiwan battalions on Taiwan
+          <span class="legend-dot" style="background:var(--chart-green)"></span>Taiwan battalions on Taiwan
         </div>
         <svg id="censusChart" class="chart-svg" viewBox="0 0 700 70" preserveAspectRatio="none"></svg>
       </div>
       <div class="chart-block">
         <div class="chart-title">Cumulative PLA ship losses (destroyed + damaged, crossing)</div>
         <svg id="shipChart" class="chart-svg" viewBox="0 0 700 70" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="chart-block">
+        <div class="chart-title">
+          Battalion losses per turn —
+          <span class="legend-dot" style="background:var(--chart-green)"></span>Taiwan
+          &nbsp;·&nbsp;
+          <span class="legend-dot" style="background:var(--red)"></span>China ground
+          &nbsp;·&nbsp;
+          <span class="legend-dot" style="background:var(--chart-red-sea)"></span>China at sea
+        </div>
+        <svg id="casualtyChart" class="chart-svg" viewBox="0 0 700 80" preserveAspectRatio="none"></svg>
       </div>
     </div>
   </div>
@@ -701,7 +728,7 @@ function renderTurn(turnIndex) {
   document.getElementById("turnIndicator").textContent = "Turn " + turn.turn_number;
   renderNarrative(turnIndex);
   updateControls(turnIndex);
-  updateChartMarker(turnIndex);
+  updateCharts(turnIndex);
 }
 
 // ============================================================================================
@@ -914,67 +941,191 @@ function renderCleanupTable(cleanup) {
 }
 
 // ============================================================================================
-// Charts (plain inline SVG, no library)
+// Charts (plain inline SVG, no library) — ghost-future reveal
+//
+// Every chart draws its full series twice: a faint "ghost" pass (the whole game's shape) and a
+// colored "reveal" pass truncated at the current turn, so briefing shows where the war is
+// heading without spoiling how hard. Y-scales come from the FULL series and never change as
+// turns advance.
 // ============================================================================================
-let CENSUS_SERIES = [];
-let SHIP_SERIES = [];
+const CHART_W = 700, CHART_PAD = 4;
+let CHART_REGISTRY = {};   // svgId -> { lines: [{series, color}], xAt, yAt } (line charts only)
+let CASUALTY_SERIES = [];
+
+function chartXAt(i) {
+  const n = TURNS.length;
+  return (n === 1) ? CHART_W / 2 : CHART_PAD + (i / (n - 1)) * (CHART_W - 2 * CHART_PAD);
+}
 
 function buildCharts() {
-  CENSUS_SERIES = TURNS.map(t => {
+  CHART_REGISTRY = {};
+  const censusSeries = TURNS.map(t => {
     const c = (t.digest || {}).cleanup_summary || {};
-    return { turn: t.turn_number, red: c.china_battalions_on_taiwan || 0, green: c.taiwan_battalions_on_taiwan || 0 };
+    return { red: c.china_battalions_on_taiwan || 0, green: c.taiwan_battalions_on_taiwan || 0 };
   });
 
   let cumDestroyed = 0, cumDamaged = 0;
-  SHIP_SERIES = TURNS.map(t => {
+  const shipSeries = TURNS.map(t => {
     const cc = ((t.digest || {}).antiship_summary || {}).crossing_casualties || {};
     cumDestroyed += cc.destroyed || 0;
     cumDamaged += cc.damaged || 0;
-    return { turn: t.turn_number, total: cumDestroyed + cumDamaged };
+    return cumDestroyed + cumDamaged;
   });
 
   drawLineChart("censusChart", [
-    { series: CENSUS_SERIES.map(d => d.red), color: "var(--red)" },
-    { series: CENSUS_SERIES.map(d => d.green), color: "var(--green)" },
+    { series: censusSeries.map(d => d.red), color: "var(--red)" },
+    { series: censusSeries.map(d => d.green), color: "var(--chart-green)" },
   ]);
   drawLineChart("shipChart", [
-    { series: SHIP_SERIES.map(d => d.total), color: "var(--accent)" },
+    { series: shipSeries, color: "var(--accent)" },
   ]);
+
+  CASUALTY_SERIES = computeCasualtySeries();
+  drawCasualtyBars("casualtyChart", CASUALTY_SERIES);
 }
 
 function drawLineChart(svgId, lines) {
   const svg = document.getElementById(svgId);
   svg.innerHTML = "";
-  const W = 700, H = 70, PAD = 4;
+  const H = 70;
   const n = TURNS.length;
   if (n === 0) return;
   let maxVal = 1;
   for (const line of lines) for (const v of line.series) maxVal = Math.max(maxVal, v);
+  const yAt = (v) => H - CHART_PAD - (v / maxVal) * (H - 2 * CHART_PAD);
 
-  const xAt = (i) => (n === 1) ? W / 2 : PAD + (i / (n - 1)) * (W - 2 * PAD);
-  const yAt = (v) => H - PAD - (v / maxVal) * (H - 2 * PAD);
-
-  for (const line of lines) {
-    const pts = line.series.map((v, i) => xAt(i).toFixed(1) + "," + yAt(v).toFixed(1)).join(" ");
+  lines.forEach((line, i) => {
+    const pts = line.series.map((v, j) => chartXAt(j).toFixed(1) + "," + yAt(v).toFixed(1)).join(" ");
     svg.appendChild(svgEl("polyline", {
+      points: pts, fill: "none", stroke: "var(--chart-ghost)", "stroke-width": "1.6",
+    }));
+    svg.appendChild(svgEl("polyline", {
+      id: svgId + "Reveal" + i,
       points: pts, fill: "none", stroke: line.color, "stroke-width": "1.6",
     }));
-  }
-  const marker = svgEl("line", {
+  });
+  svg.appendChild(svgEl("line", {
     id: svgId + "Marker", x1: "0", x2: "0", y1: "0", y2: String(H),
     stroke: "var(--ink-dim)", "stroke-width": "1", "stroke-dasharray": "3,2",
-  });
-  svg.appendChild(marker);
+  }));
+  CHART_REGISTRY[svgId] = { lines, yAt };
 }
 
-function updateChartMarker(turnIndex) {
-  const n = TURNS.length;
+// ---- Battalion casualties per side per turn -------------------------------------------------
+// Derived client-side from the digests (nothing new in the bundle):
+//   Green = combat losses on whichever role its brigades held + battalions killed by IJFS fires
+//           (ijfs_writeback.maneuver_casualties — one entry per battalion).
+//   Red   = combat losses + battalions drowned crossing (antiship_summary.bns_lost_at_sea).
+// crossing_casualties is SHIPS (charted above) — deliberately not counted here.
+function buildTeamIndex() {
+  const teamOf = new Map();
+  for (const turn of TURNS) {
+    for (const sideName of ["Red", "Green"]) {
+      const obs = (turn.sides || {})[sideName]?.observation;
+      for (const b of (obs && obs.brigades) || []) teamOf.set(b.id, b.team);
+    }
+  }
+  return (id) => teamOf.get(id) || (String(id).startsWith("PLA") ? "Red" : "Green");
+}
+
+function computeCasualtySeries() {
+  const teamOf = buildTeamIndex();
+  return TURNS.map(t => {
+    const digest = t.digest || {};
+    let greenLoss = 0, redGround = 0;
+    for (const combat of digest.combat_summaries || []) {
+      const attackerTeam = teamOf((combat.attacker_brigade_ids || [])[0]);
+      const defenderTeam = teamOf((combat.defender_brigade_ids || [])[0]);
+      if (attackerTeam === "Green") greenLoss += combat.attacker_losses || 0;
+      else redGround += combat.attacker_losses || 0;
+      if (defenderTeam === "Green") greenLoss += combat.defender_losses || 0;
+      else redGround += combat.defender_losses || 0;
+    }
+    for (const casualty of (digest.ijfs_writeback || {}).maneuver_casualties || []) {
+      if (teamOf(casualty.brigade_id) === "Green") greenLoss += 1;
+      else redGround += 1;
+    }
+    const redSea = (digest.antiship_summary || {}).bns_lost_at_sea || 0;
+    return { turn: t.turn_number, green: greenLoss, redGround, redSea };
+  });
+}
+
+function drawCasualtyBars(svgId, series) {
+  const svg = document.getElementById(svgId);
+  svg.innerHTML = "";
+  const H = 80;
+  const n = series.length;
   if (n === 0) return;
-  const W = 700, PAD = 4;
-  const x = (n === 1) ? W / 2 : PAD + (turnIndex / (n - 1)) * (W - 2 * PAD);
-  for (const id of ["censusChart", "shipChart"]) {
+  let maxVal = 1;
+  for (const d of series) maxVal = Math.max(maxVal, d.green, d.redGround + d.redSea);
+  const heightOf = (v) => (v / maxVal) * (H - 2 * CHART_PAD);
+  const baseline = H - CHART_PAD;
+  const band = (CHART_W - 2 * CHART_PAD) / n;
+  const barW = Math.max(3, Math.min(10, band * 0.32));
+
+  series.forEach((d, i) => {
+    const group = svgEl("g", { "data-turn-index": String(i) });
+    const title = svgEl("title", {});
+    title.textContent = "Turn " + d.turn + " — Taiwan −" + d.green + " bn · China −"
+      + (d.redGround + d.redSea) + " bn (" + d.redSea + " at sea)";
+    group.appendChild(title);
+
+    const center = chartXAt(i);
+    if (d.green > 0) {
+      group.appendChild(svgEl("rect", {
+        x: (center - barW - 1).toFixed(1), y: (baseline - heightOf(d.green)).toFixed(1),
+        width: barW.toFixed(1), height: heightOf(d.green).toFixed(1),
+        rx: "2", fill: "var(--chart-green)",
+      }));
+    }
+    if (d.redGround > 0) {
+      group.appendChild(svgEl("rect", {
+        x: (center + 1).toFixed(1), y: (baseline - heightOf(d.redGround)).toFixed(1),
+        width: barW.toFixed(1), height: heightOf(d.redGround).toFixed(1),
+        rx: "2", fill: "var(--red)",
+      }));
+    }
+    if (d.redSea > 0) {
+      // Stacked above the ground segment with a 2px surface gap (same-entity second step).
+      group.appendChild(svgEl("rect", {
+        x: (center + 1).toFixed(1),
+        y: (baseline - heightOf(d.redGround) - 2 - heightOf(d.redSea)).toFixed(1),
+        width: barW.toFixed(1), height: heightOf(d.redSea).toFixed(1),
+        rx: "2", fill: "var(--chart-red-sea)",
+      }));
+    }
+    svg.appendChild(group);
+  });
+
+  svg.appendChild(svgEl("line", {
+    x1: String(CHART_PAD), x2: String(CHART_W - CHART_PAD),
+    y1: String(baseline), y2: String(baseline),
+    stroke: "var(--line)", "stroke-width": "1",
+  }));
+  svg.appendChild(svgEl("line", {
+    id: svgId + "Marker", x1: "0", x2: "0", y1: "0", y2: String(H),
+    stroke: "var(--ink-dim)", "stroke-width": "1", "stroke-dasharray": "3,2",
+  }));
+}
+
+function updateCharts(turnIndex) {
+  if (!TURNS || TURNS.length === 0) return;
+  const x = chartXAt(turnIndex).toFixed(1);
+
+  for (const [svgId, chart] of Object.entries(CHART_REGISTRY)) {
+    chart.lines.forEach((line, i) => {
+      const reveal = document.getElementById(svgId + "Reveal" + i);
+      if (!reveal) return;
+      reveal.setAttribute("points", line.series.slice(0, turnIndex + 1)
+        .map((v, j) => chartXAt(j).toFixed(1) + "," + chart.yAt(v).toFixed(1)).join(" "));
+    });
+  }
+  for (const group of document.querySelectorAll("#casualtyChart g[data-turn-index]")) {
+    group.classList.toggle("ghost", Number(group.dataset.turnIndex) > turnIndex);
+  }
+  for (const id of ["censusChart", "shipChart", "casualtyChart"]) {
     const marker = document.getElementById(id + "Marker");
-    if (marker) { marker.setAttribute("x1", x.toFixed(1)); marker.setAttribute("x2", x.toFixed(1)); }
+    if (marker) { marker.setAttribute("x1", x); marker.setAttribute("x2", x); }
   }
 }
 
