@@ -121,10 +121,17 @@ offload → movement & commit → ground combat → front-line → cleanup (+ vi
   [--out=f.json] [--log=f.jsonl]` plays one full LLM-vs-LLM game and writes a record + replay log.
   `HEXCOMBAT_LLM_SIDECAR` overrides the sidecar (e.g. `tools/llm_sidecar_stub.py`, the network-free
   stub used by the gate). LLM decisions are NOT seed-reproducible; the JSONL log is the replay
-  artifact. Use IPv4 (`127.0.0.1`, default) not `localhost`; reasoning models need
-  `HEXCOMBAT_LLM_MAX_TOKENS` headroom (default 8192) or the budget is spent on reasoning before any
-  action. Live-verified against local vLLM (model `jarvis`). (The B2 batch runner is still
-  single-policy — LLM seats run via `run_llm_game.gd`, not yet inside multi-condition batches.)
+  artifact — each entry carries the full observation, the raw model reply, the validated actions,
+  and any sidecar `warnings` (stderr is dropped by the engine's `OS.execute`, so the log is where
+  diagnostics surface). Hardening from the 2026-07-10 live runs: duplicate orders for one brigade
+  are deduped in the sidecar (engine rule mirrored, first order wins); an unparseable reply gets
+  ONE strict "JSON only" retry before forfeiting the turn (rescues reasoning-model token-budget
+  overruns); `HEXCOMBAT_LLM_MAX_TOKENS` default raised 8192→16384 (observed CoT overruns at 8192;
+  DeepSeek-V4-Flash context is 131072 so headroom is cheap). Use IPv4 (`127.0.0.1`, default) not
+  `localhost`. Live-verified against local vLLM (model `jarvis`): seeds 20260710/20260711, both
+  30/30 turns GAME OK; the second (post-fix) run had zero forfeited turns. (The B2 batch runner is
+  still single-policy — LLM seats run via `run_llm_game.gd`, not yet inside multi-condition
+  batches.)
 - **`roc_full_defense` scenario** — variant placing all 32 ROC brigades (124 battalions) at their
   real garrison hexes vs the default's 4 PLA amphibious brigades; select with
   `--scenario=roc_full_defense`. Gives AI-vs-AI games a multi-turn fight instead of the default
@@ -158,6 +165,17 @@ offload → movement & commit → ground combat → front-line → cleanup (+ vi
   hex center when any neighbor hex is occupied (full-size markers are wider than the hex spacing
   and would overlap); an isolated brigade renders full-size with its entry-bearing offset.
   Visual-only — headless gates don't cover it; verify by screenshot.
+- **Post-game reconstruction viewer** — `tools/make_game_bundle.py` (stdlib-only) merges an
+  AI-vs-AI game record (`reports/llm/<name>.json`) with its JSONL replay log into one
+  `<name>.viewer.json` bundle (meta / per-turn digest+actions+observation / per-side 3-line LLM
+  SITREPs / embedded map data); `tools/viewer/game_viewer.html` is a single self-contained
+  scrollytelling page (open directly, no server) — SVG hex map on the left (terrain fill +
+  red/contested perimeter borders + beach glyphs + brigade markers, ported from `HexMap.gd`'s
+  projection/border logic) synced via `IntersectionObserver` to a per-turn narrative (SITREPs,
+  collapsible transcripts, adjudication prose, phase-detail tables) on the right, plus small
+  inline census/ship-loss trend charts. Tolerates older JSONL logs that lack `observation`
+  (degrades to text-only / "no map data this turn" for those turns). Visual-only tool, not part
+  of the canonical gate — verify by opening a bundle in a browser.
 
 **Verification.** The canonical gate — `bash tools/run_all_tests.sh` (Linux; resolves Godot via
 `$GODOT_BIN` else `godot` on PATH) or `pwsh tools/run_all_tests.ps1` (Windows) — runs: import → headless smoke →

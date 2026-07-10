@@ -130,6 +130,34 @@ caveat is resolved.
 
 ## Decisions log (append-only; record every autonomous choice here)
 
+- **2026-07-10 — LLM-sidecar hardening from the first two full DeepSeek-V4-Flash self-play runs
+  (agent judgment; USER call on the token budget).** Live game 20260710 (roc_full_defense, 30/30
+  turns) surfaced four defects, each fixed in `tools/llm_sidecar.py` and verified live in game
+  20260711: (a) the JSONL log lacked the observation — added (with the stub kept in lockstep),
+  making the log the actual replay artifact; (b) duplicate per-brigade orders in one reply hit
+  the engine's one-order-per-brigade rule as ERRORs — sidecar now dedupes (first wins, mirroring
+  `GameState.queue_move`), so logged actions == applied actions; (c) 5/60 turns forfeited to
+  reasoning-token-budget overruns (`content` null at finish_reason=length, fallback grabbed
+  truncated CoT) — one strict "JSON only" retry added, and `DEFAULT_MAX_TOKENS` 8192→16384
+  (USER; model context 131072); (d) sidecar stderr is dropped by `OS.execute(read_stderr=false)`
+  — diagnostics now also land in the JSONL entry's `warnings`. Post-fix run: zero forfeited
+  turns, 1 successful retry, 7 dedupes. **Verification:** `validate_llm_policy` after each edit +
+  full gate; retry path unit-checked with a monkeypatched model.
+
+- **2026-07-10 — Game-reconstruction viewer: bundle-file architecture (USER calls on all
+  presentation choices; Sonnet-5 subagent implementation from a tight brief).** USER picked:
+  reusable interactive viewer (not per-game builds), in-game map look, scrollytelling with
+  sticky map, post-game model-written 3-line commander SITREPs per side per turn (+ collapsible
+  raw transcripts), headline adjudication prose + expandable phase tables, census + ship-loss
+  charts. Shape: `tools/make_game_bundle.py` (stdlib-only) merges record + JSONL + SITREPs
+  (model called at bundle time, same `HEXCOMBAT_LLM_*` contract; `--skip-summaries` for offline)
+  + embedded map statics into one `<name>.viewer.json`; `tools/viewer/game_viewer.html` is a
+  single self-contained file (no CDN) that opens it. Notable subagent decisions kept on review:
+  SITREPs accept only `content` (never the `reasoning` fallback — a truncated CoT wall is worse
+  than null); map projection ported from `MapProjection.gd` (NOT `HexMath.gd`, which is pure
+  graph logic); a side's observation carries BOTH teams' `occupied_hexes`, so the viewer prefers
+  Red's and falls back to Green's. Visual-only tool, outside the canonical gate.
+
 - **2026-07-09 — Default scenario carries the full ROC defense laydown; golden re-baselined
   (USER call: "make sure the default scenario has all Taiwanese brigades on it and correctly
   placed"; agent judgment on mechanics).** `data/scenario_default.json` placements went 4 → all

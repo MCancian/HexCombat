@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HexCombat Game Viewer</title>
+<style>
+  :root {
+    --bg: #f6f5f2;
+    --panel-bg: #ffffff;
+    --ink: #1c1c1c;
+    --ink-dim: #5a5a5a;
+    --line: #d8d5cd;
+    --red: #b3272c;
+    --red-fill: #b3272c;
+    --green: #1f6f43;
+    --green-fill: #1f6f43;
+    --amber: #b9860a;
+    --accent: #2a4d8f;
+    --code-bg: #f0eee8;
+    --shadow: 0 1px 3px rgba(0,0,0,0.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1b1a;
+      --panel-bg: #242422;
+      --ink: #ececec;
+      --ink-dim: #a9a9a4;
+      --line: #3c3b37;
+      --red: #e0605f;
+      --red-fill: #b3413f;
+      --green: #57b98a;
+      --green-fill: #2e6b4c;
+      --amber: #d9a441;
+      --accent: #7ea6e0;
+      --code-bg: #1a1a19;
+      --shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1b1a; --panel-bg: #242422; --ink: #ececec; --ink-dim: #a9a9a4;
+    --line: #3c3b37; --red: #e0605f; --red-fill: #b3413f; --green: #57b98a;
+    --green-fill: #2e6b4c; --amber: #d9a441; --accent: #7ea6e0; --code-bg: #1a1a19;
+    --shadow: 0 1px 4px rgba(0,0,0,0.5);
+  }
+  :root[data-theme="light"] {
+    --bg: #f6f5f2; --panel-bg: #ffffff; --ink: #1c1c1c; --ink-dim: #5a5a5a;
+    --line: #d8d5cd; --red: #b3272c; --red-fill: #b3272c; --green: #1f6f43;
+    --green-fill: #1f6f43; --amber: #b9860a; --accent: #2a4d8f; --code-bg: #f0eee8;
+    --shadow: 0 1px 3px rgba(0,0,0,0.12);
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    /* NOTE: deliberately no overflow-x:hidden here. Setting only overflow-x without overflow-y
+       makes browsers implicitly promote overflow-y to "auto" too (the CSS overflow-pairing
+       rule), which turns html/body into their own scroll container and breaks #mapPane's
+       position:sticky (observed empirically: the map scrolled away with the page instead of
+       sticking). Nothing in this layout should overflow horizontally anyway. */
+  }
+  #dropzone {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg); text-align: center; padding: 2rem;
+  }
+  #dropzone.hidden { display: none; }
+  #dropzone .card {
+    background: var(--panel-bg); border: 2px dashed var(--line); border-radius: 12px;
+    padding: 3rem 4rem; box-shadow: var(--shadow); max-width: 32rem;
+  }
+  #dropzone h1 { font-size: 1.3rem; margin: 0 0 0.5rem; }
+  #dropzone p { color: var(--ink-dim); font-size: 0.95rem; line-height: 1.5; }
+  #dropzone.drag-over .card { border-color: var(--accent); }
+  #fileInput { display: none; }
+  #pickBtn {
+    margin-top: 1rem; padding: 0.5rem 1.2rem; font-size: 0.95rem; cursor: pointer;
+    border: 1px solid var(--accent); background: var(--accent); color: #fff; border-radius: 6px;
+  }
+
+  #app { display: none; }
+  #app.ready { display: flex; align-items: flex-start; }
+
+  #mapPane {
+    position: sticky; top: 0; width: 55%; height: 100vh;
+    display: flex; flex-direction: column;
+    border-right: 1px solid var(--line);
+    background: var(--panel-bg);
+  }
+  #metaBar {
+    padding: 0.6rem 1rem; border-bottom: 1px solid var(--line);
+    font-size: 0.82rem; color: var(--ink-dim); display: flex; justify-content: space-between;
+    flex-wrap: wrap; gap: 0.3rem 1rem;
+  }
+  #metaBar b { color: var(--ink); }
+  #mapWrap { position: relative; flex: 1; min-height: 0; }
+  #mapSvg { width: 100%; height: 100%; display: block; }
+  #noMapNote {
+    position: absolute; top: 0.6rem; left: 0.6rem; right: 0.6rem;
+    background: rgba(185, 134, 10, 0.15); border: 1px solid var(--amber);
+    color: var(--amber); font-size: 0.8rem; padding: 0.35rem 0.6rem; border-radius: 6px;
+    display: none;
+  }
+  #noMapNote.show { display: block; }
+  #chartsRail { border-top: 1px solid var(--line); padding: 0.5rem 1rem 0.7rem; }
+  .chart-block { margin-bottom: 0.5rem; }
+  .chart-title { font-size: 0.75rem; color: var(--ink-dim); margin-bottom: 0.15rem; }
+  .chart-svg { width: 100%; height: 70px; display: block; }
+  .legend-dot { display: inline-block; width: 0.6rem; height: 0.6rem; border-radius: 50%; margin-right: 0.3rem; }
+
+  /* Top/bottom padding ~= half a viewport height: without it, the first/last section can't be
+     scrolled to true vertical center (the browser clamps scrollTop at the document edges), so
+     setupScrollSync's center-distance heuristic would favor a neighboring section instead. */
+  #turnsPane { width: 45%; padding: 48vh 1.4rem 60vh; }
+  section.turn {
+    border-bottom: 1px solid var(--line);
+    padding: 1.2rem 0 1.6rem;
+  }
+  section.turn:first-child { padding-top: 0.2rem; }
+  section.turn h2 {
+    font-size: 1.1rem; margin: 0 0 0.6rem;
+    display: flex; align-items: baseline; gap: 0.6rem;
+  }
+  section.turn h2 .turn-badge {
+    font-size: 0.7rem; color: var(--ink-dim); font-weight: normal;
+  }
+
+  .sitrep {
+    border-left: 3px solid var(--line); padding: 0.4rem 0.8rem; margin-bottom: 0.6rem;
+    background: var(--code-bg); border-radius: 0 6px 6px 0;
+  }
+  .sitrep.red { border-left-color: var(--red); }
+  .sitrep.green { border-left-color: var(--green); }
+  .sitrep .side-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-dim); margin-bottom: 0.15rem; }
+  .sitrep .side-label.red { color: var(--red); }
+  .sitrep .side-label.green { color: var(--green); }
+  .sitrep .lines { font-size: 0.92rem; line-height: 1.45; white-space: pre-wrap; }
+  .sitrep .lines.fallback { font-style: italic; color: var(--ink-dim); }
+
+  details.transcript { margin-top: 0.3rem; }
+  details.transcript summary {
+    cursor: pointer; font-size: 0.75rem; color: var(--accent); user-select: none;
+  }
+  details.transcript pre {
+    white-space: pre-wrap; word-break: break-word; font-size: 0.75rem;
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px;
+    padding: 0.5rem 0.6rem; max-height: 22rem; overflow-y: auto; margin: 0.3rem 0 0;
+  }
+  .warnings { font-size: 0.72rem; color: var(--amber); margin-top: 0.2rem; }
+
+  .adjudication {
+    margin-top: 0.7rem; font-size: 0.9rem; line-height: 1.5;
+  }
+  details.detail-panel { margin-top: 0.4rem; }
+  details.detail-panel summary { cursor: pointer; font-size: 0.75rem; color: var(--accent); user-select: none; }
+  .detail-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin: 0.4rem 0; }
+  .detail-table th, .detail-table td {
+    border: 1px solid var(--line); padding: 0.2rem 0.4rem; text-align: left;
+  }
+  .detail-table th { background: var(--code-bg); }
+  .detail-sub-title { font-size: 0.72rem; color: var(--ink-dim); margin: 0.5rem 0 0.1rem; text-transform: uppercase; letter-spacing: 0.03em; }
+
+  .kbd-hint {
+    position: fixed; bottom: 0.6rem; right: 0.6rem; font-size: 0.7rem; color: var(--ink-dim);
+    background: var(--panel-bg); border: 1px solid var(--line); border-radius: 6px;
+    padding: 0.25rem 0.5rem; opacity: 0.85; z-index: 40;
+  }
+  .curtain-turn-indicator {
+    position: absolute; top: 0.6rem; right: 0.6rem; background: var(--panel-bg);
+    border: 1px solid var(--line); border-radius: 6px; padding: 0.2rem 0.55rem;
+    font-size: 0.85rem; font-weight: 600; box-shadow: var(--shadow);
+  }
+
+  @media (max-width: 900px) {
+    #app.ready { flex-direction: column; }
+    #mapPane { position: relative; width: 100%; height: 70vh; }
+    #turnsPane { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div id="dropzone">
+  <div class="card">
+    <h1>HexCombat Game Viewer</h1>
+    <p>Drop a <code>.viewer.json</code> bundle here, or pick one from disk.<br>
+       Bundles are produced by <code>tools/make_game_bundle.py</code>.</p>
+    <button id="pickBtn" type="button">Choose bundle file…</button>
+    <input id="fileInput" type="file" accept=".json,application/json">
+    <p id="loadError" style="color:var(--red); font-size:0.85rem;"></p>
+  </div>
+</div>
+
+<div id="app">
+  <div id="mapPane">
+    <div id="metaBar"></div>
+    <div id="mapWrap">
+      <svg id="mapSvg" viewBox="0 0 700 1000" preserveAspectRatio="xMidYMid meet"></svg>
+      <div id="noMapNote">No map data this turn — showing last known positions.</div>
+      <div class="curtain-turn-indicator" id="turnIndicator">Turn —</div>
+    </div>
+    <div id="chartsRail">
+      <div class="chart-block">
+        <div class="chart-title">
+          <span class="legend-dot" style="background:var(--red)"></span>China battalions on Taiwan
+          &nbsp;vs&nbsp;
+          <span class="legend-dot" style="background:var(--green)"></span>Taiwan battalions on Taiwan
+        </div>
+        <svg id="censusChart" class="chart-svg" viewBox="0 0 700 70" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="chart-block">
+        <div class="chart-title">Cumulative PLA ship losses (destroyed + damaged, crossing)</div>
+        <svg id="shipChart" class="chart-svg" viewBox="0 0 700 70" preserveAspectRatio="none"></svg>
+      </div>
+    </div>
+  </div>
+  <div id="turnsPane"></div>
+</div>
+<div class="kbd-hint">n / p or ↑ / ↓ — jump turns</div>
+
+<script>
+"use strict";
+
+/* ============================================================================================
+ * HexCombat post-game viewer.
+ *
+ * Reads one *.viewer.json bundle (produced by tools/make_game_bundle.py — meta / turns[] /
+ * sitreps / map_static) and renders a scrollytelling view: an SVG hex map on the left that
+ * re-renders per turn, and a scrolling turn-by-turn narrative on the right.
+ *
+ * Map projection is a straight port of scripts/MapProjection.gd (equirectangular fit with a
+ * fixed margin) — NOT the odd-r axial math in scripts/HexMath.gd (that file is pure grid/graph
+ * logic — neighbor lookups, pathfinding — no pixel coordinates; the game renders hexes from
+ * precomputed lat/lon vertices in data/taiwan_hex_grid.json, projected by MapProjection.gd).
+ * HexMath.gd's odd-r neighbor offsets ARE ported below (NEIGHBOR_OFFSETS_EVEN/ODD) — needed to
+ * find which polygon edge borders which neighbor hex, for the ownership-border pass ported from
+ * scripts/HexMap.gd's _build_ownership_borders/_edges_to_draw/_spawn_hex_border.
+ * ==========================================================================================*/
+
+// ---- Map projection (port of scripts/MapProjection.gd) ------------------------------------
+const LAT_MIN = 21.9, LAT_MAX = 25.3, LON_MIN = 119.9, LON_MAX = 122.1;
+const MARGIN = 0.06;
+const VIEWPORT_W = 700, VIEWPORT_H = 1000;
+
+function makeProjection(viewportW, viewportH) {
+  const meanLat = (LAT_MIN + LAT_MAX) / 2;
+  const lonScale = Math.cos(meanLat * Math.PI / 180);
+  const contentW = (LON_MAX - LON_MIN) * lonScale;
+  const contentH = (LAT_MAX - LAT_MIN);
+  const availW = viewportW * (1 - 2 * MARGIN);
+  const availH = viewportH * (1 - 2 * MARGIN);
+  const scale = Math.min(availW / contentW, availH / contentH);
+  const drawnW = contentW * scale, drawnH = contentH * scale;
+  const originX = (viewportW - drawnW) / 2, originY = (viewportH - drawnH) / 2;
+  return function project(lat, lon) {
+    const x = originX + (lon - LON_MIN) * lonScale * scale;
+    const y = originY + (LAT_MAX - lat) * scale;
+    return [x, y];
+  };
+}
+const project = makeProjection(VIEWPORT_W, VIEWPORT_H);
+
+// ---- Hex neighbor offsets (port of scripts/HexMath.gd odd-r tables) -----------------------
+const NEIGHBOR_OFFSETS_EVEN = [[-1,-1],[-1,0],[0,-1],[0,1],[1,-1],[1,0]];
+const NEIGHBOR_OFFSETS_ODD  = [[-1,0],[-1,1],[0,-1],[0,1],[1,0],[1,1]];
+function neighborCoords(row, col) {
+  const offs = (row & 1) === 1 ? NEIGHBOR_OFFSETS_ODD : NEIGHBOR_OFFSETS_EVEN;
+  return offs.map(([dr, dc]) => [row + dr, col + dc]);
+}
+
+// ---- Ownership border colors (port of HexMap.gd's color_red/_contested ramp) ---------------
+const COLOR_RED = "rgb(255,77,77)";
+const COLOR_CONTESTED_LIGHT = "rgb(255,217,77)";
+const COLOR_CONTESTED_MEDIUM = "rgb(255,153,38)";
+const COLOR_CONTESTED_HEAVY = "rgb(242,89,26)";
+
+function escapeHtml(s) {
+  if (s === null || s === undefined) return "";
+  return String(s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function el(tag, attrs, children) {
+  const e = document.createElement(tag);
+  if (attrs) for (const k in attrs) {
+    if (k === "class") e.className = attrs[k];
+    else if (k === "text") e.textContent = attrs[k];
+    else e.setAttribute(k, attrs[k]);
+  }
+  if (children) for (const c of children) e.appendChild(c);
+  return e;
+}
+function svgEl(tag, attrs) {
+  const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+// ============================================================================================
+// Bundle loading
+// ============================================================================================
+const dropzone = document.getElementById("dropzone");
+const fileInput = document.getElementById("fileInput");
+const pickBtn = document.getElementById("pickBtn");
+const loadError = document.getElementById("loadError");
+const app = document.getElementById("app");
+
+pickBtn.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", () => {
+  if (fileInput.files && fileInput.files[0]) loadFile(fileInput.files[0]);
+});
+["dragenter", "dragover"].forEach(evt =>
+  dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add("drag-over"); }));
+["dragleave", "drop"].forEach(evt =>
+  dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove("drag-over"); }));
+dropzone.addEventListener("drop", (e) => {
+  const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (file) loadFile(file);
+});
+
+function loadFile(file) {
+  loadError.textContent = "";
+  const reader = new FileReader();
+  reader.onload = () => {
+    let bundle;
+    try {
+      bundle = JSON.parse(reader.result);
+    } catch (err) {
+      loadError.textContent = "Could not parse JSON: " + err.message;
+      return;
+    }
+    try {
+      initViewer(bundle);
+      dropzone.classList.add("hidden");
+      app.classList.add("ready");
+    } catch (err) {
+      loadError.textContent = "Bundle loaded but rendering failed: " + err.message;
+      console.error(err);
+    }
+  };
+  reader.onerror = () => { loadError.textContent = "Could not read file."; };
+  reader.readAsText(file);
+}
+
+// ============================================================================================
+// Viewer state + geometry index (built once per bundle)
+// ============================================================================================
+let GEO = null;      // static geometry: per-hex projected vertices, terrain colors, neighbor->edge index
+let TURNS = null;     // bundle.turns, sorted
+let LAST_GOOD = -1;   // index into TURNS of the last turn that had observation data
+
+function initViewer(bundle) {
+  renderMetaBar(bundle.meta || {});
+  GEO = buildGeometry(bundle.map_static || {});
+  TURNS = (bundle.turns || []).slice().sort((a, b) => a.turn_number - b.turn_number);
+
+  spawnHexFills();
+  spawnBeachMarkers();
+  buildTurnSections(bundle);
+  buildCharts();
+  setupScrollSync();
+  setupKeyboardNav();
+
+  if (TURNS.length > 0) {
+    renderTurn(0);
+    document.querySelector("section.turn")?.scrollIntoView({ block: "start" });
+  }
+}
+
+function renderMetaBar(meta) {
+  const bar = document.getElementById("metaBar");
+  bar.innerHTML = "";
+  const left = el("div", {});
+  left.appendChild(el("b", { text: meta.scenario_name || meta.scenario_id || "(scenario unknown)" }));
+  const right = el("div", { class: "ink-dim" });
+  const bits = [];
+  if (meta.model) bits.push("model: " + meta.model);
+  if (meta.base_seed !== undefined) bits.push("seed: " + meta.base_seed);
+  if (meta.turns_played !== undefined) bits.push(meta.turns_played + " turns");
+  if (meta.census) bits.push("census red:" + meta.census.red + " green:" + meta.census.green);
+  if (meta.winner) bits.push("winner: " + meta.winner);
+  else if (meta.game_over === false) bits.push("no decisive winner");
+  right.textContent = bits.join("  ·  ");
+  bar.appendChild(left);
+  bar.appendChild(right);
+}
+
+// ---- Geometry -------------------------------------------------------------------------------
+function buildGeometry(mapStatic) {
+  const hexes = mapStatic.hexes || [];
+  const terrainTypes = mapStatic.terrain_types || {};
+  const hexTerrain = mapStatic.hex_terrain || {};
+  const beaches = mapStatic.beaches || [];
+
+  const byId = new Map();
+  const coordLookup = new Map(); // "row,col" -> hex_id
+  for (const h of hexes) {
+    byId.set(h.id, h);
+    coordLookup.set(h.row + "," + h.col, h.id);
+  }
+
+  const vertices = new Map();   // hex_id -> [[x,y]*6]
+  const centers = new Map();    // hex_id -> [x,y]
+  const radii = new Map();      // hex_id -> estimated radius (px)
+  const fillColor = new Map();  // hex_id -> css color string
+
+  for (const h of hexes) {
+    const verts6 = (h.vertices || []).slice(0, 6).map(v => project(v.lat, v.lon));
+    if (verts6.length < 3) continue;
+    vertices.set(h.id, verts6);
+    const center = project(h.center.lat, h.center.lon);
+    centers.set(h.id, center);
+    let total = 0;
+    for (const v of verts6) total += Math.hypot(v[0] - center[0], v[1] - center[1]);
+    radii.set(h.id, total / verts6.length);
+
+    const cls = hexTerrain[h.id];
+    const terrain = cls ? terrainTypes[cls] : null;
+    fillColor.set(h.id, (terrain && terrain.color) ? terrain.color : "#cfcfcf");
+  }
+
+  // Neighbor -> nearest-edge index (geometry only, turn-invariant). Mirrors HexMap.gd's
+  // _edges_to_draw: each on-grid neighbor claims whichever polygon edge of THIS hex its
+  // projected center sits nearest to.
+  const neighborEdge = new Map(); // hex_id -> [{edge, neighborId}]
+  for (const h of hexes) {
+    const verts6 = vertices.get(h.id);
+    if (!verts6) continue;
+    const claims = [];
+    for (const [nr, nc] of neighborCoords(h.row, h.col)) {
+      const neighborId = coordLookup.get(nr + "," + nc);
+      if (!neighborId || !centers.has(neighborId)) continue; // off-grid/sea -> no claim
+      const nCenter = centers.get(neighborId);
+      let bestEdge = 0, bestDist = Infinity;
+      for (let e = 0; e < 6; e++) {
+        const a = verts6[e], b = verts6[(e + 1) % 6];
+        const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+        const d = Math.hypot(mid[0] - nCenter[0], mid[1] - nCenter[1]);
+        if (d < bestDist) { bestDist = d; bestEdge = e; }
+      }
+      claims.push({ edge: bestEdge, neighborId });
+    }
+    neighborEdge.set(h.id, claims);
+  }
+
+  return { hexes, byId, coordLookup, vertices, centers, radii, fillColor, neighborEdge, beaches };
+}
+
+// ---- Static layers (drawn once): hex fills + beach glyphs -----------------------------------
+const HEX_LAYER = () => document.getElementById("hexLayer");
+function spawnHexFills() {
+  const svg = document.getElementById("mapSvg");
+  svg.innerHTML = "";
+  const hexLayer = svgEl("g", { id: "hexLayer" });
+  const borderLayer = svgEl("g", { id: "borderLayer" });
+  const beachLayer = svgEl("g", { id: "beachLayer" });
+  const brigadeLayer = svgEl("g", { id: "brigadeLayer" });
+  svg.appendChild(hexLayer);
+  svg.appendChild(borderLayer);
+  svg.appendChild(beachLayer);
+  svg.appendChild(brigadeLayer);
+
+  for (const h of GEO.hexes) {
+    const verts = GEO.vertices.get(h.id);
+    if (!verts) continue;
+    const poly = svgEl("polygon", {
+      points: verts.map(v => v[0].toFixed(1) + "," + v[1].toFixed(1)).join(" "),
+      fill: GEO.fillColor.get(h.id),
+      stroke: "rgba(0,0,0,0.35)",
+      "stroke-width": "0.75",
+    });
+    poly.dataset.hexId = h.id;
+    hexLayer.appendChild(poly);
+  }
+}
+
+function spawnBeachMarkers() {
+  const beachLayer = document.getElementById("beachLayer");
+  for (const beach of GEO.beaches) {
+    const center = GEO.centers.get(beach.hex_id);
+    const radius = GEO.radii.get(beach.hex_id);
+    if (!center || !radius) continue;
+    const off = 0.62 * radius;
+    const norm = Math.SQRT1_2; // (-0.55, 0.55) normalized ~= (-1,1)/sqrt(2), matches HexMap.gd
+    const cx = center[0] - norm * off, cy = center[1] + norm * off;
+    const g = svgEl("g", { transform: `translate(${cx.toFixed(1)},${cy.toFixed(1)})` });
+    const size = radius * 0.7;
+    const pts = [[0, -size], [size * 0.87, size * 0.5], [-size * 0.87, size * 0.5]];
+    const tri = svgEl("polygon", {
+      points: pts.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" "),
+      fill: "rgb(13,38,140)", stroke: "white", "stroke-width": "1",
+    });
+    g.appendChild(tri);
+    const label = svgEl("text", {
+      x: "0", y: (size * 0.28).toFixed(1), "text-anchor": "middle",
+      "font-size": Math.max(8, radius * 0.5).toFixed(1),
+      fill: "white", "font-weight": "700",
+    });
+    label.textContent = String(beach.id);
+    g.appendChild(label);
+    beachLayer.appendChild(g);
+  }
+}
+
+// ---- Per-turn layers: ownership borders + brigade markers ------------------------------------
+function pickObservation(turn) {
+  const red = turn.sides && turn.sides.Red;
+  const green = turn.sides && turn.sides.Green;
+  if (red && red.observation) return red.observation;
+  if (green && green.observation) return green.observation;
+  return null;
+}
+
+function ownerMapFromObservation(observation, digest) {
+  const owners = new Map(); // hex_id -> {owner, feba_km}
+  for (const entry of (observation.occupied_hexes || [])) {
+    owners.set(entry.hex_id, { owner: entry.owner, feba_km: entry.feba_km });
+  }
+  // Defensive: contested_hexes from the digest should already be a subset of occupied_hexes'
+  // "contested" entries, but if the digest ever lists one that had no brigade on it this turn,
+  // still border it (feba_km unknown -> ramp defaults to the medium tier).
+  for (const hexId of (digest.contested_hexes || [])) {
+    if (!owners.has(hexId)) owners.set(hexId, { owner: "contested", feba_km: null });
+  }
+  return owners;
+}
+
+function borderColorFor(entry) {
+  if (entry.owner === "red") return COLOR_RED;
+  const feba = entry.feba_km;
+  if (feba === null || feba === undefined) return COLOR_CONTESTED_MEDIUM;
+  if (feba < 2.5) return COLOR_CONTESTED_LIGHT;
+  if (feba < 7.5) return COLOR_CONTESTED_MEDIUM;
+  return COLOR_CONTESTED_HEAVY;
+}
+
+// Port of HexMap.gd's _spawn_hex_border: merge consecutive drawn edges into polylines; an edge
+// is skipped when the neighbor across it is also red/contested (same region -> no seam drawn).
+function renderOwnershipBorders(ownerMap) {
+  const layer = document.getElementById("borderLayer");
+  layer.innerHTML = "";
+
+  for (const [hexId, entry] of ownerMap) {
+    if (entry.owner !== "red" && entry.owner !== "contested") continue;
+    const verts = GEO.vertices.get(hexId);
+    if (!verts) continue;
+
+    const drawEdge = [true, true, true, true, true, true];
+    for (const claim of (GEO.neighborEdge.get(hexId) || [])) {
+      const nEntry = ownerMap.get(claim.neighborId);
+      const nOwner = nEntry ? nEntry.owner : "none";
+      if (nOwner === "red" || nOwner === "contested") drawEdge[claim.edge] = false;
+    }
+
+    const color = borderColorFor(entry);
+    const allDrawn = drawEdge.every(Boolean);
+    if (allDrawn) {
+      addBorderPolyline(layer, verts.concat([verts[0]]), color);
+      continue;
+    }
+    let start = -1;
+    for (let e = 0; e < 6; e++) {
+      if (drawEdge[e] && !drawEdge[(e + 5) % 6]) { start = e; break; }
+    }
+    if (start === -1) continue; // fully enclosed by its own region -> nothing to draw
+
+    let i = 0;
+    while (i < 6) {
+      const e = (start + i) % 6;
+      if (!drawEdge[e]) { i++; continue; }
+      const runPoints = [verts[e]];
+      while (i < 6 && drawEdge[(start + i) % 6]) {
+        const ee = (start + i) % 6;
+        runPoints.push(verts[(ee + 1) % 6]);
+        i++;
+      }
+      addBorderPolyline(layer, runPoints, color);
+    }
+  }
+}
+
+function addBorderPolyline(layer, points, color) {
+  const line = svgEl("polyline", {
+    points: points.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" "),
+    fill: "none", stroke: color, "stroke-width": "3",
+    "stroke-linejoin": "round", "stroke-linecap": "round",
+  });
+  layer.appendChild(line);
+}
+
+function renderBrigadeMarkers(observation) {
+  const layer = document.getElementById("brigadeLayer");
+  layer.innerHTML = "";
+  const groups = new Map(); // hex_id -> [brigade,...]
+  for (const b of (observation.brigades || [])) {
+    if (b.destroyed || !b.hex_id) continue;
+    if (!groups.has(b.hex_id)) groups.set(b.hex_id, []);
+    groups.get(b.hex_id).push(b);
+  }
+  for (const [hexId, brigades] of groups) {
+    const center = GEO.centers.get(hexId);
+    const radius = GEO.radii.get(hexId);
+    if (!center || !radius) continue;
+    brigades.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    const n = brigades.length;
+    for (let i = 0; i < n; i++) {
+      const b = brigades[i];
+      const markerR = Math.max(5, radius * (n === 1 ? 0.34 : 0.24));
+      let mx, my;
+      if (n === 1) {
+        mx = center[0]; my = center[1];
+      } else {
+        const angle = -Math.PI / 2 + (2 * Math.PI * i) / n;
+        mx = center[0] + Math.cos(angle) * radius * 0.45;
+        my = center[1] + Math.sin(angle) * radius * 0.45;
+      }
+      const g = svgEl("g", { transform: `translate(${mx.toFixed(1)},${my.toFixed(1)})` });
+      const isRed = b.team === "Red";
+      const circle = svgEl("circle", {
+        r: markerR.toFixed(1),
+        fill: isRed ? "rgba(216,13,13,0.92)" : "rgba(0,140,26,0.92)",
+        stroke: "white", "stroke-width": "1",
+      });
+      g.appendChild(circle);
+      if (b.battalions !== undefined && b.battalions !== null) {
+        const label = svgEl("text", {
+          x: "0", y: (markerR * 0.35).toFixed(1), "text-anchor": "middle",
+          "font-size": Math.max(7, markerR * 0.9).toFixed(1),
+          fill: "white", "font-weight": "700",
+        });
+        label.textContent = String(b.battalions);
+        g.appendChild(label);
+      }
+      const title = svgEl("title", {});
+      title.textContent = `${b.id} (${b.team}) — ${b.name || ""} — ${b.battalions ?? "?"} bn`;
+      g.appendChild(title);
+      layer.appendChild(g);
+    }
+  }
+}
+
+function renderTurn(turnIndex) {
+  const turn = TURNS[turnIndex];
+  const noMapNote = document.getElementById("noMapNote");
+  const observation = pickObservation(turn);
+
+  if (observation) {
+    const ownerMap = ownerMapFromObservation(observation, turn.digest || {});
+    renderOwnershipBorders(ownerMap);
+    renderBrigadeMarkers(observation);
+    LAST_GOOD = turnIndex;
+    noMapNote.classList.remove("show");
+  } else {
+    // Keep whatever borders/markers are already drawn (from LAST_GOOD) and just flag it.
+    noMapNote.classList.add("show");
+  }
+
+  document.getElementById("turnIndicator").textContent = "Turn " + turn.turn_number;
+  updateChartMarker(turnIndex);
+}
+
+// ============================================================================================
+// Right-column turn sections
+// ============================================================================================
+function buildTurnSections(bundle) {
+  const pane = document.getElementById("turnsPane");
+  pane.innerHTML = "";
+  const sitreps = bundle.sitreps || {};
+
+  TURNS.forEach((turn, idx) => {
+    const section = el("section", { class: "turn" });
+    section.dataset.turnIndex = String(idx);
+    section.id = "turn-" + turn.turn_number;
+
+    const h2 = el("h2", {});
+    h2.appendChild(document.createTextNode("Turn " + turn.turn_number));
+    const badge = el("span", { class: "turn-badge" });
+    const digest = turn.digest || {};
+    if (digest.game_over) badge.textContent = "GAME OVER — " + (digest.winner || "?") + " (" + (digest.victory_reason || "") + ")";
+    h2.appendChild(badge);
+    section.appendChild(h2);
+
+    const turnSitreps = sitreps[String(turn.turn_number)] || {};
+    section.appendChild(buildSitrepBlock("Red", turn.sides.Red, turnSitreps.Red));
+    section.appendChild(buildSitrepBlock("Green", turn.sides.Green, turnSitreps.Green));
+
+    section.appendChild(buildAdjudicationBlock(digest));
+
+    pane.appendChild(section);
+  });
+}
+
+function buildSitrepBlock(sideName, sideEntry, sitrepText) {
+  const cls = sideName.toLowerCase();
+  const block = el("div", { class: "sitrep " + cls });
+  const label = el("div", { class: "side-label " + cls, text: sideName });
+  block.appendChild(label);
+
+  const lines = el("div", { class: "lines" });
+  if (sitrepText) {
+    lines.textContent = sitrepText; // textContent -> safe even though sitrepText is model output
+  } else if (sideEntry && sideEntry.raw_reply) {
+    lines.classList.add("fallback");
+    const excerpt = sideEntry.raw_reply.trim();
+    lines.textContent = excerpt.length > 220 ? excerpt.slice(0, 220) + "…" : (excerpt || "(no orders)");
+  } else {
+    lines.classList.add("fallback");
+    lines.textContent = "(no orders)";
+  }
+  block.appendChild(lines);
+
+  if (sideEntry && Array.isArray(sideEntry.warnings) && sideEntry.warnings.length > 0) {
+    const warn = el("div", { class: "warnings" });
+    warn.textContent = "⚠ " + sideEntry.warnings.join(" · ");
+    block.appendChild(warn);
+  }
+
+  if (sideEntry && sideEntry.raw_reply) {
+    const details = el("details", { class: "transcript" });
+    const summary = el("summary", { text: "Full transcript (" + sideName + ")" });
+    const pre = document.createElement("pre");
+    pre.textContent = sideEntry.raw_reply; // never innerHTML'd — untrusted model text
+    details.appendChild(summary);
+    details.appendChild(pre);
+    if (Array.isArray(sideEntry.actions) && sideEntry.actions.length > 0) {
+      const actionsTitle = el("div", { class: "detail-sub-title", text: "Validated actions" });
+      const actionsPre = document.createElement("pre");
+      actionsPre.textContent = JSON.stringify(sideEntry.actions, null, 2);
+      details.appendChild(actionsTitle);
+      details.appendChild(actionsPre);
+    }
+    block.appendChild(details);
+  }
+
+  return block;
+}
+
+function buildAdjudicationBlock(digest) {
+  const wrap = el("div", { class: "adjudication" });
+  const sentences = composeAdjudicationProse(digest);
+  const p = el("p", {});
+  p.textContent = sentences;
+  wrap.appendChild(p);
+
+  const details = el("details", { class: "detail-panel" });
+  details.appendChild(el("summary", { text: "Phase detail (IJFS / anti-ship / combat / cleanup)" }));
+
+  if (digest.ijfs_summary) details.appendChild(renderIjfsTable(digest.ijfs_summary));
+  if (digest.antiship_summary) details.appendChild(renderAntishipTable(digest.antiship_summary));
+  if (Array.isArray(digest.combat_summaries) && digest.combat_summaries.length > 0) {
+    details.appendChild(renderCombatTable(digest.combat_summaries));
+  }
+  if (digest.cleanup_summary) details.appendChild(renderCleanupTable(digest.cleanup_summary));
+
+  wrap.appendChild(details);
+  return wrap;
+}
+
+function composeAdjudicationProse(digest) {
+  const parts = [];
+  const ijfs = digest.ijfs_summary || {};
+  const attacks = ijfs.attacks || {};
+  if (attacks.executed !== undefined) {
+    const destroyedTotal = sumValues(ijfs.destroyed_targets_by_category);
+    parts.push(`IJFS fired ${attacks.executed} strikes (${attacks.skipped || 0} skipped), destroying ${destroyedTotal} targets across ${Object.keys(ijfs.destroyed_targets_by_category || {}).length} categories.`);
+  }
+  const antiship = digest.antiship_summary || {};
+  const crossing = antiship.crossing_casualties || {};
+  if (crossing.destroyed !== undefined || crossing.damaged !== undefined) {
+    parts.push(`Crossing losses this turn: ${crossing.destroyed || 0} PLA vessels destroyed, ${crossing.damaged || 0} damaged.`);
+  }
+  const combats = digest.combat_summaries || [];
+  if (combats.length > 0) {
+    const hexList = combats.map(c => c.hex_id).filter(Boolean).join(", ");
+    parts.push(`Ground combat resolved at ${combats.length} hex${combats.length === 1 ? "" : "es"} (${hexList}).`);
+  }
+  const cleanup = digest.cleanup_summary || {};
+  if (cleanup.china_battalions_on_taiwan !== undefined) {
+    parts.push(`End-of-turn census: Red ${cleanup.china_battalions_on_taiwan} : Green ${cleanup.taiwan_battalions_on_taiwan} battalions ashore.`);
+  }
+  if (parts.length === 0) return "No adjudication data for this turn.";
+  return parts.join(" ");
+}
+
+function sumValues(obj) {
+  if (!obj) return 0;
+  return Object.values(obj).reduce((a, b) => a + (Number(b) || 0), 0);
+}
+
+function tableFromRows(headers, rows) {
+  const table = el("table", { class: "detail-table" });
+  const thead = el("thead", {});
+  const headRow = el("tr", {});
+  for (const h of headers) headRow.appendChild(el("th", { text: h }));
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+  const tbody = el("tbody", {});
+  for (const row of rows) {
+    const tr = el("tr", {});
+    for (const cell of row) tr.appendChild(el("td", { text: cell === undefined || cell === null ? "" : String(cell) }));
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  return table;
+}
+
+function renderIjfsTable(ijfs) {
+  const wrap = document.createDocumentFragment ? el("div", {}) : el("div", {});
+  wrap.appendChild(el("div", { class: "detail-sub-title", text: "IJFS (integrated joint fires strike)" }));
+  const attacks = ijfs.attacks || {};
+  wrap.appendChild(tableFromRows(
+    ["executed", "skipped"],
+    [[attacks.executed, attacks.skipped]]
+  ));
+  if (ijfs.destroyed_targets_by_category) {
+    wrap.appendChild(el("div", { class: "detail-sub-title", text: "Destroyed targets by category" }));
+    wrap.appendChild(tableFromRows(
+      ["category", "destroyed"],
+      Object.entries(ijfs.destroyed_targets_by_category)
+    ));
+  }
+  return wrap;
+}
+
+function renderAntishipTable(antiship) {
+  const wrap = el("div", {});
+  wrap.appendChild(el("div", { class: "detail-sub-title", text: "Anti-ship (crossing attrition)" }));
+  const crossing = antiship.crossing_casualties || {};
+  wrap.appendChild(tableFromRows(
+    ["destroyed", "damaged", "bns_lost_at_sea"],
+    [[crossing.destroyed, crossing.damaged, antiship.bns_lost_at_sea]]
+  ));
+  if (antiship.destroyed_by_ship_type) {
+    wrap.appendChild(el("div", { class: "detail-sub-title", text: "Destroyed by ship type" }));
+    wrap.appendChild(tableFromRows(
+      ["ship_type", "destroyed"],
+      Object.entries(antiship.destroyed_by_ship_type)
+    ));
+  }
+  return wrap;
+}
+
+function renderCombatTable(combats) {
+  const wrap = el("div", {});
+  wrap.appendChild(el("div", { class: "detail-sub-title", text: "Ground combats" }));
+  wrap.appendChild(tableFromRows(
+    ["hex_id", "attacker(s)", "defender(s)", "result", "attacker losses", "defender losses", "owner after"],
+    combats.map(c => [
+      c.hex_id,
+      (c.attacker_brigade_ids || []).join(", "),
+      (c.defender_brigade_ids || []).join(", "),
+      (c.combat_detail || {}).result,
+      c.attacker_losses,
+      c.defender_losses,
+      c.owner_after,
+    ])
+  ));
+  return wrap;
+}
+
+function renderCleanupTable(cleanup) {
+  const wrap = el("div", {});
+  wrap.appendChild(el("div", { class: "detail-sub-title", text: "Cleanup / census" }));
+  wrap.appendChild(tableFromRows(
+    ["china_bn_on_taiwan", "taiwan_bn_on_taiwan", "game_over", "winner", "victory_reason"],
+    [[cleanup.china_battalions_on_taiwan, cleanup.taiwan_battalions_on_taiwan,
+      cleanup.game_over, cleanup.winner, cleanup.victory_reason]]
+  ));
+  return wrap;
+}
+
+// ============================================================================================
+// Charts (plain inline SVG, no library)
+// ============================================================================================
+let CENSUS_SERIES = [];
+let SHIP_SERIES = [];
+
+function buildCharts() {
+  CENSUS_SERIES = TURNS.map(t => {
+    const c = (t.digest || {}).cleanup_summary || {};
+    return { turn: t.turn_number, red: c.china_battalions_on_taiwan || 0, green: c.taiwan_battalions_on_taiwan || 0 };
+  });
+
+  let cumDestroyed = 0, cumDamaged = 0;
+  SHIP_SERIES = TURNS.map(t => {
+    const cc = ((t.digest || {}).antiship_summary || {}).crossing_casualties || {};
+    cumDestroyed += cc.destroyed || 0;
+    cumDamaged += cc.damaged || 0;
+    return { turn: t.turn_number, total: cumDestroyed + cumDamaged };
+  });
+
+  drawLineChart("censusChart", [
+    { series: CENSUS_SERIES.map(d => d.red), color: "var(--red)" },
+    { series: CENSUS_SERIES.map(d => d.green), color: "var(--green)" },
+  ]);
+  drawLineChart("shipChart", [
+    { series: SHIP_SERIES.map(d => d.total), color: "var(--accent)" },
+  ]);
+}
+
+function drawLineChart(svgId, lines) {
+  const svg = document.getElementById(svgId);
+  svg.innerHTML = "";
+  const W = 700, H = 70, PAD = 4;
+  const n = TURNS.length;
+  if (n === 0) return;
+  let maxVal = 1;
+  for (const line of lines) for (const v of line.series) maxVal = Math.max(maxVal, v);
+
+  const xAt = (i) => (n === 1) ? W / 2 : PAD + (i / (n - 1)) * (W - 2 * PAD);
+  const yAt = (v) => H - PAD - (v / maxVal) * (H - 2 * PAD);
+
+  for (const line of lines) {
+    const pts = line.series.map((v, i) => xAt(i).toFixed(1) + "," + yAt(v).toFixed(1)).join(" ");
+    svg.appendChild(svgEl("polyline", {
+      points: pts, fill: "none", stroke: line.color, "stroke-width": "1.6",
+    }));
+  }
+  const marker = svgEl("line", {
+    id: svgId + "Marker", x1: "0", x2: "0", y1: "0", y2: String(H),
+    stroke: "var(--ink-dim)", "stroke-width": "1", "stroke-dasharray": "3,2",
+  });
+  svg.appendChild(marker);
+}
+
+function updateChartMarker(turnIndex) {
+  const n = TURNS.length;
+  if (n === 0) return;
+  const W = 700, PAD = 4;
+  const x = (n === 1) ? W / 2 : PAD + (turnIndex / (n - 1)) * (W - 2 * PAD);
+  for (const id of ["censusChart", "shipChart"]) {
+    const marker = document.getElementById(id + "Marker");
+    if (marker) { marker.setAttribute("x1", x.toFixed(1)); marker.setAttribute("x2", x.toFixed(1)); }
+  }
+}
+
+// ============================================================================================
+// Scroll sync + keyboard nav
+// ============================================================================================
+let ACTIVE_TURN_INDEX = -1;
+
+// Picks whichever intersecting section's vertical center is closest to the viewport's vertical
+// center — the standard scrollytelling heuristic. (An earlier version picked the section with
+// the highest intersectionRatio, but that disagrees with short sections: a section shorter than
+// the viewport reads ratio=1.0 for a wide range of scroll positions, so ties resolved
+// arbitrarily and jump-navigation could visibly "stick" on the wrong section. Center-distance
+// doesn't have that failure mode, and agrees with scrollIntoView({block:"center"}) by
+// construction — see setupKeyboardNav.)
+function setupScrollSync() {
+  const sections = Array.from(document.querySelectorAll("section.turn"));
+  if (sections.length === 0) return;
+  const visible = new Set();
+
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) visible.add(entry.target);
+      else visible.delete(entry.target);
+    }
+    if (visible.size === 0) return;
+    const viewportCenter = window.innerHeight / 2;
+    let best = null, bestDist = Infinity;
+    for (const target of visible) {
+      const rect = target.getBoundingClientRect();
+      const dist = Math.abs((rect.top + rect.bottom) / 2 - viewportCenter);
+      if (dist < bestDist) { bestDist = dist; best = target; }
+    }
+    if (best) {
+      const idx = Number(best.dataset.turnIndex);
+      if (idx !== ACTIVE_TURN_INDEX) {
+        ACTIVE_TURN_INDEX = idx;
+        renderTurn(idx);
+      }
+    }
+  }, { threshold: [0, 0.25, 0.5, 0.75, 1] });
+
+  for (const s of sections) observer.observe(s);
+}
+
+function setupKeyboardNav() {
+  window.addEventListener("keydown", (e) => {
+    if (!TURNS || TURNS.length === 0) return;
+    let delta = 0;
+    if (e.key === "n" || e.key === "ArrowDown") delta = 1;
+    else if (e.key === "p" || e.key === "ArrowUp") delta = -1;
+    else return;
+    e.preventDefault();
+    const current = ACTIVE_TURN_INDEX >= 0 ? ACTIVE_TURN_INDEX : 0;
+    const next = Math.min(TURNS.length - 1, Math.max(0, current + delta));
+    const target = document.getElementById("turn-" + TURNS[next].turn_number);
+    if (!target) return;
+    // Update state immediately rather than waiting on the IntersectionObserver: a single-turn
+    // scroll jump often lands the section at a ratio that doesn't cross one of its threshold
+    // buckets, so the observer can plateau instead of firing. The observer still re-confirms
+    // (or corrects, if the jump overlaps another section) once scrolling settles.
+    ACTIVE_TURN_INDEX = next;
+    renderTurn(next);
+    // block:"center" (not "start") so the target section's center lands at the viewport
+    // center — exactly what setupScrollSync's center-distance heuristic looks for, so the
+    // observer's next callback agrees with this jump instead of picking a neighboring section.
+    // Instant, not smooth: an animation leaves a window where the observer fires against
+    // mid-flight geometry first (observed empirically with smooth scroll — rapid n/p presses
+    // could race the animation).
+    target.scrollIntoView({ block: "center", behavior: "instant" });
+  });
+}
+</script>
+</body>
+</html>
