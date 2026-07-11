@@ -20,6 +20,7 @@ plan to act, the closeout wasn't done.
 |---|------|----------|--------|
 | 0001 | [Crossing-lethality calibration (D3-D)](0001-crossing-lethality-calibration.md) | High (blocks balance claims) | Exploring |
 | 0002 | [Per-hull escort magazines (D3-B3)](0002-per-hull-escort-magazines.md) | Low (needs ship-ammo subsystem) | Sketch |
+| 0003 | [Combat-summary team attribution](0003-combat-summary-team-attribution.md) | Low (blocked on USER counterattack call) | Sketch |
 
 ## Track-level forward work
 
