@@ -9,6 +9,15 @@ Completed tracks (A decomposition, B1–B6 research harness, C first variant, F 
 current behavior in `docs/STATUS.md`; their history is in `docs/archive/` (PLAN.md Decisions,
 refactor_audit, port_audit).
 
+## Numbered plans queued (see [README.md](README.md))
+
+- **0004 — Port TIV ship-count & crossing model** *(High)*. Sealift is a one-shot fixed reserve
+  that drains by ~turn 3; no follow-on echelon exists, so 27/30 turns run with no crossing. Port
+  the stateful ship / reinforcement model from TaiwanInvasionViewer. `0004-*.md`.
+- **0005 — Game-record inconsistency audit** *(Medium)*. Dispatch brief for an agent to audit
+  `reports/llm/*.viewer.json` for other engine/model inconsistencies (excludes 0004/0003).
+  `0005-*.md`.
+
 ---
 
 ## Track B — Research harness *(primary; one item left)*
