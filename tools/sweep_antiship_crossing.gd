@@ -3,13 +3,15 @@
 #   C:\Godot_v4.7-stable_win64.exe --headless --path C:\Users\mdogg\Desktop\HexCombat -s res://tools/sweep_antiship_crossing.gd
 #
 # Measures the crossing-loss fraction (bns_lost_at_sea / wave_size) for a grid of
-# (exquisite_intel.antiship.initial_count, intel_locked strike-bonus magnitude). Supports the user's
-# ~25% crossing-loss calibration target (docs/archive/0001-crossing-lethality-calibration.md). The
-# strike bonus is the intel_locked_antiship_strike_bonus scenario knob (IjfsLoaders); this tool sets
-# it directly rather than hand-building a strike_probability_modifiers entry. First prints a baseline
-# diagnostic (distinct anti-ship subcategories, intel-locked count, destroyed count) to confirm the
-# warmup is actually locking targets and what the strike bonus would key on, then a 3-point
-# multi-seed reference, then the full grid at N=30 seeds/cell (SWEEP_N_SEEDS).
+# (exquisite_intel.antiship.initial_count, intel_locked strike-bonus magnitude). Produced the
+# golden dial (ic=36, bonus=0.20, ~27.3% mean loss) per
+# docs/archive/0001-crossing-lethality-calibration.md; kept as the harness for any future
+# re-calibration. The strike bonus is the intel_locked_antiship_strike_bonus scenario knob
+# (IjfsLoaders); this tool sets it directly rather than hand-building a strike_probability_modifiers
+# entry. First prints a pre-calibration diagnostic (distinct anti-ship subcategories, intel-locked
+# count, destroyed count) to confirm the warmup is actually locking targets and what the strike
+# bonus would key on, then a 3-point multi-seed reference, then the full grid at N=30 seeds/cell
+# (SWEEP_N_SEEDS).
 extends SceneTree
 
 const SEED := 20260624
@@ -29,19 +31,25 @@ func _initialize() -> void:
 	quit(0)
 
 
-# Configure the in-memory scenario, then run IJFS warmup + anti-ship crossing on the golden seed.
-# Returns the anti-ship summary dict. initial_count<0 leaves the scenario value untouched; bonus==0.0
-# injects no modifier (pure baseline).
-func _run_once(initial_count: int, bonus: float, run_seed: int = SEED) -> Dictionary:
+# Resets to the golden scenario and rebuilds IJFS state on turn 1, returning the mutable scenario
+# dict so the caller can tweak knobs on it before running the warmup (resolve_ijfs_turn).
+func _reset_ijfs_state() -> Dictionary:
 	GameState.reset_to_scenario()
 	GameState.turn_number = 1
 	GameState._rebuild_ijfs_state()  # loads a fresh scenario dict we can mutate before the warmup
-	var scenario: Dictionary = GameState.ijfs_state.scenario
+	return GameState.ijfs_state.scenario
+
+
+# Configure the in-memory scenario, then run IJFS warmup + anti-ship crossing on the golden seed.
+# Returns the anti-ship summary dict. initial_count<0 leaves the scenario value untouched; bonus==0.0
+# injects no modifier (pure golden dial).
+func _run_once(initial_count: int, bonus: float, run_seed: int = SEED) -> Dictionary:
+	var scenario := _reset_ijfs_state()
 	if initial_count >= 0:
 		scenario["prelanding"]["intel"]["exquisite_intel"]["antiship"]["initial_count"] = initial_count
-	# Plan 0001: the strike bonus is now a scenario knob (IjfsLoaders.apply_intel_locked_strike_bonus
-	# synthesizes the modifier); the sweep just sets the scalar and re-runs the synthesis, since
-	# load_scenario already ran once inside _rebuild_ijfs_state() before we mutate the dict here.
+	# The strike bonus is a scenario knob (IjfsLoaders.apply_intel_locked_strike_bonus synthesizes
+	# the modifier); the sweep just sets the scalar and re-runs the synthesis, since load_scenario
+	# already ran once inside _rebuild_ijfs_state() before we mutate the dict here.
 	scenario["intel_locked_antiship_strike_bonus"] = bonus
 	IjfsLoaders.apply_intel_locked_strike_bonus(scenario)
 	GameState.resolve_ijfs_turn(SeededDice.new(run_seed))
@@ -89,9 +97,9 @@ func _stdev(samples: Array[float], mean_val: float) -> float:
 func _multiseed_reference() -> void:
 	var n := 24
 	print("=== MULTI-SEED REFERENCE (mean crossing-loss %% over %d seeds) ===" % n)
-	print("  baseline   ic=8  b=0.00 : %.1f%%" % _mean_loss(8, 0.0, n))
-	print("  more-intel ic=36 b=0.20 : %.1f%%" % _mean_loss(36, 0.2, n))
-	print("  max-intel  ic=73 b=0.80 : %.1f%%" % _mean_loss(73, 0.8, n))
+	print("  pre-calibration ic=8  b=0.00 : %.1f%%" % _mean_loss(8, 0.0, n))
+	print("  golden dial     ic=36 b=0.20 : %.1f%%" % _mean_loss(36, 0.2, n))
+	print("  max-intel       ic=73 b=0.80 : %.1f%%" % _mean_loss(73, 0.8, n))
 	print("")
 
 
@@ -114,7 +122,7 @@ func _loss_pct(summary: Dictionary) -> float:
 
 
 func _baseline_diagnostic() -> void:
-	print("=== BASELINE DIAGNOSTIC (initial_count=8, no bonus) ===")
+	print("=== PRE-CALIBRATION DIAGNOSTIC (initial_count=8, no bonus -- historical pre-plan-0001 default) ===")
 	var summary := _run_once(8, 0.0)
 	# Inspect the post-warmup anti-ship target population.
 	var subcats := {}
@@ -135,7 +143,7 @@ func _baseline_diagnostic() -> void:
 	print("  distinct anti-ship subcategories:")
 	for k in subcats.keys():
 		print("    %3d  %s" % [int(subcats[k]), k])
-	_print_breakdown("  baseline ic=8 b=0.00", summary)
+	_print_breakdown("  pre-calibration ic=8 b=0.00", summary)
 	# The "max intel" case: lock every container and apply a huge precision bonus. Reveals the loss
 	# FLOOR the IJFS anti-ship lever cannot go below (mine losses are independent of it).
 	_print_breakdown("  max-intel ic=73 b=0.80", _run_once(73, 0.8))
@@ -146,9 +154,7 @@ func _baseline_diagnostic() -> void:
 # Isolate the mine-loss FLOOR: kill every anti-ship system via the IJFS writeback so the crossing
 # fires nothing, leaving only mine losses. This is the lower bound the intel lever can never beat.
 func _mines_only_run() -> Dictionary:
-	GameState.reset_to_scenario()
-	GameState.turn_number = 1
-	GameState._rebuild_ijfs_state()
+	_reset_ijfs_state()
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
 	var destroyed_all := {}
 	for system_value in GameState.antiship_systems:
@@ -202,4 +208,4 @@ func _run_sweep() -> void:
 			line += "\t%.1f+/-%.1f" % [m, sd]
 		print(line)
 	print("")
-	print("(golden warmup note: baseline ic=8/no-bonus measured 50.0%% single-seed = 18/36; target ~25%%)")
+	print("(pre-calibration reference: ic=8/no-bonus measured 50.0%% single-seed = 18/36; golden dial is ic=36/b=0.20, ~27.3%%)")

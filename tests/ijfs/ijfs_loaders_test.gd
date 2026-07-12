@@ -136,6 +136,34 @@ func test_intel_locked_strike_bonus_absent_is_noop() -> void:
 	assert_bool(scenario.has("strike_probability_modifiers")).is_false()
 
 
+# Re-applying the knob on a scenario dict it already synthesized into (as
+# tools/sweep_antiship_crossing.gd does when sweeping the bonus across cells on one loaded
+# scenario) must replace the prior entry, not stack a second one alongside it.
+func test_intel_locked_strike_bonus_reapply_replaces_not_stacks() -> void:
+	var scenario := _minimal_scenario({"intel_locked_antiship_strike_bonus": 0.2})
+	IjfsLoaders.apply_intel_locked_strike_bonus(scenario)
+	scenario["intel_locked_antiship_strike_bonus"] = 0.5
+	IjfsLoaders.apply_intel_locked_strike_bonus(scenario)
+	var mods: Array = scenario["strike_probability_modifiers"]
+	var matches := mods.filter(func(m: Dictionary) -> bool:
+		return String(m.get("modifier_id", "")) == "intel_locked_antiship_precision_strike")
+	assert_int(matches.size()).is_equal(1)
+	assert_float(float(matches[0]["value"])).is_equal_approx(0.5, 0.000001)
+
+
+# Re-applying with bonus=0.0 after a nonzero bonus was already synthesized must remove the
+# stale modifier entirely (not merely skip appending a new one).
+func test_intel_locked_strike_bonus_reapply_zero_removes_prior() -> void:
+	var scenario := _minimal_scenario({"intel_locked_antiship_strike_bonus": 0.2})
+	IjfsLoaders.apply_intel_locked_strike_bonus(scenario)
+	scenario["intel_locked_antiship_strike_bonus"] = 0.0
+	IjfsLoaders.apply_intel_locked_strike_bonus(scenario)
+	var mods: Array = scenario["strike_probability_modifiers"]
+	var matches := mods.filter(func(m: Dictionary) -> bool:
+		return String(m.get("modifier_id", "")) == "intel_locked_antiship_precision_strike")
+	assert_int(matches.size()).is_equal(0)
+
+
 func _write_json(file_name: String, payload: Dictionary) -> String:
 	var path := "user://%s" % file_name
 	var file := FileAccess.open(path, FileAccess.WRITE)

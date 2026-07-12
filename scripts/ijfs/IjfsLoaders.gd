@@ -285,22 +285,32 @@ static func load_scenario(path: String) -> Dictionary:
 	return scenario
 
 
+const INTEL_LOCKED_STRIKE_BONUS_MODIFIER_ID := "intel_locked_antiship_precision_strike"
+
+
 ## Calibration knob (plan 0001, crossing-lethality): a scalar add-bonus to strike probability
 ## against exquisite-intel-locked anti-ship coastal launchers. Synthesized into a
 ## strike_probability_modifiers entry here so scenario authors set one number instead of
 ## hand-writing the modifier's match/operation shape. Optional key; default/absent = 0.0 = no
-## bonus (golden-preserving).
+## bonus (golden-preserving). Idempotent: re-running this on a scenario dict it already
+## synthesized into (as tools/sweep_antiship_crossing.gd does, re-applying with a new bonus
+## value each cell) replaces the prior entry rather than stacking a second one.
 static func apply_intel_locked_strike_bonus(scenario: Dictionary) -> void:
 	if not scenario.has("intel_locked_antiship_strike_bonus"):
 		return
 	var bonus := float(scenario["intel_locked_antiship_strike_bonus"])
 	if bonus < -1.0 or bonus > 1.0:
 		_fail("INTEL_LOCKED_STRIKE_BONUS_OUT_OF_RANGE: intel_locked_antiship_strike_bonus=%s" % bonus)
-	if bonus == 0.0:
+	if bonus == 0.0 and not scenario.has("strike_probability_modifiers"):
 		return
 	var modifiers: Array = scenario.get("strike_probability_modifiers", [])
+	modifiers = modifiers.filter(func(m: Dictionary) -> bool:
+		return m.get("modifier_id") != INTEL_LOCKED_STRIKE_BONUS_MODIFIER_ID)
+	if bonus == 0.0:
+		scenario["strike_probability_modifiers"] = modifiers
+		return
 	modifiers.append({
-		"modifier_id": "intel_locked_antiship_precision_strike",
+		"modifier_id": INTEL_LOCKED_STRIKE_BONUS_MODIFIER_ID,
 		"operation": "add",
 		"value": bonus,
 		"match": {"category": "Anti-Ship Systems", "intel_locked": true},
