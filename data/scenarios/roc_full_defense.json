@@ -500,6 +500,69 @@
       "offset_bearing": 270
     }
   ],
+  "amphibious_return_time_turns": 3,
+  "red_followon_reserve": [
+    {
+      "brigade_id": "PLA-72-124-Amphibious",
+      "locked_beach": 1,
+      "beach_hex": "hex_44_16",
+      "offset_bearing": 315
+    },
+    {
+      "brigade_id": "PLA-73-91-Amphibious",
+      "locked_beach": 2,
+      "beach_hex": "hex_44_15",
+      "offset_bearing": 0
+    },
+    {
+      "brigade_id": "PLA-74-125-Amphibious",
+      "locked_beach": 3,
+      "beach_hex": "hex_43_14",
+      "offset_bearing": 0
+    },
+    {
+      "brigade_id": "PLANMC-E-3-Amphibious",
+      "locked_beach": 1,
+      "beach_hex": "hex_44_16",
+      "offset_bearing": 315
+    },
+    {
+      "brigade_id": "PLANMC-E-4-Amphibious",
+      "locked_beach": 2,
+      "beach_hex": "hex_44_15",
+      "offset_bearing": 0
+    },
+    {
+      "brigade_id": "PLANMC-N-5-Amphibious",
+      "locked_beach": 3,
+      "beach_hex": "hex_43_14",
+      "offset_bearing": 0
+    },
+    {
+      "brigade_id": "PLANMC-N-6-Amphibious",
+      "locked_beach": 4,
+      "beach_hex": "hex_43_13",
+      "offset_bearing": 270
+    },
+    {
+      "brigade_id": "PLANMC-S-1-Amphibious",
+      "locked_beach": 1,
+      "beach_hex": "hex_44_16",
+      "offset_bearing": 315
+    },
+    {
+      "brigade_id": "PLANMC-S-2-Amphibious",
+      "locked_beach": 2,
+      "beach_hex": "hex_44_15",
+      "offset_bearing": 0
+    },
+    {
+      "brigade_id": "PLANMC-S-SO-Amphibious",
+      "locked_beach": 3,
+      "beach_hex": "hex_43_14",
+      "offset_bearing": 0
+    }
+  ],
   "placements": [
     {
       "brigade_id": "BDE-21",
