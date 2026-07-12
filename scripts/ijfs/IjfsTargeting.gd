@@ -237,7 +237,10 @@ static func apply_exquisite_intel(
 	if cfg.is_empty():
 		return []
 	var match_category := String(target_category) if target_category != null else config_key
-	var initial := int(cfg.get("initial_count", 0))
+	if not cfg.has("initial_count"):
+		_fail("EXQUISITE_INTEL_MISSING_INITIAL_COUNT: config_key=%s has no initial_count -- a category that opts into exquisite intel must set it (0 is a valid opt-in value; omitting the key silently disabled the whole mechanism project-wide once before, see hexcombat-failure-archaeology)" % config_key)
+		return []  # unreachable once _fail's assert halts a real run; keeps this call site safe if it doesn't
+	var initial := int(cfg["initial_count"])
 	var decay_cfg: Dictionary = cfg.get("decay", {})
 	var synthetic := {"initial_capability": 1.0, "floor": 0.0, "degradation": decay_cfg}
 	var fraction := IjfsDetection.evaluate_isr_source(synthetic, x_day)
