@@ -37,6 +37,9 @@ var coord_lookup: Dictionary = {}  # Vector2i -> hex_id
 var neighbor_lookup: Dictionary = {}  # hex_id -> Array[String]
 var hex_states: Dictionary = {}  # hex_id -> HexState
 var red_ship_reserve: Array = []  # raw scenario dicts: {brigade_id, locked_beach, beach_hex, offset_bearing}
+# Follow-on brigades that embark AFTER the first echelon as ready amphibious lift frees up (plan
+# 0004). Same entry shape as red_ship_reserve; empty in one-shot scenarios (e.g. scenario_default).
+var red_followon_reserve: Array = []
 
 var brigades: Dictionary = {}  # brigade_id -> Brigade
 var brigades_by_hex: Dictionary = {}  # hex_id -> Array[String]
@@ -203,7 +206,8 @@ func load_scenario(path: String) -> void:
 	red_out_of_supply_effectiveness = float(scenario.get("red_out_of_supply_effectiveness", 0.5))
 	var victory_value: Variant = scenario.get("victory", {})
 	victory_config = victory_value if victory_value is Dictionary else {}
-	_parse_red_ship_reserve(scenario.get("red_ship_reserve", []))
+	red_ship_reserve = _parse_ship_reserve_entries(scenario.get("red_ship_reserve", []), "red_ship_reserve")
+	red_followon_reserve = _parse_ship_reserve_entries(scenario.get("red_followon_reserve", []), "red_followon_reserve")
 
 	var count := 0
 	for placement in placements:
@@ -224,38 +228,42 @@ func load_scenario(path: String) -> void:
 	print_debug("Loaded scenario '%s': %d placements" % [scenario_name, count])
 
 
-func _parse_red_ship_reserve(entries) -> void:
-	red_ship_reserve.clear()
+# Validates + normalizes a ship-reserve-shaped scenario list (first echelon or follow-on pool) and
+# returns it; label names the scenario key in error messages. Entries failing validation are skipped
+# (fail loud). Shared by red_ship_reserve and red_followon_reserve (plan 0004) — same contract.
+func _parse_ship_reserve_entries(entries, label: String) -> Array:
+	var parsed: Array = []
 	if not (entries is Array):
-		push_error("Scenario red_ship_reserve must be an Array")
-		return
+		push_error("Scenario %s must be an Array" % label)
+		return parsed
 
 	for entry_value in entries:
 		if not (entry_value is Dictionary):
-			push_error("Scenario red_ship_reserve entry must be a Dictionary")
+			push_error("Scenario %s entry must be a Dictionary" % label)
 			continue
 		var entry: Dictionary = entry_value
 		var brigade_id := String(entry.get("brigade_id", ""))
 		if brigade_id == "":
-			push_error("Scenario red_ship_reserve entry missing brigade_id")
+			push_error("Scenario %s entry missing brigade_id" % label)
 			continue
 		var brigade: Brigade = get_brigade(brigade_id)
 		if brigade == null:
-			push_error("Scenario red_ship_reserve references unknown brigade_id: %s" % brigade_id)
+			push_error("Scenario %s references unknown brigade_id: %s" % [label, brigade_id])
 			continue
 		if brigade.team != Brigade.Team.RED:
-			push_error("Scenario red_ship_reserve references non-Red brigade_id: %s" % brigade_id)
+			push_error("Scenario %s references non-Red brigade_id: %s" % [label, brigade_id])
 			continue
 		var beach_hex := String(entry.get("beach_hex", ""))
 		if beach_hex not in hex_lookup:
-			push_error("Scenario red_ship_reserve references unknown beach_hex: %s" % beach_hex)
+			push_error("Scenario %s references unknown beach_hex: %s" % [label, beach_hex])
 			continue
-		red_ship_reserve.append({
+		parsed.append({
 			"brigade_id": brigade_id,
 			"locked_beach": int(entry.get("locked_beach", 0)),
 			"beach_hex": beach_hex,
 			"offset_bearing": float(entry.get("offset_bearing", 0.0))
 		})
+	return parsed
 
 
 func load_terrain() -> void:

@@ -19,6 +19,10 @@ var orders: Dictionary = {}  # Brigade.Team -> Array[MoveOrder]
 var commitments: Dictionary = {}  # Brigade.Team -> Array[CommitOrder]
 var ship_reserve: Array = []  # OffloadCalculator-ready: [{brigade_id, locked_beach, beach_hex, offset_bearing, bns:[{id,type}]}]
 var fleet: Dictionary = {}  # ship name (String) -> ShipState
+# Cross-turn sealift state (plan 0004): mainland follow-on pool, in-transit cohorts, ship
+# return/reload pipeline, escort SAM magazine. Built at scenario load, advanced by SealiftResolver
+# each turn before the crossing. Null only before the first reset_to_scenario.
+var sealift_state: SealiftState = null
 var pending_lost_at_sea: int = 0
 var supply_state: SupplyState
 var last_contested_hexes: Array[String] = []
@@ -73,6 +77,7 @@ func reset_to_scenario() -> void:
 		Brigade.Team.GREEN: []
 	}
 	_rebuild_ship_reserve()
+	_rebuild_sealift_state()
 	_rebuild_fleet()
 	_rebuild_supply_state()
 	# IJFS state is lazy-loaded on the first resolve_ijfs_turn (it pulls ~500KB of pairings + many
@@ -513,6 +518,12 @@ func _active_red_battalion_units() -> Array:
 
 func _rebuild_ship_reserve() -> void:
 	ship_reserve = ShipReserveBuilder.build(GameData.red_ship_reserve, GameData.brigades)
+
+
+func _rebuild_sealift_state() -> void:
+	# Escort SAM loadout is injected empty until D5 wires the crossing-config loadout; the follow-on
+	# pool + cohorts/return pipeline are live now (plan 0004 D1).
+	sealift_state = SealiftStateBuilder.build(GameData.red_followon_reserve, GameData.brigades, {})
 
 
 func _rebuild_supply_state() -> void:
