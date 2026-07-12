@@ -81,6 +81,13 @@ table here.
 
 Measured, never eyeballed: use/extend the sweep harness pattern (`tools/sweep_antiship_crossing.gd`)
 — fixed seed grid + multi-seed means, report per-knob deltas. Balance targets and lever analyses
-live in docs/plans/ (e.g. plan 0001, the ~25% crossing-loss calibration; deep record in
-docs/archive/PLAN.md). Deliberate
-balance changes are USER calls and re-baseline events.
+live in docs/plans/ (plan 0001, the ~25% crossing-loss calibration, USER-dialed 2026-07-11; deep
+record in docs/archive/PLAN.md). Deliberate balance changes are USER calls and re-baseline events.
+
+`data/ijfs/ijfs_scenario.json.intel_locked_antiship_strike_bonus` (float, golden = 0.20, plan 0001)
+is a calibration knob living in the IJFS data file, NOT `data/scenario_default.json` — the IJFS
+scenario file's path is currently fixed (`IjfsStateBuilder.SCENARIO_PATH`), not per-variant
+selectable via `ScenarioCatalog`, so this knob isn't reachable from a scenario variant yet, only
+by editing the file or mutating it in-memory (as the sweep tool does). `IjfsLoaders.load_scenario`
+synthesizes it into `strike_probability_modifiers` via `apply_intel_locked_strike_bonus`. Paired
+companion lever: `prelanding.intel.exquisite_intel.antiship.initial_count` (golden = 36), same file.

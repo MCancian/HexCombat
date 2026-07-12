@@ -19,6 +19,17 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-11 — Crossing-lethality calibration: dial picked, golden re-baselined (USER, per plan
+  0001).** `intel_locked_antiship_strike_bonus` promoted from an ad-hoc sweep-script modifier to a
+  named scenario knob; ran an N=30/seed sweep grid across it and
+  `exquisite_intel.antiship.initial_count`, USER picked bonus=0.20 / initial_count=36
+  (~27.3% mean crossing loss) over a marginally-closer-to-target alternative. Golden scenario
+  re-baselined to these values; `validate_cleanup.gd`, `validate_golden_victory.gd`, and the
+  `llm_result_after_turn.json` fixture pins moved accordingly (their comments carry the new
+  numbers — never repeated here). Facts: `docs/systems/ijfs.md` → "Strike"; knob details in
+  `hexcombat-config-and-knobs`; plan (now closed):
+  `docs/archive/0001-crossing-lethality-calibration.md`.
+
 - **2026-07-10 — Viewer briefing mode + casualty charts (USER).** Game-report viewer rebuilt
   from scrollytelling to turn-at-a-time briefing (wheel/buttons/keys, in-place narrative swap,
   ghost-future chart reveal) with a new per-side battalion-loss bar chart; bundler gained

@@ -109,6 +109,18 @@ in `IjfsEngine.run_daily`'s header comment — read it for the authoritative dra
 - **Suppression** (if not destroyed): roll `probability_suppressed_if_not_destroyed` from pairing
 - Data tables used: `pairings.json` (base probabilities per munition-target pair),
   `scenario.json` (`strike_probability_modifiers`, `mobile_target_destroy_caps`)
+- **Calibration knob** (plan 0001, crossing-lethality, USER dial-in 2026-07-11):
+  `scenario.intel_locked_antiship_strike_bonus` (float; golden = 0.20) is a scalar add-bonus to
+  strike probability against exquisite-intel-locked anti-ship coastal launchers (category
+  `Anti-Ship Systems`, `intel_locked: true`). `IjfsLoaders.apply_intel_locked_strike_bonus`
+  synthesizes it into a `strike_probability_modifiers` entry
+  (`modifier_id: intel_locked_antiship_precision_strike`) at scenario-load time, so authors set one
+  number instead of hand-writing the modifier's match/operation shape; 0.0 is a no-op. Paired with
+  the companion lever `prelanding.intel.exquisite_intel.antiship.initial_count` (golden = 36), a
+  plain data field read directly by `IjfsTargeting.apply_exquisite_intel` — no code promotion
+  needed, editing the JSON value is sufficient. Together these hit the USER's ~25% mean crossing-loss
+  target (N=30-seed sweep). Sweep tool: `tools/sweep_antiship_crossing.gd`, mutates both in-memory
+  to grid-search without rewriting the file.
 
 ## 5. Warmup — Multi-Day Capability Ramp
 

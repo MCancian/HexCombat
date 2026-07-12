@@ -38,7 +38,10 @@ offload → movement & commit → ground combat → front-line → cleanup (+ vi
   `GameState._inject_supply_effectiveness`.
 - **D3 Anti-ship & mine warfare** — IJFS-fed firing plan → crossing damage (count-based) → **geometric
   mine model** (randomized approach path, dangerous-mine count within `danger_radius`, decoy-sponge
-  transit; knobs in `data/antiship/minefields.json`). Ship losses → BNs lost at sea.
+  transit; knobs in `data/antiship/minefields.json`). Ship losses → BNs lost at sea. Crossing
+  lethality is calibrated to the USER's ~25% target via `data/ijfs/ijfs_scenario.json`'s
+  `intel_locked_antiship_strike_bonus` (0.20) and `prelanding.intel.exquisite_intel.antiship.initial_count`
+  (36) — see `docs/archive/0001-crossing-lethality-calibration.md`.
 - **D4 IJFS** (joint/air-missile fires) — detection → targeting → strike → suppression, with a
   multi-day pre-invasion warmup (exquisite intel) on the first turn. Per-(TO,type) writeback feeds D3.
   **IJFS now also attrits ground forces:** Green/ROC maneuver battalions are IJFS targets

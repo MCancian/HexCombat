@@ -280,8 +280,33 @@ static func load_scenario(path: String) -> Dictionary:
 	for key in REQUIRED_SCENARIO_TOP:
 		if not scenario.has(key):
 			_fail("Scenario missing required section: %s" % key)
+	apply_intel_locked_strike_bonus(scenario)
 	_validate_ijfs_config_blocks(scenario)
 	return scenario
+
+
+## Calibration knob (plan 0001, crossing-lethality): a scalar add-bonus to strike probability
+## against exquisite-intel-locked anti-ship coastal launchers. Synthesized into a
+## strike_probability_modifiers entry here so scenario authors set one number instead of
+## hand-writing the modifier's match/operation shape. Optional key; default/absent = 0.0 = no
+## bonus (golden-preserving).
+static func apply_intel_locked_strike_bonus(scenario: Dictionary) -> void:
+	if not scenario.has("intel_locked_antiship_strike_bonus"):
+		return
+	var bonus := float(scenario["intel_locked_antiship_strike_bonus"])
+	if bonus < -1.0 or bonus > 1.0:
+		_fail("INTEL_LOCKED_STRIKE_BONUS_OUT_OF_RANGE: intel_locked_antiship_strike_bonus=%s" % bonus)
+	if bonus == 0.0:
+		return
+	var modifiers: Array = scenario.get("strike_probability_modifiers", [])
+	modifiers.append({
+		"modifier_id": "intel_locked_antiship_precision_strike",
+		"operation": "add",
+		"value": bonus,
+		"match": {"category": "Anti-Ship Systems", "intel_locked": true},
+		"notes": "Precision-strike bonus vs exquisite-intel-locked coastal launchers (scenario knob intel_locked_antiship_strike_bonus).",
+	})
+	scenario["strike_probability_modifiers"] = modifiers
 
 
 static func load_air_classes(path: String) -> Dictionary:

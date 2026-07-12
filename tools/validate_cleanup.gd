@@ -16,9 +16,10 @@ const RED_MOVER_ID := GoldenScript.RED_MOVER_ID
 const GREEN_DEFENDER_ID := GoldenScript.GREEN_DEFENDER_ID
 const START_HEX := GoldenScript.START_HEX
 const TARGET_HEX := GoldenScript.TARGET_HEX
-# Re-baselined 2026-07-10 for the MANPADS layer (Stinger reclassification changed the IJFS
-# substream draw order; see PLAN.md -> Decisions). Was "casualties=6, feba=0.40".
-const EXPECTED_COMBAT_FINGERPRINT := "casualties=7, feba=-0.16"
+# Re-baselined 2026-07-11 for plan 0001 crossing-lethality dial-in (USER call: intel_locked
+# strike bonus 0.20 + exquisite-intel initial_count 36 change the PLA force landed before the
+# scripted fight, shifting feba). Was "casualties=7, feba=-0.16".
+const EXPECTED_COMBAT_FINGERPRINT := "casualties=7, feba=-0.46"
 
 var _failures: Array[String] = []
 var GameData: Node = null

@@ -239,11 +239,12 @@
       "decoys": [],
       "exquisite_intel": {
         "antiship": {
+          "_comment_initial_count": "Calibration dial (plan 0001, crossing-lethality): USER-picked (2026-07-11) 36, paired with intel_locked_antiship_strike_bonus=0.20 above, mean ~27.3% crossing loss over N=30 seeds. See docs/plans/0001-crossing-lethality-calibration.md.",
           "decay": {
             "half_life_days": 3,
             "mode": "exp_decay"
           },
-          "initial_count": 8,
+          "initial_count": 36,
           "selection": "random"
         },
         "maneuver": {
@@ -489,6 +490,8 @@
     "moveable_and_mobile_targets_require_detection": true,
     "static_targets_bypass_detection": true
   },
+  "intel_locked_antiship_strike_bonus": 0.2,
+  "_comment_intel_locked_antiship_strike_bonus": "Calibration knob (plan 0001, crossing-lethality): scalar add-bonus to strike probability vs exquisite-intel-locked coastal launchers (category Anti-Ship Systems, intel_locked=true). USER-picked dial (2026-07-11): 0.20, paired with prelanding.intel.exquisite_intel.antiship.initial_count=36 below, mean ~27.3% crossing loss over N=30 seeds (see docs/plans/0001-crossing-lethality-calibration.md). Synthesized into strike_probability_modifiers by IjfsLoaders.load_scenario; set directly rather than hand-writing a modifier entry.",
   "strike_probability_modifiers": [
     {
       "modifier_id": "mobile_hiding_fast_bre6_launcher_like",

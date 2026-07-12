@@ -2,11 +2,14 @@
 # Run from the project root:
 #   C:\Godot_v4.7-stable_win64.exe --headless --path C:\Users\mdogg\Desktop\HexCombat -s res://tools/sweep_antiship_crossing.gd
 #
-# Measures the crossing-loss fraction (bns_lost_at_sea / wave_size) on the golden seed for a grid of
+# Measures the crossing-loss fraction (bns_lost_at_sea / wave_size) for a grid of
 # (exquisite_intel.antiship.initial_count, intel_locked strike-bonus magnitude). Supports the user's
-# ~25% crossing-loss calibration target (ORCHESTRATOR_HANDOFF step 2/3). First prints a baseline
+# ~25% crossing-loss calibration target (docs/archive/0001-crossing-lethality-calibration.md). The
+# strike bonus is the intel_locked_antiship_strike_bonus scenario knob (IjfsLoaders); this tool sets
+# it directly rather than hand-building a strike_probability_modifiers entry. First prints a baseline
 # diagnostic (distinct anti-ship subcategories, intel-locked count, destroyed count) to confirm the
-# warmup is actually locking targets and what the strike bonus would key on.
+# warmup is actually locking targets and what the strike bonus would key on, then a 3-point
+# multi-seed reference, then the full grid at N=30 seeds/cell (SWEEP_N_SEEDS).
 extends SceneTree
 
 const SEED := 20260624
@@ -36,16 +39,11 @@ func _run_once(initial_count: int, bonus: float, run_seed: int = SEED) -> Dictio
 	var scenario: Dictionary = GameState.ijfs_state.scenario
 	if initial_count >= 0:
 		scenario["prelanding"]["intel"]["exquisite_intel"]["antiship"]["initial_count"] = initial_count
-	if bonus != 0.0:
-		var mods: Array = scenario.get("strike_probability_modifiers", [])
-		mods.append({
-			"modifier_id": "intel_locked_antiship_precision_strike",
-			"operation": "add",
-			"value": bonus,
-			"match": {"category": "Anti-Ship Systems", "intel_locked": true},
-			"notes": "SWEEP: precision strike vs exquisite-intel-locked coastal launchers.",
-		})
-		scenario["strike_probability_modifiers"] = mods
+	# Plan 0001: the strike bonus is now a scenario knob (IjfsLoaders.apply_intel_locked_strike_bonus
+	# synthesizes the modifier); the sweep just sets the scalar and re-runs the synthesis, since
+	# load_scenario already ran once inside _rebuild_ijfs_state() before we mutate the dict here.
+	scenario["intel_locked_antiship_strike_bonus"] = bonus
+	IjfsLoaders.apply_intel_locked_strike_bonus(scenario)
 	GameState.resolve_ijfs_turn(SeededDice.new(run_seed))
 	# The crossing wave denominator is BNs at sea (ship_reserve), captured BEFORE the phase removes
 	# the lost ones. sent_by_type is ship HULLS -- wrong unit for a BN-loss fraction.
@@ -57,10 +55,35 @@ func _run_once(initial_count: int, bonus: float, run_seed: int = SEED) -> Dictio
 
 # Mean crossing-loss %% over N seeds for one config (cuts the single-seed binary-kill noise).
 func _mean_loss(initial_count: int, bonus: float, n_seeds: int) -> float:
+	var samples := _loss_samples(initial_count, bonus, n_seeds)
 	var acc := 0.0
-	for s in range(n_seeds):
-		acc += _loss_pct(_run_once(initial_count, bonus, SEED + s))
+	for v in samples:
+		acc += v
 	return acc / float(n_seeds)
+
+
+# Per-seed crossing-loss %% samples for one config (common seed set SEED..SEED+n_seeds-1).
+func _loss_samples(initial_count: int, bonus: float, n_seeds: int) -> Array[float]:
+	var samples: Array[float] = []
+	for s in range(n_seeds):
+		samples.append(_loss_pct(_run_once(initial_count, bonus, SEED + s)))
+	return samples
+
+
+func _mean(samples: Array[float]) -> float:
+	var acc := 0.0
+	for v in samples:
+		acc += v
+	return acc / float(samples.size())
+
+
+func _stdev(samples: Array[float], mean_val: float) -> float:
+	if samples.size() < 2:
+		return 0.0
+	var acc := 0.0
+	for v in samples:
+		acc += (v - mean_val) * (v - mean_val)
+	return sqrt(acc / float(samples.size() - 1))
 
 
 func _multiseed_reference() -> void:
@@ -156,10 +179,16 @@ func _print_breakdown(label: String, summary: Dictionary) -> void:
 		crossing_hulls, mine_hulls, total_hulls])
 
 
+const SWEEP_N_SEEDS := 30
+
+
+# Full grid, N=30 seeds/condition (plan 0001 checklist item 2): mean +/- stdev crossing-loss %%
+# per (initial_count, intel_locked strike-bonus) cell, common seed set SEED..SEED+29 across every
+# cell so differences are attributable to the knobs, not seed variance.
 func _run_sweep() -> void:
 	var counts := [0, 2, 4, 8, 12, 16, 24, 36, 50, 73]
 	var bonuses := [0.0, 0.05, 0.1, 0.2, 0.4, 0.8]
-	print("=== SWEEP: crossing-loss %% (rows=initial_count, cols=intel_locked add-bonus) ===")
+	print("=== SWEEP: crossing-loss %% mean+/-stdev over %d seeds (rows=initial_count, cols=intel_locked add-bonus) ===" % SWEEP_N_SEEDS)
 	var header := "ic\\bonus"
 	for b in bonuses:
 		header += "\t%+.2f" % b
@@ -167,8 +196,10 @@ func _run_sweep() -> void:
 	for ic in counts:
 		var line := str(ic)
 		for b in bonuses:
-			var summary := _run_once(ic, b)
-			line += "\t%.1f" % _loss_pct(summary)
+			var samples := _loss_samples(ic, b, SWEEP_N_SEEDS)
+			var m := _mean(samples)
+			var sd := _stdev(samples, m)
+			line += "\t%.1f+/-%.1f" % [m, sd]
 		print(line)
 	print("")
-	print("(golden warmup note: baseline ic=8/no-bonus measured 50.0%% = 18/36; target ~25%%)")
+	print("(golden warmup note: baseline ic=8/no-bonus measured 50.0%% single-seed = 18/36; target ~25%%)")

@@ -4,22 +4,23 @@
 # -> on-Taiwan census -> VictoryConditions. Run by the gate (tools/validate_*.gd).
 #
 # NOTE: since the full ROC defense laydown (2026-07-09, 32 Green brigades) the default scenario
-# CANNOT terminate under empty orders — the census red-win (36 landed PLA battalions vs 88 ROC)
-# can never fire, and two of the four landed brigades sit on uncontested beaches so china never
-# attrites to 0. The pinned outcome is therefore the turn-40 stalemate census. Victory FIRING
-# (both win paths + arming) is covered by tests/victory_conditions_test.gd; the winner ⇔ census
-# consistency check below stays armed in case a future rebalance makes the run terminal again —
-# that would move the pins and must be a deliberate re-baseline.
+# CANNOT terminate under empty orders — the census red-win can never fire, and two of the four
+# landed brigades sit on uncontested beaches so china never attrites to 0. The pinned outcome is
+# therefore the turn-40 stalemate census. Victory FIRING (both win paths + arming) is covered by
+# tests/victory_conditions_test.gd; the winner ⇔ census consistency check below stays armed in
+# case a future rebalance makes the run terminal again — that would move the pins and must be a
+# deliberate re-baseline.
 extends SceneTree
 
 const SEED := GoldenScript.SEED
 const MAX_TURNS := 40
-# Golden pins for the empty-orders self-play at MAX_TURNS (re-baselined 2026-07-09 for the full
-# ROC defense laydown, then 2026-07-10 for the MANPADS layer — interception + the changed IJFS
-# draw order preserve more ROC battalions (88 -> 101); see PLAN.md -> Decisions).
+# Golden pins for the empty-orders self-play at MAX_TURNS (re-baselined 2026-07-11 for plan 0001
+# crossing-lethality dial-in, USER call: intel_locked strike bonus 0.20 + exquisite-intel
+# initial_count 36 lower crossing losses than the old default, landing more PLA battalions; see
+# docs/archive/0001-crossing-lethality-calibration.md and docs/DECISIONS.md).
 const EXPECTED_GAME_OVER := false
-const EXPECTED_CHINA := 22
-const EXPECTED_TAIWAN := 101
+const EXPECTED_CHINA := 25
+const EXPECTED_TAIWAN := 89
 
 var _failures: Array[String] = []
 var GameData: Node = null

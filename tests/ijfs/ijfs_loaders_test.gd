@@ -89,6 +89,53 @@ func test_sam_fallback_by_category() -> void:
 	assert_int(non_sam.sam_score).is_equal(-1)
 
 
+# --- Plan 0001: intel_locked_antiship_strike_bonus scenario knob -------------------------------
+
+func _minimal_scenario(extra: Dictionary) -> Dictionary:
+	var base := {
+		"schema_version": 1,
+		"detection_model": {},
+		"taiwan_air_defense_health": {},
+		"red_aircraft_attrition_and_sead": {},
+		"prelanding": {},
+		"red_firing_capacity": {},
+		"isr_sources": [],
+		"target_release": [],
+		"mobile_target_destroy_caps": {},
+	}
+	for k in extra.keys():
+		base[k] = extra[k]
+	return base
+
+
+func test_intel_locked_strike_bonus_synthesizes_modifier() -> void:
+	var path := _write_json("scenario_bonus.json", _minimal_scenario({"intel_locked_antiship_strike_bonus": 0.2}))
+	var scenario := IjfsLoaders.load_scenario(path)
+	var mods: Array = scenario["strike_probability_modifiers"]
+	var found: Dictionary = {}
+	for m in mods:
+		if String(m.get("modifier_id", "")) == "intel_locked_antiship_precision_strike":
+			found = m
+	assert_bool(found.is_empty()).is_false()
+	assert_float(float(found["value"])).is_equal_approx(0.2, 0.000001)
+	assert_str(found["operation"]).is_equal("add")
+	var match_dict: Dictionary = found["match"]
+	assert_str(match_dict["category"]).is_equal("Anti-Ship Systems")
+	assert_bool(bool(match_dict["intel_locked"])).is_true()
+
+
+func test_intel_locked_strike_bonus_zero_is_noop() -> void:
+	var path := _write_json("scenario_no_bonus.json", _minimal_scenario({"intel_locked_antiship_strike_bonus": 0.0}))
+	var scenario := IjfsLoaders.load_scenario(path)
+	assert_bool(scenario.has("strike_probability_modifiers")).is_false()
+
+
+func test_intel_locked_strike_bonus_absent_is_noop() -> void:
+	var path := _write_json("scenario_absent_bonus.json", _minimal_scenario({}))
+	var scenario := IjfsLoaders.load_scenario(path)
+	assert_bool(scenario.has("strike_probability_modifiers")).is_false()
+
+
 func _write_json(file_name: String, payload: Dictionary) -> String:
 	var path := "user://%s" % file_name
 	var file := FileAccess.open(path, FileAccess.WRITE)
