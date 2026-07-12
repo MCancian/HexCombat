@@ -18,7 +18,6 @@ plan to act, the closeout wasn't done.
 
 | # | Plan | Priority | Status |
 |---|------|----------|--------|
-| 0004 | [Port TIV ship-count & crossing model (sealift gap)](0004-port-ship-crossing-sealift-model.md) | High (invasion stalls after ~turn 3) | Exploring |
 | 0005 | [Game-record inconsistency audit (agent brief)](0005-game-record-inconsistency-audit.md) | Medium | Sketch |
 | 0002 | [Per-hull escort magazines (D3-B3)](0002-per-hull-escort-magazines.md) | Low (needs ship-ammo subsystem) | Sketch |
 | 0003 | [Combat-summary team attribution](0003-combat-summary-team-attribution.md) | Low (blocked on USER counterattack call) | Sketch |
@@ -27,6 +26,7 @@ plan to act, the closeout wasn't done.
 
 | # | Plan | Status |
 |---|------|--------|
+| 0004 | [Port TIV ship-count & crossing model (sealift gap)](../archive/0004-port-ship-crossing-sealift-model.md) | ✅ Shipped 2026-07-12 — cross-turn ship lifecycle + follow-on echelons + escort SAM magazine; facts in `docs/systems/amphibious-offload.md` §8, `docs/DECISIONS.md` |
 | 0001 | [Crossing-lethality calibration (D3-D)](../archive/0001-crossing-lethality-calibration.md) | ✅ Shipped 2026-07-11 — dial-in facts in `docs/systems/ijfs.md`, `hexcombat-config-and-knobs`, `docs/DECISIONS.md` |
 
 ## Track-level forward work

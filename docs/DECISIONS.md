@@ -19,6 +19,20 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-12 — Sustained sealift: cross-turn ship lifecycle + capacity-gated echelons + escort
+  SAM ammo (USER: scope "Both"; plan 0004).** Replaced the one-shot `ship_reserve` + same-turn
+  ship round-trip with a real lifecycle: `SealiftState` (mainland follow-on pool, hull↔BN cohorts,
+  return/reload pipeline, escort SAM magazine) advanced by `SealiftResolver` before the crossing;
+  follow-on echelons embark onto ready amphibious lift (departed-brigades-first). **Semantic change
+  (USER-accepted re-baseline):** a BN now crosses **once** (attrited on its crossing turn, then safe
+  in an offloading cohort) instead of the old phantom re-attrition every turn — `scenario_default`
+  crossing numbers shifted (fixture regenerated). Escort SAM magazine + reload cycle is off by
+  default (seeded only when a scenario sets `escort_reload_time_turns > 0`), so the default pin stays
+  byte-stable. Facts: `docs/systems/amphibious-offload.md` → "Sealift lifecycle"; knobs in
+  `hexcombat-config-and-knobs`; code headers in `scripts/resolvers/SealiftResolver.gd` +
+  `scripts/model/SealiftState.gd`. Evidence: roc_full_defense self-play (seed 20260624) — crossing
+  resumes at turn 6 (was 0 for turns 4–30), red reaches china_majority by turn 9.
+
 - **2026-07-11 — Viewer map box split into theater + front viewports (USER request).** The map
   pane now shows the whole island (theater) beside a zoom (front) cropped to contested/Red hexes +
   their neighbors. Implemented as two `<svg>` `<use>`-ing one shared `<defs>` render, differing

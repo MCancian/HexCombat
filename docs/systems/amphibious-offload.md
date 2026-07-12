@@ -118,10 +118,69 @@ two `ShipLoadingModel` simplifications below diverge, and both are intentional/c
     `configurator.get_unit_transport_weight()`). Documented at `ShipLoadingModel.gd`.
   - `ShipLoadingModel` drops the amphibious-vs-cargo ship-eligibility split (TIV's
     `_ship_can_carry_battalion`; HexCombat: any carrier ships any BN). Line 17-19.
-  - HexCombat has no ship-cycle (no ready/offloading/returning state machine); fleet derivation
-    is a static minimum-lift calculation rather than TIV's live sailing-set assignment.
+  - ~~HexCombat has no ship-cycle~~ **(superseded 2026-07-12, plan 0004 — see §8 Sealift lifecycle).**
+    Ships now cycle ready→sent→offloading→returning→ready and the amphibious-vs-cargo eligibility
+    split is reintroduced for follow-on lift.
 - **Resolved design decision (per PLAN.md:873):** Red starts at sea via `red_ship_reserve` in
   `scenario_default.json` (removed previous beach-hex placement). Four PLA amphibious brigades
   land Day 1 via offload.
 - `lost_at_sea` is threaded through `pending_lost_at_sea` (D3-F writes, D0-C reads) but the
   ship-loss-to-BN-casualty wiring is deferred pending the D3 crossing model integration.
+
+## 8. Sealift lifecycle (plan 0004, 2026-07-12)
+
+Sustained amphibious lift across the game. Replaces the pre-0004 one-shot `ship_reserve` (built once
+at load, only ever shrunk) + same-turn ship round-trip. **Source oracle:** TIV
+`ship_state_service.py`, `ship_transition_service.py`, `ship_readiness_policy.py`, `ship_ammo.py`,
+`manifest_allocator.py` (per-hull SQLite lifecycle, adapted here to per-type aggregate state).
+
+**State — `SealiftState` (`scripts/model/SealiftState.gd`), owned by `GameState`, built by
+`SealiftStateBuilder` at scenario load:**
+- `mainland_pool` — follow-on brigades waiting to embark (same entry shape as `ship_reserve`; from
+  the scenario's `red_followon_reserve`).
+- `cohorts` — in-transit ship groups, each binding the specific hulls loaded in one embark to the
+  BN ids they carry (`state` ∈ `sent`/`offloading`). This binding makes hull-freeing unambiguous.
+- `return_pipeline` — per-ship-type queue of `{count, turns_remaining}`; freed amphibious hulls
+  return to `ready` after `amphibious_return_time_turns`.
+- `escort_sam` / `escort_sam_max` / `escort_sam_threshold` / `escort_reload` — the escort SAM
+  magazine (§ below).
+
+**Turn flow — `SealiftResolver` (`scripts/resolvers/SealiftResolver.gd`), pure + dice-free, runs in
+`GameState.resolve_sealift_turn()` BEFORE the crossing:**
+1. Tick the return/reload pipelines; hulls whose timer hits 0 rejoin `ready`.
+2. **Adopt** any at-sea BN not yet in a cohort (the programmed first echelon on turn 1) into a
+   `sent` cohort via the existing minimum-lift derivation (`ShipLoadingModel.build_sent_snapshots`
+   over the full carrier set — preserves the pre-0004 sent fleet for the default scenario).
+3. **Embark** follow-on BNs onto remaining ready **amphibious** capacity
+   (`ShipLoadingModel.pack_bns_into_hulls`), departed-brigades-first then new brigades in pool
+   order; escorts (capacity 0) always screen and stay `ready` until they reload.
+
+The crossing (`AntishipResolver` / `AntishipCrossing`) attrits exactly the sailing cohorts; losses
+are reported back and `GameState` routes carrier losses to the cohorts and escort losses to the
+ready screen, then reprojects the `ShipState` bins (`ready/surviving_sent/offloading/returning`)
+from `SealiftState` — the single source of truth for where hulls are. Offload drains landed/lost BN
+ids from cohorts; a fully-drained cohort frees its hulls into the return pipeline.
+
+**Cross-once semantics (behavior change vs pre-0004).** A BN now takes anti-ship attrition **once**,
+on its crossing turn, then sits safe in an offloading cohort until beach capacity lands it — instead
+of the old model re-attriting every still-at-sea BN every turn. `scenario_default`'s crossing golden
+was re-baselined accordingly.
+
+**Escort SAM magazine + reload cycle.** Each interception attempt in the crossing consumes one SAM
+from the escort type's magazine (`AntishipCrossing._apply_interception` threads a per-type budget);
+a type at/below its `sam_reload_threshold` diverts to reload for `escort_reload_time_turns` (away
+from the screen — projected as `returning`, `ready = 0`) until refilled to `sam_loadout`. **Off by
+default:** `escort_sam` is seeded only when a scenario sets `escort_reload_time_turns > 0`; an empty
+magazine means unlimited interception (pre-0004 behavior), keeping `scenario_default` byte-stable.
+Loadout/threshold are in `data/antiship/antiship_crossing_config.json` (`escort_interception`).
+
+**Config knobs** (see `hexcombat-config-and-knobs`): scenario `red_followon_reserve`,
+`amphibious_return_time_turns`, `escort_reload_time_turns`; crossing-config `sam_loadout` /
+`sam_reload_threshold` per escort type. `scenario_default` leaves all defaults (empty pool,
+return_time 0, reload_time 0) → one-shot pin; `roc_full_defense` opts in (10-brigade follow-on from
+the ported OOB, return_time 3, escort reload_time 4).
+
+**TIV divergences (intentional):** TIV tracks per-hull `IndividualShip` entities in SQLite with
+per-hull ammo/repair/reload timers; HexCombat models the same lifecycle at the **per-ship-type
+aggregate** level (a whole escort type reloads as a group when its pooled SAM crosses the threshold).
+Damage-driven repair delay is not modelled (freed hulls use a flat return time).

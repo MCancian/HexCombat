@@ -20,8 +20,9 @@ owning EventBus emits, autoload access, cross-phase field assignment, and state 
 interleaves with the next hex's contributor gathering). New phases follow
 `.claude/skills/hexcombat-add-phase-resolver`.
 
-**Turn resolution order** (`resolve_turn`): IJFS air/missile fires → anti-ship crossing → amphibious
-offload → movement & commit → ground combat → front-line → cleanup (+ victory census).
+**Turn resolution order** (`resolve_turn`): IJFS air/missile fires → **sealift (tick ship
+returns + embark the crossing wave)** → anti-ship crossing → amphibious offload → movement & commit
+→ ground combat → front-line → cleanup (+ victory census).
 
 **Phases / subsystems implemented:**
 - **Ground combat** (BOOTS slice M0–M7): movement, commit, combat resolution, FEBA, casualties,
@@ -33,6 +34,12 @@ offload → movement & commit → ground combat → front-line → cleanup (+ vi
 - **D1 Amphibious offload** — ship reserve → beach landing; lands brigades onto beach hexes.
   Every scenario's `red_ship_reserve.beach_hex` must be coastal (< 6 land neighbors) —
   `validate_scenario_data.gd` rejects fully-inland landing hexes.
+- **Sealift lifecycle** (plan 0004, 2026-07-12) — ships cycle ready→sent→offloading→returning→ready
+  (`SealiftState` + `SealiftResolver`); follow-on echelons (`red_followon_reserve`) embark onto
+  ready amphibious lift so crossing sustains across turns instead of draining by ~turn 3. A BN crosses
+  **once** (attrited on its crossing turn, then safe offloading). Escorts carry a cross-turn SAM
+  magazine and cycle to reload when low. Off by default (`scenario_default` = one-shot pin);
+  `roc_full_defense` opts in. Facts: `docs/systems/amphibious-offload.md` → "Sealift lifecycle".
 - **D2 Red DOS supply** — supply pool / effectiveness tracking. An exhausted Red pool now degrades Red
   ground-combat strength (`red_out_of_supply_effectiveness`, default 0.5) via
   `GameState._inject_supply_effectiveness`.
@@ -193,7 +200,8 @@ release).
   `GameState._defender_combat_modifier`'s `* 1.0` situational-modifier slot. See
   `docs/plans/BACKLOG.md`.
 - **Deferred ports** — anti-ship missile pipeline depth (strike-coverage lever), ground-casualty
-  IJFS↔OOB linkage, per-hull escort magazines. See `docs/plans/README.md` (plan index) and
+  IJFS↔OOB linkage; **per-hull** escort magazines (aggregate per-type magazines shipped 2026-07-12,
+  plan 0004; per-hull granularity + damage-driven repair delay still deferred). See `docs/plans/README.md` (plan index) and
   `docs/archive/port_audit.md`.
 - **Refactors** — see `docs/archive/refactor_audit.md` (e.g. victory census should count *present*, not
   OOB, battalions; typed `WarmupContext`/`HexState`).

@@ -29,9 +29,9 @@ re-baseline.
   - hexcombat-docs-and-writing — plan template, numbering, README index, closeout rules.
 
 ## Already diagnosed — do NOT re-investigate
-- Follow-on sealift / "no new forces after ~turn 3": OWNED by plan 0004
-  (docs/plans/0004-port-ship-crossing-sealift-model.md). Root cause is a fixed one-shot ship
-  reserve with no reinforcement. Skip it. If you find evidence that sharpens 0004, note it there.
+- Follow-on sealift / "no new forces after ~turn 3": ✅ FIXED by plan 0004
+  (../archive/0004-port-ship-crossing-sealift-model.md), shipped 2026-07-12 — cross-turn ship
+  lifecycle + follow-on echelons. Was a fixed one-shot ship reserve with no reinforcement. Skip it.
 - "Red never issues a crossing order": expected — there is no crossing action in the LLM API
   (LLMGameAPI.gd accepts only move/commit/end_turn). Not a bug.
 

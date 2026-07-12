@@ -1,7 +1,15 @@
 # 0004 — Port TIV ship-count & crossing model (follow-on sealift gap)
 
-**Status:** Exploring · **Priority:** High — the invasion stalls after ~turn 3; 27 of 30 turns run
-with no crossing at all. USER-endorsed 2026-07-11 as a port gap, not a design question.
+> **✅ Shipped 2026-07-12 (closeout).** Implemented as a cross-turn ship lifecycle + capacity-gated
+> follow-on echelons + aggregate escort SAM magazine (USER scope: "Both"). Durable facts:
+> `docs/systems/amphibious-offload.md` → "Sealift lifecycle"; `docs/DECISIONS.md` (2026-07-12);
+> `docs/STATUS.md`; code headers in `scripts/resolvers/SealiftResolver.gd` + `SealiftState.gd`;
+> knobs in `hexcombat-config-and-knobs`. Tests: `tests/sealift_resolver_test.gd`. The design/
+> investigation body below is kept as history. USER-deferred: per-hull escort granularity +
+> damage-driven repair delay (aggregate-per-type shipped).
+
+**Status:** ✅ Shipped 2026-07-12 (was: Exploring) — the invasion stalled after ~turn 3; crossing
+now resumes at turn 6 with follow-on echelons (roc_full_defense self-play, seed 20260624).
 
 > This plan is a **work order for an agent**. It has two parts: an investigation of the source
 > repo (TaiwanInvasionViewer, "TIV") and a port into HexCombat. Read the whole plan, then start
