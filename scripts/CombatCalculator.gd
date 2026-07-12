@@ -1,16 +1,6 @@
 extends RefCounted
 class_name CombatCalculator
 
-const TERRAIN_MODIFIERS = {
-	"Clear": 1.0,
-	"Suburban": 2.0,
-	"Hilly": 2.0,
-	"Forest": 2.0,
-	"Beach Landing": 3.0,
-	"Urban": 3.0,
-	"Mountainous": 3.0
-}
-
 const SUPPORT_MULTIPLIERS = {
 	"artillery": 0.8,
 	"rocket_artillery": 1.2,
@@ -24,10 +14,10 @@ static func resolve_map_attack(
 	dice: Dice,
 	attacker_units: Array,
 	defender_units: Array,
+	feba_base_km: float,
 	attacker_support: Dictionary = {},
 	defender_support: Dictionary = {},
 	defender_terrain_modifier: float = 1.0,
-	feba_base_km: float = 2.0
 ) -> CombatResult:
 	attacker_support = normalize_support(attacker_support)
 	defender_support = normalize_support(defender_support)

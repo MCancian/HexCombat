@@ -17,7 +17,6 @@ Resolve ground combat when Red and Green brigades occupy the same hex after move
 | `scripts/model/MoveOrder.gd` | Move order: `brigade_id`, `target_hex`, `mode` ("tactical"/"administrative"). |
 | `scripts/model/CommitOrder.gd` | Commit order: `brigade_id`, `target_hex` (no mode — always tactical). |
 | `scripts/Movement.gd` | `move_allowance()`: tactical 1/2, administrative 10/20 based on fast-slow mobility. |
-| `scripts/BOOTSCalculator.gd` | Instance-wrapper compat shim — forwards to `CombatCalculator.resolve_map_attack()`. |
 | `scripts/resolvers/CombatResolver.gd` | Pure per-hex combat core (`resolve_at`): builds maneuver/support forces, injects supply effectiveness, calls `CombatCalculator.resolve_map_attack`, builds the `CombatSummary`. Applies nothing — read its header for the full resolver/`GameState` split rationale. |
 | `scripts/GameState.gd` | Thin turn orchestrator — `resolve_turn()` sequences the resolvers (movement → contested-hex discovery → combat → FEBA retreats → …); `_resolve_combat_at()` gathers per-hex contributors and delegates the dice-consuming core to `CombatResolver.resolve_at`, then applies casualties/FEBA/ownership. |
 

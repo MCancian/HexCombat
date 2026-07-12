@@ -49,12 +49,10 @@ Anything hard-coded that a variant would want to vary is a bug — promote it to
 ## Code-resident constants (single-source rule)
 
 Unit strengths live ONLY in `UnitStats.TYPE_DEFS`; DOS constants only in `DosConsumption.gd`
-(300/150/150); offload only in `OffloadRates.gd`. `CombatCalculator`'s `TERRAIN_MODIFIERS` (an old
-unused string-keyed const, superseded by `data/terrain/terrain_types.json` +
-`GameData.get_terrain` — dead code, left untouched) and `SUPPORT_MULTIPLIERS` are code constants
-today — data-driven promotion is fine if a scenario variant needs them. Known wart:
-`CombatCalculator.gd` carries a stale `feba_base_km=2.0` default param; real callers pass the
-scenario value.
+(300/150/150); offload only in `OffloadRates.gd`. `CombatCalculator.SUPPORT_MULTIPLIERS` is a code
+constant today — data-driven promotion is fine if a scenario variant needs it.
+`CombatCalculator.resolve_map_attack`'s `feba_base_km` is a required param (no default) — real
+callers always pass the scenario value; there is no fallback to silently diverge to.
 
 ## Terrain knobs (Track F)
 

@@ -58,10 +58,10 @@ static func resolve_at(
 		dice,
 		attacker_units,
 		defender_units,
+		feba_base_km,
 		attacker_support,
 		defender_support,
-		defender_terrain_modifier,
-		feba_base_km
+		defender_terrain_modifier
 	)
 
 	var summary := CombatSummary.new()

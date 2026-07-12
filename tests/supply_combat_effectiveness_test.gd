@@ -51,13 +51,13 @@ func test_exhausted_supply_lowers_attacker_strength() -> void:
 	for unit in full:
 		unit["supply_effectiveness"] = 1.0
 	var defenders := [{"type": "Amphibious Infantry Battalion"}]
-	var res_full: CombatResult = CombatCalculator.resolve_map_attack(dice, full, defenders)
+	var res_full: CombatResult = CombatCalculator.resolve_map_attack(dice, full, defenders, 2.0)
 
 	var degraded := _red_units()
 	for unit in degraded:
 		unit["supply_effectiveness"] = GameData.red_out_of_supply_effectiveness
 	var dice2 := SeededDice.new(20260624)
-	var res_degraded: CombatResult = CombatCalculator.resolve_map_attack(dice2, degraded, defenders)
+	var res_degraded: CombatResult = CombatCalculator.resolve_map_attack(dice2, degraded, defenders, 2.0)
 
 	assert_float(res_degraded.attacker_maneuver_strength).is_less(res_full.attacker_maneuver_strength)
 	assert_float(res_degraded.attacker_maneuver_strength).is_equal_approx(
