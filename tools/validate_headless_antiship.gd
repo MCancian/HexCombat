@@ -43,6 +43,7 @@ func _validate_run_and_reconcile() -> void:
 	GameState.reset_to_scenario()
 	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))  # so the (TO,type) suppression join is exercised
+	GameState.resolve_sealift_turn()  # embark/adopt the crossing wave (plan 0004) before the crossing
 	var bns_before := _reserve_bn_count()
 	var summary: Dictionary = GameState.resolve_antiship_turn(SeededDice.new(SEED))
 
@@ -74,11 +75,13 @@ func _validate_determinism() -> void:
 	GameState.reset_to_scenario()
 	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
+	GameState.resolve_sealift_turn()
 	var first := JSON.stringify(GameState.resolve_antiship_turn(SeededDice.new(SEED)))
 
 	GameState.reset_to_scenario()
 	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
+	GameState.resolve_sealift_turn()
 	var second := JSON.stringify(GameState.resolve_antiship_turn(SeededDice.new(SEED)))
 	_assert_true("same seed -> identical anti-ship summary", first == second)
 
@@ -93,6 +96,7 @@ func _validate_c2_suppression_reduces_firing() -> void:
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
 	# Snapshot the deterministic writeback, then find the TO actually under assault.
 	var writeback: Dictionary = GameState.last_ijfs_writeback.to_dict()
+	GameState.resolve_sealift_turn()
 	var probe: Dictionary = GameState.resolve_antiship_turn(SeededDice.new(SEED))
 	var target_tos: Array = probe.get("target_tos", [])
 	if target_tos.is_empty():
@@ -116,6 +120,7 @@ func _fired_count_with_c2(writeback: Dictionary, c2_key: String, suppressed_valu
 	supp[c2_key] = suppressed_value
 	wb["antiship_suppressed_by_type"] = supp
 	GameState.last_ijfs_writeback = IjfsWriteback.from_dict(wb)
+	GameState.resolve_sealift_turn()
 	var summary: Dictionary = GameState.resolve_antiship_turn(SeededDice.new(SEED))
 	return int(summary.get("systems_fired_count", 0))
 

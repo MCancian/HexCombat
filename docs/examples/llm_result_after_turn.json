@@ -2,43 +2,43 @@
 	"errors": [],
 	"observation": {
 		"antiship": {
-			"bns_lost_at_sea": 6,
+			"bns_lost_at_sea": 10,
 			"crossing_casualties": {
-				"damaged": 23,
-				"destroyed": 38
+				"damaged": 25,
+				"destroyed": 39
 			},
 			"destroyed_by_ship_type": {
-				"CG": 8,
-				"Container_Ship": 3,
-				"DDG": 4,
+				"CG": 7,
+				"Container_Ship": 8,
+				"DDG": 7,
 				"Decoys": 40,
-				"FFG": 11,
+				"FFG": 10,
 				"FFL": 12,
-				"Fast_Transport": 3
+				"Fast_Transport": 2
 			},
 			"mine_status": [
 				{
 					"beach_id": 1,
 					"lane_cleared": true,
-					"ships_destroyed": 5,
+					"ships_destroyed": 10,
 					"status_color": "green"
 				},
 				{
 					"beach_id": 2,
 					"lane_cleared": true,
-					"ships_destroyed": 16,
+					"ships_destroyed": 14,
 					"status_color": "green"
 				},
 				{
 					"beach_id": 3,
 					"lane_cleared": true,
-					"ships_destroyed": 9,
+					"ships_destroyed": 14,
 					"status_color": "green"
 				},
 				{
 					"beach_id": 4,
 					"lane_cleared": true,
-					"ships_destroyed": 13,
+					"ships_destroyed": 9,
 					"status_color": "green"
 				}
 			],
@@ -1779,19 +1779,19 @@
 		"ship_reserve": [
 			{
 				"beach_hex": "hex_44_16",
-				"bns_remaining": 2,
+				"bns_remaining": 1,
 				"brigade_id": "PLA-71-2-Amphibious",
 				"locked_beach": 1
 			},
 			{
 				"beach_hex": "hex_44_15",
-				"bns_remaining": 5,
+				"bns_remaining": 3,
 				"brigade_id": "PLA-72-5-Amphibious",
 				"locked_beach": 2
 			},
 			{
 				"beach_hex": "hex_43_14",
-				"bns_remaining": 4,
+				"bns_remaining": 3,
 				"brigade_id": "PLA-73-14-Amphibious",
 				"locked_beach": 3
 			},
@@ -1818,43 +1818,43 @@
 	"seed": 20260624,
 	"turn_result": {
 		"antiship_summary": {
-			"bns_lost_at_sea": 6,
+			"bns_lost_at_sea": 10,
 			"crossing_casualties": {
-				"damaged": 23,
-				"destroyed": 38
+				"damaged": 25,
+				"destroyed": 39
 			},
 			"destroyed_by_ship_type": {
-				"CG": 8,
-				"Container_Ship": 3,
-				"DDG": 4,
+				"CG": 7,
+				"Container_Ship": 8,
+				"DDG": 7,
 				"Decoys": 40,
-				"FFG": 11,
+				"FFG": 10,
 				"FFL": 12,
-				"Fast_Transport": 3
+				"Fast_Transport": 2
 			},
 			"mine_status": [
 				{
 					"beach_id": 1,
 					"lane_cleared": true,
-					"ships_destroyed": 5,
+					"ships_destroyed": 10,
 					"status_color": "green"
 				},
 				{
 					"beach_id": 2,
 					"lane_cleared": true,
-					"ships_destroyed": 16,
+					"ships_destroyed": 14,
 					"status_color": "green"
 				},
 				{
 					"beach_id": 3,
 					"lane_cleared": true,
-					"ships_destroyed": 9,
+					"ships_destroyed": 14,
 					"status_color": "green"
 				},
 				{
 					"beach_id": 4,
 					"lane_cleared": true,
-					"ships_destroyed": 13,
+					"ships_destroyed": 9,
 					"status_color": "green"
 				}
 			],
@@ -1882,7 +1882,7 @@
 		},
 		"cleanup_summary": {
 			"antiship_systems_reset": 50,
-			"china_battalions_on_taiwan": 20,
+			"china_battalions_on_taiwan": 24,
 			"game_over": false,
 			"taiwan_battalions_on_taiwan": 116,
 			"victory_reason": "",
@@ -2237,43 +2237,43 @@
 			},
 			{
 				"data": {
-					"bns_lost_at_sea": 6,
+					"bns_lost_at_sea": 10,
 					"crossing_casualties": {
-						"damaged": 23,
-						"destroyed": 38
+						"damaged": 25,
+						"destroyed": 39
 					},
 					"destroyed_by_ship_type": {
-						"CG": 8,
-						"Container_Ship": 3,
-						"DDG": 4,
+						"CG": 7,
+						"Container_Ship": 8,
+						"DDG": 7,
 						"Decoys": 40,
-						"FFG": 11,
+						"FFG": 10,
 						"FFL": 12,
-						"Fast_Transport": 3
+						"Fast_Transport": 2
 					},
 					"mine_status": [
 						{
 							"beach_id": 1,
 							"lane_cleared": true,
-							"ships_destroyed": 5,
+							"ships_destroyed": 10,
 							"status_color": "green"
 						},
 						{
 							"beach_id": 2,
 							"lane_cleared": true,
-							"ships_destroyed": 16,
+							"ships_destroyed": 14,
 							"status_color": "green"
 						},
 						{
 							"beach_id": 3,
 							"lane_cleared": true,
-							"ships_destroyed": 9,
+							"ships_destroyed": 14,
 							"status_color": "green"
 						},
 						{
 							"beach_id": 4,
 							"lane_cleared": true,
-							"ships_destroyed": 13,
+							"ships_destroyed": 9,
 							"status_color": "green"
 						}
 					],
@@ -2402,7 +2402,7 @@
 			{
 				"data": {
 					"antiship_systems_reset": 50,
-					"china_battalions_on_taiwan": 20,
+					"china_battalions_on_taiwan": 24,
 					"game_over": false,
 					"taiwan_battalions_on_taiwan": 116,
 					"victory_reason": "",

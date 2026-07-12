@@ -26,14 +26,21 @@ const DEFAULT_FIRE_PCT := 100.0
 const C2_SUPPRESSED_FIRE_MULTIPLIER := 0.70
 
 
-## Returns {"summary": AntishipSummary|null (null = no wave at sea, nothing happened),
-## "remaining_ship_reserve": Array, "bn_equiv_lost": int, "accumulator": float}.
+## Returns {"summary": AntishipSummary|null (null = no wave crossing, nothing happened),
+## "lost_ids": Array[String], "destroyed_by_type": Dictionary, "bn_equiv_lost": int,
+## "accumulator": float}. The caller (GameState) applies hull losses to the sealift cohorts + fleet
+## and removes the drowned BNs from the reserve — this pure resolver only computes them (plan 0004 D3).
+##
+## crossing_reserve: the subset of ship_reserve whose BNs actually cross THIS turn (the sealift
+## "sent" cohorts), NOT the whole reserve — offloading BNs are safe ashore and are not re-attrited.
+## sent_by_type: the sailing fleet (cohort carrier hulls + ready escort screen) the sealift phase
+## committed this turn; the crossing model runs attrition against exactly these hulls.
 static func resolve(
 	turn_number: int,
-	ship_reserve: Array,
+	crossing_reserve: Array,
 	antiship_systems: Array,
 	writeback: IjfsWriteback,
-	fleet: Dictionary,
+	sent_by_type: Dictionary,
 	ship_defs: Dictionary,
 	beach_to_to: Dictionary,
 	active_tos: Array,
@@ -41,17 +48,18 @@ static func resolve(
 	lost_at_sea_accumulator: float,
 	dice: Dice,
 ) -> Dictionary:
-	# The crossing wave = BNs still at sea. No wave -> no anti-ship phase.
+	# The crossing wave = BNs sailing this turn (sent cohorts). No wave -> no anti-ship phase.
 	var bns_at_sea: Array = []
 	var beach_set: Dictionary = {}
-	for entry in ship_reserve:
+	for entry in crossing_reserve:
 		for bn in entry.get("bns", []):
 			bns_at_sea.append(bn)
 		beach_set[int(entry.get("locked_beach", 0))] = true
 	if bns_at_sea.is_empty():
 		return {
 			"summary": null,
-			"remaining_ship_reserve": ship_reserve,
+			"lost_ids": [],
+			"destroyed_by_type": {},
 			"bn_equiv_lost": 0,
 			"accumulator": lost_at_sea_accumulator,
 		}
@@ -129,16 +137,18 @@ static func resolve(
 		crossing_config["launch_attrition"], dice)
 	var systems_fired: Array = attrition["systems_fired"]
 
-	# Sent fleet (D3-D BN<->ship mapping) + crossing (D3-B3).
-	var sent := build_sent_fleet(bns_at_sea.size(), ship_defs, fleet)
+	# Sent fleet (D3-D BN<->ship mapping): the sealift phase already committed which hulls sail this
+	# turn, so build the crossing snapshots straight from sent_by_type (deterministic ship_type order)
+	# instead of re-deriving a minimum-lift fleet here (plan 0004 D3).
+	var snapshots := _snapshots_from_sent(sent_by_type)
 	var crossing := AntishipCrossing.resolve_crossing_damage(
-		systems_fired, sent["snapshots"], combat_catalog, crossing_config,
+		systems_fired, snapshots, combat_catalog, crossing_config,
 		target_tos, dice, active_tos, to_adjacency)
 
 	# Combine crossing + mine ship losses; mines run on the surviving crossing fleet pool.
 	var destroyed_by_type: Dictionary = {}
 	var crossing_destroyed: Dictionary = crossing["destroyed_by_ship_type"]
-	var fleet_pool: Dictionary = (sent["sent_by_type"] as Dictionary).duplicate(true)
+	var fleet_pool: Dictionary = sent_by_type.duplicate(true)
 	for t in crossing_destroyed.keys():
 		destroyed_by_type[t] = int(destroyed_by_type.get(t, 0)) + int(crossing_destroyed[t])
 		fleet_pool[t] = maxi(0, int(fleet_pool.get(t, 0)) - int(crossing_destroyed[t]))
@@ -152,16 +162,15 @@ static func resolve(
 		for t in (beach_res["ship_loss_counts"] as Dictionary).keys():
 			destroyed_by_type[t] = int(destroyed_by_type.get(t, 0)) + int(beach_res["ship_loss_counts"][t])
 
-	# Ship losses -> BNs lost at sea (carry the fractional accumulator across turns).
+	# Ship losses -> BNs lost at sea (carry the fractional accumulator across turns). Hull losses are
+	# applied to the sealift cohorts + fleet by the caller; this resolver only reports them.
 	var losses := ShipLoadingModel.resolve_bn_losses(
 		destroyed_by_type, ship_capacity_by_type(ship_defs), bns_at_sea, lost_at_sea_accumulator, dice)
-	var remaining_reserve := remaining_reserve_after_losses(ship_reserve, losses["lost_ids"])
-	apply_ship_losses_to_fleet(fleet, destroyed_by_type)
 
 	var summary := AntishipSummary.new()
 	summary.resolved_turn = turn_number
-	summary.sent_by_type = sent["sent_by_type"]
-	summary.unliftable_bn = int(sent["unliftable_bn"])
+	summary.sent_by_type = sent_by_type.duplicate(true)
+	summary.unliftable_bn = 0
 	summary.systems_fired_count = sum_systems_fired(systems_fired)
 	summary.destroyed_by_ship_type = destroyed_by_type
 	summary.crossing_casualties = crossing["casualty_totals"]
@@ -171,30 +180,25 @@ static func resolve(
 	summary.mine_status = mine_status_summary(mine_res)
 	return {
 		"summary": summary,
-		"remaining_ship_reserve": remaining_reserve,
+		"lost_ids": losses["lost_ids"],
+		"destroyed_by_type": destroyed_by_type,
 		"bn_equiv_lost": int(losses["bn_equiv_lost"]),
 		"accumulator": float(losses["accumulator"]),
 	}
 
 
-## Build the sent crossing fleet inputs from the surviving fleet: carriers (capacity > 0,
-## non-infra) and the escort + decoy screen (capacity 0). Infrastructure ships do not sail.
-static func build_sent_fleet(bn_count: int, ship_defs: Dictionary, fleet: Dictionary) -> Dictionary:
-	var carriers: Array = []
-	var screen: Array = []
-	for ship_def_value in ship_defs.values():
-		var ship_def: ShipDef = ship_def_value
-		if ship_def.infrastructure and not ship_def.is_decoy:
-			continue
-		var state: ShipState = fleet.get(ship_def.name, null)
-		var ready := int(state.ready) if state != null else 0
-		if ready <= 0:
-			continue
-		if ship_def.carrying_capacity_bn_equiv > 0.0:
-			carriers.append({"ship_type": ship_def.name, "capacity": ship_def.carrying_capacity_bn_equiv, "ready": ready})
-		else:
-			screen.append({"ship_type": ship_def.name, "ready": ready})
-	return ShipLoadingModel.build_sent_snapshots(bn_count, carriers, screen)
+## Build crossing snapshots [{ship_type, surviving_sent}] from the sealift-committed sent_by_type,
+## in a deterministic ship_type order so the crossing resolution is reproducible.
+static func _snapshots_from_sent(sent_by_type: Dictionary) -> Array:
+	var types: Array = []
+	for ship_type in sent_by_type.keys():
+		if int(sent_by_type[ship_type]) > 0:
+			types.append(String(ship_type))
+	types.sort()
+	var snapshots: Array = []
+	for ship_type in types:
+		snapshots.append({"ship_type": ship_type, "surviving_sent": int(sent_by_type[ship_type])})
+	return snapshots
 
 
 static func ship_capacity_by_type(ship_defs: Dictionary) -> Dictionary:
@@ -203,22 +207,6 @@ static func ship_capacity_by_type(ship_defs: Dictionary) -> Dictionary:
 		var ship_def: ShipDef = ship_def_value
 		caps[ship_def.name] = ship_def.carrying_capacity_bn_equiv
 	return caps
-
-
-## Apply net ship losses (ready -> destroyed) to the fleet ShipStates, preserving the validate()
-## invariants (the one-turn crossing send/return nets out to a straight ready->destroyed transfer).
-static func apply_ship_losses_to_fleet(fleet: Dictionary, destroyed_by_type: Dictionary) -> void:
-	for ship_type in destroyed_by_type.keys():
-		var state: ShipState = fleet.get(String(ship_type), null)
-		if state == null:
-			continue
-		var lost := mini(int(destroyed_by_type[ship_type]), state.ready)
-		if lost <= 0:
-			continue
-		state.ready -= lost
-		state.destroyed += lost
-		state.fleet_surviving_total -= lost
-		assert(state.validate(), "ShipState invariant broken applying anti-ship losses for %s" % ship_type)
 
 
 ## Remove sunk BNs from the reserve entries (in place) and return the kept entries.

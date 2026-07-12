@@ -96,6 +96,67 @@ static func build_sent_snapshots(bn_count: int, carriers: Array, screen: Array) 
 	}
 
 
+## Fill direction (plan 0004 D2): pack as many BNs as possible ONTO a fixed set of ready amphibious
+## carriers, in the given BN order (caller pre-sorts by embark priority). The inverse of
+## build_sent_snapshots' minimum-lift derivation: there the BN count is fixed and we find the fewest
+## hulls; here the hulls are fixed (what's ready this turn) and we find how many BNs fit. Highest-
+## capacity carriers fill first (ties by ship_type) so the packing is deterministic.
+##
+## Args:
+##   bns: Array of Dictionary {id, type, ...}  -- ordered BN pool to load (priority already applied).
+##   carriers: Array of Dictionary {ship_type:String, capacity:float, ready:int}; capacity > 0.
+##
+## Returns Dictionary:
+##   "loaded_bns":       Array -- the BN dicts that fit (a prefix of `bns`).
+##   "hulls_used_by_type": Dictionary {ship_type -> int} -- amphibious hulls consumed.
+##   "remaining_bns":    Array -- the BN dicts that did not fit (stay on the mainland).
+static func pack_bns_into_hulls(bns: Array, carriers: Array) -> Dictionary:
+	var sorted_carriers: Array = []
+	for c in carriers:
+		var cap := float(c["capacity"])
+		var ready := int(c["ready"])
+		if cap <= 0.0 or ready <= 0:
+			continue
+		sorted_carriers.append({"ship_type": String(c["ship_type"]), "capacity": cap, "ready": ready})
+	sorted_carriers.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if not is_equal_approx(float(a["capacity"]), float(b["capacity"])):
+			return float(a["capacity"]) > float(b["capacity"])
+		return String(a["ship_type"]) < String(b["ship_type"]))
+
+	var hulls_used_by_type: Dictionary = {}
+	var loaded_bns: Array = []
+	var remaining_bns: Array = bns.duplicate()
+
+	# Walk the carriers, filling each hull's BN-equiv capacity from the front of the pool. Every BN is
+	# 1.0 BN-equiv (ShipLoadingModel's abstraction), so a hull of capacity C takes floor(C) BNs; the
+	# fractional remainder is dropped (a half-slot cannot carry a whole BN) -- consistent with the
+	# forward model's integer hull counts.
+	for c in sorted_carriers:
+		if remaining_bns.is_empty():
+			break
+		var cap := float(c["capacity"])
+		var ready := int(c["ready"])
+		var ship_type := String(c["ship_type"])
+		var per_hull := int(floor(cap + 1e-9))
+		if per_hull <= 0:
+			continue
+		var hulls_used := 0
+		while hulls_used < ready and not remaining_bns.is_empty():
+			for _slot in range(per_hull):
+				if remaining_bns.is_empty():
+					break
+				loaded_bns.append(remaining_bns.pop_front())
+			hulls_used += 1
+		if hulls_used > 0:
+			hulls_used_by_type[ship_type] = hulls_used
+
+	return {
+		"loaded_bns": loaded_bns,
+		"hulls_used_by_type": hulls_used_by_type,
+		"remaining_bns": remaining_bns,
+	}
+
+
 ## Backward: convert crossing ship losses into BNs lost at sea.
 ##
 ## Mirrors TIV _apply_casualties: lost_capacity = sum(destroyed[type] * capacity[type]); a fractional

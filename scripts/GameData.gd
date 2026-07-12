@@ -40,6 +40,9 @@ var red_ship_reserve: Array = []  # raw scenario dicts: {brigade_id, locked_beac
 # Follow-on brigades that embark AFTER the first echelon as ready amphibious lift frees up (plan
 # 0004). Same entry shape as red_ship_reserve; empty in one-shot scenarios (e.g. scenario_default).
 var red_followon_reserve: Array = []
+# Turns a freed amphibious hull spends returning/reloading before it is ready to sail again (plan
+# 0004). 0 => hulls re-ready as soon as their cargo is ashore (no cross-turn lift constraint).
+var amphibious_return_time_turns: int = 0
 
 var brigades: Dictionary = {}  # brigade_id -> Brigade
 var brigades_by_hex: Dictionary = {}  # hex_id -> Array[String]
@@ -208,6 +211,7 @@ func load_scenario(path: String) -> void:
 	victory_config = victory_value if victory_value is Dictionary else {}
 	red_ship_reserve = _parse_ship_reserve_entries(scenario.get("red_ship_reserve", []), "red_ship_reserve")
 	red_followon_reserve = _parse_ship_reserve_entries(scenario.get("red_followon_reserve", []), "red_followon_reserve")
+	amphibious_return_time_turns = maxi(0, int(scenario.get("amphibious_return_time_turns", 0)))
 
 	var count := 0
 	for placement in placements:

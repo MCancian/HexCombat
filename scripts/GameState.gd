@@ -40,6 +40,9 @@ var antiship_containers: Array = []
 # Fractional BN-equiv owed from ship losses, carried across turns (ShipLoadingModel.resolve_bn_losses).
 var lost_at_sea_accumulator: float = 0.0
 var last_antiship_summary: AntishipSummary = null
+# The sealift phase's committed sailing fleet this turn (ship_type -> hull count): cohort carriers +
+# ready escort screen. Consumed by resolve_antiship_turn as the crossing fleet (plan 0004).
+var last_sealift_sent_by_type: Dictionary = {}
 var last_frontline_summary: FrontlineSummary = null
 var last_cleanup_summary: CleanupSummary = null
 # Victory state, set in the end-of-turn cleanup census (VictoryConditions). winner: ""/"red"/"green".
@@ -97,6 +100,7 @@ func reset_to_scenario() -> void:
 	antiship_containers = []
 	lost_at_sea_accumulator = 0.0
 	last_antiship_summary = null
+	last_sealift_sent_by_type = {}
 	last_frontline_summary = null
 	last_cleanup_summary = null
 	game_over = false
@@ -166,6 +170,10 @@ func resolve_turn(dice: Dice = null) -> void:
 	# D4-H (2d): IJFS maneuver kills reduce the ground OOB before combat. Deterministic (reads the
 	# writeback the warmup just produced; no dice), so the combat golden stays reproducible.
 	_apply_ijfs_maneuver_casualties()
+	# Sealift (plan 0004): tick the ship return/reload pipeline and embark this turn's wave (first
+	# echelon adopted, follow-on echelons loaded onto ready amphibious lift) BEFORE the crossing, so
+	# the anti-ship phase attrits exactly the hulls that sail. Dice-free -> combat golden unaffected.
+	resolve_sealift_turn()
 	resolve_antiship_turn(dice)
 	resolve_offload_turn(dice)
 
@@ -315,6 +323,15 @@ func resolve_offload_turn(dice: Dice) -> Dictionary:
 	GameData.recompute_hex_ownership()
 
 	var manifest: Dictionary = outcome["manifest"]
+	# Drain the landed BNs from their offloading cohorts; a fully-offloaded cohort frees its hulls
+	# into the return/reload pipeline (or straight back to ready when return time is 0) — plan 0004 D4.
+	var landed_ids: Array = []
+	for landed_value in manifest["manifest_landed"]:
+		landed_ids.append(String((landed_value as Dictionary)["bn_id"]))
+	if sealift_state != null:
+		SealiftResolver.drain_bn_ids(sealift_state, landed_ids, GameData.amphibious_return_time_turns)
+		_project_sealift_onto_fleet()
+
 	manifest["lost_at_sea"] = pending_lost_at_sea
 	# D3-F applies lost_at_sea to the reserve; D0-C only threads the value.
 	pending_lost_at_sea = 0
@@ -431,20 +448,77 @@ func resolve_antiship_turn(dice: Dice) -> Dictionary:
 	for to_num in GameData.active_tos:
 		to_adjacency[to_num] = Theaters.adjacent_tos(to_num)
 
+	# Only the BNs sailing this turn (the sealift "sent" cohorts) cross and take attrition; offloading
+	# BNs are safe ashore. Slice that crossing wave out of the full reserve (plan 0004 D3).
+	var crossing_reserve := _crossing_reserve_from_sent_cohorts()
+
 	var outcome := AntishipResolver.resolve(
-		turn_number, ship_reserve, antiship_systems, last_ijfs_writeback,
-		fleet, GameData.ship_defs, GameData.beach_to_to, GameData.active_tos, to_adjacency,
+		turn_number, crossing_reserve, antiship_systems, last_ijfs_writeback,
+		last_sealift_sent_by_type, GameData.ship_defs, GameData.beach_to_to, GameData.active_tos, to_adjacency,
 		lost_at_sea_accumulator, as_dice)
 	if outcome["summary"] == null:
-		# No wave at sea: nothing fired, no state to apply (pending_lost_at_sea keeps its value).
+		# Nothing crossed this turn: no fires, no state to apply (pending_lost_at_sea keeps its value).
 		return {}
 
 	lost_at_sea_accumulator = float(outcome["accumulator"])
-	ship_reserve = outcome["remaining_ship_reserve"]
+	# Apply hull losses to the sealift cohorts (carriers) + the fleet, then drop drowned BNs from the
+	# reserve AND their cohorts, and flip the surviving crossers to offloading (plan 0004 D3).
+	_apply_crossing_hull_losses(outcome["destroyed_by_type"])
+	var lost_ids: Array = outcome["lost_ids"]
+	ship_reserve = AntishipResolver.remaining_reserve_after_losses(ship_reserve, lost_ids)
+	SealiftResolver.drain_bn_ids(sealift_state, lost_ids, GameData.amphibious_return_time_turns)
+	SealiftResolver.flip_sent_to_offloading(sealift_state)
+	_project_sealift_onto_fleet()
 	register_ship_losses(int(outcome["bn_equiv_lost"]))
 	last_antiship_summary = outcome["summary"]
 	EventBus.antiship_resolved.emit(last_antiship_summary.to_dict())
 	return last_antiship_summary.to_dict()
+
+
+## The subset of ship_reserve whose BNs are bound to a "sent" cohort (crossing this turn), with each
+## kept entry trimmed to just those BNs. Empty when nothing sails.
+func _crossing_reserve_from_sent_cohorts() -> Array:
+	var sailing := SealiftResolver.sent_cohort_bn_ids(sealift_state)
+	if sailing.is_empty():
+		return []
+	var crossing: Array = []
+	for entry_value in ship_reserve:
+		var entry: Dictionary = entry_value
+		var bns: Array = []
+		for bn in entry.get("bns", []):
+			if sailing.has(String((bn as Dictionary).get("id", ""))):
+				bns.append(bn)
+		if bns.is_empty():
+			continue
+		var trimmed: Dictionary = entry.duplicate(true)
+		trimmed["bns"] = bns
+		crossing.append(trimmed)
+	return crossing
+
+
+## Apply crossing/mine hull losses: carrier losses come out of the "sent" cohorts, escort/screen
+## losses out of the ready pool — both booked as destroyed on the fleet. The ShipState bins are then
+## reprojected from the sealift state by the caller (plan 0004 D3).
+func _apply_crossing_hull_losses(destroyed_by_type: Dictionary) -> void:
+	# fleet + destroyed_by_type are keyed by ship NAME; GameData.ship_defs is keyed by id, so build a
+	# name -> carrying-capacity map to tell carriers (losses come out of cohorts) from escorts (losses
+	# come out of the ready screen).
+	var capacity_by_name := AntishipResolver.ship_capacity_by_type(GameData.ship_defs)
+	for ship_type_value in destroyed_by_type.keys():
+		var ship_type := String(ship_type_value)
+		var requested := int(destroyed_by_type[ship_type_value])
+		if requested <= 0:
+			continue
+		var state: ShipState = fleet.get(ship_type, null)
+		if state == null:
+			continue
+		var applied: int
+		if float(capacity_by_name.get(ship_type, 0.0)) > 0.0:
+			applied = SealiftResolver.remove_carrier_hulls(sealift_state, ship_type, requested)
+		else:
+			applied = mini(requested, state.fleet_surviving_total)
+		state.destroyed += applied
+		state.fleet_surviving_total -= applied
 
 
 func _mine_ship_meta(transit_config: Dictionary) -> Dictionary:
@@ -524,6 +598,70 @@ func _rebuild_sealift_state() -> void:
 	# Escort SAM loadout is injected empty until D5 wires the crossing-config loadout; the follow-on
 	# pool + cohorts/return pipeline are live now (plan 0004 D1).
 	sealift_state = SealiftStateBuilder.build(GameData.red_followon_reserve, GameData.brigades, {})
+
+
+## Sealift phase (plan 0004): advance the ship return pipeline and embark this turn's crossing wave.
+## Dice-free and pure (SealiftResolver); this wrapper merges the newly-embarked BNs into the reserve,
+## records the sailing fleet for the crossing, and reprojects the fleet ShipState bins from the
+## advanced sealift state.
+func resolve_sealift_turn() -> void:
+	if sealift_state == null:
+		return
+	var ready_by_type: Dictionary = {}
+	for ship_type in fleet.keys():
+		ready_by_type[String(ship_type)] = int((fleet[ship_type] as ShipState).ready)
+
+	var outcome := SealiftResolver.resolve(
+		sealift_state, ship_reserve, ready_by_type, GameData.ship_defs,
+		GameData.amphibious_return_time_turns)
+
+	for entry_value in outcome["embarked_reserve_entries"]:
+		_merge_reserve_entry(entry_value)
+	last_sealift_sent_by_type = outcome["sent_by_type"]
+	_project_sealift_onto_fleet()
+
+
+## Merge a newly-embarked reserve entry into ship_reserve: append its BNs to the brigade's existing
+## entry (a follow-on brigade already partway across) or add a new entry.
+func _merge_reserve_entry(entry_value) -> void:
+	var entry: Dictionary = entry_value
+	var brigade_id := String(entry["brigade_id"])
+	for existing_value in ship_reserve:
+		var existing: Dictionary = existing_value
+		if String(existing["brigade_id"]) == brigade_id:
+			(existing["bns"] as Array).append_array(entry["bns"])
+			return
+	ship_reserve.append(entry)
+
+
+## Reproject the fleet ShipState bins from the sealift state (the single source of truth for where
+## hulls are): surviving_sent/offloading from cohorts, returning from the pipeline, ready as the
+## remainder of the surviving fleet. Keeps ShipState.validate()'s invariants honest (plan 0004).
+func _project_sealift_onto_fleet() -> void:
+	var sent: Dictionary = {}
+	var offloading: Dictionary = {}
+	var returning: Dictionary = {}
+	for cohort_value in sealift_state.cohorts:
+		var cohort: Dictionary = cohort_value
+		var bucket: Dictionary = sent if String(cohort["state"]) == SealiftState.STATE_SENT else offloading
+		for ship_type in (cohort["hulls_by_type"] as Dictionary).keys():
+			bucket[String(ship_type)] = int(bucket.get(String(ship_type), 0)) + int(cohort["hulls_by_type"][ship_type])
+	for ship_type in sealift_state.return_pipeline.keys():
+		for slot_value in (sealift_state.return_pipeline[ship_type] as Array):
+			returning[String(ship_type)] = int(returning.get(String(ship_type), 0)) + int((slot_value as Dictionary)["count"])
+
+	for ship_type in fleet.keys():
+		var state: ShipState = fleet[ship_type]
+		var ss := int(sent.get(String(ship_type), 0))
+		var of := int(offloading.get(String(ship_type), 0))
+		var rt := int(returning.get(String(ship_type), 0))
+		state.surviving_sent = ss
+		state.sent_original = ss
+		state.offloading = of
+		state.returning = rt
+		state.ready = state.fleet_surviving_total - ss - of - rt
+		assert(state.ready >= 0, "sealift projection: negative ready for %s (surviving=%d busy=%d)" % [ship_type, state.fleet_surviving_total, ss + of + rt])
+		assert(state.validate(), "sealift projection broke ShipState invariant for %s" % ship_type)
 
 
 func _rebuild_supply_state() -> void:

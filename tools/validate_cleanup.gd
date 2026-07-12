@@ -47,6 +47,7 @@ func _validate_cleanup_resets_antiship_flags() -> void:
 	GameState.reset_to_scenario()
 	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
+	GameState.resolve_sealift_turn()  # form the crossing wave (plan 0004) before the anti-ship phase
 	GameState.resolve_antiship_turn(SeededDice.new(SEED))
 
 	# Confirm anti-ship was exercised — at least one system has non-zero per-turn flags.
@@ -82,6 +83,7 @@ func _validate_cleanup_determinism() -> void:
 	GameState.reset_to_scenario()
 	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
+	GameState.resolve_sealift_turn()  # form the crossing wave (plan 0004) before the anti-ship phase
 	GameState.resolve_antiship_turn(SeededDice.new(SEED))
 	GameState.resolve_cleanup_phase()
 	var first_flags: Array[int] = []
@@ -92,6 +94,7 @@ func _validate_cleanup_determinism() -> void:
 	GameState.reset_to_scenario()
 	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
+	GameState.resolve_sealift_turn()  # form the crossing wave (plan 0004) before the anti-ship phase
 	GameState.resolve_antiship_turn(SeededDice.new(SEED))
 	GameState.resolve_cleanup_phase()
 	var second_flags: Array[int] = []
