@@ -43,6 +43,9 @@ var red_followon_reserve: Array = []
 # Turns a freed amphibious hull spends returning/reloading before it is ready to sail again (plan
 # 0004). 0 => hulls re-ready as soon as their cargo is ashore (no cross-turn lift constraint).
 var amphibious_return_time_turns: int = 0
+# Turns an escort type spends reloading SAMs after its magazine drops below threshold (plan 0004 D5).
+# 0 => escort SAM magazine unmodelled (unlimited interception, pre-0004 behavior).
+var escort_reload_time_turns: int = 0
 
 var brigades: Dictionary = {}  # brigade_id -> Brigade
 var brigades_by_hex: Dictionary = {}  # hex_id -> Array[String]
@@ -212,6 +215,7 @@ func load_scenario(path: String) -> void:
 	red_ship_reserve = _parse_ship_reserve_entries(scenario.get("red_ship_reserve", []), "red_ship_reserve")
 	red_followon_reserve = _parse_ship_reserve_entries(scenario.get("red_followon_reserve", []), "red_followon_reserve")
 	amphibious_return_time_turns = maxi(0, int(scenario.get("amphibious_return_time_turns", 0)))
+	escort_reload_time_turns = maxi(0, int(scenario.get("escort_reload_time_turns", 0)))
 
 	var count := 0
 	for placement in placements:

@@ -4,10 +4,10 @@
   "missile_group_size": 4,
   "screen_target_preference": 3.0,
   "escort_interception": {
-    "CG": { "attempts": 4, "success_prob": 0.45, "fleet_count": 12 },
-    "DDG": { "attempts": 6, "success_prob": 0.55, "fleet_count": 12 },
-    "FFG": { "attempts": 3, "success_prob": 0.4, "fleet_count": 24 },
-    "FFL": { "attempts": 2, "success_prob": 0.35, "fleet_count": 24 }
+    "CG": { "attempts": 4, "success_prob": 0.45, "fleet_count": 12, "sam_loadout": 96, "sam_reload_threshold": 24 },
+    "DDG": { "attempts": 6, "success_prob": 0.55, "fleet_count": 12, "sam_loadout": 144, "sam_reload_threshold": 36 },
+    "FFG": { "attempts": 3, "success_prob": 0.4, "fleet_count": 24, "sam_loadout": 144, "sam_reload_threshold": 36 },
+    "FFL": { "attempts": 2, "success_prob": 0.35, "fleet_count": 24, "sam_loadout": 96, "sam_reload_threshold": 24 }
   },
   "discrimination_probabilities": {
     "Low": 0.2,

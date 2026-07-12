@@ -455,7 +455,7 @@ func resolve_antiship_turn(dice: Dice) -> Dictionary:
 	var outcome := AntishipResolver.resolve(
 		turn_number, crossing_reserve, antiship_systems, last_ijfs_writeback,
 		last_sealift_sent_by_type, GameData.ship_defs, GameData.beach_to_to, GameData.active_tos, to_adjacency,
-		lost_at_sea_accumulator, as_dice)
+		lost_at_sea_accumulator, sealift_state.escort_sam, as_dice)
 	if outcome["summary"] == null:
 		# Nothing crossed this turn: no fires, no state to apply (pending_lost_at_sea keeps its value).
 		return {}
@@ -468,6 +468,10 @@ func resolve_antiship_turn(dice: Dice) -> Dictionary:
 	ship_reserve = AntishipResolver.remaining_reserve_after_losses(ship_reserve, lost_ids)
 	SealiftResolver.drain_bn_ids(sealift_state, lost_ids, GameData.amphibious_return_time_turns)
 	SealiftResolver.flip_sent_to_offloading(sealift_state)
+	# Deplete the escort SAM magazines by what fired, and divert any type that dropped to/below its
+	# reload threshold (plan 0004 D5). No-op when the magazine is unmodelled (escort_sam empty).
+	SealiftResolver.apply_escort_consumption(
+		sealift_state, outcome["escort_sam_consumed"], GameData.escort_reload_time_turns)
 	_project_sealift_onto_fleet()
 	register_ship_losses(int(outcome["bn_equiv_lost"]))
 	last_antiship_summary = outcome["summary"]
@@ -595,9 +599,13 @@ func _rebuild_ship_reserve() -> void:
 
 
 func _rebuild_sealift_state() -> void:
-	# Escort SAM loadout is injected empty until D5 wires the crossing-config loadout; the follow-on
-	# pool + cohorts/return pipeline are live now (plan 0004 D1).
-	sealift_state = SealiftStateBuilder.build(GameData.red_followon_reserve, GameData.brigades, {})
+	# Escort SAM magazine is seeded from the crossing config only when the scenario opts in via
+	# escort_reload_time_turns > 0 (plan 0004 D5); otherwise it stays unmodelled (empty).
+	var crossing_config := AntishipLoaders.load_crossing_config(AntishipResolver.CROSSING_PATH)
+	var escort_interception: Dictionary = crossing_config.get("escort_interception", {})
+	sealift_state = SealiftStateBuilder.build(
+		GameData.red_followon_reserve, GameData.brigades,
+		escort_interception, GameData.escort_reload_time_turns > 0)
 
 
 ## Sealift phase (plan 0004): advance the ship return pipeline and embark this turn's crossing wave.
@@ -649,6 +657,12 @@ func _project_sealift_onto_fleet() -> void:
 	for ship_type in sealift_state.return_pipeline.keys():
 		for slot_value in (sealift_state.return_pipeline[ship_type] as Array):
 			returning[String(ship_type)] = int(returning.get(String(ship_type), 0)) + int((slot_value as Dictionary)["count"])
+	# Escort types reloading SAMs are away from the screen: all their surviving hulls are busy
+	# (returning) until reload completes (plan 0004 D5).
+	for ship_type in sealift_state.escort_reload.keys():
+		var reloading_state: ShipState = fleet.get(String(ship_type), null)
+		if reloading_state != null:
+			returning[String(ship_type)] = int(returning.get(String(ship_type), 0)) + reloading_state.fleet_surviving_total
 
 	for ship_type in fleet.keys():
 		var state: ShipState = fleet[ship_type]

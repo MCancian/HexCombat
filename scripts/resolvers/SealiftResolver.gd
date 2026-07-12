@@ -40,8 +40,9 @@ static func resolve(
 	ship_defs: Dictionary,
 	amphibious_return_time: int,
 ) -> Dictionary:
-	# --- step 1: tick the return/reload pipeline ------------------------------------------------
+	# --- step 1: tick the return/reload pipelines -----------------------------------------------
 	var returned_by_type := _tick_return_pipeline(state)
+	_tick_escort_reload(state)
 
 	# Local ready pool = current ready + hulls the pipeline just released (available to sail today).
 	var ready: Dictionary = {}
@@ -223,6 +224,41 @@ static func _gather_carriers_and_screen(ready: Dictionary, ship_defs: Dictionary
 		else:
 			screen.append({"ship_type": ship_def.name, "ready": n})
 	return {"carriers": carriers, "screen": screen}
+
+
+## --- escort SAM magazine (plan 0004 D5) -----------------------------------------------------------
+
+## Deplete each escort type's SAM magazine by what it fired this crossing, then divert any type that
+## dropped to/below its reload threshold into a reload (escort_reload) for reload_time turns. No-op
+## when the magazine is unmodelled (escort_sam empty) or reload_time <= 0. Mutates state in place.
+static func apply_escort_consumption(state: SealiftState, consumed: Dictionary, reload_time: int) -> void:
+	for ship_type in consumed.keys():
+		var st := String(ship_type)
+		if state.escort_sam.has(st):
+			state.escort_sam[st] = maxi(0, int(state.escort_sam[st]) - int(consumed[ship_type]))
+	if reload_time <= 0:
+		return
+	for ship_type in state.escort_sam.keys():
+		var st := String(ship_type)
+		if state.escort_reload.has(st):
+			continue
+		if int(state.escort_sam[st]) <= int(state.escort_sam_threshold.get(st, 0)):
+			state.escort_reload[st] = reload_time
+
+
+## Advance escort reloads; a type whose timer hits 0 refills to its loadout max and rejoins the
+## screen. Mutates state.escort_reload + state.escort_sam in place.
+static func _tick_escort_reload(state: SealiftState) -> void:
+	var done: Array = []
+	for ship_type in state.escort_reload.keys():
+		var remaining := int(state.escort_reload[ship_type]) - 1
+		if remaining <= 0:
+			state.escort_sam[String(ship_type)] = int(state.escort_sam_max.get(String(ship_type), int(state.escort_sam.get(String(ship_type), 0))))
+			done.append(ship_type)
+		else:
+			state.escort_reload[ship_type] = remaining
+	for ship_type in done:
+		state.escort_reload.erase(ship_type)
 
 
 ## --- post-crossing / offload cohort maintenance (plan 0004 D3/D4) ---------------------------------

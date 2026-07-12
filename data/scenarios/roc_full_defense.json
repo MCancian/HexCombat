@@ -501,6 +501,7 @@
     }
   ],
   "amphibious_return_time_turns": 3,
+  "escort_reload_time_turns": 4,
   "red_followon_reserve": [
     {
       "brigade_id": "PLA-72-124-Amphibious",

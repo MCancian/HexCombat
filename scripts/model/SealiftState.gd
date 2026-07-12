@@ -33,10 +33,20 @@ class_name SealiftState
 @export var return_pipeline: Dictionary = {}
 
 ## Per-escort-type SAM magazine, CURRENT rounds: ship_type (String) -> count (int). Depleted by
-## interception in the crossing (AntishipCrossing). An escort type at/below its reload threshold
-## diverts into return_pipeline to reload; its count is restored to the loadout max on return. The
-## loadout max / threshold / reload time are config (SealiftStateBuilder seeds them), not stored here.
+## interception in the crossing (AntishipCrossing). EMPTY means the magazine is unmodelled (unlimited
+## interception, pre-0004 behavior) — it is only seeded when a scenario opts in via
+## escort_reload_time_turns > 0. An escort type at/below its threshold diverts to reload.
 @export var escort_sam: Dictionary = {}
+## Per-escort-type SAM loadout max (ship_type -> int): the value escort_sam is refilled to when the
+## type finishes reloading. Empty when the magazine is unmodelled.
+@export var escort_sam_max: Dictionary = {}
+## Per-escort-type reload trigger (ship_type -> int): when escort_sam drops to/below this after a
+## crossing, the type diverts to reload for escort_reload_time_turns. Empty when unmodelled.
+@export var escort_sam_threshold: Dictionary = {}
+## Escort types currently reloading (ship_type -> turns_remaining). While present, the type does not
+## screen the crossing; when its timer hits 0, escort_sam is refilled to escort_sam_max and it
+## returns to the screen. Advanced by SealiftResolver each turn.
+@export var escort_reload: Dictionary = {}
 
 const STATE_SENT := "sent"
 const STATE_OFFLOADING := "offloading"
@@ -48,6 +58,9 @@ func to_dict() -> Dictionary:
 		"cohorts": cohorts.duplicate(true),
 		"return_pipeline": return_pipeline.duplicate(true),
 		"escort_sam": escort_sam.duplicate(true),
+		"escort_sam_max": escort_sam_max.duplicate(true),
+		"escort_sam_threshold": escort_sam_threshold.duplicate(true),
+		"escort_reload": escort_reload.duplicate(true),
 	}
 
 
@@ -81,6 +94,11 @@ func validate() -> bool:
 	for ship_type in escort_sam.keys():
 		if int(escort_sam[ship_type]) < 0:
 			push_error("SealiftState: negative escort_sam for %s" % ship_type)
+			return false
+
+	for ship_type in escort_reload.keys():
+		if int(escort_reload[ship_type]) < 0:
+			push_error("SealiftState: negative escort_reload for %s" % ship_type)
 			return false
 
 	return true

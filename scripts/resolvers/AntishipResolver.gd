@@ -46,6 +46,7 @@ static func resolve(
 	active_tos: Array,
 	to_adjacency: Dictionary,
 	lost_at_sea_accumulator: float,
+	escort_sam: Dictionary,
 	dice: Dice,
 ) -> Dictionary:
 	# The crossing wave = BNs sailing this turn (sent cohorts). No wave -> no anti-ship phase.
@@ -60,6 +61,7 @@ static func resolve(
 			"summary": null,
 			"lost_ids": [],
 			"destroyed_by_type": {},
+			"escort_sam_consumed": {},
 			"bn_equiv_lost": 0,
 			"accumulator": lost_at_sea_accumulator,
 		}
@@ -143,7 +145,7 @@ static func resolve(
 	var snapshots := _snapshots_from_sent(sent_by_type)
 	var crossing := AntishipCrossing.resolve_crossing_damage(
 		systems_fired, snapshots, combat_catalog, crossing_config,
-		target_tos, dice, active_tos, to_adjacency)
+		target_tos, dice, active_tos, to_adjacency, escort_sam)
 
 	# Combine crossing + mine ship losses; mines run on the surviving crossing fleet pool.
 	var destroyed_by_type: Dictionary = {}
@@ -182,6 +184,7 @@ static func resolve(
 		"summary": summary,
 		"lost_ids": losses["lost_ids"],
 		"destroyed_by_type": destroyed_by_type,
+		"escort_sam_consumed": crossing.get("escort_sam_consumed", {}),
 		"bn_equiv_lost": int(losses["bn_equiv_lost"]),
 		"accumulator": float(losses["accumulator"]),
 	}

@@ -47,7 +47,8 @@ static func resolve_crossing_damage(
 		target_tos: Array,
 		dice: Dice,
 		active_tos: Array = [],
-		to_adjacency: Dictionary = {}) -> Dictionary:
+		to_adjacency: Dictionary = {},
+		escort_sam: Dictionary = {}) -> Dictionary:
 	# Fail loudly on broken config rather than silently producing zero damage.
 	validate_combat_catalog(combat_catalog)
 	validate_crossing_config(crossing_config)
@@ -80,7 +81,7 @@ static func resolve_crossing_damage(
 		systems_fired, launcher_catalog, munition_pool, group_pool,
 		munition_to_group, target_tos, active_tos, to_adjacency, result)
 	var surviving := _apply_in_flight_failures(launched, munitions, dice, result)
-	var leakers := _apply_interception(surviving, snaps, crossing_config, dice, result)
+	var leakers := _apply_interception(surviving, snaps, crossing_config, dice, result, escort_sam)
 	var homings := _apply_homing(leakers, snaps, crossing_config, munitions, dice, result)
 	var hits := _apply_terminal_defense(homings, crossing_config, munitions, dice, result)
 	_resolve_damage(hits, snaps, crossing_config, munitions, dice, result)
@@ -204,6 +205,7 @@ static func _build_escort_defenders(snaps: Array, escort_config: Dictionary) -> 
 		var cfg: Dictionary = escort_config[ship_type]
 		for _i in range(int(snap["surviving_sent"])):
 			defenders.append({
+				"ship_type": ship_type,
 				"attempts": int(_cfg_num(cfg, "attempts", 0)),
 				"success_prob": _cfg_num(cfg, "success_prob", 0.0),
 			})
@@ -212,11 +214,20 @@ static func _build_escort_defenders(snaps: Array, escort_config: Dictionary) -> 
 
 static func _apply_interception(
 		surviving: Dictionary, snaps: Array, crossing_config: Dictionary,
-		dice: Dice, result: Dictionary) -> Dictionary:
+		dice: Dice, result: Dictionary, escort_sam: Dictionary = {}) -> Dictionary:
 	var defenders := _build_escort_defenders(snaps, crossing_config.get("escort_interception", {}))
 	var group_size := int(crossing_config.get("missile_group_size", 4))
 	if group_size <= 0:
 		group_size = 4
+
+	# Cross-turn SAM magazine (plan 0004 D5): when escort_sam is non-empty, each interception attempt
+	# a type makes consumes one SAM, and a type with 0 SAM left cannot fire. Empty escort_sam ==
+	# unmodelled magazine (unlimited, pre-0004 behavior). budget is a working copy; consumed is
+	# reported back so the caller can deplete the persistent magazine + trigger reloads.
+	var magazine_modelled := not escort_sam.is_empty()
+	var budget: Dictionary = escort_sam.duplicate(true) if magazine_modelled else {}
+	var consumed: Dictionary = {}
+	result["escort_sam_consumed"] = consumed
 
 	# Flatten surviving missiles (sorted munition expand) then shuffle so groups mix munition types.
 	var flat: Array = []
@@ -240,14 +251,22 @@ static func _apply_interception(
 		start += group_size
 		var available: Array = []
 		for d in defenders:
-			if int(d["attempts"]) > 0:
-				available.append(d)
+			if int(d["attempts"]) <= 0:
+				continue
+			# A modelled magazine gates firing on remaining SAM for that escort type.
+			if magazine_modelled and int(budget.get(String(d["ship_type"]), 0)) <= 0:
+				continue
+			available.append(d)
 		if available.is_empty():
 			for munition in group:
 				_add(leakers, munition, 1)
 			continue
 		var defender: Dictionary = _choice(available, dice)
 		defender["attempts"] = int(defender["attempts"]) - 1
+		if magazine_modelled:
+			var st := String(defender["ship_type"])
+			budget[st] = int(budget.get(st, 0)) - 1
+			_add(consumed, st, 1)
 		var success_prob: float = defender["success_prob"]
 		for munition in group:
 			if dice.randf() < success_prob:
