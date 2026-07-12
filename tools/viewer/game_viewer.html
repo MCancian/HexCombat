@@ -108,7 +108,26 @@
   }
   #metaBar b { color: var(--ink); }
   #mapWrap { position: relative; flex: 1; min-height: 0; }
-  #mapSvg { width: 100%; height: 100%; display: block; }
+  /* Shared map content is rendered once into #mapContent (hidden in #mapSource's <defs>); the two
+     viewports below each <use> it and differ only in viewBox. */
+  #mapSource { position: absolute; width: 0; height: 0; overflow: hidden; }
+  #mapViews { display: flex; height: 100%; width: 100%; }
+  .map-view {
+    position: relative; flex: 1 1 50%; min-width: 0; height: 100%;
+    display: flex; flex-direction: column;
+  }
+  .map-view + .map-view { border-left: 1px solid var(--line); }
+  .map-view-label {
+    flex: none; padding: 0.25rem 0.5rem; font-size: 0.7rem; color: var(--ink-dim);
+    text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--line);
+  }
+  .map-view svg { flex: 1; width: 100%; min-height: 0; display: block; }
+  #zoomEmptyNote {
+    position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);
+    text-align: center; font-size: 0.8rem; color: var(--ink-dim); padding: 0 0.6rem; display: none;
+  }
+  #zoomView.empty #zoomEmptyNote { display: block; }
+  #zoomView.empty #mapSvgZoom { opacity: 0.25; }
   #noMapNote {
     position: absolute; top: 0.6rem; left: 0.6rem; right: 0.6rem;
     background: rgba(185, 134, 10, 0.15); border: 1px solid var(--amber);
@@ -219,7 +238,28 @@
   <div id="mapPane">
     <div id="metaBar"></div>
     <div id="mapWrap">
-      <svg id="mapSvg" viewBox="0 0 700 1000" preserveAspectRatio="xMidYMid meet"></svg>
+      <!-- Map content lives once in this hidden <defs> group; both viewports <use> it, so a single
+           render pass (statics + per-turn borders/brigades) feeds both. The two <svg> differ ONLY
+           in viewBox: the theater view frames the whole island; the front view crops to the bbox
+           of contested/Red hexes + their neighbors, recomputed each turn. -->
+      <svg id="mapSource" width="0" height="0" aria-hidden="true">
+        <defs><g id="mapContent"></g></defs>
+      </svg>
+      <div id="mapViews">
+        <div class="map-view">
+          <div class="map-view-label">Theater</div>
+          <svg id="mapSvgFull" viewBox="0 0 700 1000" preserveAspectRatio="xMidYMid meet">
+            <use href="#mapContent"></use>
+          </svg>
+        </div>
+        <div class="map-view" id="zoomView">
+          <div class="map-view-label">Front — contested + Red</div>
+          <svg id="mapSvgZoom" viewBox="0 0 700 1000" preserveAspectRatio="xMidYMid meet">
+            <use href="#mapContent"></use>
+          </svg>
+          <div id="zoomEmptyNote">No contested or Red-held ground yet.</div>
+        </div>
+      </div>
       <div id="noMapNote">No map data this turn — showing last known positions.</div>
       <div class="map-turn-badge" id="turnIndicator">Turn —</div>
     </div>
@@ -272,7 +312,8 @@
  * sitreps / map_static) and renders a briefing view: one turn at a time, advanced by wheel /
  * arrow keys / the ◀ ▶ controls. Each advance re-renders the SVG hex map on the left, extends
  * the chart reveal, and swaps the turn's narrative (SITREPs + adjudication) in place on the
- * right.
+ * right. The map box holds two viewports over one shared render: a full-island "theater" view
+ * and a "front" view whose viewBox crops to the contested/Red hexes and their neighbors.
  *
  * Map projection is a straight port of scripts/MapProjection.gd (equirectangular fit with a
  * fixed margin) — NOT the odd-r axial math in scripts/HexMath.gd (that file is pure grid/graph
@@ -507,16 +548,17 @@ function buildGeometry(mapStatic) {
 // ---- Static layers (drawn once): hex fills + beach glyphs -----------------------------------
 const HEX_LAYER = () => document.getElementById("hexLayer");
 function spawnHexFills() {
-  const svg = document.getElementById("mapSvg");
-  svg.innerHTML = "";
+  // Render into the shared content group (in #mapSource's <defs>); both viewports <use> it.
+  const content = document.getElementById("mapContent");
+  content.innerHTML = "";
   const hexLayer = svgEl("g", { id: "hexLayer" });
   const borderLayer = svgEl("g", { id: "borderLayer" });
   const beachLayer = svgEl("g", { id: "beachLayer" });
   const brigadeLayer = svgEl("g", { id: "brigadeLayer" });
-  svg.appendChild(hexLayer);
-  svg.appendChild(borderLayer);
-  svg.appendChild(beachLayer);
-  svg.appendChild(brigadeLayer);
+  content.appendChild(hexLayer);
+  content.appendChild(borderLayer);
+  content.appendChild(beachLayer);
+  content.appendChild(brigadeLayer);
 
   for (const h of GEO.hexes) {
     const verts = GEO.vertices.get(h.id);
@@ -714,13 +756,59 @@ function renderMap(turnIndex) {
   if (obsIndex >= 0) {
     const obsTurn = TURNS[obsIndex];
     const observation = pickObservation(obsTurn);
-    renderOwnershipBorders(ownerMapFromObservation(observation, obsTurn.digest || {}));
+    const ownerMap = ownerMapFromObservation(observation, obsTurn.digest || {});
+    renderOwnershipBorders(ownerMap);
     renderBrigadeMarkers(observation);
+    updateZoomViewport(ownerMap);
   } else {
     document.getElementById("borderLayer")?.replaceChildren();
     document.getElementById("brigadeLayer")?.replaceChildren();
+    updateZoomViewport(new Map());
   }
   document.getElementById("noMapNote").classList.toggle("show", obsIndex !== turnIndex);
+}
+
+// The "front" viewport crops to the fight: every hex owned red or contested this turn, plus every
+// on-grid neighbor of those hexes (so the seam and the ground about to be contested are both in
+// frame). viewBox = padded bbox of that set's projected vertices. Empty set (no landing yet) ->
+// fall back to the full-island viewBox and flag the view.
+// NOTE (deferred, see docs/plans): a disjoint front — two separate beachheads — currently yields
+// one bbox spanning both; tightening that to the active cluster is a future plan.
+const ZOOM_PAD_FRAC = 0.12;   // bbox padding as a fraction of the larger bbox dimension
+const FULL_VIEWBOX = "0 0 " + VIEWPORT_W + " " + VIEWPORT_H;
+
+function updateZoomViewport(ownerMap) {
+  const zoomView = document.getElementById("zoomView");
+  const zoomSvg = document.getElementById("mapSvgZoom");
+
+  const focusIds = new Set();
+  for (const [hexId, entry] of ownerMap) {
+    if (entry.owner !== "red" && entry.owner !== "contested") continue;
+    focusIds.add(hexId);
+    for (const claim of (GEO.neighborEdge.get(hexId) || [])) focusIds.add(claim.neighborId);
+  }
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const hexId of focusIds) {
+    for (const v of (GEO.vertices.get(hexId) || [])) {
+      if (v[0] < minX) minX = v[0];
+      if (v[0] > maxX) maxX = v[0];
+      if (v[1] < minY) minY = v[1];
+      if (v[1] > maxY) maxY = v[1];
+    }
+  }
+
+  if (!isFinite(minX)) {
+    zoomView.classList.add("empty");
+    zoomSvg.setAttribute("viewBox", FULL_VIEWBOX);
+    return;
+  }
+  zoomView.classList.remove("empty");
+  const pad = ZOOM_PAD_FRAC * Math.max(maxX - minX, maxY - minY, 1);
+  const x = minX - pad, y = minY - pad;
+  const w = (maxX - minX) + 2 * pad, h = (maxY - minY) + 2 * pad;
+  zoomSvg.setAttribute("viewBox",
+    x.toFixed(1) + " " + y.toFixed(1) + " " + w.toFixed(1) + " " + h.toFixed(1));
 }
 
 // ============================================================================================

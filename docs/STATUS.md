@@ -161,7 +161,13 @@ offload → movement & commit → ground combat → front-line → cleanup (+ vi
   directly, no server): opens at turn 1 and advances one turn at a time (mouse wheel with a
   momentum guard, ◀ ▶ / ⏮ ⏭-Final buttons, arrow keys, Home/End) — each advance re-renders the
   SVG hex map (terrain fill + red/contested perimeter borders + beach glyphs + brigade markers,
-  ported from `HexMap.gd`'s projection/border logic), extends the chart reveal, and swaps the
+  ported from `HexMap.gd`'s projection/border logic) and extends the chart reveal.
+  The map box holds **two viewports over one shared render** (content lives once
+  in a `<defs>` group; both `<svg>` `<use>` it, differing only in `viewBox`): a full-island
+  **theater** view and a **front** view whose `viewBox` crops to the bbox of the contested/Red
+  hexes + their neighbors (same owner predicate as the border layer, so the two always agree; no
+  landing yet → falls back to the full island). Non-contiguous fronts (two beachheads → one bbox
+  spanning both) are a known follow-up, tracked in BACKLOG. Advancing also swaps the
   turn's narrative (SITREPs, collapsible transcripts, adjudication prose, phase-detail tables)
   in place; the wheel scrolls an overflowing narrative instead of stepping. Charts render
   ghost-future (full game faint, turns ≤ current in color): census, cumulative ship losses,

@@ -19,6 +19,13 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-11 — Viewer map box split into theater + front viewports (USER request).** The map
+  pane now shows the whole island (theater) beside a zoom (front) cropped to contested/Red hexes +
+  their neighbors. Implemented as two `<svg>` `<use>`-ing one shared `<defs>` render, differing
+  only in `viewBox` (chosen over parameterizing every render fn — single source of truth, SVG-
+  native crop). Change made in the `tools/viewer/game_viewer.html` template so it carries to all
+  future baked reports. Details in `docs/STATUS.md`; non-contiguous-front corner case → BACKLOG.
+
 - **2026-07-11 — Crossing-lethality calibration: dial picked, golden re-baselined (USER, per plan
   0001).** `intel_locked_antiship_strike_bonus` promoted from an ad-hoc sweep-script modifier to a
   named scenario knob; ran an N=30/seed sweep grid across it and

@@ -30,6 +30,11 @@ Priorities to be set with the USER when the track starts:
 - D5-D front-line polyline-draw UI (the one remaining D5 piece; battalion-granularity
   distribution refine rides with it).
 - Anti-ship/mine crossing visualization (makes D3 mechanics legible to a room).
+- Viewer front-zoom: non-contiguous fronts. The briefing viewer's "front" viewport (theater +
+  front split, 2026-07-11) crops to one bbox over ALL contested/Red hexes; two separate
+  beachheads yield a single frame spanning both (and the empty ocean between). Follow-up: cluster
+  the focus set and frame the active/largest cluster (or offer per-cluster paging). USER-flagged
+  as a future plan. Lives in `tools/viewer/game_viewer.html` (`updateZoomViewport`).
 
 All need visual verification (screenshot / Godot MCP / USER) — headless gates don't cover pixels.
 
