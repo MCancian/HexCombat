@@ -1,7 +1,7 @@
 # Overnight autonomous work queue
 
 Drives the overnight `/loop`. **Orient each iteration:** `AGENTS.md`, `CLAUDE.md` (orchestrator role +
-opencode usage), `docs/STATUS.md`, `docs/plans/port_audit.md`. You are the **orchestrator**; implement
+opencode usage), `docs/STATUS.md`, `docs/archive/port_audit.md`. You are the **orchestrator**; implement
 via the `opencode` subagent (self-contained plan each time; tell it to follow `AGENTS.md`).
 
 **Autonomy: MAXIMIZE (user-set).** Make reasonable judgment calls to keep moving; record each in
@@ -97,5 +97,5 @@ just implement small/contained sub-tasks directly (faster than fighting the weak
 ## When the queue is exhausted (still green)
 Pick the next highest-value **headless-gateable** item: ADAPT items from `port_audit.md` **only if** a
 concrete balance need is evident (else skip — they're "tie to a need, not speculative"); otherwise take
-a REFINE item from `docs/plans/refactor_audit.md` (e.g. victory census counts *present* not OOB
+a REFINE item from `docs/archive/refactor_audit.md` (e.g. victory census counts *present* not OOB
 battalions; typed `HexState`/`CombatSummary`). Keep maximizing autonomy; keep the gate green.

@@ -12,7 +12,7 @@ codebase (Godot 4.7 / GDScript). This is golden-regression-prone work and was ex
 
 ## START HERE (read in this order)
 - `AGENTS.md` (canonical rules) and `CLAUDE.md` (orchestrator role).
-- `docs/plans/refactor_audit.md` → "Larger structural refactors" → **item 10** for the full spec,
+- `docs/archive/refactor_audit.md` → "Larger structural refactors" → **item 10** for the full spec,
   the **DECIDED interface**, the shared-mutable-state map, and the **verified extraction order**.
 - `PLAN.md` Decisions log, the **2026-06-30** entries for items **9** and **10**: item 9 is the
   proven typed-Resource pattern you will lean on; the item-10 entry records the USER interface call

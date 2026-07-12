@@ -613,7 +613,7 @@ caveat is resolved.
 - **2026-06-30 — Larger structural-refactor backlog recorded + GameState-decomposition interface decided
   (USER design call; documentation only, NOT implemented).** After item 3, proposed four larger refactors
   for legibility/testability; had them **independently verified against the actual code by a read-only
-  review**, then folded the corrected versions into `docs/plans/refactor_audit.md` → "Larger structural
+  review**, then folded the corrected versions into `docs/archive/refactor_audit.md` → "Larger structural
   refactors (8–10)". Net corrections from the review: (a) RNG isolation is cleaner than first claimed —
   offload consumes **no** dice (deterministic), combat is the sole base-stream consumer, so there is no
   offload↔combat coupling to fear; (b) for item 9, `last_ijfs_writeback` is the riskiest summary (internal
@@ -2223,7 +2223,7 @@ terminal (turn 1, China win 36>17), asserting winner ⇔ census. Gate green (32 
 over-counted by battalions lost at sea before landing (the design's "battalions on Taiwan" implies
 *present* battalions). For the golden scenario the outcome is robust either way (wave 36, minus ~sea
 losses, still > 17 ROC), but the count should eventually reflect surviving battalions. See
-`docs/plans/refactor_audit.md`.
+`docs/archive/refactor_audit.md`.
 
 ### D3-D crossing lethality calibration  *(2026-06-28: exquisite-intel path chosen; warmup wiring IN PROGRESS — see UPDATE below)*
 

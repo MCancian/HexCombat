@@ -15,10 +15,23 @@
 # skipped — historical passages may cite dead names on purpose. Semantic rot (a wrong claim in
 # valid prose) stays a human/agent problem; this only catches dead anchors, which the audit
 # showed is the dominant failure mode.
+#
+#   5. Every `docs/plans/<name>.md` or `docs/archive/<name>.md` token anywhere under docs/**/*.md
+#      or tools/**/*.gd must resolve to a real file — NOT subject to the historical/archive
+#      escape hatch above (that hatch is for stale script/member citations *within* a historical
+#      passage; a doc-to-doc pointer should always resolve, historical or not, since plan
+#      closeout moves a file rather than deleting the fact). Added 2026-07-11 after a plan
+#      closeout move left four such references dead across docs/STATUS.md,
+#      docs/antiship_missile_pipeline_ref.md, and two tools/*.gd comments, caught only by manual
+#      grep.
 extends SceneTree
 
 const DOCS_DIR := "res://docs/systems"
 const CODE_ROOTS := ["res://scripts", "res://tools", "res://tests"]
+const DOC_LINK_SCAN_ROOTS := [
+	["res://docs", ".md"],
+	["res://tools", ".gd"],
+]
 
 var _failures: Array[String] = []
 var _gd_index: Dictionary = {}  # basename -> full res:// path
@@ -38,8 +51,10 @@ func _initialize() -> void:
 		_check_doc("%s/%s" % [DOCS_DIR, file])
 		checked += 1
 
+	var link_files_checked := _check_doc_links()
+
 	if _failures.is_empty():
-		print("PASS: doc anchors fresh (%d docs, %d indexed .gd files)" % [checked, _gd_index.size()])
+		print("PASS: doc anchors fresh (%d docs, %d indexed .gd files, %d files checked for dead doc-links)" % [checked, _gd_index.size(), link_files_checked])
 		quit(0)
 	else:
 		for failure in _failures:
@@ -96,6 +111,38 @@ func _check_token(doc: String, line_no: int, token: String, member_ref: RegEx) -
 		return  # Godot constructor, always valid
 	if not FileAccess.get_file_as_string(script_path).contains(member):
 		_failures.append("%s:%d: `%s` — no '%s' in %s (renamed/moved?)" % [doc, line_no, token, member, script_path.get_file()])
+
+
+# Check 5 (see header): every docs/plans/<name>.md or docs/archive/<name>.md token under
+# docs/**/*.md or tools/**/*.gd must resolve to a real file. Not gated by the historical/archive
+# escape hatch used by _check_doc — a moved-but-not-deleted plan should always resolve.
+func _check_doc_links() -> int:
+	var link_re := RegEx.create_from_string("docs/(plans|archive)/[A-Za-z0-9_.\\-]+\\.md")
+	var files: Array[String] = []
+	for entry in DOC_LINK_SCAN_ROOTS:
+		_collect_files(entry[0], entry[1], files)
+	for path in files:
+		var text := FileAccess.get_file_as_string(path)
+		var lines := text.split("\n")
+		for i in range(lines.size()):
+			for m in link_re.search_all(lines[i]):
+				var token := m.get_string()
+				if token.contains("*"):
+					continue  # glob illustration, not an anchor
+				if not FileAccess.file_exists("res://" + token):
+					_failures.append("%s:%d: dead doc-link `%s`" % [path.trim_prefix("res://"), i + 1, token])
+	return files.size()
+
+
+func _collect_files(root: String, suffix: String, out: Array[String]) -> void:
+	var dir := DirAccess.open(root)
+	if dir == null:
+		return
+	for sub in dir.get_directories():
+		_collect_files("%s/%s" % [root, sub], suffix, out)
+	for file in dir.get_files():
+		if file.ends_with(suffix):
+			out.append("%s/%s" % [root, file])
 
 
 func _build_gd_index() -> void:

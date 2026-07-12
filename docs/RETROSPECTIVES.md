@@ -799,7 +799,7 @@ was too sensitive for the free-model implementer):**
   census), golden `casualties=2/feba=0.76` byte-stable, full gate green (32 GdUnit suites). opencode diff
   scoped to the 2 intended files. → **acted now** (committing 3a + 3b together).
 - Census OOB over-count → **act later**: count present/surviving battalions; logged in
-  `docs/plans/refactor_audit.md`. Cross-ref `PLAN.md 2026-06-29 — Victory conditions`.
+  `docs/archive/refactor_audit.md`. Cross-ref `PLAN.md 2026-06-29 — Victory conditions`.
 - Main-island land-hex data → **blocked on terrain phase**: `taiwan_hexes` knob is the hook; documented.
 
 ---
