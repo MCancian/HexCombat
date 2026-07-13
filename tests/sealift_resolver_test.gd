@@ -48,7 +48,7 @@ func test_adoption_creates_sent_cohort_from_reserve_orphans() -> void:
 	var reserve := [_reserve_entry("BdeA", bns)]
 	var ready := {"LHA": 3, "DDG": 5}
 
-	var result := SealiftResolver.resolve(state, reserve, ready, defs, 0)
+	var result := SealiftResolver.resolve(state, reserve, ready, defs)
 
 	# Exactly one sent cohort wrapping both BNs
 	assert_int(state.cohorts.size()).is_equal(1)
@@ -79,7 +79,7 @@ func test_embark_cap_leaves_leftover_bns_in_mainland_pool() -> void:
 	state.mainland_pool = [_reserve_entry("BdeA", [_bn("a"), _bn("b"), _bn("c"), _bn("d"), _bn("e")])]
 	var ready := {"LHA": 3}  # 3 hulls * 1.0 capacity = 3 BNs max
 
-	var result := SealiftResolver.resolve(state, [], ready, defs, 0)
+	var result := SealiftResolver.resolve(state, [], ready, defs)
 
 	# Cohort holds exactly 3 BNs (all capacity consumed)
 	assert_int(state.cohorts.size()).is_equal(1)
@@ -108,7 +108,7 @@ func test_priority_departed_brigade_embarks_first() -> void:
 	]
 	var ready := {"LHA": 2}  # capacity for 2 BNs total
 
-	var result := SealiftResolver.resolve(state, reserve, ready, defs, 0)
+	var result := SealiftResolver.resolve(state, reserve, ready, defs)
 
 	# 2 cohorts: a1 (adopted orphan), a2 (embarked — A had priority over B)
 	assert_int(state.cohorts.size()).is_equal(2)
@@ -189,7 +189,7 @@ func test_return_tick_releases_hulls_from_pipeline() -> void:
 	var state := SealiftState.new()
 	state.return_pipeline = {"LHA": [{"count": 2, "turns_remaining": 1}]}
 
-	var result := SealiftResolver.resolve(state, [], {}, defs, 0)
+	var result := SealiftResolver.resolve(state, [], {}, defs)
 
 	# Pipeline released to returned_by_type
 	assert_int(int(result["returned_by_type"].get("LHA", 0))).is_equal(2)
@@ -214,12 +214,12 @@ func test_escort_magazine_consumption_and_reload() -> void:
 
 	# Tick 3 times — still reloading, SAM stays at 3
 	for _i in range(3):
-		SealiftResolver.resolve(state, [], {}, defs, 0)
+		SealiftResolver.resolve(state, [], {}, defs)
 		assert_bool(state.escort_reload.has("DDG")).is_true()
 		assert_int(int(state.escort_sam["DDG"])).is_equal(3)
 
 	# 4th tick completes reload -> SAM refilled, reload entry removed
-	SealiftResolver.resolve(state, [], {}, defs, 0)
+	SealiftResolver.resolve(state, [], {}, defs)
 	assert_int(int(state.escort_sam["DDG"])).is_equal(10)
 	assert_bool(state.escort_reload.has("DDG")).is_false()
 
@@ -244,7 +244,7 @@ func test_empty_resolve_does_not_crash() -> void:
 	var defs := _ship_defs()
 	var state := SealiftState.new()
 
-	var result := SealiftResolver.resolve(state, [], {}, defs, 0)
+	var result := SealiftResolver.resolve(state, [], {}, defs)
 
 	assert_bool(result["carriers_sent_by_type"].is_empty()).is_true()
 	assert_bool(result["sent_by_type"].is_empty()).is_true()

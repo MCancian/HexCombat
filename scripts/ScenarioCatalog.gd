@@ -2,11 +2,13 @@ class_name ScenarioCatalog
 extends RefCounted
 
 ## Scenario selection + enumeration (research-harness B1). Pure statics — no autoload access.
-## The default scenario stays at DEFAULT_SCENARIO_PATH (the golden gate and every pinned test
-## load it); variants are additive files under SCENARIOS_DIR, addressed by id (filename stem).
-## A headless process selects a scenario with the `--scenario=<id-or-path>` user arg (after
-## Godot's `--` separator) or the HEXCOMBAT_SCENARIO environment variable — the arg wins.
-## No selection → the default, so all existing pins hold.
+## DEFAULT_SCENARIO_PATH (scenario_default.json) is the RESEARCH default — the realistic sustained-
+## sealift laydown a naked run / self-play gets. The pinned GATE does NOT run it: run_all_tests.sh/.ps1
+## export HEXCOMBAT_SCENARIO=scenario_golden.json (the frozen assault fixture) so every validator/test
+## stays byte-stable while scenario_default evolves. Variants are additive files under SCENARIOS_DIR,
+## addressed by id (filename stem). A headless process selects a scenario with the `--scenario=<id-or-
+## path>` user arg (after Godot's `--` separator) or the HEXCOMBAT_SCENARIO env var — the arg wins.
+## No selection → the research default.
 
 const DEFAULT_SCENARIO_PATH := "res://data/scenario_default.json"
 const SCENARIOS_DIR := "res://data/scenarios"

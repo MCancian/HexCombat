@@ -136,8 +136,13 @@ at load, only ever shrunk) + same-turn ship round-trip. **Source oracle:** TIV
 
 **State — `SealiftState` (`scripts/model/SealiftState.gd`), owned by `GameState`, built by
 `SealiftStateBuilder` at scenario load:**
-- `mainland_pool` — follow-on brigades waiting to embark (same entry shape as `ship_reserve`; from
-  the scenario's `red_followon_reserve`).
+- `mainland_pool` — follow-on brigades waiting to embark (same entry shape as `ship_reserve`).
+  Source: an explicit scenario `red_followon_reserve` (curated echelon, e.g. `roc_full_defense`), OR,
+  when `auto_seed_followon_pool: true`, **auto-seeded from the OOB** — every RED brigade not in the
+  first wave, round-robin across the first-wave beaches, in OOB order (deterministic; a brigade is
+  atomic). `SealiftStateBuilder.resolve_followon_reserve`. The pool is intentionally far larger than
+  any turn can lift, so *amphibious lift capacity* (not pool size) sets the tempo. Absent flag + no
+  explicit echelon ⇒ empty pool = one-shot assault (the golden fixture / minimal scenarios).
 - `cohorts` — in-transit ship groups, each binding the specific hulls loaded in one embark to the
   BN ids they carry (`state` ∈ `sent`/`offloading`). This binding makes hull-freeing unambiguous.
 - `return_pipeline` — per-ship-type queue of `{count, turns_remaining}`; freed amphibious hulls
@@ -153,7 +158,13 @@ at load, only ever shrunk) + same-turn ship round-trip. **Source oracle:** TIV
    over the full carrier set — preserves the pre-0004 sent fleet for the default scenario).
 3. **Embark** follow-on BNs onto remaining ready **amphibious** capacity
    (`ShipLoadingModel.pack_bns_into_hulls`), departed-brigades-first then new brigades in pool
-   order; escorts (capacity 0) always screen and stay `ready` until they reload.
+   order; escorts (capacity 0) always screen and stay `ready` until they reload. "Amphibious lift"
+   is classified by `ShipDef.is_amphibious_lift()` — exact category membership
+   (`Military_Amphibious` / `Civilian_Amphibious`), **not** a substring match (a `.contains(
+   "Amphibious")` test wrongly admitted `Civilian_Non_Amphibious`; see failure-archaeology).
+   `pack_bns_into_hulls` **aggregates** capacity across a type's ready hulls before flooring
+   (`floor(N·C)`, so 24 LCU @0.1 lift 2 BNs), matching `build_sent_snapshots` — per-hull flooring
+   would zero every sub-1.0 hull and stall lift once the big hulls were sunk/busy.
 
 The crossing (`AntishipResolver` / `AntishipCrossing`) attrits exactly the sailing cohorts; losses
 are reported back and `GameState` routes carrier losses to the cohorts and escort losses to the
@@ -175,10 +186,23 @@ magazine means unlimited interception (pre-0004 behavior), keeping `scenario_def
 Loadout/threshold are in `data/antiship/antiship_crossing_config.json` (`escort_interception`).
 
 **Config knobs** (see `hexcombat-config-and-knobs`): scenario `red_followon_reserve`,
-`amphibious_return_time_turns`, `escort_reload_time_turns`; crossing-config `sam_loadout` /
-`sam_reload_threshold` per escort type. `scenario_default` leaves all defaults (empty pool,
-return_time 0, reload_time 0) → one-shot pin; `roc_full_defense` opts in (10-brigade follow-on from
-the ported OOB, return_time 3, escort reload_time 4).
+`auto_seed_followon_pool`, `amphibious_return_time_turns`, `escort_reload_time_turns`; crossing-config
+`sam_loadout` / `sam_reload_threshold` per escort type. `roc_full_defense` uses an explicit
+10-brigade follow-on (return_time 3, escort reload_time 4).
+
+**Research default vs golden fixture (2026-07-12).** `data/scenario_default.json` is the **research
+default** — `auto_seed_followon_pool: true` + `amphibious_return_time_turns: 3`, so a naked run /
+self-play gets the realistic deep-pool sustained invasion. The pinned **gate does not run it**:
+`tools/run_all_tests.sh`/`.ps1` export `HEXCOMBAT_SCENARIO=res://data/scenario_golden.json`, a frozen
+one-shot assault laydown (byte-identical to the pre-deep-pool default), so every golden pin stays
+stable while `scenario_default` evolves. Deep-pool coverage rides `tools/validate_deep_pool_smoke.gd`
+(auto-seed + sustained crossing + determinism), which loads `scenario_default` explicitly via
+`GameData.load_all(path)`. To run a golden validator by hand, export the same env var.
+
+**Not yet gated: shore offload capacity.** Offload is beaches-only and uses the global turn number as
+the "day"; ports/airbridges are unmodelled (rates exist in `OffloadRates` but are unwired). With deep
+lift and no offload cap, an empty-orders default overruns. This is the **plan 0006** work item
+(`docs/plans/0006-offload-capacity-gate.md`).
 
 **TIV divergences (intentional):** TIV tracks per-hull `IndividualShip` entities in SQLite with
 per-hull ammo/repair/reload timers; HexCombat models the same lifecycle at the **per-ship-type

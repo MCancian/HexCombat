@@ -604,8 +604,8 @@ func _rebuild_sealift_state() -> void:
 	var crossing_config := AntishipLoaders.load_crossing_config(AntishipResolver.CROSSING_PATH)
 	var escort_interception: Dictionary = crossing_config.get("escort_interception", {})
 	sealift_state = SealiftStateBuilder.build(
-		GameData.red_followon_reserve, GameData.brigades,
-		escort_interception, GameData.escort_reload_time_turns > 0)
+		GameData.red_followon_reserve, GameData.red_ship_reserve, GameData.brigades,
+		GameData.auto_seed_followon_pool, escort_interception, GameData.escort_reload_time_turns > 0)
 
 
 ## Sealift phase (plan 0004): advance the ship return pipeline and embark this turn's crossing wave.
@@ -620,8 +620,7 @@ func resolve_sealift_turn() -> void:
 		ready_by_type[String(ship_type)] = int((fleet[ship_type] as ShipState).ready)
 
 	var outcome := SealiftResolver.resolve(
-		sealift_state, ship_reserve, ready_by_type, GameData.ship_defs,
-		GameData.amphibious_return_time_turns)
+		sealift_state, ship_reserve, ready_by_type, GameData.ship_defs)
 
 	for entry_value in outcome["embarked_reserve_entries"]:
 		_merge_reserve_entry(entry_value)

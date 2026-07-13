@@ -19,6 +19,19 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-12 — Deep-pool default + golden/research scenario split + two lift-path bug fixes (USER).**
+  Follow-on to plan 0004. (1) `scenario_default` opts into a **deep mainland pool** auto-seeded from the
+  OOB (`auto_seed_followon_pool`) so sustained sealift is gated by amphibious lift capacity, not pool
+  size. (2) Fixed two silent lift bugs (see `hexcombat-failure-archaeology`): the amphibious-lift
+  filter matched `"Amphibious"` as a **substring** (admitted `Civilian_Non_Amphibious`) — now
+  `ShipDef.is_amphibious_lift()` exact membership; and `pack_bns_into_hulls` floored capacity **per
+  hull** (sub-1.0 hulls carried 0) — now aggregates `floor(N·C)`. (3) **Golden/research split (USER
+  option B):** `scenario_default` = realistic deep-pool default; the gate runs a frozen
+  `scenario_golden.json` (one-shot assault) via `HEXCOMBAT_SCENARIO`, so golden pins stay byte-stable
+  with **no re-baseline** while the default evolves; deep-pool coverage via
+  `tools/validate_deep_pool_smoke.gd`. Shore offload capacity (the second gate) deferred to plan 0006.
+  Facts: `docs/systems/amphibious-offload.md` §8; `docs/STATUS.md`.
+
 - **2026-07-12 — Sustained sealift: cross-turn ship lifecycle + capacity-gated echelons + escort
   SAM ammo (USER: scope "Both"; plan 0004).** Replaced the one-shot `ship_reserve` + same-turn
   ship round-trip with a real lifecycle: `SealiftState` (mainland follow-on pool, hull↔BN cohorts,

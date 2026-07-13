@@ -76,6 +76,17 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
+# --- Golden fixture selection -----------------------------------------------
+# The whole gate runs against the FROZEN golden fixture (scenario_golden.json),
+# not the research default (scenario_default.json, which carries the deep
+# follow-on pool). This keeps every pinned validator/test byte-stable while
+# scenario_default is free to evolve as the realistic self-play/research
+# scenario. Selection is via the standard HEXCOMBAT_SCENARIO env var; an
+# explicit --scenario arg still overrides it (used by the deep-pool coverage
+# validator to load scenario_default on purpose). To run a single golden
+# validator by hand, export the same var.
+export HEXCOMBAT_SCENARIO="res://data/scenario_golden.json"
+
 # --- State ------------------------------------------------------------------
 
 failures=()

@@ -138,3 +138,36 @@ exactly (grep the pytest's asserted keys); don't let a "helpful" port re-add Pyt
 Prose in planning docs claimed "238/210 cases" when the real GdUnit count was 124 — assertions
 were counted as cases. Rule: trust `grep -c 'func test_'` and the GdUnit `Overall Summary`, never
 prose counts (including in THIS documentation).
+
+### Follow-on sealift lift-path: two silent capacity bugs (2026-07-12)
+Found together while auditing why a deep-pool `roc_full_defense`/`scenario_default` reached a Red
+`china_majority` faster than 25–30% crossing attrition should allow. Both live in the plan-0004
+follow-on **embark** path (`SealiftResolver._embark_followon` → `ShipLoadingModel`), NOT the first
+assault wave, so the golden default (no follow-on) never exercised either — they were invisible.
+- **Bug 1 — `.contains("Amphibious")` substring trap.** `_gather_carriers_and_screen` gated follow-on
+  lift with `ship_def.category.contains("Amphibious")`. The category set includes
+  `"Civilian_Non_Amphibious"`, which *contains* that substring, so every non-amphibious civilian hull
+  (Container/Fast_Transport/unmod RoRo/barges) counted as amphibious lift — the whole mainland pool
+  crossed in ~one turn instead of metering across turns. **Evidence:** turn-1 embark loaded ~85 BNs
+  vs a 36-BN first wave. **Fixed:** exact category membership, moved to `ShipDef.is_amphibious_lift()`
+  (+ `sails()`/`is_carrier()`) with a regression test pinning `Civilian_Non_Amphibious` → not lift.
+  Sister of the GDScript port-trap family above; the general lesson: **never substring-match a
+  category enum** — the negation contains the positive.
+- **Bug 2 — per-hull `floor(capacity)` zeroes sub-1.0 hulls.** `ShipLoadingModel.pack_bns_into_hulls`
+  floored capacity **per hull**, so LCU/LSM (0.1), LST/Small_RoRo_Mod (0.25) each carried 0 BNs
+  regardless of count — ~12.8 BN-equiv of dead-weight lift. Effective amphibious lift was 42, not the
+  54.8 nominal. **Consequence:** once the cap-≥1.0 hulls were busy cycling (or, generalized, if they
+  were *sunk*), only useless small craft were "ready" and follow-on embark went to 0 — a permanent
+  sealift stall with dozens of hulls afloat. **Diverged from the sibling path:**
+  `build_sent_snapshots` (first wave) aggregates fractional capacity via `ceil` across hulls, so the
+  same fleet had two different lift capacities depending on which function asked. **Fixed:** aggregate
+  `floor(ready * cap)` per type, matching the minimum-lift math (24 LCU → 2 BNs). Byte-stable for
+  cap-1.0 hulls, so existing tests held.
+- **Status:** both fixed (2026-07-12). No golden re-baseline was needed: rather than repin, the deep
+  pool was made **opt-in** (`auto_seed_followon_pool`) and the golden gate was pointed at a frozen
+  `scenario_golden.json` while `scenario_default` became the deep-pool research default (USER option
+  B; see `docs/DECISIONS.md`). Also surfaced — not a bug, a modelling gap owned by **plan 0006**:
+  offload is beaches-only with `current_day = global turn_number`, and an empty-orders *default* now
+  overruns to a turn-17 win with no offload cap. Lesson: a lift/throughput abstraction that floors or
+  substring-matches must be tested with the *awkward* inputs (sub-1.0 hulls, `Non_` enum members),
+  not just the clean 1.0/amphibious ones.

@@ -6,9 +6,6 @@
   "feba_base_km": 3.5,
   "red_out_of_supply_effectiveness": 0.5,
   "stacking_soft_cap": 6,
-  "_followon_comment": "auto_seed_followon_pool opts this scenario into the deep mainland pool: with no explicit red_followon_reserve, the pool auto-seeds from the OOB (every RED brigade not in red_ship_reserve), round-robin across the first-wave beaches. Sustained sealift is gated by amphibious lift capacity + the return cycle, not by pool size. scenario_golden omits this flag and stays a one-shot assault.",
-  "auto_seed_followon_pool": true,
-  "amphibious_return_time_turns": 3,
   "victory": {
     "_comment": "End-of-cleanup victory census of battalions ON TAIWAN. loss_check_arm: 'unconditional' (default) | 'after_first_landing' | 'after_turn:<N>'. taiwan_hexes: null counts ALL placed hexes (correct for this main-island scenario; offshore islands can't be distinguished until terrain/land data exists \u2014 see PLAN.md Victory conditions); set to a hex-id array to restrict the census.",
     "loss_check_arm": "after_first_landing",

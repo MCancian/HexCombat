@@ -35,11 +35,20 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   Every scenario's `red_ship_reserve.beach_hex` must be coastal (< 6 land neighbors) —
   `validate_scenario_data.gd` rejects fully-inland landing hexes.
 - **Sealift lifecycle** (plan 0004, 2026-07-12) — ships cycle ready→sent→offloading→returning→ready
-  (`SealiftState` + `SealiftResolver`); follow-on echelons (`red_followon_reserve`) embark onto
-  ready amphibious lift so crossing sustains across turns instead of draining by ~turn 3. A BN crosses
-  **once** (attrited on its crossing turn, then safe offloading). Escorts carry a cross-turn SAM
-  magazine and cycle to reload when low. Off by default (`scenario_default` = one-shot pin);
-  `roc_full_defense` opts in. Facts: `docs/systems/amphibious-offload.md` → "Sealift lifecycle".
+  (`SealiftState` + `SealiftResolver`); follow-on echelons embark onto ready amphibious lift so
+  crossing sustains across turns instead of draining by ~turn 3. A BN crosses **once** (attrited on
+  its crossing turn, then safe offloading). Escorts carry a cross-turn SAM magazine and cycle to
+  reload when low. Follow-on is either an explicit `red_followon_reserve` (`roc_full_defense`) or an
+  opt-in deep pool auto-seeded from the OOB (`auto_seed_followon_pool`); amphibious lift is classified
+  by `ShipDef.is_amphibious_lift()` and `pack_bns_into_hulls` aggregates fractional hull capacity.
+  Facts: `docs/systems/amphibious-offload.md` → "Sealift lifecycle".
+- **Research default vs golden fixture** (2026-07-12) — `scenario_default.json` is the realistic
+  deep-pool sustained invasion (research/self-play); the pinned gate runs the frozen
+  `scenario_golden.json` (one-shot assault) via `HEXCOMBAT_SCENARIO`, keeping golden pins byte-stable
+  as the default evolves. Deep-pool coverage: `tools/validate_deep_pool_smoke.gd`.
+- **Not yet done: shore offload capacity gate** — offload is beaches-only, ports/airbridges unwired;
+  with deep lift and no cap an empty-orders default overruns. Owned by plan 0006
+  (`docs/plans/0006-offload-capacity-gate.md`).
 - **D2 Red DOS supply** — supply pool / effectiveness tracking. An exhausted Red pool now degrades Red
   ground-combat strength (`red_out_of_supply_effectiveness`, default 0.5) via
   `GameState._inject_supply_effectiveness`.

@@ -12,6 +12,10 @@ class_name GoldenScript
 ## Current shape (full ROC defense laydown, 2026-07-09): beach 1 (hex_44_16) is garrisoned by
 ## BDE-GDU, so the beach-1 lander is in contact at its landing hex; the scripted mover is the
 ## beach-2 lander (hex_44_15, ungarrisoned) moving one hex east to join that fight.
+##
+## Runs against the FROZEN golden fixture `data/scenario_golden.json` (the assault-only laydown),
+## which the gate selects via HEXCOMBAT_SCENARIO. The research default `scenario_default.json` carries
+## the deep follow-on pool and is deliberately NOT the golden — see ScenarioCatalog.
 
 const SEED := 20260624
 const RED_MOVER_ID := "PLA-72-5-Amphibious"

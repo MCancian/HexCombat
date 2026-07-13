@@ -1,7 +1,7 @@
 class_name SealiftResolver
 extends RefCounted
 
-## Pure resolver for the cross-turn sealift phase (plan 0004 D2): runs at the top of each turn,
+## Pure resolver for the cross-turn sealift phase (plan 0004): runs at the top of each turn,
 ## BEFORE the anti-ship crossing. Three deterministic steps, no dice:
 ##
 ##   1. tick   — advance the return/reload pipeline; hulls whose timer hits 0 rejoin the ready pool.
@@ -12,19 +12,18 @@ extends RefCounted
 ##   3. embark — remaining ready AMPHIBIOUS capacity loads follow-on BNs from the mainland pool
 ##               (departed brigades finished first, then new brigades), binding them in a new cohort.
 ##
-## Escorts (capacity 0) always screen the wave and, until D5 gives them a SAM magazine, never leave
-## the ready pool (same-turn round trip). Only amphibious CARRIER hulls enter cohorts / go busy.
+## Escorts (capacity 0) screen the wave and, unless they divert to reload their SAM magazine, stay in
+## the ready pool (same-turn round trip). Only carrier hulls (capacity > 0) enter cohorts and go busy.
+## Amphibious-lift eligibility is classified by ShipDef.is_amphibious_lift() / is_carrier() / sails().
 ##
 ## Mutates the passed SealiftState in place (sanctioned Resource mutation, like IjfsResolver);
 ## ship_reserve merging + ShipState bin projection stay in GameState's wrapper. Returns the deltas
 ## the wrapper needs.
 
-const AMPHIBIOUS_TAG := "Amphibious"
-
 
 ## state: SealiftState (mutated in place). ship_reserve: current active reserve (at-sea BNs).
 ## ready_by_type: {ship_type -> ready hull count} (from fleet ShipState.ready). ship_defs:
-## {ship_type -> ShipDef}. amphibious_return_time: turns a freed amphibious hull spends returning.
+## {ship_type -> ShipDef}.
 ##
 ## Returns {
 ##   "sent_by_type":            {ship_type -> int}  -- the sailing fleet for the crossing (all cohort
@@ -38,7 +37,6 @@ static func resolve(
 	ship_reserve: Array,
 	ready_by_type: Dictionary,
 	ship_defs: Dictionary,
-	amphibious_return_time: int,
 ) -> Dictionary:
 	# --- step 1: tick the return/reload pipelines -----------------------------------------------
 	var returned_by_type := _tick_return_pipeline(state)
@@ -82,16 +80,15 @@ static func resolve(
 
 	# --- assemble the sailing fleet for the crossing --------------------------------------------
 	var sent_by_type: Dictionary = carriers_sent_by_type.duplicate(true)
-	# Escort + decoy screen: every ready escort sails (capacity 0), and stays ready (D5 adds the
-	# ammo-driven cycle). Mirror build_sent_fleet's screen selection.
+	# Escort + decoy screen: every ready escort sails (capacity 0) and stays ready; SAM-magazine
+	# depletion + reload is applied separately via apply_escort_consumption. Mirror the screen selection.
 	var screen: Array = _gather_carriers_and_screen(ready, ship_defs, false)["screen"]
 	for s in screen:
 		var st := String(s["ship_type"])
 		sent_by_type[st] = int(sent_by_type.get(st, 0)) + int(s["ready"])
 
-	# Freed-hull return timing is applied in D4 (offload drain); the knob is threaded here so the
-	# builder/scenario value is the single source once D4 lands.
-	assert(amphibious_return_time >= 0, "amphibious_return_time must be >= 0")
+	# Freed-hull return timing is applied in the offload drain (drain_bn_ids / _free_cohort_hulls),
+	# where the scenario's amphibious_return_time is threaded in directly; nothing to do here.
 
 	return {
 		"sent_by_type": sent_by_type,
@@ -203,22 +200,22 @@ static func _embark_followon(
 	return embarked_by_brigade.values()
 
 
-## Carrier / screen split from the ready pool. amphibious_only gates carriers to categories tagged
-## "Amphibious" (the follow-on lift rule); when false, every non-infra carrier qualifies (matches the
-## pre-0004 build_sent_fleet, preserving the default scenario). Infrastructure non-decoy ships never
-## sail. Returns {"carriers": [{ship_type, capacity, ready}], "screen": [{ship_type, ready}]}.
+## Carrier / screen split from the ready pool. amphibious_only gates carriers to amphibious lift (the
+## follow-on lift rule); when false, every carrier qualifies (matches the pre-0004 build_sent_fleet,
+## preserving the default scenario). Classification lives on ShipDef (sails / is_carrier /
+## is_amphibious_lift). Returns {"carriers": [{ship_type, capacity, ready}], "screen": [{ship_type, ready}]}.
 static func _gather_carriers_and_screen(ready: Dictionary, ship_defs: Dictionary, amphibious_only: bool) -> Dictionary:
 	var carriers: Array = []
 	var screen: Array = []
 	for ship_def_value in ship_defs.values():
 		var ship_def: ShipDef = ship_def_value
-		if ship_def.infrastructure and not ship_def.is_decoy:
+		if not ship_def.sails():
 			continue
 		var n := int(ready.get(ship_def.name, 0))
 		if n <= 0:
 			continue
-		if ship_def.carrying_capacity_bn_equiv > 0.0:
-			if amphibious_only and not ship_def.category.contains(AMPHIBIOUS_TAG):
+		if ship_def.is_carrier():
+			if amphibious_only and not ship_def.is_amphibious_lift():
 				continue
 			carriers.append({"ship_type": ship_def.name, "capacity": ship_def.carrying_capacity_bn_equiv, "ready": n})
 		else:
@@ -226,7 +223,7 @@ static func _gather_carriers_and_screen(ready: Dictionary, ship_defs: Dictionary
 	return {"carriers": carriers, "screen": screen}
 
 
-## --- escort SAM magazine (plan 0004 D5) -----------------------------------------------------------
+## --- escort SAM magazine -------------------------------------------------------------------------
 
 ## Deplete each escort type's SAM magazine by what it fired this crossing, then divert any type that
 ## dropped to/below its reload threshold into a reload (escort_reload) for reload_time turns. No-op
@@ -261,7 +258,7 @@ static func _tick_escort_reload(state: SealiftState) -> void:
 		state.escort_reload.erase(ship_type)
 
 
-## --- post-crossing / offload cohort maintenance (plan 0004 D3/D4) ---------------------------------
+## --- post-crossing / offload cohort maintenance --------------------------------------------------
 
 ## BN ids currently bound to a "sent" cohort (crossing THIS turn) — the wrapper uses these to slice
 ## the crossing_reserve out of the full ship_reserve so only sailing BNs are attrited.

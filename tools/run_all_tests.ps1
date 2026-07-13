@@ -56,6 +56,13 @@ function Write-Phase([string]$name) {
     Write-Host "==================================================================" -ForegroundColor Cyan
 }
 
+# Golden fixture selection: the whole gate runs against the FROZEN golden fixture
+# (scenario_golden.json), not the research default (scenario_default.json, which carries the deep
+# follow-on pool). Keeps every pinned validator/test byte-stable while scenario_default evolves as
+# the realistic self-play scenario. An explicit --scenario arg still overrides (deep-pool coverage
+# validator). To run a single golden validator by hand, set the same var.
+$env:HEXCOMBAT_SCENARIO = "res://data/scenario_golden.json"
+
 # Run Godot headless, returning combined stdout+stderr; sets $script:LastGodotExit.
 function Invoke-Godot([string[]]$GodotArgs) {
     $all = @("--headless", "--path", $ProjectRoot) + $GodotArgs

@@ -127,28 +127,26 @@ static func pack_bns_into_hulls(bns: Array, carriers: Array) -> Dictionary:
 	var loaded_bns: Array = []
 	var remaining_bns: Array = bns.duplicate()
 
-	# Walk the carriers, filling each hull's BN-equiv capacity from the front of the pool. Every BN is
-	# 1.0 BN-equiv (ShipLoadingModel's abstraction), so a hull of capacity C takes floor(C) BNs; the
-	# fractional remainder is dropped (a half-slot cannot carry a whole BN) -- consistent with the
-	# forward model's integer hull counts.
+	# Walk the carriers highest-capacity first, filling from the front of the pool. Every BN is 1.0
+	# BN-equiv (ShipLoadingModel's abstraction). Capacity is AGGREGATED across a type's ready hulls
+	# before flooring -- a type of N hulls at capacity C lifts floor(N*C) BNs (so 24 LCU @0.1 carry 2),
+	# NOT floor(C) per hull, which would zero out every sub-1.0 hull. This matches the minimum-lift
+	# derivation in build_sent_snapshots (ceil BNs->hulls); the two lift paths must agree on how much
+	# the same fleet can carry. Hulls consumed = the fewest that cover the BNs taken (ceil), capped at
+	# ready.
 	for c in sorted_carriers:
 		if remaining_bns.is_empty():
 			break
 		var cap := float(c["capacity"])
 		var ready := int(c["ready"])
 		var ship_type := String(c["ship_type"])
-		var per_hull := int(floor(cap + 1e-9))
-		if per_hull <= 0:
+		var type_capacity_bns := int(floor(float(ready) * cap + 1e-9))
+		if type_capacity_bns <= 0:
 			continue
-		var hulls_used := 0
-		while hulls_used < ready and not remaining_bns.is_empty():
-			for _slot in range(per_hull):
-				if remaining_bns.is_empty():
-					break
-				loaded_bns.append(remaining_bns.pop_front())
-			hulls_used += 1
-		if hulls_used > 0:
-			hulls_used_by_type[ship_type] = hulls_used
+		var take := mini(type_capacity_bns, remaining_bns.size())
+		for _i in range(take):
+			loaded_bns.append(remaining_bns.pop_front())
+		hulls_used_by_type[ship_type] = mini(ready, int(ceil(float(take) / cap - 1e-9)))
 
 	return {
 		"loaded_bns": loaded_bns,

@@ -13,8 +13,12 @@ not a code change. Verify a knob is actually read before relying on it (grep the
 
 Loaded by `GameData.load_scenario()`; which file a process loads is decided by
 `ScenarioCatalog.selected_path()` (`--scenario=<id-or-path>` user arg beats
-`HEXCOMBAT_SCENARIO` env var; no selection → the default, so all pins hold; selection survives
-`reset_to_scenario`). Variant authoring recipe: `hexcombat-scenario-authoring`. Current axes:
+`HEXCOMBAT_SCENARIO` env var; no selection → `scenario_default` = the research default). **The pinned
+gate does NOT run `scenario_default`:** `run_all_tests.sh`/`.ps1` export
+`HEXCOMBAT_SCENARIO=res://data/scenario_golden.json` (a frozen one-shot assault fixture) so golden
+pins stay byte-stable while `scenario_default` evolves as the deep-pool research scenario. To run a
+golden validator by hand, export the same var. Variant authoring: `hexcombat-scenario-authoring`.
+Current axes:
 
 | Key | Default | Consumed by |
 |---|---|---|
@@ -26,6 +30,10 @@ Loaded by `GameData.load_scenario()`; which file a process loads is decided by
 | `victory.loss_check_arm` | `after_first_landing` here; code default `unconditional`; also `after_turn:<N>` | Victory census arming |
 | `victory.taiwan_hexes` | `null` = all placed hexes (land-data hook) | Victory census scope |
 | `red_ship_reserve` | 4 PLA amphibious brigades, locked beaches + `beach_hex` + `offset_bearing` | D1 offload start-at-sea |
+| `red_followon_reserve` | `[]` (explicit follow-on echelon; `roc_full_defense` uses 10) | Sealift `mainland_pool` (`SealiftStateBuilder`) |
+| `auto_seed_followon_pool` | `false`; `scenario_default` sets `true` | Opt-in deep pool auto-seeded from OOB when no explicit follow-on |
+| `amphibious_return_time_turns` | `0`; `scenario_default`/`roc_full_defense` use `3` | Freed-hull return delay (`SealiftResolver`) |
+| `escort_reload_time_turns` | `0` (magazine off); `roc_full_defense` uses `4` | Escort SAM reload cycle |
 | `placements` | 4 ROC defenders with hex + `offset_bearing` | Initial placement |
 
 **Scenario variants are first-class** (user objective): a new variant = a new scenario JSON.

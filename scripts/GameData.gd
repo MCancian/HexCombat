@@ -38,8 +38,12 @@ var neighbor_lookup: Dictionary = {}  # hex_id -> Array[String]
 var hex_states: Dictionary = {}  # hex_id -> HexState
 var red_ship_reserve: Array = []  # raw scenario dicts: {brigade_id, locked_beach, beach_hex, offset_bearing}
 # Follow-on brigades that embark AFTER the first echelon as ready amphibious lift frees up (plan
-# 0004). Same entry shape as red_ship_reserve; empty in one-shot scenarios (e.g. scenario_default).
+# 0004). Same entry shape as red_ship_reserve; empty when a scenario has no explicit echelon.
 var red_followon_reserve: Array = []
+# Opt-in deep-pool auto-seed: when true (and red_followon_reserve is empty) the mainland pool is
+# seeded from the OOB (every RED brigade not in the first wave). scenario_default sets it; the golden
+# fixture and minimal scenarios leave it false so they stay a one-shot assault.
+var auto_seed_followon_pool: bool = false
 # Turns a freed amphibious hull spends returning/reloading before it is ready to sail again (plan
 # 0004). 0 => hulls re-ready as soon as their cargo is ashore (no cross-turn lift constraint).
 var amphibious_return_time_turns: int = 0
@@ -62,12 +66,15 @@ func _ready() -> void:
 	load_all()
 
 
-func load_all() -> void:
+# scenario_override: force a specific scenario path, bypassing the --scenario/HEXCOMBAT_SCENARIO
+# selection. Used to load a fixed fixture regardless of process selection — e.g. the golden gate
+# runs against scenario_golden while a deep-pool coverage check explicitly loads scenario_default.
+func load_all(scenario_override: String = "") -> void:
 	load_hex_grid()
 	load_terrain()
 	build_neighbor_lookup()
 	load_brigades()
-	load_scenario(ScenarioCatalog.selected_path())
+	load_scenario(scenario_override if not scenario_override.is_empty() else ScenarioCatalog.selected_path())
 	load_theaters()
 	load_beaches()
 	load_ships()
@@ -214,6 +221,10 @@ func load_scenario(path: String) -> void:
 	victory_config = victory_value if victory_value is Dictionary else {}
 	red_ship_reserve = _parse_ship_reserve_entries(scenario.get("red_ship_reserve", []), "red_ship_reserve")
 	red_followon_reserve = _parse_ship_reserve_entries(scenario.get("red_followon_reserve", []), "red_followon_reserve")
+	# Opt-in ONLY: when true and no explicit red_followon_reserve is given, the mainland pool
+	# auto-seeds from the deep OOB (every RED brigade not in the first wave). Absent/false => no
+	# follow-on (the minimal assault laydown, e.g. scenario_golden). See SealiftStateBuilder.
+	auto_seed_followon_pool = bool(scenario.get("auto_seed_followon_pool", false))
 	amphibious_return_time_turns = maxi(0, int(scenario.get("amphibious_return_time_turns", 0)))
 	escort_reload_time_turns = maxi(0, int(scenario.get("escort_reload_time_turns", 0)))
 
