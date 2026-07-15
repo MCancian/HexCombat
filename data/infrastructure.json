@@ -1,0 +1,18 @@
+{
+  "description": "Offload infrastructure nodes (ports + airbridges). Seed list ported from TaiwanInvasionViewer defaults/infrastructure.json (5 ports + curated main-island airfields; offshore strips dropped). hex_id = nearest hex center to lat/lng, to_number = TO of nearest beach (theaters.json beach_to_to), both precomputed offline and asserted by tools/validate_infrastructure_data.gd. Throughput rates come from data/offload_rates.json by kind + status; status lifecycle lives in InfrastructureState (scenario-driven), not here.",
+  "infrastructure": [
+    {"id": "kaohsiung", "kind": "port", "name": "Port of Kaohsiung", "hex_id": "hex_11_4", "to_number": 4, "lat": 22.6133, "lng": 120.2792},
+    {"id": "keelung", "kind": "port", "name": "Port of Keelung", "hex_id": "hex_44_20", "to_number": 3, "lat": 25.13, "lng": 121.743},
+    {"id": "taichung", "kind": "port", "name": "Port of Taichung", "hex_id": "hex_33_7", "to_number": 5, "lat": 24.2945, "lng": 120.4909},
+    {"id": "hualien", "kind": "port", "name": "Port of Hualien", "hex_id": "hex_29_18", "to_number": 2, "lat": 23.986, "lng": 121.626},
+    {"id": "taipei", "kind": "port", "name": "Port of Taipei", "hex_id": "hex_44_16", "to_number": 3, "lat": 25.1615, "lng": 121.3521},
+    {"id": "taoyuan", "kind": "airbridge", "name": "Taoyuan International Airport", "hex_id": "hex_43_14", "to_number": 3, "lat": 25.0764, "lng": 121.2239},
+    {"id": "songshan", "kind": "airbridge", "name": "Taipei Songshan Airport", "hex_id": "hex_43_17", "to_number": 3, "lat": 25.0694, "lng": 121.5517},
+    {"id": "hsinchu", "kind": "airbridge", "name": "Hsinchu Airport", "hex_id": "hex_39_11", "to_number": 3, "lat": 24.8181, "lng": 120.9392},
+    {"id": "taichung-air", "kind": "airbridge", "name": "Taichung International Airport", "hex_id": "hex_33_8", "to_number": 5, "lat": 24.2644, "lng": 120.6206},
+    {"id": "chiayi", "kind": "airbridge", "name": "Chiayi Airport", "hex_id": "hex_22_6", "to_number": 4, "lat": 23.4617, "lng": 120.3928},
+    {"id": "tainan", "kind": "airbridge", "name": "Tainan Airport", "hex_id": "hex_16_4", "to_number": 4, "lat": 22.9503, "lng": 120.2056},
+    {"id": "kaohsiung-air", "kind": "airbridge", "name": "Kaohsiung International Airport", "hex_id": "hex_11_5", "to_number": 4, "lat": 22.5769, "lng": 120.35},
+    {"id": "hualien-air", "kind": "airbridge", "name": "Hualien Airport", "hex_id": "hex_29_18", "to_number": 2, "lat": 24.0231, "lng": 121.6178}
+  ]
+}

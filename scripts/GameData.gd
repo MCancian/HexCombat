@@ -5,12 +5,14 @@ const HexResource = preload("res://scripts/model/Hex.gd")
 const BrigadeResource = preload("res://scripts/model/Brigade.gd")
 const BattalionResource = preload("res://scripts/model/Battalion.gd")
 const BeachDefResource = preload("res://scripts/model/BeachDef.gd")
+const InfrastructureDefResource = preload("res://scripts/model/InfrastructureDef.gd")
 const ShipDefResource = preload("res://scripts/model/ShipDef.gd")
 const TerrainTypeResource = preload("res://scripts/model/TerrainType.gd")
 
 const OOB_PATHS := ["res://data/pla_ground_forces.json", "res://data/roc_ground_forces.json"]
 const DEFAULT_SCENARIO_PATH := ScenarioCatalog.DEFAULT_SCENARIO_PATH
 const BEACHES_PATH := "res://data/beaches.json"
+const INFRASTRUCTURE_PATH := "res://data/infrastructure.json"
 const THEATERS_PATH := "res://data/theaters.json"
 const SHIPS_PATH := "res://data/ships.json"
 
@@ -55,6 +57,7 @@ var brigades: Dictionary = {}  # brigade_id -> Brigade
 var brigades_by_hex: Dictionary = {}  # hex_id -> Array[String]
 
 var beaches: Dictionary = {}  # beach_id (int) -> BeachDef
+var infrastructure: Dictionary = {}  # infra_id (String) -> InfrastructureDef
 var ship_defs: Dictionary = {}  # id (int) -> ShipDef
 
 var active_tos: Array[int] = []
@@ -77,6 +80,7 @@ func load_all(scenario_override: String = "") -> void:
 	load_scenario(scenario_override if not scenario_override.is_empty() else ScenarioCatalog.selected_path())
 	load_theaters()
 	load_beaches()
+	load_infrastructure()
 	load_ships()
 	print_debug("GameData ready: %d hexes, %d brigades, %d beaches, %d TOs, %d ship types" % [hexes.size(), brigades.size(), beaches.size(), active_tos.size(), ship_defs.size()])
 
@@ -553,6 +557,42 @@ func load_beaches() -> void:
 
 func get_beach(beach_id: int) -> BeachDef:
 	return beaches.get(beach_id, null)
+
+
+func load_infrastructure() -> void:
+	infrastructure.clear()
+	var json = _read_json(INFRASTRUCTURE_PATH)
+	if json == null or not (json is Dictionary):
+		push_error("infrastructure.json format not recognized: expected Dictionary")
+		return
+	var infra_data = json.get("infrastructure", null)
+	if not (infra_data is Array):
+		push_error("infrastructure.json missing infrastructure array")
+		return
+	for entry_data in infra_data:
+		var entry: InfrastructureDef = InfrastructureDefResource.new()
+		entry.id = String(entry_data.get("id", ""))
+		entry.kind = String(entry_data.get("kind", ""))
+		entry.name = String(entry_data.get("name", ""))
+		entry.hex_id = String(entry_data.get("hex_id", ""))
+		entry.to_number = int(entry_data.get("to_number", 0))
+		entry.lat = float(entry_data.get("lat", 0.0))
+		entry.lng = float(entry_data.get("lng", 0.0))
+		if entry.id.is_empty():
+			push_error("Infrastructure entry missing id field")
+			continue
+		if entry.kind != "port" and entry.kind != "airbridge":
+			push_error("infrastructure.json entry '%s' has unknown kind '%s'" % [entry.id, entry.kind])
+			continue
+		if entry.hex_id == "" or entry.hex_id not in hex_lookup:
+			push_error("infrastructure.json entry '%s' hex_id '%s' missing or not in grid" % [entry.id, entry.hex_id])
+			continue
+		infrastructure[entry.id] = entry
+	print_debug("Loaded %d infrastructure nodes" % infrastructure.size())
+
+
+func get_infrastructure(infra_id: String) -> InfrastructureDef:
+	return infrastructure.get(infra_id, null)
 
 
 func load_ships() -> void:
