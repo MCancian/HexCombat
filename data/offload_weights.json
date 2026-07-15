@@ -1,0 +1,37 @@
+{
+  "description": "Per-BN-type transport weights and offload cost multipliers. Weights ported from TaiwanInvasionViewer defaults/unit_transport_weights.json (short tons); HexCombat-only types assigned locally. Multiplier matrix: node_kind -> bn_class -> ship_category -> multiplier, with 'default' fallback keys at every level. Consumed by OffloadCostModel; only applied when a scenario sets use_offload_weight_matrix.",
+  "default_tons": 2200,
+  "weights": {
+    "Air Assault Infantry Battalion": 1100,
+    "Air Defense Battalion": 2750,
+    "Amphibious Infantry Battalion": 2200,
+    "Armor Battalion": 3300,
+    "Attack Helicopter Battalion": 1100,
+    "Combined Arms Battalion": 2200,
+    "Field Artillery Battalion": 3300,
+    "Infantry Battalion (Reserve)": 1100,
+    "Mechanized Artillery Battalion": 3300,
+    "Mechanized Infantry Battalion": 2200,
+    "Reconnaissance Battalion": 1100,
+    "Rocket Artillery Battalion": 3300,
+    "Service Support Battalion": 2200,
+    "Special Forces Battalion": 1100,
+    "Support Battalion": 2200,
+    "Tank Battalion": 3300,
+    "Utility Helicopter Battalion": 1100
+  },
+  "default_bn_class": "standard",
+  "bn_class_of": {
+    "Amphibious Infantry Battalion": "amphibious"
+  },
+  "multipliers": {
+    "beach": {
+      "amphibious": {"Military_Amphibious": 0.5, "default": 1.0},
+      "standard": {"Civilian_Amphibious": 2.0, "Civilian_Non_Amphibious": 2.0, "default": 1.0},
+      "default": 1.0
+    },
+    "port": {"default": 1.0},
+    "airbridge": {"default": 1.0},
+    "default": 1.0
+  }
+}
