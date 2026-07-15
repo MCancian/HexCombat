@@ -90,6 +90,10 @@ func _validate_beach_contracts(beaches_data: Array) -> void:
 		if offload_rate <= 0.0:
 			_fail("Beach %d has non-positive offload_rate: %s" % [beach_id, offload_rate])
 
+		var depth := int(beach_data.get("depth", 0))
+		if depth <= 0:
+			_fail("Beach %d has non-positive depth: %d" % [beach_id, depth])
+
 		var capacity_bns := int(beach_data.get("capacity_battalions", 0))
 		if capacity_bns <= 0:
 			_fail("Beach %d has non-positive capacity_battalions: %d" % [beach_id, capacity_bns])

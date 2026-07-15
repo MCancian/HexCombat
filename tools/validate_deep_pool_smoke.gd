@@ -7,6 +7,12 @@ extends SceneTree
 #   2. sustained crossing — Red keeps arriving past the first wave (follow-on echelons embark),
 #   3. determinism — same seed => identical terminal census (the reproducibility contract).
 # Prints PASS:/FAIL: for the gate's Phase-3 verdict.
+#
+# Plan 0006: the run pushes every beach-sitting RED brigade one hex inland each turn. Under the
+# beach occupancy valve (BeachDef.depth) a parked Day-1 assault closes its beach, so an
+# empty-orders run plateaus by design and sustained crossing would be unobservable; moving inland
+# clears the valve each turn, which is exactly the intended tempo loop this smoke must cover
+# (land -> vacate -> next echelon lands).
 
 const DEEP_SCENARIO := "res://data/scenario_default.json"
 const SEED := 20260624
@@ -57,7 +63,7 @@ func _play() -> Dictionary:
 	var red_final := 0
 	var grn_final := 0
 	for _t in range(TURNS):
-		var result: TurnResult = GameState.play_turn([], [], dice)
+		var result: TurnResult = GameState.play_turn(_inland_move_orders(), [], dice)
 		var cs: Dictionary = result.cleanup_summary
 		red_final = int(cs.get("china_battalions_on_taiwan", -1))
 		grn_final = int(cs.get("taiwan_battalions_on_taiwan", -1))
@@ -67,6 +73,29 @@ func _play() -> Dictionary:
 			break
 		GameState.begin_next_turn()
 	return {"red_turn2": red_turn2, "red_final": red_final, "grn_final": grn_final}
+
+
+# Deterministic "clear the beach" policy: every non-destroyed RED brigade standing on a beach hex
+# moves to that hex's first sorted neighbor that is not itself a beach hex.
+func _inland_move_orders() -> Array:
+	var beach_hexes: Dictionary = {}
+	for beach_value in GameData.beaches.values():
+		beach_hexes[String(beach_value.hex_id)] = true
+	var orders: Array = []
+	for brigade_value in GameData.brigades.values():
+		var brigade: Brigade = brigade_value
+		if brigade.team != Brigade.Team.RED or brigade.destroyed or brigade.hex_id.is_empty():
+			continue
+		if not beach_hexes.has(brigade.hex_id):
+			continue
+		var neighbors: Array = (GameData.neighbor_lookup.get(brigade.hex_id, []) as Array).duplicate()
+		neighbors.sort()
+		for neighbor_value in neighbors:
+			var neighbor := String(neighbor_value)
+			if not beach_hexes.has(neighbor):
+				orders.append({"kind": "move", "brigade_id": brigade.id, "target_hex": neighbor})
+				break
+	return orders
 
 
 func _check(label: String, ok: bool) -> void:

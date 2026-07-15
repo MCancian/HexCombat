@@ -13,6 +13,7 @@ const OOB_PATHS := ["res://data/pla_ground_forces.json", "res://data/roc_ground_
 const DEFAULT_SCENARIO_PATH := ScenarioCatalog.DEFAULT_SCENARIO_PATH
 const BEACHES_PATH := "res://data/beaches.json"
 const INFRASTRUCTURE_PATH := "res://data/infrastructure.json"
+const OFFLOAD_WEIGHTS_PATH := "res://data/offload_weights.json"
 const THEATERS_PATH := "res://data/theaters.json"
 const SHIPS_PATH := "res://data/ships.json"
 
@@ -58,6 +59,11 @@ var brigades_by_hex: Dictionary = {}  # hex_id -> Array[String]
 
 var beaches: Dictionary = {}  # beach_id (int) -> BeachDef
 var infrastructure: Dictionary = {}  # infra_id (String) -> InfrastructureDef
+var offload_weights: Dictionary = {}  # parsed data/offload_weights.json (OffloadCostModel config)
+# Scenario opt-in (plan 0006): when true the offload phase costs BNs via the offload_weights
+# matrix (per-type transport weight x bn_class/ship_category multiplier); false = flat
+# TONS_PER_BN (pre-0006 behavior, keeps scenario_golden byte-stable).
+var use_offload_weight_matrix: bool = false
 var ship_defs: Dictionary = {}  # id (int) -> ShipDef
 
 var active_tos: Array[int] = []
@@ -81,6 +87,7 @@ func load_all(scenario_override: String = "") -> void:
 	load_theaters()
 	load_beaches()
 	load_infrastructure()
+	load_offload_weights()
 	load_ships()
 	print_debug("GameData ready: %d hexes, %d brigades, %d beaches, %d TOs, %d ship types" % [hexes.size(), brigades.size(), beaches.size(), active_tos.size(), ship_defs.size()])
 
@@ -231,6 +238,7 @@ func load_scenario(path: String) -> void:
 	auto_seed_followon_pool = bool(scenario.get("auto_seed_followon_pool", false))
 	amphibious_return_time_turns = maxi(0, int(scenario.get("amphibious_return_time_turns", 0)))
 	escort_reload_time_turns = maxi(0, int(scenario.get("escort_reload_time_turns", 0)))
+	use_offload_weight_matrix = bool(scenario.get("use_offload_weight_matrix", false))
 
 	var count := 0
 	for placement in placements:
@@ -540,6 +548,7 @@ func load_beaches() -> void:
 		beach.to_number = int(beach_data.get("to_number", 0))
 		beach.offload_rate = float(beach_data.get("offload_rate", 0.0))
 		beach.capacity_battalions = int(beach_data.get("capacity_battalions", 0))
+		beach.depth = int(beach_data.get("depth", 2))
 		beach.floating_piers = int(beach_data.get("floating_piers", 0))
 		beach.jackup_barge = int(beach_data.get("jackup_barge", 0))
 		beach.advance_direction = float(beach_data.get("advance_direction", 0.0))
@@ -593,6 +602,16 @@ func load_infrastructure() -> void:
 
 func get_infrastructure(infra_id: String) -> InfrastructureDef:
 	return infrastructure.get(infra_id, null)
+
+
+func load_offload_weights() -> void:
+	offload_weights = {}
+	var json = _read_json(OFFLOAD_WEIGHTS_PATH)
+	if json == null or not (json is Dictionary):
+		push_error("offload_weights.json format not recognized: expected Dictionary")
+		return
+	offload_weights = json
+	print_debug("Loaded offload weights (%d types)" % (offload_weights.get("weights", {}) as Dictionary).size())
 
 
 func load_ships() -> void:

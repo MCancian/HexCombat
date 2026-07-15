@@ -23,6 +23,7 @@ var fleet: Dictionary = {}  # ship name (String) -> ShipState
 # return/reload pipeline, escort SAM magazine. Built at scenario load, advanced by SealiftResolver
 # each turn before the crossing. Null only before the first reset_to_scenario.
 var sealift_state: SealiftState = null
+var infrastructure_state: InfrastructureState = null
 var pending_lost_at_sea: int = 0
 var supply_state: SupplyState
 var last_contested_hexes: Array[String] = []
@@ -83,6 +84,7 @@ func reset_to_scenario() -> void:
 	_rebuild_sealift_state()
 	_rebuild_fleet()
 	_rebuild_supply_state()
+	_rebuild_infrastructure_state()
 	# IJFS state is lazy-loaded on the first resolve_ijfs_turn (it pulls ~500KB of pairings + many
 	# Resource objects; eager-loading it in every booted process — validators, smoke, tests — bloated
 	# shutdown and triggered the Godot 4.7 teardown crash). Reset the handle; resolve_ijfs_turn builds
@@ -305,6 +307,15 @@ func ship_reserve_priority_order() -> Array[String]:
 
 func resolve_offload_turn(dice: Dice) -> Dictionary:
 	assert(dice != null, "resolve_offload_turn requires a Dice instance")
+	# Infrastructure lifecycle ticks every offload phase (plan 0006), even with an empty reserve:
+	# ground combat can seize a port hex long after the last beach landing. Ownership here is last
+	# turn's post-combat state — the producer->consumer edge is combat ownership -> next offload.
+	var infra_nodes: Array = []
+	if infrastructure_state != null:
+		var owner_by_hex := _owner_by_hex()
+		InfrastructureResolver.tick(infrastructure_state, GameData.infrastructure, owner_by_hex)
+		infra_nodes = InfrastructureResolver.red_offload_nodes(infrastructure_state, GameData.infrastructure, owner_by_hex)
+
 	if ship_reserve.is_empty():
 		var empty_manifest := _empty_offload_manifest()
 		empty_manifest["lost_at_sea"] = pending_lost_at_sea
@@ -313,7 +324,10 @@ func resolve_offload_turn(dice: Dice) -> Dictionary:
 		EventBus.offload_resolved.emit(empty_manifest)
 		return empty_manifest
 
-	var outcome := OffloadResolver.resolve(turn_number, ship_reserve, GameData.beaches, GameData.brigades)
+	var cost_config: Dictionary = GameData.offload_weights if GameData.use_offload_weight_matrix else {}
+	var outcome := OffloadResolver.resolve(
+		turn_number, ship_reserve, GameData.beaches, GameData.brigades,
+		infra_nodes, cost_config, GameData.beach_to_to)
 	for landing_value in outcome["landings"]:
 		var landing: Dictionary = landing_value
 		var brigade_id := String(landing["brigade_id"])
@@ -341,6 +355,17 @@ func resolve_offload_turn(dice: Dice) -> Dictionary:
 
 func _empty_offload_manifest() -> Dictionary:
 	return OffloadResolver.empty_manifest()
+
+
+func _owner_by_hex() -> Dictionary:
+	var owners: Dictionary = {}
+	for hex_id in GameData.hex_states.keys():
+		owners[String(hex_id)] = String((GameData.hex_states[hex_id] as HexState).owner)
+	return owners
+
+
+func _rebuild_infrastructure_state() -> void:
+	infrastructure_state = InfrastructureStateBuilder.build(GameData.infrastructure)
 
 
 func resolve_supply_turn() -> Dictionary:

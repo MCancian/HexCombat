@@ -52,8 +52,9 @@ static func tick(state: InfrastructureState, infra_defs: Dictionary, owner_by_he
 
 ## Red-usable offload nodes this turn: Red-held (owner "red") AND status degraded/operational.
 ## Returns Array (sorted by id) of {"id": String, "kind": String, "to_number": int,
-## "rate_tons": float}. Rates: OffloadRates.OPERATIONAL_PORT / DEGRADED_PORT /
-## OPERATIONAL_AIRBRIDGE / DEGRADED_AIRBRIDGE by (kind, status).
+## "rate_tons": float, "hex_id": String}. Rates: OffloadRates.OPERATIONAL_PORT / DEGRADED_PORT /
+## OPERATIONAL_AIRBRIDGE / DEGRADED_AIRBRIDGE by (kind, status). hex_id lets the offload wrapper
+## place a brigade whose first landed BN came ashore through the node at the node's hex.
 static func red_offload_nodes(state: InfrastructureState, infra_defs: Dictionary, owner_by_hex: Dictionary) -> Array:
 	var result: Array = []
 	var ids: Array = state.nodes.keys()
@@ -82,5 +83,5 @@ static func red_offload_nodes(state: InfrastructureState, infra_defs: Dictionary
 				rate = OffloadRates.OPERATIONAL_AIRBRIDGE
 			else:
 				rate = OffloadRates.DEGRADED_AIRBRIDGE
-		result.append({"id": id, "kind": def_data.kind, "to_number": def_data.to_number, "rate_tons": rate})
+		result.append({"id": id, "kind": def_data.kind, "to_number": def_data.to_number, "rate_tons": rate, "hex_id": def_data.hex_id})
 	return result
