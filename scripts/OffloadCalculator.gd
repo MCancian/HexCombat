@@ -78,6 +78,11 @@ static func resolve_offload_day(
 	beach_capacity: Dictionary,
 	brigades_at_sea: Array,
 	priority_order: Array,
+	infra_nodes: Array = [],
+	cost_config: Dictionary = {},
+	beach_occupancy: Dictionary = {},
+	beach_depth: Dictionary = {},
+	beach_to_to: Dictionary = {},
 ) -> Dictionary:
 	var manifest_landed: Array = []
 	var manifest_deferred: Array = []
@@ -103,7 +108,7 @@ static func resolve_offload_day(
 	if current_day == 1:
 		_resolve_day1(ordered_ids, brigade_map, beach_capacity, manifest_landed, manifest_deferred)
 	else:
-		_resolve_day_n(ordered_ids, brigade_map, beach_capacity, manifest_landed, manifest_deferred)
+		_resolve_day_n(ordered_ids, brigade_map, beach_capacity, manifest_landed, manifest_deferred, infra_nodes, cost_config, beach_occupancy, beach_depth, beach_to_to)
 
 	var bns_sent := manifest_landed.size() + manifest_deferred.size()
 	var bns_landed := manifest_landed.size()
@@ -195,40 +200,62 @@ static func _resolve_day1(
 
 
 # Day 2+: all remaining BNs (support + any un-landed maneuver) compete for throughput.
-# Greedy allocation in priority order; each BN costs TONS_PER_BN throughput.
+# Greedy allocation in priority order; per-BN cost from OffloadCostModel.
+# Supports infra routing fallback chain (port/airbridge) and occupancy valve.
+# Routing order: locked beach -> same-TO port -> same-TO airbridge ->
+# any-TO port -> any-TO airbridge -> defer.
+# Source: TIV manifest_allocator._allocate_landing_destinations lines 774-811.
 static func _resolve_day_n(
 	ordered_ids: Array[String],
 	brigade_map: Dictionary,
 	beach_capacity: Dictionary,
 	manifest_landed: Array,
 	manifest_deferred: Array,
+	infra_nodes: Array = [],
+	cost_config: Dictionary = {},
+	beach_occupancy: Dictionary = {},
+	beach_depth: Dictionary = {},
+	beach_to_to: Dictionary = {},
 ) -> void:
-	# Remaining capacity per beach in tons.
+	# Remaining capacity per beach in tons, with occupancy valve.
 	var remaining_tons: Dictionary = {}
 	for beach_id_var in beach_capacity.keys():
-		remaining_tons[int(beach_id_var)] = float(beach_capacity[beach_id_var]) * OffloadRates.TONS_PER_BN
+		var beach_id: int = int(beach_id_var)
+		if beach_depth.has(beach_id) and beach_occupancy.get(beach_id, 0) >= int(beach_depth[beach_id]):
+			remaining_tons[beach_id] = 0.0
+		else:
+			remaining_tons[beach_id] = float(beach_capacity[beach_id_var]) * OffloadRates.TONS_PER_BN
+
+	# Per-node infra budgets (duplicate with mutable remaining field).
+	var infra_remaining: Array = []
+	for node in infra_nodes:
+		var entry: Dictionary = node.duplicate()
+		entry["remaining"] = float(entry.get("rate_tons", 0.0))
+		infra_remaining.append(entry)
 
 	for bid in ordered_ids:
 		var brigade: Dictionary = brigade_map[bid]
 		var bns: Array = brigade.get("bns", [])
-		var locked := int(brigade.get("locked_beach", 0))
+		var locked: int = int(brigade.get("locked_beach", 0))
 
 		# Determine eligible beach (locked or first available).
-		var target_beach := -1
+		var target_beach: int = -1
 		if locked > 0 and locked in remaining_tons:
 			target_beach = locked
 		else:
 			for beach_id_var in remaining_tons.keys():
-				var beach_id := int(beach_id_var)
+				var beach_id: int = int(beach_id_var)
 				if remaining_tons[beach_id] >= OffloadRates.TONS_PER_BN:
 					target_beach = beach_id
 					break
 
 		for bn in bns:
-			var bn_id := String(bn.get("id", ""))
-			var bn_type := String(bn.get("type", ""))
-			if target_beach >= 0 and remaining_tons.get(target_beach, 0.0) >= OffloadRates.TONS_PER_BN:
-				remaining_tons[target_beach] -= OffloadRates.TONS_PER_BN
+			var bn_id: String = String(bn.get("id", ""))
+			var bn_type: String = String(bn.get("type", ""))
+			var ship_category: String = String(bn.get("ship_category", ""))
+			var beach_cost: float = OffloadCostModel.bn_cost_tons(bn_type, ship_category, "beach", cost_config)
+			if target_beach >= 0 and remaining_tons.get(target_beach, 0.0) >= beach_cost:
+				remaining_tons[target_beach] -= beach_cost
 				manifest_landed.append({
 					"brigade_id": bid,
 					"bn_id": bn_id,
@@ -236,9 +263,46 @@ static func _resolve_day_n(
 					"beach_id": target_beach,
 				})
 			else:
-				manifest_deferred.append({
-					"brigade_id": bid,
-					"bn_id": bn_id,
-					"bn_type": bn_type,
-					"reason": "throughput_limited",
-				})
+				var to_num: int = int(beach_to_to.get(locked if locked > 0 else target_beach, -1))
+				var port_cost: float = OffloadCostModel.bn_cost_tons(bn_type, ship_category, "port", cost_config)
+				var ab_cost: float = OffloadCostModel.bn_cost_tons(bn_type, ship_category, "airbridge", cost_config)
+				var infra_entry: Dictionary = _try_infra_landing(infra_remaining, "port", to_num, true, port_cost)
+				if infra_entry.is_empty():
+					infra_entry = _try_infra_landing(infra_remaining, "airbridge", to_num, true, ab_cost)
+				if infra_entry.is_empty():
+					infra_entry = _try_infra_landing(infra_remaining, "port", to_num, false, port_cost)
+				if infra_entry.is_empty():
+					infra_entry = _try_infra_landing(infra_remaining, "airbridge", to_num, false, ab_cost)
+				if not infra_entry.is_empty():
+					manifest_landed.append({
+						"brigade_id": bid,
+						"bn_id": bn_id,
+						"bn_type": bn_type,
+						"beach_id": -1,
+						"node_id": infra_entry.get("id", ""),
+						"node_kind": infra_entry.get("kind", ""),
+					})
+				else:
+					manifest_deferred.append({
+						"brigade_id": bid,
+						"bn_id": bn_id,
+						"bn_type": bn_type,
+						"reason": "throughput_limited",
+					})
+
+
+# Find first infra entry with matching kind and remaining >= cost.
+# Decrements entry.remaining in-place. Returns matching entry or {}.
+# same_to_only: when true, also requires entry.to_number == to_num.
+static func _try_infra_landing(infra_remaining: Array, kind: String, to_num: int, same_to_only: bool, cost: float) -> Dictionary:
+	for i in range(infra_remaining.size()):
+		var entry: Dictionary = infra_remaining[i]
+		if String(entry.get("kind", "")) != kind:
+			continue
+		if same_to_only and int(entry.get("to_number", -1)) != to_num:
+			continue
+		var remaining: float = float(entry.get("remaining", 0.0))
+		if remaining >= cost:
+			entry["remaining"] = remaining - cost
+			return entry
+	return {}

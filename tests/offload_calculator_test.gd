@@ -293,3 +293,251 @@ func test_day2_throughput_exhausted_defers_remaining() -> void:
 	assert_int(result["bns_landed"]).is_equal(2)
 	assert_int(result["bns_waiting"]).is_equal(1)
 	assert_str(result["manifest_deferred"][0]["brigade_id"]).is_equal("BDE-B")
+
+# ---------------------------------------------------------------------------
+# plan 0006: infra routing / cost / occupancy (day N)
+# ---------------------------------------------------------------------------
+
+func test_plan0006_defaults_regression() -> void:
+	var bns := [
+		_make_bn("S1", "Support Battalion"),
+		_make_bn("S2", "Field Artillery Battalion"),
+		_make_bn("S3", "Engineer Battalion"),
+	]
+	var brigades := [_make_brigade("BDE-1", bns)]
+	var lookup := _make_beach_lookup({1: 4400.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+
+	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"])
+
+	assert_int(result["bns_landed"]).is_equal(2)
+	assert_int(result["bns_waiting"]).is_equal(1)
+
+
+func test_plan0006_occupancy_valve_closes_beach() -> void:
+	var bns := [_make_bn("S1", "Support Battalion")]
+	var brigades := [_make_brigade("BDE-1", bns)]
+	var lookup := _make_beach_lookup({1: 4400.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+
+	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], [], {}, {1: 2}, {1: 2})
+
+	assert_int(result["bns_landed"]).is_equal(0)
+	assert_int(result["bns_waiting"]).is_equal(1)
+	assert_str(result["manifest_deferred"][0]["reason"]).is_equal("throughput_limited")
+
+
+func test_plan0006_occupancy_valve_off_when_not_in_depth() -> void:
+	var bns := [_make_bn("S1", "Support Battalion")]
+	var brigades := [_make_brigade("BDE-1", bns)]
+	var lookup := _make_beach_lookup({1: 4400.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+
+	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], [], {}, {1: 5})
+
+	assert_int(result["bns_landed"]).is_equal(1)
+
+
+func test_plan0006_occupancy_below_depth() -> void:
+	var bns := [_make_bn("S1", "Support Battalion")]
+	var brigades := [_make_brigade("BDE-1", bns)]
+	var lookup := _make_beach_lookup({1: 4400.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+
+	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], [], {}, {1: 1}, {1: 2})
+
+	assert_int(result["bns_landed"]).is_equal(1)
+
+
+func test_plan0006_beach_full_to_same_to_port() -> void:
+	var bns := [_make_bn("S1", "Support Battalion")]
+	var brigades := [_make_brigade("BDE-1", bns)]
+	var lookup := _make_beach_lookup({1: 4400.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+	var infra := [
+		{"id": "port1", "kind": "port", "to_number": 42, "rate_tons": 4400.0},
+	]
+
+	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], infra, {}, {1: 1}, {1: 1}, {1: 42})
+
+	assert_int(result["bns_landed"]).is_equal(1)
+	var entry: Dictionary = result["manifest_landed"][0]
+	assert_int(int(entry["beach_id"])).is_equal(-1)
+	assert_str(String(entry["node_id"])).is_equal("port1")
+	assert_str(String(entry["node_kind"])).is_equal("port")
+
+
+func test_plan0006_same_to_port_preferred() -> void:
+	# 2 BNs, beach fits 1 => second BN goes to infra with target_beach=1 valid
+	var bns := [_make_bn("S1", "Support Battalion"), _make_bn("S2", "Support Battalion")]
+	var brigades := [_make_brigade("BDE-1", bns)]
+	var lookup := _make_beach_lookup({1: 2200.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+	var infra := [
+		{"id": "port_any", "kind": "port", "to_number": 99, "rate_tons": 4400.0},
+		{"id": "port_same", "kind": "port", "to_number": 42, "rate_tons": 4400.0},
+	]
+
+	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], infra, {}, {}, {}, {1: 42})
+
+	assert_int(result["bns_landed"]).is_equal(2)
+	assert_int(int(result["manifest_landed"][0]["beach_id"])).is_equal(1)
+	assert_str(String(result["manifest_landed"][1]["node_id"])).is_equal("port_same")
+
+
+func test_plan0006_port_exhausted_to_airbridge() -> void:
+	var bns := [_make_bn("S1", "Support Battalion")]
+	var brigades := [_make_brigade("BDE-1", bns)]
+	var lookup := _make_beach_lookup({1: 4400.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+	var infra := [
+		{"id": "port_same", "kind": "port", "to_number": 42, "rate_tons": 1100.0},
+		{"id": "ab_same", "kind": "airbridge", "to_number": 42, "rate_tons": 4400.0},
+	]
+
+	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], infra, {}, {1: 1}, {1: 1}, {1: 42})
+
+	assert_str(String(result["manifest_landed"][0]["node_id"])).is_equal("ab_same")
+	assert_str(String(result["manifest_landed"][0]["node_kind"])).is_equal("airbridge")
+
+
+func test_plan0006_same_to_exhausted_any_to_order() -> void:
+	var bns := [_make_bn("S1", "Support Battalion"), _make_bn("S2", "Support Battalion")]
+	var brigades := [_make_brigade("BDE-1", bns)]
+	var lookup := _make_beach_lookup({1: 4400.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+	var infra := [
+		{"id": "ab_diff", "kind": "airbridge", "to_number": 99, "rate_tons": 4400.0},
+		{"id": "port_diff", "kind": "port", "to_number": 99, "rate_tons": 2200.0},
+	]
+
+	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], infra, {}, {1: 1}, {1: 1}, {1: 42})
+
+	assert_int(result["bns_landed"]).is_equal(2)
+	assert_str(String(result["manifest_landed"][0]["node_id"])).is_equal("port_diff")
+	assert_str(String(result["manifest_landed"][1]["node_id"])).is_equal("ab_diff")
+
+
+func test_plan0006_all_infra_exhausted_throughput_limited() -> void:
+	var bns := [_make_bn("S1", "Support Battalion")]
+	var brigades := [_make_brigade("BDE-1", bns)]
+	var lookup := _make_beach_lookup({1: 4400.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+	var infra := [
+		{"id": "port1", "kind": "port", "to_number": 42, "rate_tons": 1100.0},
+	]
+
+	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], infra, {}, {1: 1}, {1: 1}, {1: 42})
+
+	assert_int(result["bns_landed"]).is_equal(0)
+	assert_str(result["manifest_deferred"][0]["reason"]).is_equal("throughput_limited")
+
+
+func test_plan0006_degraded_port_budget_one_bn() -> void:
+	var bns := [_make_bn("S1", "Support Battalion"), _make_bn("S2", "Support Battalion")]
+	var brigades := [_make_brigade("BDE-1", bns)]
+	var lookup := _make_beach_lookup({1: 4400.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+	var infra := [
+		{"id": "port1", "kind": "port", "to_number": 42, "rate_tons": 2200.0},
+	]
+
+	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], infra, {}, {1: 1}, {1: 1}, {1: 42})
+
+	assert_int(result["bns_landed"]).is_equal(1)
+	assert_str(String(result["manifest_landed"][0]["node_id"])).is_equal("port1")
+
+
+func test_plan0006_flat_cost_empty_config() -> void:
+	var bns := [_make_bn("S1", "Support Battalion")]
+	var brigades := [_make_brigade("BDE-1", bns)]
+	var lookup := _make_beach_lookup({1: 2200.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+	var infra := [
+		{"id": "port1", "kind": "port", "to_number": 42, "rate_tons": 2200.0},
+	]
+
+	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], infra, {}, {}, {}, {1: 42})
+	assert_int(result["bns_landed"]).is_equal(1)
+	assert_int(int(result["manifest_landed"][0]["beach_id"])).is_equal(1)
+
+	var result2 := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], infra, {}, {1: 1}, {1: 1}, {1: 42})
+	assert_int(result2["bns_landed"]).is_equal(1)
+	assert_str(String(result2["manifest_landed"][0]["node_kind"])).is_equal("port")
+
+
+func test_plan0006_weight_matrix_tank_cost() -> void:
+	var cfg: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/offload_weights.json"))
+	var bns := [_make_bn("T1", "Tank Battalion"), _make_bn("T2", "Tank Battalion")]
+	var brigades := [_make_brigade("BDE-1", bns)]
+	var lookup := _make_beach_lookup({1: 4400.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+
+	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], [], cfg)
+
+	assert_int(result["bns_landed"]).is_equal(1)
+	assert_int(result["bns_waiting"]).is_equal(1)
+
+	var bns_flat := [_make_bn("S1", "Support Battalion"), _make_bn("S2", "Support Battalion")]
+	var brigades_flat := [_make_brigade("BDE-2", bns_flat)]
+	var result2 := OffloadCalculator.resolve_offload_day(2, cap, brigades_flat, ["BDE-2"])
+	assert_int(result2["bns_landed"]).is_equal(2)
+
+
+func test_plan0006_multiplier_amphibious_military_amphibious() -> void:
+	var cfg: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/offload_weights.json"))
+	var bns := [
+		{"id": "A1", "type": "Amphibious Infantry Battalion", "ship_category": "Military_Amphibious"},
+		{"id": "A2", "type": "Amphibious Infantry Battalion", "ship_category": "Military_Amphibious"},
+	]
+	var brigades := [_make_brigade("BDE-1", bns)]
+	var lookup := _make_beach_lookup({1: 2200.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+
+	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], [], cfg)
+
+	assert_int(result["bns_landed"]).is_equal(2)
+
+
+func test_plan0006_no_ship_category_default_cost() -> void:
+	var cfg: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/offload_weights.json"))
+	var bns := [_make_bn("M1", "Mechanized Infantry Battalion")]
+	var brigades := [_make_brigade("BDE-1", bns)]
+	var lookup := _make_beach_lookup({1: 2200.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+
+	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], [], cfg)
+
+	assert_int(result["bns_landed"]).is_equal(1)
+
+
+func test_plan0006_empty_beach_to_to_any_to_port() -> void:
+	var bns := [_make_bn("S1", "Support Battalion")]
+	var brigades := [_make_brigade("BDE-1", bns)]
+	var lookup := _make_beach_lookup({1: 4400.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+	var infra := [
+		{"id": "port_any", "kind": "port", "to_number": 99, "rate_tons": 4400.0},
+	]
+
+	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], infra, {}, {1: 1}, {1: 1}, {})
+
+	assert_int(result["bns_landed"]).is_equal(1)
+	assert_str(String(result["manifest_landed"][0]["node_id"])).is_equal("port_any")
+
+
+func test_plan0006_day1_unaffected_by_new_args() -> void:
+	var bns := [_make_bn("M1", "Mechanized Infantry Battalion")]
+	var brigades := [_make_brigade("BDE-1", bns)]
+	var lookup := _make_beach_lookup({1: 4400.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+	var infra := [
+		{"id": "port1", "kind": "port", "to_number": 42, "rate_tons": 4400.0},
+	]
+
+	var result_without := OffloadCalculator.resolve_offload_day(1, cap, brigades, ["BDE-1"])
+	var result_with := OffloadCalculator.resolve_offload_day(1, cap, brigades, ["BDE-1"], infra, {}, {}, {}, {})
+
+	assert_int(result_without["bns_landed"]).is_equal(result_with["bns_landed"])
+	assert_int(result_without["bns_waiting"]).is_equal(result_with["bns_waiting"])
+	assert_int(result_without["bns_sent"]).is_equal(result_with["bns_sent"])
