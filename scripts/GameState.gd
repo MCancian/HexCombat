@@ -24,6 +24,7 @@ var fleet: Dictionary = {}  # ship name (String) -> ShipState
 # each turn before the crossing. Null only before the first reset_to_scenario.
 var sealift_state: SealiftState = null
 var infrastructure_state: InfrastructureState = null
+var jlsf_orders: Array[String] = []  # port/airbridge ids with a pending explicit deploy_jlsf order
 var pending_lost_at_sea: int = 0
 var supply_state: SupplyState
 var last_contested_hexes: Array[String] = []
@@ -327,7 +328,7 @@ func resolve_offload_turn(dice: Dice) -> Dictionary:
 	var cost_config: Dictionary = GameData.offload_weights if GameData.use_offload_weight_matrix else {}
 	var outcome := OffloadResolver.resolve(
 		turn_number, ship_reserve, GameData.beaches, GameData.brigades,
-		infra_nodes, cost_config, GameData.beach_to_to)
+		infra_nodes, cost_config, GameData.beach_to_to, _owner_by_hex())
 	for landing_value in outcome["landings"]:
 		var landing: Dictionary = landing_value
 		var brigade_id := String(landing["brigade_id"])
@@ -342,9 +343,19 @@ func resolve_offload_turn(dice: Dice) -> Dictionary:
 	var landed_ids: Array = []
 	for landed_value in manifest["manifest_landed"]:
 		landed_ids.append(String((landed_value as Dictionary)["bn_id"]))
+	# JLSF deliveries (plan 0006): the detachment is ashore at its node — start the repair clock
+	# and free its hulls like any landed cargo.
+	for arrival_value in outcome.get("jlsf_arrivals", []):
+		var arrival: Dictionary = arrival_value
+		var port_id := String(arrival["port_id"])
+		if infrastructure_state != null and infrastructure_state.nodes.has(port_id):
+			infrastructure_state.nodes[port_id]["jlsf"] = InfrastructureState.JLSF_ARRIVED
+		for bn_id_value in arrival["bn_ids"]:
+			landed_ids.append(String(bn_id_value))
 	if sealift_state != null:
 		SealiftResolver.drain_bn_ids(sealift_state, landed_ids, GameData.amphibious_return_time_turns)
 		_project_sealift_onto_fleet()
+	_reconcile_lost_jlsf()
 
 	manifest["lost_at_sea"] = pending_lost_at_sea
 	# D3-F applies lost_at_sea to the reserve; D0-C only threads the value.
@@ -366,6 +377,33 @@ func _owner_by_hex() -> Dictionary:
 
 func _rebuild_infrastructure_state() -> void:
 	infrastructure_state = InfrastructureStateBuilder.build(GameData.infrastructure)
+	jlsf_orders.clear()
+
+
+## A JLSF deployment lost whole at sea (its pseudo-BNs all drowned in the crossing) leaves no
+## pool or reserve trace; reset its node marker so a new deployment can be ordered/auto-queued.
+func _reconcile_lost_jlsf() -> void:
+	if infrastructure_state == null:
+		return
+	for id_value in infrastructure_state.nodes.keys():
+		var node: Dictionary = infrastructure_state.nodes[id_value]
+		var marker := String(node["jlsf"])
+		if marker != InfrastructureState.JLSF_QUEUED and marker != InfrastructureState.JLSF_ENROUTE:
+			continue
+		var brigade_id := JlsfCargo.brigade_id_for(String(id_value))
+		if not _reserve_or_pool_has(brigade_id):
+			node["jlsf"] = InfrastructureState.JLSF_NONE
+
+
+func _reserve_or_pool_has(brigade_id: String) -> bool:
+	for entry_value in ship_reserve:
+		if String((entry_value as Dictionary).get("brigade_id", "")) == brigade_id:
+			return true
+	if sealift_state != null:
+		for entry_value in sealift_state.mainland_pool:
+			if String((entry_value as Dictionary).get("brigade_id", "")) == brigade_id:
+				return true
+	return false
 
 
 func resolve_supply_turn() -> Dictionary:
@@ -644,13 +682,53 @@ func resolve_sealift_turn() -> void:
 	for ship_type in fleet.keys():
 		ready_by_type[String(ship_type)] = int((fleet[ship_type] as ShipState).ready)
 
+	_consume_jlsf_orders()
 	var outcome := SealiftResolver.resolve(
 		sealift_state, ship_reserve, ready_by_type, GameData.ship_defs)
 
 	for entry_value in outcome["embarked_reserve_entries"]:
-		_merge_reserve_entry(entry_value)
+		var entry: Dictionary = entry_value
+		# A JLSF deployment that got hulls this turn is now enroute (plan 0006).
+		if JlsfCargo.is_jlsf_entry(entry) and infrastructure_state != null:
+			var port_id := String(entry.get("port_id", ""))
+			if infrastructure_state.nodes.has(port_id):
+				infrastructure_state.nodes[port_id]["jlsf"] = InfrastructureState.JLSF_ENROUTE
+		_merge_reserve_entry(entry)
 	last_sealift_sent_by_type = outcome["sent_by_type"]
 	_project_sealift_onto_fleet()
+
+
+## Turn explicit deploy_jlsf orders + the auto_jlsf policy into queued JLSF pool entries (plan
+## 0006). A node accepts one deployment while its jlsf marker is "none"; the pseudo-entry goes to
+## the FRONT of the mainland pool (logistics open the port gate before more troops help).
+## Deterministic: explicit orders in submission order, then auto policy in sorted node order.
+func _consume_jlsf_orders() -> void:
+	if infrastructure_state == null or sealift_state == null:
+		jlsf_orders.clear()
+		return
+	var to_queue: Array[String] = []
+	for port_id in jlsf_orders:
+		if not infrastructure_state.nodes.has(port_id):
+			push_error("deploy_jlsf order references unknown infrastructure id: %s" % port_id)
+			continue
+		to_queue.append(port_id)
+	jlsf_orders.clear()
+	if GameData.auto_jlsf:
+		var ids: Array = infrastructure_state.nodes.keys()
+		ids.sort()
+		for id_value in ids:
+			var id := String(id_value)
+			var node: Dictionary = infrastructure_state.nodes[id]
+			if String(node["status"]) == InfrastructureState.STATUS_SEIZED and id not in to_queue:
+				to_queue.append(id)
+	for port_id in to_queue:
+		var node: Dictionary = infrastructure_state.nodes[port_id]
+		if String(node["jlsf"]) != InfrastructureState.JLSF_NONE:
+			continue
+		node["jlsf"] = InfrastructureState.JLSF_QUEUED
+		sealift_state.mainland_pool.push_front(JlsfCargo.build_pool_entry(
+			GameData.get_infrastructure(port_id), GameData.beaches, GameData.beach_to_to,
+			GameData.jlsf_lift_bn_equiv))
 
 
 ## Merge a newly-embarked reserve entry into ship_reserve: append its BNs to the brigade's existing
@@ -960,6 +1038,11 @@ func _apply_order(order: Dictionary, team: Brigade.Team) -> void:
 			add_move_order(team, String(order["brigade_id"]), String(order["target_hex"]), mode)
 		"commit":
 			add_commit_order(team, String(order["brigade_id"]), String(order["target_hex"]))
+		"deploy_jlsf":
+			if team == Brigade.Team.RED:
+				jlsf_orders.append(String(order.get("port_id", "")))
+			else:
+				push_error("deploy_jlsf is a Red order")
 		_:
 			push_error("Unknown order kind: %s" % kind)
 

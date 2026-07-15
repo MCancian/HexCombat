@@ -36,13 +36,18 @@ static func priority_order(ship_reserve: Array) -> Array[String]:
 ##                ({id, kind, to_number, rate_tons, hex_id}).
 ##   cost_config: OffloadCostModel config ({} = flat TONS_PER_BN).
 ##   beach_to_to: beach_id -> TO (GameData.beach_to_to), for same-TO infra routing.
+##   owner_by_hex: hex_id -> owner string; needed only to land JLSF cargo (see below).
 ## Beach occupancy (the valve) is derived here from `brigades`: non-destroyed RED brigades
 ## sitting on an active beach's hex count against that beach's BeachDef.depth.
+## JLSF pseudo-entries (JlsfCargo.is_jlsf_entry) never enter the throughput math or the brigade
+## landing path: one waits offshore until its target node's hex (its beach_hex) is Red-held,
+## then delivers whole — reported in "jlsf_arrivals" [{port_id, bn_ids}] and dropped from the
+## remaining reserve.
 ## Returns {"manifest": Dictionary (incl. landed_brigade_ids), "remaining_ship_reserve": Array,
-## "landings": [{brigade_id, beach_hex, offset_bearing}, …]}. A brigade whose FIRST landed BN
-## came ashore through an infra node lands at the node's hex instead of the entry's beach_hex.
-## Mutates each reserve entry's "bns" in place (landed BNs removed), matching the pre-extraction
-## behavior.
+## "landings": [{brigade_id, beach_hex, offset_bearing}, …], "jlsf_arrivals": Array}. A brigade
+## whose FIRST landed BN came ashore through an infra node lands at the node's hex instead of
+## the entry's beach_hex. Mutates each reserve entry's "bns" in place (landed BNs removed),
+## matching the pre-extraction behavior.
 static func resolve(
 	turn_number: int,
 	ship_reserve: Array,
@@ -51,9 +56,19 @@ static func resolve(
 	infra_nodes: Array = [],
 	cost_config: Dictionary = {},
 	beach_to_to: Dictionary = {},
+	owner_by_hex: Dictionary = {},
 ) -> Dictionary:
-	var active_beach_ids: Array[int] = []
+	var jlsf_entries: Array = []
+	var troop_reserve: Array = []
 	for reserve_entry_value in ship_reserve:
+		var reserve_entry: Dictionary = reserve_entry_value
+		if JlsfCargo.is_jlsf_entry(reserve_entry):
+			jlsf_entries.append(reserve_entry)
+		else:
+			troop_reserve.append(reserve_entry)
+
+	var active_beach_ids: Array[int] = []
+	for reserve_entry_value in troop_reserve:
 		var reserve_entry: Dictionary = reserve_entry_value
 		var locked_beach := int(reserve_entry["locked_beach"])
 		if locked_beach <= 0:
@@ -79,7 +94,7 @@ static func resolve(
 
 	var beach_capacity := OffloadCalculator.beach_capacity_bns(active_beach_ids, beaches)
 	var manifest := OffloadCalculator.resolve_offload_day(
-		turn_number, beach_capacity, ship_reserve, priority_order(ship_reserve),
+		turn_number, beach_capacity, troop_reserve, priority_order(troop_reserve),
 		infra_nodes, cost_config, beach_occupancy, beach_depth, beach_to_to)
 
 	var node_hex_by_id: Dictionary = {}
@@ -103,7 +118,7 @@ static func resolve(
 	var landed_brigade_ids: Array[String] = []
 	var landings: Array = []
 	var remaining_ship_reserve: Array = []
-	for reserve_entry_value in ship_reserve:
+	for reserve_entry_value in troop_reserve:
 		var reserve_entry: Dictionary = reserve_entry_value
 		var brigade_id := String(reserve_entry["brigade_id"])
 		if brigade_id in landed_bn_ids_by_brigade:
@@ -131,9 +146,23 @@ static func resolve(
 			continue
 		remaining_ship_reserve.append(reserve_entry)
 
+	# JLSF delivery: a pseudo-entry lands whole (no throughput cost) the moment its target node's
+	# hex is Red-held; otherwise it stays offshore in the reserve, hulls committed.
+	var jlsf_arrivals: Array = []
+	for jlsf_entry_value in jlsf_entries:
+		var jlsf_entry: Dictionary = jlsf_entry_value
+		if String(owner_by_hex.get(String(jlsf_entry.get("beach_hex", "")), "")) == "red":
+			var bn_ids: Array = []
+			for bn_value in jlsf_entry.get("bns", []):
+				bn_ids.append(String((bn_value as Dictionary).get("id", "")))
+			jlsf_arrivals.append({"port_id": String(jlsf_entry.get("port_id", "")), "bn_ids": bn_ids})
+		else:
+			remaining_ship_reserve.append(jlsf_entry)
+
 	manifest["landed_brigade_ids"] = landed_brigade_ids
 	return {
 		"manifest": manifest,
 		"remaining_ship_reserve": remaining_ship_reserve,
 		"landings": landings,
+		"jlsf_arrivals": jlsf_arrivals,
 	}

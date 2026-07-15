@@ -30,6 +30,7 @@ static func observation(perspective_team: String = "") -> Dictionary:
 		"occupied_hexes": _occupied_hex_observations(),
 		"ship_reserve": _ship_reserve_observations(),
 		"supply_state": _supply_state_observation(),
+		"infrastructure": _infrastructure_observations(),
 		"ijfs": _ijfs_observation(),
 		"antiship": _antiship_observation(),
 		"legal_moves": _legal_move_observations(perspective_team),
@@ -70,6 +71,8 @@ static func apply_agent_response(response: Dictionary) -> Dictionary:
 				_apply_move_action(action, errors)
 			"commit":
 				_apply_commit_action(action, errors)
+			"deploy_jlsf":
+				_apply_deploy_jlsf_action(action, errors)
 			"end_turn":
 				if not action.has("seed"):
 					errors.append("end_turn action requires an explicit seed for reproducibility")
@@ -152,6 +155,37 @@ static func _apply_commit_action(action: Dictionary, errors: Array[String]) -> v
 	_game_state().add_commit_order(team, brigade_id, target_hex)
 	if _game_state().commitments_for(team).size() != before + 1:
 		errors.append("commit rejected: %s -> %s" % [brigade_id, target_hex])
+
+
+static func _apply_deploy_jlsf_action(action: Dictionary, errors: Array[String]) -> void:
+	var port_id := String(action.get("port_id", ""))
+	if _game_data().get_infrastructure(port_id) == null:
+		errors.append("deploy_jlsf rejected: unknown infrastructure id '%s'" % port_id)
+		return
+	_game_state()._apply_order({"kind": "deploy_jlsf", "port_id": port_id}, Brigade.Team.RED)
+
+
+## Offload infrastructure (plan 0006): every port/airbridge with its lifecycle status and JLSF
+## marker, so an agent can decide where a deploy_jlsf order pays off.
+static func _infrastructure_observations() -> Array:
+	var result: Array = []
+	var state: InfrastructureState = _game_state().infrastructure_state
+	var ids: Array = _game_data().infrastructure.keys()
+	ids.sort()
+	for id_value in ids:
+		var id := String(id_value)
+		var def_data: InfrastructureDef = _game_data().infrastructure[id]
+		var node: Dictionary = state.nodes.get(id, {}) if state != null else {}
+		result.append({
+			"id": id,
+			"kind": def_data.kind,
+			"name": def_data.name,
+			"hex": def_data.hex_id,
+			"to_number": def_data.to_number,
+			"status": String(node.get("status", InfrastructureState.STATUS_TAIWANESE)),
+			"jlsf": String(node.get("jlsf", InfrastructureState.JLSF_NONE)),
+		})
+	return result
 
 
 static func _map_summary() -> Dictionary:

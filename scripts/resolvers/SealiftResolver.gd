@@ -188,13 +188,20 @@ static func _embark_followon(
 				kept.append(bn)
 		entry["bns"] = kept
 		if not moved.is_empty():
-			embarked_by_brigade[String(entry["brigade_id"])] = {
+			var embarked: Dictionary = {
 				"brigade_id": String(entry["brigade_id"]),
 				"locked_beach": int(entry["locked_beach"]),
 				"beach_hex": String(entry["beach_hex"]),
 				"offset_bearing": float(entry["offset_bearing"]),
 				"bns": moved,
 			}
+			# JLSF pseudo-entries (plan 0006) carry cargo markers the offload phase dispatches on;
+			# preserve them through embark. Plain troop entries keep their exact pre-0006 shape.
+			if entry.has("cargo"):
+				embarked["cargo"] = entry["cargo"]
+			if entry.has("port_id"):
+				embarked["port_id"] = entry["port_id"]
+			embarked_by_brigade[String(entry["brigade_id"])] = embarked
 	# Fully-drained pool entries drop out.
 	var remaining_pool: Array = []
 	for entry in state.mainland_pool:

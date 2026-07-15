@@ -64,6 +64,11 @@ var offload_weights: Dictionary = {}  # parsed data/offload_weights.json (Offloa
 # matrix (per-type transport weight x bn_class/ship_category multiplier); false = flat
 # TONS_PER_BN (pre-0006 behavior, keeps scenario_golden byte-stable).
 var use_offload_weight_matrix: bool = false
+# JLSF knobs (plan 0006): auto_jlsf auto-queues a JLSF deployment to every newly seized
+# port/airbridge (research default); jlsf_lift_bn_equiv is the abstract lift cost of one
+# deployment in BN-equivalents (TIV JLSF_RESERVED_TONS ~= 4 BN heavy brigade).
+var auto_jlsf: bool = false
+var jlsf_lift_bn_equiv: int = 4
 var ship_defs: Dictionary = {}  # id (int) -> ShipDef
 
 var active_tos: Array[int] = []
@@ -239,6 +244,8 @@ func load_scenario(path: String) -> void:
 	amphibious_return_time_turns = maxi(0, int(scenario.get("amphibious_return_time_turns", 0)))
 	escort_reload_time_turns = maxi(0, int(scenario.get("escort_reload_time_turns", 0)))
 	use_offload_weight_matrix = bool(scenario.get("use_offload_weight_matrix", false))
+	auto_jlsf = bool(scenario.get("auto_jlsf", false))
+	jlsf_lift_bn_equiv = maxi(1, int(scenario.get("jlsf_lift_bn_equiv", 4)))
 
 	var count := 0
 	for placement in placements:

@@ -451,6 +451,125 @@
 		"sam_suppressed": 0,
 		"taiwan_ad_health_after": {}
 	},
+	"infrastructure": [
+		{
+			"hex": "hex_22_6",
+			"id": "chiayi",
+			"jlsf": "none",
+			"kind": "airbridge",
+			"name": "Chiayi Airport",
+			"status": "taiwanese",
+			"to_number": 4
+		},
+		{
+			"hex": "hex_39_11",
+			"id": "hsinchu",
+			"jlsf": "none",
+			"kind": "airbridge",
+			"name": "Hsinchu Airport",
+			"status": "taiwanese",
+			"to_number": 3
+		},
+		{
+			"hex": "hex_29_18",
+			"id": "hualien",
+			"jlsf": "none",
+			"kind": "port",
+			"name": "Port of Hualien",
+			"status": "taiwanese",
+			"to_number": 2
+		},
+		{
+			"hex": "hex_29_18",
+			"id": "hualien-air",
+			"jlsf": "none",
+			"kind": "airbridge",
+			"name": "Hualien Airport",
+			"status": "taiwanese",
+			"to_number": 2
+		},
+		{
+			"hex": "hex_11_4",
+			"id": "kaohsiung",
+			"jlsf": "none",
+			"kind": "port",
+			"name": "Port of Kaohsiung",
+			"status": "taiwanese",
+			"to_number": 4
+		},
+		{
+			"hex": "hex_11_5",
+			"id": "kaohsiung-air",
+			"jlsf": "none",
+			"kind": "airbridge",
+			"name": "Kaohsiung International Airport",
+			"status": "taiwanese",
+			"to_number": 4
+		},
+		{
+			"hex": "hex_44_20",
+			"id": "keelung",
+			"jlsf": "none",
+			"kind": "port",
+			"name": "Port of Keelung",
+			"status": "taiwanese",
+			"to_number": 3
+		},
+		{
+			"hex": "hex_43_17",
+			"id": "songshan",
+			"jlsf": "none",
+			"kind": "airbridge",
+			"name": "Taipei Songshan Airport",
+			"status": "taiwanese",
+			"to_number": 3
+		},
+		{
+			"hex": "hex_33_7",
+			"id": "taichung",
+			"jlsf": "none",
+			"kind": "port",
+			"name": "Port of Taichung",
+			"status": "taiwanese",
+			"to_number": 5
+		},
+		{
+			"hex": "hex_33_8",
+			"id": "taichung-air",
+			"jlsf": "none",
+			"kind": "airbridge",
+			"name": "Taichung International Airport",
+			"status": "taiwanese",
+			"to_number": 5
+		},
+		{
+			"hex": "hex_16_4",
+			"id": "tainan",
+			"jlsf": "none",
+			"kind": "airbridge",
+			"name": "Tainan Airport",
+			"status": "taiwanese",
+			"to_number": 4
+		},
+		{
+			"hex": "hex_44_16",
+			"id": "taipei",
+			"jlsf": "none",
+			"kind": "port",
+			"name": "Port of Taipei",
+			"status": "taiwanese",
+			"to_number": 3
+		},
+		{
+			"hex": "hex_43_14",
+			"id": "taoyuan",
+			"jlsf": "none",
+			"kind": "airbridge",
+			"name": "Taoyuan International Airport",
+			"status": "taiwanese",
+			"to_number": 3
+		}
+	],
 	"last_combat": [],
 	"last_contested_hexes": [],
 	"legal_commits": {},
