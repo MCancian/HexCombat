@@ -104,3 +104,20 @@ func test_no_ship_losses_draws_no_bns() -> void:
 	assert_int(int(res["bn_equiv_lost"])).is_equal(0)
 	assert_array(res["bns_lost"]).is_empty()
 	assert_float(float(res["accumulator"])).is_equal_approx(0.3, 0.0001)
+
+
+# --- plan 0006: pack_bns_into_hulls stamps ship_category -------------------------------------------
+
+func test_pack_stamps_loaded_bns_with_carrier_category() -> void:
+	var bns := [{"id": "a", "type": "X"}, {"id": "b", "type": "X"}, {"id": "c", "type": "X"}]
+	var carriers := [
+		{"ship_type": "LPD", "capacity": 2.0, "ready": 1, "category": "Military_Amphibious"},
+		{"ship_type": "Ferry", "capacity": 1.0, "ready": 1, "category": "Civilian_Amphibious"},
+	]
+	var packed := ShipLoadingModel.pack_bns_into_hulls(bns, carriers)
+	var loaded: Array = packed["loaded_bns"]
+	assert_int(loaded.size()).is_equal(3)
+	# LPD (capacity 2.0) fills first: a, b; Ferry takes c.
+	assert_str(String((loaded[0] as Dictionary).get("ship_category", ""))).is_equal("Military_Amphibious")
+	assert_str(String((loaded[1] as Dictionary).get("ship_category", ""))).is_equal("Military_Amphibious")
+	assert_str(String((loaded[2] as Dictionary).get("ship_category", ""))).is_equal("Civilian_Amphibious")

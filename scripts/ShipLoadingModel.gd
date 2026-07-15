@@ -104,10 +104,13 @@ static func build_sent_snapshots(bn_count: int, carriers: Array, screen: Array) 
 ##
 ## Args:
 ##   bns: Array of Dictionary {id, type, ...}  -- ordered BN pool to load (priority already applied).
-##   carriers: Array of Dictionary {ship_type:String, capacity:float, ready:int}; capacity > 0.
+##   carriers: Array of Dictionary {ship_type:String, capacity:float, ready:int,
+##             category:String (optional)}; capacity > 0.
 ##
 ## Returns Dictionary:
-##   "loaded_bns":       Array -- the BN dicts that fit (a prefix of `bns`).
+##   "loaded_bns":       Array -- the BN dicts that fit (a prefix of `bns`). Each loaded BN dict is
+##                       stamped in place with "ship_category" = its carrier's category (plan 0006:
+##                       the offload cost matrix needs the ship category the BN crossed on).
 ##   "hulls_used_by_type": Dictionary {ship_type -> int} -- amphibious hulls consumed.
 ##   "remaining_bns":    Array -- the BN dicts that did not fit (stay on the mainland).
 static func pack_bns_into_hulls(bns: Array, carriers: Array) -> Dictionary:
@@ -117,7 +120,7 @@ static func pack_bns_into_hulls(bns: Array, carriers: Array) -> Dictionary:
 		var ready := int(c["ready"])
 		if cap <= 0.0 or ready <= 0:
 			continue
-		sorted_carriers.append({"ship_type": String(c["ship_type"]), "capacity": cap, "ready": ready})
+		sorted_carriers.append({"ship_type": String(c["ship_type"]), "capacity": cap, "ready": ready, "category": String(c.get("category", ""))})
 	sorted_carriers.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		if not is_equal_approx(float(a["capacity"]), float(b["capacity"])):
 			return float(a["capacity"]) > float(b["capacity"])
@@ -144,8 +147,11 @@ static func pack_bns_into_hulls(bns: Array, carriers: Array) -> Dictionary:
 		if type_capacity_bns <= 0:
 			continue
 		var take := mini(type_capacity_bns, remaining_bns.size())
+		var category := String(c.get("category", ""))
 		for _i in range(take):
-			loaded_bns.append(remaining_bns.pop_front())
+			var bn: Dictionary = remaining_bns.pop_front()
+			bn["ship_category"] = category
+			loaded_bns.append(bn)
 		hulls_used_by_type[ship_type] = mini(ready, int(ceil(float(take) / cap - 1e-9)))
 
 	return {

@@ -66,6 +66,11 @@ static func resolve(
 		# adopted cohort's hull set directly (no escort filtering needed).
 		var snap := ShipLoadingModel.build_sent_snapshots(orphan_bns.size(), full["carriers"], [])
 		var adopted_hulls: Dictionary = snap["sent_by_type"]
+		# Stamp each adopted BN with the category of the carrier type that lifts it (plan 0006: the
+		# offload cost matrix needs the ship category a BN crossed on). build_sent_snapshots fills
+		# carrier types in deterministic order and bn_equiv_assigned preserves that insertion order,
+		# so walking its cumulative BN-equiv against the orphan pool reproduces the assignment.
+		_stamp_ship_categories(orphan_bns, snap["bn_equiv_assigned"], ship_defs)
 		if not adopted_hulls.is_empty():
 			state.cohorts.append({
 				"hulls_by_type": adopted_hulls,
@@ -217,7 +222,7 @@ static func _gather_carriers_and_screen(ready: Dictionary, ship_defs: Dictionary
 		if ship_def.is_carrier():
 			if amphibious_only and not ship_def.is_amphibious_lift():
 				continue
-			carriers.append({"ship_type": ship_def.name, "capacity": ship_def.carrying_capacity_bn_equiv, "ready": n})
+			carriers.append({"ship_type": ship_def.name, "capacity": ship_def.carrying_capacity_bn_equiv, "ready": n, "category": ship_def.category})
 		else:
 			screen.append({"ship_type": ship_def.name, "ready": n})
 	return {"carriers": carriers, "screen": screen}
@@ -336,6 +341,27 @@ static func _free_cohort_hulls(state: SealiftState, hulls_by_type: Dictionary, a
 			"count": count,
 			"turns_remaining": amphibious_return_time,
 		})
+
+
+## Stamp bns (in pool order) with the carrier category lifting them: walk bn_equiv_assigned
+## ({ship_type -> BN-equiv carried}, insertion order = build_sent_snapshots' deterministic fill
+## order) and assign each type's cumulative floor of BNs from the front of the pool. BNs beyond
+## the lifted total (unliftable) keep any existing stamp.
+static func _stamp_ship_categories(bns: Array, bn_equiv_assigned: Dictionary, ship_defs: Dictionary) -> void:
+	# ship_defs is keyed by numeric id (GameData.ship_defs); index by type name for the lookup.
+	var category_by_type: Dictionary = {}
+	for ship_def_value in ship_defs.values():
+		var ship_def: ShipDef = ship_def_value
+		category_by_type[ship_def.name] = ship_def.category
+	var idx := 0
+	var cumulative := 0.0
+	for ship_type in bn_equiv_assigned.keys():
+		cumulative += float(bn_equiv_assigned[ship_type])
+		var upto := mini(int(floor(cumulative + 1e-9)), bns.size())
+		var category := String(category_by_type.get(String(ship_type), ""))
+		while idx < upto:
+			(bns[idx] as Dictionary)["ship_category"] = category
+			idx += 1
 
 
 static func _bound_bn_ids(state: SealiftState) -> Dictionary:

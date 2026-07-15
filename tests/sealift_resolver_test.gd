@@ -251,3 +251,52 @@ func test_empty_resolve_does_not_crash() -> void:
 	assert_bool(result["returned_by_type"].is_empty()).is_true()
 	assert_bool(result["embarked_reserve_entries"].is_empty()).is_true()
 	assert_bool(state.cohorts.is_empty()).is_true()
+
+
+# --- plan 0006: per-BN ship_category stamping ------------------------------------------------------
+
+func test_adopted_bns_stamped_with_carrier_category() -> void:
+	var defs := _ship_defs()
+	var state := SealiftState.new()
+	var bns := [_bn("a"), _bn("b")]
+	var reserve := [_reserve_entry("BdeA", bns)]
+	var ready := {"LHA": 3, "DDG": 5}
+
+	SealiftResolver.resolve(state, reserve, ready, defs)
+
+	# Both orphans adopted onto LHA hulls (Military_Amphibious) — stamped in place.
+	assert_str(String(bns[0].get("ship_category", ""))).is_equal("Military_Amphibious")
+	assert_str(String(bns[1].get("ship_category", ""))).is_equal("Military_Amphibious")
+
+
+func test_embarked_bns_stamped_with_carrier_category() -> void:
+	var defs := _ship_defs()
+	var state := SealiftState.new()
+	state.mainland_pool = [_reserve_entry("BdeA", [_bn("a"), _bn("b")])]
+	var ready := {"LPD": 2}
+
+	var result := SealiftResolver.resolve(state, [], ready, defs)
+
+	var entries: Array = result["embarked_reserve_entries"]
+	assert_int(entries.size()).is_equal(1)
+	for bn_value in (entries[0] as Dictionary).get("bns", []):
+		assert_str(String((bn_value as Dictionary).get("ship_category", ""))).is_equal("Military_Amphibious")
+
+
+func test_adopt_stamping_splits_across_carrier_types_in_fill_order() -> void:
+	# Two carrier types with different categories; capacity forces a split. Fill order is
+	# capacity desc (ties by ship_type), so RO-RO (cap 2.0) fills before LST (cap 1.0).
+	var defs := {
+		"RO-RO": _ship_def("RO-RO", "Civilian_Amphibious", 2.0),
+		"LST": _ship_def("LST", "Military_Amphibious", 1.0),
+	}
+	var state := SealiftState.new()
+	var bns := [_bn("a"), _bn("b"), _bn("c")]
+	var reserve := [_reserve_entry("BdeA", bns)]
+	var ready := {"RO-RO": 1, "LST": 5}
+
+	SealiftResolver.resolve(state, reserve, ready, defs)
+
+	assert_str(String(bns[0].get("ship_category", ""))).is_equal("Civilian_Amphibious")
+	assert_str(String(bns[1].get("ship_category", ""))).is_equal("Civilian_Amphibious")
+	assert_str(String(bns[2].get("ship_category", ""))).is_equal("Military_Amphibious")
