@@ -96,7 +96,10 @@ func _on_offload_resolved(manifest: Dictionary) -> void:
 
 
 # Deterministic "clear the beach" policy: every non-destroyed RED brigade standing on a beach hex
-# moves to that hex's first sorted neighbor that is not itself a beach hex.
+# moves to that hex's first sorted neighbor that is not itself a beach hex. Same rule as the
+# catalog policy `inland_clear` (InlandClearPolicy) used by research runs; kept as a private
+# order-dict copy here so this gate validator drives GameState.play_turn directly and stays
+# self-contained.
 func _inland_move_orders() -> Array:
 	var beach_hexes: Dictionary = {}
 	for beach_value in GameData.beaches.values():

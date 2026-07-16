@@ -15,6 +15,8 @@ static func create(policy_id: String) -> Object:
 	match policy_id:
 		"selfplay_default":
 			return SelfPlayPolicy.new()
+		"inland_clear":
+			return InlandClearPolicy.new()
 		"llm_local":
 			return LLMPolicy.new()
 		_:
@@ -23,4 +25,4 @@ static func create(policy_id: String) -> Object:
 
 
 static func known_ids() -> Array[String]:
-	return ["selfplay_default", "llm_local"]
+	return ["selfplay_default", "inland_clear", "llm_local"]
