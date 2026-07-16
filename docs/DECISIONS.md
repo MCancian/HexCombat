@@ -19,7 +19,15 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
-- **2026-07-12 — Deep-pool default + golden/research scenario split + two lift-path bug fixes (USER).**
+- **2026-07-15 — Offload capacity gate shipped (plan 0006; USER design calls + agent implementation).**
+  USER calls (AskUserQuestion): data-driven cost matrix (`data/offload_weights.json`, per-type
+  weight × bn_class/ship_category multiplier, TIV defaults); JLSF-faithful port repair (seized = 0
+  throughput until an abstract, attritable `jlsf_lift_bn_equiv` deployment lands; explicit
+  `deploy_jlsf` order + `auto_jlsf` policy knob); per-beach occupancy valve (`BeachDef.depth`,
+  default 2); 5 TIV ports + 8 airfields seeded. All knobs default-off ⇒ golden byte-stable, no
+  re-baseline. C8 research verification found + fixed a sealift livelock (heavy BNs unlandable in
+  one day → carry-over; see `hexcombat-failure-archaeology`). Facts:
+  `docs/systems/amphibious-offload.md` §9; knobs: `hexcombat-config-and-knobs`.
   Follow-on to plan 0004. (1) `scenario_default` opts into a **deep mainland pool** auto-seeded from the
   OOB (`auto_seed_followon_pool`) so sustained sealift is gated by amphibious lift capacity, not pool
   size. (2) Fixed two silent lift bugs (see `hexcombat-failure-archaeology`): the amphibious-lift

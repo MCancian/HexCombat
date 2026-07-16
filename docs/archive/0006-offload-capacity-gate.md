@@ -1,7 +1,9 @@
 # 0006 — Offload capacity gate (beaches + ports)
 
-**Status:** Sketch · **Priority:** High (the real balancer for sustained sealift) — blocked on a
-USER fidelity/scope call + the pending sealift re-baseline (see "Sequencing").
+**Status:** DONE — shipped 2026-07-15 on `feat/0006-offload-gate` (9 commits, golden byte-stable
+throughout via default-off knobs; no re-baseline). Facts: `docs/systems/amphibious-offload.md` §9;
+knobs: `hexcombat-config-and-knobs`; decisions: `docs/DECISIONS.md` 2026-07-15; incident:
+`hexcombat-failure-archaeology` → "Sealift livelock" (found + fixed by the C8 research runs).
 
 > This plan is a **work order**. It has two parts: (A) study the TIV offload model against what
 > HexCombat already ports, then (B) implement an infrastructure-throughput gate so the amount of Red
@@ -167,14 +169,17 @@ skipped):**
 
 ## Checklist
 
-- [ ] Part A: TIV offload model documented with citations + the port delta; reconciled with
+- [x] Part A: TIV offload model documented with citations + the port delta; reconciled with
       `docs/archive/port_audit.md` (do not re-port intentionally-skipped items)
-- [ ] USER checkpoint: fidelity/scope + "held" definition + inland-clearance rule + map numbers
-- [ ] Ports/airbridges modeled (data + defs + ownership-driven operational state); throughput lib
+- [x] USER checkpoint: fidelity/scope + "held" definition + inland-clearance rule + map numbers
+      (resolved 2026-07-15 via AskUserQuestion — see DECISIONS)
+- [x] Ports/airbridges modeled (data + defs + ownership-driven operational state); throughput lib
       extended (pure, deterministic)
-- [ ] Wired through `OffloadResolver` / `GameState`; `scenario_default` given seizable ports
-- [ ] Golden re-baseline (coordinated with the sealift re-baseline) + new resolver tests;
-      `run_all_tests.sh` ALL PHASES GREEN
-- [ ] Research run confirms offload-capacity-gated tempo (no turn-17 overrun; port seizure matters)
-- [ ] Closeout: `docs/systems/amphibious-offload.md` (offload throughput), STATUS bullet, DECISIONS
-      entry, archaeology note if any incident; archive this plan
+- [x] Wired through `OffloadResolver` / `GameState`; `scenario_default` given seizable ports
+- [x] ~~Golden re-baseline~~ not needed — all features default-off, golden byte-stable; new
+      resolver/calculator/JLSF tests; `run_all_tests.sh` ALL PHASES GREEN every commit
+- [x] Research run confirms offload-capacity-gated tempo (no overrun over 40 turns × 3 seeds;
+      Taichung seizure lifts landing rate ~5→~8 BN/turn and ends the game 2–5 turns earlier);
+      also caught + fixed the heavy-BN sealift livelock (carry-over)
+- [x] Closeout: `docs/systems/amphibious-offload.md` §9, STATUS bullet, DECISIONS entry,
+      archaeology entry (sealift livelock); this plan archived

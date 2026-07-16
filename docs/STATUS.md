@@ -46,9 +46,15 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   deep-pool sustained invasion (research/self-play); the pinned gate runs the frozen
   `scenario_golden.json` (one-shot assault) via `HEXCOMBAT_SCENARIO`, keeping golden pins byte-stable
   as the default evolves. Deep-pool coverage: `tools/validate_deep_pool_smoke.gd`.
-- **Not yet done: shore offload capacity gate** — offload is beaches-only, ports/airbridges unwired;
-  with deep lift and no cap an empty-orders default overruns. Owned by plan 0006
-  (`docs/plans/0006-offload-capacity-gate.md`).
+- **Offload capacity gate** (plan 0006) — Red buildup is gated by held/operational offload
+  infrastructure, not just ship lift: ports/airbridges (`data/infrastructure.json`,
+  `InfrastructureResolver`) contribute throughput once seized and JLSF-repaired (`deploy_jlsf`
+  order / `auto_jlsf` policy); day-N offload costs vary by BN type × ship category
+  (`use_offload_weight_matrix` → `OffloadCostModel`, with cross-turn carry-over for heavy
+  loads); a per-beach occupancy valve (`BeachDef.depth`) closes a beach until landed brigades
+  move inland. All default-off; `scenario_default` enables the matrix + auto-JLSF. Empty-orders
+  self-play hard-plateaus instead of overrunning; seizing a port visibly raises the landing
+  rate. Facts: `docs/systems/amphibious-offload.md` §9.
 - **D2 Red DOS supply** — supply pool / effectiveness tracking. An exhausted Red pool now degrades Red
   ground-combat strength (`red_out_of_supply_effectiveness`, default 0.5) via
   `GameState._inject_supply_effectiveness`.

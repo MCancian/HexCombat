@@ -12,8 +12,14 @@ anti-ship crossing model and converts ship losses into BN casualties.
 
 | File | Responsibility |
 |---|---|
-| `scripts/OffloadCalculator.gd` | Day-1 and Day-N offload resolution; maneuver-BN detection; beach-capacity math |
+| `scripts/OffloadCalculator.gd` | Day-1 and Day-N offload resolution; maneuver-BN detection; beach-capacity math; day-N infra routing + carry-over |
 | `scripts/OffloadRates.gd` | Throughput constants (tons/day per infrastructure type); TONS_PER_BN |
+| `scripts/OffloadCostModel.gd` | Per-BN day-N offload cost: transport weight × bn_class/ship_category multiplier (plan 0006) |
+| `scripts/model/InfrastructureDef.gd` / `InfrastructureState.gd` | Port/airbridge node defs + per-node lifecycle state |
+| `scripts/resolvers/InfrastructureResolver.gd` | Pure seizure + JLSF repair clock; `red_offload_nodes` throughput feed |
+| `scripts/JlsfCargo.gd` | JLSF pseudo pool-entry builder (rides the 0004 sealift pipeline) |
+| `data/infrastructure.json` | 5 ports + 8 main-island airbridges (explicit `hex_id` + `to_number`) |
+| `data/offload_weights.json` | Per-BN-type transport weights + bn_class map + multiplier matrix |
 | `scripts/ShipLoadingModel.gd` | BN-to-ship fleet derivation (forward) and ship-loss-to-BN-casualty (backward) |
 | `scripts/GameState.gd` | `resolve_offload_turn()` orchestrator; `ship_reserve` state; `_rebuild_ship_reserve()` expansion |
 | `scripts/model/BeachDef.gd` | Beach `Resource` — offload_rate, floating_piers, jackup_barge, lat/lng, advance_direction |
@@ -114,8 +120,10 @@ two `ShipLoadingModel` simplifications below diverge, and both are intentional/c
   `test_offload_brigade_spacing.py`, `test_offload_calculator_init.py`.
 - **Status per ROADMAP.md:143:** D1 is **COMPLETE** (2026-06-24) with 8 validators + 54 GdUnit4 tests.
 - **Known simplifications (logged in PLAN.md):**
-  - `ShipLoadingModel` ignores per-type transport weight (every BN = 1.0 BN-equiv; TIV uses
-    `configurator.get_unit_transport_weight()`). Documented at `ShipLoadingModel.gd`.
+  - `ShipLoadingModel` ignores per-type transport weight for **lift packing** (every BN = 1.0
+    BN-equiv aboard ship; TIV uses `configurator.get_unit_transport_weight()`). Documented at
+    `ShipLoadingModel.gd`. Since plan 0006, per-type weights DO drive day-N **offload cost**
+    (§9 cost matrix) — the simplification is now lift-side only.
   - `ShipLoadingModel` drops the amphibious-vs-cargo ship-eligibility split (TIV's
     `_ship_can_carry_battalion`; HexCombat: any carrier ships any BN). Line 17-19.
   - ~~HexCombat has no ship-cycle~~ **(superseded 2026-07-12, plan 0004 — see §8 Sealift lifecycle).**
@@ -199,12 +207,85 @@ stable while `scenario_default` evolves. Deep-pool coverage rides `tools/validat
 (auto-seed + sustained crossing + determinism), which loads `scenario_default` explicitly via
 `GameData.load_all(path)`. To run a golden validator by hand, export the same env var.
 
-**Not yet gated: shore offload capacity.** Offload is beaches-only and uses the global turn number as
-the "day"; ports/airbridges are unmodelled (rates exist in `OffloadRates` but are unwired). With deep
-lift and no offload cap, an empty-orders default overruns. This is the **plan 0006** work item
-(`docs/plans/0006-offload-capacity-gate.md`).
-
 **TIV divergences (intentional):** TIV tracks per-hull `IndividualShip` entities in SQLite with
 per-hull ammo/repair/reload timers; HexCombat models the same lifecycle at the **per-ship-type
 aggregate** level (a whole escort type reloads as a group when its pooled SAM crosses the threshold).
 Damage-driven repair delay is not modelled (freed hulls use a flat return time).
+
+## 9. Offload capacity gate (plan 0006)
+
+Shore offload capacity is the second gate on Red buildup (USER call 2026-07-12): ship lift (§8)
+sets how much can cross; held/operational infrastructure sets how much can come ashore. All 0006
+features are **default-off knobs** — `scenario_golden` never sees them; `scenario_default` turns
+them on (`use_offload_weight_matrix`, `auto_jlsf`). Knob table: `hexcombat-config-and-knobs`.
+
+**Infrastructure nodes.** `data/infrastructure.json` seeds 5 ports + 8 main-island airbridges
+(TIV `defaults/infrastructure.json` lineage), each with explicit `hex_id`/`to_number`
+(precomputed offline; asserted by `tools/validate_infrastructure_data.gd`). Loaded into
+`GameData.infrastructure` as `InfrastructureDef`; per-node lifecycle lives in
+`InfrastructureState` (owned by `GameState`, rebuilt by `InfrastructureStateBuilder` on scenario
+reset): `status ∈ taiwanese|seized|degraded|operational`, `jlsf ∈ none|queued|enroute|arrived`.
+
+**Lifecycle — `InfrastructureResolver` (pure, dice-free), ticked at the top of
+`GameState.resolve_offload_turn` even when the reserve is empty (ground combat can seize a port
+long after the last landing).** A `taiwanese` node on a Red-owned hex becomes `seized`
+(0 throughput — TIV: capture wrecks the facility until logistics troops restore it). With a JLSF
+`arrived` and the hex still Red-held, repair advances one stage per turn
+(`repair_turns_per_stage`, default 1): `seized → degraded → operational`. Status never regresses
+on recapture; instead `red_offload_nodes` gates *contribution* on ownership at read time —
+a Green-retaken port contributes nothing but keeps its repair state if Red retakes it.
+**Ownership-semantics dependency:** seizure persistence relies on
+`GameData.recompute_hex_ownership` having no else-branch — a vacated hex keeps its last owner,
+so a Red column can take a port hex and move on without the node reverting. Ownership fed to the tick is
+last turn's post-combat state (producer→consumer edge: combat ownership → next offload).
+
+**Throughput.** `red_offload_nodes` returns Red-held degraded/operational nodes with rates from
+`OffloadRates` (port 11,000/2,200 t/d operational/degraded ≈ 5.0/1.0 BN-equiv; airbridge
+2,200/1,100) — finally wiring the constants that sat unreferenced since D1. Day-N routing per
+BN (TIV `manifest_allocator` order): locked beach → same-TO port → same-TO airbridge → any-TO
+port → any-TO airbridge → defer `throughput_limited`. A brigade whose first landed BN came
+through a node lands at the node's hex, not a beach.
+
+**Cost matrix (`use_offload_weight_matrix`).** Day-N per-BN cost =
+`weights[bn_type] × multipliers[node_kind][bn_class][ship_category]` from
+`data/offload_weights.json` via `OffloadCostModel` (flat `TONS_PER_BN` when the knob is off —
+the golden path). TIV values at beaches (amphibious BN on Military_Amphibious 0.5×; standard BN
+on civilian hulls 2.0×; else 1.0×); ports/airbridges always 1.0×. `ship_category` is stamped on
+each BN dict at embark/adopt time (`ShipLoadingModel.pack_bns_into_hulls` / the adopt path) —
+per-cohort hull binding from §8 makes it derivable. New ship categories or cargo classes are
+data additions (USER flexibility requirement 2026-07-15).
+
+**Carry-over (TIV fractional flow).** A BN whose beach cost exceeds its locked beach's leftover
+tons banks those tons (`offload_progress_tons` on the bn dict, deferred reason
+`offload_in_progress`) and lands once banked progress covers the cost. Port/airbridge routing is
+tried at full price first; progress never subsidizes a node landing; a valve-closed beach banks
+nothing. Without this, a heavy BN on civilian lift (e.g. 3300 t × 2.0 = 6600 t vs a 4400 t/d
+beach) deferred forever and its cohort's hulls never returned — freezing ALL sealift
+(see `hexcombat-failure-archaeology`, sealift livelock).
+
+**Beach occupancy valve.** Per-beach `depth` in `data/beaches.json` (`BeachDef.depth`, default
+2): when ≥depth landed RED brigades stand on the beach hex, that beach contributes 0 tons until
+they move inland. Day-1 assault parks 2 brigades per beach, so an empty-orders run hard-plateaus
+BY DESIGN (~turn 2); the land→vacate→land loop is the intended tempo and is what
+`tools/validate_deep_pool_smoke.gd` exercises with inland move orders.
+
+**JLSF pipeline.** A seized node repairs only after a Joint Logistics Support Force deployment:
+an explicit Red order `{"kind": "deploy_jlsf", "port_id": ...}` or the `auto_jlsf` scenario
+policy (auto-queue for every newly seized node). `GameState._consume_jlsf_orders` pushes a
+`JlsfCargo` pseudo pool entry (`brigade_id "JLSF:<id>"`, `cargo: "jlsf"`,
+`jlsf_lift_bn_equiv` pseudo-BNs, a real locked beach in the node's TO) to the FRONT of the
+mainland pool; it rides the §8 pipeline unchanged — consumes ready amphibious lift, takes real
+crossing attrition, frees its hulls on delivery. `OffloadResolver` lands it tons-free when the
+node hex is Red-held (else defers `jlsf_waiting_port`); arrival flips the node's `jlsf` marker
+to `arrived` and starts the repair clock. A deployment lost whole at sea is reconciled by
+`GameState._reconcile_lost_jlsf` (marker back to `none`; auto-policy may re-queue). The JLSF is
+never a `Brigade` — invisible to census/combat/movement. LLM surface: `deploy_jlsf` action +
+`infrastructure` observation block (schema + fixtures regenerated).
+
+**Measured behavior (research runs, 2026-07-15, 3 seeds × 40 turns, `scenario_default`):**
+empty orders plateau at peak 31–35 Red BNs (no overrun, was turn-17 `china_majority` before
+0006); with inland-clearing orders Red sustains ~5 BN/turn over beaches alone; seizing Taichung
+port (JLSF repair seized→operational in 3–5 turns) lifts the landing rate to ~7–9 BN/turn and
+ends the game 2–5 turns earlier. Ports are also the only way ashore for BNs whose beach cost
+exceeds every beach's daily rate in one lump (heavy equipment on civilian hulls offloads at 1.0×
+alongside a pier instead of 2.0× over the beach).

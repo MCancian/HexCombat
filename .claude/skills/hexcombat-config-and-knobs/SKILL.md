@@ -34,6 +34,9 @@ Current axes:
 | `auto_seed_followon_pool` | `false`; `scenario_default` sets `true` | Opt-in deep pool auto-seeded from OOB when no explicit follow-on |
 | `amphibious_return_time_turns` | `0`; `scenario_default`/`roc_full_defense` use `3` | Freed-hull return delay (`SealiftResolver`) |
 | `escort_reload_time_turns` | `0` (magazine off); `roc_full_defense` uses `4` | Escort SAM reload cycle |
+| `use_offload_weight_matrix` | `false` (flat TONS_PER_BN); `scenario_default` sets `true` | Day-N offload cost = per-type weight × bn_class/ship_category multiplier (`data/offload_weights.json` → `OffloadCostModel`; plan 0006) |
+| `auto_jlsf` | `false`; `scenario_default` sets `true` | Auto-queue a JLSF deployment to every newly seized port/airbridge (`GameState._consume_jlsf_orders`); explicit `deploy_jlsf` Red orders work regardless |
+| `jlsf_lift_bn_equiv` | `4` | Abstract amphibious-lift cost of one JLSF deployment (`JlsfCargo` pseudo-BNs; attritable in the crossing) |
 | `placements` | 4 ROC defenders with hex + `offset_bearing` | Initial placement |
 
 **Scenario variants are first-class** (user objective): a new variant = a new scenario JSON.

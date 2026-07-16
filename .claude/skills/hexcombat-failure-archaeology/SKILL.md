@@ -171,3 +171,23 @@ assault wave, so the golden default (no follow-on) never exercised either — th
   overruns to a turn-17 win with no offload cap. Lesson: a lift/throughput abstraction that floors or
   substring-matches must be tested with the *awkward* inputs (sub-1.0 hulls, `Non_` enum members),
   not just the clean 1.0/amphibious ones.
+
+### Sealift livelock: heavy BNs unlandable in one day froze all lift (2026-07-15)
+Found by plan-0006 C8 **research runs** (40-turn ordered games on `scenario_default`), invisible
+to every unit gate and to the 10-turn deep-pool smoke. Under `use_offload_weight_matrix`, a BN
+whose day-N beach cost exceeds its locked beach's FULL per-day tons (Mechanized Artillery /
+Field/Rocket Artillery 3300 t or Air Defense 2750 t × 2.0 civilian-hull multiplier = 6600/5500 t
+vs a 4400 t/d beach) deferred `throughput_limited` **every turn forever**. Plan-0004 coupling
+turned starvation into a global livelock: a cohort frees its hulls only when ALL its BNs drain,
+so ~10 permanently-stuck BNs held every amphibious hull → embark = 0, the 864-BN mainland pool
+never moved, queued JLSFs never sailed, ports never repaired — all sealift frozen from ~turn 10.
+**Root cause:** the TIV oracle never starves — `build_offload_queue` offloads fractionally across
+days; HexCombat's day-N was whole-BN-per-turn, a porting gap only reachable once C1–C6 made
+per-BN costs exceed beach rates. **Fixed** (same day): day-N carry-over in `OffloadCalculator` —
+the locked beach's leftover tons bank into `offload_progress_tons` on the bn dict (deferred
+reason `offload_in_progress`) until progress covers the cost. Flat-cost path provably unchanged
+(all flat costs/rates are multiples of 2200 ⇒ the partial branch can't fire) — golden stayed
+byte-stable. Guard: `validate_deep_pool_smoke` now runs 12 turns and asserts landings continue
+past turn 10 (pre-fix: 0). Lesson: **any per-item cost drawn from a per-turn budget needs a
+carry-over or a proof that max(cost) ≤ min(budget)** — and end-to-end research runs longer than
+the smoke horizon are part of a feature's verification, not an optional extra.

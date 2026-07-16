@@ -18,7 +18,6 @@ plan to act, the closeout wasn't done.
 
 | # | Plan | Priority | Status |
 |---|------|----------|--------|
-| 0006 | [Offload capacity gate (beaches + ports)](0006-offload-capacity-gate.md) | High (blocked on USER scope + sealift re-baseline) | Sketch |
 | 0005 | [Game-record inconsistency audit (agent brief)](0005-game-record-inconsistency-audit.md) | Medium | Sketch |
 | 0002 | [Per-hull escort magazines (D3-B3)](0002-per-hull-escort-magazines.md) | Low (needs ship-ammo subsystem) | Sketch |
 | 0003 | [Combat-summary team attribution](0003-combat-summary-team-attribution.md) | Low (blocked on USER counterattack call) | Sketch |
@@ -27,6 +26,7 @@ plan to act, the closeout wasn't done.
 
 | # | Plan | Status |
 |---|------|--------|
+| 0006 | [Offload capacity gate (beaches + ports)](../archive/0006-offload-capacity-gate.md) | ✅ Shipped 2026-07-15 — infrastructure nodes + JLSF repair + cost matrix + occupancy valve + day-N carry-over; facts in `docs/systems/amphibious-offload.md` §9, `docs/DECISIONS.md` |
 | 0004 | [Port TIV ship-count & crossing model (sealift gap)](../archive/0004-port-ship-crossing-sealift-model.md) | ✅ Shipped 2026-07-12 — cross-turn ship lifecycle + follow-on echelons + escort SAM magazine; facts in `docs/systems/amphibious-offload.md` §8, `docs/DECISIONS.md` |
 | 0001 | [Crossing-lethality calibration (D3-D)](../archive/0001-crossing-lethality-calibration.md) | ✅ Shipped 2026-07-11 — dial-in facts in `docs/systems/ijfs.md`, `hexcombat-config-and-knobs`, `docs/DECISIONS.md` |
 
