@@ -19,6 +19,14 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-15 — Post-0006 refactor batch (agent judgment).** Behavior-preserving cleanups from the
+  C8 session's findings: deferred-reason constants + day-N decomposition on `OffloadCalculator`;
+  `GameData.ship_defs_by_name` index (fail-loud duplicate-name check); JLSF queueing policy
+  extracted to `JlsfCargo.queue_deployments`; research policy `inland_clear` registered in
+  `PolicyCatalog` (C8-style studies now run via `run_selfplay_game.gd --policy=inland_clear`, no
+  scratch drivers). Trap recorded in code: `PolicyCatalog.create` runs in `SceneTree._initialize`,
+  before autoload `_ready` — policies must resolve GameData lazily. Golden byte-stable throughout.
+
 - **2026-07-15 — Offload capacity gate shipped (plan 0006; USER design calls + agent implementation).**
   USER calls (AskUserQuestion): data-driven cost matrix (`data/offload_weights.json`, per-type
   weight × bn_class/ship_category multiplier, TIV defaults); JLSF-faithful port repair (seized = 0

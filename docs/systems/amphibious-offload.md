@@ -276,7 +276,7 @@ policy (auto-queue for every newly seized node). `GameState._consume_jlsf_orders
 `jlsf_lift_bn_equiv` pseudo-BNs, a real locked beach in the node's TO) to the FRONT of the
 mainland pool; it rides the §8 pipeline unchanged — consumes ready amphibious lift, takes real
 crossing attrition, frees its hulls on delivery. `OffloadResolver` lands it tons-free when the
-node hex is Red-held (else defers `jlsf_waiting_port`); arrival flips the node's `jlsf` marker
+node hex is Red-held (else it stays in the reserve for a later turn); arrival flips the node's `jlsf` marker
 to `arrived` and starts the repair clock. A deployment lost whole at sea is reconciled by
 `GameState._reconcile_lost_jlsf` (marker back to `none`; auto-policy may re-queue). The JLSF is
 never a `Brigade` — invisible to census/combat/movement. LLM surface: `deploy_jlsf` action +
