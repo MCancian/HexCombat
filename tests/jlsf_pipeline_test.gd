@@ -146,3 +146,53 @@ func test_end_to_end_sealift_ride() -> void:
 	var e0: Dictionary = emb[0]
 	assert_int(int(e0.get("locked_beach", -1))).is_equal(1)
 	assert_str(String(e0.get("beach_hex", ""))).is_equal("hex3")
+
+
+# --- 8. queue_deployments: explicit order flips marker -------------------------------------------
+
+func test_queue_deployments_explicit_order_flips_marker() -> void:
+	var defs := {"taichung": _port_def("taichung", 5, "hex5")}
+	var state := InfrastructureStateBuilder.build(defs)
+	var entries := JlsfCargo.queue_deployments(["taichung"], state, defs, _beaches, _beach_to_to, false, 4)
+	assert_int(entries.size()).is_equal(1)
+	assert_str(String((entries[0] as Dictionary)["brigade_id"])).is_equal("JLSF:taichung")
+	assert_str(String((state.nodes["taichung"] as Dictionary)["jlsf"])).is_equal(InfrastructureState.JLSF_QUEUED)
+
+
+# --- 9. queue_deployments: auto policy sorted seized only ----------------------------------------
+
+func test_queue_deployments_auto_policy_sorted_seized_only() -> void:
+	var defs := {"beta": _port_def("beta", 5, "hex5"), "alpha": _port_def("alpha", 3, "hex1"), "gamma": _port_def("gamma", 2, "hex8")}
+	var state := InfrastructureStateBuilder.build(defs)
+	(state.nodes["alpha"] as Dictionary)["status"] = InfrastructureState.STATUS_SEIZED
+	(state.nodes["beta"] as Dictionary)["status"] = InfrastructureState.STATUS_SEIZED
+	var entries := JlsfCargo.queue_deployments([], state, defs, _beaches, _beach_to_to, true, 4)
+	assert_int(entries.size()).is_equal(2)
+	assert_str(String((entries[0] as Dictionary)["port_id"])).is_equal("alpha")
+	assert_str(String((entries[1] as Dictionary)["port_id"])).is_equal("beta")
+	assert_str(String((state.nodes["gamma"] as Dictionary)["jlsf"])).is_equal(InfrastructureState.JLSF_NONE)
+
+
+# --- 10. queue_deployments: marker not none skipped ---------------------------------------------
+
+func test_queue_deployments_marker_not_none_skipped() -> void:
+	var defs := {"taichung": _port_def("taichung", 5, "hex5")}
+	var state := InfrastructureStateBuilder.build(defs)
+	(state.nodes["taichung"] as Dictionary)["status"] = InfrastructureState.STATUS_SEIZED
+	(state.nodes["taichung"] as Dictionary)["jlsf"] = InfrastructureState.JLSF_QUEUED
+	var entries := JlsfCargo.queue_deployments(["taichung"], state, defs, _beaches, _beach_to_to, true, 4)
+	assert_int(entries.size()).is_equal(0)
+	assert_str(String((state.nodes["taichung"] as Dictionary)["jlsf"])).is_equal(InfrastructureState.JLSF_QUEUED)
+
+
+# --- 11. queue_deployments: explicit before auto ------------------------------------------------
+
+func test_queue_deployments_explicit_before_auto() -> void:
+	var defs := {"zulu": _port_def("zulu", 5, "hex5"), "alpha": _port_def("alpha", 3, "hex1")}
+	var state := InfrastructureStateBuilder.build(defs)
+	(state.nodes["zulu"] as Dictionary)["status"] = InfrastructureState.STATUS_SEIZED
+	(state.nodes["alpha"] as Dictionary)["status"] = InfrastructureState.STATUS_SEIZED
+	var entries := JlsfCargo.queue_deployments(["zulu"], state, defs, _beaches, _beach_to_to, true, 4)
+	assert_int(entries.size()).is_equal(2)
+	assert_str(String((entries[0] as Dictionary)["port_id"])).is_equal("zulu")
+	assert_str(String((entries[1] as Dictionary)["port_id"])).is_equal("alpha")

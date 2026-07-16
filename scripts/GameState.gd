@@ -696,37 +696,19 @@ func resolve_sealift_turn() -> void:
 	_project_sealift_onto_fleet()
 
 
-## Turn explicit deploy_jlsf orders + the auto_jlsf policy into queued JLSF pool entries (plan
-## 0006). A node accepts one deployment while its jlsf marker is "none"; the pseudo-entry goes to
-## the FRONT of the mainland pool (logistics open the port gate before more troops help).
-## Deterministic: explicit orders in submission order, then auto policy in sorted node order.
+## Consume the deploy_jlsf order buffer through the JlsfCargo queueing policy (plan 0006). New
+## pseudo-entries go to the FRONT of the mainland pool (logistics open the port gate before more
+## troops help); JlsfCargo.queue_deployments owns ordering + marker flips.
 func _consume_jlsf_orders() -> void:
 	if infrastructure_state == null or sealift_state == null:
 		jlsf_orders.clear()
 		return
-	var to_queue: Array[String] = []
-	for port_id in jlsf_orders:
-		if not infrastructure_state.nodes.has(port_id):
-			push_error("deploy_jlsf order references unknown infrastructure id: %s" % port_id)
-			continue
-		to_queue.append(port_id)
+	var entries := JlsfCargo.queue_deployments(
+		jlsf_orders, infrastructure_state, GameData.infrastructure, GameData.beaches,
+		GameData.beach_to_to, GameData.auto_jlsf, GameData.jlsf_lift_bn_equiv)
 	jlsf_orders.clear()
-	if GameData.auto_jlsf:
-		var ids: Array = infrastructure_state.nodes.keys()
-		ids.sort()
-		for id_value in ids:
-			var id := String(id_value)
-			var node: Dictionary = infrastructure_state.nodes[id]
-			if String(node["status"]) == InfrastructureState.STATUS_SEIZED and id not in to_queue:
-				to_queue.append(id)
-	for port_id in to_queue:
-		var node: Dictionary = infrastructure_state.nodes[port_id]
-		if String(node["jlsf"]) != InfrastructureState.JLSF_NONE:
-			continue
-		node["jlsf"] = InfrastructureState.JLSF_QUEUED
-		sealift_state.mainland_pool.push_front(JlsfCargo.build_pool_entry(
-			GameData.get_infrastructure(port_id), GameData.beaches, GameData.beach_to_to,
-			GameData.jlsf_lift_bn_equiv))
+	for entry in entries:
+		sealift_state.mainland_pool.push_front(entry)
 
 
 ## Merge a newly-embarked reserve entry into ship_reserve: append its BNs to the brigade's existing

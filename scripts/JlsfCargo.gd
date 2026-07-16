@@ -60,3 +60,43 @@ static func build_pool_entry(node_def: InfrastructureDef, beaches: Dictionary, b
 		"offset_bearing": 0.0,
 		"bns": bns,
 	}
+
+
+## Queueing policy (extracted from GameState): turn explicit deploy_jlsf orders + the auto_jlsf
+## policy into pool entries. A node accepts one deployment while its jlsf marker is "none".
+## Deterministic: explicit orders in submission order, then auto policy in sorted node order.
+## Mutates infra_state markers (none -> queued) in place, like InfrastructureResolver.tick;
+## push_errors on unknown explicit ids. Returns the new pool entries in queue order — the caller
+## push_fronts them in this order (logistics open the port gate before more troops help).
+static func queue_deployments(
+	explicit_orders: Array,
+	infra_state: InfrastructureState,
+	infra_defs: Dictionary,
+	beaches: Dictionary,
+	beach_to_to: Dictionary,
+	auto_jlsf: bool,
+	bn_count: int,
+) -> Array:
+	var to_queue: Array[String] = []
+	for port_id in explicit_orders:
+		if not infra_state.nodes.has(port_id):
+			push_error("deploy_jlsf order references unknown infrastructure id: %s" % port_id)
+			continue
+		to_queue.append(String(port_id))
+	if auto_jlsf:
+		var ids: Array = infra_state.nodes.keys()
+		ids.sort()
+		for id_value in ids:
+			var id := String(id_value)
+			var node: Dictionary = infra_state.nodes[id]
+			if String(node["status"]) == InfrastructureState.STATUS_SEIZED and id not in to_queue:
+				to_queue.append(id)
+
+	var entries: Array = []
+	for port_id in to_queue:
+		var node: Dictionary = infra_state.nodes[port_id]
+		if String(node["jlsf"]) != InfrastructureState.JLSF_NONE:
+			continue
+		node["jlsf"] = InfrastructureState.JLSF_QUEUED
+		entries.append(build_pool_entry(infra_defs.get(port_id), beaches, beach_to_to, bn_count))
+	return entries
