@@ -13,14 +13,21 @@ extends SceneTree
 # empty-orders run plateaus by design and sustained crossing would be unobservable; moving inland
 # clears the valve each turn, which is exactly the intended tempo loop this smoke must cover
 # (land -> vacate -> next echelon lands).
+#
+# Plan 0006 C8: also assert landings CONTINUE past turn 10. The weight matrix once let a BN whose
+# beach cost exceeded its locked beach's full per-day tons defer forever, deadlocking its cohort's
+# hulls and freezing all sealift at ~turn 10 (fixed by day-N carry-over in OffloadCalculator);
+# a 10-turn run could never see it.
 
 const DEEP_SCENARIO := "res://data/scenario_default.json"
 const SEED := 20260624
-const TURNS := 10
+const TURNS := 12
+const LATE_LANDING_AFTER_TURN := 10
 
 var GameData: Node = null
 var GameState: Node = null
 var _failures: Array[String] = []
+var _late_landed := 0
 
 
 func _initialize() -> void:
@@ -41,6 +48,8 @@ func _initialize() -> void:
 	var b := _play()
 	_check("sustained crossing past first wave (red grows turn 2 -> %d)" % TURNS,
 		a["red_final"] > a["red_turn2"])
+	_check("sealift still landing after turn %d (no offload/cohort deadlock; %d BNs)"
+		% [LATE_LANDING_AFTER_TURN, a["late_landed"]], a["late_landed"] > 0)
 	_check("determinism: same seed -> identical terminal census (%d/%d == %d/%d)"
 		% [a["red_final"], a["grn_final"], b["red_final"], b["grn_final"]],
 		a["red_final"] == b["red_final"] and a["grn_final"] == b["grn_final"])
@@ -62,6 +71,9 @@ func _play() -> Dictionary:
 	var red_turn2 := 0
 	var red_final := 0
 	var grn_final := 0
+	_late_landed = 0
+	var bus: Node = get_root().get_node("EventBus")
+	bus.offload_resolved.connect(_on_offload_resolved)
 	for _t in range(TURNS):
 		var result: TurnResult = GameState.play_turn(_inland_move_orders(), [], dice)
 		var cs: Dictionary = result.cleanup_summary
@@ -72,7 +84,15 @@ func _play() -> Dictionary:
 		if result.game_over:
 			break
 		GameState.begin_next_turn()
-	return {"red_turn2": red_turn2, "red_final": red_final, "grn_final": grn_final}
+	bus.offload_resolved.disconnect(_on_offload_resolved)
+	return {"red_turn2": red_turn2, "red_final": red_final, "grn_final": grn_final,
+		"late_landed": _late_landed}
+
+
+# GDScript lambdas capture primitives by value, so the per-run counter lives on the script.
+func _on_offload_resolved(manifest: Dictionary) -> void:
+	if GameState.turn_number > LATE_LANDING_AFTER_TURN:
+		_late_landed += int(manifest.get("bns_landed", 0))
 
 
 # Deterministic "clear the beach" policy: every non-destroyed RED brigade standing on a beach hex

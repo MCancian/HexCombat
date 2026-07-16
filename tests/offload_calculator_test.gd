@@ -541,3 +541,78 @@ func test_plan0006_day1_unaffected_by_new_args() -> void:
 	assert_int(result_without["bns_landed"]).is_equal(result_with["bns_landed"])
 	assert_int(result_without["bns_waiting"]).is_equal(result_with["bns_waiting"])
 	assert_int(result_without["bns_sent"]).is_equal(result_with["bns_sent"])
+
+# ---------------------------------------------------------------------------
+# plan 0006 C8: carry-over (TIV fractional flow) — a BN whose beach cost exceeds the
+# beach's per-day tons banks progress across turns instead of deferring forever.
+# ---------------------------------------------------------------------------
+
+func _weights_config() -> Dictionary:
+	return JSON.parse_string(FileAccess.get_file_as_string("res://data/offload_weights.json"))
+
+
+# Mechanized Artillery (3300 t) on a Civilian hull (x2.0 at beach) = 6600 t vs a 4400 t/d
+# beach: never landable in one day. Turn 1 banks 4400; turn 2 needs 2200 and lands.
+func test_plan0006_carryover_heavy_bn_lands_across_turns() -> void:
+	var cfg := _weights_config()
+	var bns := [{"id": "H1", "type": "Mechanized Artillery Battalion", "ship_category": "Civilian_Amphibious"}]
+	var brigades := [_make_brigade("BDE-1", bns, 1)]
+	var lookup := _make_beach_lookup({1: 4400.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+
+	var day2 := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], [], cfg)
+	assert_int(day2["bns_landed"]).is_equal(0)
+	assert_str(String(day2["manifest_deferred"][0]["reason"])).is_equal("offload_in_progress")
+	assert_float(float((bns[0] as Dictionary)["offload_progress_tons"])).is_equal(4400.0)
+
+	var day3 := OffloadCalculator.resolve_offload_day(3, cap, brigades, ["BDE-1"], [], cfg)
+	assert_int(day3["bns_landed"]).is_equal(1)
+	assert_bool((bns[0] as Dictionary).has("offload_progress_tons")).is_false()
+
+
+# Cheaper BNs land first; the heavy BN banks only the beach's leftover tons.
+func test_plan0006_carryover_banks_leftover_after_cheaper_landings() -> void:
+	var cfg := _weights_config()
+	var bns := [
+		_make_bn("S1", "Support Battalion"),
+		{"id": "H1", "type": "Mechanized Artillery Battalion", "ship_category": "Civilian_Amphibious"},
+	]
+	var brigades := [_make_brigade("BDE-1", bns, 1)]
+	var lookup := _make_beach_lookup({1: 4400.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+
+	var day2 := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], [], cfg)
+	assert_int(day2["bns_landed"]).is_equal(1)  # S1 at 2200
+	assert_float(float((bns[1] as Dictionary)["offload_progress_tons"])).is_equal(2200.0)
+
+	var day3 := OffloadCalculator.resolve_offload_day(3, cap, brigades, ["BDE-1"], [], cfg)
+	assert_int(day3["bns_landed"]).is_equal(1)  # H1 needs 6600-2200=4400
+
+
+# A valve-closed beach gives no progress: reason stays throughput_limited, nothing banked.
+func test_plan0006_carryover_none_at_closed_beach() -> void:
+	var cfg := _weights_config()
+	var bns := [{"id": "H1", "type": "Mechanized Artillery Battalion", "ship_category": "Civilian_Amphibious"}]
+	var brigades := [_make_brigade("BDE-1", bns, 1)]
+	var lookup := _make_beach_lookup({1: 4400.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+
+	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], [], cfg, {1: 2}, {1: 2})
+	assert_str(String(result["manifest_deferred"][0]["reason"])).is_equal("throughput_limited")
+	assert_bool((bns[0] as Dictionary).has("offload_progress_tons")).is_false()
+
+
+# Port routing is tried at full port cost before any banking: an open same-TO port takes the
+# heavy BN immediately (progress never subsidizes a port landing).
+func test_plan0006_carryover_port_preferred_over_banking() -> void:
+	var cfg := _weights_config()
+	var bns := [{"id": "H1", "type": "Mechanized Artillery Battalion", "ship_category": "Civilian_Amphibious"}]
+	var brigades := [_make_brigade("BDE-1", bns, 1)]
+	var lookup := _make_beach_lookup({1: 4400.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+	var infra := [{"id": "port1", "kind": "port", "to_number": 42, "rate_tons": 11000.0}]
+
+	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], infra, cfg, {}, {}, {1: 42})
+	assert_int(result["bns_landed"]).is_equal(1)
+	assert_str(String(result["manifest_landed"][0]["node_id"])).is_equal("port1")
+	assert_bool((bns[0] as Dictionary).has("offload_progress_tons")).is_false()

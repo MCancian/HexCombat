@@ -254,8 +254,14 @@ static func _resolve_day_n(
 			var bn_type: String = String(bn.get("type", ""))
 			var ship_category: String = String(bn.get("ship_category", ""))
 			var beach_cost: float = OffloadCostModel.bn_cost_tons(bn_type, ship_category, "beach", cost_config)
-			if target_beach >= 0 and remaining_tons.get(target_beach, 0.0) >= beach_cost:
-				remaining_tons[target_beach] -= beach_cost
+			# Carry-over (TIV fractional flow, build_offload_queue): tons already banked against
+			# this BN's beach cost on previous turns reduce what it still needs today, so a BN
+			# whose full cost exceeds its beach's per-day rate offloads across turns instead of
+			# deferring forever (which would also deadlock its cohort's hulls — plan 0006 C8).
+			var beach_need: float = maxf(beach_cost - float(bn.get("offload_progress_tons", 0.0)), 0.0)
+			if target_beach >= 0 and remaining_tons.get(target_beach, 0.0) >= beach_need:
+				remaining_tons[target_beach] -= beach_need
+				bn.erase("offload_progress_tons")
 				manifest_landed.append({
 					"brigade_id": bid,
 					"bn_id": bn_id,
@@ -283,12 +289,26 @@ static func _resolve_day_n(
 						"node_kind": infra_entry.get("kind", ""),
 					})
 				else:
-					manifest_deferred.append({
-						"brigade_id": bid,
-						"bn_id": bn_id,
-						"bn_type": bn_type,
-						"reason": "throughput_limited",
-					})
+					# Bank whatever the locked beach can still give this turn toward the BN's
+					# beach cost (progress never counts toward port/airbridge costs — those are
+					# separate landings tried at full price above).
+					var leftover: float = remaining_tons.get(target_beach, 0.0) if target_beach >= 0 else 0.0
+					if leftover > 0.0:
+						bn["offload_progress_tons"] = float(bn.get("offload_progress_tons", 0.0)) + leftover
+						remaining_tons[target_beach] = 0.0
+						manifest_deferred.append({
+							"brigade_id": bid,
+							"bn_id": bn_id,
+							"bn_type": bn_type,
+							"reason": "offload_in_progress",
+						})
+					else:
+						manifest_deferred.append({
+							"brigade_id": bid,
+							"bn_id": bn_id,
+							"bn_type": bn_type,
+							"reason": "throughput_limited",
+						})
 
 
 # Find first infra entry with matching kind and remaining >= cost.
