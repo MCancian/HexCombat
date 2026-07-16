@@ -324,7 +324,7 @@ func test_plan0006_occupancy_valve_closes_beach() -> void:
 
 	assert_int(result["bns_landed"]).is_equal(0)
 	assert_int(result["bns_waiting"]).is_equal(1)
-	assert_str(result["manifest_deferred"][0]["reason"]).is_equal("throughput_limited")
+	assert_str(result["manifest_deferred"][0]["reason"]).is_equal(OffloadCalculator.REASON_THROUGHPUT_LIMITED)
 
 
 func test_plan0006_occupancy_valve_off_when_not_in_depth() -> void:
@@ -430,7 +430,7 @@ func test_plan0006_all_infra_exhausted_throughput_limited() -> void:
 	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], infra, {}, {1: 1}, {1: 1}, {1: 42})
 
 	assert_int(result["bns_landed"]).is_equal(0)
-	assert_str(result["manifest_deferred"][0]["reason"]).is_equal("throughput_limited")
+	assert_str(result["manifest_deferred"][0]["reason"]).is_equal(OffloadCalculator.REASON_THROUGHPUT_LIMITED)
 
 
 func test_plan0006_degraded_port_budget_one_bn() -> void:
@@ -562,7 +562,7 @@ func test_plan0006_carryover_heavy_bn_lands_across_turns() -> void:
 
 	var day2 := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], [], cfg)
 	assert_int(day2["bns_landed"]).is_equal(0)
-	assert_str(String(day2["manifest_deferred"][0]["reason"])).is_equal("offload_in_progress")
+	assert_str(String(day2["manifest_deferred"][0]["reason"])).is_equal(OffloadCalculator.REASON_OFFLOAD_IN_PROGRESS)
 	assert_float(float((bns[0] as Dictionary)["offload_progress_tons"])).is_equal(4400.0)
 
 	var day3 := OffloadCalculator.resolve_offload_day(3, cap, brigades, ["BDE-1"], [], cfg)
@@ -598,7 +598,7 @@ func test_plan0006_carryover_none_at_closed_beach() -> void:
 	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
 
 	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], [], cfg, {1: 2}, {1: 2})
-	assert_str(String(result["manifest_deferred"][0]["reason"])).is_equal("throughput_limited")
+	assert_str(String(result["manifest_deferred"][0]["reason"])).is_equal(OffloadCalculator.REASON_THROUGHPUT_LIMITED)
 	assert_bool((bns[0] as Dictionary).has("offload_progress_tons")).is_false()
 
 

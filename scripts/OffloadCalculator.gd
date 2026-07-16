@@ -20,6 +20,11 @@ const MANEUVER_BN_TYPES: Array[String] = [
 	"Special Forces Battalion",
 ]
 
+const REASON_DAY1_NO_BEACH_SLOT := "day1_no_beach_slot"
+const REASON_DAY1_SUPPORT_WAITING := "day1_support_waiting"
+const REASON_OFFLOAD_IN_PROGRESS := "offload_in_progress"
+const REASON_THROUGHPUT_LIMITED := "throughput_limited"
+
 
 static func is_maneuver_bn(bn_type: String) -> bool:
 	return bn_type in MANEUVER_BN_TYPES
@@ -188,14 +193,14 @@ static func _resolve_day1(
 					"brigade_id": bid,
 					"bn_id": bn_id,
 					"bn_type": bn_type,
-					"reason": "day1_no_beach_slot",
+					"reason": REASON_DAY1_NO_BEACH_SLOT,
 				})
 			else:
 				manifest_deferred.append({
 					"brigade_id": bid,
 					"bn_id": bn_id,
 					"bn_type": bn_type,
-					"reason": "day1_support_waiting",
+					"reason": REASON_DAY1_SUPPORT_WAITING,
 				})
 
 
@@ -300,14 +305,14 @@ static func _resolve_day_n(
 							"brigade_id": bid,
 							"bn_id": bn_id,
 							"bn_type": bn_type,
-							"reason": "offload_in_progress",
+							"reason": REASON_OFFLOAD_IN_PROGRESS,
 						})
 					else:
 						manifest_deferred.append({
 							"brigade_id": bid,
 							"bn_id": bn_id,
 							"bn_type": bn_type,
-							"reason": "throughput_limited",
+							"reason": REASON_THROUGHPUT_LIMITED,
 						})
 
 
