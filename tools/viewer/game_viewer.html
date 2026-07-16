@@ -107,6 +107,18 @@
     flex-wrap: wrap; gap: 0.3rem 1rem;
   }
   #metaBar b { color: var(--ink); }
+  #gameTabs {
+    display: flex; flex-wrap: wrap; gap: 0.3rem; padding: 0.5rem 1rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  #gameTabs.hidden { display: none; }
+  .game-tab {
+    font: inherit; padding: 0.3rem 0.7rem; border-radius: 6px 6px 0 0;
+    border: 1px solid var(--line); border-bottom: none; background: var(--bg);
+    color: var(--ink-dim); cursor: pointer; font-size: 0.78rem;
+  }
+  .game-tab:hover { color: var(--ink); }
+  .game-tab.active { color: var(--ink); background: var(--panel-bg); border-color: var(--accent); }
   #mapWrap { position: relative; flex: 1; min-height: 0; }
   /* Shared map content is rendered once into #mapContent (hidden in #mapSource's <defs>); the two
      viewports below each <use> it and differ only in viewBox. */
@@ -236,6 +248,7 @@
 
 <div id="app">
   <div id="mapPane">
+    <div id="gameTabs" class="hidden"></div>
     <div id="metaBar"></div>
     <div id="mapWrap">
       <!-- Map content lives once in this hidden <defs> group; both viewports <use> it, so a single
@@ -411,7 +424,7 @@ function loadFile(file) {
       return;
     }
     try {
-      initViewer(bundle);
+      loadPayload(bundle);
       dropzone.classList.add("hidden");
       app.classList.add("ready");
     } catch (err) {
@@ -432,7 +445,7 @@ const embedded = document.getElementById("embedded-bundle");
 if (embedded) {
   queueMicrotask(() => {
     try {
-      initViewer(JSON.parse(embedded.textContent));
+      loadPayload(JSON.parse(embedded.textContent));
       dropzone.classList.add("hidden");
       app.classList.add("ready");
     } catch (err) {
@@ -443,7 +456,48 @@ if (embedded) {
 }
 
 // ============================================================================================
-// Viewer state + geometry index (built once per bundle)
+// Multi-game support — a payload is either one bundle, or {"games": [bundle, ...]} for a
+// combined replay (tools/make_multi_game_bundle.py). A tab bar picks which game is on screen;
+// re-selecting calls initViewer again with that game's bundle (see the idempotency note below).
+// ============================================================================================
+let GAMES = null;          // array of bundles, always — a single bundle is wrapped as [bundle]
+let CURRENT_GAME = 0;      // index into GAMES
+
+function loadPayload(payload) {
+  GAMES = (payload && Array.isArray(payload.games)) ? payload.games : [payload];
+  CURRENT_GAME = 0;
+  renderGameTabs();
+  initViewer(GAMES[0]);
+}
+
+function renderGameTabs() {
+  const tabs = document.getElementById("gameTabs");
+  tabs.innerHTML = "";
+  if (GAMES.length <= 1) { tabs.classList.add("hidden"); return; }
+  tabs.classList.remove("hidden");
+  GAMES.forEach((game, i) => {
+    const meta = game.meta || {};
+    const label = meta.base_seed !== undefined ? "Seed " + meta.base_seed : "Game " + (i + 1);
+    const btn = el("button", {
+      type: "button",
+      text: label,
+      class: "game-tab" + (i === CURRENT_GAME ? " active" : ""),
+    });
+    btn.addEventListener("click", () => selectGame(i));
+    tabs.appendChild(btn);
+  });
+}
+
+function selectGame(i) {
+  if (i === CURRENT_GAME) return;
+  CURRENT_GAME = i;
+  renderGameTabs();
+  initViewer(GAMES[i]);
+}
+
+// ============================================================================================
+// Viewer state + geometry index (rebuilt per bundle; controls/nav are wired once at load — see
+// bottom of file — since they read the live globals below rather than closing over one bundle)
 // ============================================================================================
 let GEO = null;      // static geometry: per-hex projected vertices, terrain colors, neighbor->edge index
 let TURNS = null;     // bundle.turns, sorted
@@ -455,13 +509,11 @@ function initViewer(bundle) {
   GEO = buildGeometry(bundle.map_static || {});
   TURNS = (bundle.turns || []).slice().sort((a, b) => a.turn_number - b.turn_number);
   SITREPS = bundle.sitreps || {};
+  CURRENT = -1;
 
   spawnHexFills();
   spawnBeachMarkers();
   buildCharts();
-  buildControls();
-  setupBriefingNav();
-  setupWheelNav();
 
   if (TURNS.length > 0) showTurn(0);
 }
@@ -1288,6 +1340,15 @@ function setupWheelNav() {
     }
   }, { passive: false }); // passive:false or preventDefault() silently no-ops
 }
+
+// Wired once, unconditionally, at script load — NOT per-bundle. All three read the live TURNS/
+// CURRENT globals at event time rather than closing over one bundle, so re-running them on every
+// game switch would only stack duplicate listeners (each click/keypress/wheel-tick firing once
+// per prior game loaded) without adding any capability. showTurn/stepTurn already no-op safely
+// before any bundle has loaded (TURNS is null).
+buildControls();
+setupBriefingNav();
+setupWheelNav();
 </script>
 </body>
 </html>

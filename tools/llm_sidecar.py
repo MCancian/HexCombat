@@ -56,12 +56,43 @@ def log(message):
     WARNINGS.append(message)
 
 
+def _prior_turn_duplicate_brigades(log_path, perspective):
+    """Scan JSONL for this side's last turn; return brigade IDs with duplicate-order warnings.
+
+    Iterates line-by-line (never loads whole file) and only extracts brigade IDs from
+    the last matching-perspective record's warnings. No --log, missing file, or failed
+    parse -> empty list.
+    """
+    if not log_path or not os.path.isfile(log_path):
+        return []
+    pat = re.compile(r"dropping duplicate order for (\S+)")
+    found = []
+    with open(log_path, "r", encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                record = json.loads(line)
+            except (ValueError, TypeError):
+                continue
+            if record.get("perspective") != perspective:
+                continue
+            # Hit a matching record — reset and collect this turn only
+            found = []
+            for w in record.get("warnings", []):
+                m = pat.search(str(w))
+                if m:
+                    found.append(m.group(1))
+    return found
+
+
 def load_observation(path):
     with open(path, "r", encoding="utf-8") as handle:
         return json.load(handle)
 
 
-def build_messages(observation, perspective):
+def build_messages(observation, perspective, prior_duplicate_brigades=None):
     rules = observation.get("rules_summary", {})
     glossary = observation.get("field_glossary", {})
     system = (
@@ -84,6 +115,12 @@ def build_messages(observation, perspective):
         '  {"type":"commit","team":"' + perspective + '","brigade_id":<id>,"target_hex":<hex>}\n\n'
         + json.dumps(compact)
     )
+    if prior_duplicate_brigades:
+        user += (
+            "\n\nReminder: last turn you issued more than one order for these brigades and only "
+            "the first was kept: %s. Issue AT MOST ONE order per brigade this turn."
+            % ", ".join(prior_duplicate_brigades)
+        )
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
 
@@ -225,7 +262,8 @@ def main():
     args = parser.parse_args()
 
     observation = load_observation(args.obs)
-    messages = build_messages(observation, args.perspective)
+    prior_dups = _prior_turn_duplicate_brigades(args.log, args.perspective)
+    messages = build_messages(observation, args.perspective, prior_dups)
 
     try:
         raw_reply, model = call_model(messages)
