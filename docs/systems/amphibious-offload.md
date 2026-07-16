@@ -145,7 +145,9 @@ at load, only ever shrunk) + same-turn ship round-trip. **Source oracle:** TIV
 **State — `SealiftState` (`scripts/model/SealiftState.gd`), owned by `GameState`, built by
 `SealiftStateBuilder` at scenario load:**
 - `mainland_pool` — follow-on brigades waiting to embark (same entry shape as `ship_reserve`).
-  Source: an explicit scenario `red_followon_reserve` (curated echelon, e.g. `roc_full_defense`), OR,
+  Source: an explicit scenario `red_followon_reserve` (a curated echelon — `roc_full_defense` used
+  one until plan 0007, 2026-07-16 found its fixed 14-brigade total exhausted by turn ~15-30 against
+  32 ROC brigades, leaving nothing left to send; moved to the auto-seeded pool below), OR,
   when `auto_seed_followon_pool: true`, **auto-seeded from the OOB** — every RED brigade not in the
   first wave, round-robin across the first-wave beaches, in OOB order (deterministic; a brigade is
   atomic). `SealiftStateBuilder.resolve_followon_reserve`. The pool is intentionally far larger than
@@ -195,8 +197,9 @@ Loadout/threshold are in `data/antiship/antiship_crossing_config.json` (`escort_
 
 **Config knobs** (see `hexcombat-config-and-knobs`): scenario `red_followon_reserve`,
 `auto_seed_followon_pool`, `amphibious_return_time_turns`, `escort_reload_time_turns`; crossing-config
-`sam_loadout` / `sam_reload_threshold` per escort type. `roc_full_defense` uses an explicit
-10-brigade follow-on (return_time 3, escort reload_time 4).
+`sam_loadout` / `sam_reload_threshold` per escort type. `roc_full_defense` now sets
+`auto_seed_followon_pool: true` with an empty `red_followon_reserve` (return_time 3, escort
+reload_time 4) — same deep-pool shape as `scenario_default`.
 
 **Research default vs golden fixture (2026-07-12).** `data/scenario_default.json` is the **research
 default** — `auto_seed_followon_pool: true` + `amphibious_return_time_turns: 3`, so a naked run /

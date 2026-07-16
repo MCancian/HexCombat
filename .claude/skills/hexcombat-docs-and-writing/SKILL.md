@@ -58,8 +58,11 @@ code headers were correct.
 3. Append 3–5 lines to `docs/DECISIONS.md` — what + who decided + POINTERS to where the facts
    landed. **A DECISIONS entry is a changelog, never a reference**: if a future agent would need
    the entry to act, the fact is filed in the wrong place — move it, then point.
-4. Lessons → `docs/RETROSPECTIVES.md` with triage; closed investigations → append to
-   `hexcombat-failure-archaeology`.
+4. Lessons → `docs/RETROSPECTIVES.md` with triage.
+   - **act now**: Fix it immediately.
+   - **act later**: Formally log the issue into `docs/plans/BACKLOG.md`.
+   - **Archive**: Once triage actions are complete or logged, **move the entry** from `docs/RETROSPECTIVES.md` to `docs/archive/RETROSPECTIVES_history.md`. (Treat `RETROSPECTIVES.md` as an inbox).
+   - Closed investigations → append to `hexcombat-failure-archaeology`.
 5. Check off `docs/plans/BACKLOG.md` / the plan's checklist.
 
 **Plan closeout** (multi-session work orders, `docs/plans/NNNN-*.md`): a plan is done only when
@@ -83,11 +86,11 @@ the question. Never into STATUS.md.
   <Divergence note if TIV-lineage math changed.>
 ```
 
-**Retrospective entry** (`docs/RETROSPECTIVES.md`):
+**Retrospective entry** (`docs/RETROSPECTIVES.md` inbox → `docs/archive/RETROSPECTIVES_history.md`):
 ```markdown
 ## YYYY-MM-DD <task-slug>
 - **Lesson:** <what would be done differently>
-- **Triage:** acted now on <x>; recorded <y> for later; rejected <z> because <why>.
+- **Triage:** acted now on <x>; recorded <y> for later (added to BACKLOG); rejected <z> because <why>.
 ```
 
 **Plan** (`docs/plans/NNNN-<slug>.md`): status header (must match the README index row) → goal →

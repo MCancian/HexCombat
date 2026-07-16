@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HexCombat: Project Overview & Capabilities</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0e17;
+            --text-color: #e2e8f0;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #8b5cf6;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --slide-transition: 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        /* Abstract Background Elements */
+        .bg-glow {
+            position: absolute;
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(circle, var(--accent-primary) 0%, transparent 70%);
+            opacity: 0.1;
+            top: -20%;
+            left: -10%;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: 0;
+            animation: pulse 15s infinite alternate;
+        }
+
+        .bg-glow-2 {
+            position: absolute;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, var(--accent-secondary) 0%, transparent 70%);
+            opacity: 0.1;
+            bottom: -20%;
+            right: -10%;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: 0;
+            animation: pulse 20s infinite alternate-reverse;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1) translate(0, 0); opacity: 0.1; }
+            100% { transform: scale(1.1) translate(5%, 5%); opacity: 0.15; }
+        }
+
+        .presentation-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            display: flex;
+            transition: transform var(--slide-transition);
+        }
+
+        .slide {
+            min-width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 4rem 8rem;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .content-box {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 4rem;
+            max-width: 1200px;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: translateY(30px);
+            opacity: 0;
+            transition: all 0.8s ease;
+        }
+
+        .slide.active .content-box {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Outfit', sans-serif;
+            margin-top: 0;
+        }
+
+        h1 {
+            font-size: 4.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            line-height: 1.1;
+        }
+
+        h2 {
+            font-size: 3rem;
+            color: #fff;
+            margin-bottom: 2rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -10px;
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 2px;
+        }
+
+        p {
+            font-size: 1.25rem;
+            line-height: 1.7;
+            color: #94a3b8;
+            margin-bottom: 1.5rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+            position: relative;
+            color: #cbd5e1;
+        }
+
+        .feature-list li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent-primary);
+            font-weight: bold;
+        }
+
+        .image-container {
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            position: relative;
+        }
+        
+        .image-container::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(45deg, rgba(59,130,246,0.1), transparent);
+            pointer-events: none;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+
+        .image-container:hover img {
+            transform: scale(1.03);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-top: 2rem;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--accent-primary);
+            box-shadow: none;
+            margin-left: 1rem;
+        }
+
+        .btn-outline:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        /* Controls */
+        .controls {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .control-btn {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.1);
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            z-index: 100;
+            transition: width 0.3s ease;
+        }
+
+        /* Stats cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .stat-card {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--glass-border);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow"></div>
+    <div class="bg-glow-2"></div>
+    
+    <div class="progress-bar" id="progress"></div>
+
+    <div class="presentation-container" id="slider">
+        
+        <!-- Slide 1: Cover Action -->
+        <div class="slide active" style="padding: 0; position: relative;">
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;">
+                <img src="../reports/full_defense_view.png" alt="HexCombat Map" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.5; filter: contrast(1.1) brightness(0.9);" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMDI3Ii8+PC9zdmc+'">
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to right, rgba(10,14,23,1) 0%, rgba(10,14,23,0.4) 50%, rgba(10,14,23,0.8) 100%);"></div>
+            </div>
+            
+            <div style="position: relative; z-index: 2; width: 100%; height: 100%; display: flex; align-items: center; justify-content: space-between; padding: 4rem 8rem; box-sizing: border-box;">
+                
+                <!-- Left Side: Title & Info -->
+                <div style="max-width: 500px;">
+                    <div style="margin-bottom: 1.5rem; display: inline-block; padding: 0.5rem 1rem; border-radius: 20px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.4); color: #93c5fd; font-weight: 600; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase;">
+                        Turn 3 &middot; PLA Action Phase
+                    </div>
+                    <h1 style="font-size: 5rem; text-shadow: 0 10px 30px rgba(0,0,0,0.8);">HexCombat</h1>
+                    <p style="font-size: 1.4rem; color: #cbd5e1; text-shadow: 0 5px 15px rgba(0,0,0,0.8);">
+                        AI-driven simulation of the PLA invasion of Taiwan. Watch the LLM agent evaluate the battlespace in real-time.
+                    </p>
+                    <p style="margin-top: 2rem; color: #64748b; font-size: 0.95rem; display: flex; align-items: center;">
+                        <span style="display: inline-block; width: 8px; height: 8px; background: #22c55e; border-radius: 50%; margin-right: 8px; box-shadow: 0 0 10px #22c55e; animation: blink 2s infinite;"></span>
+                        Live Agent Inference Active
+                    </p>
+                </div>
+
+                <!-- Right Side: LLM Thinking Stream -->
+                <div style="width: 450px; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(15px); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 16px; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                        <span style="font-family: monospace; color: #94a3b8; font-size: 0.9rem;">agent_model: deepseek-v4-flash</span>
+                        <span style="color: #ef4444; font-weight: 600; font-size: 0.9rem; background: rgba(239,68,68,0.1); padding: 0.2rem 0.6rem; border-radius: 12px;">Red Commander</span>
+                    </div>
+                    
+                    <div style="font-family: monospace; font-size: 0.95rem; line-height: 1.6; color: #a5b4fc; overflow-y: hidden; position: relative;">
+                        <style>
+                            @keyframes typeLine {
+                                0% { opacity: 0; transform: translateY(10px); }
+                                100% { opacity: 1; transform: translateY(0); }
+                            }
+                            .log-line { animation: typeLine 0.5s ease forwards; opacity: 0; margin-bottom: 1rem; }
+                            .log-line:nth-child(1) { animation-delay: 0.2s; }
+                            .log-line:nth-child(2) { animation-delay: 1.5s; }
+                            .log-line:nth-child(3) { animation-delay: 2.8s; }
+                            .log-line:nth-child(4) { animation-delay: 4.0s; }
+                            .log-line:nth-child(5) { animation-delay: 5.2s; }
+                            .log-line:nth-child(6) { animation-delay: 6.0s; }
+                            .log-action { color: #34d399; font-weight: bold; background: rgba(52,211,153,0.1); padding: 0.2rem 0.5rem; border-radius: 4px; border-left: 2px solid #34d399; }
+                            @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+                        </style>
+
+                        <div class="log-line">
+                            <span style="color: #64748b;">[THOUGHT]</span> The 5th Amphibious Brigade has established a secure beachhead at hex_44_15. ROC 584th Armored is moving to counter-attack.
+                        </div>
+                        <div class="log-line">
+                            <span style="color: #64748b;">[THOUGHT]</span> Taichung Port (hex_33_7) must be seized within 10 turns to enable heavy auto-JLSF sealift operations. Delaying will result in supply cascading failure.
+                        </div>
+                        <div class="log-line">
+                            <span style="color: #64748b;">[THOUGHT]</span> I will pin the 584th Armored with the 14th Amphibious Brigade and commit the 5th Amphibious for combat support to guarantee a FEBA push.
+                        </div>
+                        <div class="log-line log-action">
+                            > move(brigade_id="PLA-73-14-Amphibious", hex_id="hex_43_13", mode="tactical")
+                        </div>
+                        <div class="log-line log-action">
+                            > commit(brigade_id="PLA-72-5-Amphibious", hex_id="hex_43_13")
+                        </div>
+                        <div class="log-line log-action" style="margin-bottom: 0;">
+                            > end_turn(seed=742819)
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- Slide 2: The Mission -->
+        <div class="slide">
+            <div class="content-box grid-2">
+                <div>
+                    <h2>The Mission</h2>
+                    <p>HexCombat is not just a game; it is an analytical instrument. Originally ported from TaiwanInvasionViewer, it serves two core purposes:</p>
+                    
+                    <ul class="feature-list" style="margin-top: 2rem;">
+                        <li><strong>Primary: AI-vs-AI Research Instrument</strong><br>
+                        Enables headless batch games, generating Monte Carlo outcome distributions. It features an LLM JSON API allowing AI players to direct the simulation autonomously.</li>
+                        
+                        <li style="margin-top: 1.5rem;"><strong>Secondary: Live-Adjudication Aid</strong><br>
+                        A facilitator can enter orders for both sides in the UI, letting the simulation resolve complex combat mathematics in real-time. Designed with a projector-friendly display.</li>
+                    </ul>
+                </div>
+                <div class="image-container">
+                    <img src="../reports/recent_screenshot.png" alt="HexCombat Terrain View" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMDI3Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+VGVycmFpbiBNYXAgVmlldzwvdGV4dD48L3N2Zz4='">
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Simulation Systems -->
+        <div class="slide">
+            <div class="content-box grid-2" style="max-width: 1400px; gap: 4rem;">
+                
+                <!-- Left Side: Detail View -->
+                <div>
+                    <h2 style="margin-bottom: 1rem;">Deep Simulation Mechanics</h2>
+                    <p style="margin-bottom: 2rem;">A rigorous port of the TIV mathematics. The <strong>Amphibious Offload</strong> system models the primary bottleneck of the invasion with exacting detail.</p>
+                    
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 16px; margin-bottom: 2rem;">
+                        <h3 style="color: #fff; font-size: 1.3rem; margin-bottom: 0.5rem;">Capacity & Throughput</h3>
+                        <p style="font-size: 0.95rem; margin-bottom: 0;">Day 1 assault maneuver BNs bypass throughput gates. Day 2+ forces compete for daily beach tonnage (2200t / BN). Capacity scales with floating piers and Jack-up barges, but is hard-capped by port availability (Auto-JLSF).</p>
+                    </div>
+
+                    <div class="image-container" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 16px;">
+                        <!-- Placeholder for Sankey Chart from subagent -->
+                        <img src="../reports/shots/offload_sankey.png" alt="Offload Flow Sankey Chart" style="width: 100%; height: auto; display: block;" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNDAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMDI3Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+U2Fua2V5IENoYXJ0IEdlbmVyYXRpbmc...</R2VuZXJhdGluZy4uLjwvdGV4dD48L3N2Zz4='">
+                    </div>
+                </div>
+
+                <!-- Right Side: Navigation Cards -->
+                <div style="display: flex; flex-direction: column; gap: 1rem; justify-content: center;">
+                    <a href="systems/html/ijfs.html" style="text-decoration: none; color: inherit;">
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 1.2rem; border-radius: 12px; transition: transform 0.2s, background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.transform='translateX(10px)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.transform='translateX(0)'">
+                            <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.2rem;">📡 Integrated Joint Fires (IJFS)</h3>
+                            <p style="font-size: 0.85rem; margin: 0;">C4ISR, kill chains, and suppression mathematics.</p>
+                        </div>
+                    </a>
+
+                    <a href="systems/html/antiship-mine.html" style="text-decoration: none; color: inherit;">
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 1.2rem; border-radius: 12px; transition: transform 0.2s, background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.transform='translateX(10px)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.transform='translateX(0)'">
+                            <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.2rem;">🚢 Anti-Ship & Mine Warfare</h3>
+                            <p style="font-size: 0.85rem; margin: 0;">Cross-strait attrition and naval minefield clearing rates.</p>
+                        </div>
+                    </a>
+
+                    <a href="systems/html/amphibious-offload.html" style="text-decoration: none; color: inherit;">
+                        <div style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.5); border-left: 4px solid var(--accent-primary); padding: 1.2rem; border-radius: 12px; transform: translateX(10px);">
+                            <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.2rem;">🌊 Amphibious Offload</h3>
+                            <p style="font-size: 0.85rem; margin: 0; color: #a5b4fc;">Currently viewing the sealift capacity and beachhead throughput module.</p>
+                        </div>
+                    </a>
+
+                    <a href="systems/html/ground-combat.html" style="text-decoration: none; color: inherit;">
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 1.2rem; border-radius: 12px; transition: transform 0.2s, background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.transform='translateX(10px)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.transform='translateX(0)'">
+                            <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.2rem;">⚔️ Ground Combat</h3>
+                            <p style="font-size: 0.85rem; margin: 0;">Kinetic engagements, terrain modifiers, and unit cohesion.</p>
+                        </div>
+                    </a>
+
+                    <a href="systems/html/supply-dos.html" style="text-decoration: none; color: inherit;">
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 1.2rem; border-radius: 12px; transition: transform 0.2s, background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.transform='translateX(10px)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.transform='translateX(0)'">
+                            <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.2rem;">📦 Supply System</h3>
+                            <p style="font-size: 0.85rem; margin: 0;">Logistic lines from nodes and combat penalties for disruption.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: LLM Integration & Headless Play -->
+        <div class="slide">
+            <div class="content-box">
+                <h2 style="text-align: center; display: block; margin-bottom: 3rem;">LLM API & Self-Play Architecture</h2>
+                <div class="grid-2">
+                    <div class="image-container" style="height: 100%; display: flex; align-items: center; background: rgba(0,0,0,0.2); padding: 2rem;">
+                        <pre style="color: #a5b4fc; font-family: monospace; font-size: 0.95rem; line-height: 1.5; white-space: pre-wrap; overflow-x: auto;">
+{
+  "turn": 1,
+  "phase": "PLA_ACTION",
+  "observation": {
+    "hexes": [...],
+    "units": [...],
+    "supply_lines": [...]
+  },
+  "legal_actions": [
+    {"type": "move", "unit_id": "brigade_5"},
+    {"type": "commit", "hex_id": "hex_85"}
+  ]
+}
+                        </pre>
+                    </div>
+                    <div>
+                        <p>HexCombat exposes a structured JSON interface allowing AI agents to play the game with zero UI overhead.</p>
+                        <p>The agent requests an <strong>observation</strong> (the full board state from its side's perspective), then submits <strong>actions</strong> (move, commit, end turn).</p>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">100%</div>
+                                <div class="stat-label">Headless execution</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">Zero</div>
+                                <div class="stat-label">Hidden randomness</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">API</div>
+                                <div class="stat-label">JSON Protocol</div>
+                            </div>
+                        </div>
+                        
+                        <a href="systems/html/llm-api-selfplay.html" class="btn" style="margin-top: 1.5rem; display: inline-block; padding: 0.8rem 1.5rem; font-size: 1rem;">View Full LLM Specification</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Game Records & Reports -->
+        <div class="slide">
+            <div class="content-box grid-2">
+                <div class="image-container">
+                    <img src="../reports/full_defense_view.png" alt="Game Report Defense View" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMDI3Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RGVmZW5zZSBWaWV3PC90ZXh0Pjwvc3ZnPg=='">
+                </div>
+                <div>
+                    <h2>Game Reports & Outcomes</h2>
+                    <p>Post-simulation, HexCombat generates comprehensive HTML briefing reports. These reports merge the game record and replay log into an interactive artifact.</p>
+                    <ul class="feature-list">
+                        <li>Interactive turn-by-turn playback</li>
+                        <li>SITREPs authored locally by LLM commanders</li>
+                        <li>Live outcome trend charts (battalion census, PLA ship losses)</li>
+                        <li>Data export to JSON for Monte Carlo analysis</li>
+                    </ul>
+                    <div style="margin-top: 2rem;">
+                        <a href="../reports/report_100/index.html" class="btn" target="_blank">View Live Game Record 100</a>
+                        <a href="../reports/batches/" class="btn btn-outline" target="_blank">View Batch Data</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- Navigation Controls -->
+    <div class="controls">
+        <button class="control-btn" onclick="prevSlide()" aria-label="Previous Slide">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button class="control-btn" onclick="nextSlide()" aria-label="Next Slide">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+    </div>
+
+    <script>
+        const slider = document.getElementById('slider');
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progress');
+        let currentSlide = 0;
+
+        function updateSlider() {
+            slider.style.transform = `translateX(-${currentSlide * 100}vw)`;
+            
+            slides.forEach((slide, index) => {
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
+
+            // Update progress bar
+            const progress = ((currentSlide + 1) / slides.length) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        function nextSlide() {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                updateSlider();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlider();
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'Space') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            }
+        });
+
+        // Initialize
+        updateSlider();
+    </script>
+</body>
+</html>

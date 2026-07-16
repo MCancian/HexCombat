@@ -1,6 +1,6 @@
 {
   "name": "Full ROC Defense - Northern Beachhead",
-  "description": "All 32 ROC ground brigades (124 battalions) placed at their real-world garrison locations (each brigade mapped to the nearest UNOCCUPIED hex by lat/lon from data/roc_ground_forces.json). Faces the same 4 PLA amphibious brigades landing on the northern beaches as scenario_default. Built so an AI-vs-AI game is a meaningful multi-turn fight instead of a turn-1 census decision. Golden scenario_default.json is left untouched (calibration pin).",
+  "description": "All 32 ROC ground brigades (124 battalions) placed at their real-world garrison locations (each brigade mapped to the nearest UNOCCUPIED hex by lat/lon from data/roc_ground_forces.json). Faces the same 4 PLA amphibious brigades landing on the northern beaches as scenario_default, with the same auto-seeded deep mainland pool (plan 0007, 2026-07-16 — a fixed 14-brigade echelon exhausted by turn ~15-30 against 32 ROC brigades, so the invasion always ground down with nothing left to send). Built so an AI-vs-AI game is a meaningful multi-turn fight instead of a turn-1 census decision. Golden scenario_default.json is left untouched (calibration pin).",
   "turn_length_days": 1,
   "red_dos_start": 100,
   "feba_base_km": 3.5,
@@ -502,68 +502,9 @@
   ],
   "amphibious_return_time_turns": 3,
   "escort_reload_time_turns": 4,
-  "red_followon_reserve": [
-    {
-      "brigade_id": "PLA-72-124-Amphibious",
-      "locked_beach": 1,
-      "beach_hex": "hex_44_16",
-      "offset_bearing": 315
-    },
-    {
-      "brigade_id": "PLA-73-91-Amphibious",
-      "locked_beach": 2,
-      "beach_hex": "hex_44_15",
-      "offset_bearing": 0
-    },
-    {
-      "brigade_id": "PLA-74-125-Amphibious",
-      "locked_beach": 3,
-      "beach_hex": "hex_43_14",
-      "offset_bearing": 0
-    },
-    {
-      "brigade_id": "PLANMC-E-3-Amphibious",
-      "locked_beach": 1,
-      "beach_hex": "hex_44_16",
-      "offset_bearing": 315
-    },
-    {
-      "brigade_id": "PLANMC-E-4-Amphibious",
-      "locked_beach": 2,
-      "beach_hex": "hex_44_15",
-      "offset_bearing": 0
-    },
-    {
-      "brigade_id": "PLANMC-N-5-Amphibious",
-      "locked_beach": 3,
-      "beach_hex": "hex_43_14",
-      "offset_bearing": 0
-    },
-    {
-      "brigade_id": "PLANMC-N-6-Amphibious",
-      "locked_beach": 4,
-      "beach_hex": "hex_43_13",
-      "offset_bearing": 270
-    },
-    {
-      "brigade_id": "PLANMC-S-1-Amphibious",
-      "locked_beach": 1,
-      "beach_hex": "hex_44_16",
-      "offset_bearing": 315
-    },
-    {
-      "brigade_id": "PLANMC-S-2-Amphibious",
-      "locked_beach": 2,
-      "beach_hex": "hex_44_15",
-      "offset_bearing": 0
-    },
-    {
-      "brigade_id": "PLANMC-S-SO-Amphibious",
-      "locked_beach": 3,
-      "beach_hex": "hex_43_14",
-      "offset_bearing": 0
-    }
-  ],
+  "_followon_comment": "auto_seed_followon_pool opts this scenario into the deep mainland pool: with no explicit red_followon_reserve, the pool auto-seeds from the OOB (every RED brigade not in red_ship_reserve), round-robin across the first-wave beaches. Sustained sealift is gated by amphibious lift capacity + the return cycle, not by pool size. Replaces the plan-0006 curated 10-brigade red_followon_reserve (plan 0007, 2026-07-16): that fixed echelon was fully spent by turn ~15-30 in every measured game, leaving the invasion with nothing left to send against 32 ROC brigades — the observed 'plateau' was force exhaustion, not a throughput bottleneck. scenario_golden omits this flag and stays a one-shot assault.",
+  "auto_seed_followon_pool": true,
+  "red_followon_reserve": [],
   "placements": [
     {
       "brigade_id": "BDE-21",

@@ -17,10 +17,6 @@ refactor_audit, port_audit).
 - **0005 — Game-record inconsistency audit** *(Medium)*. Dispatch brief for an agent to audit
   `reports/llm/*.viewer.json` for other engine/model inconsistencies (excludes 0004/0003).
   `0005-*.md`.
-- **0007 — Offload weight rebalance investigation** *(Medium)*. Dispatch brief for an agent to
-  isolate why landed PLA force plateaus ~6-43 BNs over 40 turns across 4 overnight LLM games, and
-  whether `offload_weights.json`'s HexCombat-only BN-type values (the plan-0006 open re-dial item)
-  are the cause. `0007-*.md`.
 
 ---
 
@@ -54,8 +50,6 @@ All need visual verification (screenshot / Godot MCP / USER) — headless gates 
 ## Track E — Calibration & balance *(with Track B outputs)*
 
 - Plan **0001 — Crossing-lethality calibration** (see README index) — the USER's ~25% target.
-- Plan **0007 — Offload weight rebalance investigation** (see README index) — the plan-0006 open
-  re-dial item, now with 4-game overnight evidence of a landed-force plateau.
 - MANPADS constants dial-in if future batches show the first-cut rates off
   (levers: `IjfsManpads.gd` consts; evidence pattern: 30-seed before/after batch, 2026-07-10).
 
@@ -65,3 +59,9 @@ All need visual verification (screenshot / Godot MCP / USER) — headless gates 
 - **Shared test-fixture constant for beach-1 pair**: Refactor duplicated literals (like `"hex_44_16"`) into a shared test-fixture constant in `movement_test.gd` and `composition_test.gd`.
 - **Rebuild maneuver targets per turn**: Update to rebuild maneuver targets per turn from the live OOB.
 - **Isolation tests for Phase C/D resolvers**: Add isolation tests for Phase C and D resolvers.
+- **Offload telemetry gap** (found by plan 0007, 2026-07-16): `TurnResult`/turn digests have no
+  `offload_summary` — `OffloadResolver`'s manifest (bns_sent/landed/waiting/lost_at_sea + deferral
+  reasons) only reaches `EventBus.offload_resolved`, never a game record. Add an `offload_summary`
+  field (mirroring `antiship_summary`'s shape) so research runs can read offload activity directly
+  instead of reconstructing it from census deltas + combat summaries (measurably unreliable — see
+  `docs/archive/0007-offload-weight-rebalance-investigation.md` → Findings → Method).

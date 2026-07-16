@@ -38,8 +38,9 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   (`SealiftState` + `SealiftResolver`); follow-on echelons embark onto ready amphibious lift so
   crossing sustains across turns instead of draining by ~turn 3. A BN crosses **once** (attrited on
   its crossing turn, then safe offloading). Escorts carry a cross-turn SAM magazine and cycle to
-  reload when low. Follow-on is either an explicit `red_followon_reserve` (`roc_full_defense`) or an
-  opt-in deep pool auto-seeded from the OOB (`auto_seed_followon_pool`); amphibious lift is classified
+  reload when low. Follow-on is either an explicit `red_followon_reserve` (curated echelon — no
+  shipped scenario uses this today) or an opt-in deep pool auto-seeded from the OOB
+  (`auto_seed_followon_pool`, on for both `scenario_default` and `roc_full_defense`); amphibious lift is classified
   by `ShipDef.is_amphibious_lift()` and `pack_bns_into_hulls` aggregates fractional hull capacity.
   Facts: `docs/systems/amphibious-offload.md` → "Sealift lifecycle".
 - **Research default vs golden fixture** (2026-07-12) — `scenario_default.json` is the realistic

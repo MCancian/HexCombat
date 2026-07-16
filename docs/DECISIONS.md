@@ -19,6 +19,18 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-16 — `roc_full_defense` given the deep mainland pool (plan 0007; USER decision).**
+  Investigation of 4 overnight LLM-vs-LLM games (offload_weights.json re-dial question, plan 0006's
+  open item) found the cost matrix was never active in `roc_full_defense` (`use_offload_weight_matrix`
+  unset) — the actual cause of the observed landed-force plateau was the scenario's fixed 14-brigade/
+  126-BN invasion force exhausting itself by turn ~15-30 with no reinforcement. USER chose to give
+  the scenario a deep pool rather than keep it a fixed grind: `auto_seed_followon_pool: true` +
+  emptied `red_followon_reserve` (was a curated 10-brigade echelon), same shape as `scenario_default`.
+  Verified: `validate_scenario_data.gd` PASS, deterministic self-play (byte-identical repeat), landed
+  force now climbs continuously instead of plateauing (44→81 BNs over 12 turns in one seed check),
+  full gate green. Facts: `docs/systems/amphibious-offload.md` → "Sealift lifecycle"; investigation +
+  options: `docs/archive/0007-offload-weight-rebalance-investigation.md`.
+
 - **2026-07-15 — Post-0006 refactor batch (agent judgment).** Behavior-preserving cleanups from the
   C8 session's findings: deferred-reason constants + day-N decomposition on `OffloadCalculator`;
   `GameData.ship_defs_by_name` index (fail-loud duplicate-name check); JLSF queueing policy
