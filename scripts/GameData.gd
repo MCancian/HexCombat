@@ -70,6 +70,10 @@ var use_offload_weight_matrix: bool = false
 var auto_jlsf: bool = false
 var jlsf_lift_bn_equiv: int = 4
 var ship_defs: Dictionary = {}  # id (int) -> ShipDef
+# Name index over the same ShipDefs. The fleet, cohorts, return pipeline and loss reports are all
+# keyed by ship NAME, so name lookups are the common case; ship names must be unique (load_ships
+# fails loud on a duplicate — a duplicate would silently merge fleet bins).
+var ship_defs_by_name: Dictionary = {}  # name (String) -> ShipDef
 
 var active_tos: Array[int] = []
 var to_adjacency: Dictionary = {}  # to_number (int) -> Array[int]
@@ -453,6 +457,9 @@ func remove_brigade_from_map(brigade_id: String) -> void:
 	set_brigade_hex(brigade_id, "")
 
 
+# INVARIANT: no else-branch — a hex emptied of brigades KEEPS its last owner. Load-bearing for
+# plan 0006: infrastructure seizure persists after Red moves inland (docs/systems/
+# amphibious-offload.md §9). Adding a neutral/reset branch would silently un-seize ports.
 func recompute_hex_ownership() -> void:
 	for hex_id_value in hex_lookup.keys():
 		var hex_id := String(hex_id_value)
@@ -623,6 +630,7 @@ func load_offload_weights() -> void:
 
 func load_ships() -> void:
 	ship_defs.clear()
+	ship_defs_by_name.clear()
 	var json = _read_json(SHIPS_PATH)
 	if json == null or not (json is Dictionary):
 		push_error("ships.json format not recognized: expected Dictionary")
@@ -661,7 +669,12 @@ func load_ships() -> void:
 			push_error("Ship %d has unknown category: %s" % [ship_def.id, ship_def.category])
 		if ship_def.initial_ready != ship_def.total_count:
 			push_error("Ship %s initial_ready must equal total_count" % ship_def.name)
+		if ship_defs_by_name.has(ship_def.name):
+			push_error("Duplicate ship name '%s' (ids %d and %d)" % [
+				ship_def.name, (ship_defs_by_name[ship_def.name] as ShipDef).id, ship_def.id])
+			continue
 		ship_defs[ship_def.id] = ship_def
+		ship_defs_by_name[ship_def.name] = ship_def
 	print_debug("Loaded %d ship types" % ship_defs.size())
 
 

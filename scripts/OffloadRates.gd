@@ -13,7 +13,9 @@ const BEACH_BASE := 4400.0
 const JACKUP_BARGE := 4400.0
 const FLOATING_PIER := 2200.0
 
-# Port throughput rates
+# Port throughput rates. The SEIZED_* constants exist to mirror data/offload_rates.json
+# (REQUIRED_RATE_KEYS); no code reads them — a seized node contributes zero by EXCLUSION in
+# InfrastructureResolver.red_offload_nodes, not by rating it 0.
 const OPERATIONAL_PORT := 11000.0
 const DEGRADED_PORT := 2200.0
 const SEIZED_PORT := 0.0

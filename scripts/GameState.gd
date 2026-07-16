@@ -567,10 +567,6 @@ func _crossing_reserve_from_sent_cohorts() -> Array:
 ## losses out of the ready pool — both booked as destroyed on the fleet. The ShipState bins are then
 ## reprojected from the sealift state by the caller (plan 0004 D3).
 func _apply_crossing_hull_losses(destroyed_by_type: Dictionary) -> void:
-	# fleet + destroyed_by_type are keyed by ship NAME; GameData.ship_defs is keyed by id, so build a
-	# name -> carrying-capacity map to tell carriers (losses come out of cohorts) from escorts (losses
-	# come out of the ready screen).
-	var capacity_by_name := AntishipResolver.ship_capacity_by_type(GameData.ship_defs)
 	for ship_type_value in destroyed_by_type.keys():
 		var ship_type := String(ship_type_value)
 		var requested := int(destroyed_by_type[ship_type_value])
@@ -579,8 +575,10 @@ func _apply_crossing_hull_losses(destroyed_by_type: Dictionary) -> void:
 		var state: ShipState = fleet.get(ship_type, null)
 		if state == null:
 			continue
+		# Carriers (capacity > 0) lose hulls out of their cohorts; escorts out of the ready screen.
+		var ship_def: ShipDef = GameData.ship_defs_by_name.get(ship_type, null)
 		var applied: int
-		if float(capacity_by_name.get(ship_type, 0.0)) > 0.0:
+		if ship_def != null and ship_def.is_carrier():
 			applied = SealiftResolver.remove_carrier_hulls(sealift_state, ship_type, requested)
 		else:
 			applied = mini(requested, state.fleet_surviving_total)
