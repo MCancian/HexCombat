@@ -222,40 +222,15 @@ static func _resolve_day_n(
 	beach_depth: Dictionary = {},
 	beach_to_to: Dictionary = {},
 ) -> void:
-	# Remaining capacity per beach in tons, with occupancy valve.
-	var remaining_tons: Dictionary = {}
-	for beach_id_var in beach_capacity.keys():
-		var beach_id: int = int(beach_id_var)
-		if beach_depth.has(beach_id) and beach_occupancy.get(beach_id, 0) >= int(beach_depth[beach_id]):
-			remaining_tons[beach_id] = 0.0
-		else:
-			remaining_tons[beach_id] = float(beach_capacity[beach_id_var]) * OffloadRates.TONS_PER_BN
-
-	# Per-node infra budgets (duplicate with mutable remaining field).
-	var infra_remaining: Array = []
-	for node in infra_nodes:
-		var entry: Dictionary = node.duplicate()
-		entry["remaining"] = float(entry.get("rate_tons", 0.0))
-		infra_remaining.append(entry)
+	var remaining_tons := _beach_budgets(beach_capacity, beach_occupancy, beach_depth)
+	var infra_remaining := _infra_budgets(infra_nodes)
 
 	for bid in ordered_ids:
 		var brigade: Dictionary = brigade_map[bid]
-		var bns: Array = brigade.get("bns", [])
 		var locked: int = int(brigade.get("locked_beach", 0))
+		var target_beach := _target_beach(locked, remaining_tons)
 
-		# Determine eligible beach (locked or first available).
-		var target_beach: int = -1
-		if locked > 0 and locked in remaining_tons:
-			target_beach = locked
-		else:
-			for beach_id_var in remaining_tons.keys():
-				var beach_id: int = int(beach_id_var)
-				if remaining_tons[beach_id] >= OffloadRates.TONS_PER_BN:
-					target_beach = beach_id
-					break
-
-		for bn in bns:
-			var bn_id: String = String(bn.get("id", ""))
+		for bn in brigade.get("bns", []):
 			var bn_type: String = String(bn.get("type", ""))
 			var ship_category: String = String(bn.get("ship_category", ""))
 			var beach_cost: float = OffloadCostModel.bn_cost_tons(bn_type, ship_category, "beach", cost_config)
@@ -267,53 +242,98 @@ static func _resolve_day_n(
 			if target_beach >= 0 and remaining_tons.get(target_beach, 0.0) >= beach_need:
 				remaining_tons[target_beach] -= beach_need
 				bn.erase("offload_progress_tons")
-				manifest_landed.append({
-					"brigade_id": bid,
-					"bn_id": bn_id,
-					"bn_type": bn_type,
-					"beach_id": target_beach,
-				})
+				manifest_landed.append(_beach_landing(bid, bn, target_beach))
+				continue
+
+			# Infra chain at FULL price — banked progress never subsidizes a node landing.
+			var to_num: int = int(beach_to_to.get(locked if locked > 0 else target_beach, -1))
+			var infra_entry := _route_infra(infra_remaining, to_num, bn_type, ship_category, cost_config)
+			if not infra_entry.is_empty():
+				manifest_landed.append(_node_landing(bid, bn, infra_entry))
+				continue
+
+			# Bank whatever the beach can still give this turn toward the BN's beach cost;
+			# a dry (or valve-closed) beach banks nothing.
+			var leftover: float = remaining_tons.get(target_beach, 0.0) if target_beach >= 0 else 0.0
+			if leftover > 0.0:
+				bn["offload_progress_tons"] = float(bn.get("offload_progress_tons", 0.0)) + leftover
+				remaining_tons[target_beach] = 0.0
+				manifest_deferred.append(_deferral(bid, bn, REASON_OFFLOAD_IN_PROGRESS))
 			else:
-				var to_num: int = int(beach_to_to.get(locked if locked > 0 else target_beach, -1))
-				var port_cost: float = OffloadCostModel.bn_cost_tons(bn_type, ship_category, "port", cost_config)
-				var ab_cost: float = OffloadCostModel.bn_cost_tons(bn_type, ship_category, "airbridge", cost_config)
-				var infra_entry: Dictionary = _try_infra_landing(infra_remaining, "port", to_num, true, port_cost)
-				if infra_entry.is_empty():
-					infra_entry = _try_infra_landing(infra_remaining, "airbridge", to_num, true, ab_cost)
-				if infra_entry.is_empty():
-					infra_entry = _try_infra_landing(infra_remaining, "port", to_num, false, port_cost)
-				if infra_entry.is_empty():
-					infra_entry = _try_infra_landing(infra_remaining, "airbridge", to_num, false, ab_cost)
-				if not infra_entry.is_empty():
-					manifest_landed.append({
-						"brigade_id": bid,
-						"bn_id": bn_id,
-						"bn_type": bn_type,
-						"beach_id": -1,
-						"node_id": infra_entry.get("id", ""),
-						"node_kind": infra_entry.get("kind", ""),
-					})
-				else:
-					# Bank whatever the locked beach can still give this turn toward the BN's
-					# beach cost (progress never counts toward port/airbridge costs — those are
-					# separate landings tried at full price above).
-					var leftover: float = remaining_tons.get(target_beach, 0.0) if target_beach >= 0 else 0.0
-					if leftover > 0.0:
-						bn["offload_progress_tons"] = float(bn.get("offload_progress_tons", 0.0)) + leftover
-						remaining_tons[target_beach] = 0.0
-						manifest_deferred.append({
-							"brigade_id": bid,
-							"bn_id": bn_id,
-							"bn_type": bn_type,
-							"reason": REASON_OFFLOAD_IN_PROGRESS,
-						})
-					else:
-						manifest_deferred.append({
-							"brigade_id": bid,
-							"bn_id": bn_id,
-							"bn_type": bn_type,
-							"reason": REASON_THROUGHPUT_LIMITED,
-						})
+				manifest_deferred.append(_deferral(bid, bn, REASON_THROUGHPUT_LIMITED))
+
+
+# Remaining capacity per beach in tons, with the occupancy valve applied (a beach at/over its
+# depth contributes 0 this turn).
+static func _beach_budgets(beach_capacity: Dictionary, beach_occupancy: Dictionary, beach_depth: Dictionary) -> Dictionary:
+	var remaining_tons: Dictionary = {}
+	for beach_id_var in beach_capacity.keys():
+		var beach_id: int = int(beach_id_var)
+		if beach_depth.has(beach_id) and beach_occupancy.get(beach_id, 0) >= int(beach_depth[beach_id]):
+			remaining_tons[beach_id] = 0.0
+		else:
+			remaining_tons[beach_id] = float(beach_capacity[beach_id_var]) * OffloadRates.TONS_PER_BN
+	return remaining_tons
+
+
+# Per-node infra budgets: duplicates each node row with a mutable "remaining" field.
+static func _infra_budgets(infra_nodes: Array) -> Array:
+	var infra_remaining: Array = []
+	for node in infra_nodes:
+		var entry: Dictionary = node.duplicate()
+		entry["remaining"] = float(entry.get("rate_tons", 0.0))
+		infra_remaining.append(entry)
+	return infra_remaining
+
+
+# The brigade's beach for this day: its locked beach when set (production entries always are —
+# OffloadResolver rejects locked_beach <= 0), else the first beach with any tons left.
+static func _target_beach(locked: int, remaining_tons: Dictionary) -> int:
+	if locked > 0 and locked in remaining_tons:
+		return locked
+	for beach_id_var in remaining_tons.keys():
+		var beach_id: int = int(beach_id_var)
+		if remaining_tons[beach_id] > 0.0:
+			return beach_id
+	return -1
+
+
+# TIV Day-2+ fallback chain (manifest_allocator._allocate_landing_destinations): same-TO port ->
+# same-TO airbridge -> any-TO port -> any-TO airbridge. Returns the consumed node entry or {}.
+static func _route_infra(infra_remaining: Array, to_num: int, bn_type: String, ship_category: String, cost_config: Dictionary) -> Dictionary:
+	var port_cost: float = OffloadCostModel.bn_cost_tons(bn_type, ship_category, "port", cost_config)
+	var ab_cost: float = OffloadCostModel.bn_cost_tons(bn_type, ship_category, "airbridge", cost_config)
+	for step in [["port", true, port_cost], ["airbridge", true, ab_cost],
+			["port", false, port_cost], ["airbridge", false, ab_cost]]:
+		var entry := _try_infra_landing(infra_remaining, String(step[0]), to_num, bool(step[1]), float(step[2]))
+		if not entry.is_empty():
+			return entry
+	return {}
+
+
+static func _beach_landing(bid: String, bn: Dictionary, beach_id: int) -> Dictionary:
+	return {
+		"brigade_id": bid,
+		"bn_id": String(bn.get("id", "")),
+		"bn_type": String(bn.get("type", "")),
+		"beach_id": beach_id,
+	}
+
+
+static func _node_landing(bid: String, bn: Dictionary, infra_entry: Dictionary) -> Dictionary:
+	var row := _beach_landing(bid, bn, -1)
+	row["node_id"] = infra_entry.get("id", "")
+	row["node_kind"] = infra_entry.get("kind", "")
+	return row
+
+
+static func _deferral(bid: String, bn: Dictionary, reason: String) -> Dictionary:
+	return {
+		"brigade_id": bid,
+		"bn_id": String(bn.get("id", "")),
+		"bn_type": String(bn.get("type", "")),
+		"reason": reason,
+	}
 
 
 # Find first infra entry with matching kind and remaining >= cost.
