@@ -21,6 +21,7 @@ Frontmatter descriptions are the triggers — read the skill before doing its ki
 | Run Monte Carlo batches, sweeps, LLM-vs-LLM games, outcome reports | `hexcombat-research-runs` |
 | Add a whole new phase/mechanic | `hexcombat-add-phase-resolver` |
 | Extract logic out of GameState / resolver-boundary questions | `hexcombat-gamestate-decomposition-campaign` (campaign COMPLETE — kept as the record of method) |
+| Write/modify any function or test (quality budgets, naming, magic numbers) | `hexcombat-code-quality` |
 | Finish/plan/record anything (docs of record) | `hexcombat-docs-and-writing` |
 
 Diagnostics/measurement guidance is folded into `validation-and-qa` (evidence),

@@ -18,7 +18,9 @@ plan to act, the closeout wasn't done.
 
 | # | Plan | Priority | Status |
 |---|------|----------|--------|
+| 0009 | [Code-quality baseline + remediation](0009-code-quality-baseline.md) | High | In progress |
 | 0005 | [Game-record inconsistency audit (agent brief)](0005-game-record-inconsistency-audit.md) | Medium | Sketch |
+| 0008 | [Immortal Support Units in Ground Combat](0008-immortal-support-units-combat.md) | High | Sketch |
 | 0002 | [Per-hull escort magazines (D3-B3)](0002-per-hull-escort-magazines.md) | Low (needs ship-ammo subsystem) | Sketch |
 | 0003 | [Combat-summary team attribution](0003-combat-summary-team-attribution.md) | Low (blocked on USER counterattack call) | Sketch |
 

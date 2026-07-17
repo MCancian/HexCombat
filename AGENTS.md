@@ -87,6 +87,9 @@ After adding a `class_name` script, run `godot --headless --path . --import` or 
 - **Fail loud, not silent** — solo-developer tool: `push_error`/assert at the root cause beats
   defensive guards that hide bugs. No silent default fallbacks.
 - Pure logic = static `RefCounted` libs; runtime state = autoloads; visuals = view layer.
+- **Quality budgets on touched code** (complexity/length/params ceilings, magic-number policy,
+  naming glossary, test bar): `.claude/skills/hexcombat-code-quality`; baseline audit in
+  `docs/reports/2026-07-16-code-quality-baseline.md`.
 
 ## LLM play / headless JSON API
 

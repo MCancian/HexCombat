@@ -51,6 +51,19 @@ All need visual verification (screenshot / Godot MCP / USER) — headless gates 
 
 ## Track F — Tech Debt & Hygiene
 
+**Code-quality debt deferred from the 2026-07-16 baseline** (report:
+`docs/reports/2026-07-16-code-quality-baseline.md`; actionable items worked under plan 0009):
+
+- **GameState dependency ceiling**: 47 class references (next-worst: GameData 18). Turn-conductor
+  role justifies breadth, but growth is unbounded — future campaign: push reference ownership
+  into builders/resolvers, then enforce a ceiling via `tools/gd_metrics.py`.
+- **HexMap cosmetic literals**: 93 view-layer color/offset literals — hoist opportunistically
+  when Track D touches the view layer, not before.
+- **Const→data knob promotion**: any const hoisted under 0009 the USER wants tunable moves to
+  `data/*.json` per `hexcombat-config-and-knobs` — one USER call per knob (change-control #7).
+- **IjfsDetection satellite/aircraft near-clone**: 37 duplicated lines; merge behind one
+  parameterized helper next time detection logic changes.
+
 - **carry_to_next_day parity gap**: Add a continuity test that roundtrips through `IjfsLoaders` and asserts field-by-field parity with `carry_to_next_day`.
 - **Shared test-fixture constant for beach-1 pair**: Refactor duplicated literals (like `"hex_44_16"`) into a shared test-fixture constant in `movement_test.gd` and `composition_test.gd`.
 - **Rebuild maneuver targets per turn**: Update to rebuild maneuver targets per turn from the live OOB.
