@@ -40,22 +40,18 @@ static func resolve_map_attack(
 	dice: Dice,
 	attacker_units: Array,
 	defender_units: Array,
-	feba_base_km: float,
-	attacker_support: Dictionary = {},
-	defender_support: Dictionary = {},
-	defender_terrain_modifier: float = 1.0,
-	attacker_support_units: Array = [],
-	defender_support_units: Array = [],
-	unscreened_support_strength: float = 0.5,
-	maneuver_casualty_weight: float = 4.0,
-	support_casualty_weight: float = 1.0
+	attacker_support_counts: Dictionary,
+	defender_support_counts: Dictionary,
+	attacker_support_units: Array,
+	defender_support_units: Array,
+	rules: CombatRules
 ) -> CombatResult:
-	attacker_support = normalize_support(attacker_support)
-	defender_support = normalize_support(defender_support)
-	defender_terrain_modifier = max(1.0, defender_terrain_modifier)
+	var attacker_support = normalize_support(attacker_support_counts)
+	var defender_support = normalize_support(defender_support_counts)
+	var defender_terrain_modifier = max(1.0, rules.defender_terrain_modifier)
 
 	var forces := _force_strengths(
-		attacker_units, defender_units, attacker_support, defender_support, defender_terrain_modifier, attacker_support_units, defender_support_units, unscreened_support_strength)
+		attacker_units, defender_units, attacker_support, defender_support, defender_terrain_modifier, attacker_support_units, defender_support_units, rules.unscreened_support_strength)
 	var ratio := float(forces["ratio"])
 
 	# Draw order is part of the golden contract: attacker loss, defender loss, feba, then the
@@ -66,11 +62,11 @@ static func resolve_map_attack(
 
 	var losses := _loss_counts(
 		ratio, attacker_units.size() + attacker_support_units.size(), defender_units.size() + defender_support_units.size(), attacker_loss_roll, defender_loss_roll)
-	var attacker_casualties := _select_casualties(attacker_units, attacker_support_units, int(losses["attacker"]), dice, maneuver_casualty_weight, support_casualty_weight)
-	var defender_casualties := _select_casualties(defender_units, defender_support_units, int(losses["defender"]), dice, maneuver_casualty_weight, support_casualty_weight)
+	var attacker_casualties := _select_casualties(attacker_units, attacker_support_units, int(losses["attacker"]), dice, rules.maneuver_casualty_weight, rules.support_casualty_weight)
+	var defender_casualties := _select_casualties(defender_units, defender_support_units, int(losses["defender"]), dice, rules.maneuver_casualty_weight, rules.support_casualty_weight)
 
 	var feba := _feba_shift(
-		float(forces["attacker_strength"]), float(forces["defender_strength"]), feba_base_km, feba_roll)
+		float(forces["attacker_strength"]), float(forces["defender_strength"]), rules.feba_base_km, feba_roll)
 
 	var result := CombatResult.new()
 	result.attacker_strength = forces["attacker_strength"]
@@ -79,7 +75,7 @@ static func resolve_map_attack(
 	result.defender_maneuver_strength = forces["defender_maneuver"]
 	result.force_ratio = ratio
 	result.unmodified_force_ratio = forces["unmodified_ratio"]
-	result.defender_terrain_modifier = defender_terrain_modifier
+	result.defender_terrain_modifier = rules.defender_terrain_modifier
 	result.attacker_losses = attacker_casualties.size()
 	result.defender_losses = defender_casualties.size()
 	result.feba_movement_km = feba["movement_km"]
@@ -124,7 +120,7 @@ static func resolve_map_attack(
 			"defender_loss_rate": losses["defender_rate"]
 		},
 		"feba": {
-			"base_km": feba_base_km,
+			"base_km": rules.feba_base_km,
 			"roll_factor": feba["roll_factor"],
 			"movement_km": feba["movement_km"]
 		},

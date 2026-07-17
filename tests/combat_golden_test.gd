@@ -9,7 +9,8 @@ func test_golden_formula_scenario_a() -> void:
 	var attacker_units := _make_units(SPECIAL_FORCES, 3, "A", "Red")
 	var defender_units := _make_units(SPECIAL_FORCES, 2, "D", "Blue")
 
-	var result := CombatCalculator.resolve_map_attack(dice, attacker_units, defender_units, 2.0, {}, {}, 1.0)
+	var rules := CombatRules.new()
+	var result := CombatCalculator.resolve_map_attack(dice, attacker_units, defender_units, {}, {}, [], [], rules)
 	var detail: Dictionary = result.combat_detail
 	var losses: Dictionary = detail["losses"]
 	var rolls: Dictionary = detail["rolls"]
@@ -39,7 +40,8 @@ func test_artillery_never_a_casualty_scenario_b() -> void:
 		{"unit_id": "D-ARTY", "type": FIELD_ARTILLERY, "team": "Blue"}
 	]
 
-	var result := CombatCalculator.resolve_map_attack(dice, attacker_units, defender_units, 2.0, {}, {}, 1.0)
+	var rules := CombatRules.new()
+	var result := CombatCalculator.resolve_map_attack(dice, attacker_units, defender_units, {}, {}, [], [], rules)
 
 	assert_int(result.defender_losses).is_equal(1)
 	assert_int(result.attacker_losses).is_equal(0)

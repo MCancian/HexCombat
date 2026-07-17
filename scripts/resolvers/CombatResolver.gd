@@ -40,13 +40,7 @@ static func resolve_at(
 	attacker_brigades: Array,
 	defender_brigades: Array,
 	dice: Dice,
-	feba_base_km: float,
-	red_supply_pool: float,
-	red_out_of_supply_effectiveness: float,
-	unscreened_support_strength: float = 0.5,
-	maneuver_casualty_weight: float = 4.0,
-	support_casualty_weight: float = 1.0,
-	defender_terrain_modifier: float = 1.0,
+	rules: CombatRules
 ) -> Dictionary:
 	if attacker_brigades.is_empty() or defender_brigades.is_empty():
 		return {"result": null, "summary": null}
@@ -57,23 +51,19 @@ static func resolve_at(
 	var defender_support_units := CombatForces.support_units(defender_brigades)
 	var attacker_support := CombatForces.support_counts(attacker_brigades)
 	var defender_support := CombatForces.support_counts(defender_brigades)
-	inject_supply_effectiveness(attacker_units, Brigade.Team.RED, red_supply_pool, red_out_of_supply_effectiveness)
-	inject_supply_effectiveness(defender_units, Brigade.Team.GREEN, red_supply_pool, red_out_of_supply_effectiveness)
-	inject_supply_effectiveness(attacker_support_units, Brigade.Team.RED, red_supply_pool, red_out_of_supply_effectiveness)
-	inject_supply_effectiveness(defender_support_units, Brigade.Team.GREEN, red_supply_pool, red_out_of_supply_effectiveness)
+	inject_supply_effectiveness(attacker_units, Brigade.Team.RED, rules.red_supply_pool, rules.red_out_of_supply_effectiveness)
+	inject_supply_effectiveness(defender_units, Brigade.Team.GREEN, rules.red_supply_pool, rules.red_out_of_supply_effectiveness)
+	inject_supply_effectiveness(attacker_support_units, Brigade.Team.RED, rules.red_supply_pool, rules.red_out_of_supply_effectiveness)
+	inject_supply_effectiveness(defender_support_units, Brigade.Team.GREEN, rules.red_supply_pool, rules.red_out_of_supply_effectiveness)
 	var result := CombatCalculator.resolve_map_attack(
 		dice,
 		attacker_units,
 		defender_units,
-		feba_base_km,
 		attacker_support,
 		defender_support,
-		defender_terrain_modifier,
 		attacker_support_units,
 		defender_support_units,
-		unscreened_support_strength,
-		maneuver_casualty_weight,
-		support_casualty_weight
+		rules
 	)
 
 	var summary := CombatSummary.new()

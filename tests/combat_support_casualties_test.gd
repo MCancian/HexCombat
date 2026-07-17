@@ -21,12 +21,11 @@ func test_maneuver_less_attacker_gets_unscreened_strength_and_takes_losses() -> 
 		dice,
 		attacker_units,
 		defender_units,
-		0.0,
 		attacker_support,
 		{},
-		1.0,
 		attacker_support_units,
-		[]
+		[],
+		CombatRules.new()
 	)
 	
 	var detail: Dictionary = result.combat_detail
@@ -86,12 +85,11 @@ func test_unscreened_strength_scales_with_supply_effectiveness() -> void:
 		dice,
 		attacker_units,
 		defender_units,
-		0.0,
 		{"artillery": 1},
 		{},
-		1.0,
 		attacker_support_units,
-		[]
+		[],
+		CombatRules.new()
 	)
 	
 	var detail: Dictionary = result.combat_detail

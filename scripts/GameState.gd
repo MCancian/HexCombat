@@ -833,18 +833,21 @@ func _resolve_combat_at(hex_id: String, dice: Dice) -> CombatSummary:
 	# Terrain resolves at hex_id (the defended/contested hex), not the attacker's origin — the
 	# defender_modifier models fortification/cover of the ground being held, which belongs to the
 	# hex under attack regardless of which side started there.
+	var rules := CombatRules.new()
+	rules.feba_base_km = GameData.feba_base_km
+	rules.red_supply_pool = pool
+	rules.red_out_of_supply_effectiveness = GameData.red_out_of_supply_effectiveness
+	rules.unscreened_support_strength = GameData.unscreened_support_strength
+	rules.maneuver_casualty_weight = GameData.maneuver_casualty_weight
+	rules.support_casualty_weight = GameData.support_casualty_weight
+	rules.defender_terrain_modifier = _defender_combat_modifier(hex_id)
+
 	var outcome := CombatResolver.resolve_at(
 		hex_id,
 		attacker_brigades,
 		defender_brigades,
 		dice,
-		GameData.feba_base_km,
-		pool,
-		GameData.red_out_of_supply_effectiveness,
-		GameData.unscreened_support_strength,
-		GameData.maneuver_casualty_weight,
-		GameData.support_casualty_weight,
-		_defender_combat_modifier(hex_id)
+		rules
 	)
 	if outcome["summary"] == null:
 		return null

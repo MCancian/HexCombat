@@ -240,13 +240,16 @@ if [[ -n "$PYTHON_BIN" ]]; then
     fi
 fi
 
-# ---- Fixture Git Status Validation -------------------------------------------
-write_phase "Fixture Git Status Validation"
+# ---- Fixture Generation and Drift Validation -----------------------------------
+write_phase "Fixture Generation & Drift Validation"
+invoke_godot -s "res://tools/export_llm_observation.gd" --output=docs/examples/llm_observation_red_turn1.json >/dev/null 2>&1
+invoke_godot -s "res://tools/export_llm_result.gd" --output=docs/examples/llm_result_after_turn.json >/dev/null 2>&1
+
 if command -v git >/dev/null 2>&1; then
     if ! git diff --exit-code docs/examples/*.json >/dev/null 2>&1; then
-        failures+=("Fixture drift: docs/examples/ has uncommitted modifications. Commit the updated JSON files.")
+        failures+=("Fixture drift: LLMFixtures changed docs/examples/. Commit the regenerated JSON files.")
     else
-        cecho green "Fixture git status OK."
+        cecho green "Fixture drift check OK."
     fi
 else
     cecho yellow "git not found, skipping fixture git status check."

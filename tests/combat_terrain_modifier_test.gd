@@ -48,18 +48,18 @@ func _resolve(defender_terrain_modifier: float, rolls: Array, weighted: Array) -
 	var attacker := _make_brigade("TEST-ATTACKER", Brigade.Team.RED, "Tank Battalion", 20)
 	var defender := _make_brigade("TEST-DEFENDER", Brigade.Team.GREEN, "Tank Battalion", 5)
 	var dice := ScriptedDice.new(rolls, [], [], weighted)
+	var rules := CombatRules.new()
+	rules.feba_base_km = FEBA_BASE_KM
+	rules.red_supply_pool = RED_SUPPLY_POOL
+	rules.red_out_of_supply_effectiveness = RED_OUT_OF_SUPPLY_EFFECTIVENESS
+	rules.defender_terrain_modifier = defender_terrain_modifier
+	
 	return CombatResolver.resolve_at(
 		HEX_ID,
 		[attacker],
 		[defender],
 		dice,
-		FEBA_BASE_KM,
-		RED_SUPPLY_POOL,
-		RED_OUT_OF_SUPPLY_EFFECTIVENESS,
-		0.5,
-		4.0,
-		1.0,
-		defender_terrain_modifier
+		rules
 	)
 
 

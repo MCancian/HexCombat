@@ -176,14 +176,17 @@ if ([string]::IsNullOrEmpty($PythonBin)) {
     }
 }
 
-# ---- Fixture Git Status Validation -------------------------------------------
-Write-Phase "Fixture Git Status Validation"
+# ---- Fixture Generation and Drift Validation -----------------------------------
+Write-Phase "Fixture Generation & Drift Validation"
+Invoke-Godot @("-s", "res://tools/export_llm_observation.gd", "--output=docs/examples/llm_observation_red_turn1.json") >$null 2>&1
+Invoke-Godot @("-s", "res://tools/export_llm_result.gd", "--output=docs/examples/llm_result_after_turn.json") >$null 2>&1
+
 if (Get-Command git -ErrorAction SilentlyContinue) {
     & git diff --exit-code docs/examples/*.json >$null 2>&1
     if ($LASTEXITCODE -ne 0) {
-        $failures.Add("Fixture drift: docs/examples/ has uncommitted modifications. Commit the updated JSON files.")
+        $failures.Add("Fixture drift: LLMFixtures changed docs/examples/. Commit the regenerated JSON files.")
     } else {
-        Write-Host "Fixture git status OK." -ForegroundColor Green
+        Write-Host "Fixture drift check OK." -ForegroundColor Green
     }
 } else {
     Write-Host "git not found, skipping fixture git status check." -ForegroundColor Yellow
