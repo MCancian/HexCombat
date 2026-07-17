@@ -18,7 +18,6 @@ plan to act, the closeout wasn't done.
 
 | # | Plan | Priority | Status |
 |---|------|----------|--------|
-| 0009 | [Code-quality baseline + remediation](0009-code-quality-baseline.md) | High | In progress |
 | 0005 | [Game-record inconsistency audit (agent brief)](0005-game-record-inconsistency-audit.md) | Medium | Sketch |
 | 0008 | [Immortal Support Units in Ground Combat](0008-immortal-support-units-combat.md) | High | Sketch |
 | 0002 | [Per-hull escort magazines (D3-B3)](0002-per-hull-escort-magazines.md) | Low (needs ship-ammo subsystem) | Sketch |
@@ -28,6 +27,7 @@ plan to act, the closeout wasn't done.
 
 | # | Plan | Status |
 |---|------|--------|
+| 0009 | [Code-quality baseline + remediation](../archive/0009-code-quality-baseline.md) | ✅ Shipped 2026-07-16 — audit + standards skill (`hexcombat-code-quality`) + full remediation (6 splits, 19 tests, const hoists), all golden byte-stable; report in `docs/reports/`, deferred debt in BACKLOG Track F |
 | 0007 | [Offload weight rebalance investigation](../archive/0007-offload-weight-rebalance-investigation.md) | ✅ Shipped 2026-07-16 — reframed the plateau to a force-commitment question (matrix was inactive); `roc_full_defense` given `scenario_default`'s deep pool; facts in `docs/systems/amphibious-offload.md`, `docs/DECISIONS.md` |
 | 0006 | [Offload capacity gate (beaches + ports)](../archive/0006-offload-capacity-gate.md) | ✅ Shipped 2026-07-15 — infrastructure nodes + JLSF repair + cost matrix + occupancy valve + day-N carry-over; facts in `docs/systems/amphibious-offload.md` §9, `docs/DECISIONS.md` |
 | 0004 | [Port TIV ship-count & crossing model (sealift gap)](../archive/0004-port-ship-crossing-sealift-model.md) | ✅ Shipped 2026-07-12 — cross-turn ship lifecycle + follow-on echelons + escort SAM magazine; facts in `docs/systems/amphibious-offload.md` §8, `docs/DECISIONS.md` |

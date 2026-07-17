@@ -19,6 +19,13 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-16 — Code-quality baseline + full remediation (plan 0009; USER call on scope).**
+  Audit measured (report: `docs/reports/2026-07-16-code-quality-baseline.md`, tool:
+  `tools/gd_metrics.py`); standards enshrined as `hexcombat-code-quality` skill + AGENTS.md
+  pointer; 6 oversized resolve-path functions split behavior-preserving (golden byte-stable
+  throughout), 19 new builder/resolver tests, formula constants named. Deferred debt →
+  BACKLOG Track F. Evidence: full gate green per commit.
+
 - **2026-07-16 — `roc_full_defense` given the deep mainland pool (plan 0007; USER decision).**
   Investigation of 4 overnight LLM-vs-LLM games (offload_weights.json re-dial question, plan 0006's
   open item) found the cost matrix was never active in `roc_full_defense` (`use_offload_weight_matrix`

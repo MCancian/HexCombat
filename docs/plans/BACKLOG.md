@@ -63,6 +63,10 @@ All need visual verification (screenshot / Godot MCP / USER) — headless gates 
   `data/*.json` per `hexcombat-config-and-knobs` — one USER call per knob (change-control #7).
 - **IjfsDetection satellite/aircraft near-clone**: 37 duplicated lines; merge behind one
   parameterized helper next time detection logic changes.
+- **Order-dependent `combat_resolution_test`** (found 2026-07-16): fails standalone on a fresh
+  autoload state, passes inside the full gate — it depends on state earlier suites leave in
+  GameData/GameState. Make its `before()` self-sufficient so standalone runs are trustworthy
+  during refactors.
 
 - **carry_to_next_day parity gap**: Add a continuity test that roundtrips through `IjfsLoaders` and asserts field-by-field parity with `carry_to_next_day`.
 - **Shared test-fixture constant for beach-1 pair**: Refactor duplicated literals (like `"hex_44_16"`) into a shared test-fixture constant in `movement_test.gd` and `composition_test.gd`.

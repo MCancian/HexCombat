@@ -1,6 +1,10 @@
 # 0009 — Code-quality baseline + remediation
 
-**Status:** In progress (must match `README.md` index row)
+**Status:** ✅ Shipped 2026-07-16
+**Closeout:** Audit + full remediation landed same session. Facts: report in
+`docs/reports/2026-07-16-code-quality-baseline.md`, standards in
+`.claude/skills/hexcombat-code-quality`, deferred debt in BACKLOG Track F, decision +
+lessons in `docs/DECISIONS.md` / `docs/RETROSPECTIVES.md` (2026-07-16 entries).
 **Priority:** High (USER: complete before research-game launches)
 
 ## Goal
@@ -23,18 +27,18 @@ throughout, no re-baselines.
 ## Checklist
 
 - [x] Audit measurements (gd_metrics.py, opencode test audit, gem sweep — spot-verified)
-- [ ] Commit A: report + skill + AGENTS/skills-README wiring + this plan + BACKLOG + tools/gd_metrics.py
-- [ ] Phase B tests: SupplyStateBuilder, ShipReserveBuilder, FleetBuilder, AntishipSystemsBuilder
-- [ ] Phase B tests: OffloadResolver, AntishipResolver (resolver-level, ScriptedDice)
-- [ ] Phase C split 1/6: `AntishipResolver.resolve` (157 ln, CC 19)
-- [ ] Phase C split 2/6: `OffloadResolver.resolve` (118 ln, CC 25)
-- [ ] Phase C split 3/6: `MineWarfareService.resolve_ship_losses` (118 ln, CC 22)
-- [ ] Phase C split 4/6: `IjfsEngagement.resolve_sead_engagement` (112 ln, CC 27 — RNG-heavy)
-- [ ] Phase C split 5/6: `CombatCalculator.resolve_map_attack` (130 ln, CC 11)
-- [ ] Phase C split 6/6: `AntishipCalculator.resolve_launch_attrition` (123 ln, CC 12)
-- [ ] Phase D: UnitStats.gd + CombatCalculator.gd literals → named const blocks;
+- [x] Commit A: report + skill + AGENTS/skills-README wiring + this plan + BACKLOG + tools/gd_metrics.py
+- [x] Phase B tests: SupplyStateBuilder, ShipReserveBuilder, FleetBuilder, AntishipSystemsBuilder
+- [x] Phase B tests: OffloadResolver, AntishipResolver (resolver-level, ScriptedDice)
+- [x] Phase C split 1/6: `AntishipResolver.resolve` (157 ln, CC 19)
+- [x] Phase C split 2/6: `OffloadResolver.resolve` (118 ln, CC 25)
+- [x] Phase C split 3/6: `MineWarfareService.resolve_ship_losses` (118 ln, CC 22)
+- [x] Phase C split 4/6: `IjfsEngagement.resolve_sead_engagement` (112 ln, CC 27 — RNG-heavy)
+- [x] Phase C split 5/6: `CombatCalculator.resolve_map_attack` (130 ln, CC 11)
+- [x] Phase C split 6/6: `AntishipCalculator.resolve_launch_attrition` (123 ln, CC 12)
+- [x] Phase D: UnitStats.gd + CombatCalculator.gd literals → named const blocks;
       FrontLineService `6371.0` → `EARTH_RADIUS_KM`
-- [ ] Phase E: DECISIONS + RETROSPECTIVES + gd_metrics re-run (improvement proof) + closeout +
+- [x] Phase E: DECISIONS + RETROSPECTIVES + gd_metrics re-run (improvement proof) + closeout +
       archive move + push
 
 Per-commit gate: `bash tools/run_all_tests.sh` ALL PHASES GREEN; Phase C/D additionally

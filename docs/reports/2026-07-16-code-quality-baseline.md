@@ -76,13 +76,18 @@ post-decomposition codebase; the debt is local fat functions, not structure.
 
 ### 7. Magic numbers / hardcoded values
 
-**209 non-const numeric literals in scripts/** (excluding 0/1/2/±1.0/0.5/100/1000 and `const`
-lines). Distribution is the finding:
+First pass counted **209 non-const numeric literals in scripts/** (excluding 0/1/2/±1.0/0.5/
+100/1000 and `const` lines) — but 74 of those were false positives: literals inside multi-line
+`const` tables (`UnitStats.TYPE_DEFS`, `SUPPORT_MULTIPLIERS`, …) that the first analyzer pass
+did not recognize as consts, plus `1e-9`-style epsilons. Corrected count (analyzer fixed in the
+same session): **135**, of which:
 - `HexMap.gd` 93 — view-layer colors/offsets (cosmetic, low priority),
-- `UnitStats.gd` 38 + `CombatCalculator.gd` 28 — **gameplay numbers living in code**, the real
-  offense against the data-driven rule,
-- `FrontLineService.gd` includes an unlabeled `6371.0` (Earth radius, km),
-- remainder scattered singles.
+- `CombatCalculator.gd` had ~16 real formula constants (loss-rate model, FEBA scaling,
+  advantage thresholds) — hoisted to named consts under plan 0009 phase D,
+- `FrontLineService.gd` had an unlabeled `6371.0` — now `EARTH_RADIUS_KM`,
+- remainder: config-keyed defaults with source comments and math identities (acceptable).
+The data-driven rule holds better than the raw count suggested: gameplay tuning values were
+already const tables or `data/*.json`; the debt was ~20 unlabeled formula constants.
 
 ### 8. Test coverage and triviality
 
@@ -94,12 +99,14 @@ data constants, research-harness adapters (acceptable), but 6 were flagged actio
 `FleetBuilder`, `AntishipSystemsBuilder`. On top of tests, the gate's validator+golden layer
 covers the turn path end-to-end.
 
-## Remediation (executed under plan 0009)
+## Remediation (executed under plan 0009, same session)
 
-Ranked: (1) tests for the 6 uncovered builders/resolvers; (2) split the 6 oversized functions
-(golden byte-stable, one per commit); (3) hoist UnitStats/CombatCalculator/FrontLineService
-literals to named consts. Deferred to BACKLOG: GameState dep ceiling campaign, HexMap cosmetic
-literals, any const→data/*.json knob promotion (USER design call required).
+Shipped: (1) 19 behavioral tests over the 6 uncovered builders/resolvers; (2) all 6 oversized
+functions split into job-named helpers (golden byte-stable, one file per commit); (3)
+CombatCalculator/FrontLineService formula constants named. Post-remediation measurement:
+**zero functions >100 lines** (was 6); CC>20 down to 2 (both JSON-config validators, whose
+branch chains are their job). Deferred to BACKLOG: GameState dep ceiling campaign, HexMap
+cosmetic literals, any const→data/*.json knob promotion (USER design call required).
 
 ## Standards home
 
