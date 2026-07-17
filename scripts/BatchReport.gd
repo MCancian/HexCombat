@@ -5,56 +5,73 @@ extends RefCounted
 ## Input: the per-game record dicts written by tools/run_selfplay_game.gd. No autoload/file/OS
 ## access — the tools/make_batch_report.gd wrapper does the reading/writing. "A result is a
 ## distribution" (hexcombat-research-runs): everything reports per condition
-## (scenario_id × policy_id) across the seed set.
+## (scenario_id × red policy × green policy) across the seed set.
 
 
 ## records: Array of per-game record Dictionaries. Returns condition_key -> aggregate Dictionary;
-## condition_key is "<scenario_id>|<policy_id>".
+## condition_key is "<scenario_id>|<red_policy_id>|<green_policy_id>".
 static func aggregate(records: Array) -> Dictionary:
 	var conditions: Dictionary = {}
 	for record_value in records:
 		var record: Dictionary = record_value
-		var key := "%s|%s" % [String(record.get("scenario_id", "?")), String(record.get("policy_id", "?"))]
-		if not conditions.has(key):
-			conditions[key] = {
-				"scenario_id": String(record.get("scenario_id", "?")),
-				"policy_id": String(record.get("policy_id", "?")),
-				"n": 0,
-				"seeds": [],
-				"commits": {},
-				"red_wins": 0, "green_wins": 0, "undecided": 0,
-				"turns_played": [],
-				"census_red": [], "census_green": [], "census_margin": [],
-				"red_bn_combat_losses": [], "green_bn_combat_losses": [],
-				"ships_destroyed": [], "bns_lost_at_sea": [],
-			}
-		var agg: Dictionary = conditions[key]
-		agg["n"] += 1
-		(agg["seeds"] as Array).append(int(record.get("base_seed", 0)))
-		agg["commits"][String(record.get("commit", ""))] = true
-
-		if bool(record.get("game_over", false)):
-			match String(record.get("winner", "")):
-				"red": agg["red_wins"] += 1
-				"green": agg["green_wins"] += 1
-				_: agg["undecided"] += 1
-		else:
-			agg["undecided"] += 1
-
-		(agg["turns_played"] as Array).append(int(record.get("turns_played", 0)))
-		var census: Dictionary = record.get("census", {})
-		var red_census := int(census.get("red", 0))
-		var green_census := int(census.get("green", 0))
-		(agg["census_red"] as Array).append(red_census)
-		(agg["census_green"] as Array).append(green_census)
-		(agg["census_margin"] as Array).append(red_census - green_census)
-
-		var totals := _sum_digest_losses(record.get("turn_digests", []))
-		(agg["red_bn_combat_losses"] as Array).append(totals["red_bn"])
-		(agg["green_bn_combat_losses"] as Array).append(totals["green_bn"])
-		(agg["ships_destroyed"] as Array).append(totals["ships"])
-		(agg["bns_lost_at_sea"] as Array).append(totals["lost_at_sea"])
+		var agg: Dictionary = _condition_for(conditions, record)
+		_append_record(agg, record)
 	return conditions
+
+
+static func _condition_for(conditions: Dictionary, record: Dictionary) -> Dictionary:
+	var policies := _policy_ids(record)
+	var scenario_id := String(record.get("scenario_id", "?"))
+	var key := "%s|%s|%s" % [scenario_id, policies["red"], policies["green"]]
+	if not conditions.has(key):
+		conditions[key] = {
+			"scenario_id": scenario_id,
+			"red_policy_id": policies["red"],
+			"green_policy_id": policies["green"],
+			"n": 0,
+			"seeds": [],
+			"commits": {},
+			"red_wins": 0, "green_wins": 0, "undecided": 0,
+			"turns_played": [],
+			"census_red": [], "census_green": [], "census_margin": [],
+			"red_bn_combat_losses": [], "green_bn_combat_losses": [],
+			"ships_destroyed": [], "bns_lost_at_sea": [],
+		}
+	return conditions[key]
+
+
+static func _append_record(agg: Dictionary, record: Dictionary) -> void:
+	agg["n"] += 1
+	(agg["seeds"] as Array).append(int(record.get("base_seed", 0)))
+	agg["commits"][String(record.get("commit", ""))] = true
+	if bool(record.get("game_over", false)):
+		match String(record.get("winner", "")):
+			"red": agg["red_wins"] += 1
+			"green": agg["green_wins"] += 1
+			_: agg["undecided"] += 1
+	else:
+		agg["undecided"] += 1
+	(agg["turns_played"] as Array).append(int(record.get("turns_played", 0)))
+	var census: Dictionary = record.get("census", {})
+	var red_census := int(census.get("red", 0))
+	var green_census := int(census.get("green", 0))
+	(agg["census_red"] as Array).append(red_census)
+	(agg["census_green"] as Array).append(green_census)
+	(agg["census_margin"] as Array).append(red_census - green_census)
+	var totals := _sum_digest_losses(record.get("turn_digests", []))
+	(agg["red_bn_combat_losses"] as Array).append(totals["red_bn"])
+	(agg["green_bn_combat_losses"] as Array).append(totals["green_bn"])
+	(agg["ships_destroyed"] as Array).append(totals["ships"])
+	(agg["bns_lost_at_sea"] as Array).append(totals["lost_at_sea"])
+
+
+## Version-1 records used one policy for both sides. Preserve their report compatibility.
+static func _policy_ids(record: Dictionary) -> Dictionary:
+	var legacy_policy := String(record.get("policy_id", "?"))
+	return {
+		"red": String(record.get("red_policy_id", legacy_policy)),
+		"green": String(record.get("green_policy_id", legacy_policy)),
+	}
 
 
 ## Sum per-game loss totals out of the turn digests. Red is always the attacker in ground
@@ -102,15 +119,15 @@ static func render_markdown(conditions: Dictionary, manifest: Dictionary) -> Str
 	lines.append("")
 	lines.append("## Outcomes by condition")
 	lines.append("")
-	lines.append("| Scenario | Policy | N | Red wins | Green wins | Undecided | Turns (med/min–max) | Census R:G (mean) | Margin (med) |")
-	lines.append("|---|---|---|---|---|---|---|---|---|")
+	lines.append("| Scenario | Red policy | Green policy | N | Red wins | Green wins | Undecided | Turns (med/min–max) | Census R:G (mean) | Margin (med) |")
+	lines.append("|---|---|---|---|---|---|---|---|---|---|")
 	var keys := conditions.keys()
 	keys.sort()
 	for key in keys:
 		var agg: Dictionary = conditions[key]
 		var n := int(agg["n"])
-		lines.append("| %s | %s | %d | %d (%d%%) | %d (%d%%) | %d | %s / %s–%s | %.1f : %.1f | %+.1f |" % [
-			agg["scenario_id"], agg["policy_id"], n,
+		lines.append("| %s | %s | %s | %d | %d (%d%%) | %d (%d%%) | %d | %s / %s–%s | %.1f : %.1f | %+.1f |" % [
+			agg["scenario_id"], agg["red_policy_id"], agg["green_policy_id"], n,
 			agg["red_wins"], _pct(agg["red_wins"], n),
 			agg["green_wins"], _pct(agg["green_wins"], n),
 			agg["undecided"],
@@ -121,25 +138,35 @@ static func render_markdown(conditions: Dictionary, manifest: Dictionary) -> Str
 	lines.append("")
 	lines.append("## Losses by condition (per-game means)")
 	lines.append("")
-	lines.append("| Scenario | Policy | Red BN (ground) | Green BN (ground) | Ships destroyed | BNs lost at sea |")
-	lines.append("|---|---|---|---|---|---|")
+	lines.append("| Scenario | Red policy | Green policy | Red BN (ground) | Green BN (ground) | Ships destroyed | BNs lost at sea |")
+	lines.append("|---|---|---|---|---|---|---|")
 	for key in keys:
 		var agg: Dictionary = conditions[key]
-		lines.append("| %s | %s | %.1f | %.1f | %.1f | %.1f |" % [
-			agg["scenario_id"], agg["policy_id"],
+		lines.append("| %s | %s | %s | %.1f | %.1f | %.1f | %.1f |" % [
+			agg["scenario_id"], agg["red_policy_id"], agg["green_policy_id"],
 			mean(agg["red_bn_combat_losses"]), mean(agg["green_bn_combat_losses"]),
 			mean(agg["ships_destroyed"]), mean(agg["bns_lost_at_sea"]),
 		])
 	lines.append("")
 	lines.append("## Caveats")
 	lines.append("")
-	lines.append("- Outcomes are statements about scenario × **policy** pairs, not the invasion per se —")
+	lines.append("- Outcomes are statements about scenario × **policy matchup** pairs, not the invasion per se —")
 	lines.append("  compare policies under identical conditions before attributing anything to the scenario.")
+	if _has_llm_seat(conditions):
+		lines.append("- `llm_local` seats are not seed-reproducible; their JSONL replay logs are the replay artifacts.")
 	lines.append("- Model limits: no terrain effects; secondary-use divergences — see `docs/systems/` fidelity notes.")
 	lines.append("- Green ground losses count combat defender losses only (IJFS strikes on maneuver units are")
 	lines.append("  reflected in the terminal census, not in the ground-loss column).")
 	lines.append("")
 	return "\n".join(lines)
+
+
+static func _has_llm_seat(conditions: Dictionary) -> bool:
+	for key in conditions:
+		var condition: Dictionary = conditions[key]
+		if condition["red_policy_id"] == "llm_local" or condition["green_policy_id"] == "llm_local":
+			return true
+	return false
 
 
 static func mean(values: Array) -> float:

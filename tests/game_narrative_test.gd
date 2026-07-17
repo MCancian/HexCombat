@@ -8,7 +8,8 @@ func _record() -> Dictionary:
 		"commit": "abc123",
 		"scenario_id": "test_scn",
 		"scenario_name": "Test Scenario",
-		"policy_id": "p",
+		"red_policy_id": "p",
+		"green_policy_id": "q",
 		"base_seed": 7,
 		"turns_requested": 5,
 		"game_over": true,
@@ -50,6 +51,7 @@ func _record() -> Dictionary:
 func test_render_produces_turn_sections_and_outcome() -> void:
 	var text := GameNarrative.render(_record())
 	assert_str(text).contains("# Game narrative — Test Scenario")
+	assert_str(text).contains("Red policy `p`, Green policy `q`")
 	assert_str(text).contains("## Turn 1")
 	assert_str(text).contains("10 strike(s) executed (2 skipped), destroying 3 Mobile SAMs")
 	assert_str(text).contains("degraded 50% → 25% effective")

@@ -12,8 +12,10 @@ static func render(record: Dictionary) -> String:
 	var lines: Array[String] = []
 	lines.append("# Game narrative — %s" % String(record.get("scenario_name", record.get("scenario_id", "?"))))
 	lines.append("")
-	lines.append("**Identity.** scenario `%s`, policy `%s`, seed %d, commit `%s`." % [
-		String(record.get("scenario_id", "?")), String(record.get("policy_id", "?")),
+	var legacy_policy := String(record.get("policy_id", "?"))
+	lines.append("**Identity.** scenario `%s`, Red policy `%s`, Green policy `%s`, seed %d, commit `%s`." % [
+		String(record.get("scenario_id", "?")), String(record.get("red_policy_id", legacy_policy)),
+		String(record.get("green_policy_id", legacy_policy)),
 		int(record.get("base_seed", 0)), String(record.get("commit", "?")),
 	])
 	lines.append("")
