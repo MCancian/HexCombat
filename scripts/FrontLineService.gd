@@ -1,9 +1,11 @@
 class_name FrontLineService
 extends RefCounted
 
+const EARTH_RADIUS_KM := 6371.0
+
 
 static func haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-	var radius_km := 6371.0
+	var radius_km := EARTH_RADIUS_KM
 	var dlat := deg_to_rad(lat2 - lat1)
 	var dlon := deg_to_rad(lon2 - lon1)
 	var a := (

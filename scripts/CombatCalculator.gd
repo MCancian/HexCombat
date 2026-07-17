@@ -9,6 +9,30 @@ const SUPPORT_MULTIPLIERS = {
 	"rotary_wing": 1.3
 }
 
+# Loss-rate model: base rate shifted by the force ratio, jittered by the d100 roll around its
+# midpoint, clamped to the per-side band. Values are TIV-lineage tuning (plan 0009 hoist —
+# candidates for data/ knobs only on a USER call).
+const BASE_LOSS_RATE := 0.20
+const ATTACKER_RATIO_SLOPE := 0.08
+const DEFENDER_RATIO_SLOPE := 0.10
+const LOSS_ROLL_MIDPOINT := 50
+const LOSS_ROLL_SCALE := 1000.0
+const MIN_LOSS_RATE := 0.05
+const MAX_ATTACKER_LOSS_RATE := 0.45
+const MAX_DEFENDER_LOSS_RATE := 0.50
+
+# FEBA shift: strength balance amplified by FEBA_BALANCE_GAIN (clamped symmetric), scaled by a
+# roll factor spanning [FEBA_ROLL_FACTOR_MIN, FEBA_ROLL_FACTOR_MIN + FEBA_ROLL_FACTOR_SPAN].
+const FEBA_BALANCE_GAIN := 2.0
+const FEBA_BALANCE_CLAMP := 2.0
+const FEBA_ROLL_FACTOR_MIN := 0.75
+const FEBA_ROLL_FACTOR_SPAN := 0.5
+
+# Degenerate-strength floor (keeps ratios finite) and the result-label ratio thresholds.
+const MIN_EFFECTIVE_STRENGTH := 0.1
+const ATTACKER_ADVANTAGE_RATIO := 1.2
+const DEFENDER_ADVANTAGE_RATIO := 0.85
+
 
 static func resolve_map_attack(
 	dice: Dice,
@@ -118,11 +142,11 @@ static func _force_strengths(
 	var defender_strength := defender_unmodified * defender_terrain_modifier
 
 	if attacker_strength <= 0.0:
-		attacker_strength = 0.1
+		attacker_strength = MIN_EFFECTIVE_STRENGTH
 	if defender_strength <= 0.0:
-		defender_strength = 0.1
+		defender_strength = MIN_EFFECTIVE_STRENGTH
 	if defender_unmodified <= 0.0:
-		defender_unmodified = 0.1
+		defender_unmodified = MIN_EFFECTIVE_STRENGTH
 
 	return {
 		"attacker_maneuver": attacker_maneuver,
@@ -148,12 +172,12 @@ static func _loss_counts(
 	defender_loss_roll: int,
 ) -> Dictionary:
 	var attacker_loss_rate := clampf(
-		0.20 - (ratio - 1.0) * 0.08 + (attacker_loss_roll - 50) / 1000.0,
-		0.05, 0.45
+		BASE_LOSS_RATE - (ratio - 1.0) * ATTACKER_RATIO_SLOPE + (attacker_loss_roll - LOSS_ROLL_MIDPOINT) / LOSS_ROLL_SCALE,
+		MIN_LOSS_RATE, MAX_ATTACKER_LOSS_RATE
 	)
 	var defender_loss_rate := clampf(
-		0.20 + (ratio - 1.0) * 0.10 + (defender_loss_roll - 50) / 1000.0,
-		0.05, 0.50
+		BASE_LOSS_RATE + (ratio - 1.0) * DEFENDER_RATIO_SLOPE + (defender_loss_roll - LOSS_ROLL_MIDPOINT) / LOSS_ROLL_SCALE,
+		MIN_LOSS_RATE, MAX_DEFENDER_LOSS_RATE
 	)
 
 	var attacker_losses := int(round(attacker_count * attacker_loss_rate))
@@ -176,19 +200,19 @@ static func _loss_counts(
 
 ## FEBA movement from the strength balance, scaled by the roll factor.
 static func _feba_shift(attacker_strength: float, defender_strength: float, feba_base_km: float, feba_roll: int) -> Dictionary:
-	var denominator: float = max(attacker_strength + defender_strength, 0.1)
+	var denominator: float = max(attacker_strength + defender_strength, MIN_EFFECTIVE_STRENGTH)
 	var balance: float = (attacker_strength - defender_strength) / denominator
-	var feba_roll_factor := 0.75 + (feba_roll / 100.0) * 0.5
+	var feba_roll_factor := FEBA_ROLL_FACTOR_MIN + (feba_roll / 100.0) * FEBA_ROLL_FACTOR_SPAN
 	return {
 		"roll_factor": feba_roll_factor,
-		"movement_km": feba_base_km * clampf(balance * 2.0, -2.0, 2.0) * feba_roll_factor,
+		"movement_km": feba_base_km * clampf(balance * FEBA_BALANCE_GAIN, -FEBA_BALANCE_CLAMP, FEBA_BALANCE_CLAMP) * feba_roll_factor,
 	}
 
 
 static func _result_label(ratio: float) -> String:
-	if ratio >= 1.2:
+	if ratio >= ATTACKER_ADVANTAGE_RATIO:
 		return "Attacker Advantage"
-	if ratio <= 0.85:
+	if ratio <= DEFENDER_ADVANTAGE_RATIO:
 		return "Defender Advantage"
 	return "Contested"
 

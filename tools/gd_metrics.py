@@ -14,7 +14,7 @@ FUNC_RE = re.compile(r"^(\s*)(static\s+)?func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*
 BRANCH_RE = re.compile(r"^\s*(if|elif|for|while)\b")
 MATCH_ARM_RE = re.compile(r"^\s*[^#\s].*:\s*(#.*)?$")
 BOOL_OP_RE = re.compile(r"\b(and|or)\b|&&|\|\|")
-NUM_RE = re.compile(r"(?<![\w.])-?\d+\.?\d*(?![\w.])")
+NUM_RE = re.compile(r"(?<![\w.])-?\d+\.?\d*(?:[eE][+-]?\d+)?(?![\w.])")
 CONST_RE = re.compile(r"^\s*const\s+")
 DEP_PATTERNS = [
     re.compile(r'preload\(\s*"([^"]+)"'),
@@ -77,8 +77,13 @@ for f in files:
     in_match_stack = []  # indents of active match statements
 
     # dependency + magic scan
+    const_block_depth = 0  # >0 while inside a multi-line const {...}/[...] literal
     for i, raw in enumerate(lines):
         code = strip_str_comment(raw)
+        in_const_block = const_block_depth > 0
+        if CONST_RE.match(raw) or in_const_block:
+            const_block_depth += code.count("{") + code.count("[") - code.count("}") - code.count("]")
+            const_block_depth = max(0, const_block_depth)
         for pat in DEP_PATTERNS:
             for m in pat.finditer(raw):
                 deps.add(m.group(1))
@@ -93,11 +98,13 @@ for f in files:
         m = EXTENDS_RE.match(raw)
         if m:
             extends = m.group(1)
-        # magic numbers: numeric literals outside const lines, excluding 0,1,-1,2,0.0,1.0,0.5,100
-        if not CONST_RE.match(raw) and "export" not in raw:
+        # magic numbers: numeric literals outside const declarations (incl. multi-line const
+        # tables) and @export defaults; exponent-notation epsilons (1e-9) don't count.
+        if not CONST_RE.match(raw) and not in_const_block and "export" not in raw:
             for m in NUM_RE.finditer(code):
                 v = m.group(0)
                 if v in ("0","1","-1","2","0.0","1.0","-1.0","0.5","100","1000"): continue
+                if "e" in v or "E" in v: continue
                 magic_count += 1
                 if len(magic_lines) < 400:
                     magic_lines.append((i+1, v))
