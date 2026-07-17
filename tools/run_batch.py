@@ -116,21 +116,6 @@ def make_jobs(
                     "%s__%s-vs-%s__seed%d.json"
                     % (scenario_id, red_policy, green_policy, seed)
                 )
-                command = [
-                    godot,
-                    "--headless",
-                    "--path",
-                    str(REPO_ROOT),
-                    "-s",
-                    "res://tools/run_selfplay_game.gd",
-                    "--",
-                    "--scenario=%s" % scenario,
-                    "--red-policy=%s" % red_policy,
-                    "--green-policy=%s" % green_policy,
-                    "--seed=%d" % seed,
-                    "--turns=%d" % turns,
-                    "--out=%s" % record_path,
-                ]
                 jobs.append(
                     Job(
                         scenario,
@@ -138,10 +123,38 @@ def make_jobs(
                         green_policy,
                         seed,
                         record_path,
-                        command,
+                        game_command(
+                            godot, scenario, red_policy, green_policy, seed, turns, record_path
+                        ),
                     )
                 )
     return jobs
+
+
+def game_command(
+    godot: str,
+    scenario: str,
+    red_policy: str,
+    green_policy: str,
+    seed: int,
+    turns: int,
+    record_path: Path,
+) -> list[str]:
+    return [
+        godot,
+        "--headless",
+        "--path",
+        str(REPO_ROOT),
+        "-s",
+        "res://tools/run_selfplay_game.gd",
+        "--",
+        "--scenario=%s" % scenario,
+        "--red-policy=%s" % red_policy,
+        "--green-policy=%s" % green_policy,
+        "--seed=%d" % seed,
+        "--turns=%d" % turns,
+        "--out=%s" % record_path,
+    ]
 
 
 def run_pending_jobs(pending: list[Job], parallel: int) -> None:
@@ -232,22 +245,23 @@ def write_manifest(
         "games_total": len(jobs),
         "games_run": pending_count,
         "games_failed": len(failed),
-        "results": [
-            {
-                "scenario": job.scenario,
-                "red_policy_id": job.red_policy,
-                "green_policy_id": job.green_policy,
-                "seed": job.seed,
-                "record": str(job.record_path),
-                "ok": job not in failed,
-                "command": job.command_line,
-            }
-            for job in jobs
-        ],
+        "results": [manifest_result(job, failed) for job in jobs],
     }
     with (batch_dir / "manifest.json").open("w", encoding="utf-8") as file:
         json.dump(manifest, file, indent=2)
         file.write("\n")
+
+
+def manifest_result(job: Job, failed: list[Job]) -> dict:
+    return {
+        "scenario": job.scenario,
+        "red_policy_id": job.red_policy,
+        "green_policy_id": job.green_policy,
+        "seed": job.seed,
+        "record": str(job.record_path),
+        "ok": job not in failed,
+        "command": job.command_line,
+    }
 
 
 def make_report(godot: str, batch_dir: Path) -> bool:
@@ -267,33 +281,40 @@ def make_report(godot: str, batch_dir: Path) -> bool:
     return "REPORT OK:" in result.stdout and (batch_dir / "report.md").is_file()
 
 
-def main() -> int:
-    try:
-        args = parse_args()
-        if args.n <= 0 or args.parallel <= 0 or args.turns <= 0:
-            raise ValueError("--n, --parallel, and --turns must be positive.")
-        scenarios = split_csv(args.scenarios)
-        matchups = [parse_matchup(value) for value in split_csv(args.matchups)]
-        seeds = (
-            [int(value) for value in split_csv(args.seeds)]
-            if args.seeds
-            else list(range(args.base_seed, args.base_seed + args.n))
-        )
-        godot = resolve_godot(args.godot)
-    except ValueError as error:
-        print("ERROR: %s" % error, file=sys.stderr)
-        return 2
-
+def run_batch(
+    args: argparse.Namespace,
+    scenarios: list[str],
+    matchups: list[tuple[str, str]],
+    seeds: list[int],
+    godot: str,
+) -> int:
     batch_dir = REPO_ROOT / "reports" / "batches" / args.name
     games_dir = batch_dir / "games"
     games_dir.mkdir(parents=True, exist_ok=True)
     jobs = make_jobs(scenarios, matchups, seeds, args.turns, godot, games_dir)
     pending = [job for job in jobs if read_valid_record(job.record_path) is None]
+    print_batch_start(args.name, jobs, scenarios, matchups, seeds, pending)
+    run_pending_jobs(pending, args.parallel)
+    failed = [job for job in jobs if read_valid_record(job.record_path) is None]
+    write_manifest(
+        batch_dir, args.name, scenarios, matchups, seeds, args.turns, jobs, len(pending), failed
+    )
+    return finish_batch(args, godot, batch_dir, jobs, failed)
+
+
+def print_batch_start(
+    name: str,
+    jobs: list[Job],
+    scenarios: list[str],
+    matchups: list[tuple[str, str]],
+    seeds: list[int],
+    pending: list[Job],
+) -> None:
     print(
         "Batch '%s': %d games (%d scenario(s) x %d matchup(s) x %d seed(s)); "
         "%d already recorded, %d to run."
         % (
-            args.name,
+            name,
             len(jobs),
             len(scenarios),
             len(matchups),
@@ -302,20 +323,11 @@ def main() -> int:
             len(pending),
         )
     )
-    run_pending_jobs(pending, args.parallel)
 
-    failed = [job for job in jobs if read_valid_record(job.record_path) is None]
-    write_manifest(
-        batch_dir,
-        args.name,
-        scenarios,
-        matchups,
-        seeds,
-        args.turns,
-        jobs,
-        len(pending),
-        failed,
-    )
+
+def finish_batch(
+    args: argparse.Namespace, godot: str, batch_dir: Path, jobs: list[Job], failed: list[Job]
+) -> int:
     print(
         "Batch '%s' complete: %d/%d games OK; records in %s"
         % (args.name, len(jobs) - len(failed), len(jobs), batch_dir)
@@ -329,6 +341,28 @@ def main() -> int:
         print("REPORT FAILED: %s" % (batch_dir / "report.md"), file=sys.stderr)
         return 1
     return 0
+
+
+def batch_inputs(args: argparse.Namespace) -> tuple[list[str], list[tuple[str, str]], list[int], str]:
+    if args.n <= 0 or args.parallel <= 0 or args.turns <= 0:
+        raise ValueError("--n, --parallel, and --turns must be positive.")
+    scenarios = split_csv(args.scenarios)
+    matchups = [parse_matchup(value) for value in split_csv(args.matchups)]
+    seeds = (
+        [int(value) for value in split_csv(args.seeds)]
+        if args.seeds
+        else list(range(args.base_seed, args.base_seed + args.n))
+    )
+    return scenarios, matchups, seeds, resolve_godot(args.godot)
+
+
+def main() -> int:
+    try:
+        args = parse_args()
+        return run_batch(args, *batch_inputs(args))
+    except ValueError as error:
+        print("ERROR: %s" % error, file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":
