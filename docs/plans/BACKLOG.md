@@ -9,17 +9,6 @@ Completed tracks (A decomposition, B1–B6 research harness, C first variant, F 
 current behavior in `docs/STATUS.md`; their history is in `docs/archive/` (PLAN.md Decisions,
 refactor_audit, port_audit).
 
-## Numbered plans queued (see [README.md](README.md))
-
-- **0004 — Port TIV ship-count & crossing model** *(High)*. Sealift is a one-shot fixed reserve
-  that drains by ~turn 3; no follow-on echelon exists, so 27/30 turns run with no crossing. Port
-  the stateful ship / reinforcement model from TaiwanInvasionViewer. `0004-*.md`.
-- **0005 — Game-record inconsistency audit** *(Medium)*. Dispatch brief for an agent to audit
-  `reports/llm/*.viewer.json` for other engine/model inconsistencies (excludes 0004/0003).
-  `0005-*.md`.
-
----
-
 ## Track B — Research harness *(primary; one item left)*
 
 - **B7 — Per-seat policies in the batch runner.** `run_batch.ps1`/`run_selfplay_game.gd` are
@@ -27,6 +16,13 @@ refactor_audit, port_audit).
   ids through the batch layer so LLM-vs-LLM (and mixed) games flow into multi-condition studies.
   Done when: one command produces a reproducible multi-condition study report with an LLM policy
   on either side. Contract: `.claude/skills/hexcombat-research-runs`.
+
+| ID | Plan Name | Priority | Status |
+| :--- | :--- | :--- | :--- |
+| 0008 | [Immortal Support Units in Ground Combat](0008-immortal-support-units-combat.md) | High | Sketch |
+| 0005 | [Game-record inconsistency audit (agent brief)](0005-game-record-inconsistency-audit.md) | Medium | Sketch |
+| 0002 | [Per-hull escort magazines (D3-B3)](0002-per-hull-escort-magazines.md) | Low (needs ship-ammo subsystem) | Sketch |
+| 0003 | [Combat-summary team attribution](0003-combat-summary-team-attribution.md) | Low (blocked on USER counterattack call) | Sketch |
 
 ## Track D — Adjudication aid (graphics/UI) *(secondary — on USER request)*
 

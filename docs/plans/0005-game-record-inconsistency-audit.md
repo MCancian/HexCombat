@@ -78,7 +78,6 @@ re-baseline.
 
 ## Checklist
 
-- [ ] Dispatch the brief above to an auditing agent
-- [ ] Review the queued plans it produces (classification correct? evidence traced? 0004/0003 not
-      duplicated?)
-- [ ] Fold accepted items into the backlog priority order
+- [x] Dispatch the brief above to an auditing agent
+- [x] Review the queued plans it produces (classification correct? evidence traced? 0004/0003 not duplicated?)
+- [x] Fold accepted items into the backlog priority order

@@ -37,6 +37,7 @@ the acting model. Never commit `.mcp.json`.
 
 ## Auxiliary tools
 
+- **agy** (Antigravity CLI): Use to run commands or tasks from the terminal. Use `agy -p "task"` to run a single prompt non-interactively and print the response (great for one-off tasks). Use `agy -i "task"` to start an interactive session with an initial prompt. You can also append `-c` to continue your most recent conversation.
 - **opencode** (`Bash(opencode *)` is allowed): `opencode run -m opencode/deepseek-v4-flash-free
   "task"` (add `-s <session>` for continuity, `--agent explore` for read-only). Small free model —
   suitable for broad file surveys, mechanical renames, log mining; NOT for golden-touching,
