@@ -2,7 +2,7 @@
 """Post-game bundler for tools/viewer/game_viewer.html (STDLIB ONLY, no pip dependencies).
 
 Merges one HexCombat AI-vs-AI game record (reports/llm/<name>.json, written by
-tools/run_llm_game.gd) with its JSONL replay log (<name>.jsonl, one line per side per turn,
+tools/run_selfplay_game.gd) with its JSONL replay log (<name>.jsonl, one line per side per turn,
 appended by tools/llm_sidecar.py) into a single self-contained bundle file that the viewer
 opens directly — no live game data, no cross-referencing two files at view time.
 

@@ -6,7 +6,7 @@
 # (tools/llm_sidecar_stub.py), plus direct unit checks of its parse/strip helpers. This gates the
 # marshalling contract (observation -> sidecar -> actions), the malformed-output fallback, and the
 # obs/action log WITHOUT contacting a real LLM, so it stays green inside run_all_tests.ps1. The
-# nondeterministic live path (a real model) is verified separately by tools/run_llm_game.gd.
+# nondeterministic live path (a real model) is verified separately by tools/run_selfplay_game.gd.
 extends SceneTree
 
 const STUB := "res://tools/llm_sidecar_stub.py"

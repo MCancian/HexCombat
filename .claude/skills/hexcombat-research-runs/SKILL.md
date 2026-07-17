@@ -27,12 +27,13 @@ description: Running HexCombat as a research instrument — Monte Carlo batches 
 > reports (condition rows are the sweep axis). Sweeps only cover scenario-FILE knobs; a knob
 > living in a phase data file needs promoting to a scenario key first. **LLM-player adapter (B6)
 > shipped and live-verified 2026-07-08** — policy id `llm_local` (`LLMPolicy`), sidecar
-> `tools/llm_sidecar.py`, two-seat entrypoint `tools/run_llm_game.gd` (`docs/STATUS.md` → "LLM
-> players" has the full contract). Remaining gap: the batch runner (`run_batch.ps1`) still takes
+> `tools/llm_sidecar.py`, two-seat entrypoint `tools/run_selfplay_game.gd` with
+> `--red-policy=llm_local --green-policy=llm_local` (`docs/STATUS.md` → "LLM players" has the
+> full contract). Remaining gap: the batch runner (`run_batch.ps1`) still takes
 > one `-Policies` value for both sides — per-seat policy assignment in a batch is not yet wired.
 > Single-file HTML game reports: `python3 tools/make_game_bundle.py --record <record.json>
 > --html` writes `<record>.game.html`, a shareable report with the viewer bundle baked in — works
-> for LLM games (`run_llm_game.gd` output) and for self-play games run with `--log` (the JSONL
+> for LLM games (`run_selfplay_game.gd` output) and for self-play games run with `--log` (the JSONL
 > replay/event log `make_game_bundle.py` reads alongside the record).
 
 ## The methodology (this is the contract, whatever the tooling)

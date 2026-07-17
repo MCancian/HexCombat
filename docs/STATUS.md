@@ -126,8 +126,9 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   `localhost:8088/v1`), validates the returned actions against the legal sets, and appends every
   observation/action pair to a JSONL replay log. `SelfPlayRunner.play_game_seats` runs two
   independent seats to a simultaneous WeGo resolve; `godot --headless --path . -s
-  res://tools/run_llm_game.gd -- --seed=S [--scenario=X] [--turns=N] [--model=M]
-  [--out=f.json] [--log=f.jsonl]` plays one full LLM-vs-LLM game and writes a record + replay log.
+  res://tools/run_selfplay_game.gd -- --seed=S --red-policy=llm_local --green-policy=llm_local
+  [--scenario=X] [--turns=N] [--model=M] [--out=f.json] [--log=f.jsonl]` plays one full
+  LLM-vs-LLM game and writes a record + replay log.
   `HEXCOMBAT_LLM_SIDECAR` overrides the sidecar (e.g. `tools/llm_sidecar_stub.py`, the network-free
   stub used by the gate). LLM decisions are NOT seed-reproducible; the JSONL log is the replay
   artifact — each entry carries the full observation, the raw model reply, the validated actions,
@@ -140,8 +141,8 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   budget's real cost is wall-clock on rambling turns). Use IPv4 (`127.0.0.1`, default) not
   `localhost`. Live-verified against local vLLM (model `jarvis`): seeds 20260710/20260711, both
   30/30 turns GAME OK; the second (post-fix) run had zero forfeited turns. (The B2 batch runner is
-  still single-policy — LLM seats run via `run_llm_game.gd`, not yet inside multi-condition
-  batches.)
+  still single-policy — LLM seats run through the unified game entrypoint, not yet inside
+  multi-condition batches.)
 - **`roc_full_defense` scenario** — variant placing all 32 ROC brigades (124 battalions) at their
   real garrison hexes vs the default's 4 PLA amphibious brigades; select with
   `--scenario=roc_full_defense`. Gives AI-vs-AI games a multi-turn fight instead of the default
