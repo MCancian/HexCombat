@@ -84,3 +84,45 @@ func test_frontline_resolver_moves_nothing_itself() -> void:
 	assert_str(summary.moves["u1"]).is_equal("A")
 	# The resolver only reports the move; applying it is the caller's job.
 	assert_str(brigade.hex_id).is_equal("B")
+
+
+# --- CleanupResolver -----------------------------------------------------------------------------
+
+func _antiship_system() -> AntishipSystem:
+	var sys := AntishipSystem.new()
+	sys.fired = 5
+	sys.expended = 10
+	sys.destroyed_this_turn = 2
+	sys.suppressed = true
+	sys.active = true
+	return sys
+
+
+func test_cleanup_resolver_resets_antiship_systems_and_latches_posture() -> void:
+	var system := _antiship_system()
+	var brigade := Brigade.new()
+	brigade.id = "bde-1"
+	brigade.team = Brigade.Team.RED
+	brigade.hex_id = "A"
+	brigade.moved_this_turn = true
+	brigade.fought_this_turn = true
+	var bn := Battalion.new()
+	bn.type = "Infantry Battalion"
+	bn.qty = 1
+	brigade.composition = [bn]
+	var brigades := {"bde-1": brigade}
+	
+	var outcome := CleanupResolver.resolve([system], brigades, [], {}, 1, false)
+	var summary: CleanupSummary = outcome["summary"]
+	
+	assert_int(system.fired).is_equal(0)
+	assert_int(system.expended).is_equal(0)
+	assert_int(system.destroyed_this_turn).is_equal(0)
+	assert_bool(system.suppressed).is_false()
+	assert_bool(system.active).is_false()
+	
+	assert_bool(brigade.moved_last_turn).is_true()
+	assert_bool(brigade.fought_last_turn).is_true()
+	
+	assert_int(summary.antiship_systems_reset).is_equal(1)
+	assert_int(summary.china_battalions_on_taiwan).is_equal(1)

@@ -63,7 +63,7 @@ code headers were correct.
    - **act later**: Formally log the issue into `docs/plans/BACKLOG.md`.
    - **Archive**: Once triage actions are complete or logged, **move the entry** from `docs/RETROSPECTIVES.md` to `docs/archive/RETROSPECTIVES_history.md`. (Treat `RETROSPECTIVES.md` as an inbox).
    - Closed investigations → append to `hexcombat-failure-archaeology`.
-5. Check off `docs/plans/BACKLOG.md` / the plan's checklist.
+5. Delete completed items from `docs/plans/BACKLOG.md` / the plan's checklist.
 
 **Plan closeout** (multi-session work orders, `docs/plans/NNNN-*.md`): a plan is done only when
 steps 1–5 above are done AND the plan file gets a 3-line closeout header (shipped date, where the

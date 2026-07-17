@@ -154,3 +154,6 @@ func _reset_fixture() -> void:
 	# extra combats that would consume the scripted rolls first — empty the reserve so the only
 	# combat is the test's own.
 	GameState.ship_reserve.clear()
+	if GameState.sealift_state != null:
+		GameState.sealift_state.cohorts.clear()
+		GameState.sealift_state.mainland_pool.clear()

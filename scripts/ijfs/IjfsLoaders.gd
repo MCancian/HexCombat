@@ -425,12 +425,14 @@ static func _target_from_dict(data: Dictionary) -> IjfsTarget:
 	target.posture = String(data.get("posture", data.get("posture_default", "not_applicable")))
 	target.destroyed = bool(data.get("destroyed", false))
 	target.detected_this_turn = bool(data.get("detected_this_turn", false))
-	target.last_detected_day = int(data.get("last_detected_day", -1))
+	var ldd = data.get("last_detected_day", -1)
+	target.last_detected_day = -1 if ldd == null else int(ldd)
 	target.known_to_red = bool(data.get("known_to_red", false))
 	target.suppressed = bool(data.get("suppressed", false))
 	target.suppressed_this_turn = bool(data.get("suppressed_this_turn", false))
 	target.intel_locked = bool(data.get("intel_locked", false))
-	target.sam_score = int(data.get("sam_score", -1))
+	var ss = data.get("sam_score", -1)
+	target.sam_score = -1 if ss == null else int(ss)
 	target.metadata = data.get("metadata", {})
 	return target
 

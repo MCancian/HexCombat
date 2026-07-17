@@ -1,9 +1,9 @@
 extends GdUnitTestSuite
 
-const TARGET_HEX := "hex_40_16"
-const ADJACENT_HEX := "hex_41_16"
-const OTHER_ADJACENT_HEX := "hex_40_17"
-const NON_ADJACENT_HEX := "hex_44_16"
+const TARGET_HEX := TestHexes.TARGET_HEX
+const ADJACENT_HEX := TestHexes.ADJACENT_HEX
+const OTHER_ADJACENT_HEX := TestHexes.OTHER_ADJACENT_HEX
+const NON_ADJACENT_HEX := TestHexes.BEACH_1
 
 
 func before_test() -> void:

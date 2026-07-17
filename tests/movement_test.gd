@@ -1,7 +1,7 @@
 extends GdUnitTestSuite
 
 const RED_BRIGADE_ID := "PLA-71-2-Amphibious"
-const RED_START_HEX := "hex_44_16"
+const RED_START_HEX := TestHexes.BEACH_1
 
 
 func before_test() -> void:

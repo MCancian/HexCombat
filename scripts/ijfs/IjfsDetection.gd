@@ -128,57 +128,52 @@ static func _base_components(target: IjfsTarget, scenario: Dictionary) -> Dictio
 
 
 static func satellite_detect_target_ids(targets: Array[IjfsTarget], scenario: Dictionary, dice: Dice) -> Dictionary:
-	var detected_ids: Array[String] = []
-	var log: Array = []
-	for target in _sorted_targets(targets):
-		if target.destroyed:
-			continue
-		if target.mobility == "static" or target.intel_locked:
-			detected_ids.append(target.target_id)
-			var method := "intel_locked" if target.intel_locked and target.mobility != "static" else "static_known"
-			log.append(_log_detection(target, "phase1", method, 1.0, null, true))
-			continue
-		var components := _base_components(target, scenario)
-		var p_detect := _math_clamp(float(components["satellite_floor"]))
-		components["weighted_isr_capacity"] = 0.0
-		components["weighted_isr_health"] = 0.0
-		var roll := dice.randf()
-		var detected := roll <= p_detect
-		if detected:
-			detected_ids.append(target.target_id)
-		log.append(_log_detection(target, "phase1", "satellite_floor_roll", p_detect, roll, detected, components))
-	return {"detected_ids": detected_ids, "log": log}
+	return _run_detection_phase(targets, scenario, dice, "phase1", false)
 
 
 static func aircraft_detect_target_ids(targets: Array[IjfsTarget], scenario: Dictionary, force: Variant, air_classes: Dictionary, contest_adjustment: float, dice: Dice, isr_day: int) -> Dictionary:
+	var aircraft_score := aircraft_isr_raw_score(force, air_classes)
+	return _run_detection_phase(targets, scenario, dice, "phase2", true, aircraft_score, contest_adjustment, isr_day)
+
+
+static func _run_detection_phase(targets: Array[IjfsTarget], scenario: Dictionary, dice: Dice, phase: String, is_aircraft: bool, aircraft_score: float = 0.0, contest_adjustment: float = 0.0, isr_day: int = 1) -> Dictionary:
 	var detected_ids: Array[String] = []
 	var log: Array = []
-	var aircraft_score := aircraft_isr_raw_score(force, air_classes)
 	for target in _sorted_targets(targets):
 		if target.destroyed:
 			continue
 		if target.mobility == "static" or target.intel_locked:
 			detected_ids.append(target.target_id)
 			var method := "intel_locked" if target.intel_locked and target.mobility != "static" else "static_known"
-			log.append(_log_detection(target, "phase2", method, 1.0, null, true))
+			log.append(_log_detection(target, phase, method, 1.0, null, true))
 			continue
 		var components := _base_components(target, scenario)
-		var non_air_score := _non_air_isr_score(target.category, isr_day, scenario["isr_sources"])
-		var weighted_isr := maxf(0.0, (non_air_score + aircraft_score) * contest_adjustment)
-		var p_detect := _math_clamp(
-			float(components["satellite_floor"])
-			+ float(components["base_probability"]) * float(components["mobility_multiplier"]) * float(components["posture_multiplier"]) * weighted_isr
-		)
-		components["non_air_isr_score"] = non_air_score
-		components["aircraft_isr_raw"] = aircraft_score
-		components["contest_adjustment"] = contest_adjustment
-		components["weighted_isr_capacity"] = weighted_isr
-		components["weighted_isr_health"] = weighted_isr
+		var p_detect := 0.0
+		var roll_method := ""
+		if is_aircraft:
+			var non_air_score := _non_air_isr_score(target.category, isr_day, scenario["isr_sources"])
+			var weighted_isr := maxf(0.0, (non_air_score + aircraft_score) * contest_adjustment)
+			p_detect = _math_clamp(
+				float(components["satellite_floor"])
+				+ float(components["base_probability"]) * float(components["mobility_multiplier"]) * float(components["posture_multiplier"]) * weighted_isr
+			)
+			components["non_air_isr_score"] = non_air_score
+			components["aircraft_isr_raw"] = aircraft_score
+			components["contest_adjustment"] = contest_adjustment
+			components["weighted_isr_capacity"] = weighted_isr
+			components["weighted_isr_health"] = weighted_isr
+			roll_method = "aircraft_isr_roll"
+		else:
+			p_detect = _math_clamp(float(components["satellite_floor"]))
+			components["weighted_isr_capacity"] = 0.0
+			components["weighted_isr_health"] = 0.0
+			roll_method = "satellite_floor_roll"
+			
 		var roll := dice.randf()
 		var detected := roll <= p_detect
 		if detected:
 			detected_ids.append(target.target_id)
-		log.append(_log_detection(target, "phase2", "aircraft_isr_roll", p_detect, roll, detected, components))
+		log.append(_log_detection(target, phase, roll_method, p_detect, roll, detected, components))
 	return {"detected_ids": detected_ids, "log": log}
 
 

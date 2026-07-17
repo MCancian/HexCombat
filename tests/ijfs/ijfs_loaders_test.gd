@@ -222,3 +222,41 @@ func test_load_targets_with_antiship_replaces_static_rows() -> void:
 			assert_bool(t.metadata.has("to_number")).is_true()
 			dynamic_antiship += 1
 	assert_int(dynamic_antiship).is_equal(1)  # one container bin
+
+
+func test_carry_to_next_day_parity() -> void:
+	var state := IjfsDailyState.new()
+	var t1 := IjfsTarget.new()
+	t1.target_id = "test_target"
+	t1.source_target_id = "test_target"
+	t1.destroyed = true
+	t1.suppressed = true
+	t1.suppressed_this_turn = true
+	t1.known_to_red = true
+	t1.last_detected_day = 1
+	t1.detected_this_turn = true
+	t1.sead_result = "suppressed"
+	t1.metadata = {"foo": "bar"}
+	state.targets = [t1]
+
+	var t1_dict = t1.to_dict()
+
+	# Run carry_to_next_day which modifies t1 in place
+	IjfsEngine.carry_to_next_day(state)
+
+	# Serialize the BEFORE-carry dict, as if it was written out by write_outputs
+	var path := _write_json("carry_parity.json", {"targets": [t1_dict]})
+
+	# Load it using IjfsLoaders for day 2
+	var loaded_targets := IjfsLoaders.load_targets(path, 2)
+	assert_int(loaded_targets.size()).is_equal(1)
+	var loaded: IjfsTarget = loaded_targets[0]
+
+	# Assert parity field-by-field
+	assert_bool(loaded.destroyed).is_equal(t1.destroyed)
+	assert_bool(loaded.suppressed).is_equal(t1.suppressed)
+	assert_bool(loaded.suppressed_this_turn).is_equal(t1.suppressed_this_turn)
+	assert_bool(loaded.known_to_red).is_equal(t1.known_to_red)
+	assert_int(loaded.last_detected_day).is_equal(t1.last_detected_day)
+	assert_bool(loaded.detected_this_turn).is_equal(t1.detected_this_turn)
+	assert_str(loaded.sead_result).is_equal(t1.sead_result)

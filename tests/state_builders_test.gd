@@ -35,7 +35,7 @@ func _reserve_entry(brigade_id: String) -> Dictionary:
 	return {
 		"brigade_id": brigade_id,
 		"locked_beach": 1,
-		"beach_hex": "hex_44_16",
+		"beach_hex": TestHexes.BEACH_1,
 		"offset_bearing": 90.0,
 	}
 
@@ -64,7 +64,7 @@ func test_ship_reserve_expands_battalion_instances_with_slug_ids() -> void:
 	var entry: Dictionary = reserve[0]
 	assert_str(String(entry["brigade_id"])).is_equal("BdeA")
 	assert_int(int(entry["locked_beach"])).is_equal(1)
-	assert_str(String(entry["beach_hex"])).is_equal("hex_44_16")
+	assert_str(String(entry["beach_hex"])).is_equal(TestHexes.BEACH_1)
 	assert_float(float(entry["offset_bearing"])).is_equal_approx(90.0, 0.0001)
 
 	# qty 2 + qty 1 -> 3 BN records; ids use the lowercase-underscore slug + running index.

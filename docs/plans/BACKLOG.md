@@ -54,27 +54,10 @@ All need visual verification (screenshot / Godot MCP / USER) — headless gates 
 **Code-quality debt deferred from the 2026-07-16 baseline** (report:
 `docs/reports/2026-07-16-code-quality-baseline.md`; actionable items worked under plan 0009):
 
-- **GameState dependency ceiling**: 47 class references (next-worst: GameData 18). Turn-conductor
+- [ ] **GameState dependency ceiling**: 47 class references (next-worst: GameData 18). Turn-conductor
   role justifies breadth, but growth is unbounded — future campaign: push reference ownership
   into builders/resolvers, then enforce a ceiling via `tools/gd_metrics.py`.
-- **HexMap cosmetic literals**: 93 view-layer color/offset literals — hoist opportunistically
+- [ ] **HexMap cosmetic literals**: 93 view-layer color/offset literals — hoist opportunistically
   when Track D touches the view layer, not before.
-- **Const→data knob promotion**: any const hoisted under 0009 the USER wants tunable moves to
+- [ ] **Const→data knob promotion**: any const hoisted under 0009 the USER wants tunable moves to
   `data/*.json` per `hexcombat-config-and-knobs` — one USER call per knob (change-control #7).
-- **IjfsDetection satellite/aircraft near-clone**: 37 duplicated lines; merge behind one
-  parameterized helper next time detection logic changes.
-- **Order-dependent `combat_resolution_test`** (found 2026-07-16): fails standalone on a fresh
-  autoload state, passes inside the full gate — it depends on state earlier suites leave in
-  GameData/GameState. Make its `before()` self-sufficient so standalone runs are trustworthy
-  during refactors.
-
-- **carry_to_next_day parity gap**: Add a continuity test that roundtrips through `IjfsLoaders` and asserts field-by-field parity with `carry_to_next_day`.
-- **Shared test-fixture constant for beach-1 pair**: Refactor duplicated literals (like `"hex_44_16"`) into a shared test-fixture constant in `movement_test.gd` and `composition_test.gd`.
-- **Rebuild maneuver targets per turn**: Update to rebuild maneuver targets per turn from the live OOB.
-- **Isolation tests for Phase C/D resolvers**: Add isolation tests for Phase C and D resolvers.
-- **Offload telemetry gap** (found by plan 0007, 2026-07-16): `TurnResult`/turn digests have no
-  `offload_summary` — `OffloadResolver`'s manifest (bns_sent/landed/waiting/lost_at_sea + deferral
-  reasons) only reaches `EventBus.offload_resolved`, never a game record. Add an `offload_summary`
-  field (mirroring `antiship_summary`'s shape) so research runs can read offload activity directly
-  instead of reconstructing it from census deltas + combat summaries (measurably unreliable — see
-  `docs/archive/0007-offload-weight-rebalance-investigation.md` → Findings → Method).

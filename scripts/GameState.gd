@@ -42,6 +42,7 @@ var antiship_containers: Array = []
 # Fractional BN-equiv owed from ship losses, carried across turns (ShipLoadingModel.resolve_bn_losses).
 var lost_at_sea_accumulator: float = 0.0
 var last_antiship_summary: AntishipSummary = null
+var last_offload_summary: Dictionary = {}
 # The sealift phase's committed sailing fleet this turn (ship_type -> hull count): cohort carriers +
 # ready escort screen. Consumed by resolve_antiship_turn as the crossing fleet (plan 0004).
 var last_sealift_sent_by_type: Dictionary = {}
@@ -178,7 +179,7 @@ func resolve_turn(dice: Dice = null) -> void:
 	# the anti-ship phase attrits exactly the hulls that sail. Dice-free -> combat golden unaffected.
 	resolve_sealift_turn()
 	resolve_antiship_turn(dice)
-	resolve_offload_turn(dice)
+	last_offload_summary = resolve_offload_turn(dice)
 
 	_apply_move_orders(Brigade.Team.RED)
 	_apply_move_orders(Brigade.Team.GREEN)
@@ -1002,6 +1003,7 @@ func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> Tur
 	result.ijfs_summary = last_ijfs_summary.duplicate(true)
 	result.ijfs_writeback = last_ijfs_writeback.to_dict() if last_ijfs_writeback != null else {}
 	result.antiship_summary = last_antiship_summary.to_dict() if last_antiship_summary != null else {}
+	result.offload_summary = last_offload_summary.duplicate(true)
 	result.frontline_summary = last_frontline_summary.to_dict() if last_frontline_summary != null else {}
 	result.cleanup_summary = last_cleanup_summary.to_dict() if last_cleanup_summary != null else {}
 	result.events = TurnEventLog.build(self)
