@@ -37,7 +37,7 @@ func test_ijfs_resolver_compute_writeback_aggregates_ledgers() -> void:
 		]
 	}
 	
-	var writeback := IjfsResolver.compute_writeback(state, ledgers)
+	var writeback := IjfsResolver.compute_writeback(state, ledgers, ledgers["strike_log"])
 	
 	var key1 = AntishipCalculator.encode_key(1, 100)
 	var key2 = AntishipCalculator.encode_key(1, 101)
@@ -49,3 +49,20 @@ func test_ijfs_resolver_compute_writeback_aggregates_ledgers() -> void:
 	
 	assert_int(writeback.sam_destroyed).is_equal(1)
 	assert_int(writeback.sam_suppressed).is_equal(2)
+
+
+# Regression (plan 0009 follow-up): maneuver casualties come from the ACCUMULATED multi-day strike
+# log, not the final day's `ledgers`. Here the final ledgers carry zero maneuver kills (as a late
+# warmup day would) yet the accumulated log holds two earlier-day kills — both must reach the OOB.
+func test_compute_writeback_maneuver_reads_accumulated_log_not_final_ledgers() -> void:
+	var state := IjfsDailyState.new()
+	state.targets = []
+	var ledgers := {"strike_log": [], "engagement_log": []}
+	var accumulated := [
+		{"attack_executed": true, "category": "Maneuver Units", "destroyed": true,
+			"metadata": {"battalion_id": "bde1-MU-1", "brigade_id": "bde1"}},
+		{"attack_executed": true, "category": "Maneuver Units", "destroyed": true,
+			"metadata": {"battalion_id": "bde1-MU-2", "brigade_id": "bde1"}},
+	]
+	var writeback := IjfsResolver.compute_writeback(state, ledgers, accumulated)
+	assert_int(writeback.maneuver_casualties.size()).is_equal(2)

@@ -29,6 +29,9 @@ static func resolve(ijfs_state: IjfsDailyState, brigades: Dictionary, turn_numbe
 	# intel, posture override, SEAD/AD rules, and munition filter are applied (port of TIV's
 	# ijfs_prewarmup._run_warmup_locked). Later turns run one plain cycle.
 	var ledgers: Dictionary = {}
+	# Maneuver casualties must span every warmup day (each day's kills decrement the OOB once), so
+	# accumulate all per-day strike logs — the final `ledgers` alone drops earlier warmup days.
+	var maneuver_strike_log: Array = []
 	if ijfs_day == 0:
 		var scenario_data: Dictionary = ijfs_state.scenario
 		var prelanding: Dictionary = scenario_data.get("prelanding", {})
@@ -49,11 +52,13 @@ static func resolve(ijfs_state: IjfsDailyState, brigades: Dictionary, turn_numbe
 			var z_day := x_day - warmup_days - 1
 			var warmup := build_warmup_context(x_day, z_day, warmup_days, rules, exquisite_intel, attrition_profile, firing_capacity_config, release_rules)
 			ledgers = IjfsEngine.run_daily(ijfs_state, ijfs_dice, z_day, warmup)
+			maneuver_strike_log.append_array(ledgers.get("strike_log", []))
 	else:
 		# Subsequent turns: single plain day (no warmup context).
 		IjfsEngine.carry_to_next_day(ijfs_state)
 		ledgers = IjfsEngine.run_daily(ijfs_state, _derive_day_dice(dice, turn_number, 0), turn_number)
-	return {"ledgers": ledgers, "writeback": compute_writeback(ijfs_state, ledgers)}
+		maneuver_strike_log.append_array(ledgers.get("strike_log", []))
+	return {"ledgers": ledgers, "writeback": compute_writeback(ijfs_state, ledgers, maneuver_strike_log)}
 
 
 ## Independent IJFS substream per day — NEVER consumes the combat dice.
@@ -205,8 +210,12 @@ static func apply_maneuver_casualties(casualties: Array, brigades: Dictionary) -
 ## INVARIANT: antiship_destroyed_by_type is a running TOTAL (all days so far), NOT a per-turn
 ## delta — AntishipResolver relies on this to decrement from original_quantity idempotently.
 ## (Reads ijfs_state directly, not `ledgers`, because cumulative state spans run_daily days.)
-static func compute_writeback(ijfs_state: IjfsDailyState, ledgers: Dictionary) -> IjfsWriteback:
-	var strike_log: Array = ledgers["strike_log"]
+## maneuver_strike_log is the accumulation of EVERY run_daily day's strike_log this turn (not just
+## the final day's `ledgers`): the multi-day warmup kills maneuver units across days, and each kill
+## must decrement the OOB exactly once, so the caller passes the concatenated per-day logs. (SAM is
+## still read from the final `ledgers.engagement_log`.)
+static func compute_writeback(ijfs_state: IjfsDailyState, ledgers: Dictionary, maneuver_strike_log: Array) -> IjfsWriteback:
+	var strike_log: Array = maneuver_strike_log
 	var engagement_log: Array = ledgers["engagement_log"]
 
 	var antiship_destroyed_by_type: Dictionary = {}

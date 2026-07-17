@@ -25,9 +25,12 @@ const MAX_TURNS := 40
 # Re-baselined 2026-07-17 for Plan 0009: CRBM heavy-volley maneuver attrition knob (USER call).
 # The crbm_maneuver_strike_bonus (0.15, starting value) now lets CRBM strikes kill ROC maneuver
 # battalions before ground combat, so 4 more ROC battalions die and PLA nets one more ashore. Was 25/92.
+# Re-baselined 2026-07-17 for Plan 0009 follow-up (USER call): IJFS maneuver casualties now include
+# the multi-day warmup kills (previously only the final warmup day reached the OOB), so far more ROC
+# maneuver battalions die in the pre-invasion campaign. Was 26/88.
 const EXPECTED_GAME_OVER := false
-const EXPECTED_CHINA := 26
-const EXPECTED_TAIWAN := 88
+const EXPECTED_CHINA := 25
+const EXPECTED_TAIWAN := 76
 
 var _failures: Array[String] = []
 var GameData: Node = null

@@ -22,7 +22,11 @@ const TARGET_HEX := GoldenScript.TARGET_HEX
 # Re-baselined 2026-07-17 for plan 0008 support unit casualties (USER call). Was "casualties=7, feba=-0.46".
 # Re-baselined 2026-07-17 for plan 0010 per-hex combat RNG substreams (scripted fight now draws from
 # a derived per-hex dice stream — re-derived draws, not a behaviour change). Was "casualties=9, feba=-0.48".
-const EXPECTED_COMBAT_FINGERPRINT := "casualties=8, feba=-0.23"
+# Re-baselined 2026-07-17 for plan 0009 follow-up (USER call): IJFS maneuver casualties now include
+# the multi-day warmup kills (previously only the final warmup day reached the OOB), so more ROC
+# maneuver battalions are removed before the scripted fight, shifting its contributors. Was
+# "casualties=8, feba=-0.23".
+const EXPECTED_COMBAT_FINGERPRINT := "casualties=6, feba=0.34"
 
 var _failures: Array[String] = []
 var GameData: Node = null
