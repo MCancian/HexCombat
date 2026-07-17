@@ -316,17 +316,14 @@
         <!-- Slide 1: Cover Action -->
         <div class="slide active" style="padding: 0; position: relative;">
             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;">
-                <img src="../reports/full_defense_view.png" alt="HexCombat Map" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.5; filter: contrast(1.1) brightness(0.9);" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMDI3Ii8+PC9zdmc+'">
-                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to right, rgba(10,14,23,1) 0%, rgba(10,14,23,0.4) 50%, rgba(10,14,23,0.8) 100%);"></div>
+                <img src="../reports/clean_map_view.png" alt="HexCombat Map" style="width: 100%; height: 100%; object-fit: contain; object-position: center; filter: contrast(1.15);" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMDI3Ii8+PC9zdmc+'">
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to right, rgba(10,14,23,0.85) 0%, rgba(10,14,23,0.1) 50%, rgba(10,14,23,0.7) 100%); pointer-events: none;"></div>
             </div>
             
             <div style="position: relative; z-index: 2; width: 100%; height: 100%; display: flex; align-items: center; justify-content: space-between; padding: 4rem 8rem; box-sizing: border-box;">
                 
                 <!-- Left Side: Title & Info -->
                 <div style="max-width: 500px;">
-                    <div style="margin-bottom: 1.5rem; display: inline-block; padding: 0.5rem 1rem; border-radius: 20px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.4); color: #93c5fd; font-weight: 600; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase;">
-                        Turn 3 &middot; PLA Action Phase
-                    </div>
                     <h1 style="font-size: 5rem; text-shadow: 0 10px 30px rgba(0,0,0,0.8);">HexCombat</h1>
                     <p style="font-size: 1.4rem; color: #cbd5e1; text-shadow: 0 5px 15px rgba(0,0,0,0.8);">
                         AI-driven simulation of the PLA invasion of Taiwan. Watch the LLM agent evaluate the battlespace in real-time.
@@ -538,15 +535,7 @@
         
     </div>
 
-    <!-- Navigation Controls -->
-    <div class="controls">
-        <button class="control-btn" onclick="prevSlide()" aria-label="Previous Slide">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-        </button>
-        <button class="control-btn" onclick="nextSlide()" aria-label="Next Slide">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </button>
-    </div>
+    <!-- Navigation Controls (Removed) -->
 
     <script>
         const slider = document.getElementById('slider');
