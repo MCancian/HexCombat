@@ -62,32 +62,25 @@ static func resolve_ship_losses(
 		dice: Dice,
 		ship_meta: Dictionary = {},
 		config: Dictionary = {}) -> Array:
-	var geometry: Dictionary = config.get("geometry", {})
+	var geometry := _geometry_config(config)
 	var transit: Dictionary = config.get("transit", {})
-	var length := float(geometry.get("minefield_length", DEFAULT_LENGTH))
-	var width := float(geometry.get("minefield_width", DEFAULT_WIDTH))
-	var danger_radius := float(geometry.get("danger_radius", DEFAULT_DANGER_RADIUS))
-	var angle_min := float(geometry.get("incident_angle_min_deg", DEFAULT_ANGLE_MIN_DEG))
-	var angle_max := float(geometry.get("incident_angle_max_deg", DEFAULT_ANGLE_MAX_DEG))
-	var entry_min := float(geometry.get("entry_point_min", DEFAULT_ENTRY_MIN))
-	var entry_max := float(geometry.get("entry_point_max", DEFAULT_ENTRY_MAX))
 	var clear_per_sweeper := int(transit.get("prelanding_clear_per_sweeper", DEFAULT_PRELANDING_CLEAR_PER_SWEEPER))
-	var neut_probs: Dictionary = transit.get("neutralization_probabilities", DEFAULT_NEUT_PROBS)
+	var neutralization_probabilities: Dictionary = transit.get("neutralization_probabilities", DEFAULT_NEUT_PROBS)
 
-	var by_beach: Dictionary = {}
-	for mf_value in minefields:
-		var mf: Minefield = mf_value
-		by_beach[int(mf.beach_id)] = mf
+	var minefield_by_beach: Dictionary = {}
+	for minefield_value in minefields:
+		var registered_minefield: Minefield = minefield_value
+		minefield_by_beach[int(registered_minefield.beach_id)] = registered_minefield
 
 	var sorted_beaches: Array = []
-	for b in target_beaches:
-		sorted_beaches.append(int(b))
+	for beach_id_value in target_beaches:
+		sorted_beaches.append(int(beach_id_value))
 	sorted_beaches.sort()
 
 	var resolutions: Array = []
 	for beach_id in sorted_beaches:
 		# A target beach with no minefield is "disabled" (TIV: Enabled=False) — no losses.
-		if not by_beach.has(beach_id):
+		if not minefield_by_beach.has(beach_id):
 			resolutions.append({
 				"beach_id": beach_id,
 				"status": "disabled",
@@ -96,76 +89,116 @@ static func resolve_ship_losses(
 			})
 			continue
 
-		var mf: Minefield = by_beach[beach_id]
+		var minefield: Minefield = minefield_by_beach[beach_id]
 
 		# An already-open lane exposes nothing (persisted from an earlier wave).
-		if mf.lane_cleared:
-			mf.dangerous_mines = 0
-			resolutions.append(_beach_result(beach_id, mf, {}, 0, 0, 0, 0, int(_assigned(assignments, beach_id, mf))))
+		if minefield.lane_cleared:
+			minefield.dangerous_mines = 0
+			resolutions.append(_beach_result(beach_id, minefield, {}, 0, 0, 0, 0, int(_assigned(assignments, beach_id, minefield))))
 			continue
 
 		# 1. Geometry: how many of this field's mines lie within danger_radius of a random approach path.
-		var dangerous := _count_dangerous_mines(mf.num_mines, length, width, danger_radius, angle_min, angle_max, entry_min, entry_max, dice)
+		var dangerous := _count_dangerous_mines(
+			minefield.num_mines, geometry["length"], geometry["width"], geometry["danger_radius"],
+			geometry["angle_min"], geometry["angle_max"], geometry["entry_min"], geometry["entry_max"], dice)
 
 		# 2. Pre-landing clearing (weak by default — mostly locates the field).
-		var assigned := _assigned(assignments, beach_id, mf)
+		var assigned := _assigned(assignments, beach_id, minefield)
 		var newly_swept := mini(dangerous, assigned * maxi(0, clear_per_sweeper))
 		var remaining_dangerous := maxi(0, dangerous - newly_swept)
 
 		# 3. Transit: decoys first, then ships ascending value; detonations + neutralization.
-		var ship_loss_counts: Dictionary = {}
-		var detonated := 0
 		var pool_had_ships := _pool_has_ships(fleet_pool)
-		if remaining_dangerous > 0 and pool_had_ships:
-			var order := _transit_order(fleet_pool, ship_meta)
-			for ship_type in order:
-				if remaining_dangerous <= 0:
-					break
-				var available := int(fleet_pool.get(ship_type, 0))
-				if available <= 0:
-					continue
-				var meta: Dictionary = ship_meta.get(ship_type, {})
-				var is_decoy := bool(meta.get("is_decoy", false))
-				var p_neut := _neutralization_probability(meta, neut_probs, is_decoy)
-				var losses := 0
-				var instance := 0
-				while instance < available and remaining_dangerous > 0:
-					if is_decoy:
-						# A decoy keeps detonating mines until it is neutralized or the lane is clear.
-						var sunk := false
-						while remaining_dangerous > 0:
-							remaining_dangerous -= 1
-							detonated += 1
-							if dice.randf() < p_neut:
-								sunk = true
-								break
-						if sunk:
-							losses += 1
-					else:
-						# A real ship detonates one mine; amphibs only get here if mines remain.
+		var transit_result := _run_lane_transit(fleet_pool, ship_meta, neutralization_probabilities, remaining_dangerous, dice)
+		var ship_loss_counts: Dictionary = transit_result["ship_loss_counts"]
+		var detonated := int(transit_result["detonated"])
+		remaining_dangerous = int(transit_result["remaining_dangerous"])
+
+		_apply_beach_outcome(minefield, assigned, newly_swept, detonated, ship_loss_counts, remaining_dangerous, pool_had_ships)
+
+		resolutions.append(_beach_result(beach_id, minefield, ship_loss_counts, dangerous, newly_swept, detonated, remaining_dangerous, assigned))
+	return resolutions
+
+
+## Geometry knobs with defaults applied (see data/antiship/minefields.json).
+static func _geometry_config(config: Dictionary) -> Dictionary:
+	var geometry: Dictionary = config.get("geometry", {})
+	return {
+		"length": float(geometry.get("minefield_length", DEFAULT_LENGTH)),
+		"width": float(geometry.get("minefield_width", DEFAULT_WIDTH)),
+		"danger_radius": float(geometry.get("danger_radius", DEFAULT_DANGER_RADIUS)),
+		"angle_min": float(geometry.get("incident_angle_min_deg", DEFAULT_ANGLE_MIN_DEG)),
+		"angle_max": float(geometry.get("incident_angle_max_deg", DEFAULT_ANGLE_MAX_DEG)),
+		"entry_min": float(geometry.get("entry_point_min", DEFAULT_ENTRY_MIN)),
+		"entry_max": float(geometry.get("entry_point_max", DEFAULT_ENTRY_MAX)),
+	}
+
+
+## Run the fleet down the lane: decoys first (sponges), then real ships by ascending value; each
+## detonation rolls neutralization. Mutates fleet_pool (losses depleted). Skipped bodily when the
+## lane holds no danger or the pool is empty — the callers' dice draw order depends on that.
+## Returns {"ship_loss_counts": type -> sunk, "detonated": int, "remaining_dangerous": int}.
+static func _run_lane_transit(
+		fleet_pool: Dictionary, ship_meta: Dictionary, neutralization_probabilities: Dictionary,
+		remaining_dangerous: int, dice: Dice) -> Dictionary:
+	var ship_loss_counts: Dictionary = {}
+	var detonated := 0
+	if remaining_dangerous > 0 and _pool_has_ships(fleet_pool):
+		var order := _transit_order(fleet_pool, ship_meta)
+		for ship_type in order:
+			if remaining_dangerous <= 0:
+				break
+			var available := int(fleet_pool.get(ship_type, 0))
+			if available <= 0:
+				continue
+			var meta: Dictionary = ship_meta.get(ship_type, {})
+			var is_decoy := bool(meta.get("is_decoy", false))
+			var p_neutralized := _neutralization_probability(meta, neutralization_probabilities, is_decoy)
+			var losses := 0
+			var instance := 0
+			while instance < available and remaining_dangerous > 0:
+				if is_decoy:
+					# A decoy keeps detonating mines until it is neutralized or the lane is clear.
+					var sunk := false
+					while remaining_dangerous > 0:
 						remaining_dangerous -= 1
 						detonated += 1
-						if dice.randf() < p_neut:
-							losses += 1
-					instance += 1
-				if losses > 0:
-					ship_loss_counts[ship_type] = losses
-					fleet_pool[ship_type] = available - losses
+						if dice.randf() < p_neutralized:
+							sunk = true
+							break
+					if sunk:
+						losses += 1
+				else:
+					# A real ship detonates one mine; amphibs only get here if mines remain.
+					remaining_dangerous -= 1
+					detonated += 1
+					if dice.randf() < p_neutralized:
+						losses += 1
+				instance += 1
+			if losses > 0:
+				ship_loss_counts[ship_type] = losses
+				fleet_pool[ship_type] = available - losses
+	return {
+		"ship_loss_counts": ship_loss_counts,
+		"detonated": detonated,
+		"remaining_dangerous": remaining_dangerous,
+	}
 
-		# Both swept and detonated mines are consumed from the field.
-		mf.minesweepers_assigned = assigned
-		mf.remaining_mines = maxi(0, mf.remaining_mines - newly_swept - detonated)
-		var sunk_total := 0
-		for c in ship_loss_counts.values():
-			sunk_total += int(c)
-		mf.ships_destroyed += sunk_total
-		# The lane opens once a wave has transited it (ships present) or the danger was fully cleared.
-		if pool_had_ships or remaining_dangerous == 0:
-			mf.lane_cleared = true
-		mf.dangerous_mines = 0 if mf.lane_cleared else remaining_dangerous
 
-		resolutions.append(_beach_result(beach_id, mf, ship_loss_counts, dangerous, newly_swept, detonated, remaining_dangerous, assigned))
-	return resolutions
+## Write the wave's outcome back onto the Minefield resource: consumed mines, sinkings, and the
+## lane state (opens once a wave has transited with ships present or the danger hit zero).
+static func _apply_beach_outcome(
+		minefield: Minefield, assigned: int, newly_swept: int, detonated: int,
+		ship_loss_counts: Dictionary, remaining_dangerous: int, pool_had_ships: bool) -> void:
+	minefield.minesweepers_assigned = assigned
+	minefield.remaining_mines = maxi(0, minefield.remaining_mines - newly_swept - detonated)
+	var sunk_total := 0
+	for loss_count in ship_loss_counts.values():
+		sunk_total += int(loss_count)
+	minefield.ships_destroyed += sunk_total
+	if pool_had_ships or remaining_dangerous == 0:
+		minefield.lane_cleared = true
+	minefield.dangerous_mines = 0 if minefield.lane_cleared else remaining_dangerous
 
 
 ## Geometry port: scatter num_mines uniformly, take a randomized straight approach path, and count
