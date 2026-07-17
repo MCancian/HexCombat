@@ -19,6 +19,15 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-17 — Hierarchical RNG substreams (Plan 0010; agent implementation).** Each contested
+  hex's ground fight now draws from its own dice stream, `dice.derive("combat:<turn>:<hex_id>")`,
+  instead of a single linear root stream shared across hexes — so a design tweak that changes the
+  roll count in one hex no longer scrambles every other hex's dice. IJFS and anti-ship already
+  derived their own substreams (`IjfsResolver._derive_day_dice`, `resolve_antiship_turn`); offload
+  is dice-free. `SeededDice.derive`/`ScriptedDice.derive` (returns self) pre-existed. Two SeededDice
+  golden pins re-baselined (re-derived, not behaviour): `validate_cleanup.gd` and
+  `validate_golden_victory.gd` (PASS lines are truth). Current behavior: `docs/STATUS.md`.
+
 - **2026-07-17 — Support unit casualties in ground combat (Plan 0008; USER decision, agent implementation).**
   Support units (artillery, rotary wing) are no longer immortal. They are pooled with maneuver units during casualty selection, weighted 1:4. If a side has only support units, they are considered "unscreened", contributing 0.5 strength each and taking the minimum-blood losses. `ScriptedDice` now uses `weighted_choices` for casualty selection. The golden scenario is re-baselined to reflect these changes. Facts: `docs/systems/ground-combat.md`; current behavior: `docs/STATUS.md`.
 

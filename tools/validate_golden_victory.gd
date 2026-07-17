@@ -19,9 +19,12 @@ const MAX_TURNS := 40
 # initial_count 36 lower crossing losses than the old default, landing more PLA battalions; see
 # docs/archive/0001-crossing-lethality-calibration.md and docs/DECISIONS.md).
 # Re-baselined 2026-07-17 for Plan 0008: support unit casualties (USER call). Was 25/89.
+# Re-baselined 2026-07-17 for Plan 0010: per-hex combat RNG substreams (each contested hex now
+# draws from its own derived dice stream, re-deriving all combat draws — equally valid, not a
+# behaviour change). Was 27/94.
 const EXPECTED_GAME_OVER := false
-const EXPECTED_CHINA := 27
-const EXPECTED_TAIWAN := 94
+const EXPECTED_CHINA := 25
+const EXPECTED_TAIWAN := 92
 
 var _failures: Array[String] = []
 var GameData: Node = null

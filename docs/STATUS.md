@@ -10,7 +10,10 @@ task-shaped reading lists live in `AGENTS.md` → Orientation; recording rules i
 
 **Engine.** Godot 4 / GDScript. WeGo turn model in `GameState` (autoload): plan orders →
 `resolve_turn(dice)` → `begin_next_turn`. Deterministic via an injectable `Dice` (seeded; no global
-RNG — enforced by a validator). `GameData` (autoload) loads hexes, both OOBs (PLA + ROC brigades),
+RNG — enforced by a validator). RNG is **hierarchical** (`Dice.derive(salt)`): the root turn seed
+spawns independent substreams per phase and per contested hex (`ijfs:<turn>:<day>`,
+`antiship:<turn>`, `combat:<turn>:<hex_id>`), so a roll-count change in one phase or hex never
+scrambles another's dice (`ScriptedDice.derive` returns self, so scripted fixtures are unaffected). `GameData` (autoload) loads hexes, both OOBs (PLA + ROC brigades),
 ships, theaters, beaches. `EventBus` for signals. **Every phase's logic lives in a pure
 `RefCounted` class under `scripts/resolvers/`** (5 builders + `SupplyResolver`,
 `FrontlineResolver`, `CleanupResolver`, `OffloadResolver`, `AntishipResolver`, `IjfsResolver`,

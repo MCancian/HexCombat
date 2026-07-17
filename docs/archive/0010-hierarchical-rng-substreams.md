@@ -1,7 +1,7 @@
 ---
-status: Sketch
-shipped: 
-landed_in: 
+status: Shipped
+shipped: 2026-07-17
+landed_in: main
 ---
 # 0010 — Hierarchical Deterministic RNG (Sub-streams)
 
@@ -27,12 +27,22 @@ This ensures that:
 
 ## Checklist
 
-- [ ] Update `SeededDice.gd` with a `derive(salt: String) -> SeededDice` method (hashes the current seed with the salt).
-- [ ] Update `GameState.resolve_turn()` to create sub-streams for:
-  - `resolve_ijfs_turn`
-  - `resolve_antiship_turn` (currently does this partially but needs normalization)
-  - `resolve_offload_turn` (if it ever consumes dice)
-- [ ] Update `GameState._resolve_combat_at` to use `dice.derive("combat_" + hex_id)`.
-- [ ] Update `ScriptedDice` to support or mock `.derive()` gracefully for unit tests.
-- [ ] Run the full gate and re-baseline EVERY golden pin in the repository. Provide clear change-control rationale for the massive golden shift.
-- [ ] Update `docs/DECISIONS.md` and `docs/STATUS.md` with the new hierarchical RNG architecture.
+- [x] `SeededDice.derive(salt) -> Dice` — already present (hashes `str(_seed) + ":" + label`).
+- [x] `GameState.resolve_turn()` sub-streams: `resolve_ijfs_turn` (derives per day in
+  `IjfsResolver._derive_day_dice`) and `resolve_antiship_turn` (`dice.derive("antiship:%d")`) already
+  derive; `resolve_offload_turn` consumes NO dice (deterministic capacity ordering) — nothing to do.
+- [x] `GameState._resolve_combat_at` now receives a per-hex substream: the combat loop passes
+  `dice.derive("combat:%d:%s" % [turn_number, hex_id])`.
+- [x] `ScriptedDice.derive` — already present; returns self so scripted fixtures share one queue.
+- [x] Ran the full gate. Only TWO SeededDice golden pins shifted (per-hex derivation re-derives
+  combat draws — equally valid, not a behaviour change): `validate_cleanup.gd`
+  (`casualties=9,feba=-0.48` → `casualties=8,feba=-0.23`) and `validate_golden_victory.gd`
+  (census `27/94` → `25/92`). All GdUnit suites + `validate_headless_turn` unaffected. ALL PHASES GREEN.
+- [x] `docs/DECISIONS.md` + `docs/STATUS.md` updated.
+
+## Outcome
+
+The plan's core infrastructure (`derive` + ijfs/antiship substreams) was already in place; the one
+substantive change was wiring the per-hex combat substream. The feared "massive golden re-baseline"
+was two pins, because combat was already isolated from the sea phases (they derive) and the only
+remaining butterfly was hex-to-hex within the combat loop.

@@ -20,7 +20,9 @@ const TARGET_HEX := GoldenScript.TARGET_HEX
 # strike bonus 0.20 + exquisite-intel initial_count 36 change the PLA force landed before the
 # scripted fight, shifting feba). Was "casualties=7, feba=-0.16".
 # Re-baselined 2026-07-17 for plan 0008 support unit casualties (USER call). Was "casualties=7, feba=-0.46".
-const EXPECTED_COMBAT_FINGERPRINT := "casualties=9, feba=-0.48"
+# Re-baselined 2026-07-17 for plan 0010 per-hex combat RNG substreams (scripted fight now draws from
+# a derived per-hex dice stream — re-derived draws, not a behaviour change). Was "casualties=9, feba=-0.48".
+const EXPECTED_COMBAT_FINGERPRINT := "casualties=8, feba=-0.23"
 
 var _failures: Array[String] = []
 var GameData: Node = null

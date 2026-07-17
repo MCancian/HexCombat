@@ -185,8 +185,12 @@ func resolve_turn(dice: Dice = null) -> void:
 	_apply_move_orders(Brigade.Team.GREEN)
 	last_contested_hexes = _find_contested_hexes()
 	var combat_summaries: Array[CombatSummary] = []
+	# Per-hex combat substream (plan 0010): each contested hex draws from its OWN dice stream derived
+	# from the root turn seed, so a design tweak that changes the roll count in one hex's fight never
+	# scrambles the dice of an unrelated hex. Turn-scoped salt matches the ijfs/antiship pattern so an
+	# injected constant-seed dice still varies per turn.
 	for hex_id in last_contested_hexes:
-		var summary := _resolve_combat_at(hex_id, dice)
+		var summary := _resolve_combat_at(hex_id, dice.derive("combat:%d:%s" % [turn_number, hex_id]))
 		if summary != null:
 			combat_summaries.append(summary)
 	_apply_feba_retreats()
