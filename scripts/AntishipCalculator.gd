@@ -150,90 +150,121 @@ static func resolve_launch_attrition(
 		config: Dictionary,
 		dice: Dice) -> Dictionary:
 	var grouped: Dictionary = {}
-
 	for entry in allocation_plan:
-		var row_idx := int(entry["row_idx"])
-		var attempted := int(entry["attempted_firing"])
-		var loc := int(entry["to"])
-		var type_value: Variant = entry["type"]
-		var type_key := int(entry["type_key"])
+		# Rolls happen per entry in allocation-plan order (the port's draw-order contract).
+		var attrition := _attrit_allocation_entry(systems, entry, config, dice)
+		_accumulate_attrition_group(grouped, attrition)
 
-		var type_cfg := _resolve_type_config(config, type_key)
-		var p_detect := float(type_cfg.get("p_detect", 0.0))
-		var p_destroy_if_detected := float(type_cfg.get("p_destroy_if_detected", 0.0))
-		var p_intercept := float(type_cfg.get("p_intercept_before_launch", 0.0))
-		var p_destroy := clampf(p_detect * p_destroy_if_detected, 0.0, 1.0)
-		var p_intercept_before_launch := clampf(p_intercept, 0.0, 1.0)
+	var meta := _report_key_meta(grouped, destroyed_firing_plan)
+	return _build_attrition_reports(_sorted_report_keys(meta), meta, grouped, destroyed_firing_plan)
 
-		var system: AntishipSystem = systems[row_idx]
-		system.active = true
 
-		var launched := 0
-		var prelaunch_destroyed := 0
-		var postlaunch_destroyed := 0
-		for _shot in range(attempted):
-			var destroyed := dice.randf() < p_destroy
-			if not destroyed:
-				launched += 1
-				continue
-			if dice.randf() < p_intercept_before_launch:
-				prelaunch_destroyed += 1
-			else:
-				postlaunch_destroyed += 1
-				launched += 1
+## One allocation-plan entry: per-shot detection/intercept rolls, then the sanctioned mutation of
+## the fired AntishipSystem row. Returns the tallies keyed for grouping.
+static func _attrit_allocation_entry(systems: Array, entry: Dictionary, config: Dictionary, dice: Dice) -> Dictionary:
+	var row_idx := int(entry["row_idx"])
+	var attempted := int(entry["attempted_firing"])
 
-		system.quantity = maxi(0, system.quantity - attempted)
-		system.fired += launched
-		system.expended += launched
-		system.destroyed_this_turn += prelaunch_destroyed + postlaunch_destroyed
-		system.destroyed += prelaunch_destroyed + postlaunch_destroyed
+	var type_key := int(entry["type_key"])
+	var type_cfg := _resolve_type_config(config, type_key)
+	var p_detect := float(type_cfg.get("p_detect", 0.0))
+	var p_destroy_if_detected := float(type_cfg.get("p_destroy_if_detected", 0.0))
+	var p_destroy := clampf(p_detect * p_destroy_if_detected, 0.0, 1.0)
+	var p_intercept_before_launch := clampf(float(type_cfg.get("p_intercept_before_launch", 0.0)), 0.0, 1.0)
 
-		var gkey := encode_key(loc, type_key)
-		var group: Dictionary = grouped.get(gkey, {
-			"to": loc,
-			"type": type_value,
-			"type_key": type_key,
-			"attempted_firing": 0,
-			"available_firing": 0,
-			"prelaunch_destroyed": 0,
-			"postlaunch_destroyed": 0,
-		})
-		group["attempted_firing"] = int(group["attempted_firing"]) + attempted
-		group["available_firing"] = int(group["available_firing"]) + launched
-		group["prelaunch_destroyed"] = int(group["prelaunch_destroyed"]) + prelaunch_destroyed
-		group["postlaunch_destroyed"] = int(group["postlaunch_destroyed"]) + postlaunch_destroyed
-		grouped[gkey] = group
+	var system: AntishipSystem = systems[row_idx]
+	system.active = true
 
-	# all keys = grouped ∪ destroyed_firing_plan, ordered by (to, str(type_key)) like the source.
+	var launched := 0
+	var prelaunch_destroyed := 0
+	var postlaunch_destroyed := 0
+	for _shot in range(attempted):
+		var destroyed := dice.randf() < p_destroy
+		if not destroyed:
+			launched += 1
+			continue
+		if dice.randf() < p_intercept_before_launch:
+			prelaunch_destroyed += 1
+		else:
+			postlaunch_destroyed += 1
+			launched += 1
+
+	system.quantity = maxi(0, system.quantity - attempted)
+	system.fired += launched
+	system.expended += launched
+	system.destroyed_this_turn += prelaunch_destroyed + postlaunch_destroyed
+	system.destroyed += prelaunch_destroyed + postlaunch_destroyed
+
+	return {
+		"to": int(entry["to"]),
+		"type": entry["type"],
+		"type_key": type_key,
+		"attempted": attempted,
+		"launched": launched,
+		"prelaunch_destroyed": prelaunch_destroyed,
+		"postlaunch_destroyed": postlaunch_destroyed,
+	}
+
+
+static func _accumulate_attrition_group(grouped: Dictionary, attrition: Dictionary) -> void:
+	var group_key := encode_key(int(attrition["to"]), int(attrition["type_key"]))
+	var group: Dictionary = grouped.get(group_key, {
+		"to": attrition["to"],
+		"type": attrition["type"],
+		"type_key": attrition["type_key"],
+		"attempted_firing": 0,
+		"available_firing": 0,
+		"prelaunch_destroyed": 0,
+		"postlaunch_destroyed": 0,
+	})
+	group["attempted_firing"] = int(group["attempted_firing"]) + int(attrition["attempted"])
+	group["available_firing"] = int(group["available_firing"]) + int(attrition["launched"])
+	group["prelaunch_destroyed"] = int(group["prelaunch_destroyed"]) + int(attrition["prelaunch_destroyed"])
+	group["postlaunch_destroyed"] = int(group["postlaunch_destroyed"]) + int(attrition["postlaunch_destroyed"])
+	grouped[group_key] = group
+
+
+## All report keys = grouped ∪ destroyed_firing_plan, each mapped to [to, type_key] for ordering.
+static func _report_key_meta(grouped: Dictionary, destroyed_firing_plan: Dictionary) -> Dictionary:
 	var meta: Dictionary = {}
-	for k in grouped.keys():
-		var g: Dictionary = grouped[k]
-		meta[k] = [int(g["to"]), g["type_key"]]
-	for k in destroyed_firing_plan.keys():
-		if not meta.has(k):
-			meta[k] = _decode_key(k)
+	for key in grouped.keys():
+		var group: Dictionary = grouped[key]
+		meta[key] = [int(group["to"]), group["type_key"]]
+	for key in destroyed_firing_plan.keys():
+		if not meta.has(key):
+			meta[key] = _decode_key(key)
+	return meta
 
+
+## Ordered by (to, str(type_key)) like the source.
+static func _sorted_report_keys(meta: Dictionary) -> Array:
 	var sorted_keys: Array = meta.keys()
 	sorted_keys.sort_custom(func(a: String, b: String) -> bool:
-		var ma: Array = meta[a]
-		var mb: Array = meta[b]
-		if int(ma[0]) != int(mb[0]):
-			return int(ma[0]) < int(mb[0])
-		return str(ma[1]) < str(mb[1]))
+		var meta_a: Array = meta[a]
+		var meta_b: Array = meta[b]
+		if int(meta_a[0]) != int(meta_b[0]):
+			return int(meta_a[0]) < int(meta_b[0])
+		return str(meta_a[1]) < str(meta_b[1]))
+	return sorted_keys
 
+
+## Shape the two output lists: systems_fired (crossing input) and launch_attrition (the ledger).
+static func _build_attrition_reports(
+		sorted_keys: Array, meta: Dictionary, grouped: Dictionary,
+		destroyed_firing_plan: Dictionary) -> Dictionary:
 	var systems_fired: Array = []
 	var launch_attrition: Array = []
-	for k in sorted_keys:
-		var m: Array = meta[k]
-		var summary: Dictionary = grouped.get(k, {
-			"to": int(m[0]),
-			"type": m[1],
+	for key in sorted_keys:
+		var key_meta: Array = meta[key]
+		var summary: Dictionary = grouped.get(key, {
+			"to": int(key_meta[0]),
+			"type": key_meta[1],
 			"attempted_firing": 0,
 			"available_firing": 0,
 			"prelaunch_destroyed": 0,
 			"postlaunch_destroyed": 0,
 		})
-		var destroyed_firing := int(destroyed_firing_plan.get(k, 0))
+		var destroyed_firing := int(destroyed_firing_plan.get(key, 0))
 		var total_firing := int(summary["available_firing"]) + destroyed_firing
 		if total_firing > 0:
 			systems_fired.append({
