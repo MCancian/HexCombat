@@ -9,8 +9,6 @@ extends RefCounted
 
 
 ## Instantiate the policy for an id, or null (with a push_error) for an unknown id.
-## `llm_local` returns an LLMPolicy with no seat set — the two-seat runner/entrypoint assigns
-## `.perspective` (and `.log_path`) per side before use (see LLMPolicy.for_seat).
 static func create(policy_id: String) -> Object:
 	match policy_id:
 		"selfplay_default":
@@ -22,6 +20,14 @@ static func create(policy_id: String) -> Object:
 		_:
 			push_error("Unknown policy id: '%s' (known: %s)" % [policy_id, ", ".join(known_ids())])
 			return null
+
+
+## Instantiate a policy for one WeGo seat. Seat-aware policies receive their perspective and
+## replay-log path at this boundary; deterministic policies need no seat-specific configuration.
+static func create_for_seat(policy_id: String, seat: String, log_path: String = "") -> Object:
+	if policy_id == "llm_local":
+		return LLMPolicy.for_seat(seat, log_path)
+	return create(policy_id)
 
 
 static func known_ids() -> Array[String]:

@@ -18,8 +18,13 @@ func _initialize() -> void:
 	var policy := SelfPlayPolicy.new()
 	var game1: Dictionary = SelfPlayRunner.play_game(Callable(policy, "build_actions"), TURNS, BASE_SEED)
 	var game2: Dictionary = SelfPlayRunner.play_game(Callable(policy, "build_actions"), TURNS, BASE_SEED)
+	var red_seat := SelfPlayPolicy.new()
+	var green_seat := SelfPlayPolicy.new()
+	var seated_game: Dictionary = SelfPlayRunner.play_game_seats(
+		Callable(red_seat, "build_actions"), Callable(green_seat, "build_actions"), TURNS, BASE_SEED)
 	_print_game_summary("Game 1", game1)
 	_print_game_summary("Game 2", game2)
+	_print_game_summary("Seated game", seated_game)
 
 	if not bool(game1["all_resolved"]):
 		_fail("game1: a turn failed to resolve")
@@ -32,6 +37,10 @@ func _initialize() -> void:
 		_fail("self-play not deterministic: final snapshots differ")
 	if game1["turn_digests"] != game2["turn_digests"]:
 		_fail("self-play not deterministic: turn digests differ")
+	if game1["final_snapshot"] != seated_game["final_snapshot"]:
+		_fail("single-policy and seated self-play final snapshots differ")
+	if game1["turn_digests"] != seated_game["turn_digests"]:
+		_fail("single-policy and seated self-play turn digests differ")
 
 	var violations: Array = game1["index_violations"]
 	if not violations.is_empty():
