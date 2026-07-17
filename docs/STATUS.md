@@ -97,19 +97,20 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   `data/scenarios/` (id = filename stem, enumerated by `ScenarioCatalog.list_scenario_paths()`);
   the selection survives `GameState.reset_to_scenario()`; `validate_scenario_data.gd` checks every
   scenario generically + the default's pinned shape.
-- **Batch runner (research harness B2)** — `pwsh -File tools/run_batch.ps1 -Name <study>` plays a
-  scenario × policy × common-seed matrix, one headless Godot process per game, up to `-Parallel`
-  at a time. Each game (`tools/run_selfplay_game.gd`) writes a timestamp-free, byte-reproducible
-  JSON record (commit, scenario/policy identity, seed, terminal state + census, turn digests) to
-  `reports/batches/<study>/games/`; verdicts are artifact-based; re-running the batch command
-  resumes (existing valid records skipped); `manifest.json` stamps commit + per-game re-run
-  command lines. Policies are named in `PolicyCatalog` (`selfplay_default` today; unknown ids
-  fail loud).
+- **Batch runner (research harness B2/B7)** — `python3 tools/run_batch.py --name <study>
+  --scenarios default,<variant> --matchups red:green,... --n 30` plays a scenario × matchup ×
+  common-seed matrix, one headless Godot process per game, up to `--parallel` at a time. A bare
+  matchup policy means the same policy in both seats. Each game (`tools/run_selfplay_game.gd`)
+  writes a timestamp-free, byte-reproducible (for deterministic seats) v2 JSON record with
+  explicit Red/Green policy identities to `reports/batches/<study>/games/`; verdicts are
+  artifact-based; re-running resumes only valid records; `manifest.json` stamps matchups,
+  commit, and per-game re-run command lines. The runner writes `report.md` automatically
+  (`--no-report` suppresses it). Live-model matchups should use `--parallel 1`.
 - **Outcome reports (research harness B3)** — `tools/make_batch_report.gd -- --batch=<study>`
-  aggregates a batch's records into `report.md`: per-condition (scenario × policy) win rates,
-  turn/census/margin distributions, per-game loss means, a methods line (commit, mixed-commit
-  and dirty-tree warnings), and standing caveats. Aggregation/rendering is pure `BatchReport`
-  statics (GdUnit-tested).
+  aggregates a batch's records into `report.md`: per-condition (scenario × Red policy × Green
+  policy) win rates, turn/census/margin distributions, per-game loss means, a methods line
+  (commit, mixed-commit and dirty-tree warnings), and standing caveats (including LLM
+  non-determinism). Aggregation/rendering is pure `BatchReport` statics (GdUnit-tested).
 - **Narrative renderer (research harness B4)** — `tools/make_game_narrative.gd`
   (`--record=<file>` or `--batch=<study> --pick=median|longest|shortest`) renders a game
   record's event log into a turn-by-turn Markdown account (IJFS strikes + air-defense
@@ -140,9 +141,8 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   worst prompt ≈21K tokens vs DeepSeek-V4-Flash's 131072 context, so headroom is cheap — the
   budget's real cost is wall-clock on rambling turns). Use IPv4 (`127.0.0.1`, default) not
   `localhost`. Live-verified against local vLLM (model `jarvis`): seeds 20260710/20260711, both
-  30/30 turns GAME OK; the second (post-fix) run had zero forfeited turns. (The B2 batch runner is
-  still single-policy — LLM seats run through the unified game entrypoint, not yet inside
-  multi-condition batches.)
+  30/30 turns GAME OK; the second (post-fix) run had zero forfeited turns. `llm_local` now also
+  runs in either B7 batch seat (mixed or LLM-vs-LLM) and retains its per-seat JSONL replay log.
 - **`roc_full_defense` scenario** — variant placing all 32 ROC brigades (124 battalions) at their
   real garrison hexes vs the default's 4 PLA amphibious brigades; select with
   `--scenario=roc_full_defense`. Gives AI-vs-AI games a multi-turn fight instead of the default

@@ -18,6 +18,7 @@ Structured JSON action API so LLM agents (and the self-play harness) can drive H
 | `tools/llm_sidecar.py:1` | Out-of-process, stdlib-only local-LLM adapter. Reads `--obs`, builds a prompt (rules + legal sets), POSTs to an OpenAI-compatible endpoint (`HEXCOMBAT_LLM_BASE_URL`/`_MODEL`/`_API_KEY`), tolerantly extracts the first JSON array, validates against `legal_moves`/`legal_commits`, appends a JSONL obs/action line (`--log`), prints the validated actions. |
 | `tools/llm_sidecar_stub.py:1` | Network-free test double with the same contract (`HEXCOMBAT_STUB_MODE`: `first_move`/`empty`/`malformed`/`garbage`). Used by the plumbing gate. |
 | `tools/run_selfplay_game.gd` | Unified entrypoint: creates both seats via `PolicyCatalog` and plays via `play_game_seats`. `--policy` remains the common default; `--red-policy`/`--green-policy` select a matchup. LLM seats write replay logs and stamp provenance. |
+| `tools/run_batch.py` | Cross-platform stdlib batch runner: scenario × explicit matchup × common-seed matrix, artifact-based resume, manifest, and automatic `BatchReport` output. |
 | `tools/validate_llm_policy.gd` | Deterministic gate (no network): exercises `LLMPolicy` against the stub — marshalling, parse/strip helpers, malformed-output fallback, obs/action log. |
 | `scripts/TurnEventLog.gd` | `build(state) -> Array[TurnEvent]`. Derives an ordered per-turn event log (ijfs, antiship, move, commit, combat, frontline, cleanup) from `GameState`. Called by `play_turn` and included in `turn_result`. |
 | `tools/validate_llm_api.gd` | Headless gate: asserts observation keys, action application, missing-seed rejection, example/schema conformance. |
@@ -178,4 +179,7 @@ TaiwanInvasionViewer has no LLM agent API — it is a Python/Flask web app with 
 # HEXCOMBAT_LLM_MODEL set (env or --model). Best on the full-defense scenario.
 #   $env:HEXCOMBAT_LLM_BASE_URL="http://localhost:8088/v1"; $env:HEXCOMBAT_LLM_MODEL="<served-id>"
 "C:\Godot_v4.7-stable_win64.exe" --headless --path "C:\Users\mdogg\Desktop\HexCombat" -s "res://tools/run_selfplay_game.gd" -- --seed=20260624 --scenario=roc_full_defense --red-policy=llm_local --green-policy=llm_local --turns=30 --out="reports/llm/game.json"
+
+# Batch mixed policies over a common seed set (use --parallel 1 for a live local model)
+python3 tools/run_batch.py --name mixed --scenarios roc_full_defense --matchups llm_local:selfplay_default,selfplay_default:llm_local --n 30
 ```

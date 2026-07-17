@@ -9,13 +9,12 @@ Completed tracks (A decomposition, B1–B6 research harness, C first variant, F 
 current behavior in `docs/STATUS.md`; their history is in `docs/archive/` (PLAN.md Decisions,
 refactor_audit, port_audit).
 
-## Track B — Research harness *(primary; one item left)*
+## Track B — Research harness *(primary; complete)*
 
-- **B7 — Per-seat policies in the batch runner.** `run_batch.ps1`/`run_selfplay_game.gd` are
-  single-policy; LLM seats currently run only via `tools/run_llm_game.gd`. Wire per-seat policy
-  ids through the batch layer so LLM-vs-LLM (and mixed) games flow into multi-condition studies.
-  Done when: one command produces a reproducible multi-condition study report with an LLM policy
-  on either side. Contract: `.claude/skills/hexcombat-research-runs`.
+- [x] **B7 — Per-seat policies in the batch runner.** `tools/run_batch.py` runs explicit
+  Red/Green matchups across common seeds and writes the multi-condition report automatically;
+  LLM-vs-LLM and mixed games use the unified `run_selfplay_game.gd` entrypoint. Contract:
+  `.claude/skills/hexcombat-research-runs`.
 
 | ID | Plan Name | Priority | Status |
 | :--- | :--- | :--- | :--- |

@@ -19,6 +19,14 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-17 — Per-seat research matchups (B7; approved plan, agent implementation).**
+  `run_selfplay_game.gd` now unconditionally uses the two-seat path; v2 records stamp
+  `red_policy_id`/`green_policy_id`, while reports retain legacy-record fallback. The stdlib-only
+  `tools/run_batch.py` replaces the PowerShell-only runner with explicit matchup conditions and
+  automatic reports. Facts: `docs/systems/llm-api-selfplay.md`; operation:
+  `hexcombat-research-runs`; current behavior: `docs/STATUS.md`. Evidence: full gate green and
+  90-game common-seed stub-sidecar demonstration (`reports/batches/b7_demo/`, ignored).
+
 - **2026-07-16 — Code-quality baseline + full remediation (plan 0009; USER call on scope).**
   Audit measured (report: `docs/reports/2026-07-16-code-quality-baseline.md`, tool:
   `tools/gd_metrics.py`); standards enshrined as `hexcombat-code-quality` skill + AGENTS.md
