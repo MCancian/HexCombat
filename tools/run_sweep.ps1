@@ -50,10 +50,9 @@ $variantPaths = foreach ($value in $Values) {
 }
 
 Write-Host "Sweep '$Name': $Knob over [$($Values -join ', ')] x $N seed(s); variants in $scenarioDir"
-& pwsh -File (Join-Path $PSScriptRoot "run_batch.ps1") -Name $Name -Scenarios ($variantPaths -join ',') `
-    -Policies ($Policies -join ',') -N $N -BaseSeed $BaseSeed -Turns $Turns -Parallel $Parallel -Godot $Godot
+& python (Join-Path $PSScriptRoot "run_batch.py") --name $Name --scenarios ($variantPaths -join ',') `
+    --matchups ($Policies -join ',') --n $N --base-seed $BaseSeed --turns $Turns --parallel $Parallel --godot $Godot
 $batchExit = $LASTEXITCODE
 
-& $Godot --headless --path $repo -s res://tools/make_batch_report.gd -- "--batch=$Name" | Select-String "REPORT"
 Write-Host "Sweep report: $(Join-Path $outDir 'report.md')"
 exit $batchExit
