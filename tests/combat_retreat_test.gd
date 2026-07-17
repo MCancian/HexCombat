@@ -23,7 +23,7 @@ func test_feba_threshold_retreat_moves_defender_and_flips_ownership() -> void:
 	_mark_neighbors(COMBAT_HEX, HexOwner.RED)
 	GameData.hex_states[retreat_hex].owner = HexOwner.GREEN
 
-	GameState.resolve_turn(ScriptedDice.new([50, 50, 100], [[0, 1, 2], [0, 1, 2]]))
+	GameState.resolve_turn(ScriptedDice.new([50, 50, 100], [], [], [0, 1, 2, 0, 1, 2]))
 
 	assert_str(green.hex_id).is_equal(retreat_hex)
 	assert_str(red.hex_id).is_equal(COMBAT_HEX)
@@ -41,7 +41,7 @@ func test_encircled_retreat_has_no_valid_hex_and_front_holds() -> void:
 	GameData.hex_states[COMBAT_HEX].feba_km = 9.0
 	_mark_neighbors(COMBAT_HEX, HexOwner.RED)
 
-	GameState.resolve_turn(ScriptedDice.new([50, 50, 100], [[0, 1, 2], [0, 1, 2]]))
+	GameState.resolve_turn(ScriptedDice.new([50, 50, 100], [], [], [0, 1, 2, 0, 1, 2]))
 
 	assert_str(green.hex_id).is_equal(COMBAT_HEX)
 	assert_str(red.hex_id).is_equal(COMBAT_HEX)
@@ -59,7 +59,7 @@ func test_combat_resolved_signal_emits_one_summary_for_one_contested_hex() -> vo
 	_register_brigade(red, COMBAT_HEX)
 	_register_brigade(green, COMBAT_HEX)
 
-	GameState.resolve_turn(ScriptedDice.new([50, 50, 50], [[0, 1, 2], [0, 1, 2]]))
+	GameState.resolve_turn(ScriptedDice.new([50, 50, 50], [], [], [0, 1, 2, 0, 1, 2]))
 
 	assert_int(emitted_summaries.size()).is_equal(1)
 	var summary: CombatSummary = emitted_summaries[0]

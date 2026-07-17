@@ -5,7 +5,7 @@ const FIELD_ARTILLERY := "Field Artillery Battalion"
 
 
 func test_golden_formula_scenario_a() -> void:
-	var dice := ScriptedDice.new([70, 23, 79], [[0]])
+	var dice := ScriptedDice.new([70, 23, 79], [], [], [0])
 	var attacker_units := _make_units(SPECIAL_FORCES, 3, "A", "Red")
 	var defender_units := _make_units(SPECIAL_FORCES, 2, "D", "Blue")
 
@@ -32,7 +32,7 @@ func test_golden_formula_scenario_a() -> void:
 
 
 func test_artillery_never_a_casualty_scenario_b() -> void:
-	var dice := ScriptedDice.new([70, 23, 79], [[0]])
+	var dice := ScriptedDice.new([70, 23, 79], [], [], [0])
 	var attacker_units := _make_units(SPECIAL_FORCES, 8, "A", "Red")
 	var defender_units := [
 		{"unit_id": "D-SF", "type": SPECIAL_FORCES, "team": "Blue"},

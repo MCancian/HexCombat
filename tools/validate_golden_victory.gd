@@ -18,9 +18,10 @@ const MAX_TURNS := 40
 # crossing-lethality dial-in, USER call: intel_locked strike bonus 0.20 + exquisite-intel
 # initial_count 36 lower crossing losses than the old default, landing more PLA battalions; see
 # docs/archive/0001-crossing-lethality-calibration.md and docs/DECISIONS.md).
+# Re-baselined 2026-07-17 for Plan 0008: support unit casualties (USER call). Was 25/89.
 const EXPECTED_GAME_OVER := false
-const EXPECTED_CHINA := 25
-const EXPECTED_TAIWAN := 89
+const EXPECTED_CHINA := 27
+const EXPECTED_TAIWAN := 94
 
 var _failures: Array[String] = []
 var GameData: Node = null

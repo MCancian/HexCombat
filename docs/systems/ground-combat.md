@@ -30,6 +30,7 @@ Resolve ground combat when Red and Green brigades occupy the same hex after move
 **Support strength** (`_support_strength`):
   `support = Σ(count[type] × SUPPORT_MULTIPLIERS[type])`
   Multipliers: `artillery:0.8`, `rocket_artillery:1.2`, `cas:1.4`, `crbm:0.6`, `rotary_wing:1.3`.
+  If a side has no maneuver units but has on-map support units, those support units are "unscreened". Each unscreened support battalion contributes `0.5` strength (defined by `UNSCREENED_SUPPORT_STRENGTH`), and they take the minimum-blood losses if attacked.
 
 **Final strengths**:
   ```
@@ -57,7 +58,7 @@ Resolve ground combat when Red and Green brigades occupy the same hex after move
 
 **Min-one-loss rule**: if both sides present and both loss-counts are 0, the weaker side gets 1 loss (ratio ≥ 1 → defender loses 1, else attacker loses 1).
 
-**Casualty selection** (`_select_casualties`): filter out units tagged `"artillery"`, then `dice.choose_indices(eligible.size(), min(loss_count, eligible.size()))` without replacement. Non-artillery only.
+**Casualty selection** (`_select_casualties`): weighted random selection without replacement using `weighted_choice` from the `dice` interface. All battalions (maneuver and support) are eligible, weighted by their type category (maneuver = 4.0, support = 1.0). The selection is proportional to these weights.
 
 **FEBA**:
   ```
@@ -71,11 +72,12 @@ Resolve ground combat when Red and Green brigades occupy the same hex after move
 ## 4. Casualty selection
 
 `_select_casualties` (`CombatCalculator.gd`):
-- Filters `units` to those whose `UnitStats.tags_for_type(type)` does **not** contain `"artillery"`.
-- Uses `dice.choose_indices(eligible.size(), min(loss_count, eligible.size()))` — random without replacement.
-- Returns empty array if `loss_count ≤ 0` or `eligible` is empty.
+- All maneuver and on-map support units are pooled together.
+- Weight assignment: `MANEUVER_CASUALTY_WEIGHT = 4.0`, `SUPPORT_CASUALTY_WEIGHT = 1.0`.
+- Uses `dice.weighted_choice(weights)` in a loop without replacement (selected indices have their weight set to `0.0`).
+- Returns empty array if `loss_count ≤ 0` or `pool` is empty.
 
-This excludes Field Artillery, Mechanized Artillery, and Rocket Artillery battalions from being selected as losses (they contribute support instead).
+This exposes all support units (Field Artillery, Mechanized Artillery, Rocket Artillery, and Attack/Utility Helicopters) to combat losses instead of leaving them immortal.
 
 ## 5. Unit strength table (from `UnitStats.TYPE_DEFS`)
 

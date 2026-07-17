@@ -100,7 +100,7 @@ func test_committed_forces_affect_combat_and_are_marked_fought() -> void:
 	assert_array(GameState._brigade_ids(red_contributors)).contains([red_committed.id])
 	assert_int(CombatForces.maneuver_units(red_contributors).size()).is_equal(3)
 
-	GameState.resolve_turn(ScriptedDice.new([50, 50, 50], [[0], [0]]))
+	GameState.resolve_turn(ScriptedDice.new([50, 50, 50], [], [], [0, 0]))
 
 	assert_array(GameState.last_contested_hexes).contains([TARGET_HEX])
 	assert_bool(red_committed.fought_this_turn).is_true()
@@ -116,7 +116,7 @@ func test_begin_next_turn_clears_commitments() -> void:
 	GameState.add_commit_order(Brigade.Team.RED, red_adjacent.id, TARGET_HEX)
 	assert_int(GameState.commitments_for(Brigade.Team.RED).size()).is_equal(1)
 
-	GameState.resolve_turn(ScriptedDice.new([50, 50, 50], [[0], [0]]))
+	GameState.resolve_turn(ScriptedDice.new([50, 50, 50], [], [], [0, 0]))
 	GameState.begin_next_turn()
 
 	assert_int(GameState.commitments_for(Brigade.Team.RED).size()).is_equal(0)

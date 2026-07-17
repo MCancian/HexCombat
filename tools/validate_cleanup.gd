@@ -19,7 +19,8 @@ const TARGET_HEX := GoldenScript.TARGET_HEX
 # Re-baselined 2026-07-11 for plan 0001 crossing-lethality dial-in (USER call: intel_locked
 # strike bonus 0.20 + exquisite-intel initial_count 36 change the PLA force landed before the
 # scripted fight, shifting feba). Was "casualties=7, feba=-0.16".
-const EXPECTED_COMBAT_FINGERPRINT := "casualties=7, feba=-0.46"
+# Re-baselined 2026-07-17 for plan 0008 support unit casualties (USER call). Was "casualties=7, feba=-0.46".
+const EXPECTED_COMBAT_FINGERPRINT := "casualties=9, feba=-0.48"
 
 var _failures: Array[String] = []
 var GameData: Node = null

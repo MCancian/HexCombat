@@ -45,7 +45,7 @@ func test_single_hex_combat_applies_casualties_feba_and_fought_flags() -> void:
 	# COMBAT_HEX (hex_43_16) is "urban" (defender_modifier 2.0, Track F, activated 2026-07-09).
 	# Green's defended strength doubles, so at these same rolls the attacker now loses 2 battalions
 	# (was 1) and the defender still loses 1 (unchanged) — re-pinned below.
-	GameState.resolve_turn(ScriptedDice.new([50, 100, 100], [[0, 1], [0]]))
+	GameState.resolve_turn(ScriptedDice.new([50, 100, 100], [], [], [0, 1, 0]))
 
 	# Was 3 (attacker_losses 1 -> 2 battalions destroyed out of the starting 4).
 	assert_int(_battalion_qty(red, "Amphibious Infantry Battalion")).is_equal(2)
@@ -63,7 +63,7 @@ func test_ownership_by_occupancy_after_combat_and_contested_presence() -> void:
 	_register_brigade(red, EMPTY_HEX)
 	_register_brigade(green, EMPTY_HEX)
 
-	GameState.resolve_turn(ScriptedDice.new([50, 100, 100], [[0]]))
+	GameState.resolve_turn(ScriptedDice.new([50, 100, 100], [], [], [0]))
 
 	assert_bool(green.destroyed).is_true()
 	assert_array(GameData.get_brigades_in_hex(EMPTY_HEX)).not_contains([green.id])

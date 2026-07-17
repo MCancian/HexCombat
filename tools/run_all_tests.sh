@@ -240,6 +240,18 @@ if [[ -n "$PYTHON_BIN" ]]; then
     fi
 fi
 
+# ---- Fixture Git Status Validation -------------------------------------------
+write_phase "Fixture Git Status Validation"
+if command -v git >/dev/null 2>&1; then
+    if ! git diff --exit-code docs/examples/*.json >/dev/null 2>&1; then
+        failures+=("Fixture drift: docs/examples/ has uncommitted modifications. Commit the updated JSON files.")
+    else
+        cecho green "Fixture git status OK."
+    fi
+else
+    cecho yellow "git not found, skipping fixture git status check."
+fi
+
 # ---- Phase 4: GdUnit4 suite ------------------------------------------------
 write_phase "Phase 4/4 — GdUnit4 suite (tests/)"
 # Verdict from the per-suite "Statistics:" lines, NOT the exit code: GdUnit

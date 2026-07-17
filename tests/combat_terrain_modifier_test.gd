@@ -16,7 +16,7 @@ const RED_OUT_OF_SUPPLY_EFFECTIVENESS := 0.5
 
 
 func test_modifier_1_0_no_terrain_bonus() -> void:
-	var outcome := _resolve(1.0, [50, 50, 50], [[0], [0, 1, 2]])
+	var outcome := _resolve(1.0, [50, 50, 50], [0, 0, 1, 2])
 	var result: CombatResult = outcome["result"]
 	assert_float(result.defender_terrain_modifier).is_equal_approx(1.0, 0.0001)
 	assert_int(result.attacker_losses).is_equal(1)
@@ -25,7 +25,7 @@ func test_modifier_1_0_no_terrain_bonus() -> void:
 
 
 func test_modifier_2_0_urban_defender_bonus() -> void:
-	var outcome := _resolve(2.0, [50, 50, 50], [[0, 1], [0, 1]])
+	var outcome := _resolve(2.0, [50, 50, 50], [0, 1, 0, 1])
 	var result: CombatResult = outcome["result"]
 	assert_float(result.defender_terrain_modifier).is_equal_approx(2.0, 0.0001)
 	assert_int(result.attacker_losses).is_equal(2)
@@ -35,7 +35,7 @@ func test_modifier_2_0_urban_defender_bonus() -> void:
 
 
 func test_modifier_3_0_metropolis_defender_bonus() -> void:
-	var outcome := _resolve(3.0, [50, 50, 50], [[0, 1, 2], [0]])
+	var outcome := _resolve(3.0, [50, 50, 50], [0, 1, 2, 0])
 	var result: CombatResult = outcome["result"]
 	assert_float(result.defender_terrain_modifier).is_equal_approx(3.0, 0.0001)
 	assert_int(result.attacker_losses).is_equal(3)
@@ -44,10 +44,10 @@ func test_modifier_3_0_metropolis_defender_bonus() -> void:
 	assert_float(result.feba_movement_km).is_less(1.0)  # weakest attacker advance of the three
 
 
-func _resolve(defender_terrain_modifier: float, rolls: Array, choices: Array) -> Dictionary:
+func _resolve(defender_terrain_modifier: float, rolls: Array, weighted: Array) -> Dictionary:
 	var attacker := _make_brigade("TEST-ATTACKER", Brigade.Team.RED, "Tank Battalion", 20)
 	var defender := _make_brigade("TEST-DEFENDER", Brigade.Team.GREEN, "Tank Battalion", 5)
-	var dice := ScriptedDice.new(rolls, choices)
+	var dice := ScriptedDice.new(rolls, [], [], weighted)
 	return CombatResolver.resolve_at(
 		HEX_ID,
 		[attacker],
@@ -56,6 +56,9 @@ func _resolve(defender_terrain_modifier: float, rolls: Array, choices: Array) ->
 		FEBA_BASE_KM,
 		RED_SUPPLY_POOL,
 		RED_OUT_OF_SUPPLY_EFFECTIVENESS,
+		0.5,
+		4.0,
+		1.0,
 		defender_terrain_modifier
 	)
 

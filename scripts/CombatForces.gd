@@ -21,6 +21,21 @@ static func maneuver_units(brigades: Array) -> Array:
 				})
 	return units
 
+static func support_units(brigades: Array) -> Array:
+	var units: Array = []
+	for brigade_value in brigades:
+		var brigade: Brigade = brigade_value
+		for battalion in brigade.composition:
+			if not is_support_type(battalion.type):
+				continue
+			for i in range(battalion.qty):
+				units.append({
+					"brigade_id": brigade.id,
+					"type": battalion.type,
+					"supply_effectiveness": 1.0
+				})
+	return units
+
 
 static func support_counts(brigades: Array) -> Dictionary:
 	var counts := {

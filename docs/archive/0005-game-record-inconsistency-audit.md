@@ -1,3 +1,8 @@
+---
+status: Shipped
+shipped: 2026-07-17
+landed_in: N/A (Agent task completed)
+---
 # 0005 — Game-record inconsistency audit (agent brief)
 
 **Status:** Sketch · **Priority:** Medium — a ready-to-dispatch brief for another LLM/agent to

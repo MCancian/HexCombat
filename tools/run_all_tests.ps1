@@ -176,6 +176,19 @@ if ([string]::IsNullOrEmpty($PythonBin)) {
     }
 }
 
+# ---- Fixture Git Status Validation -------------------------------------------
+Write-Phase "Fixture Git Status Validation"
+if (Get-Command git -ErrorAction SilentlyContinue) {
+    & git diff --exit-code docs/examples/*.json >$null 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        $failures.Add("Fixture drift: docs/examples/ has uncommitted modifications. Commit the updated JSON files.")
+    } else {
+        Write-Host "Fixture git status OK." -ForegroundColor Green
+    }
+} else {
+    Write-Host "git not found, skipping fixture git status check." -ForegroundColor Yellow
+}
+
 # ---- Phase 4: GdUnit4 suite --------------------------------------------------
 Write-Phase "Phase 4/4 — GdUnit4 suite (tests/)"
 # Verdict from the per-suite "Statistics:" lines, NOT the exit code: GdUnit returns 100 for real test

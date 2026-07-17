@@ -9,6 +9,8 @@ const SUPPORT_MULTIPLIERS = {
 	"rotary_wing": 1.3
 }
 
+
+
 # Loss-rate model: base rate shifted by the force ratio, jittered by the d100 roll around its
 # midpoint, clamped to the per-side band. Values are TIV-lineage tuning (plan 0009 hoist —
 # candidates for data/ knobs only on a USER call).
@@ -42,13 +44,18 @@ static func resolve_map_attack(
 	attacker_support: Dictionary = {},
 	defender_support: Dictionary = {},
 	defender_terrain_modifier: float = 1.0,
+	attacker_support_units: Array = [],
+	defender_support_units: Array = [],
+	unscreened_support_strength: float = 0.5,
+	maneuver_casualty_weight: float = 4.0,
+	support_casualty_weight: float = 1.0
 ) -> CombatResult:
 	attacker_support = normalize_support(attacker_support)
 	defender_support = normalize_support(defender_support)
 	defender_terrain_modifier = max(1.0, defender_terrain_modifier)
 
 	var forces := _force_strengths(
-		attacker_units, defender_units, attacker_support, defender_support, defender_terrain_modifier)
+		attacker_units, defender_units, attacker_support, defender_support, defender_terrain_modifier, attacker_support_units, defender_support_units, unscreened_support_strength)
 	var ratio := float(forces["ratio"])
 
 	# Draw order is part of the golden contract: attacker loss, defender loss, feba, then the
@@ -58,9 +65,9 @@ static func resolve_map_attack(
 	var feba_roll := dice.roll_d100()
 
 	var losses := _loss_counts(
-		ratio, attacker_units.size(), defender_units.size(), attacker_loss_roll, defender_loss_roll)
-	var attacker_casualties := _select_casualties(attacker_units, int(losses["attacker"]), dice)
-	var defender_casualties := _select_casualties(defender_units, int(losses["defender"]), dice)
+		ratio, attacker_units.size() + attacker_support_units.size(), defender_units.size() + defender_support_units.size(), attacker_loss_roll, defender_loss_roll)
+	var attacker_casualties := _select_casualties(attacker_units, attacker_support_units, int(losses["attacker"]), dice, maneuver_casualty_weight, support_casualty_weight)
+	var defender_casualties := _select_casualties(defender_units, defender_support_units, int(losses["defender"]), dice, maneuver_casualty_weight, support_casualty_weight)
 
 	var feba := _feba_shift(
 		float(forces["attacker_strength"]), float(forces["defender_strength"]), feba_base_km, feba_roll)
@@ -81,6 +88,8 @@ static func resolve_map_attack(
 	result.combat_detail = {
 		"attacker": {
 			"maneuver_unit_count": attacker_units.size(),
+			"support_unit_count": attacker_support_units.size(),
+			"unscreened": forces["attacker_unscreened"],
 			"maneuver_combat_power": forces["attacker_maneuver"],
 			"support_counts": attacker_support,
 			"support_combat_power": forces["attacker_support_strength"],
@@ -89,6 +98,8 @@ static func resolve_map_attack(
 		},
 		"defender": {
 			"maneuver_unit_count": defender_units.size(),
+			"support_unit_count": defender_support_units.size(),
+			"unscreened": forces["defender_unscreened"],
 			"maneuver_combat_power": forces["defender_maneuver"],
 			"support_counts": defender_support,
 			"support_combat_power": forces["defender_support_strength"],
@@ -130,11 +141,38 @@ static func _force_strengths(
 	attacker_support: Dictionary,
 	defender_support: Dictionary,
 	defender_terrain_modifier: float,
+	attacker_support_units: Array,
+	defender_support_units: Array,
+	unscreened_support_strength: float,
 ) -> Dictionary:
 	var attacker_maneuver := _sum_unit_strength(attacker_units)
 	var defender_maneuver := _sum_unit_strength(defender_units)
-	var attacker_support_strength := _support_strength(attacker_support)
-	var defender_support_strength := _support_strength(defender_support)
+	
+	var attacker_unscreened := false
+	var attacker_support_strength := 0.0
+	if attacker_units.is_empty() and not attacker_support_units.is_empty():
+		attacker_unscreened = true
+		attacker_support_strength = _sum_unscreened_strength(attacker_support_units, unscreened_support_strength)
+		var off_map := attacker_support.duplicate()
+		off_map["artillery"] = 0
+		off_map["rocket_artillery"] = 0
+		off_map["rotary_wing"] = 0
+		attacker_support_strength += _support_strength(off_map)
+	else:
+		attacker_support_strength = _support_strength(attacker_support)
+
+	var defender_unscreened := false
+	var defender_support_strength := 0.0
+	if defender_units.is_empty() and not defender_support_units.is_empty():
+		defender_unscreened = true
+		defender_support_strength = _sum_unscreened_strength(defender_support_units, unscreened_support_strength)
+		var off_map := defender_support.duplicate()
+		off_map["artillery"] = 0
+		off_map["rocket_artillery"] = 0
+		off_map["rotary_wing"] = 0
+		defender_support_strength += _support_strength(off_map)
+	else:
+		defender_support_strength = _support_strength(defender_support)
 
 	var attacker_unmodified := attacker_maneuver + attacker_support_strength
 	var defender_unmodified := defender_maneuver + defender_support_strength
@@ -153,6 +191,8 @@ static func _force_strengths(
 		"defender_maneuver": defender_maneuver,
 		"attacker_support_strength": attacker_support_strength,
 		"defender_support_strength": defender_support_strength,
+		"attacker_unscreened": attacker_unscreened,
+		"defender_unscreened": defender_unscreened,
 		"attacker_unmodified": attacker_unmodified,
 		"defender_unmodified": defender_unmodified,
 		"attacker_strength": attacker_strength,
@@ -247,6 +287,13 @@ static func _sum_unit_strength(units: Array) -> float:
 	return total
 
 
+static func _sum_unscreened_strength(units: Array, unscreened_support_strength: float) -> float:
+	var total := 0.0
+	for unit in units:
+		total += unscreened_support_strength * _unit_supply_effectiveness(unit)
+	return total
+
+
 static func _support_strength(support_counts: Dictionary) -> float:
 	var total := 0.0
 	for support_type in support_counts:
@@ -265,21 +312,24 @@ static func _support_power_breakdown(support_counts: Dictionary) -> Dictionary:
 	return breakdown
 
 
-static func _select_casualties(units: Array, loss_count: int, dice: Dice) -> Array:
-	var eligible := []
-	for unit in units:
-		var unit_type := _unit_type(unit)
-		if not UnitStats.has_tag(unit_type, "artillery"):
-			eligible.append(unit)
-
-	if loss_count <= 0 or eligible.is_empty():
+static func _select_casualties(maneuver_units: Array, support_units: Array, loss_count: int, dice: Dice, maneuver_casualty_weight: float, support_casualty_weight: float) -> Array:
+	var pool := maneuver_units + support_units
+	if loss_count <= 0 or pool.is_empty():
 		return []
 
-	var select_count: int = min(loss_count, eligible.size())
-	var selected_indices := dice.choose_indices(eligible.size(), select_count)
+	var select_count: int = min(loss_count, pool.size())
+	var weights: Array[float] = []
+	for i in range(maneuver_units.size()):
+		weights.append(maneuver_casualty_weight)
+	for i in range(support_units.size()):
+		weights.append(support_casualty_weight)
+
 	var casualties := []
-	for index in selected_indices:
-		casualties.append(eligible[index])
+	for _i in range(select_count):
+		var index := dice.weighted_choice(weights)
+		casualties.append(pool[index])
+		weights[index] = 0.0
+		
 	return casualties
 
 

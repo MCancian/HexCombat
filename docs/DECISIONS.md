@@ -19,6 +19,9 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-17 — Support unit casualties in ground combat (Plan 0008; USER decision, agent implementation).**
+  Support units (artillery, rotary wing) are no longer immortal. They are pooled with maneuver units during casualty selection, weighted 1:4. If a side has only support units, they are considered "unscreened", contributing 0.5 strength each and taking the minimum-blood losses. `ScriptedDice` now uses `weighted_choices` for casualty selection. The golden scenario is re-baselined to reflect these changes. Facts: `docs/systems/ground-combat.md`; current behavior: `docs/STATUS.md`.
+
 - **2026-07-17 — B7 replay and artifact hardening (USER-directed follow-up).** Mixed LLM/heuristic
   matches now log both seats, malformed policy identity records assert instead of grouping under a
   placeholder, and live-model parallelism warns. `validate_batch_runner.py` is part of both

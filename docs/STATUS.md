@@ -28,7 +28,7 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
 - **Ground combat** (BOOTS slice M0–M7): movement, commit, combat resolution, FEBA, casualties,
   retreat, hex ownership. Defender terrain modifier is active: `CombatResolver.resolve_at`
   receives the defended hex's `defender_modifier` via `GameState._defender_combat_modifier`.
-  Golden invariant: the scripted beach-1 fight is byte-stable per gate; the pinned values live in
+  **Support units** are mortal and included in casualty selection (weighted 1:4 vs maneuver units). If a side has only support units, they are "unscreened", contributing 0.5 strength each and taking losses. Golden invariant: the scripted beach-1 fight is byte-stable per gate; the pinned values live in
   `tools/validate_headless_turn.gd` (re-baseline history: `docs/DECISIONS.md` →
   `docs/archive/PLAN.md`).
 - **D1 Amphibious offload** — ship reserve → beach landing; lands brigades onto beach hexes.

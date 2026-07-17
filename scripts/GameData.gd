@@ -31,6 +31,9 @@ var feba_base_km: float = 3.5
 # (mirrors TIV's per-unit supply_effectiveness, adapted to HexCombat's single pool; see PLAN.md
 # Decisions 2026-06-29 supply→combat). 1.0 while the pool is positive.
 var red_out_of_supply_effectiveness: float = 0.5
+var unscreened_support_strength: float = 0.5
+var maneuver_casualty_weight: float = 4.0
+var support_casualty_weight: float = 1.0
 var victory_config: Dictionary = {}  # scenario 'victory' block (loss_check_arm, taiwan_hexes)
 
 var hexes: Array[Hex] = []
@@ -237,6 +240,9 @@ func load_scenario(path: String) -> void:
 	stacking_soft_cap = int(scenario.get("stacking_soft_cap", 0))
 	feba_base_km = float(scenario.get("feba_base_km", 3.5))
 	red_out_of_supply_effectiveness = float(scenario.get("red_out_of_supply_effectiveness", 0.5))
+	unscreened_support_strength = float(scenario.get("unscreened_support_strength", 0.5))
+	maneuver_casualty_weight = float(scenario.get("maneuver_casualty_weight", 4.0))
+	support_casualty_weight = float(scenario.get("support_casualty_weight", 1.0))
 	var victory_value: Variant = scenario.get("victory", {})
 	victory_config = victory_value if victory_value is Dictionary else {}
 	red_ship_reserve = _parse_ship_reserve_entries(scenario.get("red_ship_reserve", []), "red_ship_reserve")

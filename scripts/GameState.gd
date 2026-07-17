@@ -841,6 +841,9 @@ func _resolve_combat_at(hex_id: String, dice: Dice) -> CombatSummary:
 		GameData.feba_base_km,
 		pool,
 		GameData.red_out_of_supply_effectiveness,
+		GameData.unscreened_support_strength,
+		GameData.maneuver_casualty_weight,
+		GameData.support_casualty_weight,
 		_defender_combat_modifier(hex_id)
 	)
 	if outcome["summary"] == null:
