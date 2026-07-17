@@ -67,6 +67,40 @@ static func resolve(
 		else:
 			troop_reserve.append(reserve_entry)
 
+	var active_beach_ids := _active_beach_ids(troop_reserve)
+	var valve := _occupancy_valve_inputs(active_beach_ids, beaches, brigades)
+	var beach_capacity := OffloadCalculator.beach_capacity_bns(active_beach_ids, beaches)
+	var manifest := OffloadCalculator.resolve_offload_day(
+		turn_number, beach_capacity, troop_reserve, priority_order(troop_reserve),
+		infra_nodes, cost_config, valve["occupancy"], valve["depth"], beach_to_to)
+
+	var applied := _apply_manifest_to_reserve(manifest, troop_reserve, brigades, infra_nodes)
+	var remaining_ship_reserve: Array = applied["remaining_ship_reserve"]
+
+	# JLSF delivery: a pseudo-entry lands whole (no throughput cost) the moment its target node's
+	# hex is Red-held; otherwise it stays offshore in the reserve, hulls committed.
+	var jlsf_arrivals: Array = []
+	for jlsf_entry_value in jlsf_entries:
+		var jlsf_entry: Dictionary = jlsf_entry_value
+		if String(owner_by_hex.get(String(jlsf_entry.get("beach_hex", "")), "")) == "red":
+			var bn_ids: Array = []
+			for bn_value in jlsf_entry.get("bns", []):
+				bn_ids.append(String((bn_value as Dictionary).get("id", "")))
+			jlsf_arrivals.append({"port_id": String(jlsf_entry.get("port_id", "")), "bn_ids": bn_ids})
+		else:
+			remaining_ship_reserve.append(jlsf_entry)
+
+	manifest["landed_brigade_ids"] = applied["landed_brigade_ids"]
+	return {
+		"manifest": manifest,
+		"remaining_ship_reserve": remaining_ship_reserve,
+		"landings": applied["landings"],
+		"jlsf_arrivals": jlsf_arrivals,
+	}
+
+
+## Distinct locked beaches across the troop reserve (fail-loud on a missing locked_beach).
+static func _active_beach_ids(troop_reserve: Array) -> Array[int]:
 	var active_beach_ids: Array[int] = []
 	for reserve_entry_value in troop_reserve:
 		var reserve_entry: Dictionary = reserve_entry_value
@@ -76,8 +110,12 @@ static func resolve(
 			continue
 		if locked_beach not in active_beach_ids:
 			active_beach_ids.append(locked_beach)
+	return active_beach_ids
 
-	# Occupancy valve inputs (plan 0006): landed RED brigades per active beach hex vs its depth.
+
+## Occupancy valve inputs (plan 0006): landed RED brigades per active beach hex vs its depth.
+## Returns {"occupancy": beach_id -> count, "depth": beach_id -> BeachDef.depth}.
+static func _occupancy_valve_inputs(active_beach_ids: Array[int], beaches: Dictionary, brigades: Dictionary) -> Dictionary:
 	var beach_occupancy: Dictionary = {}
 	var beach_depth: Dictionary = {}
 	for beach_id in active_beach_ids:
@@ -91,12 +129,15 @@ static func resolve(
 			if brigade.team == Brigade.Team.RED and not brigade.destroyed and brigade.hex_id == beach.hex_id:
 				count += 1
 		beach_occupancy[beach_id] = count
+	return {"occupancy": beach_occupancy, "depth": beach_depth}
 
-	var beach_capacity := OffloadCalculator.beach_capacity_bns(active_beach_ids, beaches)
-	var manifest := OffloadCalculator.resolve_offload_day(
-		turn_number, beach_capacity, troop_reserve, priority_order(troop_reserve),
-		infra_nodes, cost_config, beach_occupancy, beach_depth, beach_to_to)
 
+## Remove landed BNs from their reserve entries (in place), report first landings, and keep the
+## still-populated entries. A brigade whose FIRST landed BN came ashore through an infra node
+## lands at the node's hex instead of the entry's beach_hex.
+## Returns {"landed_brigade_ids": Array[String], "landings": placement dicts,
+## "remaining_ship_reserve": entries that still hold BNs}.
+static func _apply_manifest_to_reserve(manifest: Dictionary, troop_reserve: Array, brigades: Dictionary, infra_nodes: Array) -> Dictionary:
 	var node_hex_by_id: Dictionary = {}
 	for node_value in infra_nodes:
 		var node: Dictionary = node_value
@@ -146,23 +187,8 @@ static func resolve(
 			continue
 		remaining_ship_reserve.append(reserve_entry)
 
-	# JLSF delivery: a pseudo-entry lands whole (no throughput cost) the moment its target node's
-	# hex is Red-held; otherwise it stays offshore in the reserve, hulls committed.
-	var jlsf_arrivals: Array = []
-	for jlsf_entry_value in jlsf_entries:
-		var jlsf_entry: Dictionary = jlsf_entry_value
-		if String(owner_by_hex.get(String(jlsf_entry.get("beach_hex", "")), "")) == "red":
-			var bn_ids: Array = []
-			for bn_value in jlsf_entry.get("bns", []):
-				bn_ids.append(String((bn_value as Dictionary).get("id", "")))
-			jlsf_arrivals.append({"port_id": String(jlsf_entry.get("port_id", "")), "bn_ids": bn_ids})
-		else:
-			remaining_ship_reserve.append(jlsf_entry)
-
-	manifest["landed_brigade_ids"] = landed_brigade_ids
 	return {
-		"manifest": manifest,
-		"remaining_ship_reserve": remaining_ship_reserve,
+		"landed_brigade_ids": landed_brigade_ids,
 		"landings": landings,
-		"jlsf_arrivals": jlsf_arrivals,
+		"remaining_ship_reserve": remaining_ship_reserve,
 	}
