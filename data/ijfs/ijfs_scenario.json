@@ -490,6 +490,10 @@
     "moveable_and_mobile_targets_require_detection": true,
     "static_targets_bypass_detection": true
   },
+  "crbm_maneuver_rounds_override": 480,
+  "_comment_crbm_maneuver_rounds_override": "Calibration knob (plan 0009, CRBM maneuver attrition): rounds_expended_per_engagement forced onto every CRBM (BRE6/BRE8) x Maneuver Units pairing, replacing the authored fire-mission size (BRE6 48 / BRE8 12). 480 = a heavy 10x volley that spends Red's excess CRBM inventory (BRE6 28800/480=60, BRE8 7200/480=15 engagements) despite the one-attack-per-target-per-day cap. Depletion only; lethality comes from crbm_maneuver_strike_bonus. Applied by IjfsLoaders.apply_crbm_maneuver_rounds_override; absent = authored values (golden-preserving).",
+  "crbm_maneuver_strike_bonus": 0.15,
+  "_comment_crbm_maneuver_strike_bonus": "Calibration knob (plan 0009): additive bonus to probability_destroyed for Maneuver Units struck by CRBM (BRE6/BRE8). rounds_expended does NOT scale kill odds, so this is the lever that turns the heavy volley into actual attrition. Synthesized into strike_probability_modifiers (modifier_id crbm_heavy_volley_maneuver_bonus) by IjfsLoaders.apply_crbm_maneuver_strike_bonus. STARTING VALUE 0.15 — awaits USER batch-driven re-dial like intel_locked_antiship_strike_bonus (plan 0001).",
   "intel_locked_antiship_strike_bonus": 0.2,
   "_comment_intel_locked_antiship_strike_bonus": "Calibration knob (plan 0001, crossing-lethality): scalar add-bonus to strike probability vs exquisite-intel-locked coastal launchers (category Anti-Ship Systems, intel_locked=true). USER-picked dial (2026-07-11): 0.20, paired with prelanding.intel.exquisite_intel.antiship.initial_count=36 below, mean ~27.3% crossing loss over N=30 seeds (see docs/plans/0001-crossing-lethality-calibration.md). Synthesized into strike_probability_modifiers by IjfsLoaders.load_scenario; set directly rather than hand-writing a modifier entry.",
   "strike_probability_modifiers": [

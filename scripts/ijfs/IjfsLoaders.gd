@@ -281,11 +281,14 @@ static func load_scenario(path: String) -> Dictionary:
 		if not scenario.has(key):
 			_fail("Scenario missing required section: %s" % key)
 	apply_intel_locked_strike_bonus(scenario)
+	apply_crbm_maneuver_strike_bonus(scenario)
 	_validate_ijfs_config_blocks(scenario)
 	return scenario
 
 
 const INTEL_LOCKED_STRIKE_BONUS_MODIFIER_ID := "intel_locked_antiship_precision_strike"
+const CRBM_MANEUVER_STRIKE_BONUS_MODIFIER_ID := "crbm_heavy_volley_maneuver_bonus"
+const CRBM_MUNITION_IDS := ["pch191_bre6_crbm", "pch191_bre8_crbm"]
 
 
 ## Calibration knob (plan 0001, crossing-lethality): a scalar add-bonus to strike probability
@@ -317,6 +320,53 @@ static func apply_intel_locked_strike_bonus(scenario: Dictionary) -> void:
 		"notes": "Precision-strike bonus vs exquisite-intel-locked coastal launchers (scenario knob intel_locked_antiship_strike_bonus).",
 	})
 	scenario["strike_probability_modifiers"] = modifiers
+
+
+## Calibration knob (plan 0009, CRBM maneuver attrition): a scalar add-bonus to strike
+## probability against Maneuver Units struck by the heavy CRBM volley (BRE6/BRE8). Paired with
+## crbm_maneuver_rounds_override (which expends the mass ammunition) so a single large volley both
+## depletes the excess CRBM inventory AND actually kills — rounds_expended alone drives inventory,
+## not lethality. Synthesized into a strike_probability_modifiers entry here (same one-number
+## authoring pattern as apply_intel_locked_strike_bonus). Optional key; default/absent = 0.0 = no
+## bonus (golden-preserving). Idempotent: re-running replaces the prior entry rather than stacking.
+static func apply_crbm_maneuver_strike_bonus(scenario: Dictionary) -> void:
+	if not scenario.has("crbm_maneuver_strike_bonus"):
+		return
+	var bonus := float(scenario["crbm_maneuver_strike_bonus"])
+	if bonus < -1.0 or bonus > 1.0:
+		_fail("CRBM_MANEUVER_STRIKE_BONUS_OUT_OF_RANGE: crbm_maneuver_strike_bonus=%s" % bonus)
+	if bonus == 0.0 and not scenario.has("strike_probability_modifiers"):
+		return
+	var modifiers: Array = scenario.get("strike_probability_modifiers", [])
+	modifiers = modifiers.filter(func(m: Dictionary) -> bool:
+		return m.get("modifier_id") != CRBM_MANEUVER_STRIKE_BONUS_MODIFIER_ID)
+	if bonus == 0.0:
+		scenario["strike_probability_modifiers"] = modifiers
+		return
+	modifiers.append({
+		"modifier_id": CRBM_MANEUVER_STRIKE_BONUS_MODIFIER_ID,
+		"operation": "add",
+		"value": bonus,
+		"match": {"category": "Maneuver Units", "munition_id": CRBM_MUNITION_IDS.duplicate()},
+		"notes": "Heavy CRBM volley lethality bonus vs Maneuver Units (scenario knob crbm_maneuver_strike_bonus).",
+	})
+	scenario["strike_probability_modifiers"] = modifiers
+
+
+## Calibration knob (plan 0009): overwrite rounds_expended_per_engagement on every CRBM×Maneuver
+## Units pairing so each engagement fires the heavy volley (e.g. 480) instead of the authored
+## battalion fire-mission size (BRE6 48 / BRE8 12). Applied to the loaded pairings by IjfsStateBuilder
+## (the scenario knob and the pairings live in separate files). Optional key; absent = pairings keep
+## their authored value (golden-preserving). The paired lethality effect is apply_crbm_maneuver_strike_bonus.
+static func apply_crbm_maneuver_rounds_override(pairings: Array[IjfsPairing], scenario: Dictionary) -> void:
+	if not scenario.has("crbm_maneuver_rounds_override"):
+		return
+	var rounds := int(scenario["crbm_maneuver_rounds_override"])
+	if rounds <= 0:
+		_fail("CRBM_MANEUVER_ROUNDS_OVERRIDE_INVALID: crbm_maneuver_rounds_override=%d must be > 0" % rounds)
+	for rule in pairings:
+		if rule.target_category == "Maneuver Units" and rule.munition_id in CRBM_MUNITION_IDS:
+			rule.rounds_expended_per_engagement = rounds
 
 
 static func load_air_classes(path: String) -> Dictionary:

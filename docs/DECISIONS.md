@@ -19,6 +19,15 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-17 — CRBM heavy-volley maneuver-attrition knob (Plan 0009; USER design call).** Red now
+  fires massive CRBM volleys at ROC maneuver battalions to convert its idle missile inventory into
+  real attrition despite the one-attack-per-target-per-day rule. Two coupled scenario knobs in
+  `data/ijfs/ijfs_scenario.json`: `crbm_maneuver_rounds_override` (480 — depletion only) and
+  `crbm_maneuver_strike_bonus` (0.15 — the lethality lever; STARTING value, awaits USER batch re-dial
+  like plan 0001's crossing dial). Mechanism/rationale: `docs/systems/ijfs.md` §4 Strike. Golden pin
+  `validate_golden_victory.gd` re-baselined 25/92 → 26/88 (PASS line is truth). Current behavior:
+  `docs/STATUS.md`.
+
 - **2026-07-17 — Hierarchical RNG substreams (Plan 0010; agent implementation).** Each contested
   hex's ground fight now draws from its own dice stream, `dice.derive("combat:<turn>:<hex_id>")`,
   instead of a single linear root stream shared across hexes — so a design tweak that changes the

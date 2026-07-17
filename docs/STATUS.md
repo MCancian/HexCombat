@@ -78,6 +78,13 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   maneuver units easier to detect. Each turn `_sync_maneuver_targets_to_oob` retires maneuver targets
   whose battalions have died (IJFS or ground combat), so the air/missile campaign stops targeting units
   that no longer exist — without disturbing detection continuity for survivors.
+  **CRBM heavy-volley maneuver attrition (plan 0009, 2026-07-17 USER call):** two coupled scenario
+  knobs in `ijfs_scenario.json` let Red spend its excess CRBM inventory on maneuver battalions —
+  `crbm_maneuver_rounds_override` (480) forces the volley size on every CRBM×Maneuver pairing
+  (depletion only), and `crbm_maneuver_strike_bonus` (0.15, a STARTING value awaiting USER batch
+  re-dial) is the paired lethality lever, synthesized into a strike modifier. Both synthesized by
+  `IjfsLoaders` (`apply_crbm_maneuver_*`), wired in `IjfsStateBuilder.build`. Detail:
+  `docs/systems/ijfs.md` §4 Strike.
   **MANPADS layer (2026-07-10, USER design call — TIV-oracle divergence):** the ~2,500 Stingers are
   per-TO container bins (category `MANPADS`, excluded from SEAD/AD-health) that intercept
   low-altitude strikes (UAV/OWA/strike-aircraft munitions; ballistic/cruise immune) and contest

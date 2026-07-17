@@ -100,3 +100,12 @@ selectable via `ScenarioCatalog`, so this knob isn't reachable from a scenario v
 by editing the file or mutating it in-memory (as the sweep tool does). `IjfsLoaders.load_scenario`
 synthesizes it into `strike_probability_modifiers` via `apply_intel_locked_strike_bonus`. Paired
 companion lever: `prelanding.intel.exquisite_intel.antiship.initial_count` (golden = 36), same file.
+
+`data/ijfs/ijfs_scenario.json.crbm_maneuver_rounds_override` (int, shipped = 480) and
+`.crbm_maneuver_strike_bonus` (float, shipped = 0.15, STARTING value awaiting USER batch re-dial;
+plan 0009) are the coupled CRBM heavy-volley maneuver-attrition knobs, same IJFS-file caveat as
+above. The rounds override retargets `rounds_expended_per_engagement` on every CRBM×"Maneuver Units"
+pairing (depletion only, applied by `IjfsLoaders.apply_crbm_maneuver_rounds_override` from
+`IjfsStateBuilder.build`); the strike bonus is the lethality lever, synthesized into
+`strike_probability_modifiers` via `apply_crbm_maneuver_strike_bonus`. Both absent/0.0 = golden no-op.
+Detail: `docs/systems/ijfs.md` §4 Strike.

@@ -32,6 +32,9 @@ static func build(antiship_containers: Array, green_brigades: Array) -> IjfsDail
 	state.munitions = IjfsLoaders.load_munitions(MUNITIONS_PATH)
 	state.pairings = IjfsLoaders.load_pairings(PAIRINGS_PATH)
 	state.scenario = IjfsLoaders.load_scenario(SCENARIO_PATH)
+	# Plan 0009: the CRBM-heavy-volley knob lives in the scenario but retargets the pairings, so it is
+	# applied here once both are loaded (keeps load_pairings/load_scenario single-responsibility).
+	IjfsLoaders.apply_crbm_maneuver_rounds_override(state.pairings, state.scenario)
 	state.air_classes = IjfsLoaders.load_air_classes(AIR_CLASSES_PATH)
 	state.squadron_force = IjfsLoaders.expand_oob_to_squadrons(IjfsLoaders.load_oob(OOB_PATH))
 	IjfsLoaders.enrich_sam_scores(state.targets, IjfsLoaders.load_sam_capabilities(SAM_CAPS_PATH))

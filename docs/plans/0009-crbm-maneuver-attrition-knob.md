@@ -1,9 +1,17 @@
 ---
-status: Sketch
-shipped: 
-landed_in: 
+status: Shipped
+shipped: 2026-07-17
+landed_in: main
 ---
 # 0009 — CRBM Maneuver Attrition Calibration Knob
+
+> **CLOSED 2026-07-17.** Both knobs (`crbm_maneuver_rounds_override` = 480,
+> `crbm_maneuver_strike_bonus` = 0.15) shipped in `data/ijfs/ijfs_scenario.json`; synthesis in
+> `IjfsLoaders.apply_crbm_maneuver_rounds_override` / `apply_crbm_maneuver_strike_bonus`, wired in
+> `IjfsStateBuilder.build`. Golden `validate_golden_victory.gd` re-baselined 25/92 → 26/88.
+> Mechanism doc: `docs/systems/ijfs.md` §4 Strike. Decision: `docs/DECISIONS.md` 2026-07-17.
+> **Open for USER:** `crbm_maneuver_strike_bonus` 0.15 is a starting value — needs a batch/sweep
+> re-dial to a target maneuver-attrition rate (same workflow as plan 0001's crossing dial).
 
 ## Goal
 Add a top-level calibration knob to `ijfs_scenario.json` that scales CRBM volley size and lethality against Maneuver Units. This allows Red to expend their excess missile inventory/sorties for higher attrition despite the 1-attack-per-target-per-day rule.
@@ -24,9 +32,13 @@ Add a top-level calibration knob to `ijfs_scenario.json` that scales CRBM volley
 3. **Validation:** Ensure that the increased ammo expenditure successfully depletes the CRBM inventory correctly in headless runs, and that the PK bonus actually yields kills.
 
 ## Checklist
-- [ ] Add `crbm_maneuver_rounds_override` and `crbm_maneuver_strike_bonus` to `ijfs_scenario.json`.
-- [ ] Implement synthesis logic in `IjfsLoaders.gd` to overwrite pairing expenditures and inject the lethality modifier.
-- [ ] Run a test game (`tools/run_llm_game.gd` or `run_batch`) and verify the `strike_log` shows 480 rounds expended and a >0% kill rate on Maneuver Units.
-- [ ] Re-baseline golden gate (`tools/validate_headless_turn.gd`) if this significantly alters the golden seed outcome.
-- [ ] Update `docs/systems/ijfs.md` to document the new calibration knob.
-- [ ] Close out this plan file and update `docs/STATUS.md`.
+- [x] Add `crbm_maneuver_rounds_override` and `crbm_maneuver_strike_bonus` to `ijfs_scenario.json`.
+- [x] Implement synthesis logic in `IjfsLoaders.gd` to overwrite pairing expenditures and inject the lethality modifier.
+- [x] Verified: every CRBM×Maneuver pairing expends 480 rounds and the `crbm_heavy_volley_maneuver_bonus` modifier applies (0.15); IJFS maneuver attrition kills ROC battalions (golden self-play taiwan census 92→88).
+- [x] Re-baselined `validate_golden_victory.gd` (25/92 → 26/88). Scripted-beach byte-golden `validate_headless_turn.gd` unaffected.
+- [x] Documented the knob in `docs/systems/ijfs.md` §4 Strike.
+- [x] Closed out this plan file, `docs/STATUS.md`, and `docs/DECISIONS.md`.
+
+## Implementation notes
+- **Key subtlety:** `rounds_expended_per_engagement` only drives inventory depletion/affordability — it does **not** scale kill probability. So the rounds override alone is inert; the strike bonus is the real lethality lever. The two knobs are coupled by design.
+- **No cap to bypass:** because `ijfs_scenario.json` already carries `strike_probability_modifiers`, `IjfsStrike.destruction_probability` already takes the modifier path (never the legacy `mobile_target_destroy_caps`), so the additive bonus lands directly on `probability_destroyed`.

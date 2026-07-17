@@ -121,6 +121,22 @@ in `IjfsEngine.run_daily`'s header comment — read it for the authoritative dra
   needed, editing the JSON value is sufficient. Together these hit the USER's ~25% mean crossing-loss
   target (N=30-seed sweep). Sweep tool: `tools/sweep_antiship_crossing.gd`, mutates both in-memory
   to grid-search without rewriting the file.
+- **Calibration knob** (plan 0009, CRBM maneuver-attrition, USER batch re-dial pending):
+  Two coupled scenario knobs in `data/ijfs/ijfs_scenario.json`:
+  `crbm_maneuver_rounds_override` (int; shipped 480) and `crbm_maneuver_strike_bonus` (float; shipped
+  0.15, a STARTING value awaiting USER batch re-dial).
+  `crbm_maneuver_rounds_override` forces `rounds_expended_per_engagement` to that value on every CRBM
+  (`pch191_bre6_crbm` / `pch191_bre8_crbm`) × "Maneuver Units" pairing, replacing authored BRE6 48 /
+  BRE8 12; applied by `IjfsLoaders.apply_crbm_maneuver_rounds_override`, called from
+  `IjfsStateBuilder.build` after pairings + scenario load (the knob and pairings live in separate
+  files). `rounds_expended` drives ONLY inventory depletion / affordability, NOT kill probability —
+  so `crbm_maneuver_strike_bonus` is the paired lethality lever: an additive bonus to
+  `probability_destroyed` for "Maneuver Units" struck by CRBM, synthesized by
+  `IjfsLoaders.apply_crbm_maneuver_strike_bonus` into a `strike_probability_modifiers` entry
+  (`modifier_id: crbm_heavy_volley_maneuver_bonus`, match `category="Maneuver Units"` + `munition_id`
+  both CRBM ids). Rationale: lets Red spend excess CRBM inventory (BRE6 28800 ÷ 480 = 60, BRE8 7200 ÷
+  480 = 15 engagements) for real maneuver attrition despite the one-attack-per-target-per-day rule.
+  Both absent / 0.0 = golden-preserving no-op.
 
 ## 5. Warmup — Multi-Day Capability Ramp
 
