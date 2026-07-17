@@ -10,8 +10,12 @@ landed_in: main
 > `IjfsLoaders.apply_crbm_maneuver_rounds_override` / `apply_crbm_maneuver_strike_bonus`, wired in
 > `IjfsStateBuilder.build`. Golden `validate_golden_victory.gd` re-baselined 25/92 → 26/88.
 > Mechanism doc: `docs/systems/ijfs.md` §4 Strike. Decision: `docs/DECISIONS.md` 2026-07-17.
-> **Open for USER:** `crbm_maneuver_strike_bonus` 0.15 is a starting value — needs a batch/sweep
-> re-dial to a target maneuver-attrition rate (same workflow as plan 0001's crossing dial).
+> **Calibration CLOSED (USER, 2026-07-17):** `crbm_maneuver_strike_bonus` = 0.15 confirmed via
+> `tools/sweep_crbm_maneuver.gd` (N=24, default full-defense) — ~38% of the 124-battalion ROC
+> maneuver pool killed over 40 turns, monotonic in the bonus. Finding: the bonus mainly amplifies
+> the pre-D-day exquisite-intel warmup; sustained in-game attrition is detection-bound (~1/turn),
+> so pushing maneuver attrition higher is a detection lever (`exquisite_intel.maneuver.initial_count`
+> / ISR weights), not this bonus.
 
 ## Goal
 Add a top-level calibration knob to `ijfs_scenario.json` that scales CRBM volley size and lethality against Maneuver Units. This allows Red to expend their excess missile inventory/sorties for higher attrition despite the 1-attack-per-target-per-day rule.

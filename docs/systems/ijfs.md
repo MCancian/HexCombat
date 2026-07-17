@@ -123,8 +123,10 @@ in `IjfsEngine.run_daily`'s header comment — read it for the authoritative dra
   to grid-search without rewriting the file.
 - **Calibration knob** (plan 0009, CRBM maneuver-attrition, USER batch re-dial pending):
   Two coupled scenario knobs in `data/ijfs/ijfs_scenario.json`:
-  `crbm_maneuver_rounds_override` (int; shipped 480) and `crbm_maneuver_strike_bonus` (float; shipped
-  0.15, a STARTING value awaiting USER batch re-dial).
+  `crbm_maneuver_rounds_override` (int; shipped 480) and `crbm_maneuver_strike_bonus` (float; 0.15,
+  USER-dialed 2026-07-17 via `tools/sweep_crbm_maneuver.gd` — N=24, default full-defense, ~38% of the
+  124-battalion ROC maneuver pool killed over 40 turns; the bonus mainly amplifies the pre-D-day
+  warmup, in-game attrition is detection-bound).
   `crbm_maneuver_rounds_override` forces `rounds_expended_per_engagement` to that value on every CRBM
   (`pch191_bre6_crbm` / `pch191_bre8_crbm`) × "Maneuver Units" pairing, replacing authored BRE6 48 /
   BRE8 12; applied by `IjfsLoaders.apply_crbm_maneuver_rounds_override`, called from

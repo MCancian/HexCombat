@@ -102,8 +102,8 @@ synthesizes it into `strike_probability_modifiers` via `apply_intel_locked_strik
 companion lever: `prelanding.intel.exquisite_intel.antiship.initial_count` (golden = 36), same file.
 
 `data/ijfs/ijfs_scenario.json.crbm_maneuver_rounds_override` (int, shipped = 480) and
-`.crbm_maneuver_strike_bonus` (float, shipped = 0.15, STARTING value awaiting USER batch re-dial;
-plan 0009) are the coupled CRBM heavy-volley maneuver-attrition knobs, same IJFS-file caveat as
+`.crbm_maneuver_strike_bonus` (float = 0.15, USER-dialed 2026-07-17 via `tools/sweep_crbm_maneuver.gd`,
+~38% ROC maneuver-pool attrition; plan 0009) are the coupled CRBM heavy-volley maneuver-attrition knobs, same IJFS-file caveat as
 above. The rounds override retargets `rounds_expended_per_engagement` on every CRBM×"Maneuver Units"
 pairing (depletion only, applied by `IjfsLoaders.apply_crbm_maneuver_rounds_override` from
 `IjfsStateBuilder.build`); the strike bonus is the lethality lever, synthesized into
