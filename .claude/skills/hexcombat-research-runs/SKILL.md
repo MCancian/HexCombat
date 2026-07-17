@@ -16,7 +16,8 @@ description: Running HexCombat as a research instrument — Monte Carlo batches 
 > manifest command line (or `godot --headless --path . -s res://tools/run_selfplay_game.gd --
 > --seed=S --scenario=X --red-policy=R --green-policy=G --turns=T --out=file.json`). Verdicts are
 > ARTIFACT-based, never exit-code-based — the Godot teardown flake corrupts exit codes. Use
-> `--no-report` to suppress automatic aggregation; use `--parallel 1` for live-model matchups.
+> `--no-report` to suppress automatic aggregation; `llm_local` with parallel workers emits a
+> warning, so use `--parallel 1` for live-model matchups.
 > Narrative vignettes:
 > `godot --headless --path . -s res://tools/make_game_narrative.gd -- --batch=<study>
 > --pick=median|longest|shortest` (or `--record=<file>`) → `<record>.narrative.md`, a

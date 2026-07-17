@@ -105,7 +105,8 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   explicit Red/Green policy identities to `reports/batches/<study>/games/`; verdicts are
   artifact-based; re-running resumes only valid records; `manifest.json` stamps matchups,
   commit, and per-game re-run command lines. The runner writes `report.md` automatically
-  (`--no-report` suppresses it). Live-model matchups should use `--parallel 1`.
+  (`--no-report` suppresses it). The runner warns when a live-model matchup uses more than one
+  worker; use `--parallel 1`.
 - **Outcome reports (research harness B3)** — `tools/make_batch_report.gd -- --batch=<study>`
   aggregates a batch's records into `report.md`: per-condition (scenario × Red policy × Green
   policy) win rates, turn/census/margin distributions, per-game loss means, a methods line
@@ -142,7 +143,8 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   budget's real cost is wall-clock on rambling turns). Use IPv4 (`127.0.0.1`, default) not
   `localhost`. Live-verified against local vLLM (model `jarvis`): seeds 20260710/20260711, both
   30/30 turns GAME OK; the second (post-fix) run had zero forfeited turns. `llm_local` now also
-  runs in either B7 batch seat (mixed or LLM-vs-LLM) and retains its per-seat JSONL replay log.
+  runs in either B7 batch seat (mixed or LLM-vs-LLM); mixed game logs include both seat
+  observations/actions so they remain bundle-ready.
 - **`roc_full_defense` scenario** — variant placing all 32 ROC brigades (124 battalions) at their
   real garrison hexes vs the default's 4 PLA amphibious brigades; select with
   `--scenario=roc_full_defense`. Gives AI-vs-AI games a multi-turn fight instead of the default

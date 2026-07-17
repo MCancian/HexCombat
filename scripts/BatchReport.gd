@@ -67,11 +67,20 @@ static func _append_record(agg: Dictionary, record: Dictionary) -> void:
 
 ## Version-1 records used one policy for both sides. Preserve their report compatibility.
 static func _policy_ids(record: Dictionary) -> Dictionary:
-	var legacy_policy := String(record.get("policy_id", "?"))
-	return {
-		"red": String(record.get("red_policy_id", legacy_policy)),
-		"green": String(record.get("green_policy_id", legacy_policy)),
-	}
+	var has_red_policy := record.has("red_policy_id")
+	var has_green_policy := record.has("green_policy_id")
+	assert(has_red_policy == has_green_policy,
+		"Game record must provide both red_policy_id and green_policy_id")
+	if has_red_policy:
+		return {
+			"red": String(record["red_policy_id"]),
+			"green": String(record["green_policy_id"]),
+		}
+	assert(record.has("policy_id"),
+		"Game record must provide per-seat policy IDs or legacy policy_id")
+	var legacy_policy := String(record["policy_id"])
+	assert(not legacy_policy.is_empty(), "Legacy policy_id must not be empty")
+	return {"red": legacy_policy, "green": legacy_policy}
 
 
 ## Sum per-game loss totals out of the turn digests. Red is always the attacker in ground

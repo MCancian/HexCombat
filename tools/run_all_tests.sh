@@ -219,6 +219,27 @@ for v in "${validators[@]}"; do
     fi
 done
 
+# ---- Batch runner Python validation ------------------------------------------
+write_phase "Batch runner Python validation"
+if command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN="python3"
+elif command -v python >/dev/null 2>&1; then
+    PYTHON_BIN="python"
+else
+    failures+=("Batch runner validation: no Python interpreter found")
+    PYTHON_BIN=""
+fi
+if [[ -n "$PYTHON_BIN" ]]; then
+    out=$(HEXCOMBAT_TEST_GODOT="$GODOT" "$PYTHON_BIN" "$SCRIPT_DIR/validate_batch_runner.py" 2>&1)
+    python_exit=$?
+    echo "$out"
+    if [[ $python_exit -ne 0 ]] || ! echo "$out" | grep -q '^PASS: batch runner validation succeeded$'; then
+        failures+=("Batch runner validation: failed (exit $python_exit)")
+    else
+        cecho green "Batch runner Python validation OK."
+    fi
+fi
+
 # ---- Phase 4: GdUnit4 suite ------------------------------------------------
 write_phase "Phase 4/4 — GdUnit4 suite (tests/)"
 # Verdict from the per-suite "Statistics:" lines, NOT the exit code: GdUnit

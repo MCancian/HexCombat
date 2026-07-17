@@ -153,6 +153,29 @@ foreach ($v in $validators) {
     }
 }
 
+# ---- Batch runner Python validation ------------------------------------------
+Write-Phase "Batch runner Python validation"
+$PythonBin = if (Get-Command python3 -ErrorAction SilentlyContinue) { "python3" } elseif (Get-Command python -ErrorAction SilentlyContinue) { "python" } else { "" }
+if ([string]::IsNullOrEmpty($PythonBin)) {
+    $failures.Add("Batch runner validation: no Python interpreter found")
+} else {
+    $priorGodot = $env:HEXCOMBAT_TEST_GODOT
+    $env:HEXCOMBAT_TEST_GODOT = $GodotBin
+    $out = & $PythonBin (Join-Path $PSScriptRoot "validate_batch_runner.py") 2>&1 | Out-String
+    $pythonExit = $LASTEXITCODE
+    if ($null -eq $priorGodot) {
+        Remove-Item Env:HEXCOMBAT_TEST_GODOT
+    } else {
+        $env:HEXCOMBAT_TEST_GODOT = $priorGodot
+    }
+    Write-Host $out
+    if ($pythonExit -ne 0 -or $out -notmatch "(?m)^PASS: batch runner validation succeeded$") {
+        $failures.Add("Batch runner validation: failed (exit $pythonExit)")
+    } else {
+        Write-Host "Batch runner Python validation OK." -ForegroundColor Green
+    }
+}
+
 # ---- Phase 4: GdUnit4 suite --------------------------------------------------
 Write-Phase "Phase 4/4 — GdUnit4 suite (tests/)"
 # Verdict from the per-suite "Statistics:" lines, NOT the exit code: GdUnit returns 100 for real test

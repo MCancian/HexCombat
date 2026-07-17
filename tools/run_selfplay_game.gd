@@ -50,8 +50,8 @@ func _initialize() -> void:
 		if fresh != null:
 			fresh.close()
 
-	var red_driver := _policy_driver(red_policy, has_llm_seat)
-	var green_driver := _policy_driver(green_policy, has_llm_seat)
+	var red_driver := _policy_driver(red_policy)
+	var green_driver := _policy_driver(green_policy)
 	var game: Dictionary = SelfPlayRunner.play_game_seats(
 		red_driver, green_driver, turns, base_seed, true)
 
@@ -74,8 +74,8 @@ func _initialize() -> void:
 	quit(0 if ok else 1)
 
 
-func _policy_driver(policy: Object, has_llm_seat: bool) -> Callable:
-	if _log_path.is_empty() or has_llm_seat:
+func _policy_driver(policy: Object) -> Callable:
+	if _log_path.is_empty() or policy is LLMPolicy:
 		return Callable(policy, "build_actions")
 	return Callable(self, "_logged_build_actions").bind(policy)
 

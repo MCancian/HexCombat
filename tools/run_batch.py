@@ -288,6 +288,7 @@ def run_batch(
     seeds: list[int],
     godot: str,
 ) -> int:
+    warn_live_llm_parallel(matchups, args.parallel)
     batch_dir = REPO_ROOT / "reports" / "batches" / args.name
     games_dir = batch_dir / "games"
     games_dir.mkdir(parents=True, exist_ok=True)
@@ -300,6 +301,15 @@ def run_batch(
         batch_dir, args.name, scenarios, matchups, seeds, args.turns, jobs, len(pending), failed
     )
     return finish_batch(args, godot, batch_dir, jobs, failed)
+
+
+def warn_live_llm_parallel(matchups: list[tuple[str, str]], parallel: int) -> None:
+    if parallel > 1 and any("llm_local" in matchup for matchup in matchups):
+        print(
+            "WARNING: live llm_local matchups should use --parallel 1 to avoid overloading "
+            "the local model server.",
+            file=sys.stderr,
+        )
 
 
 def print_batch_start(

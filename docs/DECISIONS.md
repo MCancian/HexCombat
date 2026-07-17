@@ -19,6 +19,12 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-17 — B7 replay and artifact hardening (USER-directed follow-up).** Mixed LLM/heuristic
+  matches now log both seats, malformed policy identity records assert instead of grouping under a
+  placeholder, and live-model parallelism warns. `validate_batch_runner.py` is part of both
+  canonical gates and covers these seams. Facts: `docs/systems/llm-api-selfplay.md`; operation:
+  `hexcombat-research-runs`; current behavior: `docs/STATUS.md`.
+
 - **2026-07-17 — Per-seat research matchups (B7; approved plan, agent implementation).**
   `run_selfplay_game.gd` now unconditionally uses the two-seat path; v2 records stamp
   `red_policy_id`/`green_policy_id`, while reports retain legacy-record fallback. The stdlib-only
