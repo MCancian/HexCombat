@@ -50,90 +50,23 @@ static func resolve(
 	dice: Dice,
 ) -> Dictionary:
 	# The crossing wave = BNs sailing this turn (sent cohorts). No wave -> no anti-ship phase.
-	var bns_at_sea: Array = []
-	var beach_set: Dictionary = {}
-	for entry in crossing_reserve:
-		for bn in entry.get("bns", []):
-			bns_at_sea.append(bn)
-		beach_set[int(entry.get("locked_beach", 0))] = true
+	var wave := _collect_crossing_wave(crossing_reserve)
+	var bns_at_sea: Array = wave["bns_at_sea"]
 	if bns_at_sea.is_empty():
-		return {
-			"summary": null,
-			"lost_ids": [],
-			"destroyed_by_type": {},
-			"escort_sam_consumed": {},
-			"bn_equiv_lost": 0,
-			"accumulator": lost_at_sea_accumulator,
-		}
+		return _no_wave_result(lost_at_sea_accumulator)
 
-	var target_beaches: Array = []
-	var target_tos: Array = []
-	var to_seen: Dictionary = {}
-	for beach_id in beach_set.keys():
-		if int(beach_id) <= 0:
-			continue
-		target_beaches.append(int(beach_id))
-		# Fail-loud beach->TO lookup (mirrors Theaters.to_for_beach against the passed map).
-		var to_num := 0
-		if int(beach_id) in beach_to_to:
-			to_num = int(beach_to_to[int(beach_id)])
-		else:
-			push_error("AntishipResolver: unknown beach id %d in beach_to_to" % int(beach_id))
-			assert(false)
-		if not to_seen.has(to_num):
-			to_seen[to_num] = true
-			target_tos.append(to_num)
-	target_beaches.sort()
-	target_tos.sort()
+	var target_areas := _target_areas_for(wave["beach_set"], beach_to_to)
+	var target_beaches: Array = target_areas["beaches"]
+	var target_tos: Array = target_areas["tos"]
 
-	# Apply the IJFS writeback to the Green firing systems: destroyed launchers are permanently
-	# removed from quantity; suppressed launchers sit out this turn (reduced firing %).
-	var ijfs_destroyed: Dictionary = writeback.antiship_destroyed_by_type if writeback != null else {}
-	var ijfs_suppressed: Dictionary = writeback.antiship_suppressed_by_type if writeback != null else {}
-	# TOs whose C2 (type 99) the IJFS suppressed lose over-the-horizon targeting: every surviving
-	# anti-ship system in that TO fires at C2_SUPPRESSED_FIRE_MULTIPLIER of capacity. Computed up
-	# front because C2 itself is skipped (continue) in the firing loop below and never fires.
-	var c2_suppressed_tos: Dictionary = {}
-	for system_value in antiship_systems:
-		var c2_system: AntishipSystem = system_value
-		if c2_system.type_id != AntishipCalculator.SYSTEM_TYPE_C2:
-			continue
-		var c2_key := AntishipCalculator.encode_key(c2_system.to_number, c2_system.type_id)
-		if int(ijfs_suppressed.get(c2_key, 0)) > 0:
-			c2_suppressed_tos[c2_system.to_number] = true
-	var firing_percentages: Dictionary = {}
-	var target_locations: Array = []
-	var loc_seen: Dictionary = {}
-	for system_value in antiship_systems:
-		var system: AntishipSystem = system_value
-		var key := AntishipCalculator.encode_key(system.to_number, system.type_id)
-		# `killed` is the CUMULATIVE total destroyed across all IJFS days (see IjfsResolver
-		# writeback invariant), so set quantity from original_quantity - idempotent across turns.
-		var killed := int(ijfs_destroyed.get(key, 0))
-		system.quantity = maxi(0, system.original_quantity - killed)
-		system.destroyed = killed
-		if system.type_id == AntishipCalculator.SYSTEM_TYPE_C2:
-			continue
-		var avail := maxi(0, system.quantity)
-		if avail <= 0:
-			continue
-		var suppressed := mini(avail, int(ijfs_suppressed.get(key, 0)))
-		var fire_pct := DEFAULT_FIRE_PCT * float(avail - suppressed) / float(avail)
-		# C2 suppression stacks on direct per-system suppression: the TO loses targeting entirely.
-		if c2_suppressed_tos.has(system.to_number):
-			fire_pct *= C2_SUPPRESSED_FIRE_MULTIPLIER
-		firing_percentages[key] = fire_pct
-		if not loc_seen.has(system.to_number):
-			loc_seen[system.to_number] = true
-			target_locations.append(system.to_number)
-	target_locations.sort()
+	var firing := _apply_writeback_to_systems(antiship_systems, writeback)
 
 	var crossing_config := AntishipLoaders.load_crossing_config(CROSSING_PATH)
 	var combat_catalog := AntishipLoaders.load_combat_catalog(CATALOG_PATH)
 	# Magazine gating is left null for this wiring: rebuilt-per-turn it would start full and never
 	# bind; meaningful gating needs persistent cross-turn magazine state (follow-up, PLAN.md D3-D).
 	var plan := AntishipCalculator.build_firing_plan(
-		antiship_systems, {}, target_locations, firing_percentages, {}, null)
+		antiship_systems, {}, firing["target_locations"], firing["firing_percentages"], {}, null)
 	var attrition := AntishipCalculator.resolve_launch_attrition(
 		antiship_systems, plan["allocation_plan"], plan["destroyed_firing_plan"],
 		crossing_config["launch_attrition"], dice)
@@ -142,30 +75,16 @@ static func resolve(
 	# Sent fleet (D3-D BN<->ship mapping): the sealift phase already committed which hulls sail this
 	# turn, so build the crossing snapshots straight from sent_by_type (deterministic ship_type order)
 	# instead of re-deriving a minimum-lift fleet here (plan 0004 D3).
-	var snapshots := _snapshots_from_sent(sent_by_type)
 	var crossing := AntishipCrossing.resolve_crossing_damage(
-		systems_fired, snapshots, combat_catalog, crossing_config,
+		systems_fired, _snapshots_from_sent(sent_by_type), combat_catalog, crossing_config,
 		target_tos, dice, active_tos, to_adjacency, escort_sam)
 
-	# Combine crossing + mine ship losses; mines run on the surviving crossing fleet pool.
-	var destroyed_by_type: Dictionary = {}
-	var crossing_destroyed: Dictionary = crossing["destroyed_by_ship_type"]
-	var fleet_pool: Dictionary = sent_by_type.duplicate(true)
-	for t in crossing_destroyed.keys():
-		destroyed_by_type[t] = int(destroyed_by_type.get(t, 0)) + int(crossing_destroyed[t])
-		fleet_pool[t] = maxi(0, int(fleet_pool.get(t, 0)) - int(crossing_destroyed[t]))
-	var minefields := AntishipLoaders.load_minefields(MINEFIELDS_PATH)
-	var sweepers := AntishipLoaders.available_minesweepers(MINEFIELDS_PATH)
-	var mine_config := AntishipLoaders.load_mine_config(MINEFIELDS_PATH)
-	var mine_res := MineWarfareService.resolve_ship_losses(
-		minefields, target_beaches, distribute_minesweepers(sweepers, target_beaches), fleet_pool,
-		dice, mine_ship_meta(ship_defs, mine_config.get("transit", {})), mine_config)
-	for beach_res in mine_res:
-		for t in (beach_res["ship_loss_counts"] as Dictionary).keys():
-			destroyed_by_type[t] = int(destroyed_by_type.get(t, 0)) + int(beach_res["ship_loss_counts"][t])
+	var mine_transit := _resolve_mine_transit(
+		sent_by_type, crossing["destroyed_by_ship_type"], target_beaches, ship_defs, dice)
+	var destroyed_by_type: Dictionary = mine_transit["destroyed_by_type"]
 
 	# Ship losses -> BNs lost at sea (carry the fractional accumulator across turns). Hull losses are
-	# applied to the sealift cohorts + fleet by the caller; this resolver only reports them.
+	# applied to the sealift cohorts + fleet by the caller; this resolver only computes them.
 	var losses := ShipLoadingModel.resolve_bn_losses(
 		destroyed_by_type, ship_capacity_by_type(ship_defs), bns_at_sea, lost_at_sea_accumulator, dice)
 
@@ -179,7 +98,7 @@ static func resolve(
 	summary.bns_lost_at_sea = int(losses["bn_equiv_lost"])
 	summary.target_beaches = target_beaches
 	summary.target_tos = target_tos
-	summary.mine_status = mine_status_summary(mine_res)
+	summary.mine_status = mine_status_summary(mine_transit["mine_results"])
 	return {
 		"summary": summary,
 		"lost_ids": losses["lost_ids"],
@@ -188,6 +107,127 @@ static func resolve(
 		"bn_equiv_lost": int(losses["bn_equiv_lost"]),
 		"accumulator": float(losses["accumulator"]),
 	}
+
+
+## Flatten the sailing reserve entries into the BN wave and the set of locked beaches.
+static func _collect_crossing_wave(crossing_reserve: Array) -> Dictionary:
+	var bns_at_sea: Array = []
+	var beach_set: Dictionary = {}
+	for entry in crossing_reserve:
+		for bn in entry.get("bns", []):
+			bns_at_sea.append(bn)
+		beach_set[int(entry.get("locked_beach", 0))] = true
+	return {"bns_at_sea": bns_at_sea, "beach_set": beach_set}
+
+
+static func _no_wave_result(lost_at_sea_accumulator: float) -> Dictionary:
+	return {
+		"summary": null,
+		"lost_ids": [],
+		"destroyed_by_type": {},
+		"escort_sam_consumed": {},
+		"bn_equiv_lost": 0,
+		"accumulator": lost_at_sea_accumulator,
+	}
+
+
+## Sorted target beach ids and their TOs. Fail-loud beach->TO lookup (mirrors
+## Theaters.to_for_beach against the passed map).
+static func _target_areas_for(beach_set: Dictionary, beach_to_to: Dictionary) -> Dictionary:
+	var target_beaches: Array = []
+	var target_tos: Array = []
+	var to_seen: Dictionary = {}
+	for beach_id in beach_set.keys():
+		if int(beach_id) <= 0:
+			continue
+		target_beaches.append(int(beach_id))
+		var to_number := 0
+		if int(beach_id) in beach_to_to:
+			to_number = int(beach_to_to[int(beach_id)])
+		else:
+			push_error("AntishipResolver: unknown beach id %d in beach_to_to" % int(beach_id))
+			assert(false)
+		if not to_seen.has(to_number):
+			to_seen[to_number] = true
+			target_tos.append(to_number)
+	target_beaches.sort()
+	target_tos.sort()
+	return {"beaches": target_beaches, "tos": target_tos}
+
+
+## Apply the IJFS writeback to the Green firing systems: destroyed launchers are permanently
+## removed from quantity; suppressed launchers sit out this turn (reduced firing %). Mutates the
+## passed AntishipSystem Resources (the sanctioned kind). Returns the derived firing plan inputs
+## {"firing_percentages": key -> pct, "target_locations": sorted TO numbers}.
+static func _apply_writeback_to_systems(antiship_systems: Array, writeback: IjfsWriteback) -> Dictionary:
+	var ijfs_destroyed: Dictionary = writeback.antiship_destroyed_by_type if writeback != null else {}
+	var ijfs_suppressed: Dictionary = writeback.antiship_suppressed_by_type if writeback != null else {}
+	# TOs whose C2 (type 99) the IJFS suppressed lose over-the-horizon targeting: every surviving
+	# anti-ship system in that TO fires at C2_SUPPRESSED_FIRE_MULTIPLIER of capacity. Computed up
+	# front because C2 itself is skipped (continue) in the firing loop below and never fires.
+	var c2_suppressed_tos: Dictionary = {}
+	for system_value in antiship_systems:
+		var c2_system: AntishipSystem = system_value
+		if c2_system.type_id != AntishipCalculator.SYSTEM_TYPE_C2:
+			continue
+		var c2_key := AntishipCalculator.encode_key(c2_system.to_number, c2_system.type_id)
+		if int(ijfs_suppressed.get(c2_key, 0)) > 0:
+			c2_suppressed_tos[c2_system.to_number] = true
+
+	var firing_percentages: Dictionary = {}
+	var target_locations: Array = []
+	var location_seen: Dictionary = {}
+	for system_value in antiship_systems:
+		var system: AntishipSystem = system_value
+		var key := AntishipCalculator.encode_key(system.to_number, system.type_id)
+		# `killed` is the CUMULATIVE total destroyed across all IJFS days (see IjfsResolver
+		# writeback invariant), so set quantity from original_quantity - idempotent across turns.
+		var killed := int(ijfs_destroyed.get(key, 0))
+		system.quantity = maxi(0, system.original_quantity - killed)
+		system.destroyed = killed
+		if system.type_id == AntishipCalculator.SYSTEM_TYPE_C2:
+			continue
+		var available := maxi(0, system.quantity)
+		if available <= 0:
+			continue
+		var suppressed := mini(available, int(ijfs_suppressed.get(key, 0)))
+		var fire_pct := DEFAULT_FIRE_PCT * float(available - suppressed) / float(available)
+		# C2 suppression stacks on direct per-system suppression: the TO loses targeting entirely.
+		if c2_suppressed_tos.has(system.to_number):
+			fire_pct *= C2_SUPPRESSED_FIRE_MULTIPLIER
+		firing_percentages[key] = fire_pct
+		if not location_seen.has(system.to_number):
+			location_seen[system.to_number] = true
+			target_locations.append(system.to_number)
+	target_locations.sort()
+	return {"firing_percentages": firing_percentages, "target_locations": target_locations}
+
+
+## Combine crossing + mine ship losses; mines run on the surviving crossing fleet pool.
+## Returns {"destroyed_by_type": ship_type -> hulls lost (crossing + mines),
+## "mine_results": per-beach MineWarfareService resolution rows}.
+static func _resolve_mine_transit(
+	sent_by_type: Dictionary,
+	crossing_destroyed: Dictionary,
+	target_beaches: Array,
+	ship_defs: Dictionary,
+	dice: Dice,
+) -> Dictionary:
+	var destroyed_by_type: Dictionary = {}
+	var fleet_pool: Dictionary = sent_by_type.duplicate(true)
+	for ship_type in crossing_destroyed.keys():
+		destroyed_by_type[ship_type] = int(destroyed_by_type.get(ship_type, 0)) + int(crossing_destroyed[ship_type])
+		fleet_pool[ship_type] = maxi(0, int(fleet_pool.get(ship_type, 0)) - int(crossing_destroyed[ship_type]))
+	var minefields := AntishipLoaders.load_minefields(MINEFIELDS_PATH)
+	var sweepers := AntishipLoaders.available_minesweepers(MINEFIELDS_PATH)
+	var mine_config := AntishipLoaders.load_mine_config(MINEFIELDS_PATH)
+	var mine_results := MineWarfareService.resolve_ship_losses(
+		minefields, target_beaches, distribute_minesweepers(sweepers, target_beaches), fleet_pool,
+		dice, mine_ship_meta(ship_defs, mine_config.get("transit", {})), mine_config)
+	for beach_result in mine_results:
+		for ship_type in (beach_result["ship_loss_counts"] as Dictionary).keys():
+			destroyed_by_type[ship_type] = int(destroyed_by_type.get(ship_type, 0)) + int(beach_result["ship_loss_counts"][ship_type])
+	return {"destroyed_by_type": destroyed_by_type, "mine_results": mine_results}
 
 
 ## Build crossing snapshots [{ship_type, surviving_sent}] from the sealift-committed sent_by_type,
