@@ -80,7 +80,7 @@
       },
       "moveable": {
         "active": 0.95,
-        "hiding": 0.50
+        "hiding": 0.5
       }
     },
     "static_target_rule": "Static targets are known_to_red=true and detected_this_turn=true unless destroyed; they do not use this probability calculation."
@@ -166,57 +166,6 @@
     "purpose": "Scenario parameters for standalone daily IJFS detection/strike calculator.",
     "scope_note": "One-day module called by an existing day-based simulation. This file intentionally omits ijfs_days, reattack-suppressed-targets, and partial-salvo settings.",
     "version": "0.1"
-  },
-  "mobile_target_destroy_caps": {
-    "active": {
-      "Inorganic-Fast": 0.08,
-      "Inorganic-Slow": 0.02,
-      "Organic": 0.2
-    },
-    "description": "Apply these runtime caps to probability_destroyed before resolving mobile-target attacks. Active posture uses full cap; hiding posture uses hidden cap. Caps apply even when target has been detected.",
-    "hiding": {
-      "Inorganic-Fast": 0.04,
-      "Inorganic-Slow": 0.01,
-      "Organic": 0.1
-    },
-    "subcategory_overrides": {
-      "Surface Combatant – Destroyer and Frigate": {
-        "active": {
-          "Inorganic-Slow": 0.95,
-          "Inorganic-Fast": 0.95,
-          "Organic": 0.95
-        },
-        "hiding": {
-          "Inorganic-Slow": 0.8,
-          "Inorganic-Fast": 0.8,
-          "Organic": 0.8
-        }
-      },
-      "Missile Patrol Boat": {
-        "active": {
-          "Inorganic-Slow": 0.95,
-          "Inorganic-Fast": 0.95,
-          "Organic": 0.95
-        },
-        "hiding": {
-          "Inorganic-Slow": 0.8,
-          "Inorganic-Fast": 0.8,
-          "Organic": 0.8
-        }
-      },
-      "Stealth Corvette / Fast Attack Craft": {
-        "active": {
-          "Inorganic-Slow": 0.95,
-          "Inorganic-Fast": 0.95,
-          "Organic": 0.95
-        },
-        "hiding": {
-          "Inorganic-Slow": 0.8,
-          "Inorganic-Fast": 0.8,
-          "Organic": 0.8
-        }
-      }
-    }
   },
   "munition_inventory_model": {
     "decrement_rule": "Always decrement by rounds_expended_per_engagement.",

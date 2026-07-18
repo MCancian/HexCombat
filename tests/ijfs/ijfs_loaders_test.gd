@@ -101,7 +101,7 @@ func _minimal_scenario(extra: Dictionary) -> Dictionary:
 		"red_firing_capacity": {},
 		"isr_sources": [],
 		"target_release": [],
-		"mobile_target_destroy_caps": {},
+		"strike_probability_modifiers": [],
 	}
 	for k in extra.keys():
 		base[k] = extra[k]
@@ -127,13 +127,18 @@ func test_intel_locked_strike_bonus_synthesizes_modifier() -> void:
 func test_intel_locked_strike_bonus_zero_is_noop() -> void:
 	var path := _write_json("scenario_no_bonus.json", _minimal_scenario({"intel_locked_antiship_strike_bonus": 0.0}))
 	var scenario := IjfsLoaders.load_scenario(path)
-	assert_bool(scenario.has("strike_probability_modifiers")).is_false()
+	assert_int(_intel_locked_modifiers(scenario).size()).is_equal(0)
 
 
 func test_intel_locked_strike_bonus_absent_is_noop() -> void:
 	var path := _write_json("scenario_absent_bonus.json", _minimal_scenario({}))
 	var scenario := IjfsLoaders.load_scenario(path)
-	assert_bool(scenario.has("strike_probability_modifiers")).is_false()
+	assert_int(_intel_locked_modifiers(scenario).size()).is_equal(0)
+
+
+func _intel_locked_modifiers(scenario: Dictionary) -> Array:
+	return (scenario.get("strike_probability_modifiers", []) as Array).filter(func(m: Dictionary) -> bool:
+		return String(m.get("modifier_id", "")) == "intel_locked_antiship_precision_strike")
 
 
 # Re-applying the knob on a scenario dict it already synthesized into (as

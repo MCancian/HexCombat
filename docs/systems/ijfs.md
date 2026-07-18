@@ -105,10 +105,10 @@ in `IjfsEngine.run_daily`'s header comment — read it for the authoritative dra
 ### Strike (`IjfsStrike.gd`)
 
 - **Probability model**: `final = clamp((base + add_sum) * mult_product)` from
-  `strike_probability_modifiers` in scenario config. Falls back to legacy mobile-target cap system.
+  `strike_probability_modifiers` in scenario config (an empty/absent modifier list yields `base` only).
 - **Suppression** (if not destroyed): roll `probability_suppressed_if_not_destroyed` from pairing
 - Data tables used: `pairings.json` (base probabilities per munition-target pair),
-  `scenario.json` (`strike_probability_modifiers`, `mobile_target_destroy_caps`)
+  `scenario.json` (`strike_probability_modifiers`)
 - **Calibration knob** (plan 0001, crossing-lethality, USER dial-in 2026-07-11):
   `scenario.intel_locked_antiship_strike_bonus` (float; golden = 0.20) is a scalar add-bonus to
   strike probability against exquisite-intel-locked anti-ship coastal launchers (category
@@ -200,7 +200,7 @@ whole count from the firing plan.
 | `data/ijfs/targets_master.json` | Top-level `metadata` + `targets[]` array of target rows with `target_id, category, subcategory, quantity, mobility, detectability_*` | 2489 | `IjfsLoaders.load_targets` |
 | `data/ijfs/red_munitions.json` | `metadata` + `munitions[]` with `munition_id, category, inventory_remaining_default, rounds_per_engagement_default` | 453 | `IjfsLoaders.load_munitions` |
 | `data/ijfs/munition_target_pairings.json` | `metadata, target_effect_profiles[], pairings[]` — 52 profiles, 8 munitions, 333 pairings with `probability_destroyed, rounds_expended_per_engagement` | 10183 | `IjfsLoaders.load_pairings` |
-| `data/ijfs/ijfs_scenario.json` | `schema_version: 1, china_isr_pools, detection_model, taiwan_air_defense_health, prelanding, red_firing_capacity, isr_sources, target_release, strike_probability_modifiers, mobile_target_destroy_caps, targeting_doctrine` | 615 | `IjfsLoaders.load_scenario` |
+| `data/ijfs/ijfs_scenario.json` | `schema_version: 1, china_isr_pools, detection_model, taiwan_air_defense_health, prelanding, red_firing_capacity, isr_sources, target_release, strike_probability_modifiers, targeting_doctrine` | 566 | `IjfsLoaders.load_scenario` |
 | `data/ijfs/red_air_oob.json` | `model_version, red_air_oob[]` — 11 rows with class/role/squadrons/aircraft_per_sqn | 16 | `IjfsLoaders.load_oob` |
 | `data/ijfs/air_classes.json` | `model_version, reference_isr_sum, classes{}` — 11 classes with `kind, rcs, wvr, isr_value, sead_eff` | 17 | `IjfsLoaders.load_air_classes` |
 | `data/ijfs/sam_capabilities.json` | `model_version, fallback_by_category, sam_score_by_subcategory` | 17 | `IjfsLoaders.load_sam_capabilities` |
@@ -215,7 +215,7 @@ whole count from the firing plan.
 | **Detection** | `IjfsDetection.gd` | `detection.py` + `isr_sources.py` | **1:1** — every `evaluate_isr_source` curve mode (exp_decay, linear, weibull, logistic, gompertz, from_attrition, piecewise) matches; `_apply_antiship_exposure_modifier` inlined rather than importing from `antiship_exposure.py`. |
 | **Targeting** | `IjfsTargeting.gd` | `targeting.py` | **1:1** — `targets_to_attack`, `pairing_matches_target`, `select_munition_with_doctrine`, doctrine matching, `apply_exquisite_intel` all match signature-for-signature. |
 | **Engagement** | `IjfsEngagement.gd` | `engagement.py` | **1:1** — constants, SEAD power formula, p_destroy, suppression factor, return-fire, free shot all identical. Returns dict instead of tuple. |
-| **Strike Pk** | `IjfsStrike.gd` | `strike_probability.py` | **1:1** — modifier matching, `probability_context`, `evaluate_strike_probability`, `_legacy_cap_probability` all match. |
+| **Strike Pk** | `IjfsStrike.gd` | `strike_probability.py` | modifier matching, `probability_context`, `evaluate_strike_probability` match. The TIV `_legacy_cap_probability` / `mobile_target_destroy_caps` path was dropped 2026-07-17 (never consumed once the scenario carries `strike_probability_modifiers`; see DECISIONS). |
 | **Strike resolution** | `IjfsStrike.resolve_strike` | `strike_resolution.py` | **1:1** — inventory decrement, destruction roll, suppression roll, log shape identical. |
 | **Firing capacity** | `IjfsFiringCapacity.gd` | `firing_capacity.py` | **1:1** — `FiringCapacityBudget` and `OrganicStrikeBudget` logic matches (floor, platform-kind health ratio). |
 | **AD health** | `IjfsAdHealth.gd` | `ad_health.py` | **1:1** — categories, weighting, formula identical. |

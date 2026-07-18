@@ -57,7 +57,6 @@ static func evaluate_strike_probability(target: IjfsTarget, pairing: IjfsPairing
 			"modifier_add_sum": 0.0,
 			"modifier_mult_product": 1.0,
 			"modifiers": [],
-			"legacy_cap_applied": null,
 			"formula": "base_only",
 		}
 
@@ -91,17 +90,8 @@ static func evaluate_strike_probability(target: IjfsTarget, pairing: IjfsPairing
 		"modifier_add_sum": add_sum,
 		"modifier_mult_product": mult_product,
 		"modifiers": applied,
-		"legacy_cap_applied": null,
 		"formula": "base_plus_adds_times_mults",
 	}
-
-
-static func destruction_probability(target: IjfsTarget, pairing: IjfsPairing, munition: IjfsMunition, scenario: Dictionary, phase: Variant = null) -> Dictionary:
-	var modifiers_value: Variant = scenario.get("strike_probability_modifiers")
-	var modifiers: Array = [] if modifiers_value == null else modifiers_value
-	if not modifiers.is_empty():
-		return evaluate_strike_probability(target, pairing, munition, scenario, phase)
-	return _legacy_cap_probability(target, pairing, munition, scenario)
 
 
 static func resolve_strike(
@@ -133,7 +123,7 @@ static func resolve_strike(
 	if not organic:
 		munition.inventory_remaining -= rounds
 
-	var probability := destruction_probability(target, pairing, munition, scenario, phase)
+	var probability := evaluate_strike_probability(target, pairing, munition, scenario, phase)
 	var p_destroy := float(probability["final"])
 	var roll := dice.randf()
 	var destroyed := roll <= p_destroy
@@ -170,7 +160,6 @@ static func resolve_strike(
 		"munition_id": munition.munition_id,
 		"rounds_expended": rounds,
 		"probability_destroyed_base": probability["base"],
-		"mobile_cap_applied": probability.get("legacy_cap_applied"),
 		"probability_destroyed_add_sum": probability.get("modifier_add_sum", 0.0),
 		"probability_destroyed_multiplier_product": probability.get("modifier_mult_product", 1.0),
 		"probability_destroyed_modifiers": probability.get("modifiers", []),
@@ -181,45 +170,6 @@ static func resolve_strike(
 		"probability_suppressed_if_not_destroyed": p_suppressed,
 		"suppression_roll": suppression_roll,
 		"suppressed": suppressed,
-	}
-
-
-static func _resolve_cap(target: IjfsTarget, munition: IjfsMunition, scenario: Dictionary) -> Variant:
-	var caps_value: Variant = scenario.get("mobile_target_destroy_caps")
-	var caps: Dictionary = {} if caps_value == null else caps_value
-	var overrides_value: Variant = caps.get("subcategory_overrides")
-	var overrides: Dictionary = {} if overrides_value == null else overrides_value
-	var sc_override_value: Variant = overrides.get(target.subcategory)
-	var sc_override: Dictionary = {} if sc_override_value == null else sc_override_value
-	var posture := "active" if target.posture == "active" else "hiding"
-	var posture_override_value: Variant = sc_override.get(posture)
-	var posture_override: Dictionary = {} if posture_override_value == null else posture_override_value
-	var override_val: Variant = posture_override.get(munition.category)
-	if override_val != null:
-		return float(override_val)
-	var posture_caps_value: Variant = caps.get(posture)
-	var posture_caps: Dictionary = {} if posture_caps_value == null else posture_caps_value
-	var cap: Variant = posture_caps.get(munition.category)
-	if cap != null:
-		return float(cap)
-	return null
-
-
-static func _legacy_cap_probability(target: IjfsTarget, pairing: IjfsPairing, munition: IjfsMunition, scenario: Dictionary) -> Dictionary:
-	var base := float(pairing.probability_destroyed)
-	var cap: Variant = null
-	if target.mobility == "mobile" and not target.intel_locked:
-		cap = _resolve_cap(target, munition, scenario)
-		if cap != null:
-			base = min(base, float(cap))
-	return {
-		"base": _clamp01(float(pairing.probability_destroyed)),
-		"final": _clamp01(base),
-		"modifier_add_sum": 0.0,
-		"modifier_mult_product": 1.0,
-		"modifiers": [],
-		"legacy_cap_applied": cap,
-		"formula": "legacy_mobile_cap",
 	}
 
 

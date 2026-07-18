@@ -136,7 +136,7 @@ func _validate_pairings(pairings: Array[IjfsPairing]) -> void:
 func _validate_scenario_blocks(scenario: Dictionary) -> void:
 	for key in ["detection_model", "isr_sources", "taiwan_air_defense_health", "red_firing_capacity", "targeting_doctrine", "target_release", "prelanding"]:
 		_check(scenario.has(key), "Scenario missing required block %s" % key)
-	_check(scenario.has("strike_probability_modifiers") or scenario.has("mobile_target_destroy_caps"), "Scenario missing strike_probability_modifiers or mobile_target_destroy_caps")
+	_check(scenario.has("strike_probability_modifiers"), "Scenario missing strike_probability_modifiers")
 	print("Scenario schema blocks validated")
 
 

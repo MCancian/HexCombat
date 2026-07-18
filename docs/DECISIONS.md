@@ -19,6 +19,23 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-17 — Removed the legacy mobile-target-destroy-cap Pk path (USER call, refactor idea #3).**
+  `IjfsStrike._legacy_cap_probability`/`_resolve_cap`, the `mobile_target_destroy_caps` scenario
+  block, and the always-null `mobile_cap_applied`/`legacy_cap_applied` strike-log fields are deleted.
+  The path was inert in production: `destruction_probability` only reached it when
+  `strike_probability_modifiers` was empty, and the shipped scenario always carries modifiers (it was
+  already documented "dormant"). `strike_probability_modifiers` is now a required scenario block;
+  `evaluate_strike_probability` is the sole Pk entry (empty list = base only). Golden-preserving (no
+  strike outcome changed) — no re-baseline. Facts: `docs/systems/ijfs.md` §4 Strike. (Stale mention
+  remains in `docs/systems/html/antiship_lethality_knobs.html`, a dated analysis snapshot.)
+
+- **2026-07-17 — IJFS maneuver casualties now span all warmup days (Plan 0009 follow-up; USER call).**
+  `compute_writeback` read maneuver kills from the final day's `ledgers` only, so multi-day warmup
+  kills never decremented the OOB (anti-ship was already cumulative/state-based). Now
+  `IjfsResolver.resolve` accumulates every day's strike log. Golden re-baselines (PASS lines are
+  truth): `validate_golden_victory` 26/88 → 25/76, `validate_cleanup` casualties=8/feba=-0.23 →
+  casualties=6/feba=0.34. Plan 0009's 0.15 dial predates this — its sweep should be re-run.
+
 - **2026-07-17 — CRBM heavy-volley maneuver-attrition knob (Plan 0009; USER design call).** Red now
   fires massive CRBM volleys at ROC maneuver battalions to convert its idle missile inventory into
   real attrition despite the one-attack-per-target-per-day rule. Two coupled scenario knobs in

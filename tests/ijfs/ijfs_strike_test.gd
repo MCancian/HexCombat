@@ -33,26 +33,6 @@ func test_base_only_path_when_no_modifiers() -> void:
 	assert_array(result["modifiers"]).is_empty()
 
 
-func test_legacy_mobile_cap_applies_only_to_unlocked_mobile_targets() -> void:
-	var scenario := _legacy_cap_scenario(0.25)
-	var pairing := _pairing(0.8, 0.0, 1)
-	var munition := _munition("m1", "Inorganic-Fast", 10)
-
-	var capped := IjfsStrike.destruction_probability(_target("mobile", "mobile", "active"), pairing, munition, scenario)
-	assert_float(capped["legacy_cap_applied"]).is_equal_approx(0.25, 0.000001)
-	assert_float(capped["final"]).is_equal_approx(0.25, 0.000001)
-
-	var locked_target := _target("locked", "mobile", "active")
-	locked_target.intel_locked = true
-	var locked := IjfsStrike.destruction_probability(locked_target, pairing, munition, scenario)
-	assert_object(locked["legacy_cap_applied"]).is_null()
-	assert_float(locked["final"]).is_equal_approx(0.8, 0.000001)
-
-	var static_result := IjfsStrike.destruction_probability(_target("static", "static", "active"), pairing, munition, scenario)
-	assert_object(static_result["legacy_cap_applied"]).is_null()
-	assert_float(static_result["final"]).is_equal_approx(0.8, 0.000001)
-
-
 func test_resolve_strike_inventory_rules_and_destroy_side_effects() -> void:
 	var inorganic := _munition("m1", "Inorganic-Fast", 1)
 	var inventory := {"m1": inorganic}
@@ -136,15 +116,6 @@ func _munition(munition_id: String, category: String, remaining: int) -> IjfsMun
 	munition.category = category
 	munition.inventory_remaining = remaining
 	return munition
-
-
-func _legacy_cap_scenario(active_cap: float) -> Dictionary:
-	return {
-		"mobile_target_destroy_caps": {
-			"active": {"Inorganic-Fast": active_cap},
-			"hiding": {"Inorganic-Fast": active_cap / 2.0},
-		}
-	}
 
 
 func _modifier_ids(modifiers: Array) -> Array[String]:

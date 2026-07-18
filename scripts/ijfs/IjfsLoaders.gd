@@ -581,8 +581,8 @@ static func _validate_ijfs_config_blocks(scenario: Dictionary) -> void:
 	for rule in scenario.get("target_release", []):
 		if not (rule as Dictionary).has("release_day"):
 			_fail("TARGET_RELEASE_INVALID: rule missing release_day")
-	if not scenario.has("strike_probability_modifiers") and not scenario.has("mobile_target_destroy_caps"):
-		_fail("CONFIG_SCHEMA_MISMATCH: missing strike_probability_modifiers or mobile_target_destroy_caps")
+	if not scenario.has("strike_probability_modifiers"):
+		_fail("CONFIG_SCHEMA_MISMATCH: missing strike_probability_modifiers")
 	for modifier in scenario.get("strike_probability_modifiers", []):
 		var op := String(modifier.get("operation", "")).to_lower()
 		if op not in STRIKE_MODIFIER_OPERATIONS:
