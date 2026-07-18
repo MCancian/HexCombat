@@ -21,19 +21,3 @@ static func fresh_ijfs_scenario(game_state) -> Dictionary:
 	return game_state.ijfs_state.scenario
 
 
-static func mean(samples: Array) -> float:
-	if samples.is_empty():
-		return 0.0
-	var acc := 0.0
-	for v in samples:
-		acc += float(v)
-	return acc / float(samples.size())
-
-
-static func stdev(samples: Array, mean_val: float) -> float:
-	if samples.size() < 2:
-		return 0.0
-	var acc := 0.0
-	for v in samples:
-		acc += (float(v) - mean_val) * (float(v) - mean_val)
-	return sqrt(acc / float(samples.size() - 1))

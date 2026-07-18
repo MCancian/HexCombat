@@ -209,10 +209,10 @@ need** (USER call: deferred).
   `validate_batch_runner.py` are the gate-side guards.
 
 ## Checklist
-- [ ] Phase A — `DataOverrides` + 3-helper seam + validator + `run_selfplay_game` wiring; gate green.
-- [ ] Phase B — record schema + parity capture + retrofit both sweeps (mines-only floor kept,
+- [x] Phase A — DataOverrides + 3-helper seam + validator + run_selfplay_game wiring; gate green.
+- [x] Phase B — record schema + parity capture + retrofit both sweeps (mines-only floor kept,
   census/reference dropped); parity exact; gate green.
-- [ ] Phase C — `sweep_metrics.py` + `make_sweep_report.py`; sweeps' stats move to python.
+- [x] Phase C — sweep_metrics.py + make_sweep_report.py; sweeps' stats move to python.
 - [ ] Phase D — `run_sweep.py` + `run_batch.py --overrides/--out-root` + `--run-past-game-over`;
   equivalence check; delete `run_sweep.ps1`; gate green.
 - [ ] Phase E — `run_sweep_cells.gd` backend + canned specs; parity re-check; delete both bespoke

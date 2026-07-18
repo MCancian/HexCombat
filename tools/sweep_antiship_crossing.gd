@@ -49,14 +49,12 @@ func _run_once(initial_count: int, bonus: float, run_seed: int = SEED) -> Dictio
 
 
 # Run N seeds for a cell, write the cell JSON, and return the mean.
-func _run_cell(initial_count: int, bonus: float, n_seeds: int) -> Dictionary:
-	var samples_pct: Array[float] = []
+func _run_cell(initial_count: int, bonus: float, n_seeds: int) -> void:
 	var cell_samples: Array[Dictionary] = []
 	
 	for s in range(n_seeds):
 		var run_seed = SEED + s
 		var summary = _run_once(initial_count, bonus, run_seed)
-		samples_pct.append(_loss_pct(summary))
 		cell_samples.append({
 			"seed": run_seed,
 			"wave_bns": _wave_size(summary),
@@ -64,10 +62,6 @@ func _run_cell(initial_count: int, bonus: float, n_seeds: int) -> Dictionary:
 		})
 		
 	_write_cell(initial_count, bonus, cell_samples)
-	return {
-		"mean": IjfsSweepSupport.mean(samples_pct),
-		"stdev": IjfsSweepSupport.stdev(samples_pct, IjfsSweepSupport.mean(samples_pct))
-	}
 
 
 func _write_cell(ic: int, bonus: float, cell_samples: Array) -> void:
@@ -181,22 +175,20 @@ func _print_breakdown(label: String, summary: Dictionary) -> void:
 		crossing_hulls, mine_hulls, total_hulls])
 
 
-# Full grid, N=30 seeds/condition (plan 0001 checklist item 2): mean +/- stdev crossing-loss %%
-# per (initial_count, intel_locked strike-bonus) cell, common seed set SEED..SEED+29 across every
-# cell so differences are attributable to the knobs, not seed variance.
+# Full grid, N=30 seeds/condition (plan 0001 checklist item 2):
+# common seed set SEED..SEED+29 across every cell so differences are attributable to the knobs, not seed variance.
 func _run_sweep() -> void:
 	var counts := [0, 2, 4, 8, 12, 16, 24, 36, 50, 73]
 	var bonuses := [0.0, 0.05, 0.1, 0.2, 0.4, 0.8]
-	print("=== SWEEP: crossing-loss %% mean+/-stdev over %d seeds (rows=initial_count, cols=intel_locked add-bonus) ===" % SWEEP_N_SEEDS)
-	var header := "ic\\bonus"
-	for b in bonuses:
-		header += "\t%+.2f" % b
-	print(header)
+	print("=== SWEEP: running cells ===")
 	for ic in counts:
-		var line := str(ic)
 		for b in bonuses:
-			var stats := _run_cell(ic, b, SWEEP_N_SEEDS)
-			line += "\t%.1f+/-%.1f" % [stats["mean"], stats["stdev"]]
+			_run_cell(ic, b, SWEEP_N_SEEDS)
+	
+	print("Delegating report generation to Python...")
+	var output := []
+	OS.execute("python", ["tools/make_sweep_report.py", "--sweep", "antiship_crossing"], output, true)
+	for line in output:
 		print(line)
-	print("")
+	
 	print("(pre-calibration reference: ic=8/no-bonus measured 50.0%% single-seed = 18/36; golden dial is ic=36/b=0.20, ~27.3%%)")

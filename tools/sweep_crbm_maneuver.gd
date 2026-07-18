@@ -32,48 +32,31 @@ func _initialize() -> void:
 	print("the pre-D-day exquisite-intel WARMUP slaughter and in-game kills. taiwan_census = all ROC")
 	print("battalions still on Taiwan at turn %d (downstream game outcome, not the direct measure)." % MAX_TURNS)
 	print("")
-	print("bonus\tpool\tkilled(mean+/-sd)\t%%pool\twarmup_killed(mean)\ttaiwan_census(mean)")
 	
 	for b in BONUSES:
-		var stats := _run_cell(float(b), N_SEEDS)
-		print("%+.2f\t%.0f\t%.1f+/-%.1f\t%.0f%%\t%.1f\t%.1f" % [
-			b, stats["pool"], stats["killed"], stats["stdev"], stats["pct"], stats["warmup"], stats["taiwan"]])
+		_run_cell(float(b), N_SEEDS)
+		
+	print("Delegating report generation to Python...")
+	var output := []
+	OS.execute("python", ["tools/make_sweep_report.py", "--sweep", "crbm_maneuver"], output, true)
+	for line in output:
+		print(line)
+		
 	print("")
 	print("(bonus=0.00 is the pre-plan-0009 baseline: rounds override alone, no lethality lever.)")
 	quit(0)
 
 
-func _run_cell(bonus: float, n_seeds: int) -> Dictionary:
-	var pool_samples: Array[float] = []
-	var killed: Array[float] = []
-	var warmup: Array[float] = []
-	var taiwan: Array[float] = []
-	
+func _run_cell(bonus: float, n_seeds: int) -> void:
 	var cell_samples: Array[Dictionary] = []
 	
 	for s in range(n_seeds):
 		var run_seed := SEED + s
 		var r := _run_game(bonus, run_seed)
-		pool_samples.append(float(r["pool"]))
-		killed.append(float(r["killed"]))
-		warmup.append(float(r["warmup_killed"]))
-		taiwan.append(float(r["taiwan"]))
-		
 		r["seed"] = run_seed
 		cell_samples.append(r)
 	
 	_write_cell(bonus, cell_samples)
-	
-	var mk := IjfsSweepSupport.mean(killed)
-	var pool_mean := IjfsSweepSupport.mean(pool_samples)
-	return {
-		"pool": pool_mean,
-		"killed": mk,
-		"stdev": IjfsSweepSupport.stdev(killed, mk),
-		"pct": 100.0 * mk / pool_mean if pool_mean > 0 else 0.0,
-		"warmup": IjfsSweepSupport.mean(warmup),
-		"taiwan": IjfsSweepSupport.mean(taiwan)
-	}
 
 
 # One empty-orders game with crbm_maneuver_strike_bonus = bonus. Returns the maneuver-target pool at
