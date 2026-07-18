@@ -36,7 +36,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   (the spec pipeline's generated names never matched the old `ic_*` slugs — an antiship report
   would have rendered all-N/A); stale cell files are cleared before each run; the mines-only
   floor cell is declared in the spec (`extra_cells`) and rendered in the report; manifests store
-  full seed lists; `--backend batch` with `--spec` errors until plan 0012.
+  full seed lists; `--backend batch` with `--spec` errors until plan 0012. **USER call 2026-07-18: the golden dial stays at ic=36/bonus=0.20 — the 32.9% reading on the new 81-BN sent-cohort wave is accepted as the standing calibration** (supersedes plan 0001's ~25%-of-36-BN target; no re-dial).
 
 - **2026-07-18 — Sweep orchestrator + cell backend (Plan 0011; agent implementation).** The Python `run_sweep.py` tool now orchestrates sweeps through `run_batch.py` or the new `run_sweep_cells.gd` backend. The legacy bespoke sweep scripts (`sweep_antiship_crossing.gd`, `sweep_crbm_maneuver.gd`, `ijfs_sweep_support.gd`) have been deleted. Replaced with generalized canned sweep specifications in `tools/sweeps/*.json`. Legacy powershell sweep tool `run_sweep.ps1` is deleted. Facts: `docs/STATUS.md` and `.claude/skills/hexcombat-research-runs`.
 

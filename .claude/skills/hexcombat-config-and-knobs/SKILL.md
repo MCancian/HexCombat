@@ -90,7 +90,7 @@ table here.
 
 Measured, never eyeballed: use the sweep harness (`python3 tools/run_sweep.py --spec tools/sweeps/<spec>.json` or `python3 tools/run_sweep.py --name <study> --knob ...`)
 — fixed seed grid + multi-seed means, report per-knob deltas. Balance targets and lever analyses
-live in docs/plans/ (plan 0001, the ~25% crossing-loss calibration, USER-dialed 2026-07-11; deep
+live in docs/plans/ (plan 0001, the crossing-loss calibration, USER-dialed 2026-07-11, re-read as 32.9% on the post-0004 wave and accepted 2026-07-18; deep
 record in docs/archive/PLAN.md). Deliberate balance changes are USER calls and re-baseline events.
 
 `data/ijfs/ijfs_scenario.json.intel_locked_antiship_strike_bonus` (float, golden = 0.20, plan 0001)

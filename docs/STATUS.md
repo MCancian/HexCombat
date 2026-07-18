@@ -65,7 +65,8 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
 - **D3 Anti-ship & mine warfare** — IJFS-fed firing plan → crossing damage (count-based) → **geometric
   mine model** (randomized approach path, dangerous-mine count within `danger_radius`, decoy-sponge
   transit; knobs in `data/antiship/minefields.json`). Ship losses → BNs lost at sea. Crossing
-  lethality is calibrated to the USER's ~25% target via `data/ijfs/ijfs_scenario.json`'s
+  lethality is calibrated to the USER-accepted 32.9% mean loss on the 81-BN sent-cohort wave
+  (2026-07-18; superseded plan 0001's ~25%-of-36-BN target) via `data/ijfs/ijfs_scenario.json`'s
   `intel_locked_antiship_strike_bonus` (0.20) and `prelanding.intel.exquisite_intel.antiship.initial_count`
   (36) — see `docs/archive/0001-crossing-lethality-calibration.md`.
 - **D4 IJFS** (joint/air-missile fires) — detection → targeting → strike → suppression, with a
@@ -136,8 +137,9 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   antiship crossing instrument changed 2026-07-18:** the harness now runs sealift between IJFS
   and the crossing (mandatory since plan 0004 — without it no cohort is "sent" and losses read
   zero), and the wave is the sent cohort (~81 BNs incl. follow-on echelons), not the 36-BN ship
-  reserve. The plan-0001 ~25% crossing-loss dial therefore needs USER re-reading against the new
-  baseline table (`reports/sweeps/antiship_crossing/report.md`).
+  reserve. The plan-0001 dial (ic=36, bonus=0.20) reads **32.9%** mean crossing loss on the new wave
+  semantics — USER accepted 2026-07-18 (supersedes the ~25%-of-36-BN target; table:
+  `reports/sweeps/antiship_crossing/report.md`).
 - **LLM players (research harness B6)** — policy id `llm_local` (`LLMPolicy`) marshals a seat's
   perspective observation to an out-of-process Python sidecar (`tools/llm_sidecar.py`) that calls a
   local OpenAI-compatible model (`HEXCOMBAT_LLM_BASE_URL`/`_MODEL`/`_API_KEY`, default vLLM at

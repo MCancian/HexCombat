@@ -118,8 +118,9 @@ in `IjfsEngine.run_daily`'s header comment — read it for the authoritative dra
   number instead of hand-writing the modifier's match/operation shape; 0.0 is a no-op. Paired with
   the companion lever `prelanding.intel.exquisite_intel.antiship.initial_count` (golden = 36), a
   plain data field read directly by `IjfsTargeting.apply_exquisite_intel` — no code promotion
-  needed, editing the JSON value is sufficient. Together these hit the USER's ~25% mean crossing-loss
-  target (N=30-seed sweep). Sweep tool: `python3 tools/run_sweep.py --spec
+  needed, editing the JSON value is sufficient. Together these give the USER-accepted 32.9% mean crossing loss
+  on the post-plan-0004 81-BN sent-cohort wave (N=30-seed sweep; accepted 2026-07-18,
+  superseding the ~25%-of-36-BN plan-0001 target). Sweep tool: `python3 tools/run_sweep.py --spec
   tools/sweeps/antiship_crossing.json`, grid-searches via `DataOverrides` per cell.
 - **Calibration knob** (plan 0009, CRBM maneuver-attrition, USER batch re-dial pending):
   Two coupled scenario knobs in `data/ijfs/ijfs_scenario.json`:
