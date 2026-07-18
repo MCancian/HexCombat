@@ -242,8 +242,11 @@ fi
 
 # ---- Fixture Generation and Drift Validation -----------------------------------
 write_phase "Fixture Generation & Drift Validation"
-invoke_godot -s "res://tools/export_llm_observation.gd" --output=docs/examples/llm_observation_red_turn1.json >/dev/null 2>&1
-invoke_godot -s "res://tools/export_llm_result.gd" --output=docs/examples/llm_result_after_turn.json >/dev/null 2>&1
+# The "--" separator is load-bearing: without it Godot never surfaces --output in
+# get_cmdline_user_args, the exporters fall back to reports/llm_*.json, and the drift check
+# below silently compares an untouched docs/examples/ against itself (rotted 2026-07-0x..18).
+invoke_godot -s "res://tools/export_llm_observation.gd" -- --output=docs/examples/llm_observation_red_turn1.json >/dev/null 2>&1
+invoke_godot -s "res://tools/export_llm_result.gd" -- --output=docs/examples/llm_result_after_turn.json >/dev/null 2>&1
 
 if command -v git >/dev/null 2>&1; then
     if ! git diff --exit-code docs/examples/*.json >/dev/null 2>&1; then

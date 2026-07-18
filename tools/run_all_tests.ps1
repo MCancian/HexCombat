@@ -178,8 +178,11 @@ if ([string]::IsNullOrEmpty($PythonBin)) {
 
 # ---- Fixture Generation and Drift Validation -----------------------------------
 Write-Phase "Fixture Generation & Drift Validation"
-Invoke-Godot @("-s", "res://tools/export_llm_observation.gd", "--output=docs/examples/llm_observation_red_turn1.json") >$null 2>&1
-Invoke-Godot @("-s", "res://tools/export_llm_result.gd", "--output=docs/examples/llm_result_after_turn.json") >$null 2>&1
+# The "--" separator is load-bearing: without it Godot never surfaces --output in
+# get_cmdline_user_args, the exporters fall back to reports/llm_*.json, and the drift check
+# below silently compares an untouched docs/examples/ against itself (rotted 2026-07-0x..18).
+Invoke-Godot @("-s", "res://tools/export_llm_observation.gd", "--", "--output=docs/examples/llm_observation_red_turn1.json") >$null 2>&1
+Invoke-Godot @("-s", "res://tools/export_llm_result.gd", "--", "--output=docs/examples/llm_result_after_turn.json") >$null 2>&1
 
 if (Get-Command git -ErrorAction SilentlyContinue) {
     & git diff --exit-code docs/examples/*.json >$null 2>&1

@@ -2,25 +2,19 @@
 	"errors": [],
 	"observation": {
 		"antiship": {
-			"bns_lost_at_sea": 30,
+			"bns_lost_at_sea": 8,
 			"crossing_casualties": {
-				"damaged": 26,
-				"destroyed": 62
+				"damaged": 16,
+				"destroyed": 55
 			},
 			"destroyed_by_ship_type": {
-				"CG": 2,
-				"Container_Ship": 5,
-				"DDG": 4,
-				"Decoys": 36,
-				"FFG": 10,
-				"FFL": 4,
-				"Fast_Transport": 1,
-				"LHA": 3,
-				"LPD": 4,
-				"LSM": 1,
-				"LST": 8,
-				"Large_RoRo_Mod": 14,
-				"Small_RoRo_Mod": 6
+				"CG": 5,
+				"Container_Ship": 7,
+				"DDG": 10,
+				"Decoys": 39,
+				"FFG": 20,
+				"FFL": 12,
+				"Fast_Transport": 1
 			},
 			"mine_status": [
 				{
@@ -32,19 +26,19 @@
 				{
 					"beach_id": 2,
 					"lane_cleared": true,
-					"ships_destroyed": 6,
+					"ships_destroyed": 10,
 					"status_color": "green"
 				},
 				{
 					"beach_id": 3,
 					"lane_cleared": true,
-					"ships_destroyed": 8,
+					"ships_destroyed": 10,
 					"status_color": "green"
 				},
 				{
 					"beach_id": 4,
 					"lane_cleared": true,
-					"ships_destroyed": 11,
+					"ships_destroyed": 8,
 					"status_color": "green"
 				}
 			],
@@ -56,16 +50,9 @@
 				"Decoys": 40,
 				"FFG": 24,
 				"FFL": 24,
-				"Fast_Transport": 5,
-				"LCU": 20,
-				"LHA": 4,
-				"LPD": 8,
-				"LSM": 10,
-				"LST": 16,
-				"Large_RoRo_Mod": 30,
-				"Small_RoRo_Mod": 20
+				"Fast_Transport": 5
 			},
-			"systems_fired_count": 96,
+			"systems_fired_count": 139,
 			"target_beaches": [
 				1,
 				2,
@@ -89,58 +76,6 @@
 				"name": "2nd Amphibious Brigade (71st Group Army)",
 				"nato_type": "amphibious",
 				"organization": 75.0,
-				"team": "Red"
-			},
-			{
-				"battalions": 8,
-				"destroyed": false,
-				"fought_this_turn": false,
-				"hex_id": "hex_44_16",
-				"id": "PLA-71-35-Heavy-Armored",
-				"moved_admin_this_turn": false,
-				"moved_this_turn": false,
-				"name": "35th Heavy Armored Brigade (71st Group Army)",
-				"nato_type": "armor",
-				"organization": 100.0,
-				"team": "Red"
-			},
-			{
-				"battalions": 9,
-				"destroyed": false,
-				"fought_this_turn": false,
-				"hex_id": "hex_44_15",
-				"id": "PLA-71-160-Light-Mechanized",
-				"moved_admin_this_turn": false,
-				"moved_this_turn": false,
-				"name": "160th Light Mechanized Brigade (71st Group Army)",
-				"nato_type": "motorized-infantry",
-				"organization": 100.0,
-				"team": "Red"
-			},
-			{
-				"battalions": 7,
-				"destroyed": false,
-				"fought_this_turn": false,
-				"hex_id": "hex_43_14",
-				"id": "PLA-71-235-Mechanized-Infantry",
-				"moved_admin_this_turn": false,
-				"moved_this_turn": false,
-				"name": "235th Mechanized Infantry Brigade (71st Group Army)",
-				"nato_type": "mech-infantry",
-				"organization": 100.0,
-				"team": "Red"
-			},
-			{
-				"battalions": 7,
-				"destroyed": false,
-				"fought_this_turn": false,
-				"hex_id": "hex_43_13",
-				"id": "PLA-71-71-Special-Operations",
-				"moved_admin_this_turn": false,
-				"moved_this_turn": false,
-				"name": "71th Special Operations Brigade (71st Group Army)",
-				"nato_type": "special-forces",
-				"organization": 100.0,
 				"team": "Red"
 			},
 			{
@@ -183,7 +118,7 @@
 				"team": "Red"
 			},
 			{
-				"battalions": 3,
+				"battalions": 2,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_44_17",
@@ -196,7 +131,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 4,
+				"battalions": 5,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_31_8",
@@ -235,7 +170,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 5,
+				"battalions": 3,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_12_7",
@@ -248,7 +183,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 5,
+				"battalions": 2,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_40_12",
@@ -261,7 +196,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 5,
+				"battalions": 2,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_16_3",
@@ -274,7 +209,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 3,
+				"battalions": 5,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_32_8",
@@ -339,7 +274,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 5,
+				"battalions": 6,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_43_17",
@@ -352,7 +287,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 4,
+				"battalions": 1,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_12_5",
@@ -365,7 +300,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 3,
+				"battalions": 4,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_13_4",
@@ -547,7 +482,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 3,
+				"battalions": 2,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_13_5",
@@ -560,7 +495,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 4,
+				"battalions": 5,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_44_16",
@@ -573,7 +508,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 2,
+				"battalions": 1,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_28_18",
@@ -619,9 +554,9 @@
 				"2:20": 1,
 				"2:21": 1,
 				"2:22": 1,
+				"2:23": 3,
 				"2:24": 10,
 				"2:3": 74,
-				"2:99": 1,
 				"3:16": 12,
 				"3:17": 5,
 				"3:18": 5,
@@ -629,8 +564,9 @@
 				"3:20": 4,
 				"3:21": 2,
 				"3:22": 2,
-				"3:3": 149,
-				"3:6": 1,
+				"3:23": 10,
+				"3:3": 112,
+				"3:5": 8,
 				"3:99": 1,
 				"4:16": 12,
 				"4:17": 5,
@@ -642,7 +578,6 @@
 				"4:24": 40,
 				"4:3": 74,
 				"4:5": 8,
-				"4:99": 1,
 				"5:16": 3,
 				"5:17": 1,
 				"5:18": 1,
@@ -652,63 +587,91 @@
 				"5:22": 1,
 				"5:24": 10,
 				"5:3": 37,
-				"5:5": 8,
-				"5:99": 1
+				"5:5": 8
 			},
 			"antiship_suppressed_by_type": {
-				"2:5": 8,
-				"3:5": 32,
-				"4:5": 8
+				"2:5": 16,
+				"4:5": 8,
+				"5:99": 1
 			},
 			"attacks": {
-				"executed": 136,
-				"skipped": 23,
+				"executed": 104,
+				"skipped": 51,
 				"skipped_by_reason": {
-					"no_compatible_pairing": 23
+					"insufficient_inventory": 24,
+					"no_compatible_pairing": 27
 				}
 			},
 			"maneuver_casualties": [
 				{
-					"battalion_id": "BDE-234-MU-5",
-					"brigade_id": "BDE-234",
+					"battalion_id": "BDE-66-MU-4",
+					"brigade_id": "BDE-66",
 					"subcategory": "Field Artillery",
-					"to": 5,
+					"to": 3,
 					"unit_type": "Mechanized Artillery Battalion"
 				},
 				{
-					"battalion_id": "BDE-58-MU-1",
-					"brigade_id": "BDE-58",
+					"battalion_id": "BDE-21-MU-3",
+					"brigade_id": "BDE-21",
 					"subcategory": "Field Artillery",
-					"to": 5,
-					"unit_type": "Mechanized Artillery Battalion"
-				},
-				{
-					"battalion_id": "BDE-58-MU-3",
-					"brigade_id": "BDE-58",
-					"subcategory": "Field Artillery",
-					"to": 5,
+					"to": 3,
 					"unit_type": "Field Artillery Battalion"
 				},
 				{
-					"battalion_id": "BDE-621-MU-1",
+					"battalion_id": "BDE-542-MU-3",
+					"brigade_id": "BDE-542",
+					"subcategory": "Armour",
+					"to": 3,
+					"unit_type": "Tank Battalion"
+				},
+				{
+					"battalion_id": "BDE-542-MU-5",
+					"brigade_id": "BDE-542",
+					"subcategory": "Field Artillery",
+					"to": 3,
+					"unit_type": "Mechanized Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-564-MU-1",
+					"brigade_id": "BDE-564",
+					"subcategory": "Armour",
+					"to": 4,
+					"unit_type": "Tank Battalion"
+				},
+				{
+					"battalion_id": "BDE-584-MU-5",
+					"brigade_id": "BDE-584",
+					"subcategory": "Field Artillery",
+					"to": 3,
+					"unit_type": "Mechanized Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-621-MU-5",
 					"brigade_id": "BDE-621",
 					"subcategory": "Field Artillery",
 					"to": 3,
 					"unit_type": "Mechanized Artillery Battalion"
 				},
 				{
-					"battalion_id": "BDE-621-MU-3",
-					"brigade_id": "BDE-621",
-					"subcategory": "Field Artillery",
+					"battalion_id": "BDE-66-MU-1",
+					"brigade_id": "BDE-66",
+					"subcategory": "Marine Corps",
 					"to": 3,
-					"unit_type": "Mechanized Artillery Battalion"
+					"unit_type": "Amphibious Infantry Battalion"
 				},
 				{
-					"battalion_id": "BDE-77-MU-4",
-					"brigade_id": "BDE-77",
-					"subcategory": "Field Artillery",
+					"battalion_id": "BDE-66-MU-2",
+					"brigade_id": "BDE-66",
+					"subcategory": "Marine Corps",
 					"to": 3,
-					"unit_type": "Mechanized Artillery Battalion"
+					"unit_type": "Amphibious Infantry Battalion"
+				},
+				{
+					"battalion_id": "BDE-99-MU-1",
+					"brigade_id": "BDE-99",
+					"subcategory": "Marine Corps",
+					"to": 4,
+					"unit_type": "Amphibious Infantry Battalion"
 				},
 				{
 					"battalion_id": "BDE-99-MU-4",
@@ -716,6 +679,48 @@
 					"subcategory": "Field Artillery",
 					"to": 4,
 					"unit_type": "Mechanized Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-HD-MU-2",
+					"brigade_id": "BDE-HD",
+					"subcategory": "Field Artillery",
+					"to": 2,
+					"unit_type": "Field Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-43-MU-1",
+					"brigade_id": "BDE-43",
+					"subcategory": "Rocket Artillery",
+					"to": 4,
+					"unit_type": "Rocket Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-564-MU-5",
+					"brigade_id": "BDE-564",
+					"subcategory": "Field Artillery",
+					"to": 4,
+					"unit_type": "Field Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-43-MU-3",
+					"brigade_id": "BDE-43",
+					"subcategory": "Field Artillery",
+					"to": 4,
+					"unit_type": "Field Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-542-MU-4",
+					"brigade_id": "BDE-542",
+					"subcategory": "Mechanized Infantry",
+					"to": 3,
+					"unit_type": "Mechanized Infantry Battalion"
+				},
+				{
+					"battalion_id": "BDE-564-MU-4",
+					"brigade_id": "BDE-564",
+					"subcategory": "Mechanized Infantry",
+					"to": 4,
+					"unit_type": "Mechanized Infantry Battalion"
 				}
 			],
 			"red_air_losses": 0,
@@ -724,16 +729,16 @@
 			"sam_suppressed": 0,
 			"taiwan_ad_health_after": {
 				"category_health": {
-					"Mobile Radars": 0.4,
-					"Moveable SAMs": 0.291666666666667,
+					"Mobile Radars": 1.0,
+					"Moveable SAMs": 0.625,
 					"Static Radars": 0.0,
 					"Static SAMs": 0.0
 				},
-				"effective_ad_health": 0.0775,
-				"effective_sam_health": 0.0291666666666667,
-				"radar_health": 0.15,
+				"effective_ad_health": 0.24375,
+				"effective_sam_health": 0.15625,
+				"radar_health": 0.375,
 				"radar_weight_total": 0.4,
-				"raw_sam_health": 0.194444444444444,
+				"raw_sam_health": 0.416666666666667,
 				"sam_weight_total": 0.6
 			}
 		},
@@ -859,95 +864,12 @@
 		"last_combat": [
 			{
 				"attacker_brigade_ids": [
-					"PLA-73-14-Amphibious",
-					"PLA-71-235-Mechanized-Infantry"
+					"PLA-73-14-Amphibious"
 				],
-				"attacker_losses": 4,
+				"attacker_losses": 2,
 				"combat_detail": {
 					"attacker": {
-						"maneuver_combat_power": 15.2,
-						"maneuver_unit_count": 16,
-						"support_breakdown": {
-							"artillery": 1.6,
-							"cas": 0.0,
-							"crbm": 0.0,
-							"rocket_artillery": 0.0,
-							"rotary_wing": 0.0
-						},
-						"support_combat_power": 1.6,
-						"support_counts": {
-							"artillery": 2,
-							"cas": 0,
-							"crbm": 0,
-							"rocket_artillery": 0,
-							"rotary_wing": 0
-						},
-						"support_unit_count": 2,
-						"total_combat_power_unmodified": 16.8,
-						"unscreened": false
-					},
-					"defender": {
-						"maneuver_combat_power": 7.5,
-						"maneuver_unit_count": 4,
-						"support_breakdown": {
-							"artillery": 0.8,
-							"cas": 0.0,
-							"crbm": 0.0,
-							"rocket_artillery": 0.0,
-							"rotary_wing": 0.0
-						},
-						"support_combat_power": 0.8,
-						"support_counts": {
-							"artillery": 1,
-							"cas": 0,
-							"crbm": 0,
-							"rocket_artillery": 0,
-							"rotary_wing": 0
-						},
-						"support_unit_count": 1,
-						"terrain_modifier": 2.0,
-						"total_combat_power_terrain_modified": 16.6,
-						"total_combat_power_unmodified": 8.3,
-						"unscreened": false
-					},
-					"feba": {
-						"base_km": 3.5,
-						"movement_km": 0.0400299401197603,
-						"roll_factor": 0.955
-					},
-					"losses": {
-						"attacker": 4,
-						"attacker_loss_rate": 0.223036144578313,
-						"defender": 1,
-						"defender_loss_rate": 0.192204819277108
-					},
-					"ratios": {
-						"terrain_modified": 1.01204819277108,
-						"unmodified": 2.02409638554217
-					},
-					"result": "Contested",
-					"rolls": {
-						"attacker_loss_roll": 74,
-						"defender_loss_roll": 41,
-						"feba_movement_roll": 41
-					}
-				},
-				"defender_brigade_ids": [
-					"BDE-584"
-				],
-				"defender_losses": 1,
-				"feba_movement_km": 0.0400299401197603,
-				"hex_id": "hex_43_14",
-				"owner_after": "contested"
-			},
-			{
-				"attacker_brigade_ids": [
-					"PLA-71-35-Heavy-Armored"
-				],
-				"attacker_losses": 1,
-				"combat_detail": {
-					"attacker": {
-						"maneuver_combat_power": 8.2,
+						"maneuver_combat_power": 7.0,
 						"maneuver_unit_count": 8,
 						"support_breakdown": {
 							"artillery": 0.8,
@@ -965,72 +887,70 @@
 							"rotary_wing": 0
 						},
 						"support_unit_count": 1,
-						"total_combat_power_unmodified": 9.0,
+						"total_combat_power_unmodified": 7.8,
 						"unscreened": false
 					},
 					"defender": {
-						"maneuver_combat_power": 6.0,
+						"maneuver_combat_power": 7.5,
 						"maneuver_unit_count": 4,
 						"support_breakdown": {
-							"artillery": 0.8,
+							"artillery": 0.0,
 							"cas": 0.0,
 							"crbm": 0.0,
 							"rocket_artillery": 0.0,
 							"rotary_wing": 0.0
 						},
-						"support_combat_power": 0.8,
+						"support_combat_power": 0.0,
 						"support_counts": {
-							"artillery": 1,
+							"artillery": 0,
 							"cas": 0,
 							"crbm": 0,
 							"rocket_artillery": 0,
 							"rotary_wing": 0
 						},
-						"support_unit_count": 1,
-						"terrain_modifier": 1.0,
-						"total_combat_power_terrain_modified": 6.8,
-						"total_combat_power_unmodified": 6.8,
+						"support_unit_count": 0,
+						"terrain_modifier": 2.0,
+						"total_combat_power_terrain_modified": 15.0,
+						"total_combat_power_unmodified": 7.5,
 						"unscreened": false
 					},
 					"feba": {
 						"base_km": 3.5,
-						"movement_km": 0.750506329113925,
-						"roll_factor": 0.77
+						"movement_km": -1.81263157894737,
+						"roll_factor": 0.82
 					},
 					"losses": {
-						"attacker": 1,
-						"attacker_loss_rate": 0.148117647058824,
-						"defender": 1,
-						"defender_loss_rate": 0.214352941176471
+						"attacker": 2,
+						"attacker_loss_rate": 0.2004,
+						"defender": 0,
+						"defender_loss_rate": 0.124
 					},
 					"ratios": {
-						"terrain_modified": 1.32352941176471,
-						"unmodified": 1.32352941176471
+						"terrain_modified": 0.52,
+						"unmodified": 1.04
 					},
-					"result": "Attacker Advantage",
+					"result": "Defender Advantage",
 					"rolls": {
-						"attacker_loss_roll": 24,
-						"defender_loss_roll": 32,
-						"feba_movement_roll": 4
+						"attacker_loss_roll": 12,
+						"defender_loss_roll": 22,
+						"feba_movement_roll": 14
 					}
 				},
 				"defender_brigade_ids": [
-					"BDE-GDU"
+					"BDE-584"
 				],
-				"defender_losses": 1,
-				"feba_movement_km": 0.750506329113925,
-				"hex_id": "hex_44_16",
+				"defender_losses": 0,
+				"feba_movement_km": -1.81263157894737,
+				"hex_id": "hex_43_14",
 				"owner_after": "contested"
 			}
 		],
 		"last_contested_hexes": [
-			"hex_43_14",
-			"hex_44_16"
+			"hex_43_14"
 		],
 		"legal_commits": {
 			"hex_42_15": {
 				"Red": [
-					"PLA-71-235-Mechanized-Infantry",
 					"PLA-73-14-Amphibious"
 				]
 			},
@@ -1041,21 +961,13 @@
 			},
 			"hex_43_13": {
 				"Red": [
-					"PLA-71-235-Mechanized-Infantry",
 					"PLA-73-14-Amphibious"
 				]
 			},
 			"hex_43_14": {
 				"Red": [
-					"PLA-71-160-Light-Mechanized",
-					"PLA-71-71-Special-Operations",
 					"PLA-72-5-Amphibious",
 					"PLA-74-1-Amphibious"
-				]
-			},
-			"hex_43_16": {
-				"Red": [
-					"PLA-71-35-Heavy-Armored"
 				]
 			},
 			"hex_43_17": {
@@ -1065,111 +977,22 @@
 			},
 			"hex_44_15": {
 				"Red": [
-					"PLA-71-35-Heavy-Armored",
-					"PLA-71-235-Mechanized-Infantry",
 					"PLA-73-14-Amphibious"
 				]
 			},
 			"hex_44_16": {
 				"Red": [
 					"PLA-71-2-Amphibious",
-					"PLA-71-160-Light-Mechanized",
 					"PLA-72-5-Amphibious"
 				]
 			},
 			"hex_44_17": {
 				"Red": [
-					"PLA-71-2-Amphibious",
-					"PLA-71-35-Heavy-Armored"
+					"PLA-71-2-Amphibious"
 				]
 			}
 		},
 		"legal_moves": {
-			"PLA-71-160-Light-Mechanized": {
-				"administrative": [
-					"hex_44_15",
-					"hex_43_14",
-					"hex_43_15",
-					"hex_44_16",
-					"hex_42_14",
-					"hex_42_15",
-					"hex_43_13",
-					"hex_42_16",
-					"hex_43_16",
-					"hex_44_17",
-					"hex_45_16",
-					"hex_41_13",
-					"hex_41_14",
-					"hex_42_13",
-					"hex_41_15",
-					"hex_41_16",
-					"hex_42_17",
-					"hex_43_17",
-					"hex_45_17",
-					"hex_46_17",
-					"hex_44_18",
-					"hex_40_13",
-					"hex_40_14",
-					"hex_41_12",
-					"hex_40_15",
-					"hex_42_12",
-					"hex_40_16",
-					"hex_46_18",
-					"hex_40_17",
-					"hex_41_17",
-					"hex_42_18",
-					"hex_43_18",
-					"hex_45_18",
-					"hex_39_12",
-					"hex_39_13",
-					"hex_40_12",
-					"hex_41_11",
-					"hex_44_19",
-					"hex_39_14",
-					"hex_39_15",
-					"hex_41_18",
-					"hex_42_19",
-					"hex_43_19",
-					"hex_38_12",
-					"hex_38_13",
-					"hex_39_11",
-					"hex_40_11",
-					"hex_39_17",
-					"hex_40_18",
-					"hex_38_14",
-					"hex_44_20",
-					"hex_37_11",
-					"hex_37_12",
-					"hex_38_11",
-					"hex_40_19",
-					"hex_41_19",
-					"hex_42_20",
-					"hex_43_20",
-					"hex_37_13",
-					"hex_44_21",
-					"hex_36_11",
-					"hex_36_12",
-					"hex_37_10",
-					"hex_38_10",
-					"hex_38_18",
-					"hex_39_18",
-					"hex_43_21",
-					"hex_36_10",
-					"hex_37_9",
-					"hex_39_19",
-					"hex_42_22",
-					"hex_35_9",
-					"hex_36_9"
-				],
-				"from_hex": "hex_44_15",
-				"tactical": [
-					"hex_44_15",
-					"hex_43_14",
-					"hex_43_15",
-					"hex_44_16"
-				],
-				"team": "Red"
-			},
 			"PLA-71-2-Amphibious": {
 				"administrative": [
 					"hex_43_16",
@@ -1261,347 +1084,6 @@
 					"hex_42_17",
 					"hex_43_17",
 					"hex_44_17"
-				],
-				"team": "Red"
-			},
-			"PLA-71-235-Mechanized-Infantry": {
-				"administrative": [
-					"hex_43_14",
-					"hex_42_14",
-					"hex_42_15",
-					"hex_43_13",
-					"hex_43_15",
-					"hex_44_15",
-					"hex_41_13",
-					"hex_41_14",
-					"hex_42_13",
-					"hex_42_16",
-					"hex_43_16",
-					"hex_44_16",
-					"hex_41_15",
-					"hex_40_13",
-					"hex_40_14",
-					"hex_41_12",
-					"hex_40_15",
-					"hex_42_12",
-					"hex_41_16",
-					"hex_42_17",
-					"hex_43_17",
-					"hex_44_17",
-					"hex_45_16",
-					"hex_40_16",
-					"hex_39_12",
-					"hex_39_13",
-					"hex_40_12",
-					"hex_41_11",
-					"hex_45_17",
-					"hex_46_17",
-					"hex_39_14",
-					"hex_39_15",
-					"hex_40_17",
-					"hex_41_17",
-					"hex_42_18",
-					"hex_43_18",
-					"hex_44_18",
-					"hex_38_12",
-					"hex_38_13",
-					"hex_39_11",
-					"hex_40_11",
-					"hex_46_18",
-					"hex_38_14",
-					"hex_45_18",
-					"hex_41_18",
-					"hex_42_19",
-					"hex_43_19",
-					"hex_44_19",
-					"hex_37_11",
-					"hex_37_12",
-					"hex_38_11",
-					"hex_39_17",
-					"hex_40_18",
-					"hex_37_13",
-					"hex_44_20",
-					"hex_36_11",
-					"hex_36_12",
-					"hex_37_10",
-					"hex_38_10",
-					"hex_40_19",
-					"hex_41_19",
-					"hex_42_20",
-					"hex_43_20",
-					"hex_44_21",
-					"hex_36_10",
-					"hex_37_9",
-					"hex_38_18",
-					"hex_39_18",
-					"hex_35_10",
-					"hex_35_11",
-					"hex_43_21",
-					"hex_35_9",
-					"hex_36_9",
-					"hex_39_19",
-					"hex_42_22",
-					"hex_34_9",
-					"hex_35_8"
-				],
-				"from_hex": "hex_43_14",
-				"tactical": [
-					"hex_43_14",
-					"hex_42_14",
-					"hex_43_13",
-					"hex_43_15",
-					"hex_44_15",
-					"hex_42_15"
-				],
-				"team": "Red"
-			},
-			"PLA-71-35-Heavy-Armored": {
-				"administrative": [
-					"hex_44_16",
-					"hex_43_15",
-					"hex_43_16",
-					"hex_44_15",
-					"hex_44_17",
-					"hex_45_16",
-					"hex_42_15",
-					"hex_42_16",
-					"hex_43_14",
-					"hex_42_17",
-					"hex_43_17",
-					"hex_45_17",
-					"hex_46_17",
-					"hex_44_18",
-					"hex_41_15",
-					"hex_41_16",
-					"hex_42_14",
-					"hex_43_13",
-					"hex_46_18",
-					"hex_41_14",
-					"hex_41_17",
-					"hex_42_18",
-					"hex_43_18",
-					"hex_45_18",
-					"hex_40_15",
-					"hex_40_16",
-					"hex_41_13",
-					"hex_42_13",
-					"hex_44_19",
-					"hex_40_17",
-					"hex_40_14",
-					"hex_41_18",
-					"hex_42_19",
-					"hex_43_19",
-					"hex_40_13",
-					"hex_41_12",
-					"hex_42_12",
-					"hex_40_18",
-					"hex_39_14",
-					"hex_39_15",
-					"hex_44_20",
-					"hex_39_12",
-					"hex_39_13",
-					"hex_40_12",
-					"hex_41_11",
-					"hex_39_17",
-					"hex_40_19",
-					"hex_41_19",
-					"hex_42_20",
-					"hex_43_20",
-					"hex_44_21",
-					"hex_38_12",
-					"hex_38_13",
-					"hex_39_11",
-					"hex_40_11",
-					"hex_39_18",
-					"hex_38_14",
-					"hex_43_21",
-					"hex_37_11",
-					"hex_37_12",
-					"hex_38_11",
-					"hex_38_18",
-					"hex_39_19",
-					"hex_40_20",
-					"hex_41_20",
-					"hex_42_21",
-					"hex_37_13",
-					"hex_42_22",
-					"hex_36_11",
-					"hex_36_12",
-					"hex_37_10",
-					"hex_38_10",
-					"hex_38_19",
-					"hex_38_20",
-					"hex_39_20",
-					"hex_41_21",
-					"hex_36_10",
-					"hex_37_9",
-					"hex_37_17",
-					"hex_37_18",
-					"hex_35_10",
-					"hex_35_11",
-					"hex_37_19",
-					"hex_37_20",
-					"hex_35_9",
-					"hex_36_9",
-					"hex_36_20",
-					"hex_36_21",
-					"hex_34_9",
-					"hex_34_10",
-					"hex_35_8",
-					"hex_36_17",
-					"hex_34_11",
-					"hex_35_20",
-					"hex_33_8",
-					"hex_33_9",
-					"hex_34_8",
-					"hex_35_19",
-					"hex_33_10",
-					"hex_34_20",
-					"hex_32_8",
-					"hex_32_9",
-					"hex_33_7",
-					"hex_32_10",
-					"hex_33_11",
-					"hex_31_7",
-					"hex_31_8",
-					"hex_32_7",
-					"hex_34_19",
-					"hex_32_11",
-					"hex_33_19",
-					"hex_31_9",
-					"hex_31_10",
-					"hex_30_7",
-					"hex_30_8",
-					"hex_31_6",
-					"hex_30_9",
-					"hex_30_10",
-					"hex_29_6",
-					"hex_29_7",
-					"hex_30_6",
-					"hex_29_8",
-					"hex_31_11",
-					"hex_32_19",
-					"hex_30_11",
-					"hex_29_9",
-					"hex_28_6",
-					"hex_28_7",
-					"hex_29_5",
-					"hex_28_8",
-					"hex_28_9",
-					"hex_29_10",
-					"hex_27_5",
-					"hex_27_6",
-					"hex_28_5",
-					"hex_27_7",
-					"hex_27_8",
-					"hex_27_9",
-					"hex_28_10",
-					"hex_26_5",
-					"hex_26_6",
-					"hex_27_4",
-					"hex_26_7",
-					"hex_26_8"
-				],
-				"from_hex": "hex_44_16",
-				"tactical": [
-					"hex_44_16",
-					"hex_43_15",
-					"hex_43_16",
-					"hex_44_15",
-					"hex_44_17",
-					"hex_45_16",
-					"hex_42_16",
-					"hex_43_14",
-					"hex_46_17"
-				],
-				"team": "Red"
-			},
-			"PLA-71-71-Special-Operations": {
-				"administrative": [
-					"hex_43_13",
-					"hex_42_13",
-					"hex_42_14",
-					"hex_43_14",
-					"hex_41_12",
-					"hex_41_13",
-					"hex_42_12",
-					"hex_41_14",
-					"hex_42_15",
-					"hex_43_15",
-					"hex_44_15",
-					"hex_40_12",
-					"hex_40_13",
-					"hex_41_11",
-					"hex_40_14",
-					"hex_40_15",
-					"hex_41_15",
-					"hex_42_16",
-					"hex_43_16",
-					"hex_44_16",
-					"hex_39_11",
-					"hex_39_12",
-					"hex_40_11",
-					"hex_39_13",
-					"hex_40_16",
-					"hex_41_16",
-					"hex_42_17",
-					"hex_43_17",
-					"hex_44_17",
-					"hex_45_16",
-					"hex_39_14",
-					"hex_39_15",
-					"hex_38_11",
-					"hex_38_12",
-					"hex_38_13",
-					"hex_45_17",
-					"hex_46_17",
-					"hex_38_14",
-					"hex_40_17",
-					"hex_41_17",
-					"hex_42_18",
-					"hex_43_18",
-					"hex_44_18",
-					"hex_37_10",
-					"hex_37_11",
-					"hex_38_10",
-					"hex_37_12",
-					"hex_46_18",
-					"hex_37_13",
-					"hex_45_18",
-					"hex_41_18",
-					"hex_42_19",
-					"hex_43_19",
-					"hex_44_19",
-					"hex_36_10",
-					"hex_36_11",
-					"hex_37_9",
-					"hex_36_12",
-					"hex_39_17",
-					"hex_40_18",
-					"hex_44_20",
-					"hex_35_9",
-					"hex_35_10",
-					"hex_36_9",
-					"hex_40_19",
-					"hex_41_19",
-					"hex_42_20",
-					"hex_43_20",
-					"hex_35_11",
-					"hex_44_21",
-					"hex_34_9",
-					"hex_34_10",
-					"hex_35_8",
-					"hex_43_21",
-					"hex_33_8",
-					"hex_33_9",
-					"hex_34_8"
-				],
-				"from_hex": "hex_43_13",
-				"tactical": [
-					"hex_43_13",
-					"hex_42_13",
-					"hex_42_14",
-					"hex_43_14"
 				],
 				"team": "Red"
 			},
@@ -1883,7 +1365,7 @@
 				"contested",
 				"none"
 			],
-			"placed_brigade_count": 40,
+			"placed_brigade_count": 36,
 			"teams": [
 				"Red",
 				"Green"
@@ -2028,10 +1510,9 @@
 			{
 				"brigades": [
 					"BDE-584",
-					"PLA-73-14-Amphibious",
-					"PLA-71-235-Mechanized-Infantry"
+					"PLA-73-14-Amphibious"
 				],
-				"feba_km": 0.0400299401197603,
+				"feba_km": -1.81263157894737,
 				"hex_id": "hex_43_14",
 				"neighbors": [
 					"hex_42_14",
@@ -2374,10 +1855,9 @@
 			},
 			{
 				"brigades": [
-					"BDE-GDU",
-					"PLA-71-35-Heavy-Armored"
+					"BDE-GDU"
 				],
-				"feba_km": 0.750506329113925,
+				"feba_km": 0.0,
 				"hex_id": "hex_44_16",
 				"neighbors": [
 					"hex_43_15",
@@ -2386,7 +1866,7 @@
 					"hex_44_17",
 					"hex_45_16"
 				],
-				"owner": "contested",
+				"owner": "green",
 				"terrain": "plains"
 			},
 			{
@@ -2422,8 +1902,7 @@
 			},
 			{
 				"brigades": [
-					"PLA-72-5-Amphibious",
-					"PLA-71-160-Light-Mechanized"
+					"PLA-72-5-Amphibious"
 				],
 				"feba_km": 0.0,
 				"hex_id": "hex_44_15",
@@ -2437,8 +1916,7 @@
 			},
 			{
 				"brigades": [
-					"PLA-74-1-Amphibious",
-					"PLA-71-71-Special-Operations"
+					"PLA-74-1-Amphibious"
 				],
 				"feba_km": 0.0,
 				"hex_id": "hex_43_13",
@@ -2494,13 +1972,13 @@
 		"ship_reserve": [
 			{
 				"beach_hex": "hex_44_16",
-				"bns_remaining": 4,
+				"bns_remaining": 3,
 				"brigade_id": "PLA-71-2-Amphibious",
 				"locked_beach": 1
 			},
 			{
 				"beach_hex": "hex_44_15",
-				"bns_remaining": 2,
+				"bns_remaining": 4,
 				"brigade_id": "PLA-72-5-Amphibious",
 				"locked_beach": 2
 			},
@@ -2512,56 +1990,14 @@
 			},
 			{
 				"beach_hex": "hex_43_13",
-				"bns_remaining": 3,
+				"bns_remaining": 2,
 				"brigade_id": "PLA-74-1-Amphibious",
 				"locked_beach": 4
-			},
-			{
-				"beach_hex": "hex_44_16",
-				"bns_remaining": 3,
-				"brigade_id": "PLA-71-35-Heavy-Armored",
-				"locked_beach": 1
-			},
-			{
-				"beach_hex": "hex_44_15",
-				"bns_remaining": 3,
-				"brigade_id": "PLA-71-160-Light-Mechanized",
-				"locked_beach": 2
-			},
-			{
-				"beach_hex": "hex_43_14",
-				"bns_remaining": 3,
-				"brigade_id": "PLA-71-235-Mechanized-Infantry",
-				"locked_beach": 3
-			},
-			{
-				"beach_hex": "hex_43_13",
-				"bns_remaining": 1,
-				"brigade_id": "PLA-71-71-Special-Operations",
-				"locked_beach": 4
-			},
-			{
-				"beach_hex": "hex_44_16",
-				"bns_remaining": 4,
-				"brigade_id": "PLA-71-71-Artillery",
-				"locked_beach": 1
-			},
-			{
-				"beach_hex": "hex_44_15",
-				"bns_remaining": 5,
-				"brigade_id": "PLA-71-71-Air-Defense",
-				"locked_beach": 2
-			},
-			{
-				"beach_hex": "hex_43_14",
-				"bns_remaining": 4,
-				"brigade_id": "PLA-71-71-Aviation",
-				"locked_beach": 3
 			}
 		],
 		"supply_state": {
-			"current_dos_equivalent": 51.0,
-			"current_dos_tons": 7650.0,
+			"current_dos_equivalent": 74.6666666666667,
+			"current_dos_tons": 11200.0,
 			"day_count": 1
 		},
 		"turn": 2,
@@ -2575,25 +2011,19 @@
 	"seed": 20260624,
 	"turn_result": {
 		"antiship_summary": {
-			"bns_lost_at_sea": 30,
+			"bns_lost_at_sea": 8,
 			"crossing_casualties": {
-				"damaged": 26,
-				"destroyed": 62
+				"damaged": 16,
+				"destroyed": 55
 			},
 			"destroyed_by_ship_type": {
-				"CG": 2,
-				"Container_Ship": 5,
-				"DDG": 4,
-				"Decoys": 36,
-				"FFG": 10,
-				"FFL": 4,
-				"Fast_Transport": 1,
-				"LHA": 3,
-				"LPD": 4,
-				"LSM": 1,
-				"LST": 8,
-				"Large_RoRo_Mod": 14,
-				"Small_RoRo_Mod": 6
+				"CG": 5,
+				"Container_Ship": 7,
+				"DDG": 10,
+				"Decoys": 39,
+				"FFG": 20,
+				"FFL": 12,
+				"Fast_Transport": 1
 			},
 			"mine_status": [
 				{
@@ -2605,19 +2035,19 @@
 				{
 					"beach_id": 2,
 					"lane_cleared": true,
-					"ships_destroyed": 6,
+					"ships_destroyed": 10,
 					"status_color": "green"
 				},
 				{
 					"beach_id": 3,
 					"lane_cleared": true,
-					"ships_destroyed": 8,
+					"ships_destroyed": 10,
 					"status_color": "green"
 				},
 				{
 					"beach_id": 4,
 					"lane_cleared": true,
-					"ships_destroyed": 11,
+					"ships_destroyed": 8,
 					"status_color": "green"
 				}
 			],
@@ -2629,16 +2059,9 @@
 				"Decoys": 40,
 				"FFG": 24,
 				"FFL": 24,
-				"Fast_Transport": 5,
-				"LCU": 20,
-				"LHA": 4,
-				"LPD": 8,
-				"LSM": 10,
-				"LST": 16,
-				"Large_RoRo_Mod": 30,
-				"Small_RoRo_Mod": 20
+				"Fast_Transport": 5
 			},
-			"systems_fired_count": 96,
+			"systems_fired_count": 139,
 			"target_beaches": [
 				1,
 				2,
@@ -2652,104 +2075,21 @@
 		},
 		"cleanup_summary": {
 			"antiship_systems_reset": 50,
-			"china_battalions_on_taiwan": 43,
+			"china_battalions_on_taiwan": 22,
 			"game_over": false,
-			"taiwan_battalions_on_taiwan": 115,
+			"taiwan_battalions_on_taiwan": 107,
 			"victory_reason": "",
 			"winner": ""
 		},
 		"combat_summaries": [
 			{
 				"attacker_brigade_ids": [
-					"PLA-73-14-Amphibious",
-					"PLA-71-235-Mechanized-Infantry"
+					"PLA-73-14-Amphibious"
 				],
-				"attacker_losses": 4,
+				"attacker_losses": 2,
 				"combat_detail": {
 					"attacker": {
-						"maneuver_combat_power": 15.2,
-						"maneuver_unit_count": 16,
-						"support_breakdown": {
-							"artillery": 1.6,
-							"cas": 0.0,
-							"crbm": 0.0,
-							"rocket_artillery": 0.0,
-							"rotary_wing": 0.0
-						},
-						"support_combat_power": 1.6,
-						"support_counts": {
-							"artillery": 2,
-							"cas": 0,
-							"crbm": 0,
-							"rocket_artillery": 0,
-							"rotary_wing": 0
-						},
-						"support_unit_count": 2,
-						"total_combat_power_unmodified": 16.8,
-						"unscreened": false
-					},
-					"defender": {
-						"maneuver_combat_power": 7.5,
-						"maneuver_unit_count": 4,
-						"support_breakdown": {
-							"artillery": 0.8,
-							"cas": 0.0,
-							"crbm": 0.0,
-							"rocket_artillery": 0.0,
-							"rotary_wing": 0.0
-						},
-						"support_combat_power": 0.8,
-						"support_counts": {
-							"artillery": 1,
-							"cas": 0,
-							"crbm": 0,
-							"rocket_artillery": 0,
-							"rotary_wing": 0
-						},
-						"support_unit_count": 1,
-						"terrain_modifier": 2.0,
-						"total_combat_power_terrain_modified": 16.6,
-						"total_combat_power_unmodified": 8.3,
-						"unscreened": false
-					},
-					"feba": {
-						"base_km": 3.5,
-						"movement_km": 0.0400299401197603,
-						"roll_factor": 0.955
-					},
-					"losses": {
-						"attacker": 4,
-						"attacker_loss_rate": 0.223036144578313,
-						"defender": 1,
-						"defender_loss_rate": 0.192204819277108
-					},
-					"ratios": {
-						"terrain_modified": 1.01204819277108,
-						"unmodified": 2.02409638554217
-					},
-					"result": "Contested",
-					"rolls": {
-						"attacker_loss_roll": 74,
-						"defender_loss_roll": 41,
-						"feba_movement_roll": 41
-					}
-				},
-				"defender_brigade_ids": [
-					"BDE-584"
-				],
-				"defender_losses": 1,
-				"feba_movement_km": 0.0400299401197603,
-				"hex_id": "hex_43_14",
-				"owner_after": "contested"
-			},
-			{
-				"attacker_brigade_ids": [
-					"PLA-71-35-Heavy-Armored"
-				],
-				"attacker_losses": 1,
-				"combat_detail": {
-					"attacker": {
-						"maneuver_combat_power": 8.2,
+						"maneuver_combat_power": 7.0,
 						"maneuver_unit_count": 8,
 						"support_breakdown": {
 							"artillery": 0.8,
@@ -2767,127 +2107,128 @@
 							"rotary_wing": 0
 						},
 						"support_unit_count": 1,
-						"total_combat_power_unmodified": 9.0,
+						"total_combat_power_unmodified": 7.8,
 						"unscreened": false
 					},
 					"defender": {
-						"maneuver_combat_power": 6.0,
+						"maneuver_combat_power": 7.5,
 						"maneuver_unit_count": 4,
 						"support_breakdown": {
-							"artillery": 0.8,
+							"artillery": 0.0,
 							"cas": 0.0,
 							"crbm": 0.0,
 							"rocket_artillery": 0.0,
 							"rotary_wing": 0.0
 						},
-						"support_combat_power": 0.8,
+						"support_combat_power": 0.0,
 						"support_counts": {
-							"artillery": 1,
+							"artillery": 0,
 							"cas": 0,
 							"crbm": 0,
 							"rocket_artillery": 0,
 							"rotary_wing": 0
 						},
-						"support_unit_count": 1,
-						"terrain_modifier": 1.0,
-						"total_combat_power_terrain_modified": 6.8,
-						"total_combat_power_unmodified": 6.8,
+						"support_unit_count": 0,
+						"terrain_modifier": 2.0,
+						"total_combat_power_terrain_modified": 15.0,
+						"total_combat_power_unmodified": 7.5,
 						"unscreened": false
 					},
 					"feba": {
 						"base_km": 3.5,
-						"movement_km": 0.750506329113925,
-						"roll_factor": 0.77
+						"movement_km": -1.81263157894737,
+						"roll_factor": 0.82
 					},
 					"losses": {
-						"attacker": 1,
-						"attacker_loss_rate": 0.148117647058824,
-						"defender": 1,
-						"defender_loss_rate": 0.214352941176471
+						"attacker": 2,
+						"attacker_loss_rate": 0.2004,
+						"defender": 0,
+						"defender_loss_rate": 0.124
 					},
 					"ratios": {
-						"terrain_modified": 1.32352941176471,
-						"unmodified": 1.32352941176471
+						"terrain_modified": 0.52,
+						"unmodified": 1.04
 					},
-					"result": "Attacker Advantage",
+					"result": "Defender Advantage",
 					"rolls": {
-						"attacker_loss_roll": 24,
-						"defender_loss_roll": 32,
-						"feba_movement_roll": 4
+						"attacker_loss_roll": 12,
+						"defender_loss_roll": 22,
+						"feba_movement_roll": 14
 					}
 				},
 				"defender_brigade_ids": [
-					"BDE-GDU"
+					"BDE-584"
 				],
-				"defender_losses": 1,
-				"feba_movement_km": 0.750506329113925,
-				"hex_id": "hex_44_16",
+				"defender_losses": 0,
+				"feba_movement_km": -1.81263157894737,
+				"hex_id": "hex_43_14",
 				"owner_after": "contested"
 			}
 		],
 		"contested_hexes": [
-			"hex_43_14",
-			"hex_44_16"
+			"hex_43_14"
 		],
 		"events": [
 			{
 				"data": {
 					"attacks": {
-						"executed": 136,
-						"skipped": 23,
+						"executed": 104,
+						"skipped": 51,
 						"skipped_by_reason": {
-							"no_compatible_pairing": 23
+							"insufficient_inventory": 24,
+							"no_compatible_pairing": 27
 						}
 					},
 					"contest_losses": 0,
 					"destroyed_targets_by_category": {
-						"Anti-Ship Systems": 5,
-						"Government Buildings": 1,
-						"MANPADS": 1,
-						"Maneuver Units": 7,
-						"Mobile Radars": 1,
-						"Mobile SAMs": 1,
-						"ROCAF Airbases": 1,
-						"ROCN Bases": 1
+						"Anti-Ship Systems": 3,
+						"Maneuver Units": 3,
+						"ROCAF Airbases": 2,
+						"ROCN Bases": 1,
+						"Static Radars": 4
 					},
 					"detections_by_category": {
-						"Anti-Ship Systems": 39,
-						"Government Buildings": 3,
+						"Anti-Ship Systems": 43,
 						"MANPADS": 5,
-						"Maneuver Units": 110,
-						"Military Headquarters": 4,
-						"Mobile Radars": 5,
+						"Maneuver Units": 101,
+						"Military Headquarters": 6,
+						"Mobile Radars": 4,
 						"Mobile SAMs": 16,
-						"Moveable SAMs": 29,
-						"ROCAF Airbases": 5,
-						"ROCN Bases": 3
+						"Moveable SAMs": 31,
+						"ROCAF Airbases": 4,
+						"ROCN Bases": 1,
+						"Static Radars": 4
 					},
 					"detections_by_mobility": {
-						"mobile": 141,
-						"moveable": 39,
-						"static": 39
+						"mobile": 131,
+						"moveable": 49,
+						"static": 35
 					},
 					"exquisite_intel_overrides": [
+						"maneuver_bde_333_mu_4",
+						"maneuver_bde_942_mu_3",
+						"maneuver_bde_586_mu_5",
+						"maneuver_bde_914_mu_2",
 						"maneuver_bde_gdu_mu_4",
-						"maneuver_bde_gdu_mu_5",
-						"maneuver_bde_gdu_mu_3",
-						"maneuver_bde_58_mu_2",
-						"maneuver_bde_943_mu_1",
-						"antiship_to3_type23_c000",
-						"antiship_to4_type6_c000",
-						"antiship_to4_type23_c000",
-						"antiship_to3_type24_c000",
-						"antiship_to2_type99_c000",
-						"antiship_to2_type24_c000",
+						"antiship_to5_type24_c000",
 						"antiship_to5_type23_c000",
-						"antiship_to2_type23_c000",
-						"antiship_to5_type99_c000"
+						"antiship_to3_type24_c000",
+						"antiship_to4_type6_c000",
+						"antiship_to5_type99_c000",
+						"antiship_to3_type23_c000",
+						"antiship_to4_type23_c000",
+						"antiship_to4_type24_c000",
+						"antiship_to2_type99_c000",
+						"antiship_to3_type3_c002",
+						"antiship_to3_type3_c005",
+						"antiship_to4_type99_c000",
+						"antiship_to3_type6_c000"
 					],
 					"firing_capacity_utilization": {
 						"cj10_lacm_glcm": {
 							"budget": 18,
-							"remaining": 15,
-							"used": 3
+							"remaining": 0,
+							"used": 18
 						},
 						"cm401_asbm": {
 							"budget": 20,
@@ -2901,23 +2242,23 @@
 						},
 						"owa_drone_small": {
 							"budget": 90,
-							"remaining": 87,
-							"used": 3
+							"remaining": 61,
+							"used": 29
 						},
 						"pch191_bre6_crbm": {
 							"budget": 60,
-							"remaining": 0,
-							"used": 60
+							"remaining": 60,
+							"used": 0
 						},
 						"pch191_bre8_crbm": {
 							"budget": 18,
-							"remaining": 0,
-							"used": 18
+							"remaining": 18,
+							"used": 0
 						},
 						"pla_srbm_large_generic": {
 							"budget": 30,
-							"remaining": 24,
-							"used": 6
+							"remaining": 19,
+							"used": 11
 						},
 						"yj_12_ascm": {
 							"budget": 15,
@@ -2932,25 +2273,23 @@
 					},
 					"free_shot_losses": 0,
 					"manpads": {
-						"interception_attempts": 46,
-						"interceptions": 3,
+						"interception_attempts": 54,
+						"interceptions": 11,
 						"ready_systems_by_to": {
-							"2": 438,
-							"3": 839,
-							"4": 405,
-							"5": 446,
-							"total": 2128
+							"2": 458,
+							"3": 744,
+							"4": 392,
+							"5": 381,
+							"total": 1975
 						},
 						"squadron_losses": 0
 					},
 					"red_air_losses": 0,
 					"rounds_expended_by_munition": {
 						"attack_uav_small": 18,
-						"cj10_lacm_glcm": 12,
-						"owa_drone_small": 3,
-						"pch191_bre6_crbm": 2880,
-						"pch191_bre8_crbm": 216,
-						"pla_srbm_large_generic": 48,
+						"cj10_lacm_glcm": 72,
+						"owa_drone_small": 315,
+						"pla_srbm_large_generic": 88,
 						"strike_aircraft_medium": 112
 					},
 					"sead_destroyed": 0,
@@ -2958,59 +2297,15 @@
 					"sead_pressure": {},
 					"sead_suppressed": 0,
 					"suppressed_targets_by_category": {
-						"Anti-Ship Systems": 6,
-						"Government Buildings": 1,
-						"MANPADS": 1,
-						"Maneuver Units": 11,
-						"Military Headquarters": 2,
-						"Mobile Radars": 2,
-						"Mobile SAMs": 5,
-						"Moveable SAMs": 8,
-						"ROCN Bases": 1
+						"Anti-Ship Systems": 4,
+						"MANPADS": 2,
+						"Maneuver Units": 6,
+						"Military Headquarters": 1,
+						"Mobile SAMs": 2,
+						"Moveable SAMs": 2,
+						"ROCAF Airbases": 1
 					},
 					"taiwan_ad_health_after": {
-						"category_health": {
-							"Mobile Radars": 0.4,
-							"Moveable SAMs": 0.291666666666667,
-							"Static Radars": 0.0,
-							"Static SAMs": 0.0
-						},
-						"effective_ad_health": 0.0775,
-						"effective_sam_health": 0.0291666666666667,
-						"radar_health": 0.15,
-						"radar_weight_total": 0.4,
-						"raw_sam_health": 0.194444444444444,
-						"sam_weight_total": 0.6
-					},
-					"taiwan_ad_health_after_missile_phase": {
-						"category_health": {
-							"Mobile Radars": 1.0,
-							"Moveable SAMs": 0.291666666666667,
-							"Static Radars": 0.0,
-							"Static SAMs": 0.0
-						},
-						"effective_ad_health": 0.19375,
-						"effective_sam_health": 0.0729166666666667,
-						"radar_health": 0.375,
-						"radar_weight_total": 0.4,
-						"raw_sam_health": 0.194444444444444,
-						"sam_weight_total": 0.6
-					},
-					"taiwan_ad_health_after_sead": {
-						"category_health": {
-							"Mobile Radars": 1.0,
-							"Moveable SAMs": 0.291666666666667,
-							"Static Radars": 0.0,
-							"Static SAMs": 0.0
-						},
-						"effective_ad_health": 0.19375,
-						"effective_sam_health": 0.0729166666666667,
-						"radar_health": 0.375,
-						"radar_weight_total": 0.4,
-						"raw_sam_health": 0.194444444444444,
-						"sam_weight_total": 0.6
-					},
-					"taiwan_ad_health_before": {
 						"category_health": {
 							"Mobile Radars": 1.0,
 							"Moveable SAMs": 0.625,
@@ -3024,55 +2319,97 @@
 						"raw_sam_health": 0.416666666666667,
 						"sam_weight_total": 0.6
 					},
+					"taiwan_ad_health_after_missile_phase": {
+						"category_health": {
+							"Mobile Radars": 1.0,
+							"Moveable SAMs": 0.666666666666667,
+							"Static Radars": 0.0,
+							"Static SAMs": 0.0
+						},
+						"effective_ad_health": 0.25,
+						"effective_sam_health": 0.166666666666667,
+						"radar_health": 0.375,
+						"radar_weight_total": 0.4,
+						"raw_sam_health": 0.444444444444444,
+						"sam_weight_total": 0.6
+					},
+					"taiwan_ad_health_after_sead": {
+						"category_health": {
+							"Mobile Radars": 1.0,
+							"Moveable SAMs": 0.666666666666667,
+							"Static Radars": 0.0,
+							"Static SAMs": 0.0
+						},
+						"effective_ad_health": 0.25,
+						"effective_sam_health": 0.166666666666667,
+						"radar_health": 0.375,
+						"radar_weight_total": 0.4,
+						"raw_sam_health": 0.444444444444444,
+						"sam_weight_total": 0.6
+					},
+					"taiwan_ad_health_before": {
+						"category_health": {
+							"Mobile Radars": 1.0,
+							"Moveable SAMs": 0.708333333333333,
+							"Static Radars": 0.222222222222222,
+							"Static SAMs": 0.0
+						},
+						"effective_ad_health": 0.351157407407407,
+						"effective_sam_health": 0.24266975308642,
+						"radar_health": 0.513888888888889,
+						"radar_weight_total": 0.4,
+						"raw_sam_health": 0.472222222222222,
+						"sam_weight_total": 0.6
+					},
 					"target_counts_by_category_status": {
 						"Anti-Ship Systems": {
-							"destroyed": 56,
-							"surviving": 17,
+							"destroyed": 53,
+							"surviving": 20,
 							"total": 73
 						},
 						"Government Buildings": {
-							"destroyed": 9,
-							"surviving": 1,
+							"destroyed": 10,
+							"surviving": 0,
 							"total": 10
 						},
 						"MANPADS": {
-							"destroyed": 2,
-							"surviving": 48,
+							"destroyed": 1,
+							"surviving": 49,
 							"total": 50
 						},
 						"Maneuver Units": {
-							"destroyed": 10,
-							"surviving": 114,
+							"destroyed": 17,
+							"surviving": 107,
 							"total": 124
 						},
 						"Military Headquarters": {
-							"destroyed": 3,
-							"surviving": 2,
+							"destroyed": 2,
+							"surviving": 3,
 							"total": 5
 						},
 						"Mobile Radars": {
-							"destroyed": 1,
-							"surviving": 4,
+							"destroyed": 0,
+							"surviving": 5,
 							"total": 5
 						},
 						"Mobile SAMs": {
-							"destroyed": 2,
-							"surviving": 48,
+							"destroyed": 0,
+							"surviving": 50,
 							"total": 50
 						},
 						"Moveable SAMs": {
-							"destroyed": 9,
-							"surviving": 15,
+							"destroyed": 7,
+							"surviving": 17,
 							"total": 24
 						},
 						"ROCAF Airbases": {
-							"destroyed": 8,
-							"surviving": 2,
+							"destroyed": 9,
+							"surviving": 1,
 							"total": 10
 						},
 						"ROCN Bases": {
-							"destroyed": 3,
-							"surviving": 1,
+							"destroyed": 4,
+							"surviving": 0,
 							"total": 4
 						},
 						"Static Radars": {
@@ -3095,25 +2432,19 @@
 			},
 			{
 				"data": {
-					"bns_lost_at_sea": 30,
+					"bns_lost_at_sea": 8,
 					"crossing_casualties": {
-						"damaged": 26,
-						"destroyed": 62
+						"damaged": 16,
+						"destroyed": 55
 					},
 					"destroyed_by_ship_type": {
-						"CG": 2,
-						"Container_Ship": 5,
-						"DDG": 4,
-						"Decoys": 36,
-						"FFG": 10,
-						"FFL": 4,
-						"Fast_Transport": 1,
-						"LHA": 3,
-						"LPD": 4,
-						"LSM": 1,
-						"LST": 8,
-						"Large_RoRo_Mod": 14,
-						"Small_RoRo_Mod": 6
+						"CG": 5,
+						"Container_Ship": 7,
+						"DDG": 10,
+						"Decoys": 39,
+						"FFG": 20,
+						"FFL": 12,
+						"Fast_Transport": 1
 					},
 					"mine_status": [
 						{
@@ -3125,19 +2456,19 @@
 						{
 							"beach_id": 2,
 							"lane_cleared": true,
-							"ships_destroyed": 6,
+							"ships_destroyed": 10,
 							"status_color": "green"
 						},
 						{
 							"beach_id": 3,
 							"lane_cleared": true,
-							"ships_destroyed": 8,
+							"ships_destroyed": 10,
 							"status_color": "green"
 						},
 						{
 							"beach_id": 4,
 							"lane_cleared": true,
-							"ships_destroyed": 11,
+							"ships_destroyed": 8,
 							"status_color": "green"
 						}
 					],
@@ -3149,16 +2480,9 @@
 						"Decoys": 40,
 						"FFG": 24,
 						"FFL": 24,
-						"Fast_Transport": 5,
-						"LCU": 20,
-						"LHA": 4,
-						"LPD": 8,
-						"LSM": 10,
-						"LST": 16,
-						"Large_RoRo_Mod": 30,
-						"Small_RoRo_Mod": 20
+						"Fast_Transport": 5
 					},
-					"systems_fired_count": 96,
+					"systems_fired_count": 139,
 					"target_beaches": [
 						1,
 						2,
@@ -3189,101 +2513,12 @@
 			{
 				"data": {
 					"attacker_brigade_ids": [
-						"PLA-73-14-Amphibious",
-						"PLA-71-235-Mechanized-Infantry"
+						"PLA-73-14-Amphibious"
 					],
-					"attacker_losses": 4,
+					"attacker_losses": 2,
 					"combat_detail": {
 						"attacker": {
-							"maneuver_combat_power": 15.2,
-							"maneuver_unit_count": 16,
-							"support_breakdown": {
-								"artillery": 1.6,
-								"cas": 0.0,
-								"crbm": 0.0,
-								"rocket_artillery": 0.0,
-								"rotary_wing": 0.0
-							},
-							"support_combat_power": 1.6,
-							"support_counts": {
-								"artillery": 2,
-								"cas": 0,
-								"crbm": 0,
-								"rocket_artillery": 0,
-								"rotary_wing": 0
-							},
-							"support_unit_count": 2,
-							"total_combat_power_unmodified": 16.8,
-							"unscreened": false
-						},
-						"defender": {
-							"maneuver_combat_power": 7.5,
-							"maneuver_unit_count": 4,
-							"support_breakdown": {
-								"artillery": 0.8,
-								"cas": 0.0,
-								"crbm": 0.0,
-								"rocket_artillery": 0.0,
-								"rotary_wing": 0.0
-							},
-							"support_combat_power": 0.8,
-							"support_counts": {
-								"artillery": 1,
-								"cas": 0,
-								"crbm": 0,
-								"rocket_artillery": 0,
-								"rotary_wing": 0
-							},
-							"support_unit_count": 1,
-							"terrain_modifier": 2.0,
-							"total_combat_power_terrain_modified": 16.6,
-							"total_combat_power_unmodified": 8.3,
-							"unscreened": false
-						},
-						"feba": {
-							"base_km": 3.5,
-							"movement_km": 0.0400299401197603,
-							"roll_factor": 0.955
-						},
-						"losses": {
-							"attacker": 4,
-							"attacker_loss_rate": 0.223036144578313,
-							"defender": 1,
-							"defender_loss_rate": 0.192204819277108
-						},
-						"ratios": {
-							"terrain_modified": 1.01204819277108,
-							"unmodified": 2.02409638554217
-						},
-						"result": "Contested",
-						"rolls": {
-							"attacker_loss_roll": 74,
-							"defender_loss_roll": 41,
-							"feba_movement_roll": 41
-						}
-					},
-					"defender_brigade_ids": [
-						"BDE-584"
-					],
-					"defender_losses": 1,
-					"feba_movement_km": 0.0400299401197603,
-					"hex_id": "hex_43_14",
-					"owner_after": "contested"
-				},
-				"hex_id": "hex_43_14",
-				"kind": "combat",
-				"seq": 3,
-				"team": ""
-			},
-			{
-				"data": {
-					"attacker_brigade_ids": [
-						"PLA-71-35-Heavy-Armored"
-					],
-					"attacker_losses": 1,
-					"combat_detail": {
-						"attacker": {
-							"maneuver_combat_power": 8.2,
+							"maneuver_combat_power": 7.0,
 							"maneuver_unit_count": 8,
 							"support_breakdown": {
 								"artillery": 0.8,
@@ -3301,80 +2536,80 @@
 								"rotary_wing": 0
 							},
 							"support_unit_count": 1,
-							"total_combat_power_unmodified": 9.0,
+							"total_combat_power_unmodified": 7.8,
 							"unscreened": false
 						},
 						"defender": {
-							"maneuver_combat_power": 6.0,
+							"maneuver_combat_power": 7.5,
 							"maneuver_unit_count": 4,
 							"support_breakdown": {
-								"artillery": 0.8,
+								"artillery": 0.0,
 								"cas": 0.0,
 								"crbm": 0.0,
 								"rocket_artillery": 0.0,
 								"rotary_wing": 0.0
 							},
-							"support_combat_power": 0.8,
+							"support_combat_power": 0.0,
 							"support_counts": {
-								"artillery": 1,
+								"artillery": 0,
 								"cas": 0,
 								"crbm": 0,
 								"rocket_artillery": 0,
 								"rotary_wing": 0
 							},
-							"support_unit_count": 1,
-							"terrain_modifier": 1.0,
-							"total_combat_power_terrain_modified": 6.8,
-							"total_combat_power_unmodified": 6.8,
+							"support_unit_count": 0,
+							"terrain_modifier": 2.0,
+							"total_combat_power_terrain_modified": 15.0,
+							"total_combat_power_unmodified": 7.5,
 							"unscreened": false
 						},
 						"feba": {
 							"base_km": 3.5,
-							"movement_km": 0.750506329113925,
-							"roll_factor": 0.77
+							"movement_km": -1.81263157894737,
+							"roll_factor": 0.82
 						},
 						"losses": {
-							"attacker": 1,
-							"attacker_loss_rate": 0.148117647058824,
-							"defender": 1,
-							"defender_loss_rate": 0.214352941176471
+							"attacker": 2,
+							"attacker_loss_rate": 0.2004,
+							"defender": 0,
+							"defender_loss_rate": 0.124
 						},
 						"ratios": {
-							"terrain_modified": 1.32352941176471,
-							"unmodified": 1.32352941176471
+							"terrain_modified": 0.52,
+							"unmodified": 1.04
 						},
-						"result": "Attacker Advantage",
+						"result": "Defender Advantage",
 						"rolls": {
-							"attacker_loss_roll": 24,
-							"defender_loss_roll": 32,
-							"feba_movement_roll": 4
+							"attacker_loss_roll": 12,
+							"defender_loss_roll": 22,
+							"feba_movement_roll": 14
 						}
 					},
 					"defender_brigade_ids": [
-						"BDE-GDU"
+						"BDE-584"
 					],
-					"defender_losses": 1,
-					"feba_movement_km": 0.750506329113925,
-					"hex_id": "hex_44_16",
+					"defender_losses": 0,
+					"feba_movement_km": -1.81263157894737,
+					"hex_id": "hex_43_14",
 					"owner_after": "contested"
 				},
-				"hex_id": "hex_44_16",
+				"hex_id": "hex_43_14",
 				"kind": "combat",
-				"seq": 4,
+				"seq": 3,
 				"team": ""
 			},
 			{
 				"data": {
 					"antiship_systems_reset": 50,
-					"china_battalions_on_taiwan": 43,
+					"china_battalions_on_taiwan": 22,
 					"game_over": false,
-					"taiwan_battalions_on_taiwan": 115,
+					"taiwan_battalions_on_taiwan": 107,
 					"victory_reason": "",
 					"winner": ""
 				},
 				"hex_id": "",
 				"kind": "cleanup",
-				"seq": 5,
+				"seq": 4,
 				"team": ""
 			}
 		],
@@ -3382,61 +2617,63 @@
 		"game_over": false,
 		"ijfs_summary": {
 			"attacks": {
-				"executed": 136,
-				"skipped": 23,
+				"executed": 104,
+				"skipped": 51,
 				"skipped_by_reason": {
-					"no_compatible_pairing": 23
+					"insufficient_inventory": 24,
+					"no_compatible_pairing": 27
 				}
 			},
 			"contest_losses": 0,
 			"destroyed_targets_by_category": {
-				"Anti-Ship Systems": 5,
-				"Government Buildings": 1,
-				"MANPADS": 1,
-				"Maneuver Units": 7,
-				"Mobile Radars": 1,
-				"Mobile SAMs": 1,
-				"ROCAF Airbases": 1,
-				"ROCN Bases": 1
+				"Anti-Ship Systems": 3,
+				"Maneuver Units": 3,
+				"ROCAF Airbases": 2,
+				"ROCN Bases": 1,
+				"Static Radars": 4
 			},
 			"detections_by_category": {
-				"Anti-Ship Systems": 39,
-				"Government Buildings": 3,
+				"Anti-Ship Systems": 43,
 				"MANPADS": 5,
-				"Maneuver Units": 110,
-				"Military Headquarters": 4,
-				"Mobile Radars": 5,
+				"Maneuver Units": 101,
+				"Military Headquarters": 6,
+				"Mobile Radars": 4,
 				"Mobile SAMs": 16,
-				"Moveable SAMs": 29,
-				"ROCAF Airbases": 5,
-				"ROCN Bases": 3
+				"Moveable SAMs": 31,
+				"ROCAF Airbases": 4,
+				"ROCN Bases": 1,
+				"Static Radars": 4
 			},
 			"detections_by_mobility": {
-				"mobile": 141,
-				"moveable": 39,
-				"static": 39
+				"mobile": 131,
+				"moveable": 49,
+				"static": 35
 			},
 			"exquisite_intel_overrides": [
+				"maneuver_bde_333_mu_4",
+				"maneuver_bde_942_mu_3",
+				"maneuver_bde_586_mu_5",
+				"maneuver_bde_914_mu_2",
 				"maneuver_bde_gdu_mu_4",
-				"maneuver_bde_gdu_mu_5",
-				"maneuver_bde_gdu_mu_3",
-				"maneuver_bde_58_mu_2",
-				"maneuver_bde_943_mu_1",
-				"antiship_to3_type23_c000",
-				"antiship_to4_type6_c000",
-				"antiship_to4_type23_c000",
-				"antiship_to3_type24_c000",
-				"antiship_to2_type99_c000",
-				"antiship_to2_type24_c000",
+				"antiship_to5_type24_c000",
 				"antiship_to5_type23_c000",
-				"antiship_to2_type23_c000",
-				"antiship_to5_type99_c000"
+				"antiship_to3_type24_c000",
+				"antiship_to4_type6_c000",
+				"antiship_to5_type99_c000",
+				"antiship_to3_type23_c000",
+				"antiship_to4_type23_c000",
+				"antiship_to4_type24_c000",
+				"antiship_to2_type99_c000",
+				"antiship_to3_type3_c002",
+				"antiship_to3_type3_c005",
+				"antiship_to4_type99_c000",
+				"antiship_to3_type6_c000"
 			],
 			"firing_capacity_utilization": {
 				"cj10_lacm_glcm": {
 					"budget": 18,
-					"remaining": 15,
-					"used": 3
+					"remaining": 0,
+					"used": 18
 				},
 				"cm401_asbm": {
 					"budget": 20,
@@ -3450,23 +2687,23 @@
 				},
 				"owa_drone_small": {
 					"budget": 90,
-					"remaining": 87,
-					"used": 3
+					"remaining": 61,
+					"used": 29
 				},
 				"pch191_bre6_crbm": {
 					"budget": 60,
-					"remaining": 0,
-					"used": 60
+					"remaining": 60,
+					"used": 0
 				},
 				"pch191_bre8_crbm": {
 					"budget": 18,
-					"remaining": 0,
-					"used": 18
+					"remaining": 18,
+					"used": 0
 				},
 				"pla_srbm_large_generic": {
 					"budget": 30,
-					"remaining": 24,
-					"used": 6
+					"remaining": 19,
+					"used": 11
 				},
 				"yj_12_ascm": {
 					"budget": 15,
@@ -3481,25 +2718,23 @@
 			},
 			"free_shot_losses": 0,
 			"manpads": {
-				"interception_attempts": 46,
-				"interceptions": 3,
+				"interception_attempts": 54,
+				"interceptions": 11,
 				"ready_systems_by_to": {
-					"2": 438,
-					"3": 839,
-					"4": 405,
-					"5": 446,
-					"total": 2128
+					"2": 458,
+					"3": 744,
+					"4": 392,
+					"5": 381,
+					"total": 1975
 				},
 				"squadron_losses": 0
 			},
 			"red_air_losses": 0,
 			"rounds_expended_by_munition": {
 				"attack_uav_small": 18,
-				"cj10_lacm_glcm": 12,
-				"owa_drone_small": 3,
-				"pch191_bre6_crbm": 2880,
-				"pch191_bre8_crbm": 216,
-				"pla_srbm_large_generic": 48,
+				"cj10_lacm_glcm": 72,
+				"owa_drone_small": 315,
+				"pla_srbm_large_generic": 88,
 				"strike_aircraft_medium": 112
 			},
 			"sead_destroyed": 0,
@@ -3507,59 +2742,15 @@
 			"sead_pressure": {},
 			"sead_suppressed": 0,
 			"suppressed_targets_by_category": {
-				"Anti-Ship Systems": 6,
-				"Government Buildings": 1,
-				"MANPADS": 1,
-				"Maneuver Units": 11,
-				"Military Headquarters": 2,
-				"Mobile Radars": 2,
-				"Mobile SAMs": 5,
-				"Moveable SAMs": 8,
-				"ROCN Bases": 1
+				"Anti-Ship Systems": 4,
+				"MANPADS": 2,
+				"Maneuver Units": 6,
+				"Military Headquarters": 1,
+				"Mobile SAMs": 2,
+				"Moveable SAMs": 2,
+				"ROCAF Airbases": 1
 			},
 			"taiwan_ad_health_after": {
-				"category_health": {
-					"Mobile Radars": 0.4,
-					"Moveable SAMs": 0.291666666666667,
-					"Static Radars": 0.0,
-					"Static SAMs": 0.0
-				},
-				"effective_ad_health": 0.0775,
-				"effective_sam_health": 0.0291666666666667,
-				"radar_health": 0.15,
-				"radar_weight_total": 0.4,
-				"raw_sam_health": 0.194444444444444,
-				"sam_weight_total": 0.6
-			},
-			"taiwan_ad_health_after_missile_phase": {
-				"category_health": {
-					"Mobile Radars": 1.0,
-					"Moveable SAMs": 0.291666666666667,
-					"Static Radars": 0.0,
-					"Static SAMs": 0.0
-				},
-				"effective_ad_health": 0.19375,
-				"effective_sam_health": 0.0729166666666667,
-				"radar_health": 0.375,
-				"radar_weight_total": 0.4,
-				"raw_sam_health": 0.194444444444444,
-				"sam_weight_total": 0.6
-			},
-			"taiwan_ad_health_after_sead": {
-				"category_health": {
-					"Mobile Radars": 1.0,
-					"Moveable SAMs": 0.291666666666667,
-					"Static Radars": 0.0,
-					"Static SAMs": 0.0
-				},
-				"effective_ad_health": 0.19375,
-				"effective_sam_health": 0.0729166666666667,
-				"radar_health": 0.375,
-				"radar_weight_total": 0.4,
-				"raw_sam_health": 0.194444444444444,
-				"sam_weight_total": 0.6
-			},
-			"taiwan_ad_health_before": {
 				"category_health": {
 					"Mobile Radars": 1.0,
 					"Moveable SAMs": 0.625,
@@ -3573,55 +2764,97 @@
 				"raw_sam_health": 0.416666666666667,
 				"sam_weight_total": 0.6
 			},
+			"taiwan_ad_health_after_missile_phase": {
+				"category_health": {
+					"Mobile Radars": 1.0,
+					"Moveable SAMs": 0.666666666666667,
+					"Static Radars": 0.0,
+					"Static SAMs": 0.0
+				},
+				"effective_ad_health": 0.25,
+				"effective_sam_health": 0.166666666666667,
+				"radar_health": 0.375,
+				"radar_weight_total": 0.4,
+				"raw_sam_health": 0.444444444444444,
+				"sam_weight_total": 0.6
+			},
+			"taiwan_ad_health_after_sead": {
+				"category_health": {
+					"Mobile Radars": 1.0,
+					"Moveable SAMs": 0.666666666666667,
+					"Static Radars": 0.0,
+					"Static SAMs": 0.0
+				},
+				"effective_ad_health": 0.25,
+				"effective_sam_health": 0.166666666666667,
+				"radar_health": 0.375,
+				"radar_weight_total": 0.4,
+				"raw_sam_health": 0.444444444444444,
+				"sam_weight_total": 0.6
+			},
+			"taiwan_ad_health_before": {
+				"category_health": {
+					"Mobile Radars": 1.0,
+					"Moveable SAMs": 0.708333333333333,
+					"Static Radars": 0.222222222222222,
+					"Static SAMs": 0.0
+				},
+				"effective_ad_health": 0.351157407407407,
+				"effective_sam_health": 0.24266975308642,
+				"radar_health": 0.513888888888889,
+				"radar_weight_total": 0.4,
+				"raw_sam_health": 0.472222222222222,
+				"sam_weight_total": 0.6
+			},
 			"target_counts_by_category_status": {
 				"Anti-Ship Systems": {
-					"destroyed": 56,
-					"surviving": 17,
+					"destroyed": 53,
+					"surviving": 20,
 					"total": 73
 				},
 				"Government Buildings": {
-					"destroyed": 9,
-					"surviving": 1,
+					"destroyed": 10,
+					"surviving": 0,
 					"total": 10
 				},
 				"MANPADS": {
-					"destroyed": 2,
-					"surviving": 48,
+					"destroyed": 1,
+					"surviving": 49,
 					"total": 50
 				},
 				"Maneuver Units": {
-					"destroyed": 10,
-					"surviving": 114,
+					"destroyed": 17,
+					"surviving": 107,
 					"total": 124
 				},
 				"Military Headquarters": {
-					"destroyed": 3,
-					"surviving": 2,
+					"destroyed": 2,
+					"surviving": 3,
 					"total": 5
 				},
 				"Mobile Radars": {
-					"destroyed": 1,
-					"surviving": 4,
+					"destroyed": 0,
+					"surviving": 5,
 					"total": 5
 				},
 				"Mobile SAMs": {
-					"destroyed": 2,
-					"surviving": 48,
+					"destroyed": 0,
+					"surviving": 50,
 					"total": 50
 				},
 				"Moveable SAMs": {
-					"destroyed": 9,
-					"surviving": 15,
+					"destroyed": 7,
+					"surviving": 17,
 					"total": 24
 				},
 				"ROCAF Airbases": {
-					"destroyed": 8,
-					"surviving": 2,
+					"destroyed": 9,
+					"surviving": 1,
 					"total": 10
 				},
 				"ROCN Bases": {
-					"destroyed": 3,
-					"surviving": 1,
+					"destroyed": 4,
+					"surviving": 0,
 					"total": 4
 				},
 				"Static Radars": {
@@ -3646,9 +2879,9 @@
 				"2:20": 1,
 				"2:21": 1,
 				"2:22": 1,
+				"2:23": 3,
 				"2:24": 10,
 				"2:3": 74,
-				"2:99": 1,
 				"3:16": 12,
 				"3:17": 5,
 				"3:18": 5,
@@ -3656,8 +2889,9 @@
 				"3:20": 4,
 				"3:21": 2,
 				"3:22": 2,
-				"3:3": 149,
-				"3:6": 1,
+				"3:23": 10,
+				"3:3": 112,
+				"3:5": 8,
 				"3:99": 1,
 				"4:16": 12,
 				"4:17": 5,
@@ -3669,7 +2903,6 @@
 				"4:24": 40,
 				"4:3": 74,
 				"4:5": 8,
-				"4:99": 1,
 				"5:16": 3,
 				"5:17": 1,
 				"5:18": 1,
@@ -3679,56 +2912,83 @@
 				"5:22": 1,
 				"5:24": 10,
 				"5:3": 37,
-				"5:5": 8,
-				"5:99": 1
+				"5:5": 8
 			},
 			"antiship_suppressed_by_type": {
-				"2:5": 8,
-				"3:5": 32,
-				"4:5": 8
+				"2:5": 16,
+				"4:5": 8,
+				"5:99": 1
 			},
 			"maneuver_casualties": [
 				{
-					"battalion_id": "BDE-234-MU-5",
-					"brigade_id": "BDE-234",
+					"battalion_id": "BDE-66-MU-4",
+					"brigade_id": "BDE-66",
 					"subcategory": "Field Artillery",
-					"to": 5,
+					"to": 3,
 					"unit_type": "Mechanized Artillery Battalion"
 				},
 				{
-					"battalion_id": "BDE-58-MU-1",
-					"brigade_id": "BDE-58",
+					"battalion_id": "BDE-21-MU-3",
+					"brigade_id": "BDE-21",
 					"subcategory": "Field Artillery",
-					"to": 5,
-					"unit_type": "Mechanized Artillery Battalion"
-				},
-				{
-					"battalion_id": "BDE-58-MU-3",
-					"brigade_id": "BDE-58",
-					"subcategory": "Field Artillery",
-					"to": 5,
+					"to": 3,
 					"unit_type": "Field Artillery Battalion"
 				},
 				{
-					"battalion_id": "BDE-621-MU-1",
+					"battalion_id": "BDE-542-MU-3",
+					"brigade_id": "BDE-542",
+					"subcategory": "Armour",
+					"to": 3,
+					"unit_type": "Tank Battalion"
+				},
+				{
+					"battalion_id": "BDE-542-MU-5",
+					"brigade_id": "BDE-542",
+					"subcategory": "Field Artillery",
+					"to": 3,
+					"unit_type": "Mechanized Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-564-MU-1",
+					"brigade_id": "BDE-564",
+					"subcategory": "Armour",
+					"to": 4,
+					"unit_type": "Tank Battalion"
+				},
+				{
+					"battalion_id": "BDE-584-MU-5",
+					"brigade_id": "BDE-584",
+					"subcategory": "Field Artillery",
+					"to": 3,
+					"unit_type": "Mechanized Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-621-MU-5",
 					"brigade_id": "BDE-621",
 					"subcategory": "Field Artillery",
 					"to": 3,
 					"unit_type": "Mechanized Artillery Battalion"
 				},
 				{
-					"battalion_id": "BDE-621-MU-3",
-					"brigade_id": "BDE-621",
-					"subcategory": "Field Artillery",
+					"battalion_id": "BDE-66-MU-1",
+					"brigade_id": "BDE-66",
+					"subcategory": "Marine Corps",
 					"to": 3,
-					"unit_type": "Mechanized Artillery Battalion"
+					"unit_type": "Amphibious Infantry Battalion"
 				},
 				{
-					"battalion_id": "BDE-77-MU-4",
-					"brigade_id": "BDE-77",
-					"subcategory": "Field Artillery",
+					"battalion_id": "BDE-66-MU-2",
+					"brigade_id": "BDE-66",
+					"subcategory": "Marine Corps",
 					"to": 3,
-					"unit_type": "Mechanized Artillery Battalion"
+					"unit_type": "Amphibious Infantry Battalion"
+				},
+				{
+					"battalion_id": "BDE-99-MU-1",
+					"brigade_id": "BDE-99",
+					"subcategory": "Marine Corps",
+					"to": 4,
+					"unit_type": "Amphibious Infantry Battalion"
 				},
 				{
 					"battalion_id": "BDE-99-MU-4",
@@ -3736,29 +2996,60 @@
 					"subcategory": "Field Artillery",
 					"to": 4,
 					"unit_type": "Mechanized Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-HD-MU-2",
+					"brigade_id": "BDE-HD",
+					"subcategory": "Field Artillery",
+					"to": 2,
+					"unit_type": "Field Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-43-MU-1",
+					"brigade_id": "BDE-43",
+					"subcategory": "Rocket Artillery",
+					"to": 4,
+					"unit_type": "Rocket Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-564-MU-5",
+					"brigade_id": "BDE-564",
+					"subcategory": "Field Artillery",
+					"to": 4,
+					"unit_type": "Field Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-43-MU-3",
+					"brigade_id": "BDE-43",
+					"subcategory": "Field Artillery",
+					"to": 4,
+					"unit_type": "Field Artillery Battalion"
+				},
+				{
+					"battalion_id": "BDE-542-MU-4",
+					"brigade_id": "BDE-542",
+					"subcategory": "Mechanized Infantry",
+					"to": 3,
+					"unit_type": "Mechanized Infantry Battalion"
+				},
+				{
+					"battalion_id": "BDE-564-MU-4",
+					"brigade_id": "BDE-564",
+					"subcategory": "Mechanized Infantry",
+					"to": 4,
+					"unit_type": "Mechanized Infantry Battalion"
 				}
 			],
 			"sam_destroyed": 0,
 			"sam_suppressed": 0
 		},
 		"offload_summary": {
-			"bns_landed": 9,
-			"bns_sent": 44,
-			"bns_waiting": 35,
-			"landed_brigade_ids": [
-				"PLA-71-35-Heavy-Armored",
-				"PLA-71-160-Light-Mechanized",
-				"PLA-71-235-Mechanized-Infantry",
-				"PLA-71-71-Special-Operations"
-			],
-			"lost_at_sea": 30,
+			"bns_landed": 0,
+			"bns_sent": 12,
+			"bns_waiting": 12,
+			"landed_brigade_ids": [],
+			"lost_at_sea": 8,
 			"manifest_deferred": [
-				{
-					"bn_id": "PLA-71-2-Amphibious-reconnaissance_battalion-5",
-					"bn_type": "Reconnaissance Battalion",
-					"brigade_id": "PLA-71-2-Amphibious",
-					"reason": "day1_support_waiting"
-				},
 				{
 					"bn_id": "PLA-71-2-Amphibious-mechanized_artillery_battalion-6",
 					"bn_type": "Mechanized Artillery Battalion",
@@ -3778,8 +3069,20 @@
 					"reason": "day1_support_waiting"
 				},
 				{
+					"bn_id": "PLA-72-5-Amphibious-reconnaissance_battalion-5",
+					"bn_type": "Reconnaissance Battalion",
+					"brigade_id": "PLA-72-5-Amphibious",
+					"reason": "day1_support_waiting"
+				},
+				{
 					"bn_id": "PLA-72-5-Amphibious-air_defense_battalion-7",
 					"bn_type": "Air Defense Battalion",
+					"brigade_id": "PLA-72-5-Amphibious",
+					"reason": "day1_support_waiting"
+				},
+				{
+					"bn_id": "PLA-72-5-Amphibious-support_battalion-8",
+					"bn_type": "Support Battalion",
 					"brigade_id": "PLA-72-5-Amphibious",
 					"reason": "day1_support_waiting"
 				},
@@ -3796,21 +3099,15 @@
 					"reason": "day1_support_waiting"
 				},
 				{
-					"bn_id": "PLA-73-14-Amphibious-mechanized_artillery_battalion-6",
-					"bn_type": "Mechanized Artillery Battalion",
-					"brigade_id": "PLA-73-14-Amphibious",
-					"reason": "day1_support_waiting"
-				},
-				{
 					"bn_id": "PLA-73-14-Amphibious-support_battalion-8",
 					"bn_type": "Support Battalion",
 					"brigade_id": "PLA-73-14-Amphibious",
 					"reason": "day1_support_waiting"
 				},
 				{
-					"bn_id": "PLA-74-1-Amphibious-reconnaissance_battalion-5",
-					"bn_type": "Reconnaissance Battalion",
-					"brigade_id": "PLA-74-1-Amphibious",
+					"bn_id": "PLA-73-14-Amphibious-service_support_battalion-9",
+					"bn_type": "Service Support Battalion",
+					"brigade_id": "PLA-73-14-Amphibious",
 					"reason": "day1_support_waiting"
 				},
 				{
@@ -3820,206 +3117,13 @@
 					"reason": "day1_support_waiting"
 				},
 				{
-					"bn_id": "PLA-74-1-Amphibious-air_defense_battalion-7",
-					"bn_type": "Air Defense Battalion",
+					"bn_id": "PLA-74-1-Amphibious-support_battalion-8",
+					"bn_type": "Support Battalion",
 					"brigade_id": "PLA-74-1-Amphibious",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-35-Heavy-Armored-reconnaissance_battalion-5",
-					"bn_type": "Reconnaissance Battalion",
-					"brigade_id": "PLA-71-35-Heavy-Armored",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-35-Heavy-Armored-mechanized_artillery_battalion-6",
-					"bn_type": "Mechanized Artillery Battalion",
-					"brigade_id": "PLA-71-35-Heavy-Armored",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-35-Heavy-Armored-support_battalion-8",
-					"bn_type": "Support Battalion",
-					"brigade_id": "PLA-71-35-Heavy-Armored",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-160-Light-Mechanized-reconnaissance_battalion-5",
-					"bn_type": "Reconnaissance Battalion",
-					"brigade_id": "PLA-71-160-Light-Mechanized",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-160-Light-Mechanized-mechanized_artillery_battalion-6",
-					"bn_type": "Mechanized Artillery Battalion",
-					"brigade_id": "PLA-71-160-Light-Mechanized",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-160-Light-Mechanized-air_defense_battalion-7",
-					"bn_type": "Air Defense Battalion",
-					"brigade_id": "PLA-71-160-Light-Mechanized",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-235-Mechanized-Infantry-reconnaissance_battalion-5",
-					"bn_type": "Reconnaissance Battalion",
-					"brigade_id": "PLA-71-235-Mechanized-Infantry",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-235-Mechanized-Infantry-mechanized_artillery_battalion-6",
-					"bn_type": "Mechanized Artillery Battalion",
-					"brigade_id": "PLA-71-235-Mechanized-Infantry",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-235-Mechanized-Infantry-air_defense_battalion-7",
-					"bn_type": "Air Defense Battalion",
-					"brigade_id": "PLA-71-235-Mechanized-Infantry",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-71-Special-Operations-support_battalion-6",
-					"bn_type": "Support Battalion",
-					"brigade_id": "PLA-71-71-Special-Operations",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-71-Artillery-mechanized_artillery_battalion-1",
-					"bn_type": "Mechanized Artillery Battalion",
-					"brigade_id": "PLA-71-71-Artillery",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-71-Artillery-rocket_artillery_battalion-6",
-					"bn_type": "Rocket Artillery Battalion",
-					"brigade_id": "PLA-71-71-Artillery",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-71-Artillery-support_battalion-8",
-					"bn_type": "Support Battalion",
-					"brigade_id": "PLA-71-71-Artillery",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-71-Artillery-service_support_battalion-9",
-					"bn_type": "Service Support Battalion",
-					"brigade_id": "PLA-71-71-Artillery",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-71-Air-Defense-air_defense_battalion-2",
-					"bn_type": "Air Defense Battalion",
-					"brigade_id": "PLA-71-71-Air-Defense",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-71-Air-Defense-air_defense_battalion-3",
-					"bn_type": "Air Defense Battalion",
-					"brigade_id": "PLA-71-71-Air-Defense",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-71-Air-Defense-air_defense_battalion-5",
-					"bn_type": "Air Defense Battalion",
-					"brigade_id": "PLA-71-71-Air-Defense",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-71-Air-Defense-air_defense_battalion-6",
-					"bn_type": "Air Defense Battalion",
-					"brigade_id": "PLA-71-71-Air-Defense",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-71-Air-Defense-reconnaissance_battalion-7",
-					"bn_type": "Reconnaissance Battalion",
-					"brigade_id": "PLA-71-71-Air-Defense",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-71-Aviation-attack_helicopter_battalion-1",
-					"bn_type": "Attack Helicopter Battalion",
-					"brigade_id": "PLA-71-71-Aviation",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-71-Aviation-attack_helicopter_battalion-2",
-					"bn_type": "Attack Helicopter Battalion",
-					"brigade_id": "PLA-71-71-Aviation",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-71-Aviation-utility_helicopter_battalion-3",
-					"bn_type": "Utility Helicopter Battalion",
-					"brigade_id": "PLA-71-71-Aviation",
-					"reason": "day1_support_waiting"
-				},
-				{
-					"bn_id": "PLA-71-71-Aviation-utility_helicopter_battalion-4",
-					"bn_type": "Utility Helicopter Battalion",
-					"brigade_id": "PLA-71-71-Aviation",
 					"reason": "day1_support_waiting"
 				}
 			],
-			"manifest_landed": [
-				{
-					"beach_id": 1,
-					"bn_id": "PLA-71-35-Heavy-Armored-combined_arms_battalion-1",
-					"bn_type": "Combined Arms Battalion",
-					"brigade_id": "PLA-71-35-Heavy-Armored"
-				},
-				{
-					"beach_id": 1,
-					"bn_id": "PLA-71-35-Heavy-Armored-combined_arms_battalion-4",
-					"bn_type": "Combined Arms Battalion",
-					"brigade_id": "PLA-71-35-Heavy-Armored"
-				},
-				{
-					"beach_id": 2,
-					"bn_id": "PLA-71-160-Light-Mechanized-combined_arms_battalion-1",
-					"bn_type": "Combined Arms Battalion",
-					"brigade_id": "PLA-71-160-Light-Mechanized"
-				},
-				{
-					"beach_id": 2,
-					"bn_id": "PLA-71-160-Light-Mechanized-combined_arms_battalion-4",
-					"bn_type": "Combined Arms Battalion",
-					"brigade_id": "PLA-71-160-Light-Mechanized"
-				},
-				{
-					"beach_id": 3,
-					"bn_id": "PLA-71-235-Mechanized-Infantry-combined_arms_battalion-1",
-					"bn_type": "Combined Arms Battalion",
-					"brigade_id": "PLA-71-235-Mechanized-Infantry"
-				},
-				{
-					"beach_id": 3,
-					"bn_id": "PLA-71-235-Mechanized-Infantry-combined_arms_battalion-2",
-					"bn_type": "Combined Arms Battalion",
-					"brigade_id": "PLA-71-235-Mechanized-Infantry"
-				},
-				{
-					"beach_id": 4,
-					"bn_id": "PLA-71-71-Special-Operations-special_forces_battalion-1",
-					"bn_type": "Special Forces Battalion",
-					"brigade_id": "PLA-71-71-Special-Operations"
-				},
-				{
-					"beach_id": 4,
-					"bn_id": "PLA-71-71-Special-Operations-special_forces_battalion-2",
-					"bn_type": "Special Forces Battalion",
-					"brigade_id": "PLA-71-71-Special-Operations"
-				},
-				{
-					"beach_id": 4,
-					"bn_id": "PLA-71-71-Special-Operations-special_forces_battalion-3",
-					"bn_type": "Special Forces Battalion",
-					"brigade_id": "PLA-71-71-Special-Operations"
-				}
-			]
+			"manifest_landed": []
 		},
 		"turn_number": 1,
 		"winner": ""
