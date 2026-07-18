@@ -777,4 +777,4 @@ func _read_json(path: String):
 	var json = JSON.parse_string(file.get_as_text())
 	if json == null:
 		push_error("JSON parsing failed for %s" % path)
-	return json
+	return DataOverrides.apply(path, json)

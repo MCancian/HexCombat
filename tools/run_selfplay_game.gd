@@ -55,6 +55,12 @@ func _initialize() -> void:
 	var game: Dictionary = SelfPlayRunner.play_game_seats(
 		red_driver, green_driver, turns, base_seed, true)
 
+	var unapplied := DataOverrides.unapplied()
+	if not unapplied.is_empty():
+		push_error("Unapplied data overrides: %s" % str(unapplied))
+		quit(1)
+		return
+
 	var game_state := get_root().get_node("GameState")
 	var game_data := get_root().get_node("GameData")
 	var cleanup: CleanupSummary = game_state.last_cleanup_summary
@@ -104,6 +110,7 @@ func _build_record(game: Dictionary, game_state: Object, game_data: Object,
 			"green": cleanup.taiwan_battalions_on_taiwan if cleanup != null else 0,
 		},
 		"index_violations": game["index_violations"],
+		"overrides": DataOverrides.map(),
 		"final_snapshot": game["final_snapshot"],
 		"turn_digests": game["turn_digests"],
 	}

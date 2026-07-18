@@ -6,11 +6,6 @@
 # IJFS kills per game and the terminal on-Taiwan census, across a common seed set (common random
 # numbers, so differences are attributable to the knob, not seed variance). The rounds override is
 # held at its shipped value (480). Empty-orders self-play over MAX_TURNS turns per (bonus, seed).
-#
-# Injection: the IJFS scenario dict is built once (lazily) and persists across turns, so we
-# force-build it after reset, mutate crbm_maneuver_strike_bonus + re-run the synthesis, then drive
-# the game through the same LLMGameAPI surface SelfPlayRunner uses (WITHOUT play_game, which would
-# reset_to_scenario and discard the injection).
 extends SceneTree
 
 const IjfsSweepSupport = preload("res://tools/ijfs_sweep_support.gd")
@@ -29,6 +24,7 @@ func _initialize() -> void:
 	GameState = get_root().get_node("GameState")
 	GameData.load_all()
 
+	_write_manifest()
 	print("=== CRBM MANEUVER-ATTRITION SWEEP ===")
 	print("scenario=%s  turns=%d  seeds=%d (%d..%d)  rounds_override=480 (shipped)" % [
 		GameData.scenario_path, MAX_TURNS, N_SEEDS, SEED, SEED + N_SEEDS - 1])
@@ -37,25 +33,47 @@ func _initialize() -> void:
 	print("battalions still on Taiwan at turn %d (downstream game outcome, not the direct measure)." % MAX_TURNS)
 	print("")
 	print("bonus\tpool\tkilled(mean+/-sd)\t%%pool\twarmup_killed(mean)\ttaiwan_census(mean)")
+	
 	for b in BONUSES:
-		var pool_samples: Array[float] = []
-		var killed: Array[float] = []
-		var warmup: Array[float] = []
-		var taiwan: Array[float] = []
-		for s in range(N_SEEDS):
-			var r := _run_game(float(b), SEED + s)
-			pool_samples.append(float(r["pool"]))
-			killed.append(float(r["killed"]))
-			warmup.append(float(r["warmup_killed"]))
-			taiwan.append(float(r["taiwan"]))
-		var mk := IjfsSweepSupport.mean(killed)
-		var pool_mean := IjfsSweepSupport.mean(pool_samples)
-		var pct := 100.0 * mk / pool_mean if pool_mean > 0 else 0.0
+		var stats := _run_cell(float(b), N_SEEDS)
 		print("%+.2f\t%.0f\t%.1f+/-%.1f\t%.0f%%\t%.1f\t%.1f" % [
-			b, pool_mean, mk, IjfsSweepSupport.stdev(killed, mk), pct, IjfsSweepSupport.mean(warmup), IjfsSweepSupport.mean(taiwan)])
+			b, stats["pool"], stats["killed"], stats["stdev"], stats["pct"], stats["warmup"], stats["taiwan"]])
 	print("")
 	print("(bonus=0.00 is the pre-plan-0009 baseline: rounds override alone, no lethality lever.)")
 	quit(0)
+
+
+func _run_cell(bonus: float, n_seeds: int) -> Dictionary:
+	var pool_samples: Array[float] = []
+	var killed: Array[float] = []
+	var warmup: Array[float] = []
+	var taiwan: Array[float] = []
+	
+	var cell_samples: Array[Dictionary] = []
+	
+	for s in range(n_seeds):
+		var run_seed := SEED + s
+		var r := _run_game(bonus, run_seed)
+		pool_samples.append(float(r["pool"]))
+		killed.append(float(r["killed"]))
+		warmup.append(float(r["warmup_killed"]))
+		taiwan.append(float(r["taiwan"]))
+		
+		r["seed"] = run_seed
+		cell_samples.append(r)
+	
+	_write_cell(bonus, cell_samples)
+	
+	var mk := IjfsSweepSupport.mean(killed)
+	var pool_mean := IjfsSweepSupport.mean(pool_samples)
+	return {
+		"pool": pool_mean,
+		"killed": mk,
+		"stdev": IjfsSweepSupport.stdev(killed, mk),
+		"pct": 100.0 * mk / pool_mean if pool_mean > 0 else 0.0,
+		"warmup": IjfsSweepSupport.mean(warmup),
+		"taiwan": IjfsSweepSupport.mean(taiwan)
+	}
 
 
 # One empty-orders game with crbm_maneuver_strike_bonus = bonus. Returns the maneuver-target pool at
@@ -63,11 +81,11 @@ func _initialize() -> void:
 # terminal ROC census. Attrition is measured by surviving-target count, NOT the per-turn writeback
 # (which omits the multi-day warmup slaughter).
 func _run_game(bonus: float, run_seed: int) -> Dictionary:
-	var scenario := IjfsSweepSupport.fresh_ijfs_scenario(GameState)  # build now so we can mutate before turn 1's warmup
-	scenario["crbm_maneuver_strike_bonus"] = bonus
-	IjfsLoaders.apply_crbm_maneuver_strike_bonus(scenario)
-	IjfsLoaders.apply_crbm_maneuver_rounds_override(GameState.ijfs_state.pairings, scenario)
-
+	DataOverrides.set_map({
+		"data/ijfs/ijfs_scenario.json:crbm_maneuver_strike_bonus": bonus
+	})
+	IjfsSweepSupport.fresh_ijfs_scenario(GameState)
+	
 	var pool := _alive_maneuver_targets()  # full pool before the turn-1 warmup fires
 	# Fixed 40-turn horizon (no early game_over break) — the same convention validate_golden_victory.gd
 	# uses; play_turn keeps resolving after game_over so the horizon is comparable across cells.
@@ -83,6 +101,45 @@ func _run_game(bonus: float, run_seed: int) -> Dictionary:
 		"warmup_killed": pool - after_warmup,
 		"taiwan": int(census.taiwan_battalions_on_taiwan) if census != null else -1,
 	}
+
+
+func _write_cell(bonus: float, cell_samples: Array) -> void:
+	var slug := "bonus_%.2f" % bonus
+	var path := "reports/sweeps/crbm_maneuver/cells/%s.json" % slug
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+	var overrides := DataOverrides.map()
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	file.store_string(JSON.stringify({"overrides": overrides, "samples": cell_samples}))
+	file.close()
+
+
+func _write_manifest() -> void:
+	var path := "reports/sweeps/crbm_maneuver/sweep.json"
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	var record = {
+		"sweep_name": "crbm_maneuver",
+		"created_utc": Time.get_datetime_string_from_system(true),
+		"commit": _git_commit(),
+		"dirty": false,
+		"base_scenario": GameData.scenario_path,
+		"knobs": [
+			"data/ijfs/ijfs_scenario.json:crbm_maneuver_strike_bonus"
+		],
+		"grid": [BONUSES],
+		"seeds": N_SEEDS,
+		"runtime_mode": "full_game",
+		"rerun_command": "godot --headless --path . -s res://tools/sweep_crbm_maneuver.gd",
+		"metrics": ["maneuver_attrition_pct"]
+	}
+	file.store_string(JSON.stringify(record, "\t"))
+	file.close()
+
+
+func _git_commit() -> String:
+	var output := []
+	var code := OS.execute("git", ["rev-parse", "HEAD"], output)
+	return String(output[0]).strip_edges() if code == 0 and not output.is_empty() else ""
 
 
 func _alive_maneuver_targets() -> int:

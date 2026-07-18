@@ -6,17 +6,13 @@
 # (exquisite_intel.antiship.initial_count, intel_locked strike-bonus magnitude). Produced the
 # golden dial (ic=36, bonus=0.20, ~27.3% mean loss) per
 # docs/archive/0001-crossing-lethality-calibration.md; kept as the harness for any future
-# re-calibration. The strike bonus is the intel_locked_antiship_strike_bonus scenario knob
-# (IjfsLoaders); this tool sets it directly rather than hand-building a strike_probability_modifiers
-# entry. First prints a pre-calibration diagnostic (distinct anti-ship subcategories, intel-locked
-# count, destroyed count) to confirm the warmup is actually locking targets and what the strike
-# bonus would key on, then a 3-point multi-seed reference, then the full grid at N=30 seeds/cell
-# (SWEEP_N_SEEDS).
+# re-calibration.
 extends SceneTree
 
 const IjfsSweepSupport = preload("res://tools/ijfs_sweep_support.gd")
 
 const SEED := 20260624
+const SWEEP_N_SEEDS := 30
 
 var GameData: Node = null
 var GameState: Node = null
@@ -27,63 +23,93 @@ func _initialize() -> void:
 	GameState = get_root().get_node("GameState")
 	GameData.load_all()
 
-	_baseline_diagnostic()
-	_multiseed_reference()
+	_write_manifest()
+	print("=== MINES-ONLY FLOOR ===")
+	_print_breakdown("  MINES-ONLY (all launchers killed)", _mines_only_run())
+	print("")
 	_run_sweep()
 	quit(0)
 
 
-# Resets to the golden scenario and rebuilds IJFS state on turn 1, returning the mutable scenario
-# dict so the caller can tweak knobs on it before running the warmup (resolve_ijfs_turn).
-func _reset_ijfs_state() -> Dictionary:
-	return IjfsSweepSupport.fresh_ijfs_scenario(GameState)
-
-
-# Configure the in-memory scenario, then run IJFS warmup + anti-ship crossing on the golden seed.
-# Returns the anti-ship summary dict. initial_count<0 leaves the scenario value untouched; bonus==0.0
-# injects no modifier (pure golden dial).
+# Configure the overrides, reset the IJFS state, then run IJFS warmup + anti-ship crossing on the seed.
 func _run_once(initial_count: int, bonus: float, run_seed: int = SEED) -> Dictionary:
-	var scenario := _reset_ijfs_state()
+	var overrides := {}
 	if initial_count >= 0:
-		scenario["prelanding"]["intel"]["exquisite_intel"]["antiship"]["initial_count"] = initial_count
-	# The strike bonus is a scenario knob (IjfsLoaders.apply_intel_locked_strike_bonus synthesizes
-	# the modifier); the sweep just sets the scalar and re-runs the synthesis, since load_scenario
-	# already ran once inside _rebuild_ijfs_state() before we mutate the dict here.
-	scenario["intel_locked_antiship_strike_bonus"] = bonus
-	IjfsLoaders.apply_intel_locked_strike_bonus(scenario)
+		overrides["data/ijfs/ijfs_scenario.json:prelanding.intel.exquisite_intel.antiship.initial_count"] = initial_count
+	overrides["data/ijfs/ijfs_scenario.json:intel_locked_antiship_strike_bonus"] = bonus
+	DataOverrides.set_map(overrides)
+
+	IjfsSweepSupport.fresh_ijfs_scenario(GameState)
 	GameState.resolve_ijfs_turn(SeededDice.new(run_seed))
-	# The crossing wave denominator is BNs at sea (ship_reserve), captured BEFORE the phase removes
-	# the lost ones. sent_by_type is ship HULLS -- wrong unit for a BN-loss fraction.
+	
 	var wave_bns := _reserve_bn_count()
 	var summary: Dictionary = GameState.resolve_antiship_turn(SeededDice.new(run_seed))
 	summary["_wave_bns"] = wave_bns
 	return summary
 
 
-# Mean crossing-loss %% over N seeds for one config (cuts the single-seed binary-kill noise).
-func _mean_loss(initial_count: int, bonus: float, n_seeds: int) -> float:
-	var samples := _loss_samples(initial_count, bonus, n_seeds)
-	var acc := 0.0
-	for v in samples:
-		acc += v
-	return acc / float(n_seeds)
-
-
-# Per-seed crossing-loss %% samples for one config (common seed set SEED..SEED+n_seeds-1).
-func _loss_samples(initial_count: int, bonus: float, n_seeds: int) -> Array[float]:
-	var samples: Array[float] = []
+# Run N seeds for a cell, write the cell JSON, and return the mean.
+func _run_cell(initial_count: int, bonus: float, n_seeds: int) -> Dictionary:
+	var samples_pct: Array[float] = []
+	var cell_samples: Array[Dictionary] = []
+	
 	for s in range(n_seeds):
-		samples.append(_loss_pct(_run_once(initial_count, bonus, SEED + s)))
-	return samples
+		var run_seed = SEED + s
+		var summary = _run_once(initial_count, bonus, run_seed)
+		samples_pct.append(_loss_pct(summary))
+		cell_samples.append({
+			"seed": run_seed,
+			"wave_bns": _wave_size(summary),
+			"bns_lost_at_sea": summary.get("bns_lost_at_sea", 0)
+		})
+		
+	_write_cell(initial_count, bonus, cell_samples)
+	return {
+		"mean": IjfsSweepSupport.mean(samples_pct),
+		"stdev": IjfsSweepSupport.stdev(samples_pct, IjfsSweepSupport.mean(samples_pct))
+	}
 
 
-func _multiseed_reference() -> void:
-	var n := 24
-	print("=== MULTI-SEED REFERENCE (mean crossing-loss %% over %d seeds) ===" % n)
-	print("  pre-calibration ic=8  b=0.00 : %.1f%%" % _mean_loss(8, 0.0, n))
-	print("  golden dial     ic=36 b=0.20 : %.1f%%" % _mean_loss(36, 0.2, n))
-	print("  max-intel       ic=73 b=0.80 : %.1f%%" % _mean_loss(73, 0.8, n))
-	print("")
+func _write_cell(ic: int, bonus: float, cell_samples: Array) -> void:
+	var slug := "ic_%d__bonus_%.2f" % [ic, bonus]
+	var path := "reports/sweeps/antiship_crossing/cells/%s.json" % slug
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+	var overrides := DataOverrides.map()
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	file.store_string(JSON.stringify({"overrides": overrides, "samples": cell_samples}))
+	file.close()
+
+
+func _write_manifest() -> void:
+	var path := "reports/sweeps/antiship_crossing/sweep.json"
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	var counts := [0, 2, 4, 8, 12, 16, 24, 36, 50, 73]
+	var bonuses := [0.0, 0.05, 0.1, 0.2, 0.4, 0.8]
+	var record = {
+		"sweep_name": "antiship_crossing",
+		"created_utc": Time.get_datetime_string_from_system(true),
+		"commit": _git_commit(),
+		"dirty": false,
+		"base_scenario": GameData.scenario_path,
+		"knobs": [
+			"data/ijfs/ijfs_scenario.json:prelanding.intel.exquisite_intel.antiship.initial_count",
+			"data/ijfs/ijfs_scenario.json:intel_locked_antiship_strike_bonus"
+		],
+		"grid": [counts, bonuses],
+		"seeds": SWEEP_N_SEEDS,
+		"runtime_mode": "in_process",
+		"rerun_command": "godot --headless --path . -s res://tools/sweep_antiship_crossing.gd",
+		"metrics": ["crossing_loss_pct"]
+	}
+	file.store_string(JSON.stringify(record, "\t"))
+	file.close()
+
+
+func _git_commit() -> String:
+	var output := []
+	var code := OS.execute("git", ["rev-parse", "HEAD"], output)
+	return String(output[0]).strip_edges() if code == 0 and not output.is_empty() else ""
 
 
 func _reserve_bn_count() -> int:
@@ -104,41 +130,13 @@ func _loss_pct(summary: Dictionary) -> float:
 	return 100.0 * float(int(summary.get("bns_lost_at_sea", 0))) / float(wave)
 
 
-func _baseline_diagnostic() -> void:
-	print("=== PRE-CALIBRATION DIAGNOSTIC (initial_count=8, no bonus -- historical pre-plan-0001 default) ===")
-	var summary := _run_once(8, 0.0)
-	# Inspect the post-warmup anti-ship target population.
-	var subcats := {}
-	var locked := 0
-	var destroyed := 0
-	var total := 0
-	for target_value in GameState.ijfs_state.targets:
-		var target: IjfsTarget = target_value
-		if String(target.category) != "Anti-Ship Systems":
-			continue
-		total += 1
-		subcats[target.subcategory] = int(subcats.get(target.subcategory, 0)) + 1
-		if bool(target.intel_locked):
-			locked += 1
-		if target.destroyed:
-			destroyed += 1
-	print("  anti-ship targets: %d total, %d intel_locked, %d destroyed" % [total, locked, destroyed])
-	print("  distinct anti-ship subcategories:")
-	for k in subcats.keys():
-		print("    %3d  %s" % [int(subcats[k]), k])
-	_print_breakdown("  pre-calibration ic=8 b=0.00", summary)
-	# The "max intel" case: lock every container and apply a huge precision bonus. Reveals the loss
-	# FLOOR the IJFS anti-ship lever cannot go below (mine losses are independent of it).
-	_print_breakdown("  max-intel ic=73 b=0.80", _run_once(73, 0.8))
-	_print_breakdown("  MINES-ONLY (all launchers killed)", _mines_only_run())
-	print("")
-
-
 # Isolate the mine-loss FLOOR: kill every anti-ship system via the IJFS writeback so the crossing
 # fires nothing, leaving only mine losses. This is the lower bound the intel lever can never beat.
 func _mines_only_run() -> Dictionary:
-	_reset_ijfs_state()
+	DataOverrides.set_map({})
+	IjfsSweepSupport.fresh_ijfs_scenario(GameState)
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
+	
 	var destroyed_all := {}
 	for system_value in GameState.antiship_systems:
 		var system: AntishipSystem = system_value
@@ -147,9 +145,24 @@ func _mines_only_run() -> Dictionary:
 	var wb: Dictionary = GameState.last_ijfs_writeback.to_dict()
 	wb["antiship_destroyed_by_type"] = destroyed_all
 	GameState.last_ijfs_writeback = IjfsWriteback.from_dict(wb)
+	
 	var wave_bns := _reserve_bn_count()
 	var summary: Dictionary = GameState.resolve_antiship_turn(SeededDice.new(SEED))
 	summary["_wave_bns"] = wave_bns
+	
+	var path := "reports/sweeps/antiship_crossing/cells/mines_only.json"
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	file.store_string(JSON.stringify({
+		"overrides": {},
+		"mines_only": true,
+		"samples": [{
+			"seed": SEED,
+			"wave_bns": wave_bns,
+			"bns_lost_at_sea": summary.get("bns_lost_at_sea", 0)
+		}]
+	}))
+	file.close()
 	return summary
 
 
@@ -168,9 +181,6 @@ func _print_breakdown(label: String, summary: Dictionary) -> void:
 		crossing_hulls, mine_hulls, total_hulls])
 
 
-const SWEEP_N_SEEDS := 30
-
-
 # Full grid, N=30 seeds/condition (plan 0001 checklist item 2): mean +/- stdev crossing-loss %%
 # per (initial_count, intel_locked strike-bonus) cell, common seed set SEED..SEED+29 across every
 # cell so differences are attributable to the knobs, not seed variance.
@@ -185,10 +195,8 @@ func _run_sweep() -> void:
 	for ic in counts:
 		var line := str(ic)
 		for b in bonuses:
-			var samples := _loss_samples(ic, b, SWEEP_N_SEEDS)
-			var m := IjfsSweepSupport.mean(samples)
-			var sd := IjfsSweepSupport.stdev(samples, m)
-			line += "\t%.1f+/-%.1f" % [m, sd]
+			var stats := _run_cell(ic, b, SWEEP_N_SEEDS)
+			line += "\t%.1f+/-%.1f" % [stats["mean"], stats["stdev"]]
 		print(line)
 	print("")
 	print("(pre-calibration reference: ic=8/no-bonus measured 50.0%% single-seed = 18/36; golden dial is ic=36/b=0.20, ~27.3%%)")

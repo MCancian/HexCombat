@@ -497,7 +497,7 @@ static func _read_json(path: String) -> Variant:
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if parsed == null:
 		_fail("JSON parsing failed for %s" % path)
-	return parsed
+	return DataOverrides.apply(path, parsed)
 
 
 static func _unwrap_data(payload: Variant) -> Variant:

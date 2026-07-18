@@ -182,7 +182,7 @@ static func _read_json(path: String) -> Dictionary:
 	if not (parsed is Dictionary):
 		_fail("Anti-ship data file is not a JSON object: %s" % path)
 		return {}
-	return parsed
+	return DataOverrides.apply(path, parsed) as Dictionary
 
 
 static func _fail(message: String) -> void:
