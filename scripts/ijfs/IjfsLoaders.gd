@@ -292,64 +292,55 @@ const CRBM_MUNITION_IDS := ["pch191_bre6_crbm", "pch191_bre8_crbm"]
 
 
 ## Calibration knob (plan 0001, crossing-lethality): a scalar add-bonus to strike probability
-## against exquisite-intel-locked anti-ship coastal launchers. Synthesized into a
-## strike_probability_modifiers entry here so scenario authors set one number instead of
-## hand-writing the modifier's match/operation shape. Optional key; default/absent = 0.0 = no
-## bonus (golden-preserving). Idempotent: re-running this on a scenario dict it already
-## synthesized into (as tools/sweep_antiship_crossing.gd does, re-applying with a new bonus
-## value each cell) replaces the prior entry rather than stacking a second one.
+## against exquisite-intel-locked anti-ship coastal launchers. Optional key; default/absent = 0.0 =
+## no bonus (golden-preserving). Idempotent (re-running replaces the prior entry — as
+## tools/sweep_antiship_crossing.gd relies on). See _synthesize_add_bonus_modifier.
 static func apply_intel_locked_strike_bonus(scenario: Dictionary) -> void:
-	if not scenario.has("intel_locked_antiship_strike_bonus"):
-		return
-	var bonus := float(scenario["intel_locked_antiship_strike_bonus"])
-	if bonus < -1.0 or bonus > 1.0:
-		_fail("INTEL_LOCKED_STRIKE_BONUS_OUT_OF_RANGE: intel_locked_antiship_strike_bonus=%s" % bonus)
-	if bonus == 0.0 and not scenario.has("strike_probability_modifiers"):
-		return
-	var modifiers: Array = scenario.get("strike_probability_modifiers", [])
-	modifiers = modifiers.filter(func(m: Dictionary) -> bool:
-		return m.get("modifier_id") != INTEL_LOCKED_STRIKE_BONUS_MODIFIER_ID)
-	if bonus == 0.0:
-		scenario["strike_probability_modifiers"] = modifiers
-		return
-	modifiers.append({
-		"modifier_id": INTEL_LOCKED_STRIKE_BONUS_MODIFIER_ID,
-		"operation": "add",
-		"value": bonus,
-		"match": {"category": "Anti-Ship Systems", "intel_locked": true},
-		"notes": "Precision-strike bonus vs exquisite-intel-locked coastal launchers (scenario knob intel_locked_antiship_strike_bonus).",
-	})
-	scenario["strike_probability_modifiers"] = modifiers
+	_synthesize_add_bonus_modifier(scenario, "intel_locked_antiship_strike_bonus",
+		INTEL_LOCKED_STRIKE_BONUS_MODIFIER_ID,
+		{"category": "Anti-Ship Systems", "intel_locked": true},
+		"Precision-strike bonus vs exquisite-intel-locked coastal launchers (scenario knob intel_locked_antiship_strike_bonus).")
 
 
-## Calibration knob (plan 0009, CRBM maneuver attrition): a scalar add-bonus to strike
-## probability against Maneuver Units struck by the heavy CRBM volley (BRE6/BRE8). Paired with
+## Calibration knob (plan 0009, CRBM maneuver attrition): a scalar add-bonus to strike probability
+## against Maneuver Units struck by the heavy CRBM volley (BRE6/BRE8). Paired with
 ## crbm_maneuver_rounds_override (which expends the mass ammunition) so a single large volley both
 ## depletes the excess CRBM inventory AND actually kills — rounds_expended alone drives inventory,
-## not lethality. Synthesized into a strike_probability_modifiers entry here (same one-number
-## authoring pattern as apply_intel_locked_strike_bonus). Optional key; default/absent = 0.0 = no
-## bonus (golden-preserving). Idempotent: re-running replaces the prior entry rather than stacking.
+## not lethality. Optional key; default/absent = 0.0 = no bonus (golden-preserving). See
+## _synthesize_add_bonus_modifier.
 static func apply_crbm_maneuver_strike_bonus(scenario: Dictionary) -> void:
-	if not scenario.has("crbm_maneuver_strike_bonus"):
+	_synthesize_add_bonus_modifier(scenario, "crbm_maneuver_strike_bonus",
+		CRBM_MANEUVER_STRIKE_BONUS_MODIFIER_ID,
+		{"category": "Maneuver Units", "munition_id": CRBM_MUNITION_IDS.duplicate()},
+		"Heavy CRBM volley lethality bonus vs Maneuver Units (scenario knob crbm_maneuver_strike_bonus).")
+
+
+## Shared shape for the "one scalar knob -> one additive strike_probability_modifiers entry"
+## calibration pattern. Reads scenario[knob_key] (a float add-bonus in [-1, 1]); synthesizes a
+## {operation: add} modifier keyed on `modifier_id` with the given `match`/`notes`. Idempotent:
+## always strips any prior entry with this id first, so re-applying with a new value replaces rather
+## than stacks (the sweep harnesses re-apply per grid cell). Absent key = no-op; 0.0 = strips the
+## entry (leaving other modifiers), the golden-preserving null case. Authors set one number instead
+## of hand-writing the modifier's match/operation shape.
+static func _synthesize_add_bonus_modifier(scenario: Dictionary, knob_key: String, modifier_id: String, match: Dictionary, notes: String) -> void:
+	if not scenario.has(knob_key):
 		return
-	var bonus := float(scenario["crbm_maneuver_strike_bonus"])
+	var bonus := float(scenario[knob_key])
 	if bonus < -1.0 or bonus > 1.0:
-		_fail("CRBM_MANEUVER_STRIKE_BONUS_OUT_OF_RANGE: crbm_maneuver_strike_bonus=%s" % bonus)
+		_fail("STRIKE_BONUS_OUT_OF_RANGE: %s=%s" % [knob_key, bonus])
 	if bonus == 0.0 and not scenario.has("strike_probability_modifiers"):
 		return
 	var modifiers: Array = scenario.get("strike_probability_modifiers", [])
 	modifiers = modifiers.filter(func(m: Dictionary) -> bool:
-		return m.get("modifier_id") != CRBM_MANEUVER_STRIKE_BONUS_MODIFIER_ID)
-	if bonus == 0.0:
-		scenario["strike_probability_modifiers"] = modifiers
-		return
-	modifiers.append({
-		"modifier_id": CRBM_MANEUVER_STRIKE_BONUS_MODIFIER_ID,
-		"operation": "add",
-		"value": bonus,
-		"match": {"category": "Maneuver Units", "munition_id": CRBM_MUNITION_IDS.duplicate()},
-		"notes": "Heavy CRBM volley lethality bonus vs Maneuver Units (scenario knob crbm_maneuver_strike_bonus).",
-	})
+		return m.get("modifier_id") != modifier_id)
+	if bonus != 0.0:
+		modifiers.append({
+			"modifier_id": modifier_id,
+			"operation": "add",
+			"value": bonus,
+			"match": match,
+			"notes": notes,
+		})
 	scenario["strike_probability_modifiers"] = modifiers
 
 
