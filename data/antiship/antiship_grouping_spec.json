@@ -10,6 +10,7 @@
       "mainline_mobility is metadata-only; IJFS runtime uses ijfs_profile.mobility."
     ]
   },
+  "disable_antiship_systems": false,
   "taiwan_platform_groups": {
     "destroyers_keelung": {
       "type_id": 19,

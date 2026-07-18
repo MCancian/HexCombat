@@ -55,6 +55,14 @@ func _validate_scenario(path: String, scenario_data: Dictionary, brigade_teams: 
 	if int(scenario_data.get("red_dos_start", 0)) <= 0:
 		_fail("%s: red_dos_start must be > 0 (an empty Red DOS pool is almost certainly an authoring error)" % label)
 
+	var disable_phases_value: Variant = scenario_data.get("disable_phases", [])
+	if not (disable_phases_value is Array):
+		_fail("%s: disable_phases must be an array of phase names" % label)
+	else:
+		for phase_value in disable_phases_value:
+			if String(phase_value) not in GameDataStore.DISABLEABLE_PHASES:
+				_fail("%s: unknown disable_phases entry '%s' (allowed: %s)" % [label, String(phase_value), ", ".join(GameDataStore.DISABLEABLE_PHASES)])
+
 	var placements := _placements(label, scenario_data)
 	var reserve := _red_ship_reserve(label, scenario_data)
 	var used_brigades := {}

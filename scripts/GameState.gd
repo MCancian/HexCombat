@@ -181,9 +181,18 @@ func resolve_turn(dice: Dice = null) -> void:
 	resolve_antiship_turn(dice)
 	last_offload_summary = resolve_offload_turn(dice)
 
-	_apply_move_orders(Brigade.Team.RED)
-	_apply_move_orders(Brigade.Team.GREEN)
-	last_contested_hexes = _find_contested_hexes()
+	# disable_phases (plan 0012): a scenario/override can skip the ground WeGo phases wholesale so
+	# calibration sweeps run standard games while isolating the sea/IJFS phases. Buffered orders
+	# simply never execute; skipping consumes no dice, so an empty list is byte-identical.
+	var skip_movement := GameData.disabled_phases.has("movement")
+	var skip_ground_combat := GameData.disabled_phases.has("ground_combat")
+	if not skip_movement:
+		_apply_move_orders(Brigade.Team.RED)
+		_apply_move_orders(Brigade.Team.GREEN)
+	if skip_ground_combat:
+		last_contested_hexes.clear()
+	else:
+		last_contested_hexes = _find_contested_hexes()
 	var combat_summaries: Array[CombatSummary] = []
 	# Per-hex combat substream (plan 0010): each contested hex draws from its OWN dice stream derived
 	# from the root turn seed, so a design tweak that changes the roll count in one hex's fight never
@@ -193,7 +202,8 @@ func resolve_turn(dice: Dice = null) -> void:
 		var summary := _resolve_combat_at(hex_id, dice.derive("combat:%d:%s" % [turn_number, hex_id]))
 		if summary != null:
 			combat_summaries.append(summary)
-	_apply_feba_retreats()
+	if not skip_ground_combat:
+		_apply_feba_retreats()
 	GameData.recompute_hex_ownership()
 	for summary in combat_summaries:
 		summary.owner_after = String(GameData.hex_states[summary.hex_id].owner)
@@ -519,6 +529,8 @@ func resolve_antiship_turn(dice: Dice) -> Dictionary:
 	# Only the BNs sailing this turn (the sealift "sent" cohorts) cross and take attrition; offloading
 	# BNs are safe ashore. Slice that crossing wave out of the full reserve (plan 0004 D3).
 	var crossing_reserve := _crossing_reserve_from_sent_cohorts()
+	# Captured pre-resolve: drain/flip below mutate the cohorts before the summary is stored.
+	var wave_bns: int = SealiftResolver.sent_cohort_bn_ids(sealift_state).size()
 
 	var outcome := AntishipResolver.resolve(
 		turn_number, crossing_reserve, antiship_systems, last_ijfs_writeback,
@@ -543,6 +555,7 @@ func resolve_antiship_turn(dice: Dice) -> Dictionary:
 	_project_sealift_onto_fleet()
 	register_ship_losses(int(outcome["bn_equiv_lost"]))
 	last_antiship_summary = outcome["summary"]
+	last_antiship_summary.wave_bns = wave_bns
 	EventBus.antiship_resolved.emit(last_antiship_summary.to_dict())
 	return last_antiship_summary.to_dict()
 

@@ -16,6 +16,9 @@ const INFRASTRUCTURE_PATH := "res://data/infrastructure.json"
 const OFFLOAD_WEIGHTS_PATH := "res://data/offload_weights.json"
 const THEATERS_PATH := "res://data/theaters.json"
 const SHIPS_PATH := "res://data/ships.json"
+# The only phase names disable_phases may carry (plan 0012). Sea phases (ijfs/sealift/antiship/
+# offload) and supply/cleanup are deliberately NOT skippable — sweeps measure them.
+const DISABLEABLE_PHASES: Array[String] = ["movement", "ground_combat"]
 
 var scenario_name: String = ""
 # Path of the currently loaded scenario (set by load_scenario). GameState.reset_to_scenario
@@ -35,6 +38,11 @@ var unscreened_support_strength: float = 0.5
 var maneuver_casualty_weight: float = 4.0
 var support_casualty_weight: float = 1.0
 var victory_config: Dictionary = {}  # scenario 'victory' block (loss_check_arm, taiwan_hexes)
+# Research bypass (plan 0012): WeGo phases resolve_turn skips wholesale, so a calibration sweep
+# can run standard full games while isolating one phase's effect (e.g. IJFS maneuver attrition
+# with no ground fighting). Names must come from DISABLEABLE_PHASES — anything else fails loud at
+# load. Empty (the default; no scenario file sets it, only sweep overrides) = full turn.
+var disabled_phases: Array[String] = []
 
 var hexes: Array[Hex] = []
 var hex_lookup: Dictionary = {}  # hex_id -> Hex
@@ -256,6 +264,7 @@ func load_scenario(path: String) -> void:
 	use_offload_weight_matrix = bool(scenario.get("use_offload_weight_matrix", false))
 	auto_jlsf = bool(scenario.get("auto_jlsf", false))
 	jlsf_lift_bn_equiv = maxi(1, int(scenario.get("jlsf_lift_bn_equiv", 4)))
+	disabled_phases = _parse_disabled_phases(scenario.get("disable_phases", []))
 
 	var count := 0
 	for placement in placements:
@@ -279,6 +288,20 @@ func load_scenario(path: String) -> void:
 # Validates + normalizes a ship-reserve-shaped scenario list (first echelon or follow-on pool) and
 # returns it; label names the scenario key in error messages. Entries failing validation are skipped
 # (fail loud). Shared by red_ship_reserve and red_followon_reserve (plan 0004) — same contract.
+func _parse_disabled_phases(value: Variant) -> Array[String]:
+	var parsed: Array[String] = []
+	if not (value is Array):
+		push_error("Scenario disable_phases must be an array of phase names")
+		return parsed
+	for phase_value in value:
+		var phase_name := String(phase_value)
+		if phase_name not in DISABLEABLE_PHASES:
+			push_error("Unknown disable_phases entry '%s' (allowed: %s)" % [phase_name, ", ".join(DISABLEABLE_PHASES)])
+			continue
+		parsed.append(phase_name)
+	return parsed
+
+
 func _parse_ship_reserve_entries(entries, label: String) -> Array:
 	var parsed: Array = []
 	if not (entries is Array):

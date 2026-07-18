@@ -30,6 +30,12 @@ static func load_system_types(path: String) -> Dictionary:
 ## may appear across multiple group entries (e.g. aircraft) and is summed.
 static func load_systems(grouping_path: String, types: Dictionary) -> Array[AntishipSystem]:
 	var body: Dictionary = _read_json(grouping_path)
+	# Mines-only baseline (plan 0012): an override can zero out the crossing interceptors so the
+	# only D3 attrition source left is the minefields. Containers are untouched — the IJFS target
+	# set stays real. Optional key; absent = false is the one documented default.
+	if bool(body.get("disable_antiship_systems", false)):
+		var no_systems: Array[AntishipSystem] = []
+		return no_systems
 	var groups: Dictionary = body.get("taiwan_platform_groups", {})
 	# key "<to>:<type_id>" -> aggregate dict
 	var aggregated: Dictionary = {}

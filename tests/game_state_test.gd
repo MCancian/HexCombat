@@ -82,6 +82,28 @@ func test_resolve_turn_applies_all_movement_before_contested_detection() -> void
 	assert_int(GameState.phase).is_equal(GameStateType.Phase.END)
 
 
+func test_resolve_turn_skips_disabled_movement_and_ground_combat() -> void:
+	var phases: Array[String] = ["movement", "ground_combat"]
+	GameData.disabled_phases = phases
+	GameState.add_move_order(Brigade.Team.RED, RED_BRIGADE_ID, GREEN_START_HEX, "tactical")
+
+	GameState.resolve_turn()
+
+	var red_brigade: Brigade = GameData.get_brigade(RED_BRIGADE_ID)
+	assert_str(red_brigade.hex_id).is_equal(RED_START_HEX)
+	assert_bool(red_brigade.moved_this_turn).is_false()
+	assert_int(GameState.last_contested_hexes.size()).is_equal(0)
+	assert_int(GameState.last_combat_summaries.size()).is_equal(0)
+	assert_int(GameState.phase).is_equal(GameStateType.Phase.END)
+
+
+func test_load_scenario_rejects_unknown_disable_phases_entry() -> void:
+	await assert_error(func() -> void:
+		GameData.disabled_phases = GameData._parse_disabled_phases(["teleport"])
+	).is_push_error("Unknown disable_phases entry 'teleport' (allowed: movement, ground_combat)")
+	assert_int(GameData.disabled_phases.size()).is_equal(0)
+
+
 func test_begin_next_turn_resets_flags_buffers_turn_and_phase() -> void:
 	GameState.add_move_order(Brigade.Team.RED, RED_BRIGADE_ID, GREEN_START_HEX, "tactical")
 	GameState.resolve_turn()
