@@ -13,6 +13,8 @@
 # reset_to_scenario and discard the injection).
 extends SceneTree
 
+const IjfsSweepSupport = preload("res://tools/ijfs_sweep_support.gd")
+
 const SEED := 20260624
 const MAX_TURNS := 40
 const N_SEEDS := 24
@@ -46,11 +48,11 @@ func _initialize() -> void:
 			killed.append(float(r["killed"]))
 			warmup.append(float(r["warmup_killed"]))
 			taiwan.append(float(r["taiwan"]))
-		var mk := _mean(killed)
-		var pool_mean := _mean(pool_samples)
+		var mk := IjfsSweepSupport.mean(killed)
+		var pool_mean := IjfsSweepSupport.mean(pool_samples)
 		var pct := 100.0 * mk / pool_mean if pool_mean > 0 else 0.0
 		print("%+.2f\t%.0f\t%.1f+/-%.1f\t%.0f%%\t%.1f\t%.1f" % [
-			b, pool_mean, mk, _stdev(killed, mk), pct, _mean(warmup), _mean(taiwan)])
+			b, pool_mean, mk, IjfsSweepSupport.stdev(killed, mk), pct, IjfsSweepSupport.mean(warmup), IjfsSweepSupport.mean(taiwan)])
 	print("")
 	print("(bonus=0.00 is the pre-plan-0009 baseline: rounds override alone, no lethality lever.)")
 	quit(0)
@@ -61,10 +63,7 @@ func _initialize() -> void:
 # terminal ROC census. Attrition is measured by surviving-target count, NOT the per-turn writeback
 # (which omits the multi-day warmup slaughter).
 func _run_game(bonus: float, run_seed: int) -> Dictionary:
-	GameState.reset_to_scenario()
-	GameState.turn_number = 1
-	GameState._rebuild_ijfs_state()  # build now so we can mutate before turn 1's warmup
-	var scenario: Dictionary = GameState.ijfs_state.scenario
+	var scenario := IjfsSweepSupport.fresh_ijfs_scenario(GameState)  # build now so we can mutate before turn 1's warmup
 	scenario["crbm_maneuver_strike_bonus"] = bonus
 	IjfsLoaders.apply_crbm_maneuver_strike_bonus(scenario)
 	IjfsLoaders.apply_crbm_maneuver_rounds_override(GameState.ijfs_state.pairings, scenario)
@@ -102,21 +101,3 @@ func _end_turn(seed: int) -> Dictionary:
 		"perspective_team": "",
 		"actions": [{"type": "end_turn", "seed": seed}],
 	}
-
-
-func _mean(samples: Array[float]) -> float:
-	if samples.is_empty():
-		return 0.0
-	var acc := 0.0
-	for v in samples:
-		acc += v
-	return acc / float(samples.size())
-
-
-func _stdev(samples: Array[float], mean_val: float) -> float:
-	if samples.size() < 2:
-		return 0.0
-	var acc := 0.0
-	for v in samples:
-		acc += (v - mean_val) * (v - mean_val)
-	return sqrt(acc / float(samples.size() - 1))

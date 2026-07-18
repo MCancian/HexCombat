@@ -14,6 +14,8 @@
 # (SWEEP_N_SEEDS).
 extends SceneTree
 
+const IjfsSweepSupport = preload("res://tools/ijfs_sweep_support.gd")
+
 const SEED := 20260624
 
 var GameData: Node = null
@@ -34,10 +36,7 @@ func _initialize() -> void:
 # Resets to the golden scenario and rebuilds IJFS state on turn 1, returning the mutable scenario
 # dict so the caller can tweak knobs on it before running the warmup (resolve_ijfs_turn).
 func _reset_ijfs_state() -> Dictionary:
-	GameState.reset_to_scenario()
-	GameState.turn_number = 1
-	GameState._rebuild_ijfs_state()  # loads a fresh scenario dict we can mutate before the warmup
-	return GameState.ijfs_state.scenario
+	return IjfsSweepSupport.fresh_ijfs_scenario(GameState)
 
 
 # Configure the in-memory scenario, then run IJFS warmup + anti-ship crossing on the golden seed.
@@ -76,22 +75,6 @@ func _loss_samples(initial_count: int, bonus: float, n_seeds: int) -> Array[floa
 	for s in range(n_seeds):
 		samples.append(_loss_pct(_run_once(initial_count, bonus, SEED + s)))
 	return samples
-
-
-func _mean(samples: Array[float]) -> float:
-	var acc := 0.0
-	for v in samples:
-		acc += v
-	return acc / float(samples.size())
-
-
-func _stdev(samples: Array[float], mean_val: float) -> float:
-	if samples.size() < 2:
-		return 0.0
-	var acc := 0.0
-	for v in samples:
-		acc += (v - mean_val) * (v - mean_val)
-	return sqrt(acc / float(samples.size() - 1))
 
 
 func _multiseed_reference() -> void:
@@ -203,8 +186,8 @@ func _run_sweep() -> void:
 		var line := str(ic)
 		for b in bonuses:
 			var samples := _loss_samples(ic, b, SWEEP_N_SEEDS)
-			var m := _mean(samples)
-			var sd := _stdev(samples, m)
+			var m := IjfsSweepSupport.mean(samples)
+			var sd := IjfsSweepSupport.stdev(samples, m)
 			line += "\t%.1f+/-%.1f" % [m, sd]
 		print(line)
 	print("")
