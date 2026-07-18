@@ -19,6 +19,17 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-18 — Sweep tooling refactor pass (review follow-up ideas 2/3/4/7; agent
+  implementation, USER-approved).** `run_sweep.py` restructured into `run_spec_sweep` /
+  `run_cli_sweep` + shared helpers, with metrics validated against the `sweep_metrics.REGISTRY`
+  at launch; `mines_only` moved from a fake override key to a cell-level runner directive (the
+  overrides namespace now holds only `file:dot.path` keys); `run_sweep_cells.gd` drops the
+  redundant eager `_rebuild_ijfs_state` (reset lazy-nulls it; the CRBM path keeps one eager
+  build for its pre-resolve pool census); `run_batch.py`'s manifest override embed fails loud
+  instead of silently recording a path. Proof: both canned sweeps byte-identical before/after;
+  gate green. Plans: 0013 authored (scenario files one-home — idea 5); 0012 updated (raw-number
+  metric contract folded into Phase B — idea 6).
+
 - **2026-07-18 — Sweep review fixes: antiship harness was dead since plan 0004 (review of the
   agent implementation below).** The crossing sweep read 0.0 losses in every cell — including the
   mines-only floor — because since plan 0004 (`a2b60fc`) `resolve_antiship_turn` fires only on

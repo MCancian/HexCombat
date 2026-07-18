@@ -66,9 +66,8 @@
   "extra_cells": [
     {
       "id": "mines_only",
-      "overrides": {
-        "mines_only": true
-      }
+      "mines_only": true,
+      "overrides": {}
     }
   ]
 }

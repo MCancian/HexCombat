@@ -8,9 +8,11 @@
 #   "measurement": "antiship_crossing",
 #   "cells": [
 #     {"id": "baseline", "overrides": {}},
-#     {"id": "cell1", "overrides": {"key": "val", "mines_only": true}}
+#     {"id": "mines_only", "mines_only": true, "overrides": {}}
 #   ]
 # }
+# "overrides" holds only DataOverrides <file:dot.path> keys; runner directives like
+# "mines_only" live at the cell level.
 extends SceneTree
 
 var GameData: Node = null
@@ -61,12 +63,8 @@ func _initialize() -> void:
 		var cell: Dictionary = c
 		var cell_id := String(cell["id"])
 		var overrides: Dictionary = cell.get("overrides", {})
-		
-		# Allow a special key 'mines_only' to bypass the standard run for the floor check
-		var is_mines_only := bool(overrides.get("mines_only", false))
-		if is_mines_only:
-			overrides.erase("mines_only")
-			
+		var is_mines_only := bool(cell.get("mines_only", false))
+
 		print("Running cell %s..." % cell_id)
 		
 		var samples: Array[Dictionary] = []
@@ -109,7 +107,7 @@ func _initialize() -> void:
 # pipeline does), and the wave is the sent cohort, not the whole ship reserve.
 func _run_antiship_crossing(overrides: Dictionary, run_seed: int, mines_only: bool) -> Dictionary:
 	DataOverrides.set_map(overrides)
-	_fresh_ijfs_scenario(GameState)
+	GameState.reset_to_scenario()
 	GameState.resolve_ijfs_turn(SeededDice.new(run_seed))
 
 	if mines_only:
@@ -134,8 +132,10 @@ func _run_antiship_crossing(overrides: Dictionary, run_seed: int, mines_only: bo
 
 func _run_crbm_full_game(overrides: Dictionary, run_seed: int) -> Dictionary:
 	DataOverrides.set_map(overrides)
-	_fresh_ijfs_scenario(GameState)
-	
+	GameState.reset_to_scenario()
+	# The pool census needs IJFS targets built; the resets left ijfs_state lazy-null.
+	GameState._rebuild_ijfs_state()
+
 	var pool := _alive_maneuver_targets()
 	LLMGameAPI.apply_agent_response(_end_turn(run_seed))
 	var after_warmup := _alive_maneuver_targets()
@@ -153,12 +153,6 @@ func _run_crbm_full_game(overrides: Dictionary, run_seed: int) -> Dictionary:
 		"warmup_killed": pool - after_warmup,
 		"taiwan": int(census.taiwan_battalions_on_taiwan) if census != null else -1,
 	}
-
-
-func _fresh_ijfs_scenario(game_state: Object) -> void:
-	game_state.reset_to_scenario()
-	game_state.turn_number = 1
-	game_state._rebuild_ijfs_state()
 
 
 func _alive_maneuver_targets() -> int:

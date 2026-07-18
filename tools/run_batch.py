@@ -260,12 +260,11 @@ def write_manifest(
         "games_failed": len(failed),
     }
     if overrides_path:
-        try:
-            with Path(overrides_path).open(encoding="utf-8") as file:
-                manifest["overrides"] = json.load(file)
-        except Exception:
-            manifest["overrides"] = overrides_path
-    
+        # Fail loud: a manifest that silently records a path instead of the override map lies
+        # about the batch's conditions.
+        with Path(overrides_path).open(encoding="utf-8") as file:
+            manifest["overrides"] = json.load(file)
+
     manifest["results"] = [manifest_result(job, failed) for job in jobs]
 
     with (batch_dir / "manifest.json").open("w", encoding="utf-8") as file:
