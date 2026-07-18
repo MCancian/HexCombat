@@ -10,6 +10,12 @@ func test_resolve_path_empty_and_default_yield_default() -> void:
 	assert_str(ScenarioCatalog.resolve_path("default")).is_equal(ScenarioCatalog.DEFAULT_SCENARIO_PATH)
 
 
+func test_resolve_path_default_id_round_trips_to_default() -> void:
+	# scenario_id(DEFAULT_SCENARIO_PATH) == "scenario_default" must resolve back to the default
+	# path, not to a nonexistent data/scenarios/scenario_default.json.
+	assert_str(ScenarioCatalog.resolve_path("scenario_default")).is_equal(ScenarioCatalog.DEFAULT_SCENARIO_PATH)
+
+
 func test_resolve_path_bare_id_maps_into_scenarios_dir() -> void:
 	assert_str(ScenarioCatalog.resolve_path("more_mines")).is_equal("res://data/scenarios/more_mines.json")
 

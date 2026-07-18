@@ -45,7 +45,9 @@ static func select_path(user_args: PackedStringArray, env_value: String) -> Stri
 ## a bare id becomes SCENARIOS_DIR/<id>.json.
 static func resolve_path(id_or_path: String) -> String:
 	var trimmed := id_or_path.strip_edges()
-	if trimmed.is_empty() or trimmed == "default":
+	# The default's own reporting id ("scenario_default") must round-trip back to the default
+	# path — it lives in data/, not SCENARIOS_DIR, so the bare-id rule below would miss it.
+	if trimmed.is_empty() or trimmed == "default" or trimmed == scenario_id(DEFAULT_SCENARIO_PATH):
 		return DEFAULT_SCENARIO_PATH
 	if trimmed.ends_with(".json") or trimmed.contains("/") or trimmed.contains("\\"):
 		return trimmed

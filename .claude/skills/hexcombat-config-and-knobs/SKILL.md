@@ -88,23 +88,22 @@ table here.
 
 ## Calibration / balance work
 
-Measured, never eyeballed: use/extend the sweep harness pattern (`tools/sweep_antiship_crossing.gd`)
+Measured, never eyeballed: use the sweep harness (`python3 tools/run_sweep.py --spec tools/sweeps/<spec>.json` or `python3 tools/run_sweep.py --name <study> --knob ...`)
 — fixed seed grid + multi-seed means, report per-knob deltas. Balance targets and lever analyses
 live in docs/plans/ (plan 0001, the ~25% crossing-loss calibration, USER-dialed 2026-07-11; deep
 record in docs/archive/PLAN.md). Deliberate balance changes are USER calls and re-baseline events.
 
 `data/ijfs/ijfs_scenario.json.intel_locked_antiship_strike_bonus` (float, golden = 0.20, plan 0001)
-is a calibration knob living in the IJFS data file, NOT `data/scenario_default.json` — the IJFS
-scenario file's path is currently fixed (`IjfsStateBuilder.SCENARIO_PATH`), not per-variant
-selectable via `ScenarioCatalog`, so this knob isn't reachable from a scenario variant yet, only
-by editing the file or mutating it in-memory (as the sweep tool does). `IjfsLoaders.load_scenario`
+is a calibration knob living in the IJFS data file, NOT `data/scenario_default.json`. The IJFS
+scenario file's path is fixed, so this knob isn't reachable from a scenario variant, but it can be
+swept using `run_sweep.py --spec tools/sweeps/antiship_crossing.json`. `IjfsLoaders.load_scenario`
 synthesizes it into `strike_probability_modifiers` via `apply_intel_locked_strike_bonus`. Paired
 companion lever: `prelanding.intel.exquisite_intel.antiship.initial_count` (golden = 36), same file.
 
 `data/ijfs/ijfs_scenario.json.crbm_maneuver_rounds_override` (int, shipped = 480) and
-`.crbm_maneuver_strike_bonus` (float = 0.15, USER-dialed 2026-07-17 via `tools/sweep_crbm_maneuver.gd`,
-~38% ROC maneuver-pool attrition; plan 0009) are the coupled CRBM heavy-volley maneuver-attrition knobs, same IJFS-file caveat as
-above. The rounds override retargets `rounds_expended_per_engagement` on every CRBM×"Maneuver Units"
+`.crbm_maneuver_strike_bonus` (float = 0.15, USER-dialed 2026-07-17 via `tools/sweeps/crbm_maneuver.json`,
+~38% ROC maneuver-pool attrition; plan 0009) are the coupled CRBM heavy-volley maneuver-attrition knobs.
+The rounds override retargets `rounds_expended_per_engagement` on every CRBM×"Maneuver Units"
 pairing (depletion only, applied by `IjfsLoaders.apply_crbm_maneuver_rounds_override` from
 `IjfsStateBuilder.build`); the strike bonus is the lethality lever, synthesized into
 `strike_probability_modifiers` via `apply_crbm_maneuver_strike_bonus`. Both absent/0.0 = golden no-op.

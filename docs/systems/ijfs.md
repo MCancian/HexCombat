@@ -119,12 +119,12 @@ in `IjfsEngine.run_daily`'s header comment — read it for the authoritative dra
   the companion lever `prelanding.intel.exquisite_intel.antiship.initial_count` (golden = 36), a
   plain data field read directly by `IjfsTargeting.apply_exquisite_intel` — no code promotion
   needed, editing the JSON value is sufficient. Together these hit the USER's ~25% mean crossing-loss
-  target (N=30-seed sweep). Sweep tool: `tools/sweep_antiship_crossing.gd`, mutates both in-memory
-  to grid-search without rewriting the file.
+  target (N=30-seed sweep). Sweep tool: `python3 tools/run_sweep.py --spec
+  tools/sweeps/antiship_crossing.json`, grid-searches via `DataOverrides` per cell.
 - **Calibration knob** (plan 0009, CRBM maneuver-attrition, USER batch re-dial pending):
   Two coupled scenario knobs in `data/ijfs/ijfs_scenario.json`:
   `crbm_maneuver_rounds_override` (int; shipped 480) and `crbm_maneuver_strike_bonus` (float; 0.15,
-  USER-dialed 2026-07-17 via `tools/sweep_crbm_maneuver.gd` — N=24, default full-defense, ~38% of the
+  USER-dialed 2026-07-17 via `python3 tools/run_sweep.py --spec tools/sweeps/crbm_maneuver.json` — N=24, default full-defense, ~38% of the
   124-battalion ROC maneuver pool killed over 40 turns; the bonus mainly amplifies the pre-D-day
   warmup, in-game attrition is detection-bound).
   `crbm_maneuver_rounds_override` forces `rounds_expended_per_engagement` to that value on every CRBM

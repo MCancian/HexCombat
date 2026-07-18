@@ -49,6 +49,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--parallel", type=int, default=4)
     parser.add_argument("--godot", default="")
     parser.add_argument("--no-report", action="store_true")
+    parser.add_argument("--overrides", default="", help="Path to override map json file")
+    parser.add_argument("--out-root", default="reports/batches", help="Root directory for batch output")
+    parser.add_argument("--run-past-game-over", action="store_true")
     return parser.parse_args()
 
 
@@ -104,6 +107,8 @@ def make_jobs(
     turns: int,
     godot: str,
     games_dir: Path,
+    overrides: str = "",
+    run_past_game_over: bool = False,
 ) -> list[Job]:
     jobs: list[Job] = []
     for scenario in scenarios:
@@ -124,7 +129,7 @@ def make_jobs(
                         seed,
                         record_path,
                         game_command(
-                            godot, scenario, red_policy, green_policy, seed, turns, record_path
+                            godot, scenario, red_policy, green_policy, seed, turns, record_path, overrides, run_past_game_over
                         ),
                     )
                 )
@@ -139,8 +144,10 @@ def game_command(
     seed: int,
     turns: int,
     record_path: Path,
+    overrides: str = "",
+    run_past_game_over: bool = False,
 ) -> list[str]:
-    return [
+    cmd = [
         godot,
         "--headless",
         "--path",
@@ -155,6 +162,11 @@ def game_command(
         "--turns=%d" % turns,
         "--out=%s" % record_path,
     ]
+    if overrides:
+        cmd.append("--overrides=%s" % overrides)
+    if run_past_game_over:
+        cmd.append("--run-past-game-over")
+    return cmd
 
 
 def run_pending_jobs(pending: list[Job], parallel: int) -> None:
@@ -229,6 +241,7 @@ def write_manifest(
     jobs: list[Job],
     pending_count: int,
     failed: list[Job],
+    overrides_path: str = "",
 ) -> None:
     manifest = {
         "batch_name": name,
@@ -245,8 +258,16 @@ def write_manifest(
         "games_total": len(jobs),
         "games_run": pending_count,
         "games_failed": len(failed),
-        "results": [manifest_result(job, failed) for job in jobs],
     }
+    if overrides_path:
+        try:
+            with Path(overrides_path).open(encoding="utf-8") as file:
+                manifest["overrides"] = json.load(file)
+        except Exception:
+            manifest["overrides"] = overrides_path
+    
+    manifest["results"] = [manifest_result(job, failed) for job in jobs]
+
     with (batch_dir / "manifest.json").open("w", encoding="utf-8") as file:
         json.dump(manifest, file, indent=2)
         file.write("\n")
@@ -289,16 +310,16 @@ def run_batch(
     godot: str,
 ) -> int:
     warn_live_llm_parallel(matchups, args.parallel)
-    batch_dir = REPO_ROOT / "reports" / "batches" / args.name
+    batch_dir = REPO_ROOT / args.out_root / args.name
     games_dir = batch_dir / "games"
     games_dir.mkdir(parents=True, exist_ok=True)
-    jobs = make_jobs(scenarios, matchups, seeds, args.turns, godot, games_dir)
+    jobs = make_jobs(scenarios, matchups, seeds, args.turns, godot, games_dir, args.overrides, args.run_past_game_over)
     pending = [job for job in jobs if read_valid_record(job.record_path) is None]
     print_batch_start(args.name, jobs, scenarios, matchups, seeds, pending)
     run_pending_jobs(pending, args.parallel)
     failed = [job for job in jobs if read_valid_record(job.record_path) is None]
     write_manifest(
-        batch_dir, args.name, scenarios, matchups, seeds, args.turns, jobs, len(pending), failed
+        batch_dir, args.name, scenarios, matchups, seeds, args.turns, jobs, len(pending), failed, args.overrides
     )
     return finish_batch(args, godot, batch_dir, jobs, failed)
 

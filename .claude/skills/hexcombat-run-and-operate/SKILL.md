@@ -49,7 +49,7 @@ Schemas: `schemas/*.schema.json`. Contract docs: `docs/LLM_OBSERVATION_SCHEMA.md
 & $G --headless --path $P -s "res://tools/validate_headless_selfplay.gd"  # 4-turn self-play
 & $G --headless --path $P -s "res://tools/export_llm_observation.gd" -- --team=Red --output="reports/obs.json"
 & $G --headless --path $P -s "res://tools/export_llm_result.gd"           # regenerates the result fixture
-& $G --headless --path $P -s "res://tools/sweep_antiship_crossing.gd"     # parameter sweep harness example
+python3 tools/run_sweep.py --spec tools/sweeps/antiship_crossing.json     # parameter sweep harness example
 ```
 
 ## Reading results

@@ -1,7 +1,7 @@
 ---
-status: Ready
-shipped:
-landed_in:
+status: Shipped
+shipped: 2026-07-18
+landed_in: 
 ---
 # 0011 — Disciplined Sweep Ecosystem
 
@@ -213,10 +213,20 @@ need** (USER call: deferred).
 - [x] Phase B — record schema + parity capture + retrofit both sweeps (mines-only floor kept,
   census/reference dropped); parity exact; gate green.
 - [x] Phase C — sweep_metrics.py + make_sweep_report.py; sweeps' stats move to python.
-- [ ] Phase D — `run_sweep.py` + `run_batch.py --overrides/--out-root` + `--run-past-game-over`;
+- [x] Phase D — `run_sweep.py` + `run_batch.py --overrides/--out-root` + `--run-past-game-over`;
   equivalence check; delete `run_sweep.ps1`; gate green.
-- [ ] Phase E — `run_sweep_cells.gd` backend + canned specs; parity re-check; delete both bespoke
+- [x] Phase E — `run_sweep_cells.gd` backend + canned specs; parity re-check; delete both bespoke
   sweeps + shrink/absorb `ijfs_sweep_support.gd`; update the two skills; gate green.
-- [ ] Phase F — deferred (no action).
-- [ ] Closeout: facts to `hexcombat-research-runs` / `hexcombat-config-and-knobs` / STATUS /
+- [x] Phase F — deferred (no action).
+- [x] Closeout: facts to `hexcombat-research-runs` / `hexcombat-config-and-knobs` / STATUS /
   DECISIONS; archive this plan.
+
+## Post-closeout review (2026-07-18)
+
+The Phase B/E antiship "parity exact" was vacuous: both old and migrated harnesses read 0.0
+losses in every cell because neither called `resolve_sealift_turn` — mandatory since plan 0004
+for the crossing to have a sent wave at all. The antiship leg also never actually ran through the
+new `--spec` pipeline (its manifest still pointed at the deleted GDScript), and the report
+generator's filename-slug matching could not have rendered a spec-pipeline run. All fixed in the
+same-day review pass — see DECISIONS 2026-07-18 (review fixes) for the itemized list. Lesson for
+parity protocols: a parity criterion must be a KNOWN-NONZERO reference table; 0≡0 proves nothing.

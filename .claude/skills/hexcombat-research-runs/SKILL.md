@@ -22,10 +22,15 @@ description: Running HexCombat as a research instrument — Monte Carlo batches 
 > `godot --headless --path . -s res://tools/make_game_narrative.gd -- --batch=<study>
 > --pick=median|longest|shortest` (or `--record=<file>`) → `<record>.narrative.md`, a
 > turn-by-turn account rendered from the event log (`GameNarrative.gd`). Sensitivity sweeps:
-> `pwsh -File tools/run_sweep.ps1 -Name <study> -Knob <dot.path> -Values a,b,c -N 30` —
-> generates one-knob variants of the base scenario, batches them on a common seed set, and
-> reports (condition rows are the sweep axis). Sweeps only cover scenario-FILE knobs; a knob
-> living in a phase data file needs promoting to a scenario key first. **LLM-player adapter (B6)
+> `python3 tools/run_sweep.py --name <study> --knob <file:dot.path> --values a,b,c --n 30` —
+> generates one-knob variants of the base scenario via the `DataOverrides` map, batches them on a common
+> seed set, and reports. Any JSON knob in `data/` can be swept, not just scenario files. Canned
+> sweeps: `python3 tools/run_sweep.py --spec tools/sweeps/<name>.json` (in-process backend; spec
+> fields: `sweep_name`, `measurement`, `scenario` (enforced fail-loud by the runner), `knobs`,
+> `grid`, `seeds`, `metrics`, optional `extra_cells` — e.g. the antiship `mines_only` floor).
+> Typo'd override paths fail loud (`DataOverrides.unapplied()`); reports match cells by override
+> content, not filename; stale cell files are cleared per run. The antiship instrument includes
+> sealift (mandatory post-plan-0004; wave = sent cohort, ~81 BNs). **LLM-player adapter (B6)
 > shipped and live-verified 2026-07-08** — policy id `llm_local` (`LLMPolicy`), sidecar
 > `tools/llm_sidecar.py`, two-seat entrypoint `tools/run_selfplay_game.gd` with
 > `--red-policy=llm_local --green-policy=llm_local` (`docs/STATUS.md` → "LLM players" has the
@@ -75,8 +80,8 @@ description: Running HexCombat as a research instrument — Monte Carlo batches 
   log every observation/action pair so the *game* is replayable even though the *decider* isn't.
 - Victory state: `game_over`/`winner` on GameState/TurnResult/observation; census in
   `_taiwan_battalion_census` terms (present battalions).
-- Sweep pattern: `tools/sweep_antiship_crossing.gd` (fixed-seed grid + multi-seed means) — the
-  shape to generalize, per `docs/archive/refactor_audit.md` item 7.
+- Sweep pattern: `tools/run_sweep.py` orchestration (fixed-seed grid + multi-seed means, via batch runs
+  or `run_sweep_cells.gd` for in-process sweeps) — the generalized shape per plan 0011.
 - Godot process-per-run is the parallelization unit (headless runs are cheap; separate processes
   also guarantee cross-process determinism, which is asserted by `validate_headless_selfplay.gd`).
 

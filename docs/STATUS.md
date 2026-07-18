@@ -82,7 +82,7 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   knobs in `ijfs_scenario.json` let Red spend its excess CRBM inventory on maneuver battalions —
   `crbm_maneuver_rounds_override` (480) forces the volley size on every CRBM×Maneuver pairing
   (depletion only), and `crbm_maneuver_strike_bonus` (0.15, USER-dialed 2026-07-17 via
-  `tools/sweep_crbm_maneuver.gd` — ~38% ROC maneuver-pool attrition over 40 turns) is the paired
+  `python3 tools/run_sweep.py --spec tools/sweeps/crbm_maneuver.json` — ~38% ROC maneuver-pool attrition over 40 turns) is the paired
   lethality lever, synthesized into a strike modifier. Both synthesized by `IjfsLoaders`
   (`apply_crbm_maneuver_*`), wired in `IjfsStateBuilder.build`. Detail: `docs/systems/ijfs.md`
   §4 Strike.
@@ -128,11 +128,16 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   record's event log into a turn-by-turn Markdown account (IJFS strikes + air-defense
   degradation, the crossing, maneuver/commitments, per-hex ground combat with FEBA movement,
   end-of-turn census, outcome). Pure `GameNarrative` statics (GdUnit-tested).
-- **Knob sweeps (research harness B5)** — `pwsh -File tools/run_sweep.ps1 -Name <study>
-  -Knob <dot.path> -Values a,b,c` generates one-knob scenario variants (as generated artifacts
-  in the sweep's report dir), batches them over a common seed set, and reports per-value
-  outcome rows. Array params to the ps1 tools may be comma-joined strings (normalized inside —
-  `pwsh -File` does not split them).
+- **Knob sweeps (research harness B5)** — `python3 tools/run_sweep.py --spec tools/sweeps/<spec>.json` or `python3 tools/run_sweep.py --name <study> --knob <file:dot.path> --values a,b,c` generates cell variants
+  (via `DataOverrides` map), batches them over a common seed set (using `run_batch.py` or the in-process `run_sweep_cells.gd`), and reports per-value
+  outcome rows. Any JSON knob in `data/` can be swept. A spec's `scenario` id is passed through
+  to the runner (fail-loud on mismatch or missing file); typo'd override paths fail loud via
+  `DataOverrides.unapplied()`; reports match cells by override content, not filename. **The
+  antiship crossing instrument changed 2026-07-18:** the harness now runs sealift between IJFS
+  and the crossing (mandatory since plan 0004 — without it no cohort is "sent" and losses read
+  zero), and the wave is the sent cohort (~81 BNs incl. follow-on echelons), not the 36-BN ship
+  reserve. The plan-0001 ~25% crossing-loss dial therefore needs USER re-reading against the new
+  baseline table (`reports/sweeps/antiship_crossing/report.md`).
 - **LLM players (research harness B6)** — policy id `llm_local` (`LLMPolicy`) marshals a seat's
   perspective observation to an out-of-process Python sidecar (`tools/llm_sidecar.py`) that calls a
   local OpenAI-compatible model (`HEXCOMBAT_LLM_BASE_URL`/`_MODEL`/`_API_KEY`, default vLLM at

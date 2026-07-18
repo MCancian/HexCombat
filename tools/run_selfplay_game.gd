@@ -33,6 +33,7 @@ func _initialize() -> void:
 	var green_policy_id := String(args.get("green-policy", default_policy))
 	var out_path := String(args.get("out", ""))
 	var has_llm_seat := red_policy_id == "llm_local" or green_policy_id == "llm_local"
+	var run_past_game_over: bool = args.has("run-past-game-over")
 	_log_path = String(args.get("log", _default_log_path(out_path) if has_llm_seat else ""))
 
 	if args.has("model"):
@@ -53,7 +54,7 @@ func _initialize() -> void:
 	var red_driver := _policy_driver(red_policy)
 	var green_driver := _policy_driver(green_policy)
 	var game: Dictionary = SelfPlayRunner.play_game_seats(
-		red_driver, green_driver, turns, base_seed, true)
+		red_driver, green_driver, turns, base_seed, not run_past_game_over)
 
 	var unapplied := DataOverrides.unapplied()
 	if not unapplied.is_empty():

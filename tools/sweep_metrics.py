@@ -52,7 +52,21 @@ def maneuver_attrition_pct(cell_data):
         "taiwan_census(mean)": f"{m_taiwan:.1f}"
     }
 
+def red_win_rate(cell_data):
+    wins = 0
+    total = 0
+    for s in cell_data.get('samples', []):
+        if 'winner' in s:
+            total += 1
+            # Game records store the winner lowercase ("red"/"green").
+            if str(s['winner']).lower() == 'red':
+                wins += 1
+    if total == 0:
+        return "0.0%"
+    return f"{100.0 * wins / total:.1f}%"
+
 REGISTRY = {
     "crossing_loss_pct": crossing_loss_pct,
     "maneuver_attrition_pct": maneuver_attrition_pct,
+    "red_win_rate": red_win_rate,
 }

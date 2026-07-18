@@ -1,0 +1,74 @@
+{
+  "sweep_name": "antiship_crossing",
+  "measurement": "antiship_crossing",
+  "scenario": "scenario_default",
+  "knobs": [
+    "data/ijfs/ijfs_scenario.json:prelanding.intel.exquisite_intel.antiship.initial_count",
+    "data/ijfs/ijfs_scenario.json:intel_locked_antiship_strike_bonus"
+  ],
+  "grid": [
+    [
+      0,
+      2,
+      4,
+      8,
+      12,
+      16,
+      24,
+      36,
+      50,
+      73
+    ],
+    [
+      0.0,
+      0.05,
+      0.1,
+      0.2,
+      0.4,
+      0.8
+    ]
+  ],
+  "seeds": [
+    20260624,
+    20260625,
+    20260626,
+    20260627,
+    20260628,
+    20260629,
+    20260630,
+    20260631,
+    20260632,
+    20260633,
+    20260634,
+    20260635,
+    20260636,
+    20260637,
+    20260638,
+    20260639,
+    20260640,
+    20260641,
+    20260642,
+    20260643,
+    20260644,
+    20260645,
+    20260646,
+    20260647,
+    20260648,
+    20260649,
+    20260650,
+    20260651,
+    20260652,
+    20260653
+  ],
+  "metrics": [
+    "crossing_loss_pct"
+  ],
+  "extra_cells": [
+    {
+      "id": "mines_only",
+      "overrides": {
+        "mines_only": true
+      }
+    }
+  ]
+}

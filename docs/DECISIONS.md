@@ -19,6 +19,27 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-18 — Sweep review fixes: antiship harness was dead since plan 0004 (review of the
+  agent implementation below).** The crossing sweep read 0.0 losses in every cell — including the
+  mines-only floor — because since plan 0004 (`a2b60fc`) `resolve_antiship_turn` fires only on
+  the sent sealift cohort, and the harness (old scripts and migration alike) never called
+  `resolve_sealift_turn`. The 0≡0 "parity" that gated the legacy-script deletion was vacuous.
+  Fixed: `run_sweep_cells.gd` now resolves sealift between IJFS and the crossing and measures the
+  wave as `SealiftResolver.sent_cohort_bn_ids` (~81 BNs with follow-on echelons, vs the old 36-BN
+  reserve) — so the plan-0001 ~25% dial reads differently now and awaits USER re-reading. Also
+  fixed in the same pass: spec `scenario` is now actually applied (was silently ignored; the CRBM
+  spec's `roc_full_defense` claim was wrong — pinned parity ran `scenario_default`, spec
+  corrected); `ScenarioCatalog.resolve_path` round-trips the id `scenario_default` (previously
+  resolved to a nonexistent `data/scenarios/` path and the run continued on a failed load);
+  runner fail-louds on scenario mismatch/missing file and on `DataOverrides.unapplied()`;
+  `make_sweep_report.py` matches cells by override content instead of hardcoded filename slugs
+  (the spec pipeline's generated names never matched the old `ic_*` slugs — an antiship report
+  would have rendered all-N/A); stale cell files are cleared before each run; the mines-only
+  floor cell is declared in the spec (`extra_cells`) and rendered in the report; manifests store
+  full seed lists; `--backend batch` with `--spec` errors until plan 0012.
+
+- **2026-07-18 — Sweep orchestrator + cell backend (Plan 0011; agent implementation).** The Python `run_sweep.py` tool now orchestrates sweeps through `run_batch.py` or the new `run_sweep_cells.gd` backend. The legacy bespoke sweep scripts (`sweep_antiship_crossing.gd`, `sweep_crbm_maneuver.gd`, `ijfs_sweep_support.gd`) have been deleted. Replaced with generalized canned sweep specifications in `tools/sweeps/*.json`. Legacy powershell sweep tool `run_sweep.ps1` is deleted. Facts: `docs/STATUS.md` and `.claude/skills/hexcombat-research-runs`.
+
 - **2026-07-17 — Removed the legacy mobile-target-destroy-cap Pk path (USER call, refactor idea #3).**
   `IjfsStrike._legacy_cap_probability`/`_resolve_cap`, the `mobile_target_destroy_caps` scenario
   block, and the always-null `mobile_cap_applied`/`legacy_cap_applied` strike-log fields are deleted.

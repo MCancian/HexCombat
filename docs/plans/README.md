@@ -18,7 +18,6 @@ plan to act, the closeout wasn't done.
 
 | # | Plan | Priority | Status |
 |---|------|----------|--------|
-| 0011 | [Disciplined Sweep Ecosystem](0011-disciplined-sweep-ecosystem.md) | Medium (research-infra; USER Tier-2-incremental) | Sketch |
 | 0002 | [Per-hull escort magazines (D3-B3)](0002-per-hull-escort-magazines.md) | Low (needs ship-ammo subsystem) | Sketch |
 | 0003 | [Combat-summary team attribution](0003-combat-summary-team-attribution.md) | Low (blocked on USER counterattack call) | Sketch |
 
@@ -26,6 +25,7 @@ plan to act, the closeout wasn't done.
 
 | # | Plan | Status |
 |---|------|--------|
+| 0011 | [Disciplined Sweep Ecosystem](../archive/0011-disciplined-sweep-ecosystem.md) | ✅ Shipped 2026-07-18 — unified `run_sweep.py` orchestrator + `run_sweep_cells.gd` in-process backend; canned specs under `tools/sweeps/*.json`; deleted legacy bespoke sweep scripts; facts in `docs/STATUS.md`, `docs/systems/ijfs.md`, `docs/DECISIONS.md` |
 | 0009 | [CRBM Maneuver Attrition Calibration Knob](../archive/0009-crbm-maneuver-attrition-knob.md) | ✅ Shipped 2026-07-17 — 480-round CRBM volley (`crbm_maneuver_rounds_override`) + lethality bonus (`crbm_maneuver_strike_bonus`, USER-dialed 0.15) vs maneuver units; follow-ups: warmup-casualty writeback fix (26/88→25/76), legacy mobile-cap removal, sweep-plumbing dedup; facts in `docs/systems/ijfs.md` §4, `hexcombat-config-and-knobs`, `docs/DECISIONS.md` |
 | 0010 | [Hierarchical Deterministic RNG (Sub-streams)](../archive/0010-hierarchical-rng-substreams.md) | ✅ Shipped 2026-07-17 — per-hex combat substream (`dice.derive("combat:<turn>:<hex>")`); ijfs/antiship already derived, offload dice-free; 2 SeededDice pins re-baselined; facts in `docs/STATUS.md`, `docs/DECISIONS.md` |
 | 0008 | [Immortal Support Units in Ground Combat](../archive/0008-immortal-support-units-combat.md) | ✅ Shipped 2026-07-17 — quarter-weight support casualties, unscreened strength 0.5; facts in `docs/systems/ground-combat.md`, `docs/STATUS.md`, `docs/DECISIONS.md` |
