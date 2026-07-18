@@ -67,6 +67,8 @@
 <p class="sub">HexCombat (Godot 4 / GDScript) — every tunable in the pipeline that decides how many assault battalions
 survive the crossing. Values pulled directly from source on 2026-06-28. Reference / recalibration document — <strong>no code changed.</strong></p>
 
+<div class="danger"><strong>Stale (2026-07-17):</strong> the <code>mobile_target_destroy_caps</code> / <code>_legacy_cap_probability</code> path described below as "dormant" was <strong>removed</strong> — it was inert once <code>strike_probability_modifiers</code> is present (always, in the shipped scenario). The scenario key and the code path no longer exist. See <code>docs/DECISIONS.md</code> (2026-07-17) and <code>docs/systems/ijfs.md</code> §4 Strike. The rest of this dated snapshot is otherwise unrevised.</div>
+
 <div class="summary">
   <strong>Why this exists.</strong> In the golden scenario (seed <code>20260624</code>) the amphibious wave loses ~24 of 36
   battalions crossing into theater <strong>TO3</strong>. The designer's prior is closer to ~25% (~9 of 36). This document maps
@@ -241,12 +243,12 @@ suppressed  if  not destroyed  and  roll ≤ <span class="lit">pairing.probabili
 <td>Hide/dispersal penalties that trim destroy prob for hiding mobile/moveable targets. All negative here (favor the target).</td>
 <td class="up">more-negative ⇒ <span class="up">higher</span> lethality (Green survives)</td></tr>
 
-<tr><td><strong>mobile_target_destroy_caps</strong> <span class="tag dormant">dormant</span></td>
-<td class="loc">ijfs_scenario.json → mobile_target_destroy_caps</td>
-<td class="val">active {Inorganic-Fast 0.08, Slow 0.02, Organic 0.20}; hiding {0.04, 0.01, 0.10}; ship overrides 0.80–0.95</td>
+<tr><td><strong>mobile_target_destroy_caps</strong> <span class="tag dormant">REMOVED 2026-07-17</span></td>
+<td class="loc">(deleted from ijfs_scenario.json)</td>
+<td class="val">—</td>
 <td>cap on p_destroy</td>
-<td>Legacy caps on mobile-target kill prob. <strong>NOT consumed in the current scenario</strong> — they only apply via <code>_legacy_cap_probability</code>, which runs <em>only when</em> <code>strike_probability_modifiers</code> is empty. It is non-empty, so this path is bypassed (the pairing pd values already bake in the low numbers).</td>
-<td class="note">no effect today; would lower kill prob if the modifier list were emptied</td></tr>
+<td>Legacy caps on mobile-target kill prob — <strong>removed 2026-07-17</strong> (was inert: only applied via <code>_legacy_cap_probability</code> when <code>strike_probability_modifiers</code> was empty, which it never is). The pairing pd values already bake in the low numbers.</td>
+<td class="note">deleted; see DECISIONS 2026-07-17</td></tr>
 </table>
 
 <h3>SEAD engagement (note: SAM categories, not anti-ship)</h3>

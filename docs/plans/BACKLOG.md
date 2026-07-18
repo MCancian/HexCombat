@@ -18,11 +18,10 @@ refactor_audit, port_audit).
 
 | ID | Plan Name | Priority | Status |
 | :--- | :--- | :--- | :--- |
-| 0008 | [Immortal Support Units in Ground Combat](0008-immortal-support-units-combat.md) | High | Sketch |
-| 0009 | [CRBM Maneuver Attrition Calibration Knob](0009-crbm-maneuver-attrition-knob.md) | High | Sketch |
-
 | 0002 | [Per-hull escort magazines (D3-B3)](0002-per-hull-escort-magazines.md) | Low (needs ship-ammo subsystem) | Sketch |
 | 0003 | [Combat-summary team attribution](0003-combat-summary-team-attribution.md) | Low (blocked on USER counterattack call) | Sketch |
+
+(Shipped plans move to `docs/archive/` and are indexed in [README.md](README.md) → Archived — not here.)
 
 ## Track D — Adjudication aid (graphics/UI) *(secondary — on USER request)*
 
