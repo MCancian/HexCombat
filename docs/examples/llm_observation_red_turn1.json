@@ -9,7 +9,8 @@
 		"systems_fired_count": 0,
 		"target_beaches": [],
 		"target_tos": [],
-		"unliftable_bn": 0
+		"unliftable_bn": 0,
+		"wave_bns": 0
 	},
 	"brigades": [
 		{

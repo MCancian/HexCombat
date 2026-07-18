@@ -62,7 +62,8 @@
 			"target_tos": [
 				3
 			],
-			"unliftable_bn": 0
+			"unliftable_bn": 0,
+			"wave_bns": 20
 		},
 		"brigades": [
 			{
@@ -2071,7 +2072,8 @@
 			"target_tos": [
 				3
 			],
-			"unliftable_bn": 0
+			"unliftable_bn": 0,
+			"wave_bns": 20
 		},
 		"cleanup_summary": {
 			"antiship_systems_reset": 50,
@@ -2492,7 +2494,8 @@
 					"target_tos": [
 						3
 					],
-					"unliftable_bn": 0
+					"unliftable_bn": 0,
+					"wave_bns": 20
 				},
 				"hex_id": "",
 				"kind": "antiship",

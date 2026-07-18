@@ -310,6 +310,7 @@ static func _antiship_observation() -> Dictionary:
 		"target_beaches": [],
 		"target_tos": [],
 		"mine_status": {},
+		"wave_bns": 0,
 	}
 
 

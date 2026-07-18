@@ -19,6 +19,10 @@ class_name AntishipSummary
 @export var target_beaches: Array = []
 @export var target_tos: Array = []
 @export var mine_status: Array = []
+# Size of the sent cohort (BNs sailing this turn, JLSF pseudo-BNs included) — the denominator of
+# the crossing-loss rate. Recorded so sweep extractors read it from the game record instead of
+# engine internals (plan 0012).
+@export var wave_bns: int = 0
 
 
 func to_dict() -> Dictionary:
@@ -33,4 +37,5 @@ func to_dict() -> Dictionary:
 		"target_beaches": target_beaches.duplicate(),
 		"target_tos": target_tos.duplicate(),
 		"mine_status": mine_status.duplicate(true),
+		"wave_bns": wave_bns,
 	}
