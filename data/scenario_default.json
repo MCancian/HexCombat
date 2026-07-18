@@ -16,8 +16,10 @@
   "use_offload_weight_matrix": true,
   "_jlsf_comment": "auto_jlsf: every newly seized port/airbridge auto-queues a JLSF logistics deployment (jlsf_lift_bn_equiv BN-equiv of amphibious lift, attritable in the crossing) that repairs it seized->degraded->operational. Explicit deploy_jlsf orders work regardless of this flag.",
   "auto_jlsf": true,
+  "_disable_phases_comment": "Research bypass (plan 0012): phases resolve_turn skips (allowed: movement, ground_combat). Empty = full turn; sweep overrides set it (e.g. CRBM maneuver isolation).",
+  "disable_phases": [],
   "victory": {
-    "_comment": "End-of-cleanup victory census of battalions ON TAIWAN. loss_check_arm: 'unconditional' (default) | 'after_first_landing' | 'after_turn:<N>'. taiwan_hexes: null counts ALL placed hexes (correct for this main-island scenario; offshore islands can't be distinguished until terrain/land data exists \u2014 see PLAN.md Victory conditions); set to a hex-id array to restrict the census.",
+    "_comment": "End-of-cleanup victory census of battalions ON TAIWAN. loss_check_arm: 'unconditional' (default) | 'after_first_landing' | 'after_turn:<N>'. taiwan_hexes: null counts ALL placed hexes (correct for this main-island scenario; offshore islands can't be distinguished until terrain/land data exists — see PLAN.md Victory conditions); set to a hex-id array to restrict the census.",
     "loss_check_arm": "after_first_landing",
     "taiwan_hexes": null
   },

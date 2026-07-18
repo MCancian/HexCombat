@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Run a parameter sweep: generate override cells, execute them, render the report.
 
-Two modes:
-  --spec tools/sweeps/<name>.json   canned sweep, in-process backend (run_sweep_cells.gd)
-  --name <study> --knob ... --values ...   ad-hoc one-off, batch backend (run_batch.py)
+Two modes, one backend (plan 0012 — every cell is a set of standard run_batch.py games whose
+records the Python metric extractors consume):
+  --spec tools/sweeps/<name>.json   canned sweep (seeds/turns/knobs/metrics from the spec)
+  --name <study> --knob ... --values ...   ad-hoc one-off
 """
 
 import argparse
 import itertools
 import json
 import re
-import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -26,10 +26,11 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run a sweep over parameter knobs.")
     parser.add_argument("--name")
     parser.add_argument("--spec")
-    parser.add_argument("--backend", choices=["batch", "in-process"], default=None)
     parser.add_argument("--knob", action="append", help="<file:dot.path>", default=[])
     parser.add_argument("--values", action="append", help="comma-separated values", default=[])
     parser.add_argument("--scenario", default="scenario_default")
+    parser.add_argument("--matchup", default="selfplay_default",
+                        help="policy or red:green matchup for every game")
     parser.add_argument("--seeds", default="")
     parser.add_argument("--n", type=int, default=30)
     parser.add_argument("--base-seed", type=int, default=20260624)
@@ -132,59 +133,34 @@ def render_report(name):
     )
 
 
-def run_spec_sweep(args):
-    if args.backend == "batch":
-        die("--spec sweeps run in-process only (custom metric extraction lives in "
-            "run_sweep_cells.gd until plan 0012 moves it to Python).")
-
-    with open(args.spec, "r") as f:
-        spec = json.load(f)
-    name = spec.get("sweep_name", Path(args.spec).stem)
-    scenario = spec.get("scenario", "scenario_default")
-    knobs = spec.get("knobs", [])
-    grid = spec.get("grid", [])
-    metrics = spec.get("metrics", [])
-    validate_metrics(metrics)
-
-    sweep_dir = SWEEPS_ROOT / name
-    cells_dir = sweep_dir / "cells"
-    write_manifest(sweep_dir, name, scenario, knobs, grid, spec.get("seeds", []),
-                   "in_process", metrics)
-    clear_stale_cells(cells_dir)
-
-    spec["cells"] = spec.get("cells", grid_cells(knobs, grid)) + spec.get("extra_cells", [])
-    spec["out_dir"] = str(cells_dir)
-    run_spec_path = sweep_dir / "run_spec.json"
-    with run_spec_path.open("w") as f:
-        json.dump(spec, f)
-
-    cmd = [
-        args.godot or shutil.which("godot") or "godot",
-        "--headless", "--path", str(REPO_ROOT),
-        "-s", "res://tools/run_sweep_cells.gd",
-        "--", f"--spec={run_spec_path}", f"--scenario={scenario}",
+def require_scenario_file(scenario):
+    """Fail loud before burning a batch on a typo'd scenario id (the guard the retired
+    run_sweep_cells.gd backend enforced in-process; mirrors ScenarioCatalog.resolve_path)."""
+    if scenario in ("", "default", "scenario_default"):
+        return
+    candidates = [
+        REPO_ROOT / scenario.replace("res://", ""),
+        REPO_ROOT / "data" / f"{scenario}.json",
+        REPO_ROOT / "data" / "scenarios" / f"{scenario}.json",
     ]
-    print(f"Running in-process sweep: {name} (scenario={scenario})")
-    subprocess.run(cmd, check=True)
-    render_report(name)
+    if not any(c.is_file() for c in candidates):
+        die(f"Scenario '{scenario}' does not resolve to a file (checked {[str(c) for c in candidates]})")
 
 
-def run_batch_cell(args, cell_id, overrides_path):
+def run_batch_cell(cell_id, sweep_name, scenario, seeds, turns, matchup, args):
     cmd = [
         sys.executable,
         str(REPO_ROOT / "tools" / "run_batch.py"),
         "--name", cell_id,
-        "--scenarios", args.scenario,
+        "--scenarios", scenario,
+        "--matchups", matchup,
         "--parallel", str(args.parallel),
-        "--turns", str(args.turns),
-        "--out-root", f"reports/sweeps/{args.name}/cells",
-        "--overrides", str(overrides_path),
+        "--turns", str(turns),
+        "--seeds", ",".join(str(s) for s in seeds),
+        "--out-root", f"reports/sweeps/{sweep_name}/cells",
+        "--overrides", str(SWEEPS_ROOT / sweep_name / "cells" / cell_id / "overrides.json"),
         "--no-report",
     ]
-    if args.seeds:
-        cmd.extend(["--seeds", args.seeds])
-    else:
-        cmd.extend(["--n", str(args.n), "--base-seed", str(args.base_seed)])
     if args.godot:
         cmd.extend(["--godot", args.godot])
     if args.run_past_game_over:
@@ -204,9 +180,58 @@ def collect_batch_samples(cell_dir):
     return samples
 
 
+def run_cells(cells, sweep_name, scenario, seeds, turns, matchup, args):
+    """Execute each cell as a run_batch job set and aggregate its game records into
+    cells/<id>.json — the cell shape the metric registry consumes."""
+    cells_dir = SWEEPS_ROOT / sweep_name / "cells"
+    for cell in cells:
+        cell_dir = cells_dir / cell["id"]
+        cell_dir.mkdir(parents=True, exist_ok=True)
+        with (cell_dir / "overrides.json").open("w", encoding="utf-8") as f:
+            json.dump(cell["overrides"], f)
+
+        run_batch_cell(cell["id"], sweep_name, scenario, seeds, turns, matchup, args)
+
+        samples = collect_batch_samples(cell_dir)
+        if len(samples) != len(seeds):
+            die(f"Cell {cell['id']}: {len(samples)} valid records for {len(seeds)} seeds — "
+                "a game failed; see its .err.log under the cell's games dir.")
+        with (cells_dir / f"{cell['id']}.json").open("w", encoding="utf-8") as f:
+            json.dump({"overrides": cell["overrides"], "samples": samples}, f)
+
+
+def run_spec_sweep(args):
+    with open(args.spec, "r") as f:
+        spec = json.load(f)
+    name = spec.get("sweep_name", Path(args.spec).stem)
+    scenario = spec.get("scenario", "scenario_default")
+    require_scenario_file(scenario)
+    knobs = spec.get("knobs", [])
+    grid = spec.get("grid", [])
+    metrics = spec.get("metrics", [])
+    validate_metrics(metrics)
+    seeds = spec["seeds"]
+    turns = int(spec["turns"])
+    # Both canned calibration sweeps run noop-vs-noop: pure engine dynamics, the measurement
+    # semantics their dialed reference tables were accepted under (the retired cell runner's
+    # end_turn-only loop). A spec studying real play sets its own matchup.
+    matchup = spec["matchup"]
+    if bool(spec.get("run_past_game_over", False)):
+        args.run_past_game_over = True
+
+    cells = grid_cells(knobs, grid) + spec.get("extra_cells", [])
+    for cell in cells:
+        cell["overrides"] = cell.get("overrides", {})
+
+    sweep_dir = SWEEPS_ROOT / name
+    write_manifest(sweep_dir, name, scenario, knobs, grid, seeds, "batch", metrics)
+    clear_stale_cells(sweep_dir / "cells")
+    print(f"Running spec sweep: {name} (scenario={scenario}, {len(cells)} cells x {len(seeds)} seeds)")
+    run_cells(cells, name, scenario, seeds, turns, matchup, args)
+    render_report(name)
+
+
 def run_cli_sweep(args):
-    if (args.backend or "batch") != "batch":
-        die("in-process without --spec is not wired; write a spec in tools/sweeps/.")
     if args.knob and len(args.knob) != len(args.values):
         die("--knob and --values must be paired.")
 
@@ -215,27 +240,14 @@ def run_cli_sweep(args):
     validate_metrics(metrics)
     seeds = ([int(s) for s in args.seeds.split(",") if s.strip()] if args.seeds
              else [args.base_seed + i for i in range(args.n)])
+    require_scenario_file(args.scenario)
 
     sweep_dir = SWEEPS_ROOT / args.name
-    cells_dir = sweep_dir / "cells"
-    clear_stale_cells(cells_dir)
-    cells_dir.mkdir(parents=True, exist_ok=True)
-
-    for cell in grid_cells(args.knob, grid):
-        cell_dir = cells_dir / cell["id"]
-        cell_dir.mkdir(parents=True, exist_ok=True)
-        overrides_path = cell_dir / "overrides.json"
-        with overrides_path.open("w") as f:
-            json.dump(cell["overrides"], f)
-
-        run_batch_cell(args, cell["id"], overrides_path)
-
-        with (cells_dir / f"{cell['id']}.json").open("w", encoding="utf-8") as f:
-            json.dump({"overrides": cell["overrides"],
-                       "samples": collect_batch_samples(cell_dir)}, f)
-
+    clear_stale_cells(sweep_dir / "cells")
+    run_cells(grid_cells(args.knob, grid), args.name, args.scenario, seeds, args.turns,
+              args.matchup, args)
     write_manifest(sweep_dir, args.name, args.scenario, args.knob, grid, seeds,
-                   "full_game", metrics)
+                   "batch", metrics)
     render_report(args.name)
 
 

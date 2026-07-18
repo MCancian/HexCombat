@@ -51,9 +51,21 @@ Settled battles. Primary sources: `docs/DECISIONS.md` (+ pre-2026-07-10 history 
 - **Symptom:** committed example fixture silently 318/247 lines stale vs regeneration.
 - **Root cause:** nothing regenerated-and-compared committed fixtures; the antiship balance work
   had drifted the contract.
-- **Status:** fixed by refactor item 8 — `tools/validate_fixtures.gd` byte-compares every gate
-  run through the shared `tools/LLMFixtures.gd` builder (single source of truth so the gate can't
-  drift from the exporters).
+- **Status:** fixed by refactor item 8 — the gate regenerates through the shared
+  `tools/LLMFixtures.gd` builder and git-diffs `docs/examples/` (single source of truth so the
+  gate can't drift from the exporters). **Recurred 2026-07-18** — see the next entry: the
+  regeneration step itself was silently broken.
+
+### Fixture drift gate was vacuous: exporters never wrote docs/examples (2026-07-18)
+- **Symptom:** regenerating `llm_result_after_turn.json` on a clean HEAD produced a massively
+  different file than the committed fixture, yet the gate's drift check had been green for days.
+- **Root cause:** both gate scripts invoked `export_llm_*.gd` WITHOUT the `--` user-arg
+  separator. Godot only surfaces args after `--` via `get_cmdline_user_args()`, so `--output`
+  never reached the exporter, output fell back to `reports/llm_*.json`, and the git-diff check
+  compared an untouched `docs/examples/` against itself — vacuous since f37170f.
+- **Status:** fixed 2026-07-18 (e02abc7): separator added in both `run_all_tests.sh`/`.ps1`,
+  fixture honestly re-baselined. Lesson: a NEW guard must be watched failing once before it is
+  trusted; and any `-s script.gd` invocation that passes `--flags` needs the `--` separator.
 
 ### "2,500 Mobile SAMs destroyed on turn 2" is real, not double-counting (2026-07-10)
 - **Symptom:** every game's turn-2 IJFS digest reports ~2,500 Mobile SAMs destroyed

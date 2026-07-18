@@ -20,13 +20,13 @@ plan to act, the closeout wasn't done.
 |---|------|----------|--------|
 | 0002 | [Per-hull escort magazines (D3-B3)](0002-per-hull-escort-magazines.md) | Low (needs ship-ammo subsystem) | Sketch |
 | 0003 | [Combat-summary team attribution](0003-combat-summary-team-attribution.md) | Low (blocked on USER counterattack call) | Sketch |
-| 0012 | [Unified sweep extraction & batch specs](0012-unified-sweep-extraction.md) | Medium (unblocks parallel canned sweeps) | Ready |
 | 0013 | [One home for scenario files](0013-scenario-files-one-home.md) | Low (hygiene; needs a Windows gate run to close) | Ready |
 
 ## Archived
 
 | # | Plan | Status |
 |---|------|--------|
+| 0012 | [Unified sweep extraction & batch specs](../archive/0012-unified-sweep-extraction.md) | ✅ Shipped 2026-07-18 — canned sweeps unified on the batch backend (`run_sweep_cells.gd` deleted); Python metric extractors over standard game records (raw numbers, report owns formatting); `noop` matchup preserves dialed measurement semantics (byte-identical parity tables); `disable_phases` + `disable_antiship_systems` knobs; facts in `docs/STATUS.md` B5, `hexcombat-research-runs`, `hexcombat-config-and-knobs`, `docs/DECISIONS.md` |
 | 0011 | [Disciplined Sweep Ecosystem](../archive/0011-disciplined-sweep-ecosystem.md) | ✅ Shipped 2026-07-18 — unified `run_sweep.py` orchestrator + `run_sweep_cells.gd` in-process backend; canned specs under `tools/sweeps/*.json`; deleted legacy bespoke sweep scripts; facts in `docs/STATUS.md`, `docs/systems/ijfs.md`, `docs/DECISIONS.md` |
 | 0009 | [CRBM Maneuver Attrition Calibration Knob](../archive/0009-crbm-maneuver-attrition-knob.md) | ✅ Shipped 2026-07-17 — 480-round CRBM volley (`crbm_maneuver_rounds_override`) + lethality bonus (`crbm_maneuver_strike_bonus`, USER-dialed 0.15) vs maneuver units; follow-ups: warmup-casualty writeback fix (26/88→25/76), legacy mobile-cap removal, sweep-plumbing dedup; facts in `docs/systems/ijfs.md` §4, `hexcombat-config-and-knobs`, `docs/DECISIONS.md` |
 | 0010 | [Hierarchical Deterministic RNG (Sub-streams)](../archive/0010-hierarchical-rng-substreams.md) | ✅ Shipped 2026-07-17 — per-hex combat substream (`dice.derive("combat:<turn>:<hex>")`); ijfs/antiship already derived, offload dice-free; 2 SeededDice pins re-baselined; facts in `docs/STATUS.md`, `docs/DECISIONS.md` |

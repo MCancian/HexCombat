@@ -37,6 +37,7 @@ Current axes:
 | `use_offload_weight_matrix` | `false` (flat TONS_PER_BN); `scenario_default` sets `true` | Day-N offload cost = per-type weight × bn_class/ship_category multiplier (`data/offload_weights.json` → `OffloadCostModel`; plan 0006) |
 | `auto_jlsf` | `false`; `scenario_default` sets `true` | Auto-queue a JLSF deployment to every newly seized port/airbridge (`GameState._consume_jlsf_orders`); explicit `deploy_jlsf` Red orders work regardless |
 | `jlsf_lift_bn_equiv` | `4` | Abstract amphibious-lift cost of one JLSF deployment (`JlsfCargo` pseudo-BNs; attritable in the crossing) |
+| `disable_phases` | `[]` (allowlist: `movement`, `ground_combat` — `GameDataStore.DISABLEABLE_PHASES`) | Research bypass (plan 0012): `GameState.resolve_turn` skips the listed ground WeGo phases wholesale (buffered orders never execute; no dice consumed, so `[]` is byte-identical). No canned sweep sets it — they use the `noop` matchup instead — but it's override-reachable for fast what-if runs |
 | `placements` | 4 ROC defenders with hex + `offset_bearing` | Initial placement |
 
 **Scenario variants are first-class** (user objective): a new variant = a new scenario JSON.
@@ -99,6 +100,9 @@ scenario file's path is fixed, so this knob isn't reachable from a scenario vari
 swept using `run_sweep.py --spec tools/sweeps/antiship_crossing.json`. `IjfsLoaders.load_scenario`
 synthesizes it into `strike_probability_modifiers` via `apply_intel_locked_strike_bonus`. Paired
 companion lever: `prelanding.intel.exquisite_intel.antiship.initial_count` (golden = 36), same file.
+`data/antiship/antiship_grouping_spec.json.disable_antiship_systems` (bool, default false, plan
+0012) zeroes the crossing interceptors (containers/IJFS targets intact) — the mines-only floor
+cell of the antiship sweep sets it via override.
 
 `data/ijfs/ijfs_scenario.json.crbm_maneuver_rounds_override` (int, shipped = 480) and
 `.crbm_maneuver_strike_bonus` (float = 0.15, USER-dialed 2026-07-17 via `tools/sweeps/crbm_maneuver.json`,

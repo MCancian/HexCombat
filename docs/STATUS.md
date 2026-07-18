@@ -130,10 +130,17 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   degradation, the crossing, maneuver/commitments, per-hex ground combat with FEBA movement,
   end-of-turn census, outcome). Pure `GameNarrative` statics (GdUnit-tested).
 - **Knob sweeps (research harness B5)** — `python3 tools/run_sweep.py --spec tools/sweeps/<spec>.json` or `python3 tools/run_sweep.py --name <study> --knob <file:dot.path> --values a,b,c` generates cell variants
-  (via `DataOverrides` map), batches them over a common seed set (using `run_batch.py` or the in-process `run_sweep_cells.gd`), and reports per-value
-  outcome rows. Any JSON knob in `data/` can be swept. A spec's `scenario` id is passed through
-  to the runner (fail-loud on mismatch or missing file); typo'd override paths fail loud via
-  `DataOverrides.unapplied()`; reports match cells by override content, not filename. **The
+  (via `DataOverrides` map), batches them over a common seed set, and reports per-value
+  outcome rows. One backend since plan 0012: every cell is a parallel `run_batch.py` job set of
+  standard `run_selfplay_game.gd` games; `sweep_metrics.py` extracts raw numbers from the game
+  records (turn digests + terminal census) and `make_sweep_report.py` owns all display
+  formatting. The canned calibration specs run `matchup: noop` (pure engine dynamics — the
+  measurement semantics their dialed reference tables were accepted under; per-seed parity with
+  the retired in-process cell runner verified 2026-07-18), and the antiship mines-only floor is
+  the `disable_antiship_systems` grouping-spec override. Any JSON knob in `data/` can be swept.
+  A spec's `scenario` id must resolve to a file before any game runs; typo'd override paths fail
+  loud via `DataOverrides.unapplied()` in the selfplay entrypoint; reports match cells by
+  override content, not filename. **The
   antiship crossing instrument changed 2026-07-18:** the harness now runs sealift between IJFS
   and the crossing (mandatory since plan 0004 — without it no cohort is "sent" and losses read
   zero), and the wave is the sent cohort (~81 BNs incl. follow-on echelons), not the 36-BN ship

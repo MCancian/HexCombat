@@ -1,7 +1,8 @@
 {
   "sweep_name": "antiship_crossing",
-  "measurement": "antiship_crossing",
   "scenario": "scenario_default",
+  "matchup": "noop",
+  "turns": 1,
   "knobs": [
     "data/ijfs/ijfs_scenario.json:prelanding.intel.exquisite_intel.antiship.initial_count",
     "data/ijfs/ijfs_scenario.json:intel_locked_antiship_strike_bonus"
@@ -66,8 +67,9 @@
   "extra_cells": [
     {
       "id": "mines_only",
-      "mines_only": true,
-      "overrides": {}
+      "overrides": {
+        "data/antiship/antiship_grouping_spec.json:disable_antiship_systems": true
+      }
     }
   ]
 }

@@ -18,10 +18,17 @@ def knob_leaf(knob):
     return knob.split(":")[-1].split(".")[-1]
 
 
+def is_floor_cell(cell):
+    """The mines-only floor cell: identified by its disable_antiship_systems override, so the
+    report needs no runner-side marker (plan 0012)."""
+    return any(key.endswith("disable_antiship_systems") and value
+               for key, value in cell.get("overrides", {}).items())
+
+
 def find_cell(cells, knobs, values):
     expected = dict(zip(knobs, values))
     for cell in cells:
-        if not cell.get("mines_only") and cell.get("overrides", {}) == expected:
+        if not is_floor_cell(cell) and cell.get("overrides", {}) == expected:
             return cell
     return None
 
@@ -30,16 +37,36 @@ def fmt_value(v):
     return f"+{v:.2f}" if isinstance(v, float) and v >= 0 else str(v)
 
 
+# Metric functions return raw numbers (plan 0012); the report owns ALL display formatting.
+# A formatter maps the raw value to a display string, or to a {column: string} dict for
+# multi-column metrics. Every REGISTRY metric must have one — missing is a wiring error.
+FORMATTERS = {
+    "crossing_loss_pct": lambda v: f"{v['mean']:.1f}±{v['sd']:.1f}",
+    "maneuver_attrition_pct": lambda v: {
+        "pool": f"{v['pool']:.0f}",
+        "killed(mean+/-sd)": f"{v['killed_mean']:.1f}+/-{v['killed_sd']:.1f}",
+        "%pool": f"{v['pct_pool']:.0f}%",
+        "warmup_killed(mean)": f"{v['warmup_killed_mean']:.1f}",
+        "taiwan_census(mean)": f"{v['taiwan_mean']:.1f}",
+    },
+    "red_win_rate": lambda v: f"{v:.1f}%",
+}
+
+
 def metric_fn_for(manifest):
     metrics = manifest.get("metrics", [])
     if not metrics:
         print("Manifest lists no metrics", file=sys.stderr)
         sys.exit(1)
-    fn = REGISTRY.get(metrics[0])
-    if not fn:
-        print(f"Unknown metric {metrics[0]}", file=sys.stderr)
+    name = metrics[0]
+    if name not in REGISTRY or name not in FORMATTERS:
+        print(f"Metric {name} missing from REGISTRY/FORMATTERS", file=sys.stderr)
         sys.exit(1)
-    return metrics[0], fn
+
+    def formatted(cell):
+        return FORMATTERS[name](REGISTRY[name](cell))
+
+    return name, formatted
 
 
 def render_1d(lines, manifest, cells, metric_name, metric_fn):
@@ -109,7 +136,7 @@ def render_markdown(manifest, cells, out_path):
         print(f"Unsupported grid dimensionality: {len(grid)}", file=sys.stderr)
         sys.exit(1)
 
-    floor_cell = next((c for c in cells if c.get("mines_only")), None)
+    floor_cell = next((c for c in cells if is_floor_cell(c)), None)
     if floor_cell:
         lines.append("")
         lines.append(f"**Mines-only floor** (all launchers destroyed): {metric_fn(floor_cell)}")

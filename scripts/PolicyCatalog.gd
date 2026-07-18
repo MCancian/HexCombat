@@ -15,6 +15,8 @@ static func create(policy_id: String) -> Object:
 			return SelfPlayPolicy.new()
 		"inland_clear":
 			return InlandClearPolicy.new()
+		"noop":
+			return NoopPolicy.new()
 		"llm_local":
 			return LLMPolicy.new()
 		_:
@@ -31,4 +33,4 @@ static func create_for_seat(policy_id: String, seat: String, log_path: String = 
 
 
 static func known_ids() -> Array[String]:
-	return ["selfplay_default", "inland_clear", "llm_local"]
+	return ["selfplay_default", "inland_clear", "noop", "llm_local"]

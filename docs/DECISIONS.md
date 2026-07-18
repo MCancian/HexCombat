@@ -19,6 +19,24 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-18 — Plan 0012 shipped: unified sweep extraction on the batch backend (agent
+  implementation).** `run_sweep_cells.gd` deleted; every sweep cell is now a parallel
+  `run_batch.py` set of standard `run_selfplay_game.gd` games, with `sweep_metrics.py` extracting
+  raw numbers from game records (`wave_bns` added to `AntishipSummary` for the denominator) and
+  `make_sweep_report.py` owning all formatting. Canned specs run `matchup: noop` (new
+  `NoopPolicy`) — NOT the plan's `disable_phases` route — because the dialed reference tables
+  include beach-combat dynamics from offload landings; `disable_phases` shipped anyway as a
+  scenario knob, and the mines-only floor became the `disable_antiship_systems` override. Proof:
+  both reference tables reproduced byte-identically (antiship golden-dial cell 32.9%, CRBM +0.15
+  = 46.0/124). Facts: `docs/STATUS.md` B5, `hexcombat-research-runs`, `hexcombat-config-and-knobs`.
+
+- **2026-07-18 — Fixture drift gate was vacuous; fixed + honest re-baseline (agent, e02abc7).**
+  Both gate scripts called `export_llm_*.gd` without the `--` separator, so the drift check
+  compared an untouched `docs/examples/` with itself since f37170f; the committed result fixture
+  had rotted through the plan-0004..0011 sea-phase evolution. Separator fixed on both boxes,
+  fixture regenerated and committed. Incident: `hexcombat-failure-archaeology` → "Fixture drift
+  gate was vacuous".
+
 - **2026-07-18 — Sweep tooling refactor pass (review follow-up ideas 2/3/4/7; agent
   implementation, USER-approved).** `run_sweep.py` restructured into `run_spec_sweep` /
   `run_cli_sweep` + shared helpers, with metrics validated against the `sweep_metrics.REGISTRY`

@@ -1,7 +1,9 @@
 {
   "sweep_name": "crbm_maneuver",
-  "measurement": "crbm_full_game",
   "scenario": "scenario_default",
+  "matchup": "noop",
+  "turns": 40,
+  "run_past_game_over": true,
   "knobs": [
     "data/ijfs/ijfs_scenario.json:crbm_maneuver_strike_bonus"
   ],
