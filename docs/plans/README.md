@@ -18,6 +18,7 @@ plan to act, the closeout wasn't done.
 
 | # | Plan | Priority | Status |
 |---|------|----------|--------|
+| 0011 | [Disciplined Sweep Ecosystem](0011-disciplined-sweep-ecosystem.md) | Medium (research-infra; USER Tier-2-incremental) | Sketch |
 | 0002 | [Per-hull escort magazines (D3-B3)](0002-per-hull-escort-magazines.md) | Low (needs ship-ammo subsystem) | Sketch |
 | 0003 | [Combat-summary team attribution](0003-combat-summary-team-attribution.md) | Low (blocked on USER counterattack call) | Sketch |
 
