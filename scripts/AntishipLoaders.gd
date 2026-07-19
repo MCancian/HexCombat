@@ -36,46 +36,37 @@ static func load_systems(grouping_path: String, types: Dictionary) -> Array[Anti
 	if bool(body.get("disable_antiship_systems", false)):
 		var no_systems: Array[AntishipSystem] = []
 		return no_systems
-	var groups: Dictionary = body.get("taiwan_platform_groups", {})
-	# key "<to>:<type_id>" -> aggregate dict
+
+	var containers := _walk_groups(body, types)
 	var aggregated: Dictionary = {}
 	var order: Array = []
-	for group_name in groups.keys():
-		var group: Dictionary = groups[group_name]
-		var type_id := int(group["type_id"])
-		var sizes: Array = group.get("group_sizes", [])
-		var tos: Array = group.get("to_assignments", [])
-		if sizes.size() != tos.size():
-			_fail("Anti-ship group '%s' has mismatched group_sizes (%d) / to_assignments (%d)" % [group_name, sizes.size(), tos.size()])
-		var ijfs_profile: Dictionary = group.get("ijfs_profile", {})
-		var detectability := String(group.get("mainline_detectability", ""))
-		for i in range(sizes.size()):
-			var to_number := int(tos[i])
-			var key := "%d:%d" % [to_number, type_id]
-			if not aggregated.has(key):
-				aggregated[key] = {
-					"to_number": to_number,
-					"type_id": type_id,
-					"quantity": 0,
-					"detectability": detectability,
-					"ijfs_profile": ijfs_profile,
-				}
-				order.append(key)
-			aggregated[key]["quantity"] = int(aggregated[key]["quantity"]) + int(sizes[i])
+	for c_value in containers:
+		var c: Dictionary = c_value
+		var key := "%d:%d" % [int(c["to_number"]), int(c["type_id"])]
+		if not aggregated.has(key):
+			aggregated[key] = {
+				"to_number": int(c["to_number"]),
+				"type_id": int(c["type_id"]),
+				"type_name": String(c["type_name"]),
+				"quantity": 0,
+				"detectability": String(c["detectability"]),
+				"ijfs_profile": c["ijfs_profile"],
+				"special": String(c.get("special", "")),
+			}
+			order.append(key)
+		aggregated[key]["quantity"] = int(aggregated[key]["quantity"]) + int(c["systems_represented"])
 
 	var systems: Array[AntishipSystem] = []
 	for key in order:
 		var agg: Dictionary = aggregated[key]
-		var type_id: int = agg["type_id"]
-		var type_def: Dictionary = types.get(type_id, {})
 		var system: AntishipSystem = AntishipSystemResource.new()
 		system.to_number = agg["to_number"]
-		system.type_id = type_id
-		system.type_name = String(type_def.get("name", ""))
-		system.detectability = String(type_def.get("detectability", agg["detectability"]))
-		system.quantity = int(agg["quantity"])
+		system.type_id = agg["type_id"]
+		system.type_name = agg["type_name"]
+		system.detectability = agg["detectability"]
+		system.quantity = agg["quantity"]
 		system.original_quantity = system.quantity
-		system.special = String(type_def.get("special", ""))
+		system.special = agg["special"]
 		system.ijfs_profile = agg["ijfs_profile"]
 		systems.append(system)
 	# Stable sort by (to_number, type_id) for deterministic firing-plan iteration.
@@ -90,9 +81,20 @@ static func load_systems(grouping_path: String, types: Dictionary) -> Array[Anti
 ## group_sizes[i]/to_assignments[i] entry), preserving the bin granularity that load_systems
 ## aggregates away. Used by IjfsLoaders.build_antiship_targets so IJFS strikes hit whole operating
 ## bins (see that func). Each: {to_number, type_id, type_name, systems_represented, detectability,
-## ijfs_profile, platform_group, platform_group_index}.
+## ijfs_profile, platform_group, platform_group_index, special}.
 static func load_containers(grouping_path: String, types: Dictionary) -> Array:
 	var body: Dictionary = _read_json(grouping_path)
+	var containers := _walk_groups(body, types)
+	containers.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a["to_number"]) != int(b["to_number"]):
+			return int(a["to_number"]) < int(b["to_number"])
+		if int(a["type_id"]) != int(b["type_id"]):
+			return int(a["type_id"]) < int(b["type_id"])
+		return int(a["platform_group_index"]) < int(b["platform_group_index"]))
+	return containers
+
+
+static func _walk_groups(body: Dictionary, types: Dictionary) -> Array:
 	var groups: Dictionary = body.get("taiwan_platform_groups", {})
 	var containers: Array = []
 	for group_name in groups.keys():
@@ -115,14 +117,10 @@ static func load_containers(grouping_path: String, types: Dictionary) -> Array:
 				"ijfs_profile": ijfs_profile,
 				"platform_group": group_name,
 				"platform_group_index": i,
+				"special": String(type_def.get("special", "")),
 			})
-	containers.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		if int(a["to_number"]) != int(b["to_number"]):
-			return int(a["to_number"]) < int(b["to_number"])
-		if int(a["type_id"]) != int(b["type_id"]):
-			return int(a["type_id"]) < int(b["type_id"])
-		return int(a["platform_group_index"]) < int(b["platform_group_index"]))
 	return containers
+
 
 
 static func load_combat_catalog(path: String) -> Dictionary:
