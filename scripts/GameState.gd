@@ -39,6 +39,7 @@ var last_ijfs_writeback: IjfsWriteback = null
 var antiship_systems: Array = []
 # Container-level view of the same arsenal (one entry per platform-group bin) — IJFS target source.
 var antiship_containers: Array = []
+var _antiship_built: bool = false
 # Fractional BN-equiv owed from ship losses, carried across turns (ShipLoadingModel.resolve_bn_losses).
 var lost_at_sea_accumulator: float = 0.0
 var last_antiship_summary: AntishipSummary = null
@@ -102,6 +103,7 @@ func reset_to_scenario() -> void:
 	# matching the IJFS state's lazy-load pattern; clearing here forces a fresh build per scenario.
 	antiship_systems = []
 	antiship_containers = []
+	_antiship_built = false
 	lost_at_sea_accumulator = 0.0
 	last_antiship_summary = null
 	last_sealift_sent_by_type = {}
@@ -470,11 +472,12 @@ func _build_warmup_context(
 ## Lazily build the persistent anti-ship Green firing systems (aggregated by (to_number, type_id)).
 ## Shared by resolve_ijfs_turn (IJFS targeting) and resolve_antiship_turn (firing).
 func _ensure_antiship_systems() -> void:
-	if not antiship_systems.is_empty():
+	if _antiship_built:
 		return
 	var built := AntishipSystemsBuilder.build()
 	antiship_systems = built["systems"]
 	antiship_containers = built["containers"]
+	_antiship_built = true
 
 
 func _rebuild_ijfs_state() -> void:
