@@ -31,7 +31,7 @@ def _first_wave_antiship(record):
     if not summary:
         raise KeyError(
             "record %s turn 1 has an empty antiship_summary (no crossing wave resolved)"
-            % record.get("base_seed"))
+            % record["base_seed"])
     return summary
 
 

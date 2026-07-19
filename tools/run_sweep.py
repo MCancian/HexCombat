@@ -147,7 +147,7 @@ def require_scenario_file(scenario):
         die(f"Scenario '{scenario}' does not resolve to a file (checked {[str(c) for c in candidates]})")
 
 
-def run_batch_cell(cell_id, sweep_name, scenario, seeds, turns, matchup, args):
+def run_batch_cell(cell_id, sweep_name, scenario, seeds, turns, matchup, run_past_game_over, args):
     cmd = [
         sys.executable,
         str(REPO_ROOT / "tools" / "run_batch.py"),
@@ -163,7 +163,7 @@ def run_batch_cell(cell_id, sweep_name, scenario, seeds, turns, matchup, args):
     ]
     if args.godot:
         cmd.extend(["--godot", args.godot])
-    if args.run_past_game_over:
+    if run_past_game_over:
         cmd.append("--run-past-game-over")
 
     print(f"Running cell {cell_id} via batch...")
@@ -176,11 +176,20 @@ def collect_batch_samples(cell_dir):
     if games_dir.exists():
         for g in sorted(games_dir.glob("*.json")):
             with g.open("r", encoding="utf-8") as f:
-                samples.append(json.load(f))
+                record = json.load(f)
+                digests = record["turn_digests"]
+                proj = {
+                    "base_seed": record["base_seed"],
+                    "census": record["census"],
+                    "turn_digests": [digests[0], digests[-1]] if digests else []
+                }
+                if "winner" in record:
+                    proj["winner"] = record["winner"]
+                samples.append(proj)
     return samples
 
 
-def run_cells(cells, sweep_name, scenario, seeds, turns, matchup, args):
+def run_cells(cells, sweep_name, scenario, seeds, turns, matchup, run_past_game_over, args):
     """Execute each cell as a run_batch job set and aggregate its game records into
     cells/<id>.json — the cell shape the metric registry consumes."""
     cells_dir = SWEEPS_ROOT / sweep_name / "cells"
@@ -190,7 +199,7 @@ def run_cells(cells, sweep_name, scenario, seeds, turns, matchup, args):
         with (cell_dir / "overrides.json").open("w", encoding="utf-8") as f:
             json.dump(cell["overrides"], f)
 
-        run_batch_cell(cell["id"], sweep_name, scenario, seeds, turns, matchup, args)
+        run_batch_cell(cell["id"], sweep_name, scenario, seeds, turns, matchup, run_past_game_over, args)
 
         samples = collect_batch_samples(cell_dir)
         if len(samples) != len(seeds):
@@ -216,8 +225,7 @@ def run_spec_sweep(args):
     # semantics their dialed reference tables were accepted under (the retired cell runner's
     # end_turn-only loop). A spec studying real play sets its own matchup.
     matchup = spec["matchup"]
-    if bool(spec.get("run_past_game_over", False)):
-        args.run_past_game_over = True
+    run_past_game_over = bool(spec.get("run_past_game_over", False)) or args.run_past_game_over
 
     cells = grid_cells(knobs, grid) + spec.get("extra_cells", [])
     for cell in cells:
@@ -227,7 +235,7 @@ def run_spec_sweep(args):
     write_manifest(sweep_dir, name, scenario, knobs, grid, seeds, "batch", metrics)
     clear_stale_cells(sweep_dir / "cells")
     print(f"Running spec sweep: {name} (scenario={scenario}, {len(cells)} cells x {len(seeds)} seeds)")
-    run_cells(cells, name, scenario, seeds, turns, matchup, args)
+    run_cells(cells, name, scenario, seeds, turns, matchup, run_past_game_over, args)
     render_report(name)
 
 
@@ -245,7 +253,7 @@ def run_cli_sweep(args):
     sweep_dir = SWEEPS_ROOT / args.name
     clear_stale_cells(sweep_dir / "cells")
     run_cells(grid_cells(args.knob, grid), args.name, args.scenario, seeds, args.turns,
-              args.matchup, args)
+              args.matchup, args.run_past_game_over, args)
     write_manifest(sweep_dir, args.name, args.scenario, args.knob, grid, seeds,
                    "batch", metrics)
     render_report(args.name)
