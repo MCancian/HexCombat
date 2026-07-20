@@ -21,7 +21,8 @@ plan to act, the closeout wasn't done.
 | 0002 | [Per-hull escort magazines (D3-B3)](0002-per-hull-escort-magazines.md) | Low (needs ship-ammo subsystem) | Sketch |
 | 0003 | [Combat-summary team attribution](0003-combat-summary-team-attribution.md) | Low (blocked on USER counterattack call) | Sketch |
 | 0013 | [One home for scenario files](0013-scenario-files-one-home.md) | Low (hygiene; needs a Windows gate run to close) | Ready |
-| 0016 | [Separate State Data from Autoload](0016-separate-state-data.md) | Medium (hygiene/architecture) | Sketch |
+| 0014 | [GameState dependency ceiling](0014-gamestate-dependency-ceiling.md) | Medium (tech debt / architecture) | Sketch |
+| 0016 | [Separate State Data from Autoload](0016-separate-state-data.md) | Medium (hygiene/architecture) | Superseded by 0014 |
 | 0017 | [Move Away from push_error for Validation](0017-validation-errors.md) | Medium (hygiene/api stability) | Sketch |
 | 0018 | [Research Knob Tracking](0018-research-knob-tracking.md) | Medium (Research visibility) | Sketch |
 
@@ -30,7 +31,6 @@ plan to act, the closeout wasn't done.
 | # | Plan | Status |
 |---|------|--------|
 | 0015 | [Fully Parallelize Tests](../archive/0015-parallel-tests.md) | ✅ Shipped 2026-07-19 — unified `run_all_tests.py` using `concurrent.futures`, isolated Godot caches, wrapped `.sh` and `.ps1` |
-| 0014 | [GameState dependency ceiling](../archive/0014-gamestate-dependency-ceiling.md) | ✅ Shipped 2026-07-19 — logic moved to `GameStateBuilder`, `TurnConductor`, `OrderValidator`, dependencies dropped from 47 to 21 |
 | 0012 | [Unified sweep extraction & batch specs](../archive/0012-unified-sweep-extraction.md) | ✅ Shipped 2026-07-18 — canned sweeps unified on the batch backend (`run_sweep_cells.gd` deleted); Python metric extractors over standard game records (raw numbers, report owns formatting); `noop` matchup preserves dialed measurement semantics (byte-identical parity tables); `disable_phases` + `disable_antiship_systems` knobs; facts in `docs/STATUS.md` B5, `hexcombat-research-runs`, `hexcombat-config-and-knobs`, `docs/DECISIONS.md` |
 | 0011 | [Disciplined Sweep Ecosystem](../archive/0011-disciplined-sweep-ecosystem.md) | ✅ Shipped 2026-07-18 — unified `run_sweep.py` orchestrator + `run_sweep_cells.gd` in-process backend; canned specs under `tools/sweeps/*.json`; deleted legacy bespoke sweep scripts; facts in `docs/STATUS.md`, `docs/systems/ijfs.md`, `docs/DECISIONS.md` |
 | 0009 | [CRBM Maneuver Attrition Calibration Knob](../archive/0009-crbm-maneuver-attrition-knob.md) | ✅ Shipped 2026-07-17 — 480-round CRBM volley (`crbm_maneuver_rounds_override`) + lethality bonus (`crbm_maneuver_strike_bonus`, USER-dialed 0.15) vs maneuver units; follow-ups: warmup-casualty writeback fix (26/88→25/76), legacy mobile-cap removal, sweep-plumbing dedup; facts in `docs/systems/ijfs.md` §4, `hexcombat-config-and-knobs`, `docs/DECISIONS.md` |
