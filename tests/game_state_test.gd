@@ -123,14 +123,6 @@ func test_begin_next_turn_resets_flags_buffers_turn_and_phase() -> void:
 	assert_int(GameState.phase).is_equal(GameStateType.Phase.PLANNING)
 
 
-func _ship_reserve_bn_count() -> int:
-	var total := 0
-	for reserve_entry_value in GameState.ship_reserve:
-		var reserve_entry: Dictionary = reserve_entry_value
-		total += (reserve_entry["bns"] as Array).size()
-	return total
-
-
 func _reset_fixture() -> void:
 	GameData.load_all()
 	GameState.reset_to_scenario()
