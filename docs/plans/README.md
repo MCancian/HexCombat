@@ -23,6 +23,7 @@ plan to act, the closeout wasn't done.
 | 0013 | [One home for scenario files](0013-scenario-files-one-home.md) | Low (hygiene; needs a Windows gate run to close) | Ready |
 | 0016 | [Separate State Data from Autoload](0016-separate-state-data.md) | Medium (hygiene/architecture) | Superseded by 0014 |
 | 0018 | [Research Knob Tracking](0018-research-knob-tracking.md) | Medium (Research visibility) | Sketch |
+| 0019 | [Consolidate Brigade.Team→string converters](0019-team-string-seam.md) | Low (hygiene; seam removal) | Ready |
 
 ## Archived
 
