@@ -53,9 +53,10 @@ All need visual verification (screenshot / Godot MCP / USER) — headless gates 
 **Code-quality debt deferred from the 2026-07-16 baseline** (report:
 `docs/reports/2026-07-16-code-quality-baseline.md`; actionable items worked under plan 0009):
 
-- [ ] **GameState dependency ceiling**: 47 class references (next-worst: GameData 18). Turn-conductor
-  role justifies breadth, but growth is unbounded — future campaign: push reference ownership
-  into builders/resolvers, then enforce a ceiling via `tools/gd_metrics.py`.
+- [x] **GameState dependency ceiling** — shipped as plan 0014 (2026-07-19): state → `GameStateData`
+  value object, orchestration/construction/validation → `static` `TurnConductor`/`GameStateBuilder`/
+  `OrderValidator` taking `GameStateData`; deps 48→24, ceiling enforced via
+  `gd_metrics.py --check-ceiling`. See `docs/archive/0014-gamestate-dependency-ceiling.md`.
 - [ ] **HexMap cosmetic literals**: 93 view-layer color/offset literals — hoist opportunistically
   when Track D touches the view layer, not before.
 - [ ] **Const→data knob promotion**: any const hoisted under 0009 the USER wants tunable moves to
