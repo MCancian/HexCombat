@@ -109,7 +109,7 @@ Fallback categories (`FALLBACK_CATEGORY_DEFS`) provide strength/tag values for u
 
 `support_counts(brigades)`: sums `battalion.qty` by support type, routing via tags: `"rocket"` → `rocket_artillery`, `"artillery"` → `artillery`, `"rotary_wing"` → `rotary_wing`. Does not count `cas` or `crbm` — those are external munition strikes, not organic battalions.
 
-`GameState._resolve_combat_at()` gathers forces per hex via `_combat_contributors_for()`, which collects:
+`TurnConductor.resolve_combat_at()` gathers forces per hex via `TurnConductor.combat_contributors_for()`, which collects:
 - Brigades **already in** the hex (not destroyed, not admin-moved, matching team).
 - Brigades with a **commit order** targeting that hex (same filters, deduped by `seen`).
 
@@ -178,14 +178,14 @@ case where HexCombat also diverges from TIV's *intent* (0.5 vs 1.4).
 
 **DIVERGENCE 4 — feba_base_km (✅ RESOLVED 2026-06-29 — now scenario-configurable, default 3.5).**
 Was hardcoded `2.0`; now `GameData.feba_base_km` (loaded from scenario `feba_base_km`, default **3.5**
-to match TIV's `_load_feba_base_km`) and passed by `GameState._resolve_combat_at`. The golden pin
+to match TIV's `_load_feba_base_km`) and passed by `TurnConductor.resolve_combat_at`. The golden pin
 that moved when this landed lives in `tools/validate_headless_turn.gd` — that validator's PASS
 line is truth, not this doc.
 
 **Terrain modifiers — ACTIVE since 2026-07-09 (Track F).** `CombatCalculator.gd`'s own
 `TERRAIN_MODIFIERS` dict is dead code (superseded, left untouched — see
 `.claude/skills/hexcombat-config-and-knobs`). The live path is
-`GameState._defender_combat_modifier()` (reads `GameData.get_terrain(hex_id).defender_modifier`,
+`TurnConductor.defender_combat_modifier()` (reads `GameData.get_terrain(hex_id).defender_modifier`,
 falling back to `1.0` for an unclassified hex) → passed as `defender_terrain_modifier` into
 `CombatResolver.resolve_at` → `CombatCalculator.resolve_map_attack`. Full terrain data model,
 per-class values, and rendering: `docs/systems/terrain.md`.

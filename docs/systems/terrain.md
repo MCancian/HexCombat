@@ -136,7 +136,7 @@ Tests: `tests/terrain_movement_test.gd` — `test_slow_brigade_min_one_step_and_
 
 `CombatResolver.resolve_at` (`scripts/resolvers/CombatResolver.gd`, pure — no `GameData`
 access) takes `defender_terrain_modifier: float = 1.0` as its last parameter and forwards it
-straight into `CombatCalculator.resolve_map_attack`. `GameState._defender_combat_modifier(hex_id)`
+straight into `CombatCalculator.resolve_map_attack`. `TurnConductor.defender_combat_modifier(hex_id)`
 (`scripts/GameState.gd`) computes the value passed in:
 
 ```gdscript
@@ -207,7 +207,7 @@ Full canonical gate: `bash tools/run_all_tests.sh` (Linux) / `pwsh tools/run_all
 ## 9. Open questions / deferred
 
 - **Beach first-landing ×2 defender penalty** — deferred design call (2026-07-09); implementation
-  seam is `GameState._defender_combat_modifier`'s `* 1.0` (§5). See `docs/plans/BACKLOG.md`.
+  seam is `TurnConductor.defender_combat_modifier`'s `* 1.0` (§5). See `docs/plans/BACKLOG.md`.
 - Sea hexes / naval terrain — out of scope for Track F; all 466 hexes are land.
 - Mountain as a reachable-but-penalized (rather than fully impassable) class was considered and
   rejected — USER call, mountains block ground movement entirely.

@@ -99,7 +99,7 @@ func _rebuild_fleet() -> void                                # line 1002
     - `ShipLoadingModel.build_sent_snapshots()` (called from `_build_sent_fleet`, line 676)
       derives the crossing fleet from remaining at-sea BNs for D3 anti-ship resolution.
     - `ShipLoadingModel.resolve_bn_losses()` converts D3 crossing ship losses into BN
-      casualties via `pending_lost_at_sea` → `GameState.register_ship_losses()` (line 998).
+      casualties via `pending_lost_at_sea` → `TurnConductor.register_ship_losses()` (line 998).
     - Emits `EventBus.offload_resolved` (line 368).
 
 ## 7. TIV-port fidelity notes
@@ -274,14 +274,14 @@ BY DESIGN (~turn 2); the land→vacate→land loop is the intended tempo and is 
 
 **JLSF pipeline.** A seized node repairs only after a Joint Logistics Support Force deployment:
 an explicit Red order `{"kind": "deploy_jlsf", "port_id": ...}` or the `auto_jlsf` scenario
-policy (auto-queue for every newly seized node). `GameState._consume_jlsf_orders` pushes a
+policy (auto-queue for every newly seized node). `TurnConductor.consume_jlsf_orders` pushes a
 `JlsfCargo` pseudo pool entry (`brigade_id "JLSF:<id>"`, `cargo: "jlsf"`,
 `jlsf_lift_bn_equiv` pseudo-BNs, a real locked beach in the node's TO) to the FRONT of the
 mainland pool; it rides the §8 pipeline unchanged — consumes ready amphibious lift, takes real
 crossing attrition, frees its hulls on delivery. `OffloadResolver` lands it tons-free when the
 node hex is Red-held (else it stays in the reserve for a later turn); arrival flips the node's `jlsf` marker
 to `arrived` and starts the repair clock. A deployment lost whole at sea is reconciled by
-`GameState._reconcile_lost_jlsf` (marker back to `none`; auto-policy may re-queue). The JLSF is
+`TurnConductor.reconcile_lost_jlsf` (marker back to `none`; auto-policy may re-queue). The JLSF is
 never a `Brigade` — invisible to census/combat/movement. LLM surface: `deploy_jlsf` action +
 `infrastructure` observation block (schema + fixtures regenerated).
 
