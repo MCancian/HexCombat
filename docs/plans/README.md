@@ -23,6 +23,7 @@ plan to act, the closeout wasn't done.
 | 0013 | [One home for scenario files](0013-scenario-files-one-home.md) | Low (hygiene; needs a Windows gate run to close) | Ready |
 | 0016 | [Separate State Data from Autoload](0016-separate-state-data.md) | Medium (hygiene/architecture) | Superseded by 0014 |
 | 0018 | [Research Knob Tracking](0018-research-knob-tracking.md) | Medium (Research visibility) | Sketch |
+| 0020 | [Lowercase "red"/"green" team-token seam](0020-lowercase-team-token-seam.md) | Low (Tier A mechanical; Tier B needs USER design call) | Sketch |
 
 ## Archived
 
