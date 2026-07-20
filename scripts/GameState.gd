@@ -448,7 +448,7 @@ func _owner_by_hex() -> Dictionary:
 
 
 func _rebuild_infrastructure_state() -> void:
-	data.infrastructure_state = InfrastructureStateBuilder.build(GameData.infrastructure)
+	data.infrastructure_state = GameStateBuilder.build_infrastructure_state(GameData.infrastructure)
 	data.jlsf_orders.clear()
 
 
@@ -529,7 +529,7 @@ func _build_warmup_context(
 func _ensure_antiship_systems() -> void:
 	if data._antiship_built:
 		return
-	var built := AntishipSystemsBuilder.build()
+	var built := GameStateBuilder.build_antiship_systems()
 	data.antiship_systems = built["systems"]
 	data.antiship_containers = built["containers"]
 	data._antiship_built = true
@@ -538,12 +538,7 @@ func _ensure_antiship_systems() -> void:
 func _rebuild_ijfs_state() -> void:
 	# Anti-ship systems must exist first (their containers seed the per-(TO,type) IJFS targets).
 	_ensure_antiship_systems()
-	var green_brigades: Array = []
-	for brigade_value in GameData.brigades.values():
-		var brigade: Brigade = brigade_value
-		if brigade.team == Brigade.Team.GREEN and not brigade.destroyed:
-			green_brigades.append(brigade)
-	data.ijfs_state = IjfsStateBuilder.build(data.antiship_containers, green_brigades)
+	data.ijfs_state = GameStateBuilder.build_ijfs_state(data.antiship_containers, GameData.brigades)
 	data._ijfs_day = 0
 
 
@@ -732,17 +727,13 @@ func _active_red_battalion_units() -> Array:
 
 
 func _rebuild_ship_reserve() -> void:
-	data.ship_reserve = ShipReserveBuilder.build(GameData.red_ship_reserve, GameData.brigades)
+	data.ship_reserve = GameStateBuilder.build_ship_reserve(GameData.red_ship_reserve, GameData.brigades)
 
 
 func _rebuild_sealift_state() -> void:
-	# Escort SAM magazine is seeded from the crossing config only when the scenario opts in via
-	# escort_reload_time_turns > 0 (plan 0004 D5); otherwise it stays unmodelled (empty).
-	var crossing_config := AntishipLoaders.load_crossing_config(AntishipResolver.CROSSING_PATH)
-	var escort_interception: Dictionary = crossing_config.get("escort_interception", {})
-	data.sealift_state = SealiftStateBuilder.build(
+	data.sealift_state = GameStateBuilder.build_sealift_state(
 		GameData.red_followon_reserve, GameData.red_ship_reserve, GameData.brigades,
-		GameData.auto_seed_followon_pool, escort_interception, GameData.escort_reload_time_turns > 0)
+		GameData.auto_seed_followon_pool, GameData.escort_reload_time_turns)
 
 
 ## Sealift phase (plan 0004): advance the ship return pipeline and embark this turn's crossing wave.
@@ -837,7 +828,7 @@ func _project_sealift_onto_fleet() -> void:
 
 
 func _rebuild_supply_state() -> void:
-	data.supply_state = SupplyStateBuilder.build(float(GameData.red_dos_start))
+	data.supply_state = GameStateBuilder.build_supply_state(float(GameData.red_dos_start))
 
 
 func register_ship_losses(bn_equiv_lost: int) -> void:
@@ -845,7 +836,7 @@ func register_ship_losses(bn_equiv_lost: int) -> void:
 
 
 func _rebuild_fleet() -> void:
-	data.fleet = FleetBuilder.build(GameData.ship_defs)
+	data.fleet = GameStateBuilder.build_fleet(GameData.ship_defs)
 
 
 func _apply_move_orders(team: Brigade.Team) -> void:
