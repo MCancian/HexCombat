@@ -60,9 +60,9 @@ func test_reachable_set_and_tactical_allowance_are_enforced() -> void:
 	assert_int(GameState.orders_for(Brigade.Team.RED).size()).is_equal(1)
 
 	_reset_fixture()
-	await assert_error(func() -> void:
-		GameState.add_move_order(Brigade.Team.RED, RED_BRIGADE_ID, invalid_target, Movement.MODE_TACTICAL)
-	).is_push_error("Move order target %s beyond %s allowance for %s" % [invalid_target, Movement.MODE_TACTICAL, RED_BRIGADE_ID])
+	var beyond := GameState.add_move_order(Brigade.Team.RED, RED_BRIGADE_ID, invalid_target, Movement.MODE_TACTICAL)
+	assert_bool(beyond.ok).is_false()
+	assert_int(beyond.code).is_equal(OrderResult.Code.BEYOND_ALLOWANCE)
 	assert_int(GameState.orders_for(Brigade.Team.RED).size()).is_equal(0)
 
 
@@ -73,9 +73,9 @@ func test_re_move_is_blocked() -> void:
 	GameState.add_move_order(Brigade.Team.RED, RED_BRIGADE_ID, target, Movement.MODE_TACTICAL)
 	assert_int(GameState.orders_for(Brigade.Team.RED).size()).is_equal(1)
 
-	await assert_error(func() -> void:
-		GameState.add_move_order(Brigade.Team.RED, RED_BRIGADE_ID, brigade.hex_id, Movement.MODE_TACTICAL)
-	).is_push_error("Brigade already has a pending move order this turn: %s" % RED_BRIGADE_ID)
+	var duplicate := GameState.add_move_order(Brigade.Team.RED, RED_BRIGADE_ID, brigade.hex_id, Movement.MODE_TACTICAL)
+	assert_bool(duplicate.ok).is_false()
+	assert_int(duplicate.code).is_equal(OrderResult.Code.DUPLICATE_MOVE)
 	assert_int(GameState.orders_for(Brigade.Team.RED).size()).is_equal(1)
 
 

@@ -26,7 +26,10 @@ gathering). Runtime state itself is the plain **`GameStateData`** value object
 `GameStateData` and exposes delegating wrappers to `TurnConductor` (turns), `OrderValidator`
 (order validation), and `GameStateBuilder` (scenario construction), plus typed forwarding
 properties for the fields external callers read (plan 0014 / decomposition campaign). New phases
-follow `.claude/skills/hexcombat-add-phase-resolver`.
+follow `.claude/skills/hexcombat-add-phase-resolver`. Order validation (`add_move_order` /
+`add_commit_order`) returns a typed **`OrderResult`** (`ok`/`code`/`message`) rather than
+`push_error`, so callers — the LLM API included — can branch on the rejection and surface its
+reason (plan 0017).
 
 **Turn resolution order** (`resolve_turn`): IJFS air/missile fires → **sealift (tick ship
 returns + embark the crossing wave)** → anti-ship crossing → amphibious offload → movement & commit

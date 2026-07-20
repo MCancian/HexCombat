@@ -37,8 +37,8 @@ PLANNING  ── resolve_turn() ──►  RESOLUTION  ── begin_next_turn() 
 ```
 
 **Planning phase** (`Phase.PLANNING`, GameState.gd):
-- `add_move_order()` (line 119) — validates brigade exists, team matches, hex exists, within movement allowance, no double-order
-- `add_commit_order()` (line 203) — validates adjacency, not destroyed/admin-moved, no double-order
+- `add_move_order()` (line 119) — validates brigade exists, team matches, hex exists, within movement allowance, no double-order; returns a typed `OrderResult` (`ok`/`code`/`message`, plan 0017) — rejections are values, not `push_error`
+- `add_commit_order()` (line 203) — validates adjacency, not destroyed/admin-moved, no double-order; also returns `OrderResult`
 - `eligible_commit_brigades()` (line 248) — returns brigades adjacent to a hex that can commit
 - Orders are stored in `orders[team]` / `commitments[team]` as `Array[MoveOrder]` / `Array[CommitOrder]`
 

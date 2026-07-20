@@ -53,19 +53,19 @@ func test_add_move_order_collects_valid_orders_and_rejects_invalid_orders() -> v
 	assert_str(order.target_hex).is_equal(GREEN_START_HEX)
 	assert_str(order.mode).is_equal("tactical")
 
-	await assert_error(func() -> void:
-		GameState.add_move_order(Brigade.Team.GREEN, RED_BRIGADE_ID, GREEN_START_HEX, "tactical")
-	).is_push_error("Move order team mismatch for %s: order=Green brigade=Red" % RED_BRIGADE_ID)
+	var mismatch := GameState.add_move_order(Brigade.Team.GREEN, RED_BRIGADE_ID, GREEN_START_HEX, "tactical")
+	assert_bool(mismatch.ok).is_false()
+	assert_int(mismatch.code).is_equal(OrderResult.Code.TEAM_MISMATCH)
 	assert_int(GameState.orders_for(Brigade.Team.GREEN).size()).is_equal(0)
 
-	await assert_error(func() -> void:
-		GameState.add_move_order(Brigade.Team.RED, "UNKNOWN-BRIGADE", GREEN_START_HEX, "tactical")
-	).is_push_error("Move order references unknown brigade_id: UNKNOWN-BRIGADE")
+	var unknown_brigade := GameState.add_move_order(Brigade.Team.RED, "UNKNOWN-BRIGADE", GREEN_START_HEX, "tactical")
+	assert_bool(unknown_brigade.ok).is_false()
+	assert_int(unknown_brigade.code).is_equal(OrderResult.Code.UNKNOWN_BRIGADE)
 	assert_int(GameState.orders_for(Brigade.Team.RED).size()).is_equal(1)
 
-	await assert_error(func() -> void:
-		GameState.add_move_order(Brigade.Team.RED, RED_BRIGADE_ID, "unknown_hex", "tactical")
-	).is_push_error("Move order references unknown target_hex: unknown_hex")
+	var unknown_hex := GameState.add_move_order(Brigade.Team.RED, RED_BRIGADE_ID, "unknown_hex", "tactical")
+	assert_bool(unknown_hex.ok).is_false()
+	assert_int(unknown_hex.code).is_equal(OrderResult.Code.UNKNOWN_HEX)
 	assert_int(GameState.orders_for(Brigade.Team.RED).size()).is_equal(1)
 
 

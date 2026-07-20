@@ -28,40 +28,40 @@ func test_add_commit_order_validation_and_one_order_per_brigade() -> void:
 	assert_str(order.brigade_id).is_equal(red_adjacent.id)
 	assert_str(order.target_hex).is_equal(TARGET_HEX)
 
-	await assert_error(func() -> void:
-		GameState.add_commit_order(Brigade.Team.GREEN, red_far.id, TARGET_HEX)
-	).is_push_error("Commit order team mismatch for TEST-RED-FAR: order=Green brigade=Red")
+	var mismatch := GameState.add_commit_order(Brigade.Team.GREEN, red_far.id, TARGET_HEX)
+	assert_bool(mismatch.ok).is_false()
+	assert_int(mismatch.code).is_equal(OrderResult.Code.TEAM_MISMATCH)
 	assert_int(GameState.commitments_for(Brigade.Team.GREEN).size()).is_equal(0)
 
-	await assert_error(func() -> void:
-		GameState.add_commit_order(Brigade.Team.RED, red_in_hex.id, TARGET_HEX)
-	).is_push_error("Commit order brigade is already in target hex: TEST-RED-IN")
+	var in_hex_reject := GameState.add_commit_order(Brigade.Team.RED, red_in_hex.id, TARGET_HEX)
+	assert_bool(in_hex_reject.ok).is_false()
+	assert_int(in_hex_reject.code).is_equal(OrderResult.Code.ALREADY_IN_HEX)
 	assert_int(GameState.commitments_for(Brigade.Team.RED).size()).is_equal(1)
 
-	await assert_error(func() -> void:
-		GameState.add_commit_order(Brigade.Team.RED, red_far.id, TARGET_HEX)
-	).is_push_error("Commit order brigade TEST-RED-FAR is not adjacent to target_hex: hex_40_16")
+	var not_adjacent := GameState.add_commit_order(Brigade.Team.RED, red_far.id, TARGET_HEX)
+	assert_bool(not_adjacent.ok).is_false()
+	assert_int(not_adjacent.code).is_equal(OrderResult.Code.NOT_ADJACENT)
 	assert_int(GameState.commitments_for(Brigade.Team.RED).size()).is_equal(1)
 
 	GameState.add_move_order(Brigade.Team.RED, red_far.id, ADJACENT_HEX, Movement.MODE_ADMINISTRATIVE)
-	await assert_error(func() -> void:
-		GameState.add_commit_order(Brigade.Team.RED, red_far.id, TARGET_HEX)
-	).is_push_error("Commit order brigade TEST-RED-FAR is not adjacent to target_hex: hex_40_16")
+	var not_adjacent_after_move := GameState.add_commit_order(Brigade.Team.RED, red_far.id, TARGET_HEX)
+	assert_bool(not_adjacent_after_move.ok).is_false()
+	assert_int(not_adjacent_after_move.code).is_equal(OrderResult.Code.NOT_ADJACENT)
 
 	var red_move_then_commit := _make_brigade("TEST-RED-MOVE-FIRST", Brigade.Team.RED, OTHER_ADJACENT_HEX)
 	_register_brigade(red_move_then_commit)
 	GameState.add_move_order(Brigade.Team.RED, red_move_then_commit.id, ADJACENT_HEX, Movement.MODE_TACTICAL)
-	await assert_error(func() -> void:
-		GameState.add_commit_order(Brigade.Team.RED, red_move_then_commit.id, TARGET_HEX)
-	).is_push_error("Brigade already has a pending move order this turn: TEST-RED-MOVE-FIRST")
+	var pending_move := GameState.add_commit_order(Brigade.Team.RED, red_move_then_commit.id, TARGET_HEX)
+	assert_bool(pending_move.ok).is_false()
+	assert_int(pending_move.code).is_equal(OrderResult.Code.DUPLICATE_MOVE)
 
 	var red_commit_then_move := _make_brigade("TEST-RED-COMMIT-FIRST", Brigade.Team.RED, OTHER_ADJACENT_HEX)
 	_register_brigade(red_commit_then_move)
 	GameState.add_commit_order(Brigade.Team.RED, red_commit_then_move.id, TARGET_HEX)
 	var move_count_before := GameState.orders_for(Brigade.Team.RED).size()
-	await assert_error(func() -> void:
-		GameState.add_move_order(Brigade.Team.RED, red_commit_then_move.id, ADJACENT_HEX, Movement.MODE_TACTICAL)
-	).is_push_error("Brigade already has a pending commit order this turn: TEST-RED-COMMIT-FIRST")
+	var pending_commit := GameState.add_move_order(Brigade.Team.RED, red_commit_then_move.id, ADJACENT_HEX, Movement.MODE_TACTICAL)
+	assert_bool(pending_commit.ok).is_false()
+	assert_int(pending_commit.code).is_equal(OrderResult.Code.DUPLICATE_COMMIT)
 	assert_int(GameState.orders_for(Brigade.Team.RED).size()).is_equal(move_count_before)
 
 

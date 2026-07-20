@@ -19,6 +19,18 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-20 — Plan 0017 shipped: order validation returns a typed `OrderResult`, not
+  `push_error` (agent implementation).** `OrderValidator.add_move_order` / `add_commit_order` (and
+  their `GameState` wrappers) now return `OrderResult` (`ok` / `code`:enum / `message`; new
+  `scripts/model/OrderResult.gd`, following the CombatResult/MineResult typed-Resource pattern)
+  instead of `push_error(<string>)` + void. Callers branch on `result.ok`; the LLM API's old
+  count-the-orders rejection hack is gone and now feeds `OrderResult.message` back to the agent in
+  the result `errors` array. 11 GdUnit assertions moved off `assert_error().is_push_error(<string>)`
+  to asserting `code` (`composition`/`movement`/`game_state` tests). `eligible_commit_brigades`'
+  lone `push_error` stays (programmer-error guard, not order validation). Control-flow-only; golden
+  byte-stable, 120 suites green. Behavior in `docs/systems/turn-engine.md` + `llm-api-selfplay.md`;
+  contract in `OrderValidator.gd` header.
+
 - **2026-07-19 — Plan 0014 shipped: GameState genuinely decoupled + dependency ceiling gated
   (agent implementation, USER-directed re-scope).** `GameState` (autoload) was split three ways:
   runtime state moved to a plain `GameStateData` value object (`scripts/model/`, absorbing plan

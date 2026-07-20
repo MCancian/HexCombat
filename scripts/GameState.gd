@@ -178,8 +178,8 @@ func reset_to_scenario() -> void:
 	EventBus.phase_changed.emit(data.phase)
 
 
-func add_move_order(team: Brigade.Team, brigade_id: String, target_hex: String, mode: String) -> void:
-	OrderValidator.add_move_order(data, team, brigade_id, target_hex, mode)
+func add_move_order(team: Brigade.Team, brigade_id: String, target_hex: String, mode: String) -> OrderResult:
+	return OrderValidator.add_move_order(data, team, brigade_id, target_hex, mode)
 
 
 ## Full WeGo turn resolution — delegates to TurnConductor (plan 0014 P3); see that class's header
@@ -188,8 +188,8 @@ func resolve_turn(dice: Dice = null) -> void:
 	TurnConductor.resolve_turn(data, dice)
 
 
-func add_commit_order(team: Brigade.Team, brigade_id: String, target_hex: String) -> void:
-	OrderValidator.add_commit_order(data, team, brigade_id, target_hex)
+func add_commit_order(team: Brigade.Team, brigade_id: String, target_hex: String) -> OrderResult:
+	return OrderValidator.add_commit_order(data, team, brigade_id, target_hex)
 
 
 func eligible_commit_brigades(team: Brigade.Team, target_hex: String) -> Array:

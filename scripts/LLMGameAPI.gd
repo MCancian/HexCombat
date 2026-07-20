@@ -138,10 +138,9 @@ static func _apply_move_action(action: Dictionary, errors: Array[String]) -> voi
 	var brigade_id := String(action.get("brigade_id", ""))
 	var target_hex := String(action.get("target_hex", ""))
 	var mode := String(action.get("mode", Movement.MODE_TACTICAL))
-	var before: int = _game_state().orders_for(team).size()
-	_game_state().add_move_order(team, brigade_id, target_hex, mode)
-	if _game_state().orders_for(team).size() != before + 1:
-		errors.append("move rejected: %s -> %s (%s)" % [brigade_id, target_hex, mode])
+	var result: OrderResult = _game_state().add_move_order(team, brigade_id, target_hex, mode)
+	if not result.ok:
+		errors.append("move rejected: %s -> %s (%s): %s" % [brigade_id, target_hex, mode, result.message])
 
 
 static func _apply_commit_action(action: Dictionary, errors: Array[String]) -> void:
@@ -151,10 +150,9 @@ static func _apply_commit_action(action: Dictionary, errors: Array[String]) -> v
 		return
 	var brigade_id := String(action.get("brigade_id", ""))
 	var target_hex := String(action.get("target_hex", ""))
-	var before: int = _game_state().commitments_for(team).size()
-	_game_state().add_commit_order(team, brigade_id, target_hex)
-	if _game_state().commitments_for(team).size() != before + 1:
-		errors.append("commit rejected: %s -> %s" % [brigade_id, target_hex])
+	var result: OrderResult = _game_state().add_commit_order(team, brigade_id, target_hex)
+	if not result.ok:
+		errors.append("commit rejected: %s -> %s: %s" % [brigade_id, target_hex, result.message])
 
 
 static func _apply_deploy_jlsf_action(action: Dictionary, errors: Array[String]) -> void:

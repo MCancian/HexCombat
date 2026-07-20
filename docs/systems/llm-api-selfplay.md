@@ -67,6 +67,7 @@ Routes an action response object. Returns an action-result Dictionary (`ok`, `er
 | `end_turn` | **`seed`** (required) | `GameState.play_turn([], [], SeededDice.new(seed))` then `begin_next_turn()` | `LLMGameAPI.gd` |
 
 - Missing `end_turn.seed` is rejected at `LLMGameAPI.gd` — the gate (`validate_llm_api.gd`) asserts this.
+- A rejected `move`/`commit` order now surfaces its **specific reason** in the result `errors` array (e.g. `"move rejected: X -> Y (tactical): <reason>"`), taken from the `OrderResult.message` the validator returns (plan 0017); the old code inferred rejection by counting orders and lost the reason.
 - Protocol/schema version mismatch is checked at `LLMGameAPI.gd`.
 
 **Validation gate:** `tools/validate_llm_api.gd` runs in order: observation shape → action application (move + end_turn, checks brigade advanced and turn incremented) → missing-seed rejection → example parse/apply → result-schema conformance.
