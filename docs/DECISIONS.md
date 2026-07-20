@@ -19,6 +19,18 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-20 — Plan 0018 shipped: research-knob tracking so all sweeps are comparable (agent
+  implementation; USER design calls).** Curated knob registry `data/knobs/registry.json` (23 knobs);
+  every game record now carries the full resolved knob vector `record["knobs"]` (via new pure
+  `scripts/KnobRegistry.gd`, stamped by `run_selfplay_game.gd`), so records from any sweep share one
+  knob-space. `tools/research_knobs.py {ledger,sensitivity}` renders the explored-space table and
+  ranks which knobs move outcomes most. LLM `llm_model` + `llm_prompt_hash` captured (sidecar hashes
+  its system prompt). USER calls: **curated** registry not auto-dump; prompts **capture-only** now
+  (variant files deferred); build **all at once**. Golden byte-stable (knobs field additive to
+  research records). Follow-ups: array-knob sweeping (beach capacity), prompt-variant files. Homes:
+  `hexcombat-config-and-knobs` (registry), `hexcombat-research-runs` (ledger/sensitivity),
+  `docs/STATUS.md`. Two gate validators added (`validate_knob_registry.gd`, `validate_research_knobs.py`).
+
 - **2026-07-20 — Plan 0020 shipped: the lowercase `"red"/"green"` team-token seam consolidated,
   two homes kept distinct (Tier A agent; Tier B USER design call — Option 2).** Tier A: the three
   resolver hex-ownership *reads* that bypassed `HexOwner.RED` with a bare `"red"` (`OffloadResolver`,

@@ -1,6 +1,6 @@
 ---
 title: "0018: Research knob tracking — consolidate knobs so all sweeps are comparable"
-status: "Ready"
+status: "Shipped 2026-07-20"
 created: "2026-07-19"
 fleshed: "2026-07-20"
 ---

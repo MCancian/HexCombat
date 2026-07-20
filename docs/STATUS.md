@@ -178,6 +178,18 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   30/30 turns GAME OK; the second (post-fix) run had zero forfeited turns. `llm_local` now also
   runs in either B7 batch seat (mixed or LLM-vs-LLM); mixed game logs include both seat
   observations/actions so they remain bundle-ready.
+- **Research knob tracking (plan 0018)** — a curated registry `data/knobs/registry.json` (23
+  outcome-relevant knobs, IJFS warmup → beach capacity) drives a full resolved-knob dump into every
+  game record (`record["knobs"]`, via pure `scripts/KnobRegistry.gd`), so records from any sweep
+  share one knob-space and are directly comparable. LLM games also record `llm_model` +
+  `llm_prompt_hash` (the sidecar hashes its system prompt) so a prompt/model change is never
+  invisible. `python3 tools/research_knobs.py ledger --records reports/` renders the explored-space
+  table (one row per distinct knob-vector, held-constant knobs listed once);
+  `... sensitivity --records reports/ --metric red_win_rate|census_margin` ranks which varying knobs
+  move outcomes most (confounding caveat when >1 co-varies). Registry integrity + path resolution
+  gated by `tools/validate_knob_registry.gd`; the analysis tools by `tools/validate_research_knobs.py`.
+  Sweepable = scalar single-path knobs; array knobs (beach capacity) are dump-only until
+  `DataOverrides` grows array-addressing (0018 follow-up).
 - **`roc_full_defense` scenario** — variant placing all 32 ROC brigades (124 battalions) at their
   real garrison hexes vs the default's 4 PLA amphibious brigades; select with
   `--scenario=roc_full_defense`. Gives AI-vs-AI games a multi-turn fight instead of the default

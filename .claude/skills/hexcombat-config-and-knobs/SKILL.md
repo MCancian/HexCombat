@@ -112,3 +112,26 @@ pairing (depletion only, applied by `IjfsLoaders.apply_crbm_maneuver_rounds_over
 `IjfsStateBuilder.build`); the strike bonus is the lethality lever, synthesized into
 `strike_probability_modifiers` via `apply_crbm_maneuver_strike_bonus`. Both absent/0.0 = golden no-op.
 Detail: `docs/systems/ijfs.md` §4 Strike.
+
+## Research knob registry (plan 0018) — the comparability backbone
+
+`data/knobs/registry.json` is the **curated** catalog of outcome-relevant knobs (IJFS warmup →
+beach capacity + the plan 0001/0009 calibration levers). It exists so **every game record carries
+the full resolved value of every knob** (`record["knobs"]`, stamped by `run_selfplay_game.gd` via
+`KnobRegistry.resolve_all`) — that is what lets any two records, from any sweep, sit in one
+knob-space and be compared. Adding a knob is a deliberate one-line entry here (not auto-derived).
+
+- **Path grammar:** `scenario:<dot.path>` resolves against the *active* scenario file (variants
+  work); `<data/rel/file.json>:<dot.path>` is literal; a `name[]` segment projects the field over a
+  JSON array (dump-only). `kind` (`llm_model` / `prompt_hash`) replaces `path` for values not in a
+  data file — model id from `HEXCOMBAT_LLM_MODEL`, prompt hash stamped by `llm_sidecar.py` into the
+  JSONL log (capture-only; prompt-variant *files* are a follow-up).
+- **`sweepable`:** `true` = scalar single-path, overridable today via `DataOverrides`. `false` =
+  dump-only — recorded but not yet swept. Array knobs (`beaches[].capacity_battalions`) are `false`
+  because `DataOverrides` traverses dicts only; sweeping them needs array-override support (0018
+  follow-up), NOT a new home.
+- **Validator:** `tools/validate_knob_registry.gd` (in the gate) proves structure + that every
+  path knob resolves against the default scenario — catches typos and the silent-default class.
+  A scenario knob absent from the default (code-default applies) resolves null and is allowed.
+- **Analysis:** `tools/research_knobs.py {ledger,sensitivity}` over `reports/` — see
+  `hexcombat-research-runs`.

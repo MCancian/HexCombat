@@ -90,6 +90,16 @@ description: Running HexCombat as a research instrument — Monte Carlo batches 
   0011, unified on the batch backend per plan 0012.
 - Godot process-per-run is the parallelization unit (headless runs are cheap; separate processes
   also guarantee cross-process determinism, which is asserted by `validate_headless_selfplay.gd`).
+- **Knob vector + cross-sweep analysis (plan 0018):** every record carries `record["knobs"]` — the
+  full resolved value of every registry knob (`data/knobs/registry.json`; see
+  `hexcombat-config-and-knobs`), so records from *different* sweeps are comparable. Two views over
+  a `reports/` tree via `tools/research_knobs.py`:
+  `ledger --records reports/` → one row per distinct knob-vector (game count, sources, outcome
+  summary; held-constant knobs listed once) = "what have we explored?";
+  `sensitivity --records reports/ --metric red_win_rate|census_margin` → ranks each *varying* knob
+  by the spread it induces on the metric (confounding caveat when >1 knob co-varies; cleanest over
+  a single one-knob-at-a-time grid) = "which knobs move outcomes most?". LLM runs also record
+  `llm_model` + `llm_prompt_hash` (capture-only) so a prompt/model change is never invisible.
 
 ## Report shape (deliverable to the user)
 

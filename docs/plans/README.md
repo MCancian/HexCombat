@@ -22,12 +22,12 @@ plan to act, the closeout wasn't done.
 | 0003 | [Combat-summary team attribution](0003-combat-summary-team-attribution.md) | Low (blocked on USER counterattack call) | Sketch |
 | 0013 | [One home for scenario files](0013-scenario-files-one-home.md) | Low (hygiene; needs a Windows gate run to close) | Ready |
 | 0016 | [Separate State Data from Autoload](0016-separate-state-data.md) | Medium (hygiene/architecture) | Superseded by 0014 |
-| 0018 | [Research Knob Tracking](0018-research-knob-tracking.md) | Medium (Research visibility) | Sketch |
 
 ## Archived
 
 | # | Plan | Status |
 |---|------|--------|
+| 0018 | [Research Knob Tracking](../archive/0018-research-knob-tracking.md) | ✅ Shipped 2026-07-20 — curated knob registry `data/knobs/registry.json` + full resolved knob vector in every record (`KnobRegistry`), so all sweeps share one knob-space; `tools/research_knobs.py {ledger,sensitivity}`; LLM model/prompt-hash captured. USER calls: curated (not auto-dump), prompts capture-only, build all-at-once. Golden byte-stable. Follow-ups: array-knob sweeping, prompt-variant files |
 | 0020 | [Lowercase "red"/"green" team-token seam](../archive/0020-lowercase-team-token-seam.md) | ✅ Shipped 2026-07-20 — Tier A: 3 resolver ownership reads onto `HexOwner.RED`. Tier B (USER Option 2): winner/census wire token gets its own home `Brigade.TEAM_KEY_RED`/`TEAM_KEY_GREEN` (const — used in `match` arms + dict keys), kept distinct from `HexOwner` ownership vocab; golden byte-stable |
 | 0019 | [Consolidate Brigade.Team→string converters](../archive/0019-team-string-seam.md) | ✅ Shipped 2026-07-20 — `Brigade.team_name(team)` static now owns the capitalized `"Red"/"Green"` mapping; six byte-identical local copies deleted and repointed; lowercase record serialization untouched; pure dedup, golden byte-stable; entry in `docs/DECISIONS.md` |
 | 0017 | [Move order validation off push_error](../archive/0017-validation-errors.md) | ✅ Shipped 2026-07-20 — `OrderValidator.add_move_order`/`add_commit_order` (+ `GameState` wrappers) return a typed `OrderResult` (`ok`/`code`/`message`, `scripts/model/OrderResult.gd`) instead of `push_error`; LLM API surfaces the rejection reason; 11 GdUnit assertions moved off `is_push_error` to `code`; golden byte-stable; facts in `docs/STATUS.md`, `docs/DECISIONS.md`, `docs/systems/turn-engine.md` + `llm-api-selfplay.md` |
