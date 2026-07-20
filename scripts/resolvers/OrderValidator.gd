@@ -31,14 +31,9 @@ static func add_move_order(state: GameStateData, team: Brigade.Team, brigade_id:
 	if mode != Movement.MODE_TACTICAL and mode != Movement.MODE_ADMINISTRATIVE:
 		return OrderResult.reject(OrderResult.Code.UNKNOWN_MODE, "Unknown movement mode: %s" % mode)
 
-	for pending_order in state.orders[team]:
-		var typed_pending_order: MoveOrder = pending_order
-		if typed_pending_order.brigade_id == brigade_id:
-			return OrderResult.reject(OrderResult.Code.DUPLICATE_MOVE, "Brigade already has a pending move order this turn: %s" % brigade_id)
-	for pending_commitment in state.commitments[team]:
-		var typed_pending_commitment: CommitOrder = pending_commitment
-		if typed_pending_commitment.brigade_id == brigade_id:
-			return OrderResult.reject(OrderResult.Code.DUPLICATE_COMMIT, "Brigade already has a pending commit order this turn: %s" % brigade_id)
+	var conflict := pending_order_conflict(state, team, brigade_id)
+	if not conflict.ok:
+		return conflict
 
 	var allowance := Movement.move_allowance(brigade, mode)
 	var reachable := GameData.find_reachable(brigade.hex_id, allowance)
@@ -73,14 +68,9 @@ static func add_commit_order(state: GameStateData, team: Brigade.Team, brigade_i
 	if brigade.hex_id not in GameData.get_neighbors(target_hex):
 		return OrderResult.reject(OrderResult.Code.NOT_ADJACENT, "Commit order brigade %s is not adjacent to target_hex: %s" % [brigade_id, target_hex])
 
-	for pending_order in state.orders[team]:
-		var typed_pending_order: MoveOrder = pending_order
-		if typed_pending_order.brigade_id == brigade_id:
-			return OrderResult.reject(OrderResult.Code.DUPLICATE_MOVE, "Brigade already has a pending move order this turn: %s" % brigade_id)
-	for pending_commitment in state.commitments[team]:
-		var typed_pending_commitment: CommitOrder = pending_commitment
-		if typed_pending_commitment.brigade_id == brigade_id:
-			return OrderResult.reject(OrderResult.Code.DUPLICATE_COMMIT, "Brigade already has a pending commit order this turn: %s" % brigade_id)
+	var conflict := pending_order_conflict(state, team, brigade_id)
+	if not conflict.ok:
+		return conflict
 
 	var order: CommitOrder = CommitOrderResource.new()
 	order.brigade_id = brigade_id
@@ -103,22 +93,26 @@ static func eligible_commit_brigades(state: GameStateData, team: Brigade.Team, t
 			continue
 		if brigade.hex_id not in GameData.get_neighbors(target_hex):
 			continue
-		if brigade_has_pending_order(state, team, brigade.id):
+		if not pending_order_conflict(state, team, brigade.id).ok:
 			continue
 		eligible.append(brigade.id)
 	return eligible
 
 
-static func brigade_has_pending_order(state: GameStateData, team: Brigade.Team, brigade_id: String) -> bool:
+## Single home for the "one order per brigade per turn" rule. Returns a rejecting OrderResult
+## (DUPLICATE_MOVE / DUPLICATE_COMMIT, message centralized here) when the brigade already has a
+## pending order this turn, else accept(). add_move_order / add_commit_order return the reject
+## verbatim; eligible_commit_brigades filters on `.ok`.
+static func pending_order_conflict(state: GameStateData, team: Brigade.Team, brigade_id: String) -> OrderResult:
 	for pending_order in state.orders[team]:
 		var typed_pending_order: MoveOrder = pending_order
 		if typed_pending_order.brigade_id == brigade_id:
-			return true
+			return OrderResult.reject(OrderResult.Code.DUPLICATE_MOVE, "Brigade already has a pending move order this turn: %s" % brigade_id)
 	for pending_commitment in state.commitments[team]:
 		var typed_pending_commitment: CommitOrder = pending_commitment
 		if typed_pending_commitment.brigade_id == brigade_id:
-			return true
-	return false
+			return OrderResult.reject(OrderResult.Code.DUPLICATE_COMMIT, "Brigade already has a pending commit order this turn: %s" % brigade_id)
+	return OrderResult.accept()
 
 
 static func team_to_string(team: Brigade.Team) -> String:
