@@ -130,11 +130,22 @@ static func _action_result(ok: bool, errors: Array[String], resolved: bool, seed
 	}
 
 
-static func _apply_move_action(action: Dictionary, errors: Array[String]) -> void:
+## Parses an action's "team" field, appending an error and returning null when it is
+## missing/unknown (callers bail on null). Centralizes the errors-count guard both order
+## handlers relied on, since _parse_team_string returns RED on failure rather than a sentinel.
+static func _parse_action_team(action: Dictionary, errors: Array[String]) -> Variant:
 	var errors_before := errors.size()
 	var team := _parse_team_string(String(action.get("team", "")), errors)
 	if errors.size() != errors_before:
+		return null
+	return team
+
+
+static func _apply_move_action(action: Dictionary, errors: Array[String]) -> void:
+	var team_value: Variant = _parse_action_team(action, errors)
+	if team_value == null:
 		return
+	var team: Brigade.Team = team_value
 	var brigade_id := String(action.get("brigade_id", ""))
 	var target_hex := String(action.get("target_hex", ""))
 	var mode := String(action.get("mode", Movement.MODE_TACTICAL))
@@ -144,10 +155,10 @@ static func _apply_move_action(action: Dictionary, errors: Array[String]) -> voi
 
 
 static func _apply_commit_action(action: Dictionary, errors: Array[String]) -> void:
-	var errors_before := errors.size()
-	var team := _parse_team_string(String(action.get("team", "")), errors)
-	if errors.size() != errors_before:
+	var team_value: Variant = _parse_action_team(action, errors)
+	if team_value == null:
 		return
+	var team: Brigade.Team = team_value
 	var brigade_id := String(action.get("brigade_id", ""))
 	var target_hex := String(action.get("target_hex", ""))
 	var result: OrderResult = _game_state().add_commit_order(team, brigade_id, target_hex)
