@@ -1,9 +1,6 @@
 extends Node
 class_name GameStateType
 
-const MoveOrderResource = preload("res://scripts/model/MoveOrder.gd")
-const CommitOrderResource = preload("res://scripts/model/CommitOrder.gd")
-
 # IJFS (D4) data-source paths live on IjfsStateBuilder (their only consumer).
 
 # D3/D4 data paths + phase knobs live on their resolvers (AntishipResolver, IjfsResolver,
@@ -173,46 +170,7 @@ func reset_to_scenario() -> void:
 
 
 func add_move_order(team: Brigade.Team, brigade_id: String, target_hex: String, mode: String) -> void:
-	if data.phase != Phase.PLANNING:
-		push_error("Cannot add move order outside PLANNING phase")
-		return
-
-	var brigade: Brigade = GameData.get_brigade(brigade_id)
-	if brigade == null:
-		push_error("Move order references unknown brigade_id: %s" % brigade_id)
-		return
-	if brigade.team != team:
-		push_error("Move order team mismatch for %s: order=%s brigade=%s" % [brigade_id, _team_to_string(team), _team_to_string(brigade.team)])
-		return
-	if target_hex not in GameData.hex_lookup:
-		push_error("Move order references unknown target_hex: %s" % target_hex)
-		return
-	if mode != Movement.MODE_TACTICAL and mode != Movement.MODE_ADMINISTRATIVE:
-		push_error("Unknown movement mode: %s" % mode)
-		return
-
-	for pending_order in data.orders[team]:
-		var typed_pending_order: MoveOrder = pending_order
-		if typed_pending_order.brigade_id == brigade_id:
-			push_error("Brigade already has a pending move order this turn: %s" % brigade_id)
-			return
-	for pending_commitment in data.commitments[team]:
-		var typed_pending_commitment: CommitOrder = pending_commitment
-		if typed_pending_commitment.brigade_id == brigade_id:
-			push_error("Brigade already has a pending commit order this turn: %s" % brigade_id)
-			return
-
-	var allowance := Movement.move_allowance(brigade, mode)
-	var reachable := GameData.find_reachable(brigade.hex_id, allowance)
-	if target_hex not in reachable:
-		push_error("Move order target %s beyond %s allowance for %s" % [target_hex, mode, brigade_id])
-		return
-
-	var order: MoveOrder = MoveOrderResource.new()
-	order.brigade_id = brigade_id
-	order.target_hex = target_hex
-	order.mode = mode
-	data.orders[team].append(order)
+	OrderValidator.add_move_order(data, team, brigade_id, target_hex, mode)
 
 
 ## Full WeGo turn resolution — delegates to TurnConductor (plan 0014 P3); see that class's header
@@ -222,68 +180,11 @@ func resolve_turn(dice: Dice = null) -> void:
 
 
 func add_commit_order(team: Brigade.Team, brigade_id: String, target_hex: String) -> void:
-	if data.phase != Phase.PLANNING:
-		push_error("Cannot add commit order outside PLANNING phase")
-		return
-
-	var brigade: Brigade = GameData.get_brigade(brigade_id)
-	if brigade == null:
-		push_error("Commit order references unknown brigade_id: %s" % brigade_id)
-		return
-	if brigade.team != team:
-		push_error("Commit order team mismatch for %s: order=%s brigade=%s" % [brigade_id, _team_to_string(team), _team_to_string(brigade.team)])
-		return
-	if brigade.destroyed:
-		push_error("Destroyed brigade cannot commit: %s" % brigade_id)
-		return
-	if brigade.moved_admin_this_turn:
-		push_error("Administrative-moved brigade cannot commit: %s" % brigade_id)
-		return
-	if target_hex not in GameData.hex_lookup:
-		push_error("Commit order references unknown target_hex: %s" % target_hex)
-		return
-	if brigade.hex_id == target_hex:
-		push_error("Commit order brigade is already in target hex: %s" % brigade_id)
-		return
-	if brigade.hex_id not in GameData.get_neighbors(target_hex):
-		push_error("Commit order brigade %s is not adjacent to target_hex: %s" % [brigade_id, target_hex])
-		return
-
-	for pending_order in data.orders[team]:
-		var typed_pending_order: MoveOrder = pending_order
-		if typed_pending_order.brigade_id == brigade_id:
-			push_error("Brigade already has a pending move order this turn: %s" % brigade_id)
-			return
-	for pending_commitment in data.commitments[team]:
-		var typed_pending_commitment: CommitOrder = pending_commitment
-		if typed_pending_commitment.brigade_id == brigade_id:
-			push_error("Brigade already has a pending commit order this turn: %s" % brigade_id)
-			return
-
-	var order: CommitOrder = CommitOrderResource.new()
-	order.brigade_id = brigade_id
-	order.target_hex = target_hex
-	data.commitments[team].append(order)
+	OrderValidator.add_commit_order(data, team, brigade_id, target_hex)
 
 
 func eligible_commit_brigades(team: Brigade.Team, target_hex: String) -> Array:
-	if target_hex not in GameData.hex_lookup:
-		push_error("Commit eligibility requested for unknown target_hex: %s" % target_hex)
-		return []
-
-	var eligible: Array = []
-	for brigade_value in GameData.brigades.values():
-		var brigade: Brigade = brigade_value
-		if brigade.team != team or brigade.destroyed or brigade.moved_admin_this_turn:
-			continue
-		if brigade.hex_id == target_hex:
-			continue
-		if brigade.hex_id not in GameData.get_neighbors(target_hex):
-			continue
-		if _brigade_has_pending_order(team, brigade.id):
-			continue
-		eligible.append(brigade.id)
-	return eligible
+	return OrderValidator.eligible_commit_brigades(data, team, target_hex)
 
 
 func begin_next_turn() -> void:
@@ -438,18 +339,6 @@ func _brigade_ids(brigades: Array) -> Array[String]:
 	return CombatResolver.brigade_ids(brigades)
 
 
-func _brigade_has_pending_order(team: Brigade.Team, brigade_id: String) -> bool:
-	for pending_order in data.orders[team]:
-		var typed_pending_order: MoveOrder = pending_order
-		if typed_pending_order.brigade_id == brigade_id:
-			return true
-	for pending_commitment in data.commitments[team]:
-		var typed_pending_commitment: CommitOrder = pending_commitment
-		if typed_pending_commitment.brigade_id == brigade_id:
-			return true
-	return false
-
-
 ## Play a full turn from a bulk-order spec: buffers every order, resolves, and
 ## returns a typed TurnResult. The caller remains in Phase.END and must call
 ## begin_next_turn() separately to advance.
@@ -498,9 +387,3 @@ func _apply_order(order: Dictionary, team: Brigade.Team) -> void:
 			push_error("Unknown order kind: %s" % kind)
 
 
-func _team_to_string(team: Brigade.Team) -> String:
-	match team:
-		Brigade.Team.GREEN:
-			return "Green"
-		_:
-			return "Red"
