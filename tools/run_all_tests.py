@@ -152,6 +152,17 @@ if result.returncode != 0 or not re.search(r'(?m)^PASS: batch runner validation 
 else:
     cecho("green", "Batch runner Python validation OK.")
 
+# ---- Metrics Validation (dependency ceilings) ----
+write_phase("Metrics Validation (tools/gd_metrics.py --check-ceiling)")
+metrics_result = subprocess.run(
+    [sys.executable, os.path.join(SCRIPT_DIR, "gd_metrics.py"), PROJECT_ROOT, os.devnull, "--check-ceiling"],
+    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace")
+print(metrics_result.stdout)
+if metrics_result.returncode != 0 or not re.search(r'(?m)^PASS: dependency ceilings OK', metrics_result.stdout):
+    failures.append(f"Metrics Validation: dependency ceiling breach (exit {metrics_result.returncode})")
+else:
+    cecho("green", "Metrics Validation OK.")
+
 # ---- Fixture Generation and Drift Validation ----
 write_phase("Fixture Generation & Drift Validation")
 invoke_godot(["-s", "res://tools/export_llm_observation.gd", "--", "--output=docs/examples/llm_observation_red_turn1.json"])

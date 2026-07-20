@@ -1,6 +1,15 @@
 extends Node
 class_name GameStateType
 
+## Runtime-state autoload — now a thin shell (plan 0014): the mutable state itself lives in
+## `data: GameStateData` (scripts/model/GameStateData.gd), the scenario-load builders in
+## `GameStateBuilder`, turn orchestration in `TurnConductor`, and order legality in
+## `OrderValidator` (all scripts/resolvers/, all static, all taking `GameStateData` — never this
+## autoload — as their first argument). What remains here: the typed forwarding properties that
+## keep the pre-refactor `GameState.<field>` API byte-stable for external callers, a handful of
+## one-line delegating wrappers kept because GdUnit tests call them directly on the autoload, and
+## `reset_to_scenario`/`begin_next_turn`/`play_turn` (the autoload's own lifecycle, not turn logic).
+
 # IJFS (D4) data-source paths live on IjfsStateBuilder (their only consumer).
 
 # D3/D4 data paths + phase knobs live on their resolvers (AntishipResolver, IjfsResolver,

@@ -7,8 +7,38 @@ duplication windows.
 import json, os, re, sys, hashlib
 from collections import defaultdict
 
-ROOT = sys.argv[1] if len(sys.argv) > 1 else "."
+CHECK_CEILING = "--check-ceiling" in sys.argv
+_positional = [a for a in sys.argv[1:] if not a.startswith("--")]
+
+ROOT = _positional[0] if len(_positional) > 0 else "."
+OUT_PATH = _positional[1] if len(_positional) > 1 else None
 SKIP_DIRS = {".godot", "addons", ".git"}
+
+# Dependency ceilings (plan 0014 P5): a file's `ndeps` (distinct class_name/autoload references)
+# exceeding its ceiling fails the gate with --check-ceiling. Add a new entry only when a file's
+# role genuinely changes; bumping an existing ceiling to silence a real regression defeats the
+# point — fix the coupling instead. Each ceiling = the measured count at the commit that set it,
+# plus small headroom for legitimate growth (a new field, a new phase call), not room to launder
+# a god-object back in.
+DEP_CEILINGS = {
+    # GameState.gd (plan 0014): decomposed into GameStateData (state) + GameStateBuilder
+    # (scenario-load builders) + TurnConductor (turn orchestration) + OrderValidator (order
+    # legality) — GameState.gd itself is now a thin autoload shell: typed forwarding properties
+    # (var x: T: get/set) for the external byte-stable API, plus a few one-line delegating
+    # wrappers kept because GdUnit tests call them directly on the autoload. Most of its 24
+    # measured deps are property-type annotations (SealiftState, SupplyState, CombatSummary, …)
+    # inherent to that forwarding surface, not turn-orchestration coupling — measured 24 at
+    # commit time, well above the plan's ~8-12 prediction (which assumed a looser/untyped
+    # forwarding mechanism; the typed-property design was chosen deliberately after a generic
+    # _get/_set override proved unreliable for legitimately-null fields).
+    "scripts/GameState.gd": 27,
+    # TurnConductor.gd legitimately depends on every phase resolver it orchestrates (IjfsResolver,
+    # SealiftResolver, AntishipResolver, OffloadResolver, InfrastructureResolver, SupplyResolver,
+    # CleanupResolver, FrontlineResolver, CombatResolver, …) — that is cohesion, not lamination.
+    # Ceiling here catches it acquiring UNRELATED responsibilities (the god-object failure mode),
+    # not the resolver fan-out that is its actual job. Measured 32 at commit time.
+    "scripts/resolvers/TurnConductor.gd": 36,
+}
 
 FUNC_RE = re.compile(r"^(\s*)(static\s+)?func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*)$")
 BRANCH_RE = re.compile(r"^\s*(if|elif|for|while)\b")
@@ -179,7 +209,24 @@ result["dup"] = {
 result["classnames"] = {k: os.path.relpath(v, ROOT) for k, v in classnames.items()}
 result["autoloads"] = sorted(AUTOLOADS)
 
-json.dump(result, open(sys.argv[2], "w"), indent=1)
+if OUT_PATH:
+    json.dump(result, open(OUT_PATH, "w"), indent=1)
 print("files", len(files), "funcs", len(result["functions"]),
       "dup_windows", result["dup"]["n_dup_windows"],
       "total_dup_lines", result["dup"]["total_dup_lines"])
+
+if CHECK_CEILING:
+    breaches = []
+    for rel, ceiling in DEP_CEILINGS.items():
+        info = result["files"].get(rel)
+        if info is None:
+            breaches.append("%s: not found (ceiling entry stale — file moved/deleted?)" % rel)
+            continue
+        if info["ndeps"] > ceiling:
+            breaches.append("%s: ndeps=%d exceeds ceiling %d" % (rel, info["ndeps"], ceiling))
+    if breaches:
+        print("FAIL: dependency ceiling breach(es):")
+        for b in breaches:
+            print("  -", b)
+        sys.exit(1)
+    print("PASS: dependency ceilings OK (%d file(s) checked)" % len(DEP_CEILINGS))
