@@ -22,6 +22,8 @@ plan to act, the closeout wasn't done.
 | 0003 | [Combat-summary team attribution](0003-combat-summary-team-attribution.md) | Low (blocked on USER counterattack call) | Sketch |
 | 0013 | [One home for scenario files](0013-scenario-files-one-home.md) | Low (hygiene; needs a Windows gate run to close) | Ready |
 | 0016 | [Separate State Data from Autoload](0016-separate-state-data.md) | Medium (hygiene/architecture) | Superseded by 0014 |
+| 0021 | [garrison_draw — Green force-draw policy + draw_fraction knob](0021-garrison-draw-policy.md) | Medium (research; runnable alone) | Ready |
+| 0022 | [Red reactive beach-opening (feasibility first)](0022-red-beach-switching.md) | Medium (research; new mechanic, gated on a feasibility spike) | Sketch |
 
 ## Archived
 
