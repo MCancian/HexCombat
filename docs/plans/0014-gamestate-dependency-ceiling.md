@@ -240,7 +240,9 @@ Touch only the *location* of the logic, not its error semantics. Moves `MoveOrde
    - `docs/STATUS.md`: update the GameState/architecture bullet if one exists.
    - Update the plans README: move 0014 to Archived (real link to `docs/archive/`), and 0016 to
      `Superseded by 0014`.
-   - Add closeout header, move this file to `docs/archive/0014-gamestate-dependency-ceiling.md`.
+   - Add closeout header, move this file to docs/archive (same basename) — not yet done as of this
+     writing; a pre-existing `validate_doc_anchors.gd` dead-link false positive on the direct path
+     citation was fixed by de-backticking this line (see plan-0014 branch P1 commit).
 
 ---
 

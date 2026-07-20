@@ -10,49 +10,104 @@ const FEBA_RETREAT_THRESHOLD_KM := 10.0
 # D3/D4 data paths + phase knobs live on their resolvers (AntishipResolver, IjfsResolver,
 # AntishipSystemsBuilder, IjfsStateBuilder) — each const sits with its only consumer.
 
-enum Phase { PLANNING, RESOLUTION, END }
+# Re-exposed so external `GameStateType.Phase.*` / `GameState.Phase.*` references (tests, tools)
+# keep resolving unchanged (plan 0014 P1) — the enum's home moved to GameStateData.
+const Phase = GameStateData.Phase
 
-var turn_number: int = 1
-var phase: Phase = Phase.PLANNING
-var turn_length_days: int = 1
-var orders: Dictionary = {}  # Brigade.Team -> Array[MoveOrder]
-var commitments: Dictionary = {}  # Brigade.Team -> Array[CommitOrder]
-var ship_reserve: Array = []  # OffloadCalculator-ready: [{brigade_id, locked_beach, beach_hex, offset_bearing, bns:[{id,type}]}]
-var fleet: Dictionary = {}  # ship name (String) -> ShipState
-# Cross-turn sealift state (plan 0004): mainland follow-on pool, in-transit cohorts, ship
-# return/reload pipeline, escort SAM magazine. Built at scenario load, advanced by SealiftResolver
-# each turn before the crossing. Null only before the first reset_to_scenario.
-var sealift_state: SealiftState = null
-var infrastructure_state: InfrastructureState = null
-var jlsf_orders: Array[String] = []  # port/airbridge ids with a pending explicit deploy_jlsf order
-var pending_lost_at_sea: int = 0
-var supply_state: SupplyState
-var last_contested_hexes: Array[String] = []
-var last_combat_summaries: Array[CombatSummary] = []
-# IJFS daily state persists across turns (carry_to_next_day advances it each turn).
-var ijfs_state: IjfsDailyState = null
-var _ijfs_day: int = 0
-var last_ijfs_summary: Dictionary = {}
-var last_ijfs_writeback: IjfsWriteback = null
-# D3 anti-ship Green firing systems (AntishipSystem rows aggregated by (to_number, type_id)). Persist
-# across turns so launcher destruction/suppression carries forward; lazily built on first use.
-var antiship_systems: Array = []
-# Container-level view of the same arsenal (one entry per platform-group bin) — IJFS target source.
-var antiship_containers: Array = []
-var _antiship_built: bool = false
-# Fractional BN-equiv owed from ship losses, carried across turns (ShipLoadingModel.resolve_bn_losses).
-var lost_at_sea_accumulator: float = 0.0
-var last_antiship_summary: AntishipSummary = null
-var last_offload_summary: Dictionary = {}
-# The sealift phase's committed sailing fleet this turn (ship_type -> hull count): cohort carriers +
-# ready escort screen. Consumed by resolve_antiship_turn as the crossing fleet (plan 0004).
-var last_sealift_sent_by_type: Dictionary = {}
-var last_frontline_summary: FrontlineSummary = null
-var last_cleanup_summary: CleanupSummary = null
-# Victory state, set in the end-of-turn cleanup census (VictoryConditions). winner: ""/"red"/"green".
-var game_over: bool = false
-var winner: String = ""
-var _china_has_landed: bool = false  # latch for the "after_first_landing" loss-check arm
+# Mutable runtime state lives in this single value object (plan 0014 P1, folded 0016) — see
+# scripts/model/GameStateData.gd. GameState (this autoload) forwards the fields external callers
+# read/write via the typed properties below, so `GameState.turn_number` etc. keep working
+# unchanged. Internal code in this file always goes through `data.<field>` explicitly — the
+# properties below exist ONLY for the autoload's public surface (GameController, tests,
+# tools/validate_*.gd). Declared `var name: Type: get/set` (not a generic _get/_set override)
+# because a generic override can't distinguish a legitimately-null field (e.g.
+# last_antiship_summary before the first antiship phase) from "property does not exist".
+var data := GameStateData.new()
+
+var turn_number: int:
+	get: return data.turn_number
+	set(value): data.turn_number = value
+var phase: Phase:
+	get: return data.phase
+	set(value): data.phase = value
+var turn_length_days: int:
+	get: return data.turn_length_days
+	set(value): data.turn_length_days = value
+var orders: Dictionary:
+	get: return data.orders
+	set(value): data.orders = value
+var commitments: Dictionary:
+	get: return data.commitments
+	set(value): data.commitments = value
+var ship_reserve: Array:
+	get: return data.ship_reserve
+	set(value): data.ship_reserve = value
+var fleet: Dictionary:
+	get: return data.fleet
+	set(value): data.fleet = value
+var sealift_state: SealiftState:
+	get: return data.sealift_state
+	set(value): data.sealift_state = value
+var infrastructure_state: InfrastructureState:
+	get: return data.infrastructure_state
+	set(value): data.infrastructure_state = value
+var jlsf_orders: Array[String]:
+	get: return data.jlsf_orders
+	set(value): data.jlsf_orders = value
+var pending_lost_at_sea: int:
+	get: return data.pending_lost_at_sea
+	set(value): data.pending_lost_at_sea = value
+var supply_state: SupplyState:
+	get: return data.supply_state
+	set(value): data.supply_state = value
+var last_contested_hexes: Array[String]:
+	get: return data.last_contested_hexes
+	set(value): data.last_contested_hexes = value
+var last_combat_summaries: Array[CombatSummary]:
+	get: return data.last_combat_summaries
+	set(value): data.last_combat_summaries = value
+var ijfs_state: IjfsDailyState:
+	get: return data.ijfs_state
+	set(value): data.ijfs_state = value
+var _ijfs_day: int:
+	get: return data._ijfs_day
+	set(value): data._ijfs_day = value
+var last_ijfs_summary: Dictionary:
+	get: return data.last_ijfs_summary
+	set(value): data.last_ijfs_summary = value
+var last_ijfs_writeback: IjfsWriteback:
+	get: return data.last_ijfs_writeback
+	set(value): data.last_ijfs_writeback = value
+var antiship_systems: Array:
+	get: return data.antiship_systems
+	set(value): data.antiship_systems = value
+var antiship_containers: Array:
+	get: return data.antiship_containers
+	set(value): data.antiship_containers = value
+var lost_at_sea_accumulator: float:
+	get: return data.lost_at_sea_accumulator
+	set(value): data.lost_at_sea_accumulator = value
+var last_antiship_summary: AntishipSummary:
+	get: return data.last_antiship_summary
+	set(value): data.last_antiship_summary = value
+var last_offload_summary: Dictionary:
+	get: return data.last_offload_summary
+	set(value): data.last_offload_summary = value
+var last_sealift_sent_by_type: Dictionary:
+	get: return data.last_sealift_sent_by_type
+	set(value): data.last_sealift_sent_by_type = value
+var last_frontline_summary: FrontlineSummary:
+	get: return data.last_frontline_summary
+	set(value): data.last_frontline_summary = value
+var last_cleanup_summary: CleanupSummary:
+	get: return data.last_cleanup_summary
+	set(value): data.last_cleanup_summary = value
+var game_over: bool:
+	get: return data.game_over
+	set(value): data.game_over = value
+var winner: String:
+	get: return data.winner
+	set(value): data.winner = value
 
 
 func _ready() -> void:
@@ -69,17 +124,17 @@ func reset_to_scenario() -> void:
 	# survive resets); before any load_all it falls back to the default.
 	GameData.load_scenario(GameData.scenario_path if not GameData.scenario_path.is_empty() else GameData.DEFAULT_SCENARIO_PATH)
 
-	turn_number = 1
-	phase = Phase.PLANNING
-	turn_length_days = GameData.turn_length_days
-	if turn_length_days == 0:
+	data.turn_number = 1
+	data.phase = Phase.PLANNING
+	data.turn_length_days = GameData.turn_length_days
+	if data.turn_length_days == 0:
 		push_warning("GameData.turn_length_days is 0; falling back to 1 day")
-		turn_length_days = 1
-	orders = {
+		data.turn_length_days = 1
+	data.orders = {
 		Brigade.Team.RED: [],
 		Brigade.Team.GREEN: []
 	}
-	commitments = {
+	data.commitments = {
 		Brigade.Team.RED: [],
 		Brigade.Team.GREEN: []
 	}
@@ -92,31 +147,31 @@ func reset_to_scenario() -> void:
 	# Resource objects; eager-loading it in every booted process — validators, smoke, tests — bloated
 	# shutdown and triggered the Godot 4.7 teardown crash). Reset the handle; resolve_ijfs_turn builds
 	# it fresh per scenario.
-	ijfs_state = null
-	_ijfs_day = 0
-	pending_lost_at_sea = 0
-	last_contested_hexes.clear()
-	last_combat_summaries.clear()
-	last_ijfs_summary = {}
-	last_ijfs_writeback = null
+	data.ijfs_state = null
+	data._ijfs_day = 0
+	data.pending_lost_at_sea = 0
+	data.last_contested_hexes.clear()
+	data.last_combat_summaries.clear()
+	data.last_ijfs_summary = {}
+	data.last_ijfs_writeback = null
 	# Anti-ship systems are lazily (re)built on first use (resolve_ijfs_turn / resolve_antiship_turn),
 	# matching the IJFS state's lazy-load pattern; clearing here forces a fresh build per scenario.
-	antiship_systems = []
-	antiship_containers = []
-	_antiship_built = false
-	lost_at_sea_accumulator = 0.0
-	last_antiship_summary = null
-	last_sealift_sent_by_type = {}
-	last_frontline_summary = null
-	last_cleanup_summary = null
-	game_over = false
-	winner = ""
-	_china_has_landed = false
-	EventBus.phase_changed.emit(phase)
+	data.antiship_systems = []
+	data.antiship_containers = []
+	data._antiship_built = false
+	data.lost_at_sea_accumulator = 0.0
+	data.last_antiship_summary = null
+	data.last_sealift_sent_by_type = {}
+	data.last_frontline_summary = null
+	data.last_cleanup_summary = null
+	data.game_over = false
+	data.winner = ""
+	data._china_has_landed = false
+	EventBus.phase_changed.emit(data.phase)
 
 
 func add_move_order(team: Brigade.Team, brigade_id: String, target_hex: String, mode: String) -> void:
-	if phase != Phase.PLANNING:
+	if data.phase != Phase.PLANNING:
 		push_error("Cannot add move order outside PLANNING phase")
 		return
 
@@ -134,12 +189,12 @@ func add_move_order(team: Brigade.Team, brigade_id: String, target_hex: String, 
 		push_error("Unknown movement mode: %s" % mode)
 		return
 
-	for pending_order in orders[team]:
+	for pending_order in data.orders[team]:
 		var typed_pending_order: MoveOrder = pending_order
 		if typed_pending_order.brigade_id == brigade_id:
 			push_error("Brigade already has a pending move order this turn: %s" % brigade_id)
 			return
-	for pending_commitment in commitments[team]:
+	for pending_commitment in data.commitments[team]:
 		var typed_pending_commitment: CommitOrder = pending_commitment
 		if typed_pending_commitment.brigade_id == brigade_id:
 			push_error("Brigade already has a pending commit order this turn: %s" % brigade_id)
@@ -155,19 +210,19 @@ func add_move_order(team: Brigade.Team, brigade_id: String, target_hex: String, 
 	order.brigade_id = brigade_id
 	order.target_hex = target_hex
 	order.mode = mode
-	orders[team].append(order)
+	data.orders[team].append(order)
 
 
 func resolve_turn(dice: Dice = null) -> void:
-	if phase != Phase.PLANNING:
+	if data.phase != Phase.PLANNING:
 		push_error("Cannot resolve turn outside PLANNING phase")
 		return
 
 	if dice == null:
-		dice = SeededDice.new(turn_number)
+		dice = SeededDice.new(data.turn_number)
 
-	phase = Phase.RESOLUTION
-	EventBus.phase_changed.emit(phase)
+	data.phase = Phase.RESOLUTION
+	EventBus.phase_changed.emit(data.phase)
 	# Sea phase ordering (D3-D): IJFS (Red joint fires) suppresses/destroys Green anti-ship systems
 	# first; then Green anti-ship + mines attrit the Red crossing (removing BNs from the reserve);
 	# then offload lands only the survivors. Each draws from its own INDEPENDENT substream (never the
@@ -181,7 +236,7 @@ func resolve_turn(dice: Dice = null) -> void:
 	# the anti-ship phase attrits exactly the hulls that sail. Dice-free -> combat golden unaffected.
 	resolve_sealift_turn()
 	resolve_antiship_turn(dice)
-	last_offload_summary = resolve_offload_turn(dice)
+	data.last_offload_summary = resolve_offload_turn(dice)
 
 	# disable_phases (plan 0012): a scenario/override can skip the ground WeGo phases wholesale so
 	# calibration sweeps run standard games while isolating the sea/IJFS phases. Buffered orders
@@ -192,16 +247,16 @@ func resolve_turn(dice: Dice = null) -> void:
 		_apply_move_orders(Brigade.Team.RED)
 		_apply_move_orders(Brigade.Team.GREEN)
 	if skip_ground_combat:
-		last_contested_hexes.clear()
+		data.last_contested_hexes.clear()
 	else:
-		last_contested_hexes = _find_contested_hexes()
+		data.last_contested_hexes = _find_contested_hexes()
 	var combat_summaries: Array[CombatSummary] = []
 	# Per-hex combat substream (plan 0010): each contested hex draws from its OWN dice stream derived
 	# from the root turn seed, so a design tweak that changes the roll count in one hex's fight never
 	# scrambles the dice of an unrelated hex. Turn-scoped salt matches the ijfs/antiship pattern so an
 	# injected constant-seed dice still varies per turn.
-	for hex_id in last_contested_hexes:
-		var summary := _resolve_combat_at(hex_id, dice.derive("combat:%d:%s" % [turn_number, hex_id]))
+	for hex_id in data.last_contested_hexes:
+		var summary := _resolve_combat_at(hex_id, dice.derive("combat:%d:%s" % [data.turn_number, hex_id]))
 		if summary != null:
 			combat_summaries.append(summary)
 	if not skip_ground_combat:
@@ -209,7 +264,7 @@ func resolve_turn(dice: Dice = null) -> void:
 	GameData.recompute_hex_ownership()
 	for summary in combat_summaries:
 		summary.owner_after = String(GameData.hex_states[summary.hex_id].owner)
-	last_combat_summaries = combat_summaries.duplicate()
+	data.last_combat_summaries = combat_summaries.duplicate()
 	resolve_supply_turn()
 	resolve_cleanup_phase()
 
@@ -221,14 +276,14 @@ func resolve_turn(dice: Dice = null) -> void:
 		var index_violations := GameData.validate_runtime_indexes()
 		assert(index_violations.is_empty(), "runtime index desync at end of resolve_turn: %s" % "; ".join(index_violations))
 
-	phase = Phase.END
-	EventBus.phase_changed.emit(phase)
+	data.phase = Phase.END
+	EventBus.phase_changed.emit(data.phase)
 	EventBus.combat_resolved.emit(combat_summaries)
-	EventBus.turn_resolved.emit(turn_number)
+	EventBus.turn_resolved.emit(data.turn_number)
 
 
 func add_commit_order(team: Brigade.Team, brigade_id: String, target_hex: String) -> void:
-	if phase != Phase.PLANNING:
+	if data.phase != Phase.PLANNING:
 		push_error("Cannot add commit order outside PLANNING phase")
 		return
 
@@ -255,12 +310,12 @@ func add_commit_order(team: Brigade.Team, brigade_id: String, target_hex: String
 		push_error("Commit order brigade %s is not adjacent to target_hex: %s" % [brigade_id, target_hex])
 		return
 
-	for pending_order in orders[team]:
+	for pending_order in data.orders[team]:
 		var typed_pending_order: MoveOrder = pending_order
 		if typed_pending_order.brigade_id == brigade_id:
 			push_error("Brigade already has a pending move order this turn: %s" % brigade_id)
 			return
-	for pending_commitment in commitments[team]:
+	for pending_commitment in data.commitments[team]:
 		var typed_pending_commitment: CommitOrder = pending_commitment
 		if typed_pending_commitment.brigade_id == brigade_id:
 			push_error("Brigade already has a pending commit order this turn: %s" % brigade_id)
@@ -269,7 +324,7 @@ func add_commit_order(team: Brigade.Team, brigade_id: String, target_hex: String
 	var order: CommitOrder = CommitOrderResource.new()
 	order.brigade_id = brigade_id
 	order.target_hex = target_hex
-	commitments[team].append(order)
+	data.commitments[team].append(order)
 
 
 func eligible_commit_brigades(team: Brigade.Team, target_hex: String) -> Array:
@@ -293,7 +348,7 @@ func eligible_commit_brigades(team: Brigade.Team, target_hex: String) -> Array:
 
 
 func begin_next_turn() -> void:
-	if phase != Phase.END:
+	if data.phase != Phase.END:
 		push_error("Cannot begin next turn outside END phase")
 		return
 
@@ -302,25 +357,25 @@ func begin_next_turn() -> void:
 		typed_brigade.moved_this_turn = false
 		typed_brigade.moved_admin_this_turn = false
 		typed_brigade.fought_this_turn = false
-	orders[Brigade.Team.RED].clear()
-	orders[Brigade.Team.GREEN].clear()
-	commitments[Brigade.Team.RED].clear()
-	commitments[Brigade.Team.GREEN].clear()
-	turn_number += 1
-	phase = Phase.PLANNING
-	EventBus.phase_changed.emit(phase)
+	data.orders[Brigade.Team.RED].clear()
+	data.orders[Brigade.Team.GREEN].clear()
+	data.commitments[Brigade.Team.RED].clear()
+	data.commitments[Brigade.Team.GREEN].clear()
+	data.turn_number += 1
+	data.phase = Phase.PLANNING
+	EventBus.phase_changed.emit(data.phase)
 
 
 func orders_for(team: Brigade.Team) -> Array:
-	return orders[team]
+	return data.orders[team]
 
 
 func commitments_for(team: Brigade.Team) -> Array:
-	return commitments[team]
+	return data.commitments[team]
 
 
 func ship_reserve_priority_order() -> Array[String]:
-	return OffloadResolver.priority_order(ship_reserve)
+	return OffloadResolver.priority_order(data.ship_reserve)
 
 
 func resolve_offload_turn(dice: Dice) -> Dictionary:
@@ -329,29 +384,29 @@ func resolve_offload_turn(dice: Dice) -> Dictionary:
 	# ground combat can seize a port hex long after the last beach landing. Ownership here is last
 	# turn's post-combat state — the producer->consumer edge is combat ownership -> next offload.
 	var infra_nodes: Array = []
-	if infrastructure_state != null:
+	if data.infrastructure_state != null:
 		var owner_by_hex := _owner_by_hex()
-		InfrastructureResolver.tick(infrastructure_state, GameData.infrastructure, owner_by_hex)
-		infra_nodes = InfrastructureResolver.red_offload_nodes(infrastructure_state, GameData.infrastructure, owner_by_hex)
+		InfrastructureResolver.tick(data.infrastructure_state, GameData.infrastructure, owner_by_hex)
+		infra_nodes = InfrastructureResolver.red_offload_nodes(data.infrastructure_state, GameData.infrastructure, owner_by_hex)
 
-	if ship_reserve.is_empty():
+	if data.ship_reserve.is_empty():
 		var empty_manifest := _empty_offload_manifest()
-		empty_manifest["lost_at_sea"] = pending_lost_at_sea
+		empty_manifest["lost_at_sea"] = data.pending_lost_at_sea
 		# D3-F applies lost_at_sea to the reserve; D0-C only threads the value.
-		pending_lost_at_sea = 0
+		data.pending_lost_at_sea = 0
 		EventBus.offload_resolved.emit(empty_manifest)
 		return empty_manifest
 
 	var cost_config: Dictionary = GameData.offload_weights if GameData.use_offload_weight_matrix else {}
 	var outcome := OffloadResolver.resolve(
-		turn_number, ship_reserve, GameData.beaches, GameData.brigades,
+		data.turn_number, data.ship_reserve, GameData.beaches, GameData.brigades,
 		infra_nodes, cost_config, GameData.beach_to_to, _owner_by_hex())
 	for landing_value in outcome["landings"]:
 		var landing: Dictionary = landing_value
 		var brigade_id := String(landing["brigade_id"])
 		GameData.set_brigade_hex(brigade_id, String(landing["beach_hex"]))
 		GameData.get_brigade(brigade_id).entry_bearing = float(landing["offset_bearing"])
-	ship_reserve = outcome["remaining_ship_reserve"]
+	data.ship_reserve = outcome["remaining_ship_reserve"]
 	GameData.recompute_hex_ownership()
 
 	var manifest: Dictionary = outcome["manifest"]
@@ -365,18 +420,18 @@ func resolve_offload_turn(dice: Dice) -> Dictionary:
 	for arrival_value in outcome.get("jlsf_arrivals", []):
 		var arrival: Dictionary = arrival_value
 		var port_id := String(arrival["port_id"])
-		if infrastructure_state != null and infrastructure_state.nodes.has(port_id):
-			infrastructure_state.nodes[port_id]["jlsf"] = InfrastructureState.JLSF_ARRIVED
+		if data.infrastructure_state != null and data.infrastructure_state.nodes.has(port_id):
+			data.infrastructure_state.nodes[port_id]["jlsf"] = InfrastructureState.JLSF_ARRIVED
 		for bn_id_value in arrival["bn_ids"]:
 			landed_ids.append(String(bn_id_value))
-	if sealift_state != null:
-		SealiftResolver.drain_bn_ids(sealift_state, landed_ids, GameData.amphibious_return_time_turns)
+	if data.sealift_state != null:
+		SealiftResolver.drain_bn_ids(data.sealift_state, landed_ids, GameData.amphibious_return_time_turns)
 		_project_sealift_onto_fleet()
 	_reconcile_lost_jlsf()
 
-	manifest["lost_at_sea"] = pending_lost_at_sea
+	manifest["lost_at_sea"] = data.pending_lost_at_sea
 	# D3-F applies lost_at_sea to the reserve; D0-C only threads the value.
-	pending_lost_at_sea = 0
+	data.pending_lost_at_sea = 0
 	EventBus.offload_resolved.emit(manifest)
 	return manifest
 
@@ -393,17 +448,17 @@ func _owner_by_hex() -> Dictionary:
 
 
 func _rebuild_infrastructure_state() -> void:
-	infrastructure_state = InfrastructureStateBuilder.build(GameData.infrastructure)
-	jlsf_orders.clear()
+	data.infrastructure_state = InfrastructureStateBuilder.build(GameData.infrastructure)
+	data.jlsf_orders.clear()
 
 
 ## A JLSF deployment lost whole at sea (its pseudo-BNs all drowned in the crossing) leaves no
 ## pool or reserve trace; reset its node marker so a new deployment can be ordered/auto-queued.
 func _reconcile_lost_jlsf() -> void:
-	if infrastructure_state == null:
+	if data.infrastructure_state == null:
 		return
-	for id_value in infrastructure_state.nodes.keys():
-		var node: Dictionary = infrastructure_state.nodes[id_value]
+	for id_value in data.infrastructure_state.nodes.keys():
+		var node: Dictionary = data.infrastructure_state.nodes[id_value]
 		var marker := String(node["jlsf"])
 		if marker != InfrastructureState.JLSF_QUEUED and marker != InfrastructureState.JLSF_ENROUTE:
 			continue
@@ -413,18 +468,18 @@ func _reconcile_lost_jlsf() -> void:
 
 
 func _reserve_or_pool_has(brigade_id: String) -> bool:
-	for entry_value in ship_reserve:
+	for entry_value in data.ship_reserve:
 		if String((entry_value as Dictionary).get("brigade_id", "")) == brigade_id:
 			return true
-	if sealift_state != null:
-		for entry_value in sealift_state.mainland_pool:
+	if data.sealift_state != null:
+		for entry_value in data.sealift_state.mainland_pool:
 			if String((entry_value as Dictionary).get("brigade_id", "")) == brigade_id:
 				return true
 	return false
 
 
 func resolve_supply_turn() -> Dictionary:
-	assert(supply_state != null, "resolve_supply_turn requires supply_state")
+	assert(data.supply_state != null, "resolve_supply_turn requires supply_state")
 	var units := _active_red_battalion_units()
 	var moved_ids: Array[String] = []
 	var engaged_ids: Array[String] = []
@@ -437,7 +492,7 @@ func resolve_supply_turn() -> Dictionary:
 		if brigade.fought_this_turn:
 			engaged_ids.append(brigade.id)
 
-	var summary := SupplyResolver.resolve(supply_state, units, moved_ids, engaged_ids, turn_number)
+	var summary := SupplyResolver.resolve(data.supply_state, units, moved_ids, engaged_ids, data.turn_number)
 	EventBus.supply_updated.emit(summary)
 	return summary
 
@@ -446,14 +501,14 @@ func resolve_supply_turn() -> Dictionary:
 
 func resolve_ijfs_turn(dice: Dice) -> Dictionary:
 	assert(dice != null, "resolve_ijfs_turn requires a Dice instance")
-	if ijfs_state == null:
+	if data.ijfs_state == null:
 		_rebuild_ijfs_state()
-	var outcome := IjfsResolver.resolve(ijfs_state, GameData.brigades, turn_number, _ijfs_day, dice)
-	_ijfs_day = turn_number
+	var outcome := IjfsResolver.resolve(data.ijfs_state, GameData.brigades, data.turn_number, data._ijfs_day, dice)
+	data._ijfs_day = data.turn_number
 	var ledgers: Dictionary = outcome["ledgers"]
-	last_ijfs_summary = ledgers["summary"]
-	last_ijfs_writeback = outcome["writeback"]
-	EventBus.ijfs_resolved.emit(last_ijfs_summary)
+	data.last_ijfs_summary = ledgers["summary"]
+	data.last_ijfs_writeback = outcome["writeback"]
+	EventBus.ijfs_resolved.emit(data.last_ijfs_summary)
 	return ledgers
 
 
@@ -472,12 +527,12 @@ func _build_warmup_context(
 ## Lazily build the persistent anti-ship Green firing systems (aggregated by (to_number, type_id)).
 ## Shared by resolve_ijfs_turn (IJFS targeting) and resolve_antiship_turn (firing).
 func _ensure_antiship_systems() -> void:
-	if _antiship_built:
+	if data._antiship_built:
 		return
 	var built := AntishipSystemsBuilder.build()
-	antiship_systems = built["systems"]
-	antiship_containers = built["containers"]
-	_antiship_built = true
+	data.antiship_systems = built["systems"]
+	data.antiship_containers = built["containers"]
+	data._antiship_built = true
 
 
 func _rebuild_ijfs_state() -> void:
@@ -488,20 +543,20 @@ func _rebuild_ijfs_state() -> void:
 		var brigade: Brigade = brigade_value
 		if brigade.team == Brigade.Team.GREEN and not brigade.destroyed:
 			green_brigades.append(brigade)
-	ijfs_state = IjfsStateBuilder.build(antiship_containers, green_brigades)
-	_ijfs_day = 0
+	data.ijfs_state = IjfsStateBuilder.build(data.antiship_containers, green_brigades)
+	data._ijfs_day = 0
 
 
 func _update_maneuver_posture() -> void:
-	IjfsResolver.update_maneuver_posture(ijfs_state, GameData.brigades)
+	IjfsResolver.update_maneuver_posture(data.ijfs_state, GameData.brigades)
 
 
 func _sync_maneuver_targets_to_oob() -> void:
-	IjfsResolver.sync_maneuver_targets_to_oob(ijfs_state, GameData.brigades)
+	IjfsResolver.sync_maneuver_targets_to_oob(data.ijfs_state, GameData.brigades)
 
 
 func _apply_ijfs_maneuver_casualties() -> void:
-	var casualties: Array = last_ijfs_writeback.maneuver_casualties if last_ijfs_writeback != null else []
+	var casualties: Array = data.last_ijfs_writeback.maneuver_casualties if data.last_ijfs_writeback != null else []
 	IjfsResolver.apply_maneuver_casualties(casualties, GameData.brigades)
 
 
@@ -512,16 +567,16 @@ func _apply_ijfs_maneuver_casualties() -> void:
 ## INDEPENDENT substream so the ground-combat golden invariant stays byte-stable.
 func resolve_antiship_turn(dice: Dice) -> Dictionary:
 	_ensure_antiship_systems()
-	last_antiship_summary = null
+	data.last_antiship_summary = null
 
 	# Independent substream (same isolation pattern as resolve_ijfs_turn). SeededDice.derive is a
 	# pure hash of (seed, label) — it consumes no parent-stream state, so deriving before the
 	# resolver's no-wave check cannot shift the base combat stream.
 	var as_dice: Dice
 	if dice is SeededDice:
-		as_dice = dice.derive("antiship:%d" % turn_number)
+		as_dice = dice.derive("antiship:%d" % data.turn_number)
 	else:
-		as_dice = SeededDice.new(hash("antiship:%d" % turn_number))
+		as_dice = SeededDice.new(hash("antiship:%d" % data.turn_number))
 
 	# Theaters reads the GameData autoload internally, so the TO maps are materialized here and
 	# passed into the pure resolver as plain data.
@@ -533,44 +588,44 @@ func resolve_antiship_turn(dice: Dice) -> Dictionary:
 	# BNs are safe ashore. Slice that crossing wave out of the full reserve (plan 0004 D3).
 	var crossing_reserve := _crossing_reserve_from_sent_cohorts()
 	# Captured pre-resolve: drain/flip below mutate the cohorts before the summary is stored.
-	var wave_bns: int = SealiftResolver.sent_cohort_bn_ids(sealift_state).size()
+	var wave_bns: int = SealiftResolver.sent_cohort_bn_ids(data.sealift_state).size()
 
 	var outcome := AntishipResolver.resolve(
-		turn_number, crossing_reserve, antiship_systems, last_ijfs_writeback,
-		last_sealift_sent_by_type, GameData.ship_defs, GameData.beach_to_to, GameData.active_tos, to_adjacency,
-		lost_at_sea_accumulator, sealift_state.escort_sam, as_dice)
+		data.turn_number, crossing_reserve, data.antiship_systems, data.last_ijfs_writeback,
+		data.last_sealift_sent_by_type, GameData.ship_defs, GameData.beach_to_to, GameData.active_tos, to_adjacency,
+		data.lost_at_sea_accumulator, data.sealift_state.escort_sam, as_dice)
 	if outcome["summary"] == null:
 		# Nothing crossed this turn: no fires, no state to apply (pending_lost_at_sea keeps its value).
 		return {}
 
-	lost_at_sea_accumulator = float(outcome["accumulator"])
+	data.lost_at_sea_accumulator = float(outcome["accumulator"])
 	# Apply hull losses to the sealift cohorts (carriers) + the fleet, then drop drowned BNs from the
 	# reserve AND their cohorts, and flip the surviving crossers to offloading (plan 0004 D3).
 	_apply_crossing_hull_losses(outcome["destroyed_by_type"])
 	var lost_ids: Array = outcome["lost_ids"]
-	ship_reserve = AntishipResolver.remaining_reserve_after_losses(ship_reserve, lost_ids)
-	SealiftResolver.drain_bn_ids(sealift_state, lost_ids, GameData.amphibious_return_time_turns)
-	SealiftResolver.flip_sent_to_offloading(sealift_state)
+	data.ship_reserve = AntishipResolver.remaining_reserve_after_losses(data.ship_reserve, lost_ids)
+	SealiftResolver.drain_bn_ids(data.sealift_state, lost_ids, GameData.amphibious_return_time_turns)
+	SealiftResolver.flip_sent_to_offloading(data.sealift_state)
 	# Deplete the escort SAM magazines by what fired, and divert any type that dropped to/below its
 	# reload threshold (plan 0004 D5). No-op when the magazine is unmodelled (escort_sam empty).
 	SealiftResolver.apply_escort_consumption(
-		sealift_state, outcome["escort_sam_consumed"], GameData.escort_reload_time_turns)
+		data.sealift_state, outcome["escort_sam_consumed"], GameData.escort_reload_time_turns)
 	_project_sealift_onto_fleet()
 	register_ship_losses(int(outcome["bn_equiv_lost"]))
-	last_antiship_summary = outcome["summary"]
-	last_antiship_summary.wave_bns = wave_bns
-	EventBus.antiship_resolved.emit(last_antiship_summary.to_dict())
-	return last_antiship_summary.to_dict()
+	data.last_antiship_summary = outcome["summary"]
+	data.last_antiship_summary.wave_bns = wave_bns
+	EventBus.antiship_resolved.emit(data.last_antiship_summary.to_dict())
+	return data.last_antiship_summary.to_dict()
 
 
 ## The subset of ship_reserve whose BNs are bound to a "sent" cohort (crossing this turn), with each
 ## kept entry trimmed to just those BNs. Empty when nothing sails.
 func _crossing_reserve_from_sent_cohorts() -> Array:
-	var sailing := SealiftResolver.sent_cohort_bn_ids(sealift_state)
+	var sailing := SealiftResolver.sent_cohort_bn_ids(data.sealift_state)
 	if sailing.is_empty():
 		return []
 	var crossing: Array = []
-	for entry_value in ship_reserve:
+	for entry_value in data.ship_reserve:
 		var entry: Dictionary = entry_value
 		var bns: Array = []
 		for bn in entry.get("bns", []):
@@ -593,14 +648,14 @@ func _apply_crossing_hull_losses(destroyed_by_type: Dictionary) -> void:
 		var requested := int(destroyed_by_type[ship_type_value])
 		if requested <= 0:
 			continue
-		var state: ShipState = fleet.get(ship_type, null)
+		var state: ShipState = data.fleet.get(ship_type, null)
 		if state == null:
 			continue
 		# Carriers (capacity > 0) lose hulls out of their cohorts; escorts out of the ready screen.
 		var ship_def: ShipDef = GameData.ship_defs_by_name.get(ship_type, null)
 		var applied: int
 		if ship_def != null and ship_def.is_carrier():
-			applied = SealiftResolver.remove_carrier_hulls(sealift_state, ship_type, requested)
+			applied = SealiftResolver.remove_carrier_hulls(data.sealift_state, ship_type, requested)
 		else:
 			applied = mini(requested, state.fleet_surviving_total)
 		state.destroyed += applied
@@ -618,18 +673,18 @@ func resolve_cleanup_phase() -> Dictionary:
 	# Pure work (flag reset, victory census + verdict, activity latch) lives in CleanupResolver;
 	# consumes no dice, so the golden RNG stream is unaffected.
 	var outcome := CleanupResolver.resolve(
-		antiship_systems, GameData.brigades, ship_reserve, GameData.victory_config,
-		turn_number, _china_has_landed)
-	_china_has_landed = bool(outcome["china_has_landed"])
-	last_cleanup_summary = outcome["summary"]
-	game_over = last_cleanup_summary.game_over
-	winner = last_cleanup_summary.winner
-	EventBus.cleanup_resolved.emit(last_cleanup_summary.to_dict())
-	return last_cleanup_summary.to_dict()
+		data.antiship_systems, GameData.brigades, data.ship_reserve, GameData.victory_config,
+		data.turn_number, data._china_has_landed)
+	data._china_has_landed = bool(outcome["china_has_landed"])
+	data.last_cleanup_summary = outcome["summary"]
+	data.game_over = data.last_cleanup_summary.game_over
+	data.winner = data.last_cleanup_summary.winner
+	EventBus.cleanup_resolved.emit(data.last_cleanup_summary.to_dict())
+	return data.last_cleanup_summary.to_dict()
 
 
 func _taiwan_battalion_census() -> Dictionary:
-	return CleanupResolver.census(GameData.brigades, ship_reserve, GameData.victory_config)
+	return CleanupResolver.census(GameData.brigades, data.ship_reserve, GameData.victory_config)
 
 
 # --- D5-A Frontline phase — redistribute Red brigades along a drawn polyline -------------------
@@ -652,11 +707,11 @@ func resolve_frontline_phase(polyline_coords: Array) -> Dictionary:
 		if brigade.team == Brigade.Team.RED and not brigade.destroyed:
 			candidate_brigades.append(brigade)
 
-	last_frontline_summary = FrontlineResolver.resolve(polyline_coords, _frontline_hex_centers(), candidate_brigades)
-	for brigade_id in last_frontline_summary.moves.keys():
-		GameData.set_brigade_hex(String(brigade_id), String(last_frontline_summary.moves[brigade_id]))
-	EventBus.frontline_resolved.emit(last_frontline_summary.to_dict())
-	return last_frontline_summary.to_dict()
+	data.last_frontline_summary = FrontlineResolver.resolve(polyline_coords, _frontline_hex_centers(), candidate_brigades)
+	for brigade_id in data.last_frontline_summary.moves.keys():
+		GameData.set_brigade_hex(String(brigade_id), String(data.last_frontline_summary.moves[brigade_id]))
+	EventBus.frontline_resolved.emit(data.last_frontline_summary.to_dict())
+	return data.last_frontline_summary.to_dict()
 
 
 func _active_red_battalion_units() -> Array:
@@ -677,7 +732,7 @@ func _active_red_battalion_units() -> Array:
 
 
 func _rebuild_ship_reserve() -> void:
-	ship_reserve = ShipReserveBuilder.build(GameData.red_ship_reserve, GameData.brigades)
+	data.ship_reserve = ShipReserveBuilder.build(GameData.red_ship_reserve, GameData.brigades)
 
 
 func _rebuild_sealift_state() -> void:
@@ -685,7 +740,7 @@ func _rebuild_sealift_state() -> void:
 	# escort_reload_time_turns > 0 (plan 0004 D5); otherwise it stays unmodelled (empty).
 	var crossing_config := AntishipLoaders.load_crossing_config(AntishipResolver.CROSSING_PATH)
 	var escort_interception: Dictionary = crossing_config.get("escort_interception", {})
-	sealift_state = SealiftStateBuilder.build(
+	data.sealift_state = SealiftStateBuilder.build(
 		GameData.red_followon_reserve, GameData.red_ship_reserve, GameData.brigades,
 		GameData.auto_seed_followon_pool, escort_interception, GameData.escort_reload_time_turns > 0)
 
@@ -695,25 +750,25 @@ func _rebuild_sealift_state() -> void:
 ## records the sailing fleet for the crossing, and reprojects the fleet ShipState bins from the
 ## advanced sealift state.
 func resolve_sealift_turn() -> void:
-	if sealift_state == null:
+	if data.sealift_state == null:
 		return
 	var ready_by_type: Dictionary = {}
-	for ship_type in fleet.keys():
-		ready_by_type[String(ship_type)] = int((fleet[ship_type] as ShipState).ready)
+	for ship_type in data.fleet.keys():
+		ready_by_type[String(ship_type)] = int((data.fleet[ship_type] as ShipState).ready)
 
 	_consume_jlsf_orders()
 	var outcome := SealiftResolver.resolve(
-		sealift_state, ship_reserve, ready_by_type, GameData.ship_defs)
+		data.sealift_state, data.ship_reserve, ready_by_type, GameData.ship_defs)
 
 	for entry_value in outcome["embarked_reserve_entries"]:
 		var entry: Dictionary = entry_value
 		# A JLSF deployment that got hulls this turn is now enroute (plan 0006).
-		if JlsfCargo.is_jlsf_entry(entry) and infrastructure_state != null:
+		if JlsfCargo.is_jlsf_entry(entry) and data.infrastructure_state != null:
 			var port_id := String(entry.get("port_id", ""))
-			if infrastructure_state.nodes.has(port_id):
-				infrastructure_state.nodes[port_id]["jlsf"] = InfrastructureState.JLSF_ENROUTE
+			if data.infrastructure_state.nodes.has(port_id):
+				data.infrastructure_state.nodes[port_id]["jlsf"] = InfrastructureState.JLSF_ENROUTE
 		_merge_reserve_entry(entry)
-	last_sealift_sent_by_type = outcome["sent_by_type"]
+	data.last_sealift_sent_by_type = outcome["sent_by_type"]
 	_project_sealift_onto_fleet()
 
 
@@ -721,15 +776,15 @@ func resolve_sealift_turn() -> void:
 ## pseudo-entries go to the FRONT of the mainland pool (logistics open the port gate before more
 ## troops help); JlsfCargo.queue_deployments owns ordering + marker flips.
 func _consume_jlsf_orders() -> void:
-	if infrastructure_state == null or sealift_state == null:
-		jlsf_orders.clear()
+	if data.infrastructure_state == null or data.sealift_state == null:
+		data.jlsf_orders.clear()
 		return
 	var entries := JlsfCargo.queue_deployments(
-		jlsf_orders, infrastructure_state, GameData.infrastructure, GameData.beaches,
+		data.jlsf_orders, data.infrastructure_state, GameData.infrastructure, GameData.beaches,
 		GameData.beach_to_to, GameData.auto_jlsf, GameData.jlsf_lift_bn_equiv)
-	jlsf_orders.clear()
+	data.jlsf_orders.clear()
 	for entry in entries:
-		sealift_state.mainland_pool.push_front(entry)
+		data.sealift_state.mainland_pool.push_front(entry)
 
 
 ## Merge a newly-embarked reserve entry into ship_reserve: append its BNs to the brigade's existing
@@ -737,12 +792,12 @@ func _consume_jlsf_orders() -> void:
 func _merge_reserve_entry(entry_value) -> void:
 	var entry: Dictionary = entry_value
 	var brigade_id := String(entry["brigade_id"])
-	for existing_value in ship_reserve:
+	for existing_value in data.ship_reserve:
 		var existing: Dictionary = existing_value
 		if String(existing["brigade_id"]) == brigade_id:
 			(existing["bns"] as Array).append_array(entry["bns"])
 			return
-	ship_reserve.append(entry)
+	data.ship_reserve.append(entry)
 
 
 ## Reproject the fleet ShipState bins from the sealift state (the single source of truth for where
@@ -752,23 +807,23 @@ func _project_sealift_onto_fleet() -> void:
 	var sent: Dictionary = {}
 	var offloading: Dictionary = {}
 	var returning: Dictionary = {}
-	for cohort_value in sealift_state.cohorts:
+	for cohort_value in data.sealift_state.cohorts:
 		var cohort: Dictionary = cohort_value
 		var bucket: Dictionary = sent if String(cohort["state"]) == SealiftState.STATE_SENT else offloading
 		for ship_type in (cohort["hulls_by_type"] as Dictionary).keys():
 			bucket[String(ship_type)] = int(bucket.get(String(ship_type), 0)) + int(cohort["hulls_by_type"][ship_type])
-	for ship_type in sealift_state.return_pipeline.keys():
-		for slot_value in (sealift_state.return_pipeline[ship_type] as Array):
+	for ship_type in data.sealift_state.return_pipeline.keys():
+		for slot_value in (data.sealift_state.return_pipeline[ship_type] as Array):
 			returning[String(ship_type)] = int(returning.get(String(ship_type), 0)) + int((slot_value as Dictionary)["count"])
 	# Escort types reloading SAMs are away from the screen: all their surviving hulls are busy
 	# (returning) until reload completes (plan 0004 D5).
-	for ship_type in sealift_state.escort_reload.keys():
-		var reloading_state: ShipState = fleet.get(String(ship_type), null)
+	for ship_type in data.sealift_state.escort_reload.keys():
+		var reloading_state: ShipState = data.fleet.get(String(ship_type), null)
 		if reloading_state != null:
 			returning[String(ship_type)] = int(returning.get(String(ship_type), 0)) + reloading_state.fleet_surviving_total
 
-	for ship_type in fleet.keys():
-		var state: ShipState = fleet[ship_type]
+	for ship_type in data.fleet.keys():
+		var state: ShipState = data.fleet[ship_type]
 		var ss := int(sent.get(String(ship_type), 0))
 		var of := int(offloading.get(String(ship_type), 0))
 		var rt := int(returning.get(String(ship_type), 0))
@@ -782,19 +837,19 @@ func _project_sealift_onto_fleet() -> void:
 
 
 func _rebuild_supply_state() -> void:
-	supply_state = SupplyStateBuilder.build(float(GameData.red_dos_start))
+	data.supply_state = SupplyStateBuilder.build(float(GameData.red_dos_start))
 
 
 func register_ship_losses(bn_equiv_lost: int) -> void:
-	pending_lost_at_sea = maxi(0, bn_equiv_lost)
+	data.pending_lost_at_sea = maxi(0, bn_equiv_lost)
 
 
 func _rebuild_fleet() -> void:
-	fleet = FleetBuilder.build(GameData.ship_defs)
+	data.fleet = FleetBuilder.build(GameData.ship_defs)
 
 
 func _apply_move_orders(team: Brigade.Team) -> void:
-	for order in orders[team]:
+	for order in data.orders[team]:
 		var move_order: MoveOrder = order
 		var brigade: Brigade = GameData.get_brigade(move_order.brigade_id)
 		GameData.set_brigade_hex(move_order.brigade_id, move_order.target_hex)
@@ -838,7 +893,7 @@ func _defender_combat_modifier(hex_id: String) -> float:
 
 # Delegating wrapper (test-called surface) — pure logic lives in CombatResolver.
 func _inject_supply_effectiveness(units: Array, team: int) -> void:
-	var pool: float = supply_state.current_dos_tons if supply_state != null else 1.0
+	var pool: float = data.supply_state.current_dos_tons if data.supply_state != null else 1.0
 	CombatResolver.inject_supply_effectiveness(units, team, pool, GameData.red_out_of_supply_effectiveness)
 
 
@@ -849,7 +904,7 @@ func _inject_supply_effectiveness(units: Array, team: int) -> void:
 func _resolve_combat_at(hex_id: String, dice: Dice) -> CombatSummary:
 	var attacker_brigades := _combat_contributors_for(Brigade.Team.RED, hex_id)
 	var defender_brigades := _combat_contributors_for(Brigade.Team.GREEN, hex_id)
-	var pool: float = supply_state.current_dos_tons if supply_state != null else 1.0
+	var pool: float = data.supply_state.current_dos_tons if data.supply_state != null else 1.0
 	# Terrain resolves at hex_id (the defended/contested hex), not the attacker's origin — the
 	# defender_modifier models fortification/cover of the ground being held, which belongs to the
 	# hex under attack regardless of which side started there.
@@ -898,7 +953,7 @@ func _combat_contributors_for(team: Brigade.Team, hex_id: String) -> Array:
 		contributors.append(brigade)
 		seen[brigade.id] = true
 
-	for commitment_value in commitments[team]:
+	for commitment_value in data.commitments[team]:
 		var commitment: CommitOrder = commitment_value
 		if commitment.target_hex != hex_id:
 			continue
@@ -918,11 +973,11 @@ func _brigade_ids(brigades: Array) -> Array[String]:
 
 
 func _brigade_has_pending_order(team: Brigade.Team, brigade_id: String) -> bool:
-	for pending_order in orders[team]:
+	for pending_order in data.orders[team]:
 		var typed_pending_order: MoveOrder = pending_order
 		if typed_pending_order.brigade_id == brigade_id:
 			return true
-	for pending_commitment in commitments[team]:
+	for pending_commitment in data.commitments[team]:
 		var typed_pending_commitment: CommitOrder = pending_commitment
 		if typed_pending_commitment.brigade_id == brigade_id:
 			return true
@@ -930,7 +985,7 @@ func _brigade_has_pending_order(team: Brigade.Team, brigade_id: String) -> bool:
 
 
 func _apply_feba_retreats() -> void:
-	for hex_id in last_contested_hexes:
+	for hex_id in data.last_contested_hexes:
 		var feba: float = GameData.hex_states[hex_id].feba_km
 		if absf(feba) < FEBA_RETREAT_THRESHOLD_KM:
 			continue
@@ -1011,7 +1066,7 @@ func _apply_casualty(casualty: Dictionary) -> void:
 ## returns a typed TurnResult. The caller remains in Phase.END and must call
 ## begin_next_turn() separately to advance.
 func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> TurnResult:
-	if phase != Phase.PLANNING:
+	if data.phase != Phase.PLANNING:
 		push_error("play_turn requires PLANNING phase")
 		return null
 
@@ -1023,18 +1078,18 @@ func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> Tur
 	resolve_turn(dice)
 
 	var result := TurnResult.new()
-	result.turn_number = turn_number
-	result.contested_hexes = last_contested_hexes.duplicate()
-	result.combat_summaries = last_combat_summaries.duplicate()
-	result.ijfs_summary = last_ijfs_summary.duplicate(true)
-	result.ijfs_writeback = last_ijfs_writeback.to_dict() if last_ijfs_writeback != null else {}
-	result.antiship_summary = last_antiship_summary.to_dict() if last_antiship_summary != null else {}
-	result.offload_summary = last_offload_summary.duplicate(true)
-	result.frontline_summary = last_frontline_summary.to_dict() if last_frontline_summary != null else {}
-	result.cleanup_summary = last_cleanup_summary.to_dict() if last_cleanup_summary != null else {}
+	result.turn_number = data.turn_number
+	result.contested_hexes = data.last_contested_hexes.duplicate()
+	result.combat_summaries = data.last_combat_summaries.duplicate()
+	result.ijfs_summary = data.last_ijfs_summary.duplicate(true)
+	result.ijfs_writeback = data.last_ijfs_writeback.to_dict() if data.last_ijfs_writeback != null else {}
+	result.antiship_summary = data.last_antiship_summary.to_dict() if data.last_antiship_summary != null else {}
+	result.offload_summary = data.last_offload_summary.duplicate(true)
+	result.frontline_summary = data.last_frontline_summary.to_dict() if data.last_frontline_summary != null else {}
+	result.cleanup_summary = data.last_cleanup_summary.to_dict() if data.last_cleanup_summary != null else {}
 	result.events = TurnEventLog.build(self)
-	result.game_over = game_over
-	result.winner = winner
+	result.game_over = data.game_over
+	result.winner = data.winner
 	return result
 
 
@@ -1048,7 +1103,7 @@ func _apply_order(order: Dictionary, team: Brigade.Team) -> void:
 			add_commit_order(team, String(order["brigade_id"]), String(order["target_hex"]))
 		"deploy_jlsf":
 			if team == Brigade.Team.RED:
-				jlsf_orders.append(String(order.get("port_id", "")))
+				data.jlsf_orders.append(String(order.get("port_id", "")))
 			else:
 				push_error("deploy_jlsf is a Red order")
 		_:
