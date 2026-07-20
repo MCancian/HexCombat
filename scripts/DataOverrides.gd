@@ -73,18 +73,21 @@ static func apply_map(active_map: Dictionary, path: String, parsed: Dictionary, 
 	for override_key: String in active_map.keys():
 		if override_key.begins_with(file_prefix):
 			var dot_path := override_key.trim_prefix(file_prefix)
-			_set_override(parsed, Array(dot_path.split(".")), active_map[override_key], override_key)
-			applied_tracker[override_key] = true
+			# Mark applied ONLY on success, so a bad dot-path is still reported by unapplied() where
+			# asserts are stripped (exported release) instead of silently swallowed.
+			if _set_override(parsed, Array(dot_path.split(".")), active_map[override_key], override_key):
+				applied_tracker[override_key] = true
 
 	return parsed
 
 
-## Recursively assign `value` at `parts` within `container`, per the shared JsonPath grammar (plain
-## dict key, all-elements array segment "beaches[]"/"beaches[*]", or indexed "beaches[2]"). An
-## all-elements segment fans out — writing every element is how one override sweeps e.g. every beach's
-## capacity at once. Fail-loud on any missing key / out-of-range index / type mismatch (write side: a
-## bad override path is a typo, never a default).
-static func _set_override(container: Variant, parts: Array, value: Variant, override_key: String) -> void:
+## Recursively assign `value` at `parts` within `container`, per the shared JsonPath grammar (see
+## `JsonPath` — plain key, all-elements array segment, or indexed; an all-elements segment fans out,
+## which is how one override sweeps e.g. every beach's capacity at once). Fail-loud on any missing key
+## / out-of-range index / type mismatch (write side: a bad override path is a typo, never a default).
+## Returns true when every write landed — the assert never survives debug, but the bool lets a release
+## build (asserts stripped) still leave the key out of applied_tracker so unapplied() flags it.
+static func _set_override(container: Variant, parts: Array, value: Variant, override_key: String) -> bool:
 	var segment := JsonPath.parse_segment(String(parts[0]))
 	var key: String = segment["key"]
 	var is_last := parts.size() == 1
@@ -92,30 +95,31 @@ static func _set_override(container: Variant, parts: Array, value: Variant, over
 	if not (container is Dictionary) or not (container as Dictionary).has(key):
 		push_error("Override path not found: %s (missing key '%s')" % [override_key, key])
 		assert(false, "Override path not found")
-		return
+		return false
 
 	if not segment["is_array"]:
 		if is_last:
 			container[key] = value
-		else:
-			_set_override(container[key], parts.slice(1), value, override_key)
-		return
+			return true
+		return _set_override(container[key], parts.slice(1), value, override_key)
 
 	var arr: Variant = container[key]
 	if not (arr is Array):
 		push_error("Override array segment on non-Array: %s at '%s'" % [override_key, key])
 		assert(false, "Override array segment on non-Array")
-		return
+		return false
 	var selection := JsonPath.select_indices(arr, segment["selector"])
 	if not selection["valid"]:
 		push_error("Override array selector invalid/out of range: %s (array size %d)" % [override_key, arr.size()])
 		assert(false, "Override array selector invalid/out of range")
-		return
+		return false
+	var ok := true
 	for index in selection["indices"]:
 		if is_last:
 			arr[index] = value
 		else:
-			_set_override(arr[index], parts.slice(1), value, override_key)
+			ok = _set_override(arr[index], parts.slice(1), value, override_key) and ok
+	return ok
 
 
 ## Returns any override keys that have not matched a loaded file. Checked at process end.

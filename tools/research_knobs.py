@@ -205,11 +205,14 @@ def knob_sensitivity(records, metric="red_win_rate"):
             value = knob_vector(record).get(knob_id)
             by_value.setdefault(value, []).append(record)
         per_value = {value: metric_fn(recs) for value, recs in by_value.items()}
+        counts = {value: len(recs) for value, recs in by_value.items()}
         spread = max(per_value.values()) - min(per_value.values()) if per_value else 0.0
         results.append({
             "knob": knob_id,
             "metric": metric,
             "per_value": per_value,
+            "counts": counts,
+            "min_bin_n": min(counts.values()) if counts else 0,
             "spread": spread,
             "n_values": len(per_value),
         })
@@ -230,14 +233,20 @@ def render_sensitivity_md(records, metric="red_win_rate"):
     if len(varying) > 1:
         lines.append("")
         lines.append("> **Caveat:** more than one knob varies across this set, so spreads may be "
-                     "confounded (co-varying knobs). Cleanest read is a set where one knob varies "
-                     "at a time — e.g. a single sweep grid.")
+                     "confounded (co-varying knobs). Cleanest read holds every other knob constant "
+                     "— i.e. a single-knob sweep, not a multi-knob grid.")
+    thin = [row["knob"] for row in ranked if row["min_bin_n"] < 3]
+    if thin:
+        lines.append("")
+        lines.append("> **Thin bins:** %s rank on a value backed by <3 games — the spread may be "
+                     "sampling noise, not signal. Read the per-value `n=` counts below." % (
+                         ", ".join("`%s`" % k for k in thin)))
     lines.append("")
-    lines.append("| Rank | Knob | Values | `%s` by value | Spread |" % metric)
+    lines.append("| Rank | Knob | Values | `%s` by value (n) | Spread |" % metric)
     lines.append("|---|---|---|---|---|")
     for i, row in enumerate(ranked, 1):
-        by_value = ", ".join("%s→%.3g" % (v, m) for v, m in sorted(row["per_value"].items(),
-                                                                    key=lambda kv: str(kv[0])))
+        by_value = ", ".join("%s→%.3g (n=%d)" % (v, m, row["counts"][v])
+                             for v, m in sorted(row["per_value"].items(), key=lambda kv: str(kv[0])))
         lines.append("| %d | `%s` | %d | %s | %.3g |" % (
             i, row["knob"], row["n_values"], by_value, row["spread"]))
     lines.append("")

@@ -115,6 +115,29 @@ class SensitivityTest(unittest.TestCase):
         md = rk.render_sensitivity_md(records, "red_win_rate")
         self.assertIn("Caveat", md)
 
+    def test_reports_per_bin_sample_counts(self) -> None:
+        records = [
+            _record("red", {"k": 0}), _record("green", {"k": 0}),  # value 0: n=2
+            _record("red", {"k": 1}),                              # value 1: n=1
+        ]
+        ranked = rk.knob_sensitivity(records, "red_win_rate")
+        row = ranked[0]
+        self.assertEqual(row["counts"][0], 2)
+        self.assertEqual(row["counts"][1], 1)
+        self.assertEqual(row["min_bin_n"], 1)
+        md = rk.render_sensitivity_md(records, "red_win_rate")
+        self.assertIn("n=2", md)
+        self.assertIn("n=1", md)
+
+    def test_thin_bin_warning_when_a_value_has_few_games(self) -> None:
+        # value 1 backed by a single game -> should be flagged, not silently trusted.
+        records = [
+            _record("red", {"k": 0}), _record("red", {"k": 0}), _record("red", {"k": 0}),
+            _record("green", {"k": 1}),
+        ]
+        md = rk.render_sensitivity_md(records, "red_win_rate")
+        self.assertIn("Thin bins", md)
+
 
 if __name__ == "__main__":
     result = unittest.main(argv=[sys.argv[0], "-v"], exit=False).result

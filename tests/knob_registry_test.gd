@@ -68,3 +68,35 @@ func test_llm_kinds_pass_through() -> void:
 
 func test_registry_version_is_positive() -> void:
 	assert_int(KnobRegistry.version()).is_greater(0)
+
+
+# --- read-side leniency: _extract (via resolve_path) returns null on a miss, never crashes ---
+
+func test_missing_key_resolves_null() -> void:
+	DataOverrides.set_map({})
+	var value: Variant = KnobRegistry.resolve_path(
+		"data/beaches.json:beaches[0].no_such_field", DEFAULT_SCENARIO, {})
+	assert_that(value).is_null()
+
+
+func test_array_index_out_of_range_resolves_null() -> void:
+	DataOverrides.set_map({})
+	# beaches has 9 entries; index 999 is out of range -> null, not a crash.
+	var value: Variant = KnobRegistry.resolve_path(
+		"data/beaches.json:beaches[999].capacity_battalions", DEFAULT_SCENARIO, {})
+	assert_that(value).is_null()
+
+
+func test_malformed_array_selector_resolves_null() -> void:
+	DataOverrides.set_map({})
+	var value: Variant = KnobRegistry.resolve_path(
+		"data/beaches.json:beaches[abc].capacity_battalions", DEFAULT_SCENARIO, {})
+	assert_that(value).is_null()
+
+
+func test_indexed_array_element_resolves_scalar() -> void:
+	DataOverrides.set_map({})
+	# beaches[1].capacity_battalions is a single beach's scalar capacity (positive).
+	var value: Variant = KnobRegistry.resolve_path(
+		"data/beaches.json:beaches[1].capacity_battalions", DEFAULT_SCENARIO, {})
+	assert_int(int(value)).is_greater(0)
