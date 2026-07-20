@@ -19,6 +19,14 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-19 — Plan 0015 shipped: parallelized verification gate (agent implementation).**
+  The gate's per-validator and per-GdUnit-suite phases now fan out across `os.cpu_count()` workers
+  via a single unified `tools/run_all_tests.py` (Python `concurrent.futures`), each Godot process
+  handed an isolated `--user-data-dir` to avoid class-cache contention; `run_all_tests.sh`/`.ps1`
+  are thin wrappers over it, so both boxes run identical gate logic. Teardown-flake tolerance and
+  phase semantics preserved. Verified ALL PHASES GREEN on Linux; Windows `.ps1` wrapper unrun
+  (same pending-Windows-gate caveat as plan 0013).
+
 - **2026-07-18 — Plan 0012 shipped: unified sweep extraction on the batch backend (agent
   implementation).** `run_sweep_cells.gd` deleted; every sweep cell is now a parallel
   `run_batch.py` set of standard `run_selfplay_game.gd` games, with `sweep_metrics.py` extracting
