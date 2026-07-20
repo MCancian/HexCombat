@@ -152,6 +152,15 @@ if result.returncode != 0 or not re.search(r'(?m)^PASS: batch runner validation 
 else:
     cecho("green", "Batch runner Python validation OK.")
 
+# ---- Research knobs Python validation (plan 0018: ledger + sensitivity) ----
+write_phase("Research knobs Python validation")
+rk_result = subprocess.run([sys.executable, os.path.join(SCRIPT_DIR, "validate_research_knobs.py")], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace", env=env)
+print(rk_result.stdout)
+if rk_result.returncode != 0 or not re.search(r'(?m)^PASS: research knobs validation succeeded$', rk_result.stdout):
+    failures.append(f"Research knobs validation: failed (exit {rk_result.returncode})")
+else:
+    cecho("green", "Research knobs Python validation OK.")
+
 # ---- Metrics Validation (dependency ceilings) ----
 write_phase("Metrics Validation (tools/gd_metrics.py --check-ceiling)")
 metrics_result = subprocess.run(
