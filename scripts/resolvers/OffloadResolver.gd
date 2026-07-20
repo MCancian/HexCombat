@@ -82,7 +82,7 @@ static func resolve(
 	var jlsf_arrivals: Array = []
 	for jlsf_entry_value in jlsf_entries:
 		var jlsf_entry: Dictionary = jlsf_entry_value
-		if String(owner_by_hex.get(String(jlsf_entry.get("beach_hex", "")), "")) == "red":
+		if String(owner_by_hex.get(String(jlsf_entry.get("beach_hex", "")), "")) == HexOwner.RED:
 			var bn_ids: Array = []
 			for bn_value in jlsf_entry.get("bns", []):
 				bn_ids.append(String((bn_value as Dictionary).get("id", "")))

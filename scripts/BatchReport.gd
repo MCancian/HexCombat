@@ -22,12 +22,12 @@ static func aggregate(records: Array) -> Dictionary:
 static func _condition_for(conditions: Dictionary, record: Dictionary) -> Dictionary:
 	var policies := _policy_ids(record)
 	var scenario_id := String(record.get("scenario_id", "?"))
-	var key := "%s|%s|%s" % [scenario_id, policies["red"], policies["green"]]
+	var key := "%s|%s|%s" % [scenario_id, policies[Brigade.TEAM_KEY_RED], policies[Brigade.TEAM_KEY_GREEN]]
 	if not conditions.has(key):
 		conditions[key] = {
 			"scenario_id": scenario_id,
-			"red_policy_id": policies["red"],
-			"green_policy_id": policies["green"],
+			"red_policy_id": policies[Brigade.TEAM_KEY_RED],
+			"green_policy_id": policies[Brigade.TEAM_KEY_GREEN],
 			"n": 0,
 			"seeds": [],
 			"commits": {},
@@ -46,15 +46,15 @@ static func _append_record(agg: Dictionary, record: Dictionary) -> void:
 	agg["commits"][String(record.get("commit", ""))] = true
 	if bool(record.get("game_over", false)):
 		match String(record.get("winner", "")):
-			"red": agg["red_wins"] += 1
-			"green": agg["green_wins"] += 1
+			Brigade.TEAM_KEY_RED: agg["red_wins"] += 1
+			Brigade.TEAM_KEY_GREEN: agg["green_wins"] += 1
 			_: agg["undecided"] += 1
 	else:
 		agg["undecided"] += 1
 	(agg["turns_played"] as Array).append(int(record.get("turns_played", 0)))
 	var census: Dictionary = record.get("census", {})
-	var red_census := int(census.get("red", 0))
-	var green_census := int(census.get("green", 0))
+	var red_census := int(census.get(Brigade.TEAM_KEY_RED, 0))
+	var green_census := int(census.get(Brigade.TEAM_KEY_GREEN, 0))
 	(agg["census_red"] as Array).append(red_census)
 	(agg["census_green"] as Array).append(green_census)
 	(agg["census_margin"] as Array).append(red_census - green_census)
@@ -73,14 +73,14 @@ static func _policy_ids(record: Dictionary) -> Dictionary:
 		"Game record must provide both red_policy_id and green_policy_id")
 	if has_red_policy:
 		return {
-			"red": String(record["red_policy_id"]),
-			"green": String(record["green_policy_id"]),
+			Brigade.TEAM_KEY_RED: String(record["red_policy_id"]),
+			Brigade.TEAM_KEY_GREEN: String(record["green_policy_id"]),
 		}
 	assert(record.has("policy_id"),
 		"Game record must provide per-seat policy IDs or legacy policy_id")
 	var legacy_policy := String(record["policy_id"])
 	assert(not legacy_policy.is_empty(), "Legacy policy_id must not be empty")
-	return {"red": legacy_policy, "green": legacy_policy}
+	return {Brigade.TEAM_KEY_RED: legacy_policy, Brigade.TEAM_KEY_GREEN: legacy_policy}
 
 
 ## Sum per-game loss totals out of the turn digests. Red is always the attacker in ground

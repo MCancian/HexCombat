@@ -23,12 +23,12 @@ plan to act, the closeout wasn't done.
 | 0013 | [One home for scenario files](0013-scenario-files-one-home.md) | Low (hygiene; needs a Windows gate run to close) | Ready |
 | 0016 | [Separate State Data from Autoload](0016-separate-state-data.md) | Medium (hygiene/architecture) | Superseded by 0014 |
 | 0018 | [Research Knob Tracking](0018-research-knob-tracking.md) | Medium (Research visibility) | Sketch |
-| 0020 | [Lowercase "red"/"green" team-token seam](0020-lowercase-team-token-seam.md) | Low (Tier A mechanical; Tier B needs USER design call) | Sketch |
 
 ## Archived
 
 | # | Plan | Status |
 |---|------|--------|
+| 0020 | [Lowercase "red"/"green" team-token seam](../archive/0020-lowercase-team-token-seam.md) | ✅ Shipped 2026-07-20 — Tier A: 3 resolver ownership reads onto `HexOwner.RED`. Tier B (USER Option 2): winner/census wire token gets its own home `Brigade.TEAM_KEY_RED`/`TEAM_KEY_GREEN` (const — used in `match` arms + dict keys), kept distinct from `HexOwner` ownership vocab; golden byte-stable |
 | 0019 | [Consolidate Brigade.Team→string converters](../archive/0019-team-string-seam.md) | ✅ Shipped 2026-07-20 — `Brigade.team_name(team)` static now owns the capitalized `"Red"/"Green"` mapping; six byte-identical local copies deleted and repointed; lowercase record serialization untouched; pure dedup, golden byte-stable; entry in `docs/DECISIONS.md` |
 | 0017 | [Move order validation off push_error](../archive/0017-validation-errors.md) | ✅ Shipped 2026-07-20 — `OrderValidator.add_move_order`/`add_commit_order` (+ `GameState` wrappers) return a typed `OrderResult` (`ok`/`code`/`message`, `scripts/model/OrderResult.gd`) instead of `push_error`; LLM API surfaces the rejection reason; 11 GdUnit assertions moved off `is_push_error` to `code`; golden byte-stable; facts in `docs/STATUS.md`, `docs/DECISIONS.md`, `docs/systems/turn-engine.md` + `llm-api-selfplay.md` |
 | 0015 | [Fully Parallelize Tests](../archive/0015-parallel-tests.md) | ✅ Shipped 2026-07-19 — unified `run_all_tests.py` using `concurrent.futures`, isolated Godot caches, wrapped `.sh` and `.ps1` |

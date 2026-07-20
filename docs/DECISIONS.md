@@ -19,6 +19,19 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-20 — Plan 0020 shipped: the lowercase `"red"/"green"` team-token seam consolidated,
+  two homes kept distinct (Tier A agent; Tier B USER design call — Option 2).** Tier A: the three
+  resolver hex-ownership *reads* that bypassed `HexOwner.RED` with a bare `"red"` (`OffloadResolver`,
+  `InfrastructureResolver` ×2) now use the const — ownership vocabulary already lived on `HexOwner`.
+  Tier B: the game-record `winner` field + team-keyed census/policy dicts got their own home —
+  `Brigade.TEAM_KEY_RED`/`TEAM_KEY_GREEN` consts (const, not a func, because the token appears in
+  `match` arms and dict keys where a call is illegal). USER chose Option 2: outcome/record token
+  (`Brigade`) is deliberately SEPARATE from hex-ownership (`HexOwner`) despite the shared spelling.
+  Producers + GDScript consumers repointed (VictoryConditions, CleanupResolver, GameNarrative,
+  BatchReport, run_selfplay_game.gd, LLMGameAPI parse guard). Python report tools keep their own
+  JSON-contract literals (language boundary). Golden byte-stable. `MineWarfareService.status_color`
+  traffic-light `"red"/"amber"/"green"` is not a team token — untouched.
+
 - **2026-07-20 — Plan 0019 shipped: the `Brigade.Team → "Red"/"Green"` display converter is now
   owned by the enum's owner (agent implementation).** Added `Brigade.team_name(team)` static; the
   six byte-identical local copies (`OrderValidator.team_to_string`, plus `_team_to_string`/`_team_str`

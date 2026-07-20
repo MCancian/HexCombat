@@ -27,14 +27,14 @@ static func render(record: Dictionary) -> String:
 	var census: Dictionary = record.get("census", {})
 	if bool(record.get("game_over", false)):
 		lines.append("**%s wins** after %d turn(s)%s — terminal census %d PLA : %d ROC battalions on Taiwan." % [
-			"Red" if String(record.get("winner", "")) == "red" else "Green",
+			"Red" if String(record.get("winner", "")) == Brigade.TEAM_KEY_RED else "Green",
 			digests.size(),
 			" (%s)" % String(record.get("victory_reason", "")) if String(record.get("victory_reason", "")) != "" else "",
-			int(census.get("red", 0)), int(census.get("green", 0)),
+			int(census.get(Brigade.TEAM_KEY_RED, 0)), int(census.get(Brigade.TEAM_KEY_GREEN, 0)),
 		])
 	else:
 		lines.append("Undecided at the %d-turn cap — census %d PLA : %d ROC battalions on Taiwan." % [
-			int(record.get("turns_requested", digests.size())), int(census.get("red", 0)), int(census.get("green", 0)),
+			int(record.get("turns_requested", digests.size())), int(census.get(Brigade.TEAM_KEY_RED, 0)), int(census.get(Brigade.TEAM_KEY_GREEN, 0)),
 		])
 	lines.append("")
 	return "\n".join(lines)

@@ -1,6 +1,6 @@
 ---
 title: "0020: The lowercase \"red\"/\"green\" team-token seam"
-status: "Sketch"
+status: "Shipped 2026-07-20"
 created: "2026-07-20"
 ---
 

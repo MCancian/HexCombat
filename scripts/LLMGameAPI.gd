@@ -405,7 +405,7 @@ static func _has_pending_order(team: Brigade.Team, brigade_id: String) -> bool:
 ## unknown value (the errors-count guard _parse_action_team relies on) before delegating.
 ## team_from_name itself is silent (RED default), so the validity check lives here.
 static func _parse_team_string(value: String, errors: Array[String]) -> Brigade.Team:
-	if value.to_lower() not in ["red", "green"]:
+	if value.to_lower() not in [Brigade.TEAM_KEY_RED, Brigade.TEAM_KEY_GREEN]:
 		errors.append("unknown team: %s" % value)
 	return Brigade.team_from_name(value)
 

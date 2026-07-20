@@ -23,7 +23,7 @@ static func tick(state: InfrastructureState, infra_defs: Dictionary, owner_by_he
 		var def_data: InfrastructureDef = def_val
 		var node_val: Variant = state.nodes[id]
 		var node: Dictionary = node_val
-		var is_red := String(owner_by_hex.get(def_data.hex_id, "")) == "red"
+		var is_red := String(owner_by_hex.get(def_data.hex_id, "")) == HexOwner.RED
 
 		# Seizure
 		if node["status"] == InfrastructureState.STATUS_TAIWANESE and is_red:
@@ -70,7 +70,7 @@ static func red_offload_nodes(state: InfrastructureState, infra_defs: Dictionary
 		if status != InfrastructureState.STATUS_DEGRADED and status != InfrastructureState.STATUS_OPERATIONAL:
 			continue
 		var owner: String = String(owner_by_hex.get(def_data.hex_id, ""))
-		if owner != "red":
+		if owner != HexOwner.RED:
 			continue
 		var rate: float = 0.0
 		if def_data.kind == "port":

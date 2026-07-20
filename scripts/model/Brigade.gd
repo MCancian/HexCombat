@@ -15,7 +15,17 @@ static func team_name(team: Team) -> String:
 ## Silent RED default for any non-"green" input (empty/unknown included) — callers that
 ## must reject unknown values validate before delegating (see LLMGameAPI._parse_team_string).
 static func team_from_name(name: String) -> Team:
-	return Team.GREEN if name.to_lower() == "green" else Team.RED
+	return Team.GREEN if name.to_lower() == TEAM_KEY_GREEN else Team.RED
+
+
+## Lowercase team tokens for the serialized game-record wire format — the `winner` field and
+## the team-keyed census / policy / aggregation dicts. This is a DISTINCT mapping from the
+## capitalized display strings above (team_name) and from HexOwner's hex-ownership vocabulary
+## (plan 0020, Option 2: two homes kept distinct — outcome/record token vs. ownership value,
+## even though the spelling coincides). Sole GDScript home for these tokens; the Python report
+## tools read the same JSON contract with their own literals (a language boundary).
+const TEAM_KEY_RED := "red"
+const TEAM_KEY_GREEN := "green"
 
 # Organization costs (percentage points). Tracked now; inert until wired into combat later.
 const MAX_ORGANIZATION := 100.0

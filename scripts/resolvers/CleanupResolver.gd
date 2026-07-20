@@ -42,7 +42,7 @@ static func census(brigades: Dictionary, ship_reserve: Array, victory_config: Di
 			red += bn
 		elif brigade.team == Brigade.Team.GREEN:
 			green += bn
-	return {"red": red, "green": green}
+	return {Brigade.TEAM_KEY_RED: red, Brigade.TEAM_KEY_GREEN: green}
 
 
 ## Returns {"summary": CleanupSummary, "china_has_landed": bool}. china_has_landed_before is the
@@ -70,10 +70,10 @@ static func resolve(
 	# Brigade per-turn flags are reset in begin_next_turn, so cleanup does not duplicate them.
 
 	var census_counts := census(brigades, ship_reserve, victory_config)
-	var china_has_landed := china_has_landed_before or int(census_counts["red"]) > 0
+	var china_has_landed := china_has_landed_before or int(census_counts[Brigade.TEAM_KEY_RED]) > 0
 	var arm := String(victory_config.get("loss_check_arm", "unconditional"))
 	var verdict := VictoryConditions.evaluate(
-		int(census_counts["red"]), int(census_counts["green"]), arm, turn_number, china_has_landed)
+		int(census_counts[Brigade.TEAM_KEY_RED]), int(census_counts[Brigade.TEAM_KEY_GREEN]), arm, turn_number, china_has_landed)
 
 	# Latch this turn's activity into prior-turn flags (for next turn's IJFS detection posture)
 	# BEFORE begin_next_turn resets the per-turn flags.
@@ -84,8 +84,8 @@ static func resolve(
 
 	var summary := CleanupSummary.new()
 	summary.antiship_systems_reset = reset_count
-	summary.china_battalions_on_taiwan = int(census_counts["red"])
-	summary.taiwan_battalions_on_taiwan = int(census_counts["green"])
+	summary.china_battalions_on_taiwan = int(census_counts[Brigade.TEAM_KEY_RED])
+	summary.taiwan_battalions_on_taiwan = int(census_counts[Brigade.TEAM_KEY_GREEN])
 	summary.game_over = bool(verdict["game_over"])
 	summary.winner = String(verdict["winner"])
 	summary.victory_reason = String(verdict["reason"])

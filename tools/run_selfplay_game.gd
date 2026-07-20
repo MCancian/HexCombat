@@ -76,7 +76,7 @@ func _initialize() -> void:
 		"GAME OK" if ok else "GAME FAILED",
 		ScenarioCatalog.scenario_id(game_data.scenario_path), red_policy_id, green_policy_id, base_seed,
 		record["turns_played"], turns, str(game_state.game_over), game_state.winner,
-		record["census"]["red"], record["census"]["green"],
+		record["census"][Brigade.TEAM_KEY_RED], record["census"][Brigade.TEAM_KEY_GREEN],
 	])
 	quit(0 if ok else 1)
 
@@ -107,8 +107,8 @@ func _build_record(game: Dictionary, game_state: Object, game_data: Object,
 		"winner": game_state.winner,
 		"victory_reason": cleanup.victory_reason if cleanup != null else "",
 		"census": {
-			"red": cleanup.china_battalions_on_taiwan if cleanup != null else 0,
-			"green": cleanup.taiwan_battalions_on_taiwan if cleanup != null else 0,
+			Brigade.TEAM_KEY_RED: cleanup.china_battalions_on_taiwan if cleanup != null else 0,
+			Brigade.TEAM_KEY_GREEN: cleanup.taiwan_battalions_on_taiwan if cleanup != null else 0,
 		},
 		"index_violations": game["index_violations"],
 		"overrides": DataOverrides.map(),

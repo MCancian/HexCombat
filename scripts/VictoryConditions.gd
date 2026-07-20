@@ -5,7 +5,7 @@ class_name VictoryConditions
 static func evaluate(china_bn: int, taiwan_bn: int, arm: String, turn_number: int, china_has_landed: bool) -> Dictionary:
 	# 1. Win: China has strict majority
 	if china_bn > taiwan_bn:
-		return {"game_over": true, "winner": "red", "reason": "china_majority"}
+		return {"game_over": true, "winner": Brigade.TEAM_KEY_RED, "reason": "china_majority"}
 
 	# 2. Compute armed status
 	var armed: bool
@@ -24,6 +24,6 @@ static func evaluate(china_bn: int, taiwan_bn: int, arm: String, turn_number: in
 		armed = true
 
 	if armed and china_bn == 0:
-		return {"game_over": true, "winner": "green", "reason": "china_eliminated"}
+		return {"game_over": true, "winner": Brigade.TEAM_KEY_GREEN, "reason": "china_eliminated"}
 
 	return {"game_over": false, "winner": "", "reason": ""}
