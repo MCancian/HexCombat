@@ -121,16 +121,17 @@ the full resolved value of every knob** (`record["knobs"]`, stamped by `run_self
 `KnobRegistry.resolve_all`) — that is what lets any two records, from any sweep, sit in one
 knob-space and be compared. Adding a knob is a deliberate one-line entry here (not auto-derived).
 
-- **Path grammar:** `scenario:<dot.path>` resolves against the *active* scenario file (variants
-  work); `<data/rel/file.json>:<dot.path>` is literal; a `name[]` segment projects the field over a
-  JSON array (dump-only). `kind` (`llm_model` / `prompt_hash`) replaces `path` for values not in a
-  data file — model id from `HEXCOMBAT_LLM_MODEL`, prompt hash stamped by `llm_sidecar.py` into the
-  JSONL log (capture-only; prompt-variant *files* are a follow-up).
-- **`sweepable`:** `true` = overridable via `DataOverrides` — **scalars and array knobs alike**.
-  `DataOverrides` addresses arrays with `name[*]`/`name[]` (every element) or `name[N]` (one), so
-  `run_sweep.py --knob "data/beaches.json:beaches[*].capacity_battalions" --values 2,4,6` scales all
-  nine beaches at once. `false` = dump-only (only the two capture `kind` knobs today). The read side
-  (`KnobRegistry._extract`) shares the same array grammar — single home for the syntax.
+- **Path grammar:** a `path` is a file prefix + a JsonPath. Prefix `scenario:` resolves against the
+  *active* scenario file (variants work); `<data/rel/file.json>:` is literal. The dot-path/array
+  grammar after the `:` is **JsonPath's — `scripts/JsonPath.gd` is the canonical spec** (`name[*]` /
+  `name[]` = every array element, `name[N]` = one), shared by the record dump (`KnobRegistry._extract`)
+  and `DataOverrides` so read and write can't drift. `kind` (`llm_model` / `prompt_hash`) replaces
+  `path` for values not in a data file — model id from `HEXCOMBAT_LLM_MODEL`, prompt hash stamped by
+  `llm_sidecar.py` into the JSONL log (capture-only; prompt-variant *files* are a follow-up).
+- **`sweepable`:** `true` = overridable via `DataOverrides` — **scalars and array knobs alike**
+  (array knobs fan out, so `run_sweep.py --knob "data/beaches.json:beaches[*].capacity_battalions"
+  --values 2,4,6` scales all nine beaches at once). `false` = dump-only (only the two capture `kind`
+  knobs today).
 - **Validator:** `tools/validate_knob_registry.gd` (in the gate) proves structure + that every
   path knob resolves against the default scenario — catches typos and the silent-default class.
   A scenario knob absent from the default (code-default applies) resolves null and is allowed.

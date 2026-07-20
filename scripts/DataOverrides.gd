@@ -79,29 +79,22 @@ static func apply_map(active_map: Dictionary, path: String, parsed: Dictionary, 
 	return parsed
 
 
-## Recursively assign `value` at `parts` within `container`. A segment is either a plain dict key
-## ("beach_base"), an all-elements array segment ("beaches[]" or "beaches[*]"), or an indexed array
-## segment ("beaches[2]"). Array segments fan out — an all-elements segment writes every element,
-## which is how a single override sweeps e.g. every beach's capacity at once. Fail-loud on any
-## missing key / out-of-range index / type mismatch (a bad override path is a typo, never a default).
+## Recursively assign `value` at `parts` within `container`, per the shared JsonPath grammar (plain
+## dict key, all-elements array segment "beaches[]"/"beaches[*]", or indexed "beaches[2]"). An
+## all-elements segment fans out — writing every element is how one override sweeps e.g. every beach's
+## capacity at once. Fail-loud on any missing key / out-of-range index / type mismatch (write side: a
+## bad override path is a typo, never a default).
 static func _set_override(container: Variant, parts: Array, value: Variant, override_key: String) -> void:
-	var segment := String(parts[0])
+	var segment := JsonPath.parse_segment(String(parts[0]))
+	var key: String = segment["key"]
 	var is_last := parts.size() == 1
-	var key := segment
-	var selector := ""
-	var has_bracket := segment.find("[") != -1
-	if has_bracket:
-		assert(segment.ends_with("]"), "Malformed array segment in override %s: %s" % [override_key, segment])
-		var bracket := segment.find("[")
-		key = segment.substr(0, bracket)
-		selector = segment.substr(bracket + 1, segment.length() - bracket - 2)
 
 	if not (container is Dictionary) or not (container as Dictionary).has(key):
 		push_error("Override path not found: %s (missing key '%s')" % [override_key, key])
 		assert(false, "Override path not found")
 		return
 
-	if not has_bracket:
+	if not segment["is_array"]:
 		if is_last:
 			container[key] = value
 		else:
@@ -113,25 +106,16 @@ static func _set_override(container: Variant, parts: Array, value: Variant, over
 		push_error("Override array segment on non-Array: %s at '%s'" % [override_key, key])
 		assert(false, "Override array segment on non-Array")
 		return
-	for index in _selected_indices(arr, selector, override_key):
+	var selection := JsonPath.select_indices(arr, segment["selector"])
+	if not selection["valid"]:
+		push_error("Override array selector invalid/out of range: %s (array size %d)" % [override_key, arr.size()])
+		assert(false, "Override array selector invalid/out of range")
+		return
+	for index in selection["indices"]:
 		if is_last:
 			arr[index] = value
 		else:
 			_set_override(arr[index], parts.slice(1), value, override_key)
-
-
-## Indices an array selector addresses: "" or "*" => every element; a digit string => that one index
-## (fail-loud if out of range).
-static func _selected_indices(arr: Array, selector: String, override_key: String) -> Array:
-	if selector.is_empty() or selector == "*":
-		return range(arr.size())
-	assert(selector.is_valid_int(), "Malformed array index '%s' in override %s" % [selector, override_key])
-	var index := int(selector)
-	if index < 0 or index >= arr.size():
-		push_error("Override array index out of range: %s (size %d)" % [override_key, arr.size()])
-		assert(false, "Override array index out of range")
-		return []
-	return [index]
 
 
 ## Returns any override keys that have not matched a loaded file. Checked at process end.

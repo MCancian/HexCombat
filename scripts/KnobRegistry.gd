@@ -6,10 +6,10 @@ extends RefCounted
 ## record can carry the full knob vector and be compared across sweeps. No autoload/GameState
 ## coupling — takes the active scenario path as an argument, which is what makes it unit-testable.
 ##
-## Path grammar (see registry.json header):
+## Registry-path prefixes (this class owns these; the dot-path/array grammar after the ":" is
+## JsonPath's — its header is the canonical spec):
 ##   "scenario:<dot.path>"          -> resolved against the ACTIVE scenario file (variants work)
 ##   "<data/rel/file.json>:<dot>"   -> a literal data file
-##   a segment "name[]"             -> projects the following field over a JSON array (dump-only)
 ## A "kind" entry (llm_model / prompt_hash) carries no path — the caller supplies those values.
 
 const REGISTRY_PATH := "res://data/knobs/registry.json"
@@ -82,37 +82,33 @@ static func _split_path(path: String, scenario_path: String) -> Array:
 	return ["res://" + path.substr(0, colon), path.substr(colon + 1)]
 
 
-## Traverse a parsed JSON value by dot path. An array segment mirrors the DataOverrides addressing
-## used for sweeping (single home for the grammar): "name[]"/"name[*]" projects the remaining path
-## over EVERY element (returns an Array); "name[N]" selects one element. Returns null on any missing
-## key, out-of-range index, or type mismatch.
+## Traverse a parsed JSON value by dot path, per the shared JsonPath grammar. An all-elements array
+## segment ("name[]"/"name[*]") projects the remaining path over EVERY element (returns an Array); an
+## indexed segment ("name[N]") selects one. Read side: lenient — null on any missing key, out-of-range
+## index, or type mismatch.
 static func _extract(parsed: Variant, dot_path: String) -> Variant:
 	var parts := dot_path.split(".")
 	var current: Variant = parsed
 	for i in range(parts.size()):
-		var part := parts[i]
-		var bracket := part.find("[")
-		if bracket != -1:
-			var key := part.substr(0, bracket)
-			var selector := part.substr(bracket + 1, part.length() - bracket - 2)
-			if not (current is Dictionary) or not (current as Dictionary).has(key):
-				return null
-			var arr: Variant = current[key]
-			if not (arr is Array):
-				return null
-			var rest := ".".join(parts.slice(i + 1))
-			if selector.is_empty() or selector == "*":
-				var projected: Array = []
-				for element in arr:
-					projected.append(element if rest.is_empty() else _extract(element, rest))
-				return projected
-			if not selector.is_valid_int():
-				return null
-			var index := int(selector)
-			if index < 0 or index >= arr.size():
-				return null
-			return arr[index] if rest.is_empty() else _extract(arr[index], rest)
-		if not (current is Dictionary) or not (current as Dictionary).has(part):
+		var segment := JsonPath.parse_segment(parts[i])
+		var key: String = segment["key"]
+		if not (current is Dictionary) or not (current as Dictionary).has(key):
 			return null
-		current = current[part]
+		if not segment["is_array"]:
+			current = current[key]
+			continue
+		var arr: Variant = current[key]
+		if not (arr is Array):
+			return null
+		var rest := ".".join(parts.slice(i + 1))
+		if JsonPath.is_all_elements(segment["selector"]):
+			var projected: Array = []
+			for element in arr:
+				projected.append(element if rest.is_empty() else _extract(element, rest))
+			return projected
+		var selection := JsonPath.select_indices(arr, segment["selector"])
+		if not selection["valid"]:
+			return null
+		var index: int = selection["indices"][0]
+		return arr[index] if rest.is_empty() else _extract(arr[index], rest)
 	return current

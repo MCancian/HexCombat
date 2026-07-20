@@ -19,6 +19,19 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-20 — Legibility refactor: the JSON path/array grammar has one home, `scripts/JsonPath.gd`
+  (agent, USER-requested reflection).** The array-segment grammar had been reimplemented in two
+  places (the read-side `KnobRegistry._extract` dump and the write-side `DataOverrides._set_override`)
+  with byte-identical segment parsing — the very seam class plans 0019/0020 removed, re-introduced by
+  the array-addressing follow-on. Extracted `JsonPath.parse_segment` / `select_indices` / `is_all_elements`
+  as the canonical grammar; both callers use them (read stays lenient/null, write stays fail-loud —
+  the asymmetry is why the traversals are NOT merged). Docs reconciled onto it: fixed the ghost method
+  reference (`registry.json` said `GameData.dump_tunables()`, which never existed — it is
+  `KnobRegistry.resolve_all`), removed stale "(dump-only)" array claims from the config skill +
+  `KnobRegistry` header, pointed the four grammar re-specs at the JsonPath header, unified the
+  `beach_capacities` path/label on `beaches[*]`, and dropped array-sweeping from the README follow-ups.
+  Pure internal move under existing tests; golden byte-stable.
+
 - **2026-07-20 — Plan 0018 follow-on: array knobs are now first-class sweepable (agent, USER-requested).**
   `DataOverrides` learned array-segment addressing once — `name[*]`/`name[]` (every element) and
   `name[N]` (one) — so any array knob is sweepable with no per-knob code; `KnobRegistry._extract`
