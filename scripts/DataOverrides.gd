@@ -73,28 +73,65 @@ static func apply_map(active_map: Dictionary, path: String, parsed: Dictionary, 
 	for override_key: String in active_map.keys():
 		if override_key.begins_with(file_prefix):
 			var dot_path := override_key.trim_prefix(file_prefix)
-			var parts := dot_path.split(".")
-			
-			var current: Dictionary = parsed
-			for i in range(parts.size() - 1):
-				var part := parts[i]
-				if not current.has(part):
-					push_error("Override path not found: %s in %s" % [override_key, path])
-					assert(false, "Override path not found")
-				if typeof(current[part]) != TYPE_DICTIONARY:
-					push_error("Override path traverses non-Dictionary: %s at %s" % [override_key, part])
-					assert(false, "Override path traverses non-Dictionary")
-				current = current[part]
-			
-			var final_part := parts[-1]
-			if not current.has(final_part):
-				push_error("Override path final key not found: %s in %s" % [override_key, path])
-				assert(false, "Override path final key not found")
-			
-			current[final_part] = active_map[override_key]
+			_set_override(parsed, Array(dot_path.split(".")), active_map[override_key], override_key)
 			applied_tracker[override_key] = true
-			
+
 	return parsed
+
+
+## Recursively assign `value` at `parts` within `container`. A segment is either a plain dict key
+## ("beach_base"), an all-elements array segment ("beaches[]" or "beaches[*]"), or an indexed array
+## segment ("beaches[2]"). Array segments fan out — an all-elements segment writes every element,
+## which is how a single override sweeps e.g. every beach's capacity at once. Fail-loud on any
+## missing key / out-of-range index / type mismatch (a bad override path is a typo, never a default).
+static func _set_override(container: Variant, parts: Array, value: Variant, override_key: String) -> void:
+	var segment := String(parts[0])
+	var is_last := parts.size() == 1
+	var key := segment
+	var selector := ""
+	var has_bracket := segment.find("[") != -1
+	if has_bracket:
+		assert(segment.ends_with("]"), "Malformed array segment in override %s: %s" % [override_key, segment])
+		var bracket := segment.find("[")
+		key = segment.substr(0, bracket)
+		selector = segment.substr(bracket + 1, segment.length() - bracket - 2)
+
+	if not (container is Dictionary) or not (container as Dictionary).has(key):
+		push_error("Override path not found: %s (missing key '%s')" % [override_key, key])
+		assert(false, "Override path not found")
+		return
+
+	if not has_bracket:
+		if is_last:
+			container[key] = value
+		else:
+			_set_override(container[key], parts.slice(1), value, override_key)
+		return
+
+	var arr: Variant = container[key]
+	if not (arr is Array):
+		push_error("Override array segment on non-Array: %s at '%s'" % [override_key, key])
+		assert(false, "Override array segment on non-Array")
+		return
+	for index in _selected_indices(arr, selector, override_key):
+		if is_last:
+			arr[index] = value
+		else:
+			_set_override(arr[index], parts.slice(1), value, override_key)
+
+
+## Indices an array selector addresses: "" or "*" => every element; a digit string => that one index
+## (fail-loud if out of range).
+static func _selected_indices(arr: Array, selector: String, override_key: String) -> Array:
+	if selector.is_empty() or selector == "*":
+		return range(arr.size())
+	assert(selector.is_valid_int(), "Malformed array index '%s' in override %s" % [selector, override_key])
+	var index := int(selector)
+	if index < 0 or index >= arr.size():
+		push_error("Override array index out of range: %s (size %d)" % [override_key, arr.size()])
+		assert(false, "Override array index out of range")
+		return []
+	return [index]
 
 
 ## Returns any override keys that have not matched a loaded file. Checked at process end.

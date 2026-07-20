@@ -126,10 +126,11 @@ knob-space and be compared. Adding a knob is a deliberate one-line entry here (n
   JSON array (dump-only). `kind` (`llm_model` / `prompt_hash`) replaces `path` for values not in a
   data file — model id from `HEXCOMBAT_LLM_MODEL`, prompt hash stamped by `llm_sidecar.py` into the
   JSONL log (capture-only; prompt-variant *files* are a follow-up).
-- **`sweepable`:** `true` = scalar single-path, overridable today via `DataOverrides`. `false` =
-  dump-only — recorded but not yet swept. Array knobs (`beaches[].capacity_battalions`) are `false`
-  because `DataOverrides` traverses dicts only; sweeping them needs array-override support (0018
-  follow-up), NOT a new home.
+- **`sweepable`:** `true` = overridable via `DataOverrides` — **scalars and array knobs alike**.
+  `DataOverrides` addresses arrays with `name[*]`/`name[]` (every element) or `name[N]` (one), so
+  `run_sweep.py --knob "data/beaches.json:beaches[*].capacity_battalions" --values 2,4,6` scales all
+  nine beaches at once. `false` = dump-only (only the two capture `kind` knobs today). The read side
+  (`KnobRegistry._extract`) shares the same array grammar — single home for the syntax.
 - **Validator:** `tools/validate_knob_registry.gd` (in the gate) proves structure + that every
   path knob resolves against the default scenario — catches typos and the silent-default class.
   A scenario knob absent from the default (code-default applies) resolves null and is allowed.

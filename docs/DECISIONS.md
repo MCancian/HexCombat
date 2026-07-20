@@ -19,6 +19,16 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-20 — Plan 0018 follow-on: array knobs are now first-class sweepable (agent, USER-requested).**
+  `DataOverrides` learned array-segment addressing once — `name[*]`/`name[]` (every element) and
+  `name[N]` (one) — so any array knob is sweepable with no per-knob code; `KnobRegistry._extract`
+  shares the same grammar for the record dump (single home for the syntax). Flipped `beach_capacities`
+  to `sweepable: true` (the only change to the registry): `run_sweep.py --knob
+  "data/beaches.json:beaches[*].capacity_battalions"` scales all nine beaches at once. Verified
+  end-to-end (a real capacity sweep records the uniform vector; `capacity_battalions` is live via
+  `OffloadCalculator.beach_capacity_bns`). Golden byte-stable (arrays only touched when an override
+  targets them). Remaining 0018 follow-up: prompt-variant files.
+
 - **2026-07-20 — Plan 0018 shipped: research-knob tracking so all sweeps are comparable (agent
   implementation; USER design calls).** Curated knob registry `data/knobs/registry.json` (23 knobs);
   every game record now carries the full resolved knob vector `record["knobs"]` (via new pure

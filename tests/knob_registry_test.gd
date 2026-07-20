@@ -46,6 +46,19 @@ func test_override_shows_through_and_others_hold_default() -> void:
 	assert_float(float(knobs["feba_base_km"])).is_equal(3.5)    # untouched -> default
 
 
+func test_array_knob_sweeps_all_beaches() -> void:
+	# beaches[*] all-elements override -> every beach capacity becomes the swept value, and the dump
+	# records the resulting uniform vector (array knobs are now first-class sweepable, plan 0018 f/u).
+	DataOverrides.set_map({
+		"data/beaches.json:beaches[*].capacity_battalions": 5,
+	})
+	var knobs := KnobRegistry.resolve_all(DEFAULT_SCENARIO)
+	var capacities: Variant = knobs["beach_capacities"]
+	assert_bool(capacities is Array).is_true()
+	for capacity in capacities:
+		assert_int(int(capacity)).is_equal(5)
+
+
 func test_llm_kinds_pass_through() -> void:
 	DataOverrides.set_map({})
 	var knobs := KnobRegistry.resolve_all(DEFAULT_SCENARIO, "deepseek-v4-flash", "abc123")

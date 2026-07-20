@@ -82,25 +82,36 @@ static func _split_path(path: String, scenario_path: String) -> Array:
 	return ["res://" + path.substr(0, colon), path.substr(colon + 1)]
 
 
-## Traverse a parsed JSON value by dot path. One "name[]" segment projects the remaining path over
-## each array element (returns an Array). Returns null on any missing key or type mismatch.
+## Traverse a parsed JSON value by dot path. An array segment mirrors the DataOverrides addressing
+## used for sweeping (single home for the grammar): "name[]"/"name[*]" projects the remaining path
+## over EVERY element (returns an Array); "name[N]" selects one element. Returns null on any missing
+## key, out-of-range index, or type mismatch.
 static func _extract(parsed: Variant, dot_path: String) -> Variant:
 	var parts := dot_path.split(".")
 	var current: Variant = parsed
 	for i in range(parts.size()):
 		var part := parts[i]
-		if part.ends_with("[]"):
-			var key := part.substr(0, part.length() - 2)
+		var bracket := part.find("[")
+		if bracket != -1:
+			var key := part.substr(0, bracket)
+			var selector := part.substr(bracket + 1, part.length() - bracket - 2)
 			if not (current is Dictionary) or not (current as Dictionary).has(key):
 				return null
 			var arr: Variant = current[key]
 			if not (arr is Array):
 				return null
 			var rest := ".".join(parts.slice(i + 1))
-			var projected: Array = []
-			for element in arr:
-				projected.append(element if rest.is_empty() else _extract(element, rest))
-			return projected
+			if selector.is_empty() or selector == "*":
+				var projected: Array = []
+				for element in arr:
+					projected.append(element if rest.is_empty() else _extract(element, rest))
+				return projected
+			if not selector.is_valid_int():
+				return null
+			var index := int(selector)
+			if index < 0 or index >= arr.size():
+				return null
+			return arr[index] if rest.is_empty() else _extract(arr[index], rest)
 		if not (current is Dictionary) or not (current as Dictionary).has(part):
 			return null
 		current = current[part]

@@ -11,6 +11,8 @@ func _initialize() -> void:
 	_validate_nested_path()
 	_validate_address_normalization()
 	_validate_unapplied_tracking()
+	_validate_array_all_elements()
+	_validate_array_indexed_element()
 	_finish()
 
 
@@ -75,6 +77,34 @@ func _validate_unapplied_tracking() -> void:
 		_fail("Unapplied tracking failed: expected [data/other.json:missing], got %s" % unapplied)
 	
 	print("  Unapplied tracking OK")
+
+
+func _validate_array_all_elements() -> void:
+	# "beaches[*].capacity" (and the "[]" alias) must set the field on EVERY element — the mechanism
+	# that makes an array knob (e.g. beach capacity) sweepable with one override.
+	for selector in ["*", ""]:
+		var parsed: Dictionary = {"beaches": [{"cap": 2}, {"cap": 4}, {"cap": 2}]}
+		var map := {"data/beaches.json:beaches[%s].cap" % selector: 6}
+		var tracker := {}
+		var applied := DataOverrides.apply_map(map, "data/beaches.json", parsed.duplicate(true), tracker)
+		for beach in applied["beaches"]:
+			if beach["cap"] != 6:
+				_fail("Array all-elements override [%s] missed an element: %s" % [selector, applied["beaches"]])
+		if not tracker.has("data/beaches.json:beaches[%s].cap" % selector):
+			_fail("Array all-elements override [%s] not tracked" % selector)
+	print("  Array all-elements override OK")
+
+
+func _validate_array_indexed_element() -> void:
+	# "beaches[1].cap" must touch ONLY element 1.
+	var parsed: Dictionary = {"beaches": [{"cap": 2}, {"cap": 4}, {"cap": 2}]}
+	var map := {"data/beaches.json:beaches[1].cap": 9}
+	var applied := DataOverrides.apply_map(map, "data/beaches.json", parsed.duplicate(true), {})
+	if applied["beaches"][1]["cap"] != 9:
+		_fail("Indexed override did not set element 1: %s" % applied["beaches"])
+	if applied["beaches"][0]["cap"] != 2 or applied["beaches"][2]["cap"] != 2:
+		_fail("Indexed override touched other elements: %s" % applied["beaches"])
+	print("  Array indexed override OK")
 
 
 func _fail(message: String) -> void:

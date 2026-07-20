@@ -188,8 +188,9 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   `... sensitivity --records reports/ --metric red_win_rate|census_margin` ranks which varying knobs
   move outcomes most (confounding caveat when >1 co-varies). Registry integrity + path resolution
   gated by `tools/validate_knob_registry.gd`; the analysis tools by `tools/validate_research_knobs.py`.
-  Sweepable = scalar single-path knobs; array knobs (beach capacity) are dump-only until
-  `DataOverrides` grows array-addressing (0018 follow-up).
+  `DataOverrides` addresses arrays (`name[*]`/`name[]` = all elements, `name[N]` = one), so array
+  knobs are first-class sweepable too — e.g. `--knob "data/beaches.json:beaches[*].capacity_battalions"`
+  scales every beach at once; `KnobRegistry._extract` shares the grammar for the record dump.
 - **`roc_full_defense` scenario** — variant placing all 32 ROC brigades (124 battalions) at their
   real garrison hexes vs the default's 4 PLA amphibious brigades; select with
   `--scenario=roc_full_defense`. Gives AI-vs-AI games a multi-turn fight instead of the default
