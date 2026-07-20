@@ -10,6 +10,13 @@ enum Team { RED, GREEN }
 static func team_name(team: Team) -> String:
 	return "Green" if team == Team.GREEN else "Red"
 
+
+## Inverse of team_name: parses a team display string (case-insensitive) to the enum.
+## Silent RED default for any non-"green" input (empty/unknown included) — callers that
+## must reject unknown values validate before delegating (see LLMGameAPI._parse_team_string).
+static func team_from_name(name: String) -> Team:
+	return Team.GREEN if name.to_lower() == "green" else Team.RED
+
 # Organization costs (percentage points). Tracked now; inert until wired into combat later.
 const MAX_ORGANIZATION := 100.0
 const ADMIN_MOVE_ORG_COST := 100.0      # administrative move: -100%

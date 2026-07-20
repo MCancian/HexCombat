@@ -206,7 +206,7 @@ func _load_oob_file(path: String) -> void:
 		var brigade: Brigade = BrigadeResource.new()
 		brigade.id = brigade_id
 		brigade.name = brigade_data.get("name", "")
-		brigade.team = _parse_team(brigade_data.get("team", "Red"))
+		brigade.team = Brigade.team_from_name(brigade_data.get("team", "Red"))
 		var to_number_val: Variant = brigade_data.get("to_number")  # PLA brigades store null (at sea)
 		brigade.to_number = int(to_number_val) if to_number_val != null else 0
 		brigade.nato_type = brigade_data.get("nato_type", "")
@@ -274,7 +274,7 @@ func load_scenario(path: String) -> void:
 			push_error("Scenario placement references unknown brigade_id: %s" % brigade_id)
 			continue
 
-		var placement_team := _parse_team(String(placement.get("team", "")))
+		var placement_team := Brigade.team_from_name(String(placement.get("team", "")))
 		if placement_team != brigade.team:
 			push_error("Scenario placement team mismatch for %s: placement=%s OOB=%s" % [brigade_id, String(placement.get("team", "")), Brigade.team_name(brigade.team)])
 
@@ -716,14 +716,6 @@ func _add_brigade_to_hex(brigade_id: String, hex_id: String) -> void:
 		brigades_by_hex[hex_id] = []
 	if brigade_id not in brigades_by_hex[hex_id]:
 		brigades_by_hex[hex_id].append(brigade_id)
-
-
-func _parse_team(team_value: String) -> Brigade.Team:
-	match team_value.to_lower():
-		"green":
-			return Brigade.Team.GREEN
-		_:
-			return Brigade.Team.RED
 
 
 ## Read-only consistency check: verifies cross-references between the `brigades`

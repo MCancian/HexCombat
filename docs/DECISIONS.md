@@ -24,8 +24,13 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   six byte-identical local copies (`OrderValidator.team_to_string`, plus `_team_to_string`/`_team_str`
   in `GameData`, `GameController`, `InfoPanel`, `LLMGameAPI`, `TurnEventLog`) deleted and repointed
   to it. Lowercase `"red"/"green"` record serialization is a distinct mapping, untouched. Pure dedup;
-  golden byte-stable; no STATUS change. `LLMGameAPI._parse_team_string` (string→Team, appends parse
-  errors) left as-is — API-layer concern, not folded in.
+  golden byte-stable; no STATUS change.
+
+- **2026-07-20 — Plan 0019 follow-on: the inverse `string → Brigade.Team` parser folded onto
+  `Brigade` too (agent implementation).** Added `Brigade.team_from_name(name)` (case-insensitive,
+  silent RED default). `GameData._parse_team` deleted (both callers inlined); `LLMGameAPI._parse_team_string`
+  reduced to a thin wrapper that appends the unknown-team parse error (the guard `_parse_action_team`
+  relies on) then delegates. Input-side only; golden byte-stable.
 
 - **2026-07-20 — Plan 0017 shipped: order validation returns a typed `OrderResult`, not
   `push_error` (agent implementation).** `OrderValidator.add_move_order` / `add_commit_order` (and

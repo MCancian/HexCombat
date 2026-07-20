@@ -401,15 +401,13 @@ static func _has_pending_order(team: Brigade.Team, brigade_id: String) -> bool:
 	return false
 
 
+## Thin API-layer wrapper over Brigade.team_from_name: appends a parse error for an
+## unknown value (the errors-count guard _parse_action_team relies on) before delegating.
+## team_from_name itself is silent (RED default), so the validity check lives here.
 static func _parse_team_string(value: String, errors: Array[String]) -> Brigade.Team:
-	match value.to_lower():
-		"red":
-			return Brigade.Team.RED
-		"green":
-			return Brigade.Team.GREEN
-		_:
-			errors.append("unknown team: %s" % value)
-			return Brigade.Team.RED
+	if value.to_lower() not in ["red", "green"]:
+		errors.append("unknown team: %s" % value)
+	return Brigade.team_from_name(value)
 
 
 static func _phase_to_string(phase: int) -> String:
