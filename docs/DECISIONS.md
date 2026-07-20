@@ -19,6 +19,14 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-20 — Plan 0019 shipped: the `Brigade.Team → "Red"/"Green"` display converter is now
+  owned by the enum's owner (agent implementation).** Added `Brigade.team_name(team)` static; the
+  six byte-identical local copies (`OrderValidator.team_to_string`, plus `_team_to_string`/`_team_str`
+  in `GameData`, `GameController`, `InfoPanel`, `LLMGameAPI`, `TurnEventLog`) deleted and repointed
+  to it. Lowercase `"red"/"green"` record serialization is a distinct mapping, untouched. Pure dedup;
+  golden byte-stable; no STATUS change. `LLMGameAPI._parse_team_string` (string→Team, appends parse
+  errors) left as-is — API-layer concern, not folded in.
+
 - **2026-07-20 — Plan 0017 shipped: order validation returns a typed `OrderResult`, not
   `push_error` (agent implementation).** `OrderValidator.add_move_order` / `add_commit_order` (and
   their `GameState` wrappers) now return `OrderResult` (`ok` / `code`:enum / `message`; new

@@ -25,7 +25,7 @@ static func add_move_order(state: GameStateData, team: Brigade.Team, brigade_id:
 	if brigade == null:
 		return OrderResult.reject(OrderResult.Code.UNKNOWN_BRIGADE, "Move order references unknown brigade_id: %s" % brigade_id)
 	if brigade.team != team:
-		return OrderResult.reject(OrderResult.Code.TEAM_MISMATCH, "Move order team mismatch for %s: order=%s brigade=%s" % [brigade_id, team_to_string(team), team_to_string(brigade.team)])
+		return OrderResult.reject(OrderResult.Code.TEAM_MISMATCH, "Move order team mismatch for %s: order=%s brigade=%s" % [brigade_id, Brigade.team_name(team), Brigade.team_name(brigade.team)])
 	if target_hex not in GameData.hex_lookup:
 		return OrderResult.reject(OrderResult.Code.UNKNOWN_HEX, "Move order references unknown target_hex: %s" % target_hex)
 	if mode != Movement.MODE_TACTICAL and mode != Movement.MODE_ADMINISTRATIVE:
@@ -56,7 +56,7 @@ static func add_commit_order(state: GameStateData, team: Brigade.Team, brigade_i
 	if brigade == null:
 		return OrderResult.reject(OrderResult.Code.UNKNOWN_BRIGADE, "Commit order references unknown brigade_id: %s" % brigade_id)
 	if brigade.team != team:
-		return OrderResult.reject(OrderResult.Code.TEAM_MISMATCH, "Commit order team mismatch for %s: order=%s brigade=%s" % [brigade_id, team_to_string(team), team_to_string(brigade.team)])
+		return OrderResult.reject(OrderResult.Code.TEAM_MISMATCH, "Commit order team mismatch for %s: order=%s brigade=%s" % [brigade_id, Brigade.team_name(team), Brigade.team_name(brigade.team)])
 	if brigade.destroyed:
 		return OrderResult.reject(OrderResult.Code.DESTROYED, "Destroyed brigade cannot commit: %s" % brigade_id)
 	if brigade.moved_admin_this_turn:
@@ -113,11 +113,3 @@ static func pending_order_conflict(state: GameStateData, team: Brigade.Team, bri
 		if typed_pending_commitment.brigade_id == brigade_id:
 			return OrderResult.reject(OrderResult.Code.DUPLICATE_COMMIT, "Brigade already has a pending commit order this turn: %s" % brigade_id)
 	return OrderResult.accept()
-
-
-static func team_to_string(team: Brigade.Team) -> String:
-	match team:
-		Brigade.Team.GREEN:
-			return "Green"
-		_:
-			return "Red"

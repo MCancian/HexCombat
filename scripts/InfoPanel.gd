@@ -59,7 +59,7 @@ func _render() -> void:
 			if brigade == null:
 				push_error("Hex '%s' references unknown brigade_id '%s'" % [selected_hex_id, String(brigade_id)])
 				continue
-			lines.append("- %s (%s)" % [brigade.name, _team_to_string(brigade.team)])
+			lines.append("- %s (%s)" % [brigade.name, Brigade.team_name(brigade.team)])
 
 	if not selected_brigade_id.is_empty():
 		lines.append("")
@@ -77,7 +77,7 @@ func _append_brigade_section(lines: Array[String], brigade_id: String) -> void:
 	lines.append("[b]Brigade[/b]")
 	lines.append("ID: %s" % brigade.id)
 	lines.append("Name: %s" % brigade.name)
-	lines.append("Team: %s" % _team_to_string(brigade.team))
+	lines.append("Team: %s" % Brigade.team_name(brigade.team))
 	lines.append("NATO type: %s" % brigade.nato_type)
 	lines.append("Battalions: %d" % brigade.get_battalion_count())
 	lines.append("Composition:")
@@ -86,14 +86,3 @@ func _append_brigade_section(lines: Array[String], brigade_id: String) -> void:
 	else:
 		for battalion in brigade.composition:
 			lines.append("- %s x %d" % [battalion.type, battalion.qty])
-
-
-func _team_to_string(team: Brigade.Team) -> String:
-	match team:
-		Brigade.Team.GREEN:
-			return "Green"
-		Brigade.Team.RED:
-			return "Red"
-		_:
-			push_error("Unknown brigade team: %d" % team)
-			return "Unknown"

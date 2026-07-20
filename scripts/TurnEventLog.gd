@@ -22,7 +22,7 @@ static func build(state: GameStateType) -> Array[TurnEvent]:
 	for team in [Brigade.Team.RED, Brigade.Team.GREEN]:
 		for order in state.orders_for(team):
 			var mo: MoveOrder = order
-			events.append(_event(seq, "move", mo.target_hex, _team_str(team), {
+			events.append(_event(seq, "move", mo.target_hex, Brigade.team_name(team), {
 				"brigade_id": mo.brigade_id,
 				"target_hex": mo.target_hex,
 				"mode": mo.mode,
@@ -32,7 +32,7 @@ static func build(state: GameStateType) -> Array[TurnEvent]:
 	for team in [Brigade.Team.RED, Brigade.Team.GREEN]:
 		for c in state.commitments_for(team):
 			var co: CommitOrder = c
-			events.append(_event(seq, "commit", co.target_hex, _team_str(team), {
+			events.append(_event(seq, "commit", co.target_hex, Brigade.team_name(team), {
 				"brigade_id": co.brigade_id,
 				"target_hex": co.target_hex,
 			}))
@@ -62,9 +62,3 @@ static func _event(seq: int, kind: String, hex_id: String, team: String, data: D
 	e.team = team
 	e.data = data.duplicate(true)
 	return e
-
-
-static func _team_str(team: Brigade.Team) -> String:
-	if team == Brigade.Team.GREEN:
-		return "Green"
-	return "Red"

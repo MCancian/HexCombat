@@ -145,18 +145,10 @@ func _emit_commit_options(target_hex: String) -> void:
 			options.append({
 				"brigade_id": brigade_id,
 				"team": team,
-				"team_string": _team_to_string(team),
+				"team_string": Brigade.team_name(team),
 				"name": brigade.name
 			})
 	EventBus.commit_options_changed.emit(target_hex, options)
-
-
-func _team_to_string(team: Brigade.Team) -> String:
-	match team:
-		Brigade.Team.GREEN:
-			return "Green"
-		_:
-			return "Red"
 
 
 func _update_turn_status() -> void:

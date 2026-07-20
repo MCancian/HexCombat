@@ -225,7 +225,7 @@ static func _brigade_observations() -> Array:
 		result.append({
 			"id": brigade.id,
 			"name": brigade.name,
-			"team": _team_to_string(brigade.team),
+			"team": Brigade.team_name(brigade.team),
 			"nato_type": brigade.nato_type,
 			"hex_id": brigade.hex_id,
 			"battalions": brigade.get_battalion_count(),
@@ -329,12 +329,12 @@ static func _legal_move_observations(perspective_team: String) -> Dictionary:
 		var brigade: Brigade = brigade_value
 		if brigade.hex_id.is_empty() or brigade.destroyed:
 			continue
-		if not perspective_team.is_empty() and _team_to_string(brigade.team) != perspective_team:
+		if not perspective_team.is_empty() and Brigade.team_name(brigade.team) != perspective_team:
 			continue
 		if _has_pending_order(brigade.team, brigade.id):
 			continue
 		result[brigade.id] = {
-			"team": _team_to_string(brigade.team),
+			"team": Brigade.team_name(brigade.team),
 			"from_hex": brigade.hex_id,
 			Movement.MODE_TACTICAL: _game_data().find_reachable(brigade.hex_id, Movement.move_allowance(brigade, Movement.MODE_TACTICAL)),
 			Movement.MODE_ADMINISTRATIVE: _game_data().find_reachable(brigade.hex_id, Movement.move_allowance(brigade, Movement.MODE_ADMINISTRATIVE))
@@ -349,7 +349,7 @@ static func _legal_commit_observations(perspective_team: String) -> Dictionary:
 		var hex_id := String(hex_id_value)
 		var by_team := {}
 		for team in teams:
-			var team_string := _team_to_string(team)
+			var team_string := Brigade.team_name(team)
 			if not perspective_team.is_empty() and team_string != perspective_team:
 				continue
 			var eligible: Array = _game_state().eligible_commit_brigades(team, hex_id)
@@ -367,7 +367,7 @@ static func _pending_orders() -> Dictionary:
 		for order_value in _game_state().orders_for(team):
 			var order: MoveOrder = order_value
 			team_orders.append({"brigade_id": order.brigade_id, "target_hex": order.target_hex, "mode": order.mode})
-		result[_team_to_string(team)] = team_orders
+		result[Brigade.team_name(team)] = team_orders
 	return result
 
 
@@ -378,7 +378,7 @@ static func _pending_commitments() -> Dictionary:
 		for order_value in _game_state().commitments_for(team):
 			var order: CommitOrder = order_value
 			team_commitments.append({"brigade_id": order.brigade_id, "target_hex": order.target_hex})
-		result[_team_to_string(team)] = team_commitments
+		result[Brigade.team_name(team)] = team_commitments
 	return result
 
 
@@ -410,14 +410,6 @@ static func _parse_team_string(value: String, errors: Array[String]) -> Brigade.
 		_:
 			errors.append("unknown team: %s" % value)
 			return Brigade.Team.RED
-
-
-static func _team_to_string(team: Brigade.Team) -> String:
-	match team:
-		Brigade.Team.GREEN:
-			return "Green"
-		_:
-			return "Red"
 
 
 static func _phase_to_string(phase: int) -> String:

@@ -3,6 +3,13 @@ class_name Brigade
 
 enum Team { RED, GREEN }
 
+
+## Canonical display name for a team enum. Sole owner of the capitalized
+## "Red"/"Green" mapping — do NOT reimplement locally (see plan 0019). Note the
+## lowercase "red"/"green" used in game-record serialization is a DISTINCT mapping.
+static func team_name(team: Team) -> String:
+	return "Green" if team == Team.GREEN else "Red"
+
 # Organization costs (percentage points). Tracked now; inert until wired into combat later.
 const MAX_ORGANIZATION := 100.0
 const ADMIN_MOVE_ORG_COST := 100.0      # administrative move: -100%

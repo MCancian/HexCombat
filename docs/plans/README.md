@@ -23,12 +23,12 @@ plan to act, the closeout wasn't done.
 | 0013 | [One home for scenario files](0013-scenario-files-one-home.md) | Low (hygiene; needs a Windows gate run to close) | Ready |
 | 0016 | [Separate State Data from Autoload](0016-separate-state-data.md) | Medium (hygiene/architecture) | Superseded by 0014 |
 | 0018 | [Research Knob Tracking](0018-research-knob-tracking.md) | Medium (Research visibility) | Sketch |
-| 0019 | [Consolidate Brigade.Team→string converters](0019-team-string-seam.md) | Low (hygiene; seam removal) | Ready |
 
 ## Archived
 
 | # | Plan | Status |
 |---|------|--------|
+| 0019 | [Consolidate Brigade.Team→string converters](../archive/0019-team-string-seam.md) | ✅ Shipped 2026-07-20 — `Brigade.team_name(team)` static now owns the capitalized `"Red"/"Green"` mapping; six byte-identical local copies deleted and repointed; lowercase record serialization untouched; pure dedup, golden byte-stable; entry in `docs/DECISIONS.md` |
 | 0017 | [Move order validation off push_error](../archive/0017-validation-errors.md) | ✅ Shipped 2026-07-20 — `OrderValidator.add_move_order`/`add_commit_order` (+ `GameState` wrappers) return a typed `OrderResult` (`ok`/`code`/`message`, `scripts/model/OrderResult.gd`) instead of `push_error`; LLM API surfaces the rejection reason; 11 GdUnit assertions moved off `is_push_error` to `code`; golden byte-stable; facts in `docs/STATUS.md`, `docs/DECISIONS.md`, `docs/systems/turn-engine.md` + `llm-api-selfplay.md` |
 | 0015 | [Fully Parallelize Tests](../archive/0015-parallel-tests.md) | ✅ Shipped 2026-07-19 — unified `run_all_tests.py` using `concurrent.futures`, isolated Godot caches, wrapped `.sh` and `.ps1` |
 | 0014 | [GameState dependency ceiling](../archive/0014-gamestate-dependency-ceiling.md) | ✅ Shipped 2026-07-19 — `GameState` split into a `GameStateData` value object + `static` `TurnConductor`/`GameStateBuilder`/`OrderValidator` (take `GameStateData`, never the autoload); deps 48→24, ceiling gated in `gd_metrics.py --check-ceiling`; absorbed plan 0016; facts in `docs/STATUS.md`, `docs/DECISIONS.md` |

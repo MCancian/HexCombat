@@ -276,7 +276,7 @@ func load_scenario(path: String) -> void:
 
 		var placement_team := _parse_team(String(placement.get("team", "")))
 		if placement_team != brigade.team:
-			push_error("Scenario placement team mismatch for %s: placement=%s OOB=%s" % [brigade_id, String(placement.get("team", "")), _team_to_string(brigade.team)])
+			push_error("Scenario placement team mismatch for %s: placement=%s OOB=%s" % [brigade_id, String(placement.get("team", "")), Brigade.team_name(brigade.team)])
 
 		set_brigade_hex(brigade_id, String(placement.get("hex", "")))
 		brigade.entry_bearing = float(placement.get("offset_bearing", 0.0))
@@ -724,14 +724,6 @@ func _parse_team(team_value: String) -> Brigade.Team:
 			return Brigade.Team.GREEN
 		_:
 			return Brigade.Team.RED
-
-
-func _team_to_string(team: Brigade.Team) -> String:
-	match team:
-		Brigade.Team.GREEN:
-			return "Green"
-		_:
-			return "Red"
 
 
 ## Read-only consistency check: verifies cross-references between the `brigades`
