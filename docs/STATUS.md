@@ -17,11 +17,16 @@ scrambles another's dice (`ScriptedDice.derive` returns self, so scripted fixtur
 ships, theaters, beaches. `EventBus` for signals. **Every phase's logic lives in a pure
 `RefCounted` class under `scripts/resolvers/`** (5 builders + `SupplyResolver`,
 `FrontlineResolver`, `CleanupResolver`, `OffloadResolver`, `AntishipResolver`, `IjfsResolver`,
-`CombatResolver`); `GameState` is the thin orchestrator — its methods are delegating wrappers
-owning EventBus emits, autoload access, cross-phase field assignment, and state application
-(combat casualty/FEBA/retreat application stays there deliberately: per-hex application
-interleaves with the next hex's contributor gathering). New phases follow
-`.claude/skills/hexcombat-add-phase-resolver`.
+`CombatResolver`). Turn orchestration is **`TurnConductor`** (also `RefCounted`, all `static`):
+its methods take a `GameStateData` value object as their first argument, own the EventBus emits,
+cross-phase field assignment, and combat casualty/FEBA/retreat application (which stays in the
+conductor deliberately: per-hex application interleaves with the next hex's contributor
+gathering). Runtime state itself is the plain **`GameStateData`** value object
+(`scripts/model/`); **`GameState` (autoload) is a thin state-holder** — it owns one
+`GameStateData` and exposes delegating wrappers to `TurnConductor` (turns), `OrderValidator`
+(order validation), and `GameStateBuilder` (scenario construction), plus typed forwarding
+properties for the fields external callers read (plan 0014 / decomposition campaign). New phases
+follow `.claude/skills/hexcombat-add-phase-resolver`.
 
 **Turn resolution order** (`resolve_turn`): IJFS air/missile fires → **sealift (tick ship
 returns + embark the crossing wave)** → anti-ship crossing → amphibious offload → movement & commit
@@ -30,7 +35,7 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
 **Phases / subsystems implemented:**
 - **Ground combat** (BOOTS slice M0–M7): movement, commit, combat resolution, FEBA, casualties,
   retreat, hex ownership. Defender terrain modifier is active: `CombatResolver.resolve_at`
-  receives the defended hex's `defender_modifier` via `GameState._defender_combat_modifier`.
+  receives the defended hex's `defender_modifier` via `TurnConductor.defender_combat_modifier`.
   **Support units** are mortal and included in casualty selection (weighted 1:4 vs maneuver units). If a side has only support units, they are "unscreened", contributing 0.5 strength each and taking losses. Golden invariant: the scripted beach-1 fight is byte-stable per gate; the pinned values live in
   `tools/validate_headless_turn.gd` (re-baseline history: `docs/DECISIONS.md` →
   `docs/archive/PLAN.md`).
@@ -184,7 +189,7 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   plains/urban/mountain cost 1) with a min-one-step guarantee (a unit that hasn't moved may always
   take one step into an adjacent passable hex); mountains are impassable
   (`GameData._with_impassable`). Ground combat's defender gets a per-class strength modifier
-  (`GameState._defender_combat_modifier` → `CombatResolver.resolve_at`): plains ×1.0, hills ×1.5,
+  (`TurnConductor.defender_combat_modifier` → `CombatResolver.resolve_at`): plains ×1.0, hills ×1.5,
   urban ×2.0, mountain ×2.0, metropolis ×3.0 — golden currently seed 20260624
   `casualties=9, feba=1.98` (re-baselined 2026-07-09 for the full-defense laydown). Terrain is
   surfaced per-hex in the LLM `occupied_hexes` observation and IS the map fill: every classified
@@ -241,7 +246,7 @@ release).
 - **Graphics** (Track 5): anti-ship/mine visualization, front-line draw UI (D5-D), unit/HUD polish.
   Needs visual verification (not headless-gateable).
 - **Beach first-landing ×2 defender penalty** — deferred design call (2026-07-09); the seam is
-  `GameState._defender_combat_modifier`'s `* 1.0` situational-modifier slot. See
+  `TurnConductor.defender_combat_modifier`'s `* 1.0` situational-modifier slot. See
   `docs/plans/BACKLOG.md`.
 - **Deferred ports** — anti-ship missile pipeline depth (strike-coverage lever), ground-casualty
   IJFS↔OOB linkage; **per-hull** escort magazines (aggregate per-type magazines shipped 2026-07-12,

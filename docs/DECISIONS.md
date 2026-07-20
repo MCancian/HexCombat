@@ -19,6 +19,17 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-19 — Plan 0014 shipped: GameState genuinely decoupled + dependency ceiling gated
+  (agent implementation, USER-directed re-scope).** `GameState` (autoload) was split three ways:
+  runtime state moved to a plain `GameStateData` value object (`scripts/model/`, absorbing plan
+  0016), and orchestration/construction/order-validation moved to `static` services
+  `TurnConductor` / `GameStateBuilder` / `OrderValidator` (`scripts/resolvers/`) that take a
+  `GameStateData` and never the autoload — genuine decoupling, not the reference-laundering of the
+  reverted first attempt. `GameState` is now a thin state-holder with typed forwarding properties;
+  deps 48→24. Ceiling enforced in the gate via `gd_metrics.py --check-ceiling` (GameState 27,
+  TurnConductor 36). Byte-stable golden throughout. Purity contract in the class headers; behavior
+  in `docs/STATUS.md` (Engine). Superseded plan 0016.
+
 - **2026-07-19 — Plan 0015 shipped: parallelized verification gate (agent implementation).**
   The gate's per-validator and per-GdUnit-suite phases now fan out across `os.cpu_count()` workers
   via a single unified `tools/run_all_tests.py` (Python `concurrent.futures`), each Godot process

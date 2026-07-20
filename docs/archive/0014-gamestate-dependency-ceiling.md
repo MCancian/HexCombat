@@ -1,6 +1,16 @@
 # 0014 — GameState Dependency Ceiling (via genuine decoupling)
 
-**Status:** Sketch
+> **CLOSEOUT (2026-07-19).** ✅ Shipped. All 5 phases landed byte-stable green (commits
+> `db95b33`→`06a8d55`). Runtime state extracted to `scripts/model/GameStateData.gd`; orchestration
+> / construction / order-validation moved to `static` services `TurnConductor` / `GameStateBuilder`
+> / `OrderValidator` (`scripts/resolvers/`) that take a `GameStateData`, never the autoload —
+> genuine decoupling (verified: no autoload `self` passed in; three correctness-review angles clean).
+> `GameState` deps 48→24; ceiling enforced in the gate (`gd_metrics.py --check-ceiling`: GameState
+> 27, TurnConductor 36). USER accepted 24 as the genuine typed-API floor (2026-07-19). Absorbed
+> plan 0016. Durable facts: `docs/DECISIONS.md` (2026-07-19), `docs/STATUS.md` (Engine), class
+> headers.
+
+**Status:** ✅ Shipped 2026-07-19
 **Priority:** Medium (Tech Debt / Architecture; unblocks future refactors)
 **Absorbs:** Plan 0016 (Separate State Data from Autoload) — folded in as Phase 1. 0016 is
 marked *Superseded by 0014*.
