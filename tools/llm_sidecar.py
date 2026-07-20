@@ -18,6 +18,7 @@ Provider config from the environment (inherited from the Godot process):
   HEXCOMBAT_LLM_API_KEY   default "EMPTY"  (sent as Authorization: Bearer <key>)
 """
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -92,10 +93,12 @@ def load_observation(path):
         return json.load(handle)
 
 
-def build_messages(observation, perspective, prior_duplicate_brigades=None):
+def build_system_prompt(observation, perspective):
+    """The system message: static template + this game's rules/glossary + the side. Sole producer
+    of the system prompt so it can be hashed for the record (plan 0018) without duplication."""
     rules = observation.get("rules_summary", {})
     glossary = observation.get("field_glossary", {})
-    system = (
+    return (
         "You are the commander of the {side} side in a WeGo hex wargame (HexCombat: a PLA "
         "amphibious assault on Taiwan). Each planning turn you issue orders; then both sides' "
         "orders resolve simultaneously.\n\n"
@@ -105,6 +108,15 @@ def build_messages(observation, perspective, prior_duplicate_brigades=None):
         "Reply with ONLY a JSON array of action objects and nothing else (no prose, no markdown "
         "code fences). An empty array [] is a valid reply meaning 'no orders'."
     ).format(side=perspective, rules=json.dumps(rules, indent=2), glossary=json.dumps(glossary, indent=2))
+
+
+def system_prompt_hash(observation, perspective):
+    """Stable short hash identifying the exact system prompt the model received."""
+    return hashlib.sha256(build_system_prompt(observation, perspective).encode("utf-8")).hexdigest()[:12]
+
+
+def build_messages(observation, perspective, prior_duplicate_brigades=None):
+    system = build_system_prompt(observation, perspective)
 
     compact = {k: observation[k] for k in COMPACT_KEYS if k in observation}
     user = (
@@ -244,6 +256,7 @@ def append_log(log_path, perspective, observation, model, raw_reply, actions):
         "perspective": perspective,
         "turn": observation.get("turn"),
         "model": model,
+        "prompt_hash": system_prompt_hash(observation, perspective),
         "raw_reply": raw_reply,
         "actions": actions,
         "warnings": list(WARNINGS),

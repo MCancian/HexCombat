@@ -115,11 +115,36 @@ func _build_record(game: Dictionary, game_state: Object, game_data: Object,
 		"final_snapshot": game["final_snapshot"],
 		"turn_digests": game["turn_digests"],
 	}
+	# Full resolved research-knob vector so every record is self-describing and comparable across
+	# sweeps (plan 0018). llm_model/llm_prompt_hash are captured (empty for non-LLM games).
+	var llm_model := OS.get_environment("HEXCOMBAT_LLM_MODEL") if has_llm_seat else ""
+	var llm_prompt_hash := _llm_prompt_hash() if has_llm_seat else ""
+	record["knobs"] = KnobRegistry.resolve_all(game_data.scenario_path, llm_model, llm_prompt_hash)
+	record["knobs_registry_version"] = KnobRegistry.version()
 	if has_llm_seat:
 		record["model"] = OS.get_environment("HEXCOMBAT_LLM_MODEL")
 		record["base_url"] = _llm_base_url()
 		record["log_path"] = _log_path
 	return record
+
+
+## The sidecar stamps each JSONL log entry with the hash of its system prompt (plan 0018,
+## capture-only). Read it from the last log line; empty when no log / no hash (e.g. deterministic
+## seats or an older sidecar).
+func _llm_prompt_hash() -> String:
+	if _log_path.is_empty() or not FileAccess.file_exists(_log_path):
+		return ""
+	var content := FileAccess.get_file_as_string(_log_path)
+	var last_line := ""
+	for line in content.split("\n", false):
+		if not line.strip_edges().is_empty():
+			last_line = line
+	if last_line.is_empty():
+		return ""
+	var parsed: Variant = JSON.parse_string(last_line)
+	if parsed is Dictionary:
+		return String((parsed as Dictionary).get("prompt_hash", ""))
+	return ""
 
 
 func _write_record(record_json: String, out_path: String) -> void:
