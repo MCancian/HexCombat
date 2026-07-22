@@ -13,14 +13,79 @@ var _ownership_borders: Array[Node2D] = []
 var _selected_hex: String = ""
 var _reachable_hexes: Array = []
 
-var color_none = Color(0.85, 0.85, 0.85)
-var color_red = Color(1.0, 0.3, 0.3)
-var color_green = Color(0.3, 1.0, 0.3)
 # Contested hexes use an amber→orange→red-orange ramp that reads clearly against
 # the green/red owner fills (a near-green contested tint was invisible at map scale).
-var color_contested_light = Color(1.0, 0.85, 0.3)
-var color_contested_medium = Color(1.0, 0.6, 0.15)
-var color_contested_heavy = Color(0.95, 0.35, 0.1)
+
+
+const COLOR_UNOWNED := Color(0.85, 0.85, 0.85)
+const COLOR_OWNED_RED := Color(1.0, 0.3, 0.3)
+const COLOR_OWNED_GREEN := Color(0.3, 1.0, 0.3)
+const COLOR_CONTESTED_LIGHT := Color(1.0, 0.85, 0.3)
+const COLOR_CONTESTED_MEDIUM := Color(1.0, 0.6, 0.15)
+const COLOR_CONTESTED_HEAVY := Color(0.95, 0.35, 0.1)
+
+const COLOR_BEACH_GLYPH := Color(0.05, 0.15, 0.55, 0.95)
+const COLOR_BEACH_OUTLINE := Color.WHITE
+const COLOR_BEACH_TEXT := Color.WHITE
+const COLOR_BEACH_TEXT_OUTLINE := Color(0.05, 0.15, 0.55)
+
+const COLOR_STACK_BADGE_DISC := Color(1, 1, 1, 0.92)
+const COLOR_STACK_BADGE_OUTLINE := Color.BLACK
+const COLOR_STACK_BADGE_TEXT := Color(0.1, 0.1, 0.1)
+
+const COLOR_TEAM_RED := Color(0.85, 0.05, 0.05, 0.9)
+const COLOR_TEAM_GREEN := Color(0.0, 0.55, 0.1, 0.9)
+const COLOR_TEAM_UNKNOWN := Color(1.0, 0.0, 1.0, 0.82)
+
+const COLOR_HIGHLIGHT_REACHABLE := Color(0.1, 0.55, 1.0, 0.5)
+const COLOR_HIGHLIGHT_SELECTED_FILL := Color(1.0, 0.9, 0.1, 0.45)
+const COLOR_HIGHLIGHT_SELECTED_BORDER := Color(1.0, 0.85, 0.0)
+const COLOR_HEX_OUTLINE := Color.BLACK
+
+const Z_HEX_CELL := 0
+const Z_OWNERSHIP_BORDER := 4
+const Z_HIGHLIGHT_OVERLAY := 5
+const Z_BEACH_MARKER := 6
+const Z_BRIGADE_MARKER := 10
+const Z_BRIGADE_BACKING := 0
+const Z_BRIGADE_SPRITE := 1
+const Z_STACK_BADGE := 12
+
+const HEX_OUTLINE_WIDTH := 2.0
+const BORDER_LINE_WIDTH := 3.0
+const HIGHLIGHT_SELECTED_BORDER_WIDTH := 4.0
+
+const BEACH_GLYPH_RADIUS_MULT := 0.7
+const BEACH_MARKER_OFFSET_DIR := Vector2(-0.55, 0.55)
+const BEACH_MARKER_OFFSET_MULT := 0.62
+const BEACH_TRIANGLE_POINT_1 := Vector2(0.0, -1.0)
+const BEACH_TRIANGLE_POINT_2 := Vector2(0.87, 0.5)
+const BEACH_TRIANGLE_POINT_3 := Vector2(-0.87, 0.5)
+const BEACH_OUTLINE_WIDTH := 1.5
+const BEACH_TEXT_OUTLINE_SIZE := 1
+const BEACH_TEXT_SIZE_MIN := 10
+const BEACH_TEXT_SIZE_MULT := 0.55
+const BEACH_LABEL_W_MULT := 4.0
+const BEACH_LABEL_H_MULT := 3.0
+const BEACH_LABEL_Y_OFFSET_MULT := 0.05
+
+const BRIGADE_SCALE_CROWDED := 0.75
+const BRIGADE_OFFSET_MULT_SINGLE := 0.4
+const BRIGADE_SCALE_STACK := 0.62
+const BRIGADE_OFFSET_MULT_STACK := 0.45
+const STACK_BADGE_MIN_BRIGADES := 3
+const BRIGADE_BACKING_W_MULT := 0.95
+const BRIGADE_BACKING_H_MULT := 0.68
+const BRIGADE_SPRITE_SCALE_MULT := 1.1
+
+const STACK_BADGE_RADIUS_MULT := 0.28
+const STACK_BADGE_POINTS := 16
+const STACK_BADGE_OUTLINE_WIDTH := 1.5
+const STACK_BADGE_TEXT_SIZE_MIN := 10
+const STACK_BADGE_TEXT_SIZE_MULT := 0.45
+
+const CONTESTED_LIGHT_THRESHOLD_KM := 2.5
+const CONTESTED_MEDIUM_THRESHOLD_KM := 7.5
 
 signal hex_clicked(hex_id: String)
 signal selection_cancelled()
@@ -48,14 +113,14 @@ func spawn_hex_cells() -> void:
 		var poly := Polygon2D.new()
 		poly.polygon = vertices
 		poly.color = get_hex_color(hex.id)
-		poly.z_index = 0
+		poly.z_index = Z_HEX_CELL
 
 		# Polygon2D has no outline in Godot 4; draw a closed border with Line2D.
 		var outline := Line2D.new()
 		outline.points = vertices
 		outline.closed = true
-		outline.width = 2.0
-		outline.default_color = Color.BLACK
+		outline.width = HEX_OUTLINE_WIDTH
+		outline.default_color = COLOR_HEX_OUTLINE
 		poly.add_child(outline)
 
 		add_child(poly)
@@ -82,7 +147,7 @@ func render_beach_markers() -> void:
 		var radius := _estimate_hex_radius(center, vertices)
 
 		var marker := _build_beach_marker(beach, radius)
-		marker.position = center + Vector2(-0.55, 0.55).normalized() * (radius * 0.62)
+		marker.position = center + BEACH_MARKER_OFFSET_DIR.normalized() * (radius * BEACH_MARKER_OFFSET_MULT)
 		add_child(marker)
 		beach_markers[beach.id] = marker
 
@@ -93,27 +158,27 @@ func _build_beach_marker(beach: BeachDef, radius: float) -> Node2D:
 	var marker := Node2D.new()
 	marker.name = "BeachMarker_%d" % beach.id
 	# Above hex fills (z 0) and the highlight overlay tint (z 5), below brigade markers (z 10).
-	marker.z_index = 6
+	marker.z_index = Z_BEACH_MARKER
 
-	var glyph_size := radius * 0.7
+	var glyph_size := radius * BEACH_GLYPH_RADIUS_MULT
 	var points := PackedVector2Array([
-		Vector2(0, -glyph_size),
-		Vector2(glyph_size * 0.87, glyph_size * 0.5),
-		Vector2(-glyph_size * 0.87, glyph_size * 0.5),
+		BEACH_TRIANGLE_POINT_1 * glyph_size,
+		BEACH_TRIANGLE_POINT_2 * glyph_size,
+		BEACH_TRIANGLE_POINT_3 * glyph_size,
 	])
 
 	var triangle := Polygon2D.new()
 	triangle.name = "BeachGlyph"
 	triangle.polygon = points
-	triangle.color = Color(0.05, 0.15, 0.55, 0.95)  # dark blue
+	triangle.color = COLOR_BEACH_GLYPH  # dark blue
 	marker.add_child(triangle)
 
 	var outline := Line2D.new()
 	outline.name = "BeachGlyphOutline"
 	outline.points = points
 	outline.closed = true
-	outline.width = 1.5
-	outline.default_color = Color.WHITE
+	outline.width = BEACH_OUTLINE_WIDTH
+	outline.default_color = COLOR_BEACH_OUTLINE
 	triangle.add_child(outline)
 
 	# Number sits inside the triangle (white on dark blue) — beside/below it the digit
@@ -122,16 +187,16 @@ func _build_beach_marker(beach: BeachDef, radius: float) -> Node2D:
 	var label := Label.new()
 	label.name = "BeachLabel"
 	label.text = str(beach.id)
-	label.add_theme_color_override("font_color", Color.WHITE)
-	label.add_theme_color_override("font_outline_color", Color(0.05, 0.15, 0.55))
-	label.add_theme_constant_override("outline_size", 1)
-	label.add_theme_font_size_override("font_size", maxi(10, int(radius * 0.55)))
+	label.add_theme_color_override("font_color", COLOR_BEACH_TEXT)
+	label.add_theme_color_override("font_outline_color", COLOR_BEACH_TEXT_OUTLINE)
+	label.add_theme_constant_override("outline_size", BEACH_TEXT_OUTLINE_SIZE)
+	label.add_theme_font_size_override("font_size", maxi(BEACH_TEXT_SIZE_MIN, int(radius * BEACH_TEXT_SIZE_MULT)))
 	# Box must exceed the Label's minimum size or Godot clamps it and the centered text
 	# drifts; oversize it and center it on the widest part of the triangle (just below
 	# the centroid).
-	var label_size := Vector2(glyph_size * 4.0, glyph_size * 3.0)
+	var label_size := Vector2(glyph_size * BEACH_LABEL_W_MULT, glyph_size * BEACH_LABEL_H_MULT)
 	label.size = label_size
-	label.position = Vector2(-label_size.x / 2.0, -label_size.y / 2.0 + glyph_size * 0.05)
+	label.position = Vector2(-label_size.x / 2.0, -label_size.y / 2.0 + glyph_size * BEACH_LABEL_Y_OFFSET_MULT)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	marker.add_child(label)
@@ -195,21 +260,21 @@ func render_brigade_markers() -> void:
 				# apart), so in crowded neighborhoods (any occupied neighbor hex) shrink it and
 				# pin it to the hex center instead of the entry-bearing offset.
 				if _has_occupied_neighbor(hex_id, hex_groups):
-					marker.scale = Vector2.ONE * 0.75
+					marker.scale = Vector2.ONE * BRIGADE_SCALE_CROWDED
 					marker.position = center
 				else:
 					var bearing_radians := deg_to_rad(brigade.entry_bearing)
-					var offset := Vector2(sin(bearing_radians), -cos(bearing_radians)) * (0.4 * radius)
+					var offset := Vector2(sin(bearing_radians), -cos(bearing_radians)) * (BRIGADE_OFFSET_MULT_SINGLE * radius)
 					marker.position = center + offset
 			else:
-				marker.scale = Vector2.ONE * 0.62
+				marker.scale = Vector2.ONE * BRIGADE_SCALE_STACK
 				var angle := -PI / 2.0 + TAU * i / n
-				marker.position = center + Vector2(cos(angle), sin(angle)) * (0.45 * radius)
+				marker.position = center + Vector2(cos(angle), sin(angle)) * (BRIGADE_OFFSET_MULT_STACK * radius)
 
 			add_child(marker)
 			brigade_markers[brigade.id] = marker
 
-		if n >= 3:
+		if n >= STACK_BADGE_MIN_BRIGADES:
 			var badge := _build_stack_badge(n, radius)
 			badge.position = center
 			add_child(badge)
@@ -236,11 +301,11 @@ func _estimate_hex_radius(center: Vector2, vertices: PackedVector2Array) -> floa
 func _build_brigade_marker(brigade: Brigade, texture: Texture2D, radius: float) -> Node2D:
 	var marker := Node2D.new()
 	marker.name = "BrigadeMarker_%s" % brigade.id
-	marker.z_index = 10
+	marker.z_index = Z_BRIGADE_MARKER
 
 	# Size the marker relative to the hex so it never dwarfs or overflows the cell.
-	var half_w := radius * 0.95
-	var half_h := radius * 0.68
+	var half_w := radius * BRIGADE_BACKING_W_MULT
+	var half_h := radius * BRIGADE_BACKING_H_MULT
 
 	var backing := Polygon2D.new()
 	backing.name = "TeamBacking"
@@ -251,7 +316,7 @@ func _build_brigade_marker(brigade: Brigade, texture: Texture2D, radius: float) 
 		Vector2(-half_w, half_h),
 	])
 	backing.color = _team_marker_color(brigade.team)
-	backing.z_index = 0
+	backing.z_index = Z_BRIGADE_BACKING
 	marker.add_child(backing)
 
 	var sprite := Sprite2D.new()
@@ -260,8 +325,8 @@ func _build_brigade_marker(brigade: Brigade, texture: Texture2D, radius: float) 
 	sprite.centered = true
 	var texture_height := float(texture.get_height())
 	assert(texture_height > 0.0, "NATO symbol texture has invalid height for brigade '%s'" % brigade.id)
-	sprite.scale = Vector2.ONE * (radius * 1.1 / texture_height)
-	sprite.z_index = 1
+	sprite.scale = Vector2.ONE * (radius * BRIGADE_SPRITE_SCALE_MULT / texture_height)
+	sprite.z_index = Z_BRIGADE_SPRITE
 	marker.add_child(sprite)
 
 	return marker
@@ -269,30 +334,30 @@ func _build_brigade_marker(brigade: Brigade, texture: Texture2D, radius: float) 
 
 func _build_stack_badge(n: int, radius: float) -> Node2D:
 	var badge := Node2D.new()
-	badge.z_index = 12
+	badge.z_index = Z_STACK_BADGE
 
-	var disc_radius := radius * 0.28
+	var disc_radius := radius * STACK_BADGE_RADIUS_MULT
 	var disc := Polygon2D.new()
 	var points: PackedVector2Array = []
-	var num_points := 16
+	var num_points := STACK_BADGE_POINTS
 	for i in range(num_points):
 		var a := TAU * i / num_points
 		points.append(Vector2(cos(a), sin(a)) * disc_radius)
 	disc.polygon = points
-	disc.color = Color(1, 1, 1, 0.92)
+	disc.color = COLOR_STACK_BADGE_DISC
 	badge.add_child(disc)
 
 	var outline := Line2D.new()
 	outline.points = points
 	outline.closed = true
-	outline.width = 1.5
-	outline.default_color = Color.BLACK
+	outline.width = STACK_BADGE_OUTLINE_WIDTH
+	outline.default_color = COLOR_HEX_OUTLINE
 	disc.add_child(outline)
 
 	var label := Label.new()
 	label.text = "×%d" % n
-	label.add_theme_color_override("font_color", Color(0.1, 0.1, 0.1))
-	var font_size := maxi(10, int(radius * 0.45))
+	label.add_theme_color_override("font_color", COLOR_STACK_BADGE_TEXT)
+	var font_size := maxi(STACK_BADGE_TEXT_SIZE_MIN, int(radius * STACK_BADGE_TEXT_SIZE_MULT))
 	label.add_theme_font_size_override("font_size", font_size)
 	label.position = Vector2(-disc_radius, -disc_radius)
 	label.size = Vector2(disc_radius * 2, disc_radius * 2)
@@ -306,36 +371,36 @@ func _build_stack_badge(n: int, radius: float) -> Node2D:
 func _team_marker_color(team: Brigade.Team) -> Color:
 	match team:
 		Brigade.Team.RED:
-			return Color(0.85, 0.05, 0.05, 0.9)
+			return COLOR_TEAM_RED
 		Brigade.Team.GREEN:
-			return Color(0.0, 0.55, 0.1, 0.9)
+			return COLOR_TEAM_GREEN
 		_:
 			push_error("Unknown brigade team for marker color: %d" % team)
-			return Color(1.0, 0.0, 1.0, 0.82)
+			return COLOR_TEAM_UNKNOWN
 
 
 # Ownership-only color (pre-Track-F behavior): red/green/contested-ramp, gray when unowned.
 func _ownership_color(hex_id: String) -> Color:
 	if hex_id not in GameData.hex_states:
-		return color_none
+		return COLOR_UNOWNED
 
 	var state: HexState = GameData.hex_states[hex_id]
 	var owner := state.owner
 	var feba_km := state.feba_km
 
 	if owner == HexOwner.RED:
-		return color_red
+		return COLOR_OWNED_RED
 	elif owner == HexOwner.GREEN:
-		return color_green
+		return COLOR_OWNED_GREEN
 	elif owner == HexOwner.CONTESTED:
-		if feba_km < 2.5:
-			return color_contested_light
-		elif feba_km < 7.5:
-			return color_contested_medium
+		if feba_km < CONTESTED_LIGHT_THRESHOLD_KM:
+			return COLOR_CONTESTED_LIGHT
+		elif feba_km < CONTESTED_MEDIUM_THRESHOLD_KM:
+			return COLOR_CONTESTED_MEDIUM
 		else:
-			return color_contested_heavy
+			return COLOR_CONTESTED_HEAVY
 
-	return color_none
+	return COLOR_UNOWNED
 
 
 # Terrain (data/terrain/terrain_types.json, via GameData.get_terrain) is the base fill. Every
@@ -461,12 +526,12 @@ func _add_border_line(points: PackedVector2Array, color: Color, closed: bool) ->
 	var line := Line2D.new()
 	line.points = points
 	line.closed = closed
-	line.width = 3.0
+	line.width = BORDER_LINE_WIDTH
 	line.default_color = color
 	line.joint_mode = Line2D.LINE_JOINT_ROUND
 	line.begin_cap_mode = Line2D.LINE_CAP_ROUND
 	line.end_cap_mode = Line2D.LINE_CAP_ROUND
-	line.z_index = 4
+	line.z_index = Z_OWNERSHIP_BORDER
 	add_child(line)
 	_ownership_borders.append(line)
 
@@ -554,7 +619,7 @@ func highlight_hexes(hex_ids: Array, fill_color: Color, border_color: Color = Co
 		var overlay := Polygon2D.new()
 		overlay.polygon = vertices
 		overlay.color = fill_color
-		overlay.z_index = 5
+		overlay.z_index = Z_HIGHLIGHT_OVERLAY
 		add_child(overlay)
 		_highlight_overlays.append(overlay)
 
@@ -576,6 +641,6 @@ func clear_highlights() -> void:
 
 func _refresh_highlights() -> void:
 	clear_highlights()
-	highlight_hexes(_reachable_hexes, Color(0.1, 0.55, 1.0, 0.5))
+	highlight_hexes(_reachable_hexes, COLOR_HIGHLIGHT_REACHABLE)
 	if _selected_hex != "":
-		highlight_hexes([_selected_hex], Color(1.0, 0.9, 0.1, 0.45), Color(1.0, 0.85, 0.0), 4.0)
+		highlight_hexes([_selected_hex], COLOR_HIGHLIGHT_SELECTED_FILL, COLOR_HIGHLIGHT_SELECTED_BORDER, HIGHLIGHT_SELECTED_BORDER_WIDTH)

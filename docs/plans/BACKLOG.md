@@ -57,7 +57,7 @@ All need visual verification (screenshot / Godot MCP / USER) — headless gates 
   value object, orchestration/construction/validation → `static` `TurnConductor`/`GameStateBuilder`/
   `OrderValidator` taking `GameStateData`; deps 48→24, ceiling enforced via
   `gd_metrics.py --check-ceiling`. See `docs/archive/0014-gamestate-dependency-ceiling.md`.
-- [ ] **HexMap cosmetic literals**: 93 view-layer color/offset literals — hoist opportunistically
+- [x] **HexMap cosmetic literals**: 93 view-layer color/offset literals — hoist opportunistically
   when Track D touches the view layer, not before.
 - [ ] **Const→data knob promotion**: any const hoisted under 0009 the USER wants tunable moves to
   `data/*.json` per `hexcombat-config-and-knobs` — one USER call per knob (change-control #7).
