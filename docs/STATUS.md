@@ -111,9 +111,10 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   `tools/validate_victory_hexes.gd`); `null` counts every placed hex (the golden default).
 - **AI-readiness (Track E)** — `GameState.play_turn(red, green, dice) -> TurnResult`, per-turn event
   log, `LLMGameAPI` observation/action contract (JSON-schema-gated), headless self-play harness.
+  Deterministic scripted policies: `inland_clear`, `garrison_draw`, `noop`, `selfplay_default`.
 - **Scenario selection (research harness B1)** — any headless process picks its scenario via the
   `--scenario=<id-or-path>` user arg or `HEXCOMBAT_SCENARIO` env var (`ScenarioCatalog`; arg wins,
-  no selection = `data/scenario_default.json` so all pins hold). Variant files live in
+  no selection = `data/scenarios/scenario_default.json` so all pins hold). Variant files live in
   `data/scenarios/` (id = filename stem, enumerated by `ScenarioCatalog.list_scenario_paths()`);
   the selection survives `GameState.reset_to_scenario()`; `validate_scenario_data.gd` checks every
   scenario generically + the default's pinned shape.
@@ -213,7 +214,7 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   ownership renders as a 3px perimeter border around each connected pocket, no interior lines
   (`HexMap._build_ownership_borders`), with numbered beach glyphs. Full detail:
   `docs/systems/terrain.md`.
-- **Default scenario = full ROC defense (2026-07-09 USER call)** — `data/scenario_default.json`
+- **Default scenario = full ROC defense (2026-07-09 USER call)** — `data/scenarios/scenario_default.json`
   places all 32 ROC brigades (laydown shared with `roc_full_defense`; beaches 1/3/6/9 garrisoned
   on-hex, every landing beach covered on-hex or adjacent — pinned by `validate_scenario_data.gd`).
   Under empty-orders self-play the default now runs to the 40-turn stalemate census 24/88 pinned

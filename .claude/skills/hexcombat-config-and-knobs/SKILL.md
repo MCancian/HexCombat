@@ -9,13 +9,13 @@ Everything tunable comes from `data/*.json` + the scenario file — adding conte
 not a code change. Verify a knob is actually read before relying on it (grep the consumer;
 "knob does nothing" = silent-default bug class, see `hexcombat-debugging-playbook`).
 
-## The scenario file (`data/scenario_default.json` + `data/scenarios/*.json` variants)
+## The scenario file (`data/scenarios/scenario_default.json` + `data/scenarios/*.json` variants)
 
 Loaded by `GameData.load_scenario()`; which file a process loads is decided by
 `ScenarioCatalog.selected_path()` (`--scenario=<id-or-path>` user arg beats
 `HEXCOMBAT_SCENARIO` env var; no selection → `scenario_default` = the research default). **The pinned
 gate does NOT run `scenario_default`:** `run_all_tests.sh`/`.ps1` export
-`HEXCOMBAT_SCENARIO=res://data/scenario_golden.json` (a frozen one-shot assault fixture) so golden
+`HEXCOMBAT_SCENARIO=res://data/scenarios/scenario_golden.json` (a frozen one-shot assault fixture) so golden
 pins stay byte-stable while `scenario_default` evolves as the deep-pool research scenario. To run a
 golden validator by hand, export the same var. Variant authoring: `hexcombat-scenario-authoring`.
 Current axes:
@@ -75,7 +75,7 @@ table here.
 
 ## Adding a scenario parameter (checklist)
 
-1. Add the key to `data/scenario_default.json` with a `_comment` if non-obvious.
+1. Add the key to `data/scenarios/scenario_default.json` with a `_comment` if non-obvious.
 2. Read it in `GameData.load_scenario()` into a typed field — **fail loud** if malformed;
    a genuinely optional key gets an explicit, documented default in ONE place.
 3. Thread it to the consumer explicitly (signature param or typed field — no `.get()` chains).
@@ -95,7 +95,7 @@ live in docs/plans/ (plan 0001, the crossing-loss calibration, USER-dialed 2026-
 record in docs/archive/PLAN.md). Deliberate balance changes are USER calls and re-baseline events.
 
 `data/ijfs/ijfs_scenario.json.intel_locked_antiship_strike_bonus` (float, golden = 0.20, plan 0001)
-is a calibration knob living in the IJFS data file, NOT `data/scenario_default.json`. The IJFS
+is a calibration knob living in the IJFS data file, NOT `data/scenarios/scenario_default.json`. The IJFS
 scenario file's path is fixed, so this knob isn't reachable from a scenario variant, but it can be
 swept using `run_sweep.py --spec tools/sweeps/antiship_crossing.json`. `IjfsLoaders.load_scenario`
 synthesizes it into `strike_probability_modifiers` via `apply_intel_locked_strike_bonus`. Paired

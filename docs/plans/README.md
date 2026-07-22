@@ -20,15 +20,16 @@ plan to act, the closeout wasn't done.
 |---|------|----------|--------|
 | 0002 | [Per-hull escort magazines (D3-B3)](0002-per-hull-escort-magazines.md) | Low (needs ship-ammo subsystem) | Sketch |
 | 0003 | [Combat-summary team attribution](0003-combat-summary-team-attribution.md) | Low (blocked on USER counterattack call) | Sketch |
-| 0013 | [One home for scenario files](0013-scenario-files-one-home.md) | Low (hygiene; needs a Windows gate run to close) | Ready |
+
 | 0016 | [Separate State Data from Autoload](0016-separate-state-data.md) | Medium (hygiene/architecture) | Superseded by 0014 |
-| 0021 | [garrison_draw — Green force-draw policy + draw_fraction knob](0021-garrison-draw-policy.md) | Medium (research; runnable alone) | Ready |
 | 0022 | [Red reactive beach-opening (feasibility first)](0022-red-beach-switching.md) | Medium (research; new mechanic, gated on a feasibility spike) | Sketch |
 
 ## Archived
 
 | # | Plan | Status |
 |---|------|--------|
+| 0013 | [One home for scenario files](../archive/0013-scenario-files-one-home.md) | ✅ Shipped 2026-07-22 — `scenario_default.json` and `scenario_golden.json` moved to `data/scenarios/`. `ScenarioCatalog` updated. |
+| 0021 | [Garrison draw policy + draw_fraction knob](../archive/0021-garrison-draw-policy.md) | ✅ Shipped 2026-07-21 — `garrison_draw` deterministic policy + `garrison_draw_fraction` knob added to registry. Evaluated via unit tests and batch sweep vs `inland_clear`. |
 | 0018 | [Research Knob Tracking](../archive/0018-research-knob-tracking.md) | ✅ Shipped 2026-07-20 — curated knob registry `data/knobs/registry.json` + full resolved knob vector in every record (`KnobRegistry`), so all sweeps share one knob-space; `tools/research_knobs.py {ledger,sensitivity}`; LLM model/prompt-hash captured. USER calls: curated (not auto-dump), prompts capture-only, build all-at-once. Golden byte-stable. Array-knob sweeping shipped as a follow-on (`DataOverrides` array addressing via `JsonPath`); remaining follow-up: prompt-variant files |
 | 0020 | [Lowercase "red"/"green" team-token seam](../archive/0020-lowercase-team-token-seam.md) | ✅ Shipped 2026-07-20 — Tier A: 3 resolver ownership reads onto `HexOwner.RED`. Tier B (USER Option 2): winner/census wire token gets its own home `Brigade.TEAM_KEY_RED`/`TEAM_KEY_GREEN` (const — used in `match` arms + dict keys), kept distinct from `HexOwner` ownership vocab; golden byte-stable |
 | 0019 | [Consolidate Brigade.Team→string converters](../archive/0019-team-string-seam.md) | ✅ Shipped 2026-07-20 — `Brigade.team_name(team)` static now owns the capitalized `"Red"/"Green"` mapping; six byte-identical local copies deleted and repointed; lowercase record serialization untouched; pure dedup, golden byte-stable; entry in `docs/DECISIONS.md` |

@@ -62,7 +62,7 @@ validation/golden tests. Every later phase copies that template.
 
 ### M1 — Unit placement + rendering
 
-- Define `data/scenario_default.json`: 4 Red + 4 Green brigades around beaches 1–4 (one Red
+- Define `data/scenarios/scenario_default.json`: 4 Red + 4 Green brigades around beaches 1–4 (one Red
   amphibious brigade on each beach hex, one Green marine/amphibious brigade on an adjacent inland
   hex). Red from the PLA OOB, Green from the imported Taiwan OOB (MA). Render brigades as markers
   using the imported **unit symbols**, colored by team — **not** all 111.
@@ -214,7 +214,7 @@ exactly unless a rebalance is explicitly requested.
   `compute_unit_tons(mechanized, moved, in_combat)`, `calculate_consumption(units, moved_ids, engaged_ids, day)` → summary dict
 - `GameState.supply_state` + `resolve_supply_turn()` — calls DosConsumption on all landed Red
   BNs using moved/fought flags from the just-resolved turn; deducts from supply pool
-- `data/scenario_default.json` — add `red_dos_start` (initial DOS pool, e.g. 100)
+- `data/scenarios/scenario_default.json` — add `red_dos_start` (initial DOS pool, e.g. 100)
 - `tools/validate_dos_consumption.gd` — headless: load scenario + land 4 brigades + resolve
   supply → assert pool decremented correctly (mech vs. non-mech consumed)
 - `tests/dos_consumption_test.gd` — mirror `test_red_dos_consumption.py` cases (whitelist

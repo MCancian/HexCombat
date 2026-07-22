@@ -12,7 +12,7 @@ change; if authoring one forces a code change, that's a parameterization gap —
 
 ## Recipe
 
-1. **Copy the baseline:** `data/scenario_default.json` → `data/scenarios/<slug>.json`
+1. **Copy the baseline:** `data/scenarios/scenario_default.json` → `data/scenarios/<slug>.json`
    (keep `scenario_default.json` untouched — the golden gate and every pinned test load it).
    The variant's **id is the filename stem**; any headless process selects it with the
    `--scenario=<id>` user arg (after Godot's `--` separator) or `HEXCOMBAT_SCENARIO=<id>` env

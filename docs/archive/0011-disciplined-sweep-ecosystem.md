@@ -67,7 +67,7 @@ Retire the bespoke, stdout-only GDScript sweeps and the Windows-only `run_sweep.
   an autoload (architecture contract forbids new autoloads). Modeled on `ScenarioCatalog`.
 - **Override key format:** `"<data-file>:<dot.path>"` where `<data-file>` is the path relative to
   `res://` exactly as loaders pass it (e.g. `data/ijfs/ijfs_scenario.json:crbm_maneuver_strike_bonus`,
-  `data/scenario_default.json:red_dos_start`). `apply()` normalizes the incoming loader path by
+  `data/scenarios/scenario_default.json:red_dos_start`). `apply()` normalizes the incoming loader path by
   stripping `res://` before matching. Dot path traverses Dictionary keys only (no array indices —
   same restriction as `run_sweep.ps1`); value replaces whatever is there, as parsed from JSON.
 - **Sources & precedence:** `--overrides=<value>` user arg (after `--`) wins over
@@ -164,7 +164,7 @@ Retire the bespoke, stdout-only GDScript sweeps and the Windows-only `run_sweep.
    stop_on_game_over=false)` for fixed-horizon sweeps.
 4. Write `sweep.json` + run `make_sweep_report.py` at the end.
 5. **Equivalence check (plan risk #2):** one scenario knob (e.g.
-   `data/scenario_default.json:red_dos_start`), 3 seeds — records via `--overrides` must match
+   `data/scenarios/scenario_default.json:red_dos_start`), 3 seeds — records via `--overrides` must match
    records via a hand-made variant scenario file on every outcome field (identity fields like
    scenario name/id may differ; compare census/turns/winner/violations). This proves override-map
    injection ≡ the old variant-file path.

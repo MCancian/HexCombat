@@ -4,7 +4,7 @@
 # the record). Run headless: godot --headless --path <repo> -s res://tools/validate_knob_registry.gd
 extends SceneTree
 
-const DEFAULT_SCENARIO := "res://data/scenario_default.json"
+const DEFAULT_SCENARIO := "res://data/scenarios/scenario_default.json"
 const VALID_KINDS := ["llm_model", "prompt_hash"]
 
 var _failures: Array[String] = []

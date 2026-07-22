@@ -2,7 +2,7 @@
 
 One `.json` file per scenario variant; the **id** is the filename stem (`more_mines.json` →
 `--scenario=more_mines` / `HEXCOMBAT_SCENARIO=more_mines`). The baseline stays at
-`data/scenario_default.json` — it is a calibration artifact pinned by the golden gate; **never
+`data/scenarios/scenario_default.json` — it is a calibration artifact pinned by the golden gate; **never
 edit it to make a variant** (variants are additive copies; see
 `.claude/skills/hexcombat-scenario-authoring` for the recipe and
 `.claude/skills/hexcombat-config-and-knobs` for every key).

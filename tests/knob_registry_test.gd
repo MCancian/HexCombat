@@ -4,7 +4,7 @@ extends GdUnitTestSuite
 ## active override shows through on the targeted knob while others hold their default, array
 ## projection works, and captured llm kinds pass through.
 
-const DEFAULT_SCENARIO := "res://data/scenario_default.json"
+const DEFAULT_SCENARIO := "res://data/scenarios/scenario_default.json"
 
 
 func after_test() -> void:

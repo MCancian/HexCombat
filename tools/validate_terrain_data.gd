@@ -5,7 +5,7 @@ extends SceneTree
 const TERRAIN_TYPES_PATH := "res://data/terrain/terrain_types.json"
 const HEX_TERRAIN_PATH := "res://data/terrain/hex_terrain.json"
 const HEX_GRID_PATH := "res://data/taiwan_hex_grid.json"
-const SCENARIO_DEFAULT_PATH := "res://data/scenario_default.json"
+const SCENARIO_DEFAULT_PATH := "res://data/scenarios/scenario_default.json"
 const SCENARIOS_DIR := "res://data/scenarios/"
 const EXPECTED_CLASSES := ["mountain", "metropolis", "hills", "urban", "plains"]
 

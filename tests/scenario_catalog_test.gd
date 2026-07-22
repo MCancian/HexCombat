@@ -12,7 +12,7 @@ func test_resolve_path_empty_and_default_yield_default() -> void:
 
 func test_resolve_path_default_id_round_trips_to_default() -> void:
 	# scenario_id(DEFAULT_SCENARIO_PATH) == "scenario_default" must resolve back to the default
-	# path, not to a nonexistent data/scenarios/scenario_default.json.
+	# path.
 	assert_str(ScenarioCatalog.resolve_path("scenario_default")).is_equal(ScenarioCatalog.DEFAULT_SCENARIO_PATH)
 
 
@@ -21,7 +21,7 @@ func test_resolve_path_bare_id_maps_into_scenarios_dir() -> void:
 
 
 func test_resolve_path_paths_pass_through_verbatim() -> void:
-	assert_str(ScenarioCatalog.resolve_path("res://data/scenario_default.json")).is_equal("res://data/scenario_default.json")
+	assert_str(ScenarioCatalog.resolve_path("res://data/scenarios/scenario_default.json")).is_equal("res://data/scenarios/scenario_default.json")
 	assert_str(ScenarioCatalog.resolve_path("C:/tmp/variant.json")).is_equal("C:/tmp/variant.json")
 	assert_str(ScenarioCatalog.resolve_path("variant.json")).is_equal("variant.json")
 
@@ -32,8 +32,8 @@ func test_select_path_no_selection_yields_default() -> void:
 
 
 func test_select_path_arg_beats_env() -> void:
-	var args := PackedStringArray(["--scenario=res://data/scenario_default.json"])
-	assert_str(ScenarioCatalog.select_path(args, "res://does/not/matter.json")).is_equal("res://data/scenario_default.json")
+	var args := PackedStringArray(["--scenario=res://data/scenarios/scenario_default.json"])
+	assert_str(ScenarioCatalog.select_path(args, "res://does/not/matter.json")).is_equal("res://data/scenarios/scenario_default.json")
 
 
 func test_select_path_env_used_when_no_arg() -> void:

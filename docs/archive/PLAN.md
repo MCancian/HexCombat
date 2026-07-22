@@ -46,7 +46,7 @@ Scoped 2026-06-23 (sources located; see Decisions). Two independent sub-units; d
 ## M1 — Unit placement + rendering  ✓ *(complete 2026-06-23)*
 
 **M1a — Scenario authoring + loading** ✓ *(complete 2026-06-23)*
-- [x] `data/scenario_default.json`: 4 PLA amphibious brigades on beach hexes 1-4 + 4 ROC brigades on
+- [x] `data/scenarios/scenario_default.json`: 4 PLA amphibious brigades on beach hexes 1-4 + 4 ROC brigades on
       the adjacent inland neighbors, each with an `offset_bearing`. Beach→hex by nearest center;
       inland = real HexMath neighbor matching the beach's advance bearing.
 - [x] `Brigade.entry_bearing`; `GameData.load_scenario()` places the 8 brigades at startup (fail-loud).
@@ -63,7 +63,7 @@ Scoped 2026-06-23 (sources located; see Decisions). Two independent sub-units; d
 
 ## Upcoming (detail when reached — see ROADMAP for acceptance criteria)
 
-- [ ] M1 — Unit placement + rendering (`data/scenario_default.json`, brigade markers)
+- [ ] M1 — Unit placement + rendering (`data/scenarios/scenario_default.json`, brigade markers)
 - [x] M2 — Selection + event bus + info panel ✓ *(complete 2026-06-23)* — `EventBus` autoload
       (`hex_selected`/`brigade_selected`/`selection_cleared`); `GameController` emits on click;
       `HexMap` highlights via the bus; `InfoPanel` shows hex+brigade details; `selection_test.gd`
@@ -181,7 +181,7 @@ caveat is resolved.
 
 - **2026-07-09 — Default scenario carries the full ROC defense laydown; golden re-baselined
   (USER call: "make sure the default scenario has all Taiwanese brigades on it and correctly
-  placed"; agent judgment on mechanics).** `data/scenario_default.json` placements went 4 → all
+  placed"; agent judgment on mechanics).** `data/scenarios/scenario_default.json` placements went 4 → all
   32 ROC brigades, copied verbatim from `roc_full_defense` (the vetted B6 laydown; beaches
   1/3/6/9 garrisoned on-hex, every landing beach covered on-hex or adjacent). Consequences, each
   re-pinned deliberately: (a) the scripted golden turn moved — beach 1 (`hex_44_16`) is now
@@ -335,7 +335,7 @@ caveat is resolved.
   (consequence of the grid reconciliation above; USER call on the resulting placement).** Under
   the reconciled coastline, `hex_44_14` — where `5fc675f` had pointed beach 3's landing — came
   back pure sea (no longer a valid amphibious landing hex). Re-pointed
-  `red_ship_reserve[...].beach_hex` in `data/scenario_default.json`: `hex_44_14` → `hex_43_14`.
+  `red_ship_reserve[...].beach_hex` in `data/scenarios/scenario_default.json`: `hex_44_14` → `hex_43_14`.
   BDE-99's defender start moved inland with it, `hex_43_14` → `hex_42_15`, preserving the
   red-lands-coastal / green-defends-adjacent pattern the scenario relies on.
   `data/beaches.json` gained a canonical `hex_id` per beach entry (the grid hex containing the
@@ -1759,7 +1759,7 @@ brigade priority ordering, and the maneuver-first Day 1 landing rule.
 - [x] **D1-D** *(2026-06-24)* — Ship fleet model + scenario rework:
       - `scripts/model/ShipFleet.gd` typed Resource (ship_type, ready, offloading, returning,
         destroyed, carrying_capacity_bns).
-      - `data/scenario_default.json`: removed the 4 Red placements; added `red_ship_reserve` array
+      - `data/scenarios/scenario_default.json`: removed the 4 Red placements; added `red_ship_reserve` array
         ({brigade_id, locked_beach, beach_hex, offset_bearing} — rosters stay in the OOB, not
         duplicated). Green defenders unchanged.
       - `GameData.red_ship_reserve` parsed fail-loud; Red no longer placed at startup.
@@ -1826,7 +1826,7 @@ supply pool decrements; exhaustion degrades combat effectiveness.
 
 - [x] **D2-A** *(2026-06-24, with D2-B)* — Supply data + model: `scripts/model/SupplyState.gd`
       (typed Resource: `current_dos_tons: float`, `day_history: Array[Dictionary]`); added
-      `red_dos_start: 100` to `data/scenario_default.json`; `GameData.red_dos_start` parsed
+      `red_dos_start: 100` to `data/scenarios/scenario_default.json`; `GameData.red_dos_start` parsed
       (push_warning if ≤0); `GameState.supply_state` rebuilt in `reset_to_scenario` at
       `red_dos_start * TONS_PER_DOS` (15000 tons). Inert until D2-C deducts.
 
@@ -2507,7 +2507,7 @@ so all 4 brigades get beach slots on Day 1 (4 beaches × `floor(4400/2200)` = 2 
 total slots; 4 brigades fit easily).
 
 **Implications for D1-D/E**:
-- `data/scenario_default.json`: remove Red brigades from their current beach hex placements;
+- `data/scenarios/scenario_default.json`: remove Red brigades from their current beach hex placements;
   replace with a `red_ship_reserve` block listing the 4 PLA brigades and their battalion rosters
   at sea. Green defenders remain on their inland hexes unchanged.
 - `scripts/model/ShipFleet.gd`: ship_type, ready_count, offloading_count, returning_count,

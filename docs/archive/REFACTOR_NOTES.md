@@ -114,7 +114,7 @@ in-scope suggestions are applied immediately; the rest are deferred with a one-l
 ## 2026-06-23 — M1a: scenario authoring + loader + placement (data orchestrator-generated, code pi)
 
 **(a) What shipped** (orchestrator-verified: full gate green, 5 validators + 6 GdUnit4 tests)
-- `data/scenario_default.json` — authored by the orchestrator: 4 PLA amphibious brigades on beach
+- `data/scenarios/scenario_default.json` — authored by the orchestrator: 4 PLA amphibious brigades on beach
   hexes 1-4 (hex_44_16/44_15/43_14/43_13) + 4 ROC brigades on the adjacent inland neighbors
   (hex_43_16/43_15/42_15/42_14), with `offset_bearing` per brigade. Beach→hex by nearest center;
   inland neighbor = the real HexMath neighbor whose bearing best matches the beach's advance

@@ -19,7 +19,7 @@ extends SceneTree
 # hulls and freezing all sealift at ~turn 10 (fixed by day-N carry-over in OffloadCalculator);
 # a 10-turn run could never see it.
 
-const DEEP_SCENARIO := "res://data/scenario_default.json"
+const DEEP_SCENARIO := "res://data/scenarios/scenario_default.json"
 const SEED := 20260624
 const TURNS := 12
 const LATE_LANDING_AFTER_TURN := 10

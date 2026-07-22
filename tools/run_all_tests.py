@@ -19,7 +19,7 @@ except FileNotFoundError:
     print(f"\033[0;31mFATAL: Godot binary not found at '{GODOT_BIN}'.\033[0m")
     sys.exit(2)
 
-os.environ["HEXCOMBAT_SCENARIO"] = "res://data/scenario_golden.json"
+os.environ["HEXCOMBAT_SCENARIO"] = "scenario_golden"
 
 TEARDOWN_CRASH_CODES = {
     "Windows": [-1073741819, -1073740940, -1073741571, -1073740791, 3221225477, 3221226356, 3221225725, 3221226505],

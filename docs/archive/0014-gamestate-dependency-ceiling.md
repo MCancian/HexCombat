@@ -53,7 +53,7 @@ autoload cannot. The first is the target; the second is the rejected anti-patter
 
 Every phase below must end **byte-stable**: `bash tools/run_all_tests.sh` → **ALL PHASES GREEN**
 with zero golden drift and zero fixture drift. The golden gate exports
-`HEXCOMBAT_SCENARIO=res://data/scenario_golden.json` — the scripted beach-1 fight is pinned. If a
+`HEXCOMBAT_SCENARIO=res://data/scenarios/scenario_golden.json` — the scripted beach-1 fight is pinned. If a
 phase changes any pinned value, you did more than move code; stop and find what you changed.
 Commit after each green phase (one phase = one commit).
 

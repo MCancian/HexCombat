@@ -1,11 +1,11 @@
 ---
-status: Ready
-shipped:
-landed_in:
+status: Shipped
+shipped: 2026-07-22
+landed_in: docs/DECISIONS.md
 ---
 # 0013 — One home for scenario files (`data/scenarios/`)
 
-**Goal:** Move `data/scenario_default.json` and `data/scenario_golden.json` into
+**Goal:** Move `data/scenarios/scenario_default.json` and `data/scenarios/scenario_golden.json` into
 `data/scenarios/`, so every scenario lives in `SCENARIOS_DIR` and `ScenarioCatalog` loses its
 special cases.
 
@@ -20,7 +20,7 @@ already caused one real incident:
   sweep silently ran with an empty ship reserve off exactly that bad resolution — see DECISIONS
   2026-07-18 review fixes).
 - `list_scenario_paths` prepends `DEFAULT_SCENARIO_PATH` instead of just globbing one directory.
-- The gate selects the golden fixture by full path (`HEXCOMBAT_SCENARIO=res://data/scenario_golden.json`
+- The gate selects the golden fixture by full path (`HEXCOMBAT_SCENARIO=res://data/scenarios/scenario_golden.json`
   in `tools/run_all_tests.sh` / `.ps1`) rather than by id.
 
 One directory = id↔path resolution is a single rule (`SCENARIOS_DIR/<id>.json`), enumeration is
@@ -28,7 +28,7 @@ one glob, and no future id can silently miss its file.
 
 ## Design
 
-1. `git mv data/scenario_default.json data/scenarios/scenario_default.json` (same for
+1. `git mv data/scenarios/scenario_default.json data/scenarios/scenario_default.json` (same for
    `scenario_golden.json`).
 2. `ScenarioCatalog`: point `DEFAULT_SCENARIO_PATH` at the new location; delete the
    `scenario_default`-id special branch (bare-id rule now covers it); simplify

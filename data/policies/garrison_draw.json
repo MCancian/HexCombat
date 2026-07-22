@@ -1,0 +1,7 @@
+{
+  "draw_fraction": 0.0,
+  "selection_rule": "stable_by_brigade_id",
+  "rounding_rule": "ceiling",
+  "non_drawn_behavior": "local_defense",
+  "march_behavior": "toward_landing"
+}

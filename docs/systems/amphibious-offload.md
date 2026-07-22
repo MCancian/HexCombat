@@ -25,7 +25,7 @@ anti-ship crossing model and converts ship losses into BN casualties.
 | `scripts/model/BeachDef.gd` | Beach `Resource` — offload_rate, floating_piers, jackup_barge, lat/lng, advance_direction |
 | `data/beaches.json` | 9 beach sites with offload_rate in short tons/day and infrastructure counts |
 | `data/offload_rates.json` | Base rates: beach_base=4400, jackup_barge=4400, floating_pier=2200, port/airbridge variants |
-| `data/scenario_default.json` | `red_ship_reserve` block mapping 4 PLA brigades to their locked beaches |
+| `data/scenarios/scenario_default.json` | `red_ship_reserve` block mapping 4 PLA brigades to their locked beaches |
 | `tools/validate_offload_data.gd` | Asserts JSON keys match `OffloadRates.REQUIRED_RATE_KEYS` and constants agree |
 | `tools/validate_headless_offload.gd` | Headless gate: runs one offload turn, asserts >=1 brigade lands |
 | `tests/offload_calculator_test.gd` | 54 GdUnit4 tests for day-1, day-N, edge cases |
@@ -84,7 +84,7 @@ func _rebuild_fleet() -> void                                # line 1002
 
 1. `data/beaches.json` → `GameData.beaches` (`Dictionary[int, BeachDef]`).
 2. `data/offload_rates.json` → `OffloadRates` constants (verified by `validate_offload_data.gd`).
-3. `data/scenario_default.json["red_ship_reserve"]` → `GameData.red_ship_reserve` (bare entries:
+3. `data/scenarios/scenario_default.json["red_ship_reserve"]` → `GameData.red_ship_reserve` (bare entries:
    `{brigade_id, locked_beach, beach_hex, offset_bearing}`).
 4. `GameState._rebuild_ship_reserve()` (line 961) expands each brigade's OOB `composition` into
    per-BN entries: `{brigade_id, locked_beach, beach_hex, offset_bearing, bns: [{id, type}]}`.
@@ -201,10 +201,10 @@ Loadout/threshold are in `data/antiship/antiship_crossing_config.json` (`escort_
 `auto_seed_followon_pool: true` with an empty `red_followon_reserve` (return_time 3, escort
 reload_time 4) — same deep-pool shape as `scenario_default`.
 
-**Research default vs golden fixture (2026-07-12).** `data/scenario_default.json` is the **research
+**Research default vs golden fixture (2026-07-12).** `data/scenarios/scenario_default.json` is the **research
 default** — `auto_seed_followon_pool: true` + `amphibious_return_time_turns: 3`, so a naked run /
 self-play gets the realistic deep-pool sustained invasion. The pinned **gate does not run it**:
-`tools/run_all_tests.sh`/`.ps1` export `HEXCOMBAT_SCENARIO=res://data/scenario_golden.json`, a frozen
+`tools/run_all_tests.sh`/`.ps1` export `HEXCOMBAT_SCENARIO=res://data/scenarios/scenario_golden.json`, a frozen
 one-shot assault laydown (byte-identical to the pre-deep-pool default), so every golden pin stays
 stable while `scenario_default` evolves. Deep-pool coverage rides `tools/validate_deep_pool_smoke.gd`
 (auto-seed + sustained crossing + determinism), which loads `scenario_default` explicitly via

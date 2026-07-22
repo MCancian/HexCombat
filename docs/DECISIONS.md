@@ -19,6 +19,15 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-22 — Scenario files moved to one home (plan 0013; agent implementation).**
+  Moved `data/scenario_default.json` and `data/scenario_golden.json` into `data/scenarios/` so all scenarios share a single location. `ScenarioCatalog` simplified to use a pure glob and no longer needs special-casing for the default scenario id. Fixed test paths and references across documentation. Golden byte-stable; Windows gate run pending but assumed green. Facts: `docs/STATUS.md`.
+- **2026-07-21 — Garrison draw policy and sweep (plan 0021; agent implementation, USER design calls).**
+  Added `garrison_draw` policy to simulate ROC commanders pulling non-landing theater garrisons toward
+  the landing hexes while fighting locally at the landing. Introduced `garrison_draw_fraction` knob in
+  `data/knobs/registry.json` and a new parameterized `data/policies/garrison_draw.json` policy. Added
+  `garrison_draw` to `PolicyCatalog`. Golden byte-stable (tests run green). Verified behavior via
+  GdUnit tests and a batch parameter sweep. Facts: `docs/STATUS.md` (AI-readiness).
+
 - **2026-07-20 — Legibility refactor: the JSON path/array grammar has one home, `scripts/JsonPath.gd`
   (agent, USER-requested reflection).** The array-segment grammar had been reimplemented in two
   places (the read-side `KnobRegistry._extract` dump and the write-side `DataOverrides._set_override`)

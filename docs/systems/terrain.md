@@ -71,7 +71,7 @@ Consequences of the regen, all part of commit `bf75d9f`:
 - `data/beaches.json` gained a canonical `hex_id` per beach (the grid hex containing the beach's
   lat/lon point); `BeachDef` + loader + validator enforce its presence.
 - **Beach 3 (Zhuwei) re-pointed**: `red_ship_reserve[...].beach_hex` `hex_44_14` → `hex_43_14` in
-  `data/scenario_default.json` — `hex_44_14` came back pure sea under the reconciled coastline,
+  `data/scenarios/scenario_default.json` — `hex_44_14` came back pure sea under the reconciled coastline,
   reversing an earlier fix (commit `5fc675f`, which had moved the landing the other direction).
   BDE-99's defender placement moved inland with it, `hex_43_14` → `hex_42_15`, preserving the
   red-lands-coastal / green-defends-adjacent pattern.

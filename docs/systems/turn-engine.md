@@ -113,7 +113,7 @@ GameData autoloads in `_ready()` → `load_all()` (line 40–52):
 | `data/taiwan_hex_grid.json` | `load_hex_grid()` | `hex_lookup` (id→Hex), `coord_lookup` (Vector2i→id), `hex_states` (id→{owner,feba_km}) |
 | \(neighbors via HexMath\) | `build_neighbor_lookup()` | `neighbor_lookup` (id→Array[String]) |
 | `data/pla_ground_forces.json` + `roc_ground_forces.json` | `load_brigades()` | `brigades` (id→Brigade), `brigades_by_hex` (hex→Array[id]) |
-| `data/scenario_default.json` | `load_scenario()` | `turn_length_days`, `red_dos_start`, `stacking_soft_cap`, `victory_config`, `red_ship_reserve`, placements → `set_brigade_hex` |
+| `data/scenarios/scenario_default.json` | `load_scenario()` | `turn_length_days`, `red_dos_start`, `stacking_soft_cap`, `victory_config`, `red_ship_reserve`, placements → `set_brigade_hex` |
 | `data/theaters.json` | `load_theaters()` | `active_tos`, `to_adjacency`, `beach_to_to` |
 | `data/beaches.json` | `load_beaches()` | `beaches` (id→BeachDef: capacity, offload_rate, category, etc.) |
 | `data/ships.json` | `load_ships()` | `ship_defs` (id→ShipDef: capacity, category, decoy flag, etc.) |

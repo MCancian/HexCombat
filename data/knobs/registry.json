@@ -24,6 +24,7 @@
     {"id": "offload_operational_port_rate", "path": "data/offload_rates.json:rates.operational_port", "label": "Operational-port offload rate (tons/day)", "group": "offload", "sweepable": true},
     {"id": "beach_capacities", "path": "data/beaches.json:beaches[*].capacity_battalions", "label": "Per-beach capacity (battalions); sweep beaches[*] (all) or beaches[N] (one)", "group": "offload", "sweepable": true},
     {"id": "llm_model", "kind": "llm_model", "label": "LLM model id", "group": "llm", "sweepable": false},
-    {"id": "llm_prompt_hash", "kind": "prompt_hash", "label": "LLM system-prompt hash", "group": "llm", "sweepable": false}
+    {"id": "llm_prompt_hash", "kind": "prompt_hash", "label": "LLM system-prompt hash", "group": "llm", "sweepable": false},
+    {"id": "garrison_draw_fraction", "path": "data/policies/garrison_draw.json:draw_fraction", "label": "Garrison draw fraction", "group": "policy", "sweepable": true}
   ]
 }
