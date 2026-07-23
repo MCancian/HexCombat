@@ -19,6 +19,21 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-23 — Monte Carlo outcome distribution shipped into deck slide 6.**
+  - **Who**: Agent (Opus 4.8); policy/N/outcome-axis choices per the standing research-runs
+    methodology (outcome axis was already defined = golden victory census, so no USER call needed).
+  - **What**: Chose scripted `selfplay_default` (both seats) × 200 common seeds over LLM-small-N so
+    the deck's "hundreds of seeds" claim is honest and re-runnable; outcome axis = victory census
+    (`winner` + margin `census.red−census.green`). Finding: PLA wins 200/200 but by a stochastic,
+    often razor-thin margin (median +6); beach-capacity and anti-ship-lethality sweeps don't flip it
+    (structurally Red-favored). Dropped a second sweep chart — the honest sensitivity curve
+    (crossing-loss) is counterintuitive and win rate is flat — folded it into an honest caption
+    instead.
+  - **Where the facts landed**: `docs/STATUS.md` (research-runs bullet), full report
+    `docs/reports/2026-07-23-monte-carlo-outcome-distribution.md`; new stdlib tools
+    `tools/mc_summarize.py` + `tools/mc_chart.py` + spec `tools/sweeps/mc_beach_capacity.json`; deck
+    `docs/presentation.html` slide 6 (`#mc-distribution` → generated inline SVG, `data-status=ready`).
+
 - **2026-07-23 — Plan 0023 reframed presentation-first; swarm dropped; front-view clustering + ship_stats shipped.**
   - **Who**: USER (reframe call + P1 greenlight against a real turn-15 fixture) and Agent (implementation).
   - **What**: Retired the Track D "swarm orchestration" draft; 0023 became *presentation visuals for

@@ -1,0 +1,2124 @@
+{
+  "batch_name": "mc_outcome_distribution",
+  "commit": "7339378ae9d3f68832d4910c15d71b22443571e4",
+  "dirty": true,
+  "scenarios": [
+    "default"
+  ],
+  "matchups": [
+    {
+      "red_policy_id": "selfplay_default",
+      "green_policy_id": "selfplay_default"
+    }
+  ],
+  "turns_requested": 30,
+  "seeds": [
+    20260624,
+    20260625,
+    20260626,
+    20260627,
+    20260628,
+    20260629,
+    20260630,
+    20260631,
+    20260632,
+    20260633,
+    20260634,
+    20260635,
+    20260636,
+    20260637,
+    20260638,
+    20260639,
+    20260640,
+    20260641,
+    20260642,
+    20260643,
+    20260644,
+    20260645,
+    20260646,
+    20260647,
+    20260648,
+    20260649,
+    20260650,
+    20260651,
+    20260652,
+    20260653,
+    20260654,
+    20260655,
+    20260656,
+    20260657,
+    20260658,
+    20260659,
+    20260660,
+    20260661,
+    20260662,
+    20260663,
+    20260664,
+    20260665,
+    20260666,
+    20260667,
+    20260668,
+    20260669,
+    20260670,
+    20260671,
+    20260672,
+    20260673,
+    20260674,
+    20260675,
+    20260676,
+    20260677,
+    20260678,
+    20260679,
+    20260680,
+    20260681,
+    20260682,
+    20260683,
+    20260684,
+    20260685,
+    20260686,
+    20260687,
+    20260688,
+    20260689,
+    20260690,
+    20260691,
+    20260692,
+    20260693,
+    20260694,
+    20260695,
+    20260696,
+    20260697,
+    20260698,
+    20260699,
+    20260700,
+    20260701,
+    20260702,
+    20260703,
+    20260704,
+    20260705,
+    20260706,
+    20260707,
+    20260708,
+    20260709,
+    20260710,
+    20260711,
+    20260712,
+    20260713,
+    20260714,
+    20260715,
+    20260716,
+    20260717,
+    20260718,
+    20260719,
+    20260720,
+    20260721,
+    20260722,
+    20260723,
+    20260724,
+    20260725,
+    20260726,
+    20260727,
+    20260728,
+    20260729,
+    20260730,
+    20260731,
+    20260732,
+    20260733,
+    20260734,
+    20260735,
+    20260736,
+    20260737,
+    20260738,
+    20260739,
+    20260740,
+    20260741,
+    20260742,
+    20260743,
+    20260744,
+    20260745,
+    20260746,
+    20260747,
+    20260748,
+    20260749,
+    20260750,
+    20260751,
+    20260752,
+    20260753,
+    20260754,
+    20260755,
+    20260756,
+    20260757,
+    20260758,
+    20260759,
+    20260760,
+    20260761,
+    20260762,
+    20260763,
+    20260764,
+    20260765,
+    20260766,
+    20260767,
+    20260768,
+    20260769,
+    20260770,
+    20260771,
+    20260772,
+    20260773,
+    20260774,
+    20260775,
+    20260776,
+    20260777,
+    20260778,
+    20260779,
+    20260780,
+    20260781,
+    20260782,
+    20260783,
+    20260784,
+    20260785,
+    20260786,
+    20260787,
+    20260788,
+    20260789,
+    20260790,
+    20260791,
+    20260792,
+    20260793,
+    20260794,
+    20260795,
+    20260796,
+    20260797,
+    20260798,
+    20260799,
+    20260800,
+    20260801,
+    20260802,
+    20260803,
+    20260804,
+    20260805,
+    20260806,
+    20260807,
+    20260808,
+    20260809,
+    20260810,
+    20260811,
+    20260812,
+    20260813,
+    20260814,
+    20260815,
+    20260816,
+    20260817,
+    20260818,
+    20260819,
+    20260820,
+    20260821,
+    20260822,
+    20260823
+  ],
+  "n_games": 200,
+  "outcomes": {
+    "red": 200,
+    "green": 0,
+    "none": 0
+  },
+  "win_rates": {
+    "red": 1.0,
+    "green": 0.0,
+    "none": 0.0
+  },
+  "margin": {
+    "n": 200,
+    "min": 1,
+    "max": 28,
+    "mean": 7.97,
+    "median": 6.0,
+    "stdev": 6.64,
+    "bins": [
+      {
+        "start": -25,
+        "end": -20,
+        "count": 0
+      },
+      {
+        "start": -20,
+        "end": -15,
+        "count": 0
+      },
+      {
+        "start": -15,
+        "end": -10,
+        "count": 0
+      },
+      {
+        "start": -10,
+        "end": -5,
+        "count": 0
+      },
+      {
+        "start": -5,
+        "end": 0,
+        "count": 0
+      },
+      {
+        "start": 0,
+        "end": 5,
+        "count": 82
+      },
+      {
+        "start": 5,
+        "end": 10,
+        "count": 49
+      },
+      {
+        "start": 10,
+        "end": 15,
+        "count": 32
+      },
+      {
+        "start": 15,
+        "end": 20,
+        "count": 24
+      },
+      {
+        "start": 20,
+        "end": 25,
+        "count": 6
+      },
+      {
+        "start": 25,
+        "end": 30,
+        "count": 7
+      },
+      {
+        "start": 30,
+        "end": 31,
+        "count": 0
+      }
+    ]
+  },
+  "red_ashore": {
+    "n": 200,
+    "min": 59,
+    "max": 92,
+    "mean": 73.33,
+    "median": 73.0,
+    "stdev": 7.66
+  },
+  "green": {
+    "n": 200,
+    "min": 57,
+    "max": 82,
+    "mean": 65.36,
+    "median": 65.0,
+    "stdev": 4.73
+  },
+  "turns_to_decision": {
+    "n": 200,
+    "min": 11,
+    "max": 23,
+    "mean": 16.68,
+    "median": 17.0,
+    "stdev": 2.2
+  },
+  "per_game": [
+    {
+      "seed": 20260624,
+      "winner": "red",
+      "red_ashore": 72,
+      "green": 71,
+      "margin": 1,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260625,
+      "winner": "red",
+      "red_ashore": 63,
+      "green": 62,
+      "margin": 1,
+      "turns": 13,
+      "game_over": true
+    },
+    {
+      "seed": 20260626,
+      "winner": "red",
+      "red_ashore": 80,
+      "green": 67,
+      "margin": 13,
+      "turns": 21,
+      "game_over": true
+    },
+    {
+      "seed": 20260627,
+      "winner": "red",
+      "red_ashore": 75,
+      "green": 60,
+      "margin": 15,
+      "turns": 22,
+      "game_over": true
+    },
+    {
+      "seed": 20260628,
+      "winner": "red",
+      "red_ashore": 82,
+      "green": 75,
+      "margin": 7,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260629,
+      "winner": "red",
+      "red_ashore": 74,
+      "green": 66,
+      "margin": 8,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260630,
+      "winner": "red",
+      "red_ashore": 84,
+      "green": 64,
+      "margin": 20,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260631,
+      "winner": "red",
+      "red_ashore": 76,
+      "green": 68,
+      "margin": 8,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260632,
+      "winner": "red",
+      "red_ashore": 69,
+      "green": 67,
+      "margin": 2,
+      "turns": 12,
+      "game_over": true
+    },
+    {
+      "seed": 20260633,
+      "winner": "red",
+      "red_ashore": 81,
+      "green": 69,
+      "margin": 12,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260634,
+      "winner": "red",
+      "red_ashore": 79,
+      "green": 63,
+      "margin": 16,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260635,
+      "winner": "red",
+      "red_ashore": 68,
+      "green": 65,
+      "margin": 3,
+      "turns": 13,
+      "game_over": true
+    },
+    {
+      "seed": 20260636,
+      "winner": "red",
+      "red_ashore": 77,
+      "green": 71,
+      "margin": 6,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260637,
+      "winner": "red",
+      "red_ashore": 72,
+      "green": 61,
+      "margin": 11,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260638,
+      "winner": "red",
+      "red_ashore": 83,
+      "green": 69,
+      "margin": 14,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260639,
+      "winner": "red",
+      "red_ashore": 73,
+      "green": 70,
+      "margin": 3,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260640,
+      "winner": "red",
+      "red_ashore": 68,
+      "green": 64,
+      "margin": 4,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260641,
+      "winner": "red",
+      "red_ashore": 70,
+      "green": 69,
+      "margin": 1,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260642,
+      "winner": "red",
+      "red_ashore": 70,
+      "green": 68,
+      "margin": 2,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260643,
+      "winner": "red",
+      "red_ashore": 82,
+      "green": 66,
+      "margin": 16,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260644,
+      "winner": "red",
+      "red_ashore": 78,
+      "green": 71,
+      "margin": 7,
+      "turns": 20,
+      "game_over": true
+    },
+    {
+      "seed": 20260645,
+      "winner": "red",
+      "red_ashore": 66,
+      "green": 65,
+      "margin": 1,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260646,
+      "winner": "red",
+      "red_ashore": 76,
+      "green": 60,
+      "margin": 16,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260647,
+      "winner": "red",
+      "red_ashore": 72,
+      "green": 70,
+      "margin": 2,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260648,
+      "winner": "red",
+      "red_ashore": 83,
+      "green": 82,
+      "margin": 1,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260649,
+      "winner": "red",
+      "red_ashore": 78,
+      "green": 63,
+      "margin": 15,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260650,
+      "winner": "red",
+      "red_ashore": 73,
+      "green": 65,
+      "margin": 8,
+      "turns": 14,
+      "game_over": true
+    },
+    {
+      "seed": 20260651,
+      "winner": "red",
+      "red_ashore": 73,
+      "green": 68,
+      "margin": 5,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260652,
+      "winner": "red",
+      "red_ashore": 88,
+      "green": 63,
+      "margin": 25,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260653,
+      "winner": "red",
+      "red_ashore": 74,
+      "green": 57,
+      "margin": 17,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260654,
+      "winner": "red",
+      "red_ashore": 76,
+      "green": 66,
+      "margin": 10,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260655,
+      "winner": "red",
+      "red_ashore": 84,
+      "green": 64,
+      "margin": 20,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260656,
+      "winner": "red",
+      "red_ashore": 83,
+      "green": 78,
+      "margin": 5,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260657,
+      "winner": "red",
+      "red_ashore": 85,
+      "green": 66,
+      "margin": 19,
+      "turns": 20,
+      "game_over": true
+    },
+    {
+      "seed": 20260658,
+      "winner": "red",
+      "red_ashore": 62,
+      "green": 61,
+      "margin": 1,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260659,
+      "winner": "red",
+      "red_ashore": 75,
+      "green": 63,
+      "margin": 12,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260660,
+      "winner": "red",
+      "red_ashore": 77,
+      "green": 63,
+      "margin": 14,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260661,
+      "winner": "red",
+      "red_ashore": 72,
+      "green": 65,
+      "margin": 7,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260662,
+      "winner": "red",
+      "red_ashore": 84,
+      "green": 69,
+      "margin": 15,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260663,
+      "winner": "red",
+      "red_ashore": 80,
+      "green": 64,
+      "margin": 16,
+      "turns": 23,
+      "game_over": true
+    },
+    {
+      "seed": 20260664,
+      "winner": "red",
+      "red_ashore": 71,
+      "green": 62,
+      "margin": 9,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260665,
+      "winner": "red",
+      "red_ashore": 64,
+      "green": 63,
+      "margin": 1,
+      "turns": 13,
+      "game_over": true
+    },
+    {
+      "seed": 20260666,
+      "winner": "red",
+      "red_ashore": 69,
+      "green": 67,
+      "margin": 2,
+      "turns": 14,
+      "game_over": true
+    },
+    {
+      "seed": 20260667,
+      "winner": "red",
+      "red_ashore": 78,
+      "green": 77,
+      "margin": 1,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260668,
+      "winner": "red",
+      "red_ashore": 80,
+      "green": 73,
+      "margin": 7,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260669,
+      "winner": "red",
+      "red_ashore": 77,
+      "green": 67,
+      "margin": 10,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260670,
+      "winner": "red",
+      "red_ashore": 82,
+      "green": 65,
+      "margin": 17,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260671,
+      "winner": "red",
+      "red_ashore": 61,
+      "green": 59,
+      "margin": 2,
+      "turns": 13,
+      "game_over": true
+    },
+    {
+      "seed": 20260672,
+      "winner": "red",
+      "red_ashore": 79,
+      "green": 68,
+      "margin": 11,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260673,
+      "winner": "red",
+      "red_ashore": 63,
+      "green": 62,
+      "margin": 1,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260674,
+      "winner": "red",
+      "red_ashore": 74,
+      "green": 63,
+      "margin": 11,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260675,
+      "winner": "red",
+      "red_ashore": 73,
+      "green": 63,
+      "margin": 10,
+      "turns": 20,
+      "game_over": true
+    },
+    {
+      "seed": 20260676,
+      "winner": "red",
+      "red_ashore": 79,
+      "green": 72,
+      "margin": 7,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260677,
+      "winner": "red",
+      "red_ashore": 73,
+      "green": 60,
+      "margin": 13,
+      "turns": 21,
+      "game_over": true
+    },
+    {
+      "seed": 20260678,
+      "winner": "red",
+      "red_ashore": 62,
+      "green": 60,
+      "margin": 2,
+      "turns": 14,
+      "game_over": true
+    },
+    {
+      "seed": 20260679,
+      "winner": "red",
+      "red_ashore": 86,
+      "green": 76,
+      "margin": 10,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260680,
+      "winner": "red",
+      "red_ashore": 70,
+      "green": 64,
+      "margin": 6,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260681,
+      "winner": "red",
+      "red_ashore": 63,
+      "green": 61,
+      "margin": 2,
+      "turns": 14,
+      "game_over": true
+    },
+    {
+      "seed": 20260682,
+      "winner": "red",
+      "red_ashore": 66,
+      "green": 65,
+      "margin": 1,
+      "turns": 14,
+      "game_over": true
+    },
+    {
+      "seed": 20260683,
+      "winner": "red",
+      "red_ashore": 71,
+      "green": 68,
+      "margin": 3,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260684,
+      "winner": "red",
+      "red_ashore": 71,
+      "green": 63,
+      "margin": 8,
+      "turns": 21,
+      "game_over": true
+    },
+    {
+      "seed": 20260685,
+      "winner": "red",
+      "red_ashore": 73,
+      "green": 70,
+      "margin": 3,
+      "turns": 14,
+      "game_over": true
+    },
+    {
+      "seed": 20260686,
+      "winner": "red",
+      "red_ashore": 76,
+      "green": 64,
+      "margin": 12,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260687,
+      "winner": "red",
+      "red_ashore": 59,
+      "green": 57,
+      "margin": 2,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260688,
+      "winner": "red",
+      "red_ashore": 77,
+      "green": 68,
+      "margin": 9,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260689,
+      "winner": "red",
+      "red_ashore": 70,
+      "green": 60,
+      "margin": 10,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260690,
+      "winner": "red",
+      "red_ashore": 91,
+      "green": 71,
+      "margin": 20,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260691,
+      "winner": "red",
+      "red_ashore": 62,
+      "green": 59,
+      "margin": 3,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260692,
+      "winner": "red",
+      "red_ashore": 76,
+      "green": 63,
+      "margin": 13,
+      "turns": 20,
+      "game_over": true
+    },
+    {
+      "seed": 20260693,
+      "winner": "red",
+      "red_ashore": 82,
+      "green": 67,
+      "margin": 15,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260694,
+      "winner": "red",
+      "red_ashore": 72,
+      "green": 71,
+      "margin": 1,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260695,
+      "winner": "red",
+      "red_ashore": 61,
+      "green": 59,
+      "margin": 2,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260696,
+      "winner": "red",
+      "red_ashore": 79,
+      "green": 66,
+      "margin": 13,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260697,
+      "winner": "red",
+      "red_ashore": 71,
+      "green": 65,
+      "margin": 6,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260698,
+      "winner": "red",
+      "red_ashore": 83,
+      "green": 78,
+      "margin": 5,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260699,
+      "winner": "red",
+      "red_ashore": 68,
+      "green": 63,
+      "margin": 5,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260700,
+      "winner": "red",
+      "red_ashore": 61,
+      "green": 59,
+      "margin": 2,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260701,
+      "winner": "red",
+      "red_ashore": 74,
+      "green": 65,
+      "margin": 9,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260702,
+      "winner": "red",
+      "red_ashore": 70,
+      "green": 66,
+      "margin": 4,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260703,
+      "winner": "red",
+      "red_ashore": 68,
+      "green": 63,
+      "margin": 5,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260704,
+      "winner": "red",
+      "red_ashore": 86,
+      "green": 69,
+      "margin": 17,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260705,
+      "winner": "red",
+      "red_ashore": 76,
+      "green": 67,
+      "margin": 9,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260706,
+      "winner": "red",
+      "red_ashore": 76,
+      "green": 72,
+      "margin": 4,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260707,
+      "winner": "red",
+      "red_ashore": 70,
+      "green": 65,
+      "margin": 5,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260708,
+      "winner": "red",
+      "red_ashore": 74,
+      "green": 61,
+      "margin": 13,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260709,
+      "winner": "red",
+      "red_ashore": 76,
+      "green": 72,
+      "margin": 4,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260710,
+      "winner": "red",
+      "red_ashore": 76,
+      "green": 72,
+      "margin": 4,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260711,
+      "winner": "red",
+      "red_ashore": 80,
+      "green": 76,
+      "margin": 4,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260712,
+      "winner": "red",
+      "red_ashore": 86,
+      "green": 63,
+      "margin": 23,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260713,
+      "winner": "red",
+      "red_ashore": 71,
+      "green": 65,
+      "margin": 6,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260714,
+      "winner": "red",
+      "red_ashore": 74,
+      "green": 69,
+      "margin": 5,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260715,
+      "winner": "red",
+      "red_ashore": 61,
+      "green": 59,
+      "margin": 2,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260716,
+      "winner": "red",
+      "red_ashore": 70,
+      "green": 64,
+      "margin": 6,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260717,
+      "winner": "red",
+      "red_ashore": 73,
+      "green": 64,
+      "margin": 9,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260718,
+      "winner": "red",
+      "red_ashore": 66,
+      "green": 63,
+      "margin": 3,
+      "turns": 12,
+      "game_over": true
+    },
+    {
+      "seed": 20260719,
+      "winner": "red",
+      "red_ashore": 69,
+      "green": 65,
+      "margin": 4,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260720,
+      "winner": "red",
+      "red_ashore": 82,
+      "green": 69,
+      "margin": 13,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260721,
+      "winner": "red",
+      "red_ashore": 86,
+      "green": 60,
+      "margin": 26,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260722,
+      "winner": "red",
+      "red_ashore": 73,
+      "green": 71,
+      "margin": 2,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260723,
+      "winner": "red",
+      "red_ashore": 80,
+      "green": 63,
+      "margin": 17,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260724,
+      "winner": "red",
+      "red_ashore": 76,
+      "green": 65,
+      "margin": 11,
+      "turns": 20,
+      "game_over": true
+    },
+    {
+      "seed": 20260725,
+      "winner": "red",
+      "red_ashore": 61,
+      "green": 60,
+      "margin": 1,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260726,
+      "winner": "red",
+      "red_ashore": 88,
+      "green": 72,
+      "margin": 16,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260727,
+      "winner": "red",
+      "red_ashore": 63,
+      "green": 61,
+      "margin": 2,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260728,
+      "winner": "red",
+      "red_ashore": 85,
+      "green": 59,
+      "margin": 26,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260729,
+      "winner": "red",
+      "red_ashore": 76,
+      "green": 61,
+      "margin": 15,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260730,
+      "winner": "red",
+      "red_ashore": 74,
+      "green": 62,
+      "margin": 12,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260731,
+      "winner": "red",
+      "red_ashore": 66,
+      "green": 63,
+      "margin": 3,
+      "turns": 13,
+      "game_over": true
+    },
+    {
+      "seed": 20260732,
+      "winner": "red",
+      "red_ashore": 69,
+      "green": 65,
+      "margin": 4,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260733,
+      "winner": "red",
+      "red_ashore": 80,
+      "green": 65,
+      "margin": 15,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260734,
+      "winner": "red",
+      "red_ashore": 72,
+      "green": 63,
+      "margin": 9,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260735,
+      "winner": "red",
+      "red_ashore": 72,
+      "green": 66,
+      "margin": 6,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260736,
+      "winner": "red",
+      "red_ashore": 65,
+      "green": 64,
+      "margin": 1,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260737,
+      "winner": "red",
+      "red_ashore": 72,
+      "green": 66,
+      "margin": 6,
+      "turns": 20,
+      "game_over": true
+    },
+    {
+      "seed": 20260738,
+      "winner": "red",
+      "red_ashore": 88,
+      "green": 60,
+      "margin": 28,
+      "turns": 20,
+      "game_over": true
+    },
+    {
+      "seed": 20260739,
+      "winner": "red",
+      "red_ashore": 75,
+      "green": 74,
+      "margin": 1,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260740,
+      "winner": "red",
+      "red_ashore": 80,
+      "green": 69,
+      "margin": 11,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260741,
+      "winner": "red",
+      "red_ashore": 62,
+      "green": 61,
+      "margin": 1,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260742,
+      "winner": "red",
+      "red_ashore": 74,
+      "green": 66,
+      "margin": 8,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260743,
+      "winner": "red",
+      "red_ashore": 89,
+      "green": 62,
+      "margin": 27,
+      "turns": 20,
+      "game_over": true
+    },
+    {
+      "seed": 20260744,
+      "winner": "red",
+      "red_ashore": 65,
+      "green": 63,
+      "margin": 2,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260745,
+      "winner": "red",
+      "red_ashore": 67,
+      "green": 60,
+      "margin": 7,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260746,
+      "winner": "red",
+      "red_ashore": 74,
+      "green": 61,
+      "margin": 13,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260747,
+      "winner": "red",
+      "red_ashore": 65,
+      "green": 63,
+      "margin": 2,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260748,
+      "winner": "red",
+      "red_ashore": 70,
+      "green": 68,
+      "margin": 2,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260749,
+      "winner": "red",
+      "red_ashore": 84,
+      "green": 65,
+      "margin": 19,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260750,
+      "winner": "red",
+      "red_ashore": 64,
+      "green": 63,
+      "margin": 1,
+      "turns": 12,
+      "game_over": true
+    },
+    {
+      "seed": 20260751,
+      "winner": "red",
+      "red_ashore": 80,
+      "green": 76,
+      "margin": 4,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260752,
+      "winner": "red",
+      "red_ashore": 82,
+      "green": 59,
+      "margin": 23,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260753,
+      "winner": "red",
+      "red_ashore": 62,
+      "green": 61,
+      "margin": 1,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260754,
+      "winner": "red",
+      "red_ashore": 65,
+      "green": 62,
+      "margin": 3,
+      "turns": 11,
+      "game_over": true
+    },
+    {
+      "seed": 20260755,
+      "winner": "red",
+      "red_ashore": 79,
+      "green": 67,
+      "margin": 12,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260756,
+      "winner": "red",
+      "red_ashore": 62,
+      "green": 61,
+      "margin": 1,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260757,
+      "winner": "red",
+      "red_ashore": 71,
+      "green": 70,
+      "margin": 1,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260758,
+      "winner": "red",
+      "red_ashore": 67,
+      "green": 66,
+      "margin": 1,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260759,
+      "winner": "red",
+      "red_ashore": 62,
+      "green": 60,
+      "margin": 2,
+      "turns": 14,
+      "game_over": true
+    },
+    {
+      "seed": 20260760,
+      "winner": "red",
+      "red_ashore": 64,
+      "green": 62,
+      "margin": 2,
+      "turns": 12,
+      "game_over": true
+    },
+    {
+      "seed": 20260761,
+      "winner": "red",
+      "red_ashore": 62,
+      "green": 58,
+      "margin": 4,
+      "turns": 14,
+      "game_over": true
+    },
+    {
+      "seed": 20260762,
+      "winner": "red",
+      "red_ashore": 71,
+      "green": 63,
+      "margin": 8,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260763,
+      "winner": "red",
+      "red_ashore": 85,
+      "green": 66,
+      "margin": 19,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260764,
+      "winner": "red",
+      "red_ashore": 64,
+      "green": 61,
+      "margin": 3,
+      "turns": 13,
+      "game_over": true
+    },
+    {
+      "seed": 20260765,
+      "winner": "red",
+      "red_ashore": 65,
+      "green": 63,
+      "margin": 2,
+      "turns": 11,
+      "game_over": true
+    },
+    {
+      "seed": 20260766,
+      "winner": "red",
+      "red_ashore": 73,
+      "green": 64,
+      "margin": 9,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260767,
+      "winner": "red",
+      "red_ashore": 74,
+      "green": 69,
+      "margin": 5,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260768,
+      "winner": "red",
+      "red_ashore": 79,
+      "green": 74,
+      "margin": 5,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260769,
+      "winner": "red",
+      "red_ashore": 69,
+      "green": 66,
+      "margin": 3,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260770,
+      "winner": "red",
+      "red_ashore": 83,
+      "green": 68,
+      "margin": 15,
+      "turns": 20,
+      "game_over": true
+    },
+    {
+      "seed": 20260771,
+      "winner": "red",
+      "red_ashore": 61,
+      "green": 58,
+      "margin": 3,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260772,
+      "winner": "red",
+      "red_ashore": 61,
+      "green": 60,
+      "margin": 1,
+      "turns": 12,
+      "game_over": true
+    },
+    {
+      "seed": 20260773,
+      "winner": "red",
+      "red_ashore": 62,
+      "green": 61,
+      "margin": 1,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260774,
+      "winner": "red",
+      "red_ashore": 76,
+      "green": 62,
+      "margin": 14,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260775,
+      "winner": "red",
+      "red_ashore": 75,
+      "green": 65,
+      "margin": 10,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260776,
+      "winner": "red",
+      "red_ashore": 74,
+      "green": 62,
+      "margin": 12,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260777,
+      "winner": "red",
+      "red_ashore": 84,
+      "green": 67,
+      "margin": 17,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260778,
+      "winner": "red",
+      "red_ashore": 68,
+      "green": 60,
+      "margin": 8,
+      "turns": 21,
+      "game_over": true
+    },
+    {
+      "seed": 20260779,
+      "winner": "red",
+      "red_ashore": 81,
+      "green": 64,
+      "margin": 17,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260780,
+      "winner": "red",
+      "red_ashore": 86,
+      "green": 61,
+      "margin": 25,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260781,
+      "winner": "red",
+      "red_ashore": 62,
+      "green": 61,
+      "margin": 1,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260782,
+      "winner": "red",
+      "red_ashore": 72,
+      "green": 71,
+      "margin": 1,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260783,
+      "winner": "red",
+      "red_ashore": 61,
+      "green": 58,
+      "margin": 3,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260784,
+      "winner": "red",
+      "red_ashore": 62,
+      "green": 61,
+      "margin": 1,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260785,
+      "winner": "red",
+      "red_ashore": 81,
+      "green": 69,
+      "margin": 12,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260786,
+      "winner": "red",
+      "red_ashore": 71,
+      "green": 67,
+      "margin": 4,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260787,
+      "winner": "red",
+      "red_ashore": 70,
+      "green": 62,
+      "margin": 8,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260788,
+      "winner": "red",
+      "red_ashore": 82,
+      "green": 59,
+      "margin": 23,
+      "turns": 20,
+      "game_over": true
+    },
+    {
+      "seed": 20260789,
+      "winner": "red",
+      "red_ashore": 66,
+      "green": 65,
+      "margin": 1,
+      "turns": 12,
+      "game_over": true
+    },
+    {
+      "seed": 20260790,
+      "winner": "red",
+      "red_ashore": 72,
+      "green": 66,
+      "margin": 6,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260791,
+      "winner": "red",
+      "red_ashore": 82,
+      "green": 69,
+      "margin": 13,
+      "turns": 20,
+      "game_over": true
+    },
+    {
+      "seed": 20260792,
+      "winner": "red",
+      "red_ashore": 68,
+      "green": 66,
+      "margin": 2,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260793,
+      "winner": "red",
+      "red_ashore": 70,
+      "green": 65,
+      "margin": 5,
+      "turns": 14,
+      "game_over": true
+    },
+    {
+      "seed": 20260794,
+      "winner": "red",
+      "red_ashore": 86,
+      "green": 71,
+      "margin": 15,
+      "turns": 19,
+      "game_over": true
+    },
+    {
+      "seed": 20260795,
+      "winner": "red",
+      "red_ashore": 77,
+      "green": 69,
+      "margin": 8,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260796,
+      "winner": "red",
+      "red_ashore": 74,
+      "green": 65,
+      "margin": 9,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260797,
+      "winner": "red",
+      "red_ashore": 74,
+      "green": 72,
+      "margin": 2,
+      "turns": 12,
+      "game_over": true
+    },
+    {
+      "seed": 20260798,
+      "winner": "red",
+      "red_ashore": 62,
+      "green": 61,
+      "margin": 1,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260799,
+      "winner": "red",
+      "red_ashore": 71,
+      "green": 69,
+      "margin": 2,
+      "turns": 11,
+      "game_over": true
+    },
+    {
+      "seed": 20260800,
+      "winner": "red",
+      "red_ashore": 74,
+      "green": 67,
+      "margin": 7,
+      "turns": 14,
+      "game_over": true
+    },
+    {
+      "seed": 20260801,
+      "winner": "red",
+      "red_ashore": 77,
+      "green": 76,
+      "margin": 1,
+      "turns": 14,
+      "game_over": true
+    },
+    {
+      "seed": 20260802,
+      "winner": "red",
+      "red_ashore": 62,
+      "green": 60,
+      "margin": 2,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260803,
+      "winner": "red",
+      "red_ashore": 65,
+      "green": 58,
+      "margin": 7,
+      "turns": 13,
+      "game_over": true
+    },
+    {
+      "seed": 20260804,
+      "winner": "red",
+      "red_ashore": 63,
+      "green": 62,
+      "margin": 1,
+      "turns": 12,
+      "game_over": true
+    },
+    {
+      "seed": 20260805,
+      "winner": "red",
+      "red_ashore": 72,
+      "green": 69,
+      "margin": 3,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260806,
+      "winner": "red",
+      "red_ashore": 72,
+      "green": 68,
+      "margin": 4,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260807,
+      "winner": "red",
+      "red_ashore": 61,
+      "green": 60,
+      "margin": 1,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260808,
+      "winner": "red",
+      "red_ashore": 70,
+      "green": 65,
+      "margin": 5,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260809,
+      "winner": "red",
+      "red_ashore": 71,
+      "green": 67,
+      "margin": 4,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260810,
+      "winner": "red",
+      "red_ashore": 76,
+      "green": 64,
+      "margin": 12,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260811,
+      "winner": "red",
+      "red_ashore": 89,
+      "green": 81,
+      "margin": 8,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260812,
+      "winner": "red",
+      "red_ashore": 82,
+      "green": 73,
+      "margin": 9,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260813,
+      "winner": "red",
+      "red_ashore": 72,
+      "green": 67,
+      "margin": 5,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260814,
+      "winner": "red",
+      "red_ashore": 68,
+      "green": 67,
+      "margin": 1,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260815,
+      "winner": "red",
+      "red_ashore": 72,
+      "green": 64,
+      "margin": 8,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260816,
+      "winner": "red",
+      "red_ashore": 62,
+      "green": 61,
+      "margin": 1,
+      "turns": 15,
+      "game_over": true
+    },
+    {
+      "seed": 20260817,
+      "winner": "red",
+      "red_ashore": 78,
+      "green": 61,
+      "margin": 17,
+      "turns": 20,
+      "game_over": true
+    },
+    {
+      "seed": 20260818,
+      "winner": "red",
+      "red_ashore": 88,
+      "green": 63,
+      "margin": 25,
+      "turns": 18,
+      "game_over": true
+    },
+    {
+      "seed": 20260819,
+      "winner": "red",
+      "red_ashore": 67,
+      "green": 65,
+      "margin": 2,
+      "turns": 17,
+      "game_over": true
+    },
+    {
+      "seed": 20260820,
+      "winner": "red",
+      "red_ashore": 78,
+      "green": 65,
+      "margin": 13,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260821,
+      "winner": "red",
+      "red_ashore": 92,
+      "green": 73,
+      "margin": 19,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260822,
+      "winner": "red",
+      "red_ashore": 66,
+      "green": 61,
+      "margin": 5,
+      "turns": 16,
+      "game_over": true
+    },
+    {
+      "seed": 20260823,
+      "winner": "red",
+      "red_ashore": 77,
+      "green": 67,
+      "margin": 10,
+      "turns": 18,
+      "game_over": true
+    }
+  ]
+}

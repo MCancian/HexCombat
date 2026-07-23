@@ -192,6 +192,18 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   `DataOverrides` addresses arrays (`name[*]`/`name[]` = all elements, `name[N]` = one), so array
   knobs are first-class sweepable too — e.g. `--knob "data/beaches.json:beaches[*].capacity_battalions"`
   scales every beach at once; `KnobRegistry._extract` shares the grammar for the record dump.
+- **Monte Carlo outcome distribution (deck slide 6)** — `tools/mc_summarize.py` aggregates a
+  `run_batch.py` batch into a committable, timestamp-free summary JSON (outcome counts, win rates,
+  and the victory-margin / battalions-ashore / turns-to-decision distributions with histogram bins);
+  `tools/mc_chart.py` renders that summary into a deck-themed self-contained inline `<svg>` (no
+  fabricated numbers — the chart is a pure function of the batch). Both are stdlib-only standalone
+  tools, not wired into the gate. Headline result (200 seeds, `selfplay_default` both seats,
+  `scenario_default`, commit 7339378): **PLA wins 200/200 but by a stochastic margin** (min +1,
+  median +6, mean +8, max +28); single-knob sweeps of beach capacity (1→4) and anti-ship lethality
+  (0→0.8) leave the win rate flat at 100% — the laydown is structurally Red-favored, the RNG sets the
+  margin not the winner. Report + committed data: `docs/reports/2026-07-23-monte-carlo-outcome-distribution.md`
+  (+ `docs/reports/assets/mc_outcome_distribution.{summary.json,svg}`). The slide's `#mc-distribution`
+  container holds the generated SVG (`data-status="ready"`).
 - **`roc_full_defense` scenario** — variant placing all 32 ROC brigades (124 battalions) at their
   real garrison hexes vs the default's 4 PLA amphibious brigades; select with
   `--scenario=roc_full_defense`. Gives AI-vs-AI games a multi-turn fight instead of the default
