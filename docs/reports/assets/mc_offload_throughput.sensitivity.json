@@ -1,0 +1,54 @@
+{
+  "knob": "data/beaches.json:beaches[*].offload_rate",
+  "knob_label": "beach offload throughput (short tons/day)",
+  "scenario": "scenario_default",
+  "matchup": "selfplay_default",
+  "turns": 30,
+  "n_per_cell": 20,
+  "baseline": 4400,
+  "commit": "7339378",
+  "points": [
+    {
+      "offload_rate": 4400,
+      "n": 20,
+      "red_win_rate": 1.0,
+      "mean_margin": 6.7
+    },
+    {
+      "offload_rate": 3000,
+      "n": 20,
+      "red_win_rate": 1.0,
+      "mean_margin": 2.7
+    },
+    {
+      "offload_rate": 2200,
+      "n": 20,
+      "red_win_rate": 1.0,
+      "mean_margin": 2.2
+    },
+    {
+      "offload_rate": 1600,
+      "n": 20,
+      "red_win_rate": 0.8,
+      "mean_margin": 1.6
+    },
+    {
+      "offload_rate": 1200,
+      "n": 20,
+      "red_win_rate": 0.35,
+      "mean_margin": -3.75
+    },
+    {
+      "offload_rate": 900,
+      "n": 20,
+      "red_win_rate": 0.05,
+      "mean_margin": -9.05
+    },
+    {
+      "offload_rate": 600,
+      "n": 20,
+      "red_win_rate": 0.0,
+      "mean_margin": -22.35
+    }
+  ]
+}

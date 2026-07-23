@@ -93,3 +93,68 @@ python3 tools/run_sweep.py --name mc_crossing_sensitivity \
 Committed artifacts: `assets/mc_outcome_distribution.summary.json` (the distribution data),
 `assets/mc_outcome_distribution.svg` (chart source), `assets/mc_crossing_sensitivity.sweep.md`
 (sweep table). Raw per-seed records are reproducible from the commands above.
+
+---
+
+## Follow-up — what actually flips the outcome, and two tooling bugs (2026-07-23)
+
+**Question (USER):** the 100% PLA win rate can't be scenario luck — which dial flips it, and once
+the amphibious wave lands, isn't the follow-on logistics-throughput-constrained?
+
+**Nothing wave-level flips it.** Eleven dials swept/probed at extremes leave the win rate flat at
+100%: amphibious return time (3→20), anti-ship strike bonus (0→0.8), exquisite missile count
+(36→260), DOS supply start (100→6), combat base loss rate, and the combat advantage ratios. The
+cause is **structural**: with `auto_seed_followon_pool = true` the PLA follow-on auto-seeds from the
+*entire remaining mainland OOB* (`SealiftStateBuilder.resolve_followon_reserve`) — a bottomless
+reservoir — and there is no campaign clock, so any positive delivery rate eventually out-accumulates
+the defender. Cutting the pool off (first wave only) is the crude flip: Green holds 25:55, margin
+−22..−35 over 12 seeds. But "first wave with no follow-on" is not a plausible operational case.
+
+**The follow-on IS throughput-limited (USER instinct confirmed).** Turn 1 ships ~54 BNs but only
+~39% discharge; a standing beach queue peaks at 33–45 BNs, draining 2–5/turn. The PLA also captures
+the Taipei port **turn 1 for free** — `taipei` is `hex_44_16`, the primary assault beach — and
+`auto_jlsf` repairs it to 11,000 t/day. But denying that repair (`auto_jlsf=false`) barely changes
+the result (74:69, 63:62, …): the port isn't the crux. The crux is that baseline **beach** throughput
+(4,400 t/day/beach) is already generous enough that logistics never binds.
+
+**The plausible flip lever: beach offload throughput.** Sweeping `beaches[*].offload_rate` gives a
+clean monotone crossing — the invasion **culminates** (plateaus below the ROC count, no decisive PLA
+win) below **~1,330 t/day**:
+
+| offload_rate (t/day) | 4400 | 3000 | 2200 | 1600 | 1200 | 900 | 600 |
+|---|---|---|---|---|---|---|---|
+| PLA win rate | 100% | 100% | 100% | 80% | 35% | 5% | 0% |
+| mean margin | +6.7 | +2.7 | +2.2 | +1.6 | −3.8 | −9.0 | −22.4 |
+
+Chart: `assets/mc_offload_throughput.svg` (deck slide 7). Data:
+`assets/mc_offload_throughput.sensitivity.json`, sweep spec `tools/sweeps/mc_offload_throughput.json`.
+
+**Two knob-registry bugs found and (partly) fixed:**
+
+1. `offload_beach_base_rate` pointed at `data/offload_rates.json:rates.beach_base` — a **phantom**:
+   that file is never loaded at runtime (throughput is the `OffloadRates` GDScript constants; the
+   JSON is only a validation mirror), so a DataOverrides sweep of it silently no-ops while the record
+   dump still reads a matching value. **Fixed:** repointed to the real, working path
+   `data/beaches.json:beaches[*].offload_rate` (beaches.json *is* routed through DataOverrides).
+2. `offload_operational_port_rate` has the same phantom problem (port rate is
+   `OffloadRates.OPERATIONAL_PORT`, a code constant). **Marked `sweepable: false`** (dump-only);
+   wiring `InfrastructureResolver` to read a loaded rate is backlogged.
+3. **Not yet fixed:** `combat_defender_advantage_ratio` / `combat_attacker_advantage_ratio` are
+   registry knobs that are recorded but **inert** — overriding either to an extreme produces a
+   byte-identical game (they don't reach `CombatResolver`). Backlog: wire them or drop them.
+
+**Reproduce the flip curve:**
+
+```bash
+python3 tools/run_sweep.py --name mc_offload_throughput \
+    --knob "data/beaches.json:beaches[*].offload_rate" \
+    --values 4400,3000,2200,1600,1200,900,600 --matchup selfplay_default \
+    --scenario scenario_default --n 20 --turns 30 --metrics red_win_rate
+python3 tools/mc_chart.py --crossing reports/mc/mc_offload_throughput.sensitivity.json \
+    --out reports/mc/mc_offload_throughput.svg
+```
+
+**Open threads (USER-selected next levers, no artificial clock):** sustained per-turn follow-on
+interdiction; a bindable offload/lift throughput (fix the port-rate phantom); dynamic ROC defense
+(counterattack / reserve mobilization). Each aims to create a plateau below the ROC count *within*
+the horizon rather than capping delivery with a timer.

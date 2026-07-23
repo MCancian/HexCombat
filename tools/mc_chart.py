@@ -203,16 +203,101 @@ def build_svg(summary: dict, sens: dict | None) -> str:
     )
 
 
+def build_crossing_svg(sens: dict) -> str:
+    """A knob-sweep crossing curve: PLA win rate (single axis) vs a knob value, with the 50%
+    coin-flip line and the culmination crossing marked. Pure function of the sweep's points."""
+    points = sorted(sens["points"], key=lambda p: p["offload_rate"])
+    xs = [p["offload_rate"] for p in points]
+    x_lo, x_hi = min(xs), max(xs)
+    plot_l, plot_r, plot_t, plot_b = 66, 566, 100, 296
+    baseline = sens.get("baseline", x_hi)
+
+    def mx(v):
+        return plot_l + (v - x_lo) / (x_hi - x_lo) * (plot_r - plot_l)
+
+    def my(rate):  # rate in [0,1]
+        return plot_b - rate * (plot_b - plot_t)
+
+    # Linear interpolate the 50% crossing between the two straddling points.
+    cross_x = None
+    for a, b in zip(points, points[1:]):
+        if (a["red_win_rate"] - 0.5) * (b["red_win_rate"] - 0.5) <= 0 and a["red_win_rate"] != b["red_win_rate"]:
+            t = (0.5 - a["red_win_rate"]) / (b["red_win_rate"] - a["red_win_rate"])
+            cross_x = a["offload_rate"] + t * (b["offload_rate"] - a["offload_rate"])
+            break
+
+    parts: list[str] = []
+    parts.append(text(60, 34, "Logistics binds — PLA win rate vs beach throughput", 20, INK, "700", "start", "Outfit"))
+    parts.append(text(60, 58, "Throttle the follow-on's beach offload and the invasion culminates below the ROC count",
+                      12, MUTED))
+
+    # Y gridlines 0/50/100%.
+    for rate, lab in ((0.0, "0%"), (0.5, "50%"), (1.0, "100%")):
+        y = my(rate)
+        parts.append('<line x1="%s" y1="%.1f" x2="%s" y2="%.1f" stroke="%s" stroke-width="1"/>'
+                     % (plot_l, y, plot_r, y, GRID))
+        parts.append(text(plot_l - 8, y + 4, lab, 11, FAINT, "400", "end"))
+
+    # Culmination zone shading left of the crossing.
+    if cross_x is not None:
+        parts.append('<rect x="%.1f" y="%s" width="%.1f" height="%s" fill="rgba(139,92,246,0.10)"/>'
+                     % (mx(x_lo), plot_t, mx(cross_x) - mx(x_lo), plot_b - plot_t))
+
+    # 50% coin-flip line.
+    parts.append('<line x1="%s" y1="%.1f" x2="%s" y2="%.1f" stroke="%s" stroke-width="1.5" '
+                 'stroke-dasharray="5 4"/>' % (plot_l, my(0.5), plot_r, my(0.5), VIOLET))
+    parts.append(text(plot_r - 2, my(0.5) - 7, "coin-flip", 10.5, VIOLET, "600", "end"))
+
+    # The win-rate line + markers.
+    line = " ".join("%.1f,%.1f" % (mx(p["offload_rate"]), my(p["red_win_rate"])) for p in points)
+    parts.append('<polyline points="%s" fill="none" stroke="%s" stroke-width="2.5" '
+                 'stroke-linejoin="round" stroke-linecap="round"/>' % (line, BLUE))
+    for p in points:
+        cx, cy = mx(p["offload_rate"]), my(p["red_win_rate"])
+        parts.append('<circle cx="%.1f" cy="%.1f" r="4.5" fill="%s" stroke="#0a0e17" stroke-width="2"/>'
+                     % (cx, cy, BAR_TOP))
+        parts.append('<line x1="%.1f" y1="%s" x2="%.1f" y2="%s" stroke="%s" stroke-width="1"/>'
+                     % (cx, plot_b, cx, plot_b + 5, "rgba(255,255,255,0.25)"))
+        parts.append(text(cx, plot_b + 19, "%d" % p["offload_rate"], 10, MUTED, "400", "middle"))
+
+    # Crossing callout.
+    if cross_x is not None:
+        cxx = mx(cross_x)
+        parts.append('<line x1="%.1f" y1="%s" x2="%.1f" y2="%s" stroke="%s" stroke-width="1.5" '
+                     'stroke-dasharray="2 3"/>' % (cxx, plot_t, cxx, my(0.5), INK))
+        parts.append(text(cxx + 6, plot_t + 14, "culmination", 11, INK, "600", "start"))
+        parts.append(text(cxx + 6, plot_t + 29, "≈%d t/day" % round(cross_x, -1), 10.5, MUTED, "400", "start"))
+
+    # Baseline marker (anchored end so it never clips the right edge).
+    parts.append(text(mx(baseline), my(1.0) - 10, "baseline %s" % f"{baseline:,}", 10.5, FAINT, "400", "end"))
+
+    parts.append('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width="1.5"/>'
+                 % (plot_l, plot_b, plot_r, plot_b, "rgba(255,255,255,0.25)"))
+    parts.append(text((plot_l + plot_r) / 2, plot_b + 38, "beach offload throughput (short tons/day)",
+                      12, MUTED, "400", "middle"))
+    return (
+        '<svg viewBox="0 0 %d 336" width="100%%" role="img" '
+        'aria-label="PLA win rate versus beach offload throughput" '
+        'xmlns="http://www.w3.org/2000/svg" style="max-width:100%%;height:auto;">\n  %s\n</svg>'
+        % (WIDTH, "\n  ".join(parts))
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--summary", required=True)
+    parser.add_argument("--summary", default="")
     parser.add_argument("--sensitivity", default="")
+    parser.add_argument("--crossing", default="", help="Sweep sensitivity JSON → crossing-curve SVG.")
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
 
-    summary = json.loads(Path(args.summary).read_text(encoding="utf-8"))
-    sens = json.loads(Path(args.sensitivity).read_text(encoding="utf-8")) if args.sensitivity else None
-    svg = build_svg(summary, sens)
+    if args.crossing:
+        sens = json.loads(Path(args.crossing).read_text(encoding="utf-8"))
+        svg = build_crossing_svg(sens)
+    else:
+        summary = json.loads(Path(args.summary).read_text(encoding="utf-8"))
+        extra = json.loads(Path(args.sensitivity).read_text(encoding="utf-8")) if args.sensitivity else None
+        svg = build_svg(summary, extra)
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(svg + "\n", encoding="utf-8")

@@ -19,6 +19,24 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-23 — Invasion outcome is logistics-bound; found the flip lever + fixed a phantom knob.**
+  - **Who**: Agent (Opus 4.8), driven by USER's "which dial flips it / isn't the follow-on
+    throughput-limited" question.
+  - **What**: Established the 100% PLA win is *structural* (bottomless `auto_seed_followon_pool` +
+    no campaign clock), not scenario luck; 11 wave-level dials don't flip it. The plausible flip
+    lever is **beach offload throughput** (`beaches[*].offload_rate`) — clean monotone crossing,
+    invasion culminates below ~1,330 t/day. The PLA captures the Taipei port free (it's the assault
+    beach hex) but denying its JLSF repair barely matters — the beach rate is the binding lever.
+    Fixed the registry knob `offload_beach_base_rate` (was pointing at the never-loaded
+    `offload_rates.json` phantom → repointed to the real `beaches[*].offload_rate`); marked
+    `offload_operational_port_rate` `sweepable:false`. USER chose to pursue interdiction / bindable
+    throughput / dynamic ROC defense next (no artificial clock).
+  - **Where the facts landed**: report follow-up section
+    `docs/reports/2026-07-23-monte-carlo-outcome-distribution.md`; `docs/STATUS.md` (MC bullet);
+    deck **slide 7** "Where the Invasion Culminates"; `data/knobs/registry.json`;
+    `tools/mc_chart.py --crossing`; `tools/sweeps/mc_offload_throughput.json`. Open backlog:
+    `combat_{defender,attacker}_advantage_ratio` inert knobs; port-rate loadable wiring.
+
 - **2026-07-23 — Monte Carlo outcome distribution shipped into deck slide 6.**
   - **Who**: Agent (Opus 4.8); policy/N/outcome-axis choices per the standing research-runs
     methodology (outcome axis was already defined = golden victory census, so no USER call needed).

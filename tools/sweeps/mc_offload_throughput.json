@@ -1,0 +1,21 @@
+{
+  "sweep_name": "mc_offload_throughput",
+  "scenario": "scenario_default",
+  "matchup": "selfplay_default",
+  "turns": 30,
+  "knobs": [
+    "data/beaches.json:beaches[*].offload_rate"
+  ],
+  "grid": [
+    [4400, 3000, 2200, 1600, 1200, 900, 600]
+  ],
+  "seeds": [
+    20260624, 20260625, 20260626, 20260627, 20260628, 20260629,
+    20260630, 20260631, 20260632, 20260633, 20260634, 20260635,
+    20260636, 20260637, 20260638, 20260639, 20260640, 20260641,
+    20260642, 20260643
+  ],
+  "metrics": [
+    "red_win_rate"
+  ]
+}

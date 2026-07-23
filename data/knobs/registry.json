@@ -130,17 +130,17 @@
     },
     {
       "id": "offload_beach_base_rate",
-      "path": "data/offload_rates.json:rates.beach_base",
-      "label": "Beach base offload rate (tons/day)",
+      "path": "data/beaches.json:beaches[*].offload_rate",
+      "label": "Per-beach offload throughput (tons/day); sweep beaches[*] (all) or beaches[N] (one). The binding logistics lever: lowering it plateaus the follow-on below the ROC count (invasion culminates).",
       "group": "offload",
       "sweepable": true
     },
     {
       "id": "offload_operational_port_rate",
       "path": "data/offload_rates.json:rates.operational_port",
-      "label": "Operational-port offload rate (tons/day)",
+      "label": "Operational-port offload rate (tons/day). DUMP-ONLY: the runtime value is the OffloadRates.OPERATIONAL_PORT code constant (offload_rates.json is only its validation mirror), so a DataOverrides sweep of this path is a no-op. Wiring InfrastructureResolver to read a loaded rate is backlogged.",
       "group": "offload",
-      "sweepable": true
+      "sweepable": false
     },
     {
       "id": "beach_capacities",

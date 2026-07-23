@@ -203,7 +203,19 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   (0→0.8) leave the win rate flat at 100% — the laydown is structurally Red-favored, the RNG sets the
   margin not the winner. Report + committed data: `docs/reports/2026-07-23-monte-carlo-outcome-distribution.md`
   (+ `docs/reports/assets/mc_outcome_distribution.{summary.json,svg}`). The slide's `#mc-distribution`
-  container holds the generated SVG (`data-status="ready"`).
+  container holds the generated SVG (`data-status="ready"`). **Follow-up (structural cause + the flip
+  lever):** the 100% win rate is structural — the PLA follow-on auto-seeds from the entire mainland OOB
+  (`auto_seed_followon_pool`, a bottomless reservoir) and no campaign clock caps the buildup, so a
+  logistics-throttled trickle still out-accumulates the defender. The plausible flip lever is **beach
+  offload throughput**: sweeping `data/beaches.json:beaches[*].offload_rate` gives a clean monotone
+  crossing — the invasion culminates below ~1,330 t/day (deck **slide 7** "Where the Invasion
+  Culminates" + `tools/mc_chart.py --crossing`; spec `tools/sweeps/mc_offload_throughput.json`). Fixed
+  a registry bug in the process: `offload_beach_base_rate` pointed at the phantom `offload_rates.json`
+  (never loaded at runtime — throughput is `OffloadRates` constants; the JSON is only a validation
+  mirror), so its sweep silently no-op'd; repointed to the real `beaches[*].offload_rate`, and marked
+  `offload_operational_port_rate` `sweepable:false` (dump-only code constant). Still open:
+  `combat_{defender,attacker}_advantage_ratio` are registry knobs recorded but inert (don't reach
+  `CombatResolver`).
 - **`roc_full_defense` scenario** — variant placing all 32 ROC brigades (124 battalions) at their
   real garrison hexes vs the default's 4 PLA amphibious brigades; select with
   `--scenario=roc_full_defense`. Gives AI-vs-AI games a multi-turn fight instead of the default
