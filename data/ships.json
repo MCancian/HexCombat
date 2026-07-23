@@ -37,7 +37,8 @@
       "infrastructure": false,
       "total_count": 12,
       "initial_ready": 12,
-      "carrying_capacity_bn_equiv": 0.0
+      "carrying_capacity_bn_equiv": 0.0,
+      "area_sam_capacity": 72
     },
     {
       "id": 2,
@@ -47,7 +48,8 @@
       "infrastructure": false,
       "total_count": 12,
       "initial_ready": 12,
-      "carrying_capacity_bn_equiv": 0.0
+      "carrying_capacity_bn_equiv": 0.0,
+      "area_sam_capacity": 52
     },
     {
       "id": 3,
@@ -57,7 +59,8 @@
       "infrastructure": false,
       "total_count": 24,
       "initial_ready": 24,
-      "carrying_capacity_bn_equiv": 0.0
+      "carrying_capacity_bn_equiv": 0.0,
+      "area_sam_capacity": 32
     },
     {
       "id": 4,
@@ -67,7 +70,8 @@
       "infrastructure": false,
       "total_count": 24,
       "initial_ready": 24,
-      "carrying_capacity_bn_equiv": 0.0
+      "carrying_capacity_bn_equiv": 0.0,
+      "area_sam_capacity": 0
     },
     {
       "id": 5,

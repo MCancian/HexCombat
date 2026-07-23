@@ -20,6 +20,7 @@ plan to act, the closeout wasn't done.
 |---|------|----------|--------|
 | 0002 | [Per-hull escort magazines (D3-B3)](0002-per-hull-escort-magazines.md) | Low (needs ship-ammo subsystem) | Sketch |
 | 0003 | [Combat-summary team attribution](0003-combat-summary-team-attribution.md) | Low (blocked on USER counterattack call) | Sketch |
+| 0023 | [Track D Master Orchestration Plan](0023-track-d-orchestration.md) | High (coordinated swarm UI execution) | Ready |
 
 | 0016 | [Separate State Data from Autoload](0016-separate-state-data.md) | Medium (hygiene/architecture) | Superseded by 0014 |
 | 0022 | [Red reactive beach-opening (feasibility first)](0022-red-beach-switching.md) | Medium (research; new mechanic, gated on a feasibility spike) | Sketch |

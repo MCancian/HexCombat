@@ -12,6 +12,7 @@ class_name ShipDef
 @export var is_decoy: bool = false
 @export var setup_group: String = ""
 @export var mine_neutralization_likelihood: String = ""  # optional per-hull override; "" => use category
+@export var area_sam_capacity: int = 0  # number of area-defense SAMs (e.g. HHQ-9, HQ-16) the hull carries
 
 # Ship categories whose carriers may lift the amphibious follow-on echelon. Membership is EXACT — do
 # not substring-match on "Amphibious": the category set also contains "Civilian_Non_Amphibious",

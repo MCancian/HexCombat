@@ -37,6 +37,29 @@ var red_out_of_supply_effectiveness: float = 0.5
 var unscreened_support_strength: float = 0.5
 var maneuver_casualty_weight: float = 4.0
 var support_casualty_weight: float = 1.0
+var support_multipliers: Dictionary = {
+	"artillery": 0.8,
+	"rocket_artillery": 1.2,
+	"cas": 1.4,
+	"crbm": 0.6,
+	"rotary_wing": 1.3
+}
+var combat_base_loss_rate: float = 0.20
+var combat_attacker_ratio_slope: float = 0.08
+var combat_defender_ratio_slope: float = 0.10
+var combat_loss_roll_midpoint: float = 50.0
+var combat_loss_roll_scale: float = 1000.0
+var combat_min_loss_rate: float = 0.05
+var combat_max_attacker_loss_rate: float = 0.45
+var combat_max_defender_loss_rate: float = 0.50
+var feba_balance_gain: float = 2.0
+var feba_balance_clamp: float = 2.0
+var feba_roll_factor_min: float = 0.75
+var feba_roll_factor_span: float = 0.5
+var combat_min_effective_strength: float = 0.1
+var combat_attacker_advantage_ratio: float = 1.2
+var combat_defender_advantage_ratio: float = 0.85
+var default_combat_strength: float = 1.0
 var victory_config: Dictionary = {}  # scenario 'victory' block (loss_check_arm, taiwan_hexes)
 # Research bypass (plan 0012): WeGo phases resolve_turn skips wholesale, so a calibration sweep
 # can run standard full games while isolating one phase's effect (e.g. IJFS maneuver attrition
@@ -251,6 +274,30 @@ func load_scenario(path: String) -> void:
 	unscreened_support_strength = float(scenario.get("unscreened_support_strength", 0.5))
 	maneuver_casualty_weight = float(scenario.get("maneuver_casualty_weight", 4.0))
 	support_casualty_weight = float(scenario.get("support_casualty_weight", 1.0))
+	var mults_value: Variant = scenario.get("support_multipliers", {
+		"artillery": 0.8,
+		"rocket_artillery": 1.2,
+		"cas": 1.4,
+		"crbm": 0.6,
+		"rotary_wing": 1.3
+	})
+	support_multipliers = mults_value if mults_value is Dictionary else {}
+	combat_base_loss_rate = float(scenario.get("combat_base_loss_rate", 0.20))
+	combat_attacker_ratio_slope = float(scenario.get("combat_attacker_ratio_slope", 0.08))
+	combat_defender_ratio_slope = float(scenario.get("combat_defender_ratio_slope", 0.10))
+	combat_loss_roll_midpoint = float(scenario.get("combat_loss_roll_midpoint", 50.0))
+	combat_loss_roll_scale = float(scenario.get("combat_loss_roll_scale", 1000.0))
+	combat_min_loss_rate = float(scenario.get("combat_min_loss_rate", 0.05))
+	combat_max_attacker_loss_rate = float(scenario.get("combat_max_attacker_loss_rate", 0.45))
+	combat_max_defender_loss_rate = float(scenario.get("combat_max_defender_loss_rate", 0.50))
+	feba_balance_gain = float(scenario.get("feba_balance_gain", 2.0))
+	feba_balance_clamp = float(scenario.get("feba_balance_clamp", 2.0))
+	feba_roll_factor_min = float(scenario.get("feba_roll_factor_min", 0.75))
+	feba_roll_factor_span = float(scenario.get("feba_roll_factor_span", 0.5))
+	combat_min_effective_strength = float(scenario.get("combat_min_effective_strength", 0.1))
+	combat_attacker_advantage_ratio = float(scenario.get("combat_attacker_advantage_ratio", 1.2))
+	combat_defender_advantage_ratio = float(scenario.get("combat_defender_advantage_ratio", 0.85))
+	default_combat_strength = float(scenario.get("default_combat_strength", 1.0))
 	var victory_value: Variant = scenario.get("victory", {})
 	victory_config = victory_value if victory_value is Dictionary else {}
 	red_ship_reserve = _parse_ship_reserve_entries(scenario.get("red_ship_reserve", []), "red_ship_reserve")
@@ -689,6 +736,7 @@ func load_ships() -> void:
 		ship_def.is_decoy = bool(ship_data.get("is_decoy", false))
 		ship_def.setup_group = String(ship_data.get("setup_group", ""))
 		ship_def.mine_neutralization_likelihood = String(ship_data.get("mine_neutralization_likelihood", ""))
+		ship_def.area_sam_capacity = int(ship_data.get("area_sam_capacity", 0))
 		if ship_def.id == 0:
 			push_error("Ship entry missing id field")
 			continue
