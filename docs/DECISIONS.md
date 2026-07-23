@@ -19,6 +19,12 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-22: Combat Constants Promoted to Scenario Knobs**
+  - **Who**: USER (authorized) and Agent
+  - **What**: Promoted all hardcoded combat parameters (support multipliers, loss rate parameters, FEBA shift, and default strength) from `CombatCalculator` and `UnitStats` into scenario configuration fields.
+  - **Where**: `GameData.gd`, `CombatRules.gd`, `CombatCalculator.gd`, `UnitStats.gd`, and registered in `data/knobs/registry.json`.
+  - **Why**: Allows research parameter sweeps over core combat mechanics (Track F, Item 2).
+
 - **2026-07-22 — HexMap cosmetic literals hoisted to constants (USER authorized, agent implementation).**
   Track F backlog item completed. Grouped and hoisted 93 view-layer color and offset literals from `HexMap.gd` into named constants at the top of the file. Behavior preserving. Code headers in `scripts/HexMap.gd`.
 

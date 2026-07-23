@@ -6,4 +6,4 @@ class_name Battalion
 
 var combat_strength: float:
 	get:
-		return UnitStats.strength_for_type(type) * float(qty)
+		return UnitStats.strength_for_type(type, 1.0) * float(qty)

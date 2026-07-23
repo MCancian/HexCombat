@@ -19,7 +19,7 @@
   "_disable_phases_comment": "Research bypass (plan 0012): phases resolve_turn skips (allowed: movement, ground_combat). Empty = full turn; sweep overrides set it (e.g. CRBM maneuver isolation).",
   "disable_phases": [],
   "victory": {
-    "_comment": "End-of-cleanup victory census of battalions ON TAIWAN. loss_check_arm: 'unconditional' (default) | 'after_first_landing' | 'after_turn:<N>'. taiwan_hexes: null counts ALL placed hexes (correct for this main-island scenario; offshore islands can't be distinguished until terrain/land data exists — see PLAN.md Victory conditions); set to a hex-id array to restrict the census.",
+    "_comment": "End-of-cleanup victory census of battalions ON TAIWAN. loss_check_arm: 'unconditional' (default) | 'after_first_landing' | 'after_turn:<N>'. taiwan_hexes: null counts ALL placed hexes (correct for this main-island scenario; offshore islands can't be distinguished until terrain/land data exists \u2014 see PLAN.md Victory conditions); set to a hex-id array to restrict the census.",
     "loss_check_arm": "after_first_landing",
     "taiwan_hexes": null
   },
@@ -210,5 +210,29 @@
       "team": "Green",
       "hex": "hex_38_20"
     }
-  ]
+  ],
+  "_combat_comment": "support_multipliers, base loss rates, ratio slopes, FEBA shift, and default strength are all configurable combat parameters.",
+  "support_multipliers": {
+    "artillery": 0.8,
+    "rocket_artillery": 1.2,
+    "cas": 1.4,
+    "crbm": 0.6,
+    "rotary_wing": 1.3
+  },
+  "combat_base_loss_rate": 0.2,
+  "combat_attacker_ratio_slope": 0.08,
+  "combat_defender_ratio_slope": 0.1,
+  "combat_loss_roll_midpoint": 50.0,
+  "combat_loss_roll_scale": 1000.0,
+  "combat_min_loss_rate": 0.05,
+  "combat_max_attacker_loss_rate": 0.45,
+  "combat_max_defender_loss_rate": 0.5,
+  "feba_balance_gain": 2.0,
+  "feba_balance_clamp": 2.0,
+  "feba_roll_factor_min": 0.75,
+  "feba_roll_factor_span": 0.5,
+  "combat_min_effective_strength": 0.1,
+  "combat_attacker_advantage_ratio": 1.2,
+  "combat_defender_advantage_ratio": 0.85,
+  "default_combat_strength": 1.0
 }

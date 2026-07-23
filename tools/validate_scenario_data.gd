@@ -63,6 +63,21 @@ func _validate_scenario(path: String, scenario_data: Dictionary, brigade_teams: 
 			if String(phase_value) not in GameDataStore.DISABLEABLE_PHASES:
 				_fail("%s: unknown disable_phases entry '%s' (allowed: %s)" % [label, String(phase_value), ", ".join(GameDataStore.DISABLEABLE_PHASES)])
 
+	if not (scenario_data.get("support_multipliers", {}) is Dictionary):
+		_fail("%s: support_multipliers must be a Dictionary" % label)
+	
+	var numeric_keys := ["combat_base_loss_rate", "combat_attacker_ratio_slope", "combat_defender_ratio_slope",
+		"combat_loss_roll_midpoint", "combat_loss_roll_scale", "combat_min_loss_rate",
+		"combat_max_attacker_loss_rate", "combat_max_defender_loss_rate",
+		"feba_balance_gain", "feba_balance_clamp", "feba_roll_factor_min", "feba_roll_factor_span",
+		"combat_min_effective_strength", "combat_attacker_advantage_ratio", "combat_defender_advantage_ratio",
+		"default_combat_strength"]
+	for k in numeric_keys:
+		if scenario_data.has(k):
+			var val = scenario_data.get(k)
+			if not (val is float or val is int):
+				_fail("%s: %s must be a number" % [label, k])
+
 	var placements := _placements(label, scenario_data)
 	var reserve := _red_ship_reserve(label, scenario_data)
 	var used_brigades := {}

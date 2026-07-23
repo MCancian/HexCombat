@@ -568,6 +568,23 @@ static func resolve_combat_at(state: GameStateData, hex_id: String, dice: Dice) 
 	rules.maneuver_casualty_weight = GameData.maneuver_casualty_weight
 	rules.support_casualty_weight = GameData.support_casualty_weight
 	rules.defender_terrain_modifier = defender_combat_modifier(hex_id)
+	rules.support_multipliers = GameData.support_multipliers
+	rules.combat_base_loss_rate = GameData.combat_base_loss_rate
+	rules.combat_attacker_ratio_slope = GameData.combat_attacker_ratio_slope
+	rules.combat_defender_ratio_slope = GameData.combat_defender_ratio_slope
+	rules.combat_loss_roll_midpoint = GameData.combat_loss_roll_midpoint
+	rules.combat_loss_roll_scale = GameData.combat_loss_roll_scale
+	rules.combat_min_loss_rate = GameData.combat_min_loss_rate
+	rules.combat_max_attacker_loss_rate = GameData.combat_max_attacker_loss_rate
+	rules.combat_max_defender_loss_rate = GameData.combat_max_defender_loss_rate
+	rules.feba_balance_gain = GameData.feba_balance_gain
+	rules.feba_balance_clamp = GameData.feba_balance_clamp
+	rules.feba_roll_factor_min = GameData.feba_roll_factor_min
+	rules.feba_roll_factor_span = GameData.feba_roll_factor_span
+	rules.combat_min_effective_strength = GameData.combat_min_effective_strength
+	rules.combat_attacker_advantage_ratio = GameData.combat_attacker_advantage_ratio
+	rules.combat_defender_advantage_ratio = GameData.combat_defender_advantage_ratio
+	rules.default_combat_strength = GameData.default_combat_strength
 
 	var outcome := CombatResolver.resolve_at(
 		hex_id,

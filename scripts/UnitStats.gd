@@ -1,8 +1,6 @@
 extends RefCounted
 class_name UnitStats
 
-const DEFAULT_COMBAT_STRENGTH := 1.0
-
 # NOTE: battalions tagged "artillery" or "rotary_wing" are routed to combat SUPPORT (via their support
 # multiplier) and excluded from maneuver_units (see CombatForces). Their `strength` here is therefore
 # NOT used as maneuver combat strength — helicopters (rotary_wing) contribute at the rotary_wing support
@@ -65,20 +63,20 @@ static func has_known_type(unit_type: String) -> bool:
 	return TYPE_DEFS.has(unit_type)
 
 
-static func strength_for_type(unit_type: String) -> float:
-	var definition := _definition_for_type(unit_type, true)
+static func strength_for_type(unit_type: String, default_strength: float = 1.0) -> float:
+	var definition := _definition_for_type(unit_type, true, default_strength)
 	if definition.is_empty():
-		return DEFAULT_COMBAT_STRENGTH
-	return float(definition.get("strength", DEFAULT_COMBAT_STRENGTH))
+		return default_strength
+	return float(definition.get("strength", default_strength))
 
 
 static func category_for_type(unit_type: String) -> String:
-	var definition := _definition_for_type(unit_type, true)
+	var definition := _definition_for_type(unit_type, true, 1.0)
 	return String(definition.get("category", ""))
 
 
 static func tags_for_type(unit_type: String) -> Array[String]:
-	var definition := _definition_for_type(unit_type, true)
+	var definition := _definition_for_type(unit_type, true, 1.0)
 	var tags: Array[String] = []
 	for tag in definition.get("tags", []):
 		tags.append(String(tag))
@@ -93,7 +91,7 @@ static func is_artillery_type(unit_type: String) -> bool:
 	return has_tag(unit_type, "artillery")
 
 
-static func _definition_for_type(unit_type: String, warn_on_fallback: bool) -> Dictionary:
+static func _definition_for_type(unit_type: String, warn_on_fallback: bool, default_strength: float) -> Dictionary:
 	if TYPE_DEFS.has(unit_type):
 		return TYPE_DEFS[unit_type]
 
@@ -106,7 +104,7 @@ static func _definition_for_type(unit_type: String, warn_on_fallback: bool) -> D
 		return fallback_definition
 
 	if warn_on_fallback:
-		push_warning("Unknown battalion type '%s'; using default combat strength %.1f" % [unit_type, DEFAULT_COMBAT_STRENGTH])
+		push_warning("Unknown battalion type '%s'; using default combat strength %.1f" % [unit_type, default_strength])
 	return {}
 
 

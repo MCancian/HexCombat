@@ -1,30 +1,321 @@
 {
-  "description": "Canonical registry of research knobs (plan 0018). Every game record dumps the resolved value of these via KnobRegistry.resolve_all, so any two records — from any sweep — sit in a common knob-space and are comparable. Adding a knob is a deliberate one-line entry here. Each 'path' is a file prefix + a JsonPath: prefix 'scenario:' resolves against the ACTIVE scenario file (variants work), '<data/rel/file.json>:' is a literal file; the dot-path/array grammar after ':' is JsonPath's (scripts/JsonPath.gd header is the canonical spec — 'name[*]'/'name[]' = every array element, 'name[N]' = one). 'kind' replaces 'path' for values not in a data file (llm_model from env, prompt_hash from the sidecar). 'sweepable': true = overridable via DataOverrides (scalars AND array knobs, e.g. sweep beaches[*].capacity_battalions to scale every beach at once); false = dump-only. DISTINCT from scenario content — see hexcombat-config-and-knobs.",
+  "description": "Canonical registry of research knobs (plan 0018). Every game record dumps the resolved value of these via KnobRegistry.resolve_all, so any two records \u2014 from any sweep \u2014 sit in a common knob-space and are comparable. Adding a knob is a deliberate one-line entry here. Each 'path' is a file prefix + a JsonPath: prefix 'scenario:' resolves against the ACTIVE scenario file (variants work), '<data/rel/file.json>:' is a literal file; the dot-path/array grammar after ':' is JsonPath's (scripts/JsonPath.gd header is the canonical spec \u2014 'name[*]'/'name[]' = every array element, 'name[N]' = one). 'kind' replaces 'path' for values not in a data file (llm_model from env, prompt_hash from the sidecar). 'sweepable': true = overridable via DataOverrides (scalars AND array knobs, e.g. sweep beaches[*].capacity_battalions to scale every beach at once); false = dump-only. DISTINCT from scenario content \u2014 see hexcombat-config-and-knobs.",
   "version": 1,
   "knobs": [
-    {"id": "red_dos_start", "path": "scenario:red_dos_start", "label": "Red DOS supply pool start", "group": "supply", "sweepable": true},
-    {"id": "feba_base_km", "path": "scenario:feba_base_km", "label": "Ground FEBA base shift (km)", "group": "ground", "sweepable": true},
-    {"id": "red_out_of_supply_effectiveness", "path": "scenario:red_out_of_supply_effectiveness", "label": "Red combat effectiveness when out of supply", "group": "supply", "sweepable": true},
-    {"id": "stacking_soft_cap", "path": "scenario:stacking_soft_cap", "label": "Stacking soft cap", "group": "ground", "sweepable": true},
-    {"id": "amphibious_return_time_turns", "path": "scenario:amphibious_return_time_turns", "label": "Freed-hull return delay (turns)", "group": "sealift", "sweepable": true},
-    {"id": "escort_reload_time_turns", "path": "scenario:escort_reload_time_turns", "label": "Escort SAM reload cycle (turns)", "group": "antiship", "sweepable": true},
-    {"id": "victory_loss_check_arm", "path": "scenario:victory.loss_check_arm", "label": "Victory census arming rule", "group": "victory", "sweepable": true},
-    {"id": "ijfs_warmup_days", "path": "data/ijfs/ijfs_scenario.json:prelanding.days", "label": "IJFS prelanding warmup length (days)", "group": "ijfs", "sweepable": true},
-    {"id": "intel_locked_antiship_strike_bonus", "path": "data/ijfs/ijfs_scenario.json:intel_locked_antiship_strike_bonus", "label": "Strike bonus vs intel-locked coastal launchers (plan 0001)", "group": "ijfs", "sweepable": true},
-    {"id": "exquisite_antiship_initial_count", "path": "data/ijfs/ijfs_scenario.json:prelanding.intel.exquisite_intel.antiship.initial_count", "label": "Exquisite-intel coastal launcher count (plan 0001)", "group": "ijfs", "sweepable": true},
-    {"id": "crbm_maneuver_strike_bonus", "path": "data/ijfs/ijfs_scenario.json:crbm_maneuver_strike_bonus", "label": "CRBM maneuver-unit strike bonus (plan 0009)", "group": "ijfs", "sweepable": true},
-    {"id": "missile_group_size", "path": "data/antiship/antiship_crossing_config.json:missile_group_size", "label": "Anti-ship missile group size", "group": "antiship", "sweepable": true},
-    {"id": "screen_target_preference", "path": "data/antiship/antiship_crossing_config.json:screen_target_preference", "label": "Escort-screen target preference weight", "group": "antiship", "sweepable": true},
-    {"id": "terminal_defense_base_prob", "path": "data/antiship/antiship_crossing_config.json:terminal_defense.base_probability", "label": "Terminal-defense base intercept probability", "group": "antiship", "sweepable": true},
-    {"id": "damaged_hull_neut_multiplier", "path": "data/antiship/antiship_crossing_config.json:damaged_hull_neut_multiplier", "label": "Damaged-hull neutralization multiplier", "group": "antiship", "sweepable": true},
-    {"id": "available_minesweepers", "path": "data/antiship/minefields.json:available_minesweepers", "label": "Available minesweepers", "group": "mine", "sweepable": true},
-    {"id": "mine_danger_radius", "path": "data/antiship/minefields.json:geometry.danger_radius", "label": "Mine danger radius (m)", "group": "mine", "sweepable": true},
-    {"id": "prelanding_clear_per_sweeper", "path": "data/antiship/minefields.json:transit.prelanding_clear_per_sweeper", "label": "Pre-landing dangerous mines cleared per sweeper", "group": "mine", "sweepable": true},
-    {"id": "offload_beach_base_rate", "path": "data/offload_rates.json:rates.beach_base", "label": "Beach base offload rate (tons/day)", "group": "offload", "sweepable": true},
-    {"id": "offload_operational_port_rate", "path": "data/offload_rates.json:rates.operational_port", "label": "Operational-port offload rate (tons/day)", "group": "offload", "sweepable": true},
-    {"id": "beach_capacities", "path": "data/beaches.json:beaches[*].capacity_battalions", "label": "Per-beach capacity (battalions); sweep beaches[*] (all) or beaches[N] (one)", "group": "offload", "sweepable": true},
-    {"id": "llm_model", "kind": "llm_model", "label": "LLM model id", "group": "llm", "sweepable": false},
-    {"id": "llm_prompt_hash", "kind": "prompt_hash", "label": "LLM system-prompt hash", "group": "llm", "sweepable": false},
-    {"id": "garrison_draw_fraction", "path": "data/policies/garrison_draw.json:draw_fraction", "label": "Garrison draw fraction", "group": "policy", "sweepable": true}
+    {
+      "id": "red_dos_start",
+      "path": "scenario:red_dos_start",
+      "label": "Red DOS supply pool start",
+      "group": "supply",
+      "sweepable": true
+    },
+    {
+      "id": "feba_base_km",
+      "path": "scenario:feba_base_km",
+      "label": "Ground FEBA base shift (km)",
+      "group": "ground",
+      "sweepable": true
+    },
+    {
+      "id": "red_out_of_supply_effectiveness",
+      "path": "scenario:red_out_of_supply_effectiveness",
+      "label": "Red combat effectiveness when out of supply",
+      "group": "supply",
+      "sweepable": true
+    },
+    {
+      "id": "stacking_soft_cap",
+      "path": "scenario:stacking_soft_cap",
+      "label": "Stacking soft cap",
+      "group": "ground",
+      "sweepable": true
+    },
+    {
+      "id": "amphibious_return_time_turns",
+      "path": "scenario:amphibious_return_time_turns",
+      "label": "Freed-hull return delay (turns)",
+      "group": "sealift",
+      "sweepable": true
+    },
+    {
+      "id": "escort_reload_time_turns",
+      "path": "scenario:escort_reload_time_turns",
+      "label": "Escort SAM reload cycle (turns)",
+      "group": "antiship",
+      "sweepable": true
+    },
+    {
+      "id": "victory_loss_check_arm",
+      "path": "scenario:victory.loss_check_arm",
+      "label": "Victory census arming rule",
+      "group": "victory",
+      "sweepable": true
+    },
+    {
+      "id": "ijfs_warmup_days",
+      "path": "data/ijfs/ijfs_scenario.json:prelanding.days",
+      "label": "IJFS prelanding warmup length (days)",
+      "group": "ijfs",
+      "sweepable": true
+    },
+    {
+      "id": "intel_locked_antiship_strike_bonus",
+      "path": "data/ijfs/ijfs_scenario.json:intel_locked_antiship_strike_bonus",
+      "label": "Strike bonus vs intel-locked coastal launchers (plan 0001)",
+      "group": "ijfs",
+      "sweepable": true
+    },
+    {
+      "id": "exquisite_antiship_initial_count",
+      "path": "data/ijfs/ijfs_scenario.json:prelanding.intel.exquisite_intel.antiship.initial_count",
+      "label": "Exquisite-intel coastal launcher count (plan 0001)",
+      "group": "ijfs",
+      "sweepable": true
+    },
+    {
+      "id": "crbm_maneuver_strike_bonus",
+      "path": "data/ijfs/ijfs_scenario.json:crbm_maneuver_strike_bonus",
+      "label": "CRBM maneuver-unit strike bonus (plan 0009)",
+      "group": "ijfs",
+      "sweepable": true
+    },
+    {
+      "id": "missile_group_size",
+      "path": "data/antiship/antiship_crossing_config.json:missile_group_size",
+      "label": "Anti-ship missile group size",
+      "group": "antiship",
+      "sweepable": true
+    },
+    {
+      "id": "screen_target_preference",
+      "path": "data/antiship/antiship_crossing_config.json:screen_target_preference",
+      "label": "Escort-screen target preference weight",
+      "group": "antiship",
+      "sweepable": true
+    },
+    {
+      "id": "terminal_defense_base_prob",
+      "path": "data/antiship/antiship_crossing_config.json:terminal_defense.base_probability",
+      "label": "Terminal-defense base intercept probability",
+      "group": "antiship",
+      "sweepable": true
+    },
+    {
+      "id": "damaged_hull_neut_multiplier",
+      "path": "data/antiship/antiship_crossing_config.json:damaged_hull_neut_multiplier",
+      "label": "Damaged-hull neutralization multiplier",
+      "group": "antiship",
+      "sweepable": true
+    },
+    {
+      "id": "available_minesweepers",
+      "path": "data/antiship/minefields.json:available_minesweepers",
+      "label": "Available minesweepers",
+      "group": "mine",
+      "sweepable": true
+    },
+    {
+      "id": "mine_danger_radius",
+      "path": "data/antiship/minefields.json:geometry.danger_radius",
+      "label": "Mine danger radius (m)",
+      "group": "mine",
+      "sweepable": true
+    },
+    {
+      "id": "prelanding_clear_per_sweeper",
+      "path": "data/antiship/minefields.json:transit.prelanding_clear_per_sweeper",
+      "label": "Pre-landing dangerous mines cleared per sweeper",
+      "group": "mine",
+      "sweepable": true
+    },
+    {
+      "id": "offload_beach_base_rate",
+      "path": "data/offload_rates.json:rates.beach_base",
+      "label": "Beach base offload rate (tons/day)",
+      "group": "offload",
+      "sweepable": true
+    },
+    {
+      "id": "offload_operational_port_rate",
+      "path": "data/offload_rates.json:rates.operational_port",
+      "label": "Operational-port offload rate (tons/day)",
+      "group": "offload",
+      "sweepable": true
+    },
+    {
+      "id": "beach_capacities",
+      "path": "data/beaches.json:beaches[*].capacity_battalions",
+      "label": "Per-beach capacity (battalions); sweep beaches[*] (all) or beaches[N] (one)",
+      "group": "offload",
+      "sweepable": true
+    },
+    {
+      "id": "llm_model",
+      "kind": "llm_model",
+      "label": "LLM model id",
+      "group": "llm",
+      "sweepable": false
+    },
+    {
+      "id": "llm_prompt_hash",
+      "kind": "prompt_hash",
+      "label": "LLM system-prompt hash",
+      "group": "llm",
+      "sweepable": false
+    },
+    {
+      "id": "garrison_draw_fraction",
+      "path": "data/policies/garrison_draw.json:draw_fraction",
+      "label": "Garrison draw fraction",
+      "group": "policy",
+      "sweepable": true
+    },
+    {
+      "id": "combat_base_loss_rate",
+      "path": "scenario:combat_base_loss_rate",
+      "label": "Combat Base Loss Rate",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "combat_attacker_ratio_slope",
+      "path": "scenario:combat_attacker_ratio_slope",
+      "label": "Combat Attacker Ratio Slope",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "combat_defender_ratio_slope",
+      "path": "scenario:combat_defender_ratio_slope",
+      "label": "Combat Defender Ratio Slope",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "combat_loss_roll_midpoint",
+      "path": "scenario:combat_loss_roll_midpoint",
+      "label": "Combat Loss Roll Midpoint",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "combat_loss_roll_scale",
+      "path": "scenario:combat_loss_roll_scale",
+      "label": "Combat Loss Roll Scale",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "combat_min_loss_rate",
+      "path": "scenario:combat_min_loss_rate",
+      "label": "Combat Min Loss Rate",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "combat_max_attacker_loss_rate",
+      "path": "scenario:combat_max_attacker_loss_rate",
+      "label": "Combat Max Attacker Loss Rate",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "combat_max_defender_loss_rate",
+      "path": "scenario:combat_max_defender_loss_rate",
+      "label": "Combat Max Defender Loss Rate",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "feba_balance_gain",
+      "path": "scenario:feba_balance_gain",
+      "label": "FEBA Balance Gain",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "feba_balance_clamp",
+      "path": "scenario:feba_balance_clamp",
+      "label": "FEBA Balance Clamp",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "feba_roll_factor_min",
+      "path": "scenario:feba_roll_factor_min",
+      "label": "FEBA Roll Factor Min",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "feba_roll_factor_span",
+      "path": "scenario:feba_roll_factor_span",
+      "label": "FEBA Roll Factor Span",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "combat_min_effective_strength",
+      "path": "scenario:combat_min_effective_strength",
+      "label": "Combat Min Effective Strength",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "combat_attacker_advantage_ratio",
+      "path": "scenario:combat_attacker_advantage_ratio",
+      "label": "Combat Attacker Advantage Ratio",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "combat_defender_advantage_ratio",
+      "path": "scenario:combat_defender_advantage_ratio",
+      "label": "Combat Defender Advantage Ratio",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "default_combat_strength",
+      "path": "scenario:default_combat_strength",
+      "label": "Default Combat Strength",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "support_multiplier_artillery",
+      "path": "scenario:support_multipliers.artillery",
+      "label": "Support Multiplier Artillery",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "support_multiplier_rocket_artillery",
+      "path": "scenario:support_multipliers.rocket_artillery",
+      "label": "Support Multiplier Rocket Artillery",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "support_multiplier_cas",
+      "path": "scenario:support_multipliers.cas",
+      "label": "Support Multiplier CAS",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "support_multiplier_crbm",
+      "path": "scenario:support_multipliers.crbm",
+      "label": "Support Multiplier CRBM",
+      "group": "combat",
+      "sweepable": true
+    },
+    {
+      "id": "support_multiplier_rotary_wing",
+      "path": "scenario:support_multipliers.rotary_wing",
+      "label": "Support Multiplier Rotary Wing",
+      "group": "combat",
+      "sweepable": true
+    }
   ]
 }
