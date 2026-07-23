@@ -220,10 +220,34 @@
     background: var(--panel-bg); border: 1px solid var(--line); border-radius: 6px;
     padding: 0.25rem 0.5rem; opacity: 0.85; z-index: 40;
   }
+  /* Projector-legible turn/phase header: large and high-contrast so the current turn reads across
+     a room. Turns amber on the final/game-over turn. */
   .map-turn-badge {
-    position: absolute; top: 0.6rem; right: 0.6rem; background: var(--panel-bg);
-    border: 1px solid var(--line); border-radius: 6px; padding: 0.2rem 0.55rem;
-    font-size: 0.85rem; font-weight: 600; box-shadow: var(--shadow);
+    position: absolute; top: 0.6rem; right: 0.6rem; background: var(--accent);
+    color: #fff; border: 1px solid var(--accent); border-radius: 7px; padding: 0.3rem 0.7rem;
+    font-size: 1.15rem; font-weight: 700; letter-spacing: 0.01em; box-shadow: var(--shadow);
+  }
+  .map-turn-badge.game-over { background: var(--amber); border-color: var(--amber); }
+
+  /* Ownership / glyph key, baked into the map box so a projected still is self-explanatory. */
+  #mapLegend {
+    position: absolute; left: 0.6rem; bottom: 0.6rem; z-index: 5;
+    background: var(--panel-bg); border: 1px solid var(--line); border-radius: 7px;
+    padding: 0.4rem 0.6rem; box-shadow: var(--shadow);
+    display: grid; grid-template-columns: auto auto; gap: 0.2rem 0.9rem;
+    font-size: 0.82rem; color: var(--ink); opacity: 0.94;
+  }
+  #mapLegend .row { display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+  #mapLegend .sw { width: 0.95rem; height: 0.95rem; flex: none; display: inline-block; }
+  #mapLegend .sw.hex { border-radius: 3px; background: transparent; }
+  #mapLegend .sw.red-held { border: 3px solid rgb(255,77,77); }
+  #mapLegend .sw.contested { border: 3px solid rgb(255,153,38); }
+  #mapLegend .sw.dot { border-radius: 50%; border: 1.5px solid #fff; }
+  #mapLegend .sw.pla { background: rgba(216,13,13,0.92); }
+  #mapLegend .sw.roc { background: rgba(0,140,26,0.92); }
+  #mapLegend .sw.beach {
+    width: 0; height: 0; border-left: 0.5rem solid transparent; border-right: 0.5rem solid transparent;
+    border-bottom: 0.85rem solid rgb(13,38,140);
   }
 
   @media (max-width: 900px) {
@@ -275,6 +299,14 @@
       </div>
       <div id="noMapNote">No map data this turn — showing last known positions.</div>
       <div class="map-turn-badge" id="turnIndicator">Turn —</div>
+      <div id="mapLegend" aria-label="Map legend">
+        <div class="row"><span class="sw hex red-held"></span>Red-held</div>
+        <div class="row"><span class="sw dot pla"></span>PLA brigade</div>
+        <div class="row"><span class="sw hex contested"></span>Contested</div>
+        <div class="row"><span class="sw dot roc"></span>ROC brigade</div>
+        <div class="row"><span class="sw beach"></span>Landing beach</div>
+        <div class="row"><span class="sw" style="background:rgba(13,20,38,0.82);border:1px solid #fff;border-radius:3px"></span>Crossing this turn</div>
+      </div>
     </div>
     <div id="chartsRail">
       <div class="chart-block">
@@ -1437,7 +1469,15 @@ function buildControls() {
 }
 
 function updateControls(idx) {
-  document.getElementById("turnIndicator").textContent = "Turn " + TURNS[idx].turn_number;
+  const badge = document.getElementById("turnIndicator");
+  const digest = TURNS[idx].digest || {};
+  if (digest.game_over) {
+    badge.textContent = "Turn " + TURNS[idx].turn_number + " · " + (digest.winner || "?") + " wins";
+    badge.classList.add("game-over");
+  } else {
+    badge.textContent = "Turn " + TURNS[idx].turn_number;
+    badge.classList.remove("game-over");
+  }
   document.getElementById("turnReadout").textContent =
     "Turn " + TURNS[idx].turn_number + " / " + TURNS[TURNS.length - 1].turn_number;
   document.getElementById("btnFirst").disabled = idx === 0;

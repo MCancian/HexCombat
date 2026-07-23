@@ -253,7 +253,10 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   per-beachhead pager is deferred to plan 0027). No landing yet → falls back to the full island.
   The clustering has a durable unit test — `node tools/viewer/test_clustering.mjs` loads the real
   functions out of the HTML and checks a known two-cluster fixture (not part of the Godot gate).
-  Advancing also swaps the
+  For projection legibility (plan 0023 P3) the map box bakes in a large high-contrast turn/phase
+  header (amber "X wins" on the game-over turn) and a compact ownership/glyph legend (Red-held /
+  Contested / PLA-brigade / ROC-brigade / landing-beach / crossing-this-turn). Advancing also swaps
+  the
   turn's narrative (SITREPs, collapsible transcripts, adjudication prose, phase-detail tables)
   in place; the wheel scrolls an overflowing narrative instead of stepping. Charts render
   ghost-future (full game faint, turns ≤ current in color): census, cumulative ship losses,
