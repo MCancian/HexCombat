@@ -1,68 +1,172 @@
 ---
 status: Ready
-shipped: 
-landed_in: 
+shipped:
+landed_in:
 ---
 
-# 0023 — Track D Master Orchestration Plan (Adjudication UI)
+# 0023 — Presentation visuals for headless LLM-vs-LLM games
 
-**Goal:** Execute Track D from the backlog (Adjudication aid graphics/UI) using a fully autonomous agentic swarm. This plan is written specifically for the **Orchestrator Agent**, dictating how to manage the `opencode` and `agy` subagents.
+**Goal:** Make the existing headless-replay presentation surface — the self-contained
+`tools/viewer/game_viewer.html` briefing page — good enough to project in a talk about
+LLM-vs-LLM games. This is the *immediate-priority* slice of the old Track D graphics wishlist,
+reframed around presentation of headless games rather than live-facilitator interaction.
 
-## Orchestration Strategy
+**How the work is done** (USER call 2026-07-23): the primary agent writes the code directly. No
+opencode/agy swarm — the view layer is architectural per `CLAUDE.md`. `agy`/Godot-MCP are
+verification helpers (visual review of screenshots), not authors. The retired
+plan→opencode→verify loop stays retired.
 
-1. **Sequential Execution:** The orchestrator must tackle one UI component at a time to prevent Godot scene merge conflicts and ensure a stable base.
-2. **Subagent Lifecycle:** For each component, the orchestrator will spawn a **fresh** pair of subagents:
-   *   An `opencode` subagent to write the code.
-   *   An `agy` subagent to review the visuals.
-   *   *Note: Kill the previous subagents before spawning new ones to conserve resources and context window.*
-3. **Screenshot Pipeline:** Because headless testing doesn't cover pixels, the `opencode` agent MUST write a small Godot script to run the scene, wait for the render, capture the viewport (`get_viewport().get_texture().get_image().save_png()`), and save it to the workspace.
-4. **The Feedback Loop:** 
-   *   The orchestrator acts as the broker. When `opencode` produces a screenshot, the orchestrator passes it to the `agy` agent for visual review against the component's requirements.
-   *   The orchestrator passes `agy`'s feedback back to `opencode` for iteration.
-5. **Approval & Commit:** Once `agy` approves the visuals, the **orchestrator** performs a final verification of the code against the `AGENTS.md` rules, commits the code, and appends the final screenshot to a master visual log artifact (`track_d_visual_log.md`) for the USER to review at the end of the session. The orchestrator then automatically proceeds to the next component.
+## Why the viewer, not the Godot scene
 
----
+The presentation target is a *headless* game: a finished LLM-vs-LLM record + JSONL replay.
+`game_viewer.html` already renders each replay turn's SVG hex map (terrain fill + red/contested
+perimeter borders + beach glyphs + brigade markers, ported from `HexMap.gd`), plus per-turn
+charts and SITREPs, from a `<name>.viewer.json` bundle (`tools/make_game_bundle.py`). That is the
+presentation surface. `tools/capture_screenshot.gd` only captures the live interactive
+`Main.tscn`, not an arbitrary replay turn — Godot-quality stills of replay states are a *separate*
+capability, deferred to plan 0026.
 
-## Component Sequence
+So this plan touches JS/CSS in one self-contained HTML file (+ possibly the stdlib
+`make_game_bundle.py` if a phase needs data the bundle doesn't yet carry). No `.gd` golden-path
+code, no RNG, no gate-covered logic.
 
-Tackle these components strictly in this order:
+## Scope — three phases, each independently shippable
 
-### 1. Projector-readable Map (Foundation)
-*   **Requirements:** Establish the visual language. Add clear markers, distinct ownership colors, a phase/turn HUD, and camera fit/zoom/pan controls. It must be highly legible when projected in a room.
-*   **Subagent Task:** Update `HexMap.gd` and the main scene to implement these visuals. Generate a screenshot of a mid-game state (e.g., turn 5 of `scenario_default`).
-*   **Current State:** `HexMap.gd` currently renders hexes with solid terrain colors, and ownership is drawn as per-region perimeter borders (via `_build_ownership_borders()`). Brigade markers render with stacked badges (via `_build_brigade_marker()`). However, there are NO camera pan/zoom scripts attached to `Main.tscn`'s `Camera2D`, and no visual phase HUD exists (only a basic `TurnStatusLabel` in `GameController.gd`).
+Sequence P1 → P2 → P3; each ends with a Playwright screenshot pass and a commit.
 
-### 2. Order-entry Flow Polish
-*   **Requirements:** Build a clean interaction loop for a non-developer facilitator: Select Unit -> Issue Move/Commit Order -> End Turn.
-*   **Subagent Task:** Refine the UI controls and selection visuals. Generate screenshots of the selection state and the order-confirmation state.
-*   **Current State:** `GameController.gd` handles clicks via `_on_hex_clicked()`, toggles tactical vs administrative movement via an `OptionButton`, and emits `commit_requested` through `CompositionPanel.gd`. `HexMap.gd` draws basic highlights (`highlight_hexes()`) for reachable/selected hexes. This flow needs to be refined for a facilitator.
+### P1 — Front-view clustering (was draft component 5)
+**Problem.** `updateZoomViewport(ownerMap)` (`game_viewer.html:832`) accumulates one
+`minX/minY/maxX/maxY` bbox over *all* red/contested hexes, then pads it (`ZOOM_PAD_FRAC`,
+`:829`). Two separated beachheads → one bbox spanning the ocean between them; the "Front" view
+zooms to empty water. (Known follow-up, flagged in the code at `:828` and STATUS.)
+**Fix (USER call 2026-07-23: option A, single-frame-of-largest — no pager).** Group the
+red/contested set into connected components (odd-r hex adjacency — reuse the same neighbor logic
+the border layer uses so the two agree), then frame the **largest** cluster by hex count
+(tie-break: most contested hexes). Keep the empty-set fallback to `FULL_VIEWBOX` (`:855`).
+A per-cluster pager is explicitly **out** — multiple non-contiguous beachheads are a corner case;
+the secondary beachhead stays visible in the Theater view. (Pager is a clean follow-on if a real
+talk ever needs per-beachhead close-ups, since the clustering is already done here.)
+**Precondition — confirm the disjoint-front state actually occurs (do this BEFORE building P1).**
+P1's value *and* its verification both require a single turn where the red/contested set forms
+**≥2 spatially-separated clusters**. Existing replays target all 4 beaches over 30–40 turns, but
+that is cumulative — it is *unconfirmed* that any single turn shows two separated beachheads
+coexisting (fronts usually merge or collapse; end-turn `contested_hexes` is 1–2 hexes). Determining
+this needs exactly the clustering P1 builds, so it is unconfirmed by construction. First scan the
+`reports/llm/*` replays (per-turn owner map → connected components over `GEO.neighborEdge`
+adjacency) for any turn with ≥2 clusters. **If none exists, STOP and surface to the USER**: P1 is
+then aimed at a state the sim rarely/never produces (secondary beachhead already stays visible in
+Theater view), which makes it a speculative feature, not a fix — a design call, not the agent's.
+Only proceed once a real disjoint front is found (use it as the fixture) or the USER greenlights
+building against a hand-authored synthetic bundle.
+**Regression test (clustering is the real logic here — do not leave it screenshot-only).** The
+component-finder is a pure function over `GEO.neighborEdge`; extract it and unit-test it (JS
+harness, or mirror the algorithm in a stdlib validator) against a fixture with a known 2-cluster
+layout: assert it finds both components and frames the larger by hex count (contested tie-break).
+This is the *one* piece of new logic in the plan that carries real algorithmic risk — it earns a
+durable test, unlike the low-risk bundler reshuffling P2a already guards.
+**Verify.** Build a bundle from the confirmed/authored two-beachhead replay;
+Playwright-screenshot the Front view mid-game; confirm it frames one beachhead tightly, not the
+ocean gap.
 
-### 3. Anti-ship/Mine Crossing Visualization
-*   **Requirements:** Make the D3 crossing mechanics (missile defense, mine encounters) legible on the map.
-*   **Subagent Task:** Create transient visual effects or permanent logs on the map that show crossing attrition. Generate a screenshot showing an active crossing phase.
-*   **Current State:** Crossing mechanics logic is fully implemented (`AntishipCrossing.gd`), but there is NO visual representation of crossing paths, mines, or ship losses in `HexMap.gd` or `Main.tscn`. The UI is completely blind to D3 mechanics.
+### P2 — Ship activity + losses: map annotation + canonical data home (was draft component 3)
+**USER shape (2026-07-23):** on the map, show *where ships are* and *how many were lost each
+turn* (textual is fine). Separately — and treated as the **priority** here — store per-turn AND
+cumulative ship activity/loss data in one well-defined place, so a future click-through stats
+view (separate from the map) can read it. Building that stats view is **not** in scope now; only
+the data home + the map annotation are.
 
-### 4. D5-D Front-line Polyline-draw UI
-*   **Requirements:** Implement the complex drawing interaction for the front line, showing battalion-granularity distribution.
-*   **Subagent Task:** Build the polyline drawing tool. Generate a screenshot of a drawn, contested frontline.
-*   **Current State:** The backend logic exists in `FrontLineService.gd`, but there is zero UI for drawing a frontline. The user cannot interactively distribute battalions or draw polylines on the map.
+**Data is already all present — no engine change, zero golden risk.** Every field needed is
+serialized per-turn in `antiship_summary` (`AntishipSummary.to_dict()`, byte-stable per its own
+contract) and already flows record → `TurnResult.antiship_summary` → digest → bundle → viewer:
+- `sent_by_type` — hulls sailing this turn by ship type (= "where the ships are"/activity)
+- `target_beaches`, `target_tos` — where the wave is headed
+- `wave_bns` — cohort size (crossing-loss denominator)
+- `crossing_casualties.{destroyed, damaged}`, `destroyed_by_ship_type`, `bns_lost_at_sea` — losses
+- `mine_status`, `systems_fired_count` — mine encounters / defensive fire
 
-### 5. Viewer Front-zoom (HTML Viewer)
-*   **Requirements:** Fix the HTML viewer's bounding box issue. Currently, non-contiguous fronts (two separate beachheads) create a massive bounding box spanning empty ocean. Cluster the focus set and frame the active/largest cluster, or offer per-cluster paging.
-*   **Subagent Task:** Modify `tools/viewer/game_viewer.html` (`updateZoomViewport`). Generate a screenshot of the HTML report using Playwright/browser tools.
-*   **Current State:** `tools/viewer/game_viewer.html` implements `updateZoomViewport()` by accumulating a single `minX, minY, maxX, maxY` bounding box for *all* Red/Contested hexes across the entire map, exactly as the plan states. This needs to be clustered.
+The viewer already charts cumulative `crossing_casualties` client-side (`shipChart`,
+`game_viewer.html:1108`) and tabulates `destroyed_by_ship_type` (`renderAntishipTable`, `:1028`),
+but `sent_by_type` / `target_*` / `mine_status` are unused, and no per-turn+cumulative ship
+dataset is *stored* — cumulative is recomputed on the fly. So the work is all JS/stdlib:
 
----
+**P2a — Canonical `ship_stats` block in the bundle (priority).** In `make_game_bundle.py`
+(stdlib), fold the per-turn `antiship_summary` fields into one documented `ship_stats` block at
+the **root** of `<name>.viewer.json` (alongside `meta` and `turns` — not nested inside a turn,
+so schema boundaries stay clean; reviewer 2026-07-23):
+- `per_turn[]` — one row/turn: turn number, `sent_by_type`, `target_beaches`/`target_tos`,
+  `wave_bns`, `crossing_casualties`, `destroyed_by_ship_type`, `bns_lost_at_sea`, `mine_status`.
+- `cumulative` — stored rollups (total destroyed/damaged, by ship type, total BNs lost at sea,
+  running per-turn cumulative series) so the future stats view reads numbers, not re-derives them.
+This is the single home the map annotation (P2b) and the future stats view (P2c) both read.
+Document the schema in `docs/STATUS.md` (viewer bullet) and the relevant `docs/systems/` doc so
+"where all the ship data is stored" is written down, per USER's explicit ask.
 
-## Checklist for the Orchestrator
+**P2a guardrail — bundler is NOT gate-covered today (reviewer 2026-07-23).**
+`tools/make_game_bundle.py` is exercised by nothing in `tools/run_all_tests.py`, so breaking the
+new `ship_stats` computation would leave the gate green. Since P2a adds real bundler logic, add
+`tools/validate_make_game_bundle.py` (stdlib): build a bundle from a small fixture record+JSONL
+(**≥2 turns** — a 1-turn fixture makes the running-sum assertion trivially true), assert the
+`ship_stats` block's shape and that `cumulative` equals the running sum of `per_turn` losses.
+**Also cross-check the derived block against its source.** `ship_stats.per_turn` is a *copy* of
+data that still lives raw in `turns[].digest.antiship_summary`; AGENTS.md makes single-source a
+hard convention, so the two representations can silently drift. The validator must therefore also
+assert `ship_stats.per_turn[n]` equals the corresponding `turns[n].digest.antiship_summary`
+fields — internal consistency (`cumulative == sum(per_turn)`) alone does not catch a per-turn
+derivation bug. Wire it into `tools/run_all_tests.py` next to `validate_batch_runner.py` /
+`validate_research_knobs.py`: the `subprocess.run([sys.executable, "validate_*.py"])` call plus
+its PASS-marker regex + `failures.append` block, mirroring `run_all_tests.py:148-153`/`156-162`.
+This turns the ship data home into gate-protected code.
 
-- [ ] Initialize `track_d_visual_log.md` (as a persistent artifact) to store approved screenshots.
-- [ ] **Component 1 (Projector Map):** Spawn agents -> Iterate -> Verify -> Commit -> Log.
-- [ ] **Component 2 (Order Entry):** Spawn agents -> Iterate -> Verify -> Commit -> Log.
-- [ ] **Component 3 (Crossing Vis):** Spawn agents -> Iterate -> Verify -> Commit -> Log.
-- [ ] **Component 4 (Front-line Draw):** Spawn agents -> Iterate -> Verify -> Commit -> Log.
-- [ ] **Component 5 (Viewer Zoom):** Spawn agents -> Iterate -> Verify -> Commit -> Log.
-- [ ] Run full verification gate (`bash tools/run_all_tests.sh`) to ensure no logic regressions.
-- [ ] Update `docs/plans/BACKLOG.md` to check off Track D.
-- [ ] Log the Track D completion in `docs/DECISIONS.md`.
-- [ ] Present `track_d_visual_log.md` to the USER.
+**P2b — Map annotation.** For turns with a crossing, draw a textual annotation near the target
+beach(es) on the SVG map: hulls sailed (from `sent_by_type` totals) and losses this turn
+(`crossing_casualties.destroyed`/`damaged`, `bns_lost_at_sea`), reading from the `ship_stats`
+block. Textual per USER — no lane-glyph geometry required. Keep it legible at projection distance.
+
+**P2c — Separate stats/graph view — DEFERRED (data-ready only).** The clickable stats page is
+out of scope now; P2a guarantees its data exists and is documented. Track as a follow-on.
+
+**Verify.** Bundle a game with a live crossing phase; assert `ship_stats.per_turn` +
+`cumulative` are populated and match the digests; Playwright-screenshot a crossing turn and
+confirm sailed/lost annotation reads at reduced size. Run `bash tools/run_all_tests.sh` (the
+bundler is stdlib and, once P2a's validator is wired, tool-exercised) → ALL PHASES GREEN.
+
+### P3 — Projection legibility polish (presentation slice of draft component 1)
+**Problem.** The map is tuned for a desktop viewer, not a projector across a room: ownership
+colors, phase/turn identification, and a legend need to read at distance.
+**Fix.** Within the viewer only: bake a clear turn/phase header and a compact ownership/glyph
+legend into the map box; audit the red/contested ramp (`:371`) and terrain fills for
+projector contrast; ensure brigade markers and count badges stay legible at the theater zoom.
+Interactive camera pan/zoom is explicitly **out** — that's a live-operator need (plan 0026), and
+a screenshot sets its own framing.
+**Verify.** Screenshot the theater and front views; eyeball at reduced size (simulating
+projection); confirm ownership, turn, and unit counts are unambiguous.
+
+## Verification (whole plan)
+- The viewer is **not** part of the canonical gate (it's a self-contained HTML tool). Verify each
+  phase with a headless-Chromium (Playwright) pass over a rebuilt `game.html` + screenshots, per
+  the viewer verification note in `docs/STATUS.md` and `hexcombat-run-and-operate`.
+- **The canonical gate does not exercise `make_game_bundle.py` today** (reviewer 2026-07-23) — a
+  bundler regression would NOT turn `run_all_tests.sh` red on its own. P2a therefore *adds*
+  `tools/validate_make_game_bundle.py` to the gate (see P2a guardrail); after that, run
+  `bash tools/run_all_tests.sh` → **ALL PHASES GREEN** to confirm the bundler + `ship_stats`
+  computation are guarded. Pure-HTML-only changes (P1, P2b, P3) can't regress the gate — verify
+  those by rebuilt-bundle + Playwright screenshot; still run the gate as a smoke check.
+- **Coverage is aimed at the risk, not the easy target.** The bundler reshuffling P2a guards is
+  low-risk stdlib; the real algorithmic risk in this plan is P1's connected-components clustering.
+  That earns its own durable unit test (see P1) — screenshots are not regression protection for
+  logic. Do not let the P2a validator be the *only* automated coverage the plan adds.
+- Collect the approved screenshots into a short visual log for the USER at plan close (this
+  replaces the draft's `track_d_visual_log.md` broker artifact — it's a deliverable, not an
+  orchestration mechanism).
+
+## Closeout (per `hexcombat-docs-and-writing`)
+- STATUS "Post-game briefing viewer" bullet updated (clustering + crossing viz + polish).
+- `docs/DECISIONS.md` 3–5-line entry (reframe to presentation-first; swarm approach dropped).
+- Plan gets 3-line closeout header, moves to `docs/archive/`.
+
+## Explicitly deferred (own plans — live-facilitator, not headless presentation)
+- **0024** — Order-entry facilitator flow (draft component 2). Interactive; N/A to a headless game.
+- **0025** — Front-line polyline-draw UI, D5-D (draft component 4).
+- **0026** — Live-play Godot map: camera pan/zoom + interactive HUD + a replay-state screenshotter
+  (interactive slice of draft component 1 + the missing "screenshot an arbitrary replay turn from
+  Godot" capability, if Godot-quality stills are ever wanted over the HTML viewer's SVG).
