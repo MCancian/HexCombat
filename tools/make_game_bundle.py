@@ -29,6 +29,11 @@ Bundle shape (see tools/viewer/game_viewer.html for the consumer):
   turns[]     — one entry per turn_digests[n]: {turn_number, digest, sides: {Red, Green}}, where
                 each side is {model, raw_reply, actions, warnings, observation} joined from the
                 JSONL (warnings/observation are null/absent on older logs — tolerated throughout).
+  ship_stats  — canonical per-turn + cumulative ship activity/loss home (see build_ship_stats):
+                per_turn[] (1:1 with turns[], each row copied verbatim from that turn's
+                digest.antiship_summary) and cumulative (stored rollups + running series). The
+                single place the map annotation and a future stats view read ship data from;
+                gate-guarded by tools/validate_make_game_bundle.py against per-turn drift.
   sitreps     — {"<turn_number>": {"Red": str|null, "Green": str|null}}, a 3-line first-person
                 commander SITREP per side per turn, written by a local LLM at bundle time.
                 Null on --skip-summaries or on any model failure — bundling never fails because
@@ -131,6 +136,59 @@ def build_turns(record: dict, jsonl_by_turn: dict) -> list:
             },
         })
     return turns
+
+
+# Per-turn ship fields copied verbatim from each turn's antiship_summary. Kept as a named list so
+# tools/validate_make_game_bundle.py asserts against exactly this set (single-source drift guard).
+SHIP_PER_TURN_FIELDS = [
+    "sent_by_type", "target_beaches", "target_tos", "wave_bns",
+    "crossing_casualties", "destroyed_by_ship_type", "bns_lost_at_sea", "mine_status",
+]
+
+
+def build_ship_stats(turns: list) -> dict:
+    """Canonical per-turn + cumulative ship activity/loss home, stored at the bundle root (alongside
+    meta/turns — not nested inside a turn). Every per_turn field is copied verbatim from the turn's
+    digest.antiship_summary, the byte-stable single source (AntishipSummary.to_dict); the validator
+    asserts per_turn stays equal to that source so this derived block never silently drifts. One row
+    per turn (1:1 with turns[], keyed by turn_number; a turn with no crossing yields a row of
+    nulls). `cumulative` is *stored* (running series + rollups) so a future click-through stats view
+    reads numbers rather than re-deriving them — the only home P2b's map annotation and that view
+    both read."""
+    per_turn = []
+    cum_destroyed = cum_damaged = cum_bns = 0
+    cum_by_type: dict = {}
+    series = []
+    for turn in turns:
+        summary = (turn.get("digest") or {}).get("antiship_summary") or {}
+        row = {"turn_number": turn.get("turn_number")}
+        for field in SHIP_PER_TURN_FIELDS:
+            row[field] = summary.get(field)
+        per_turn.append(row)
+
+        crossing = summary.get("crossing_casualties") or {}
+        cum_destroyed += crossing.get("destroyed") or 0
+        cum_damaged += crossing.get("damaged") or 0
+        cum_bns += summary.get("bns_lost_at_sea") or 0
+        for ship_type, count in (summary.get("destroyed_by_ship_type") or {}).items():
+            cum_by_type[ship_type] = cum_by_type.get(ship_type, 0) + (count or 0)
+        series.append({
+            "turn_number": turn.get("turn_number"),
+            "destroyed": cum_destroyed,
+            "damaged": cum_damaged,
+            "bns_lost_at_sea": cum_bns,
+        })
+
+    return {
+        "per_turn": per_turn,
+        "cumulative": {
+            "destroyed": cum_destroyed,
+            "damaged": cum_damaged,
+            "bns_lost_at_sea": cum_bns,
+            "destroyed_by_ship_type": cum_by_type,
+            "series": series,
+        },
+    }
 
 
 def load_map_static() -> dict:
@@ -329,6 +387,7 @@ def main() -> int:
     bundle = {
         "meta": build_meta(record),
         "turns": turns,
+        "ship_stats": build_ship_stats(turns),
         "sitreps": sitreps,
         "map_static": load_map_static(),
     }

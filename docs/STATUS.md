@@ -230,7 +230,15 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   `<name>.viewer.json` bundle (meta / per-turn digest+actions+observation / per-side 3-line LLM
   SITREPs / embedded map data); `--html` bakes it into a single shareable `<name>.game.html`,
   and `--from-bundle` re-bakes that HTML from an existing bundle without re-running sitrep LLM
-  calls. `tools/viewer/game_viewer.html` is a single self-contained briefing page (open
+  calls. The bundle also carries a canonical **`ship_stats`** block at its root (plan 0023 P2a):
+  `per_turn[]` (1:1 with `turns[]`, each row — `sent_by_type` / `target_beaches` / `target_tos` /
+  `wave_bns` / `crossing_casualties` / `destroyed_by_ship_type` / `bns_lost_at_sea` / `mine_status`
+  — copied verbatim from that turn's `digest.antiship_summary`) plus a stored `cumulative` (running
+  `series` + rollups). This is the single home for per-turn+cumulative ship activity/loss data that
+  the map annotation and a future click-through stats view both read; it's gate-guarded against
+  per-turn drift from its source digests by `tools/validate_make_game_bundle.py` (wired into
+  `run_all_tests.py` — the bundler was previously exercised by nothing). The map draws a per-turn
+  crossing annotation (hulls sailed + losses) reading from `ship_stats`. `tools/viewer/game_viewer.html` is a single self-contained briefing page (open
   directly, no server): opens at turn 1 and advances one turn at a time (mouse wheel with a
   momentum guard, ◀ ▶ / ⏮ ⏭-Final buttons, arrow keys, Home/End) — each advance re-renders the
   SVG hex map (terrain fill + red/contested perimeter borders + beach glyphs + brigade markers,

@@ -161,6 +161,15 @@ if rk_result.returncode != 0 or not re.search(r'(?m)^PASS: research knobs valida
 else:
     cecho("green", "Research knobs Python validation OK.")
 
+# ---- Game bundle ship_stats Python validation (plan 0023 P2a) ----
+write_phase("Game bundle ship_stats Python validation")
+gb_result = subprocess.run([sys.executable, os.path.join(SCRIPT_DIR, "validate_make_game_bundle.py")], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace", env=env)
+print(gb_result.stdout)
+if gb_result.returncode != 0 or not re.search(r'(?m)^PASS: make_game_bundle validation succeeded$', gb_result.stdout):
+    failures.append(f"Game bundle validation: failed (exit {gb_result.returncode})")
+else:
+    cecho("green", "Game bundle ship_stats Python validation OK.")
+
 # ---- Metrics Validation (dependency ceilings) ----
 write_phase("Metrics Validation (tools/gd_metrics.py --check-ceiling)")
 metrics_result = subprocess.run(

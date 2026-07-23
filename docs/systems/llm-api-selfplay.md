@@ -114,10 +114,21 @@ Routes an action response object. Returns an action-result Dictionary (`ok`, `er
 ## 7. Post-game report: bundle & briefing viewer
 
 `tools/make_game_bundle.py` merges a game record with its JSONL replay log into one
-`.viewer.json` bundle — `{meta, turns[], sitreps, map_static}`; the authoritative shape is the
-bundler's module docstring. SITREPs (3-line first-person commander summaries per side per turn)
-are written at bundle time by a local LLM (same endpoint env vars as `tools/llm_sidecar.py`);
-`--skip-summaries` or any model failure yields null sitreps, never a bundling failure.
+`.viewer.json` bundle — `{meta, turns[], ship_stats, sitreps, map_static}`; the authoritative
+shape is the bundler's module docstring. SITREPs (3-line first-person commander summaries per side
+per turn) are written at bundle time by a local LLM (same endpoint env vars as
+`tools/llm_sidecar.py`); `--skip-summaries` or any model failure yields null sitreps, never a
+bundling failure.
+
+**`ship_stats` — the one home for ship activity/loss data** (plan 0023 P2a). A root block with
+`per_turn[]` (1:1 with `turns[]`; each row copies `sent_by_type` / `target_beaches` / `target_tos`
+/ `wave_bns` / `crossing_casualties` / `destroyed_by_ship_type` / `bns_lost_at_sea` / `mine_status`
+verbatim from that turn's `digest.antiship_summary`) and a stored `cumulative` (running `series` +
+rollups: total destroyed/damaged/bns-lost-at-sea and destroyed-by-ship-type). `per_turn` is a
+*copy* of data that still lives raw in `turns[].digest.antiship_summary`, so
+`tools/validate_make_game_bundle.py` (gate-wired) asserts it never drifts from that single source.
+The map annotation and a future click-through stats view (deferred, P2c) both read from here rather
+than re-deriving.
 
 `tools/viewer/game_viewer.html` renders the bundle as a **briefing**: it opens at turn 1 and
 the reader advances one turn at a time (mouse wheel with a momentum guard, ◀ ▶ / ⏮ ⏭ buttons,
@@ -126,6 +137,14 @@ reveal, and swaps the turn's narrative (SITREPs, collapsible transcripts, adjudi
 phase-detail tables) in place. The wheel scrolls the narrative instead of stepping when its
 content overflows. If a turn lacks an observation (older logs), the map falls back to the
 nearest earlier observed turn and flags it.
+
+The map's **front** viewport frames the largest connected cluster of red/contested hexes
+(`connectedComponents` / `largestCluster` in the `<clustering-pure>` block; plan 0023 P1), so a
+disjoint front no longer spans the ocean between two beachheads — the secondary beachhead stays in
+the theater view (per-beachhead pager deferred to plan 0027). The clustering has a durable Node
+unit test, `tools/viewer/test_clustering.mjs`, that loads the real functions out of the HTML. On
+crossing turns the map also draws a compact ship annotation (hulls sailed + losses this turn) from
+`ship_stats`.
 
 Charts draw ghost-future — the full game's shape in faint gray, turns up to the current one in
 color: battalion census, cumulative PLA ship losses, and per-turn battalion losses per side.
@@ -144,9 +163,12 @@ python3 tools/make_game_bundle.py --record reports/llm/game_20260711.json --html
 python3 tools/make_game_bundle.py --from-bundle reports/llm/game_20260711.viewer.json
 ```
 
-Viewer and bundler are tooling, not gated engine code: no headless validator covers them.
-Verify viewer changes with a headless-Chromium (Playwright) pass over a rebuilt `game.html` —
-assert turn stepping, narrative swap, chart reveal — plus light/dark screenshots.
+The viewer HTML is tooling, not gated engine code — verify viewer changes with a headless-Chromium
+(Playwright) pass over a rebuilt `game.html` (assert turn stepping, narrative swap, chart reveal)
+plus light/dark screenshots, and run `node tools/viewer/test_clustering.mjs` for the front-view
+clustering. The **bundler's** `ship_stats` derivation, by contrast, *is* now gate-covered:
+`tools/validate_make_game_bundle.py` runs in `run_all_tests.py` (previously nothing exercised
+`make_game_bundle.py`).
 
 ## 8. Relationship to existing docs
 

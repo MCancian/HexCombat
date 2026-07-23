@@ -502,6 +502,7 @@ function selectGame(i) {
 let GEO = null;      // static geometry: per-hex projected vertices, terrain colors, neighbor->edge index
 let TURNS = null;     // bundle.turns, sorted
 let SITREPS = null;   // bundle.sitreps — {"<turn_number>": {Red, Green}}
+let SHIP_STATS = null; // turn_number -> ship_stats.per_turn row (null for pre-P2a bundles)
 let CURRENT = -1;     // index into TURNS of the turn currently on screen
 
 function initViewer(bundle) {
@@ -509,6 +510,7 @@ function initViewer(bundle) {
   GEO = buildGeometry(bundle.map_static || {});
   TURNS = (bundle.turns || []).slice().sort((a, b) => a.turn_number - b.turn_number);
   SITREPS = bundle.sitreps || {};
+  SHIP_STATS = indexShipStats(bundle.ship_stats);
   CURRENT = -1;
 
   spawnHexFills();
@@ -607,10 +609,12 @@ function spawnHexFills() {
   const borderLayer = svgEl("g", { id: "borderLayer" });
   const beachLayer = svgEl("g", { id: "beachLayer" });
   const brigadeLayer = svgEl("g", { id: "brigadeLayer" });
+  const shipLayer = svgEl("g", { id: "shipLayer" });   // per-turn crossing annotation, topmost
   content.appendChild(hexLayer);
   content.appendChild(borderLayer);
   content.appendChild(beachLayer);
   content.appendChild(brigadeLayer);
+  content.appendChild(shipLayer);
 
   for (const h of GEO.hexes) {
     const verts = GEO.vertices.get(h.id);
@@ -791,6 +795,83 @@ function renderBrigadeMarkers(observation) {
   }
 }
 
+// ---- Ship crossing annotation (P2a data home -> P2b map text) --------------------------------
+// SHIP_STATS indexes bundle.ship_stats.per_turn by turn_number. Older (pre-P2a) bundles have no
+// ship_stats -> null, and the annotation silently no-ops (map degrades to no crossing text).
+function indexShipStats(shipStats) {
+  if (!shipStats || !Array.isArray(shipStats.per_turn)) return null;
+  const byTurn = new Map();
+  for (const row of shipStats.per_turn) byTurn.set(row.turn_number, row);
+  return byTurn;
+}
+
+function sumDict(obj) {
+  if (!obj) return 0;
+  return Object.values(obj).reduce((a, b) => a + (Number(b) || 0), 0);
+}
+
+// Draw this turn's crossing summary (hulls sailed + losses) as a compact text card anchored
+// seaward of the target beaches, so a projected map reads "where the ships are / how many were
+// lost" without opening the phase-detail table. Game-wide crossing totals (what the data is).
+function renderShipAnnotation(turnNumber) {
+  const layer = document.getElementById("shipLayer");
+  if (!layer) return;
+  layer.replaceChildren();
+  if (!SHIP_STATS) return;
+  const row = SHIP_STATS.get(turnNumber);
+  if (!row) return;
+
+  const sailed = sumDict(row.sent_by_type);
+  const crossing = row.crossing_casualties || {};
+  const destroyed = crossing.destroyed || 0;
+  const damaged = crossing.damaged || 0;
+  const bnsLost = row.bns_lost_at_sea || 0;
+  if (sailed === 0 && destroyed === 0 && damaged === 0 && bnsLost === 0) return; // no crossing
+
+  // Anchor seaward of the target beaches (west of their centroid); fall back to all beaches.
+  const beachById = new Map(GEO.beaches.map(b => [b.id, b]));
+  const targets = (row.target_beaches && row.target_beaches.length)
+    ? row.target_beaches : GEO.beaches.map(b => b.id);
+  const centers = targets
+    .map(id => beachById.get(id))
+    .filter(Boolean)
+    .map(b => GEO.centers.get(b.hex_id))
+    .filter(Boolean);
+  if (centers.length === 0) return;
+  const cx = centers.reduce((a, c) => a + c[0], 0) / centers.length;
+  const cy = centers.reduce((a, c) => a + c[1], 0) / centers.length;
+  const radius = GEO.radii.get(beachById.get(targets[0])?.hex_id) || 20;
+
+  const line1 = "⚓ " + sailed + " hulls → " + (targets.length ? "beach " + targets.join(",") : "sea");
+  const line2 = "✖ " + destroyed + " sunk · " + damaged + " dmg · " + bnsLost + " bn lost at sea";
+  // Position the card west (seaward) of the beaches; nudge fully into the viewport if it runs off.
+  const fs = Math.max(13, radius * 0.85);
+  const padX = fs * 0.5, lineH = fs * 1.25;
+  const wide = Math.max(line1.length, line2.length) * fs * 0.52;
+  let bx = cx - radius * 3.2 - wide;
+  let by = cy - lineH;
+  if (bx < 2) bx = 2;
+  if (by < 2) by = 2;
+
+  const rect = svgEl("rect", {
+    x: bx.toFixed(1), y: by.toFixed(1),
+    width: (wide + 2 * padX).toFixed(1), height: (2 * lineH + padX).toFixed(1),
+    rx: (fs * 0.3).toFixed(1),
+    fill: "rgba(13,20,38,0.82)", stroke: "rgba(255,255,255,0.65)", "stroke-width": "1",
+  });
+  layer.appendChild(rect);
+  for (const [i, text] of [line1, line2].entries()) {
+    const t = svgEl("text", {
+      x: (bx + padX).toFixed(1), y: (by + padX * 0.6 + lineH * (i + 0.75)).toFixed(1),
+      "font-size": fs.toFixed(1), "font-weight": "700",
+      fill: i === 0 ? "#ffffff" : "#ffd166",
+      "font-family": "-apple-system, Segoe UI, Roboto, sans-serif",
+    });
+    t.textContent = text;
+    layer.appendChild(t);
+  }
+}
+
 function renderTurn(turnIndex) {
   renderMap(turnIndex);
   renderNarrative(turnIndex);
@@ -817,6 +898,9 @@ function renderMap(turnIndex) {
     document.getElementById("brigadeLayer")?.replaceChildren();
     updateZoomViewport(new Map());
   }
+  // The crossing annotation is about THIS turn's ships (not the fallback observation turn), so it
+  // reads the current turn number regardless of whether map positions fell back.
+  renderShipAnnotation(TURNS[turnIndex].turn_number);
   document.getElementById("noMapNote").classList.toggle("show", obsIndex !== turnIndex);
 }
 
