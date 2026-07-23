@@ -326,7 +326,8 @@
                 <div style="max-width: 500px;">
                     <h1 style="font-size: 5rem; text-shadow: 0 10px 30px rgba(0,0,0,0.8);">HexCombat</h1>
                     <p style="font-size: 1.4rem; color: #cbd5e1; text-shadow: 0 5px 15px rgba(0,0,0,0.8);">
-                        AI-driven simulation of the PLA invasion of Taiwan. Watch the LLM agent evaluate the battlespace in real-time.
+                        Two LLMs fought a militarily-literate invasion of Taiwan — no human in the loop.
+                        Turn one: <strong style="color:#fff;">148 hulls sailed, 29 sunk</strong> before they reached the beach.
                     </p>
                     <p style="margin-top: 2rem; color: #64748b; font-size: 0.95rem; display: flex; align-items: center;">
                         <span style="display: inline-block; width: 8px; height: 8px; background: #22c55e; border-radius: 50%; margin-right: 8px; box-shadow: 0 0 10px #22c55e; animation: blink 2s infinite;"></span>
@@ -510,11 +511,30 @@
             </div>
         </div>
 
+        <!-- Slide 4.5: Watch One Game (centerpiece) -->
+        <div class="slide">
+            <div class="content-box grid-2" style="max-width: 1500px; gap: 3rem;">
+                <div class="image-container">
+                    <img src="reports/assets/presentation/deck-game-board-t3.png" alt="LLM-vs-LLM game board, turn 3: theater + front beachhead" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMDI3Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+R2FtZSBCb2FyZDwvdGV4dD48L3N2Zz4='">
+                </div>
+                <div>
+                    <h2>Watch One Game</h2>
+                    <p><strong>Full ROC Defense — Northern Beachhead</strong>, seed 20260710. Red (PLA) and Green (ROC), both driven by an LLM through the JSON API — 30 turns, start to finish.</p>
+                    <ul class="feature-list">
+                        <li><strong>Turn 1 — the assault crosses.</strong> 148 hulls sail at four beaches; ROC anti-ship fire and mines sink 29, damage 21, drown 10 battalions at sea.</li>
+                        <li><strong>Mid-game — the beachhead.</strong> The <em>Front</em> view auto-frames the largest contested cluster — PLA lodgement against the ROC counter-attack, hex by hex.</li>
+                        <li><strong>Turn 30 — no decisive winner.</strong> Final census Red&nbsp;4 : Green&nbsp;59 battalions ashore: the landing is contained, not thrown back.</li>
+                    </ul>
+                    <p style="font-size: 0.95rem; color:#64748b;">Rendered from the headless replay into one self-contained briefing page — projectable in a talk, no live game required.</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Slide 5: Game Records & Reports -->
         <div class="slide">
             <div class="content-box grid-2">
                 <div class="image-container">
-                    <img src="../reports/full_defense_view.png" alt="Game Report Defense View" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMDI3Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RGVmZW5zZSBWaWV3PC90ZXh0Pjwvc3ZnPg=='">
+                    <img src="reports/assets/presentation/deck-beachhead-t6.png" alt="Beachhead front view, turn 6" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMDI3Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RGVmZW5zZSBWaWV3PC90ZXh0Pjwvc3ZnPg=='">
                 </div>
                 <div>
                     <h2>Game Reports & Outcomes</h2>
@@ -532,7 +552,58 @@
                 </div>
             </div>
         </div>
-        
+
+        <!-- Slide 6: Research Instrument — Monte Carlo (SCAFFOLD: next agent fills #mc-distribution) -->
+        <div class="slide">
+            <div class="content-box">
+                <h2 style="text-align: center; display: block; margin-bottom: 2rem;">Not One Game — Thousands</h2>
+                <div class="grid-2">
+                    <div>
+                        <p>One game is an anecdote. Because every game is <strong>deterministic under a seed</strong> — hierarchical, per-phase RNG, so the same seed reproduces the game exactly — HexCombat runs the same matchup across hundreds of seeds headlessly and reads the <strong>distribution of outcomes</strong>.</p>
+                        <p>Parameter sweeps turn a single knob — beach capacity, mine density, CRBM maneuver — and measure how the outcome curve shifts. This is the primary mission: an <strong>instrument</strong>, not a match.</p>
+                        <div class="stats-grid">
+                            <div class="stat-card"><div class="stat-value">1 → N</div><div class="stat-label">Seeds per matchup</div></div>
+                            <div class="stat-card"><div class="stat-value">P(win)</div><div class="stat-label">Outcome distribution</div></div>
+                            <div class="stat-card"><div class="stat-value">Sweeps</div><div class="stat-label">Knob sensitivity</div></div>
+                        </div>
+                    </div>
+                    <div class="image-container" id="mc-distribution" data-status="pending-batch"
+                         style="background: rgba(0,0,0,0.25); display:flex; align-items:center; justify-content:center; min-height:360px; border:1px dashed rgba(59,130,246,0.4);">
+                        <div style="text-align:center; color:#64748b;">
+                            <div style="font-size:1.1rem; color:#94a3b8; margin-bottom:0.5rem;">Outcome distribution</div>
+                            <div style="font-size:0.9rem;">chart pending Monte Carlo batch run</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Limits & Roadmap (close) -->
+        <div class="slide">
+            <div class="content-box">
+                <h2 style="text-align: center; display: block; margin-bottom: 2rem;">Honest Limits, Clear Roadmap</h2>
+                <div class="grid-2">
+                    <div>
+                        <h3 style="color:#fff; font-size:1.4rem;">What it isn't (yet)</h3>
+                        <ul class="feature-list">
+                            <li>LLM play quality is bounded by the model — commanders reason locally, not campaign-deep.</li>
+                            <li>Fidelity is the TIV port; new mechanics are deliberate, USER-directed changes, not free additions.</li>
+                            <li>Live human-facilitator play is still landing (order entry, front-line draw).</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 style="color:#fff; font-size:1.4rem;">Where it's going</h3>
+                        <ul class="feature-list">
+                            <li><strong>0024</strong> — order-entry facilitator flow.</li>
+                            <li><strong>0025</strong> — front-line polyline-draw UI.</li>
+                            <li><strong>0026</strong> — live Godot map: camera + interactive HUD + replay screenshotter.</li>
+                            <li><strong>Monte Carlo dashboards</strong> — outcome distributions and sensitivity, folded straight into this deck.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Navigation Controls (Removed) -->
