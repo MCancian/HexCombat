@@ -237,10 +237,15 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   ported from `HexMap.gd`'s projection/border logic) and extends the chart reveal.
   The map box holds **two viewports over one shared render** (content lives once
   in a `<defs>` group; both `<svg>` `<use>` it, differing only in `viewBox`): a full-island
-  **theater** view and a **front** view whose `viewBox` crops to the bbox of the contested/Red
-  hexes + their neighbors (same owner predicate as the border layer, so the two always agree; no
-  landing yet → falls back to the full island). Non-contiguous fronts (two beachheads → one bbox
-  spanning both) are a known follow-up, tracked in BACKLOG. Advancing also swaps the
+  **theater** view and a **front** view whose `viewBox` crops to the **largest connected cluster**
+  of contested/Red hexes (+ that cluster's neighbors). Clustering (`connectedComponents` /
+  `largestCluster`, the pure `<clustering-pure>` block) runs over the same neighbor adjacency the
+  border layer uses, tie-broken by contested-hex count; a disjoint front no longer yields one bbox
+  spanning the water between two beachheads (the secondary beachhead stays in the theater view; a
+  per-beachhead pager is deferred to plan 0027). No landing yet → falls back to the full island.
+  The clustering has a durable unit test — `node tools/viewer/test_clustering.mjs` loads the real
+  functions out of the HTML and checks a known two-cluster fixture (not part of the Godot gate).
+  Advancing also swaps the
   turn's narrative (SITREPs, collapsible transcripts, adjudication prose, phase-detail tables)
   in place; the wheel scrolls an overflowing narrative instead of stepping. Charts render
   ghost-future (full game faint, turns ≤ current in color): census, cumulative ship losses,

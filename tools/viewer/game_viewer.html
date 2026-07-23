@@ -820,28 +820,90 @@ function renderMap(turnIndex) {
   document.getElementById("noMapNote").classList.toggle("show", obsIndex !== turnIndex);
 }
 
-// The "front" viewport crops to the fight: every hex owned red or contested this turn, plus every
-// on-grid neighbor of those hexes (so the seam and the ground about to be contested are both in
-// frame). viewBox = padded bbox of that set's projected vertices. Empty set (no landing yet) ->
-// fall back to the full-island viewBox and flag the view.
-// NOTE (deferred, see docs/plans): a disjoint front — two separate beachheads — currently yields
-// one bbox spanning both; tightening that to the active cluster is a future plan.
+// The "front" viewport crops to the fight: the largest connected cluster of red/contested hexes
+// this turn, plus every on-grid neighbor of that cluster (so the seam and the ground about to be
+// contested are both in frame). viewBox = padded bbox of that set's projected vertices. Empty set
+// (no landing yet) -> fall back to the full-island viewBox and flag the view.
+// A disjoint front (two separated beachheads) used to yield one bbox spanning the water between
+// them ("zoom to empty ocean"); clustering (below) now frames only the active beachhead. A
+// per-beachhead pager for showing BOTH clusters is a documented follow-on (docs/plans/0027) —
+// only worth building once a talk needs it AND the sim actually produces an ocean-spanning front.
 const ZOOM_PAD_FRAC = 0.12;   // bbox padding as a fraction of the larger bbox dimension
 const FULL_VIEWBOX = "0 0 " + VIEWPORT_W + " " + VIEWPORT_H;
+
+// <clustering-pure> — pure graph logic, extracted so tools/viewer/test_clustering.mjs can load and
+// exercise it directly (no DOM, no GEO). Keep this block free of document/GEO references; the
+// frame geometry (bbox, vertex lookups) stays in updateZoomViewport below.
+
+// Group `focusIds` (iterable of hex ids) into connected components over `neighborsOf`
+// (hexId -> iterable of adjacent hex ids). Only ids in focusIds are traversed, so a neighbor
+// outside the set never bridges two components. Deterministic: components come out in first-seen
+// order of the focusIds iteration.
+function connectedComponents(focusIds, neighborsOf) {
+  const inFocus = focusIds instanceof Set ? focusIds : new Set(focusIds);
+  const seen = new Set();
+  const components = [];
+  for (const start of inFocus) {
+    if (seen.has(start)) continue;
+    seen.add(start);
+    const stack = [start];
+    const comp = [];
+    while (stack.length) {
+      const id = stack.pop();
+      comp.push(id);
+      for (const nid of neighborsOf(id)) {
+        if (inFocus.has(nid) && !seen.has(nid)) { seen.add(nid); stack.push(nid); }
+      }
+    }
+    components.push(comp);
+  }
+  return components;
+}
+
+// Pick the cluster to frame: largest by hex count, tie-broken by most contested hexes
+// (isContested: hexId -> bool). Returns [] when there are no components. Stable — on a full tie
+// the earliest-found component wins, matching connectedComponents' order.
+function largestCluster(components, isContested) {
+  let best = [], bestSize = -1, bestContested = -1;
+  for (const comp of components) {
+    const contested = comp.reduce((n, id) => n + (isContested(id) ? 1 : 0), 0);
+    if (comp.length > bestSize || (comp.length === bestSize && contested > bestContested)) {
+      best = comp; bestSize = comp.length; bestContested = contested;
+    }
+  }
+  return best;
+}
+// </clustering-pure>
 
 function updateZoomViewport(ownerMap) {
   const zoomView = document.getElementById("zoomView");
   const zoomSvg = document.getElementById("mapSvgZoom");
 
+  // The fight set: red/contested hexes only. Neighbors are added to the FRAME later (below) but
+  // must not be clustered over, or an intervening neutral hex could bridge two beachheads.
   const focusIds = new Set();
   for (const [hexId, entry] of ownerMap) {
-    if (entry.owner !== "red" && entry.owner !== "contested") continue;
-    focusIds.add(hexId);
-    for (const claim of (GEO.neighborEdge.get(hexId) || [])) focusIds.add(claim.neighborId);
+    if (entry.owner === "red" || entry.owner === "contested") focusIds.add(hexId);
+  }
+
+  // Cluster over the SAME neighbor adjacency the border layer uses (GEO.neighborEdge), so the two
+  // agree on what "adjacent" means, then frame only the largest cluster.
+  const neighborsOf = (hexId) =>
+    (GEO.neighborEdge.get(hexId) || []).map(claim => claim.neighborId);
+  const isContested = (hexId) => {
+    const entry = ownerMap.get(hexId);
+    return !!entry && entry.owner === "contested";
+  };
+  const cluster = largestCluster(connectedComponents(focusIds, neighborsOf), isContested);
+
+  // Frame the chosen cluster plus its on-grid neighbors (the seam + about-to-be-contested ground).
+  const frameIds = new Set(cluster);
+  for (const hexId of cluster) {
+    for (const nid of neighborsOf(hexId)) frameIds.add(nid);
   }
 
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (const hexId of focusIds) {
+  for (const hexId of frameIds) {
     for (const v of (GEO.vertices.get(hexId) || [])) {
       if (v[0] < minX) minX = v[0];
       if (v[0] > maxX) maxX = v[0];

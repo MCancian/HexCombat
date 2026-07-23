@@ -20,7 +20,11 @@ plan to act, the closeout wasn't done.
 |---|------|----------|--------|
 | 0002 | [Per-hull escort magazines (D3-B3)](0002-per-hull-escort-magazines.md) | Low (needs ship-ammo subsystem) | Sketch |
 | 0003 | [Combat-summary team attribution](0003-combat-summary-team-attribution.md) | Low (blocked on USER counterattack call) | Sketch |
-| 0023 | [Track D Master Orchestration Plan](0023-track-d-orchestration.md) | High (coordinated swarm UI execution) | Ready |
+| 0023 | [Presentation visuals for headless LLM-vs-LLM games](0023-track-d-orchestration.md) | High (immediate — talk visuals) | In progress (P1 shipped) |
+| 0024 | [Order-entry facilitator flow (live play)](0024-order-entry-facilitator-flow.md) | Medium (live-facilitator UI) | Sketch |
+| 0025 | [Front-line polyline-draw UI (D5-D)](0025-frontline-polyline-draw-ui.md) | Medium (live-facilitator UI; large feature) | Sketch |
+| 0026 | [Live-play Godot map: camera, HUD, replay screenshotter](0026-liveplay-map-camera-hud.md) | Low (live-operator polish) | Sketch |
+| 0027 | [Front-view per-beachhead pager (ocean-spanning fronts)](0027-front-view-beachhead-pager.md) | Low (build only when a talk needs it AND the sim produces an ocean-spanning front) | Sketch |
 
 | 0016 | [Separate State Data from Autoload](0016-separate-state-data.md) | Medium (hygiene/architecture) | Superseded by 0014 |
 | 0022 | [Red reactive beach-opening (feasibility first)](0022-red-beach-switching.md) | Medium (research; new mechanic, gated on a feasibility spike) | Sketch |
