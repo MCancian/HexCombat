@@ -1,10 +1,20 @@
 ---
-status: Ready
-shipped:
-landed_in:
+status: Shipped
+shipped: 2026-07-23
+landed_in: docs/DECISIONS.md, docs/systems/llm-api-selfplay.md, docs/STATUS.md
 ---
 
 # 0023 — Presentation visuals for headless LLM-vs-LLM games
+
+> **CLOSEOUT (2026-07-23).** All three phases shipped. **P1** — front view frames the largest
+> connected red/contested cluster (`connectedComponents`/`largestCluster` + `test_clustering.mjs`;
+> USER greenlit building against real turn-15 fixture after the precondition scan found only small,
+> tight multi-cluster turns — never an ocean-spanning front, so the pager was deferred to plan 0027).
+> **P2** — canonical root `ship_stats` block (per_turn + cumulative) in the bundle, gate-guarded by
+> `tools/validate_make_game_bundle.py`, plus a per-turn map crossing annotation. **P3** — projector
+> turn/phase header + ownership/glyph legend. Verified per phase via Playwright screenshots (visual
+> log at `docs/reports/2026-07-23-plan-0023-visual-log.md`) + gate ALL PHASES GREEN. Facts landed in
+> STATUS / `llm-api-selfplay.md` §7 / DECISIONS; live-facilitator work is plans 0024–0026.
 
 **Goal:** Make the existing headless-replay presentation surface — the self-contained
 `tools/viewer/game_viewer.html` briefing page — good enough to project in a talk about

@@ -19,6 +19,21 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-23 — Plan 0023 reframed presentation-first; swarm dropped; front-view clustering + ship_stats shipped.**
+  - **Who**: USER (reframe call + P1 greenlight against a real turn-15 fixture) and Agent (implementation).
+  - **What**: Retired the Track D "swarm orchestration" draft; 0023 became *presentation visuals for
+    headless LLM-vs-LLM games* (viewer only). Shipped P1 (front view frames the largest connected
+    red/contested cluster — no more ocean-spanning bbox), P2 (canonical `ship_stats` bundle home +
+    map crossing annotation, gate-guarded by `tools/validate_make_game_bundle.py`), P3 (projector
+    header + legend). Live-facilitator components split into deferred plans 0024–0026; ocean-spanning
+    per-beachhead pager deferred to 0027 (the precondition scan found only small, tight multi-cluster
+    turns, never two beachheads across water).
+  - **Where**: `docs/STATUS.md` viewer bullet; `docs/systems/llm-api-selfplay.md` §7;
+    `tools/viewer/game_viewer.html`, `tools/make_game_bundle.py`, `tools/validate_make_game_bundle.py`;
+    plan archived at `docs/archive/0023-track-d-orchestration.md`.
+  - **Why**: Immediate need is talk visuals for finished headless games; the view layer is
+    architectural (primary-agent-written), so the swarm loop was dropped.
+
 - **2026-07-22: Combat Constants Promoted to Scenario Knobs**
   - **Who**: USER (authorized) and Agent
   - **What**: Promoted all hardcoded combat parameters (support multipliers, loss rate parameters, FEBA shift, and default strength) from `CombatCalculator` and `UnitStats` into scenario configuration fields.

@@ -20,7 +20,6 @@ plan to act, the closeout wasn't done.
 |---|------|----------|--------|
 | 0002 | [Per-hull escort magazines (D3-B3)](0002-per-hull-escort-magazines.md) | Low (needs ship-ammo subsystem) | Sketch |
 | 0003 | [Combat-summary team attribution](0003-combat-summary-team-attribution.md) | Low (blocked on USER counterattack call) | Sketch |
-| 0023 | [Presentation visuals for headless LLM-vs-LLM games](0023-track-d-orchestration.md) | High (immediate — talk visuals) | In progress (P1 shipped) |
 | 0024 | [Order-entry facilitator flow (live play)](0024-order-entry-facilitator-flow.md) | Medium (live-facilitator UI) | Sketch |
 | 0025 | [Front-line polyline-draw UI (D5-D)](0025-frontline-polyline-draw-ui.md) | Medium (live-facilitator UI; large feature) | Sketch |
 | 0026 | [Live-play Godot map: camera, HUD, replay screenshotter](0026-liveplay-map-camera-hud.md) | Low (live-operator polish) | Sketch |
@@ -33,6 +32,7 @@ plan to act, the closeout wasn't done.
 
 | # | Plan | Status |
 |---|------|--------|
+| 0023 | [Presentation visuals for headless LLM-vs-LLM games](../archive/0023-track-d-orchestration.md) | ✅ Shipped 2026-07-23 — P1 front-view largest-cluster framing (+ `test_clustering.mjs`), P2 canonical `ship_stats` bundle home (gate-guarded by `validate_make_game_bundle.py`) + map crossing annotation, P3 projector header + legend. Reframed presentation-first, swarm dropped; live-facilitator work split to 0024–0026, ocean-spanning pager to 0027. Visual log in `docs/reports/2026-07-23-plan-0023-visual-log.md`. |
 | 0013 | [One home for scenario files](../archive/0013-scenario-files-one-home.md) | ✅ Shipped 2026-07-22 — `scenario_default.json` and `scenario_golden.json` moved to `data/scenarios/`. `ScenarioCatalog` updated. |
 | 0021 | [Garrison draw policy + draw_fraction knob](../archive/0021-garrison-draw-policy.md) | ✅ Shipped 2026-07-21 — `garrison_draw` deterministic policy + `garrison_draw_fraction` knob added to registry. Evaluated via unit tests and batch sweep vs `inland_clear`. |
 | 0018 | [Research Knob Tracking](../archive/0018-research-knob-tracking.md) | ✅ Shipped 2026-07-20 — curated knob registry `data/knobs/registry.json` + full resolved knob vector in every record (`KnobRegistry`), so all sweeps share one knob-space; `tools/research_knobs.py {ledger,sensitivity}`; LLM model/prompt-hash captured. USER calls: curated (not auto-dump), prompts capture-only, build all-at-once. Golden byte-stable. Array-knob sweeping shipped as a follow-on (`DataOverrides` array addressing via `JsonPath`); remaining follow-up: prompt-variant files |
