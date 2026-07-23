@@ -8,6 +8,7 @@
   :root {
     --bg: #f6f5f2;
     --panel-bg: #ffffff;
+    --sea: #d3e2ec;
     --ink: #1c1c1c;
     --ink-dim: #5a5a5a;
     --line: #d8d5cd;
@@ -31,6 +32,7 @@
     :root {
       --bg: #1b1b1a;
       --panel-bg: #242422;
+      --sea: #16232b;
       --ink: #ececec;
       --ink-dim: #a9a9a4;
       --line: #3c3b37;
@@ -50,14 +52,14 @@
     }
   }
   :root[data-theme="dark"] {
-    --bg: #1b1b1a; --panel-bg: #242422; --ink: #ececec; --ink-dim: #a9a9a4;
+    --bg: #1b1b1a; --panel-bg: #242422; --sea: #16232b; --ink: #ececec; --ink-dim: #a9a9a4;
     --line: #3c3b37; --red: #e0605f; --red-fill: #b3413f; --green: #57b98a;
     --green-fill: #2e6b4c; --amber: #d9a441; --accent: #7ea6e0; --code-bg: #1a1a19;
     --shadow: 0 1px 4px rgba(0,0,0,0.5);
     --chart-green: #45a97a; --chart-red-sea: #ad5450; --chart-ghost: #4a4945;
   }
   :root[data-theme="light"] {
-    --bg: #f6f5f2; --panel-bg: #ffffff; --ink: #1c1c1c; --ink-dim: #5a5a5a;
+    --bg: #f6f5f2; --panel-bg: #ffffff; --sea: #d3e2ec; --ink: #1c1c1c; --ink-dim: #5a5a5a;
     --line: #d8d5cd; --red: #b3272c; --red-fill: #b3272c; --green: #1f6f43;
     --green-fill: #1f6f43; --amber: #b9860a; --accent: #2a4d8f; --code-bg: #f0eee8;
     --shadow: 0 1px 3px rgba(0,0,0,0.12);
@@ -133,7 +135,7 @@
     flex: none; padding: 0.25rem 0.5rem; font-size: 0.7rem; color: var(--ink-dim);
     text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--line);
   }
-  .map-view svg { flex: 1; width: 100%; min-height: 0; display: block; }
+  .map-view svg { flex: 1; width: 100%; min-height: 0; display: block; background: var(--sea); }
   #zoomEmptyNote {
     position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);
     text-align: center; font-size: 0.8rem; color: var(--ink-dim); padding: 0 0.6rem; display: none;
@@ -229,6 +231,21 @@
   }
   .map-turn-badge.game-over { background: var(--amber); border-color: var(--amber); }
 
+  /* This-turn crossing summary — an HTML card pinned to the THEATER panel (left half), not drawn
+     into the shared SVG: the front view crops to the beachhead and would clip/overlap a map-space
+     card. max-width keeps it inside the theater half so it never spills into the front view. */
+  #shipAnnotation {
+    position: absolute; left: 0.6rem; top: 1.9rem; z-index: 6; max-width: 40%;
+    background: rgba(13,20,38,0.9); color: #fff; border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 7px; padding: 0.35rem 0.6rem; box-shadow: var(--shadow);
+    font-size: 0.95rem; font-weight: 700; line-height: 1.35; display: none; pointer-events: none;
+  }
+  #shipAnnotation.show { display: block; }
+  #shipAnnotation .loss { color: #ffd166; }
+  /* On fallback turns the "no map data" banner occupies the top strip; drop the card below it so
+     the two stack instead of overlapping. (#shipAnnotation follows #noMapNote in the DOM.) */
+  #noMapNote.show ~ #shipAnnotation { top: 2.9rem; }
+
   /* Ownership / glyph key, baked into the map box so a projected still is self-explanatory. */
   #mapLegend {
     position: absolute; left: 0.6rem; bottom: 0.6rem; z-index: 5;
@@ -240,6 +257,7 @@
   #mapLegend .row { display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
   #mapLegend .sw { width: 0.95rem; height: 0.95rem; flex: none; display: inline-block; }
   #mapLegend .sw.hex { border-radius: 3px; background: transparent; }
+  #mapLegend .sw.fill { border-radius: 3px; border: 1px solid rgba(0,0,0,0.25); }
   #mapLegend .sw.red-held { border: 3px solid rgb(255,77,77); }
   #mapLegend .sw.contested { border: 3px solid rgb(255,153,38); }
   #mapLegend .sw.dot { border-radius: 50%; border: 1.5px solid #fff; }
@@ -299,13 +317,18 @@
       </div>
       <div id="noMapNote">No map data this turn — showing last known positions.</div>
       <div class="map-turn-badge" id="turnIndicator">Turn —</div>
+      <div id="shipAnnotation" aria-label="Ship crossing this turn"></div>
       <div id="mapLegend" aria-label="Map legend">
         <div class="row"><span class="sw hex red-held"></span>Red-held</div>
         <div class="row"><span class="sw dot pla"></span>PLA brigade</div>
         <div class="row"><span class="sw hex contested"></span>Contested</div>
         <div class="row"><span class="sw dot roc"></span>ROC brigade</div>
-        <div class="row"><span class="sw beach"></span>Landing beach</div>
-        <div class="row"><span class="sw" style="background:rgba(13,20,38,0.82);border:1px solid #fff;border-radius:3px"></span>Crossing this turn</div>
+        <div class="row"><span class="sw beach"></span>Landing beach (#=id)</div>
+        <div class="row"><span class="sw fill" style="background:#DCE8C0"></span>Plains</div>
+        <div class="row"><span class="sw fill" style="background:#C4A96A"></span>Hills</div>
+        <div class="row"><span class="sw fill" style="background:#8B7355"></span>Mountain</div>
+        <div class="row"><span class="sw fill" style="background:#9E9E9E"></span>Urban / city</div>
+        <div class="row"><span class="sw fill" style="background:var(--sea)"></span>Sea</div>
       </div>
     </div>
     <div id="chartsRail">
@@ -367,9 +390,15 @@
  * HexMath.gd's odd-r neighbor offsets ARE ported below (NEIGHBOR_OFFSETS_EVEN/ODD) — needed to
  * find which polygon edge borders which neighbor hex, for the ownership-border pass ported from
  * scripts/HexMap.gd's _build_ownership_borders/_edges_to_draw/_spawn_hex_border.
+ *
+ * PORT SEAM (no shared code — JS copies of GDScript logic): the projection, the odd-r offsets,
+ * and the border ramp/merge are hand-ported and have NO test tying them to their .gd source, so
+ * a change on the .gd side will NOT flag here. Each port site below is marked "PORT — re-sync
+ * with <file>.<symbol>"; if you touch that GDScript, re-check the twin here. (The front-view
+ * clustering further down is NOT a port — it has no .gd equivalent — so it is exempt.)
  * ==========================================================================================*/
 
-// ---- Map projection (port of scripts/MapProjection.gd) ------------------------------------
+// ---- Map projection — PORT: re-sync with scripts/MapProjection.gd (equirectangular fit) ------
 const LAT_MIN = 21.9, LAT_MAX = 25.3, LON_MIN = 119.9, LON_MAX = 122.1;
 const MARGIN = 0.06;
 const VIEWPORT_W = 700, VIEWPORT_H = 1000;
@@ -392,7 +421,7 @@ function makeProjection(viewportW, viewportH) {
 }
 const project = makeProjection(VIEWPORT_W, VIEWPORT_H);
 
-// ---- Hex neighbor offsets (port of scripts/HexMath.gd odd-r tables) -----------------------
+// ---- Hex neighbor offsets — PORT: re-sync with scripts/HexMath.gd odd-r tables --------------
 const NEIGHBOR_OFFSETS_EVEN = [[-1,-1],[-1,0],[0,-1],[0,1],[1,-1],[1,0]];
 const NEIGHBOR_OFFSETS_ODD  = [[-1,0],[-1,1],[0,-1],[0,1],[1,0],[1,1]];
 function neighborCoords(row, col) {
@@ -400,7 +429,7 @@ function neighborCoords(row, col) {
   return offs.map(([dr, dc]) => [row + dr, col + dc]);
 }
 
-// ---- Ownership border colors (port of HexMap.gd's color_red/_contested ramp) ---------------
+// ---- Ownership border colors — PORT: re-sync with HexMap.gd's color_red/_contested ramp -----
 const COLOR_RED = "rgb(255,77,77)";
 const COLOR_CONTESTED_LIGHT = "rgb(255,217,77)";
 const COLOR_CONTESTED_MEDIUM = "rgb(255,153,38)";
@@ -535,6 +564,7 @@ let GEO = null;      // static geometry: per-hex projected vertices, terrain col
 let TURNS = null;     // bundle.turns, sorted
 let SITREPS = null;   // bundle.sitreps — {"<turn_number>": {Red, Green}}
 let SHIP_STATS = null; // turn_number -> ship_stats.per_turn row (null for pre-P2a bundles)
+let SHIP_SERIES = null; // ship_stats.cumulative.series (running totals; null for pre-P2a bundles)
 let CURRENT = -1;     // index into TURNS of the turn currently on screen
 
 function initViewer(bundle) {
@@ -543,6 +573,8 @@ function initViewer(bundle) {
   TURNS = (bundle.turns || []).slice().sort((a, b) => a.turn_number - b.turn_number);
   SITREPS = bundle.sitreps || {};
   SHIP_STATS = indexShipStats(bundle.ship_stats);
+  SHIP_SERIES = (bundle.ship_stats && Array.isArray(bundle.ship_stats.cumulative?.series))
+    ? bundle.ship_stats.cumulative.series : null;
   CURRENT = -1;
 
   spawnHexFills();
@@ -641,12 +673,10 @@ function spawnHexFills() {
   const borderLayer = svgEl("g", { id: "borderLayer" });
   const beachLayer = svgEl("g", { id: "beachLayer" });
   const brigadeLayer = svgEl("g", { id: "brigadeLayer" });
-  const shipLayer = svgEl("g", { id: "shipLayer" });   // per-turn crossing annotation, topmost
   content.appendChild(hexLayer);
   content.appendChild(borderLayer);
   content.appendChild(beachLayer);
   content.appendChild(brigadeLayer);
-  content.appendChild(shipLayer);
 
   for (const h of GEO.hexes) {
     const verts = GEO.vertices.get(h.id);
@@ -722,8 +752,8 @@ function borderColorFor(entry) {
   return COLOR_CONTESTED_HEAVY;
 }
 
-// Port of HexMap.gd's _spawn_hex_border: merge consecutive drawn edges into polylines; an edge
-// is skipped when the neighbor across it is also red/contested (same region -> no seam drawn).
+// PORT — re-sync with HexMap.gd's _spawn_hex_border: merge consecutive drawn edges into polylines;
+// an edge is skipped when the neighbor across it is also red/contested (same region -> no seam).
 function renderOwnershipBorders(ownerMap) {
   const layer = document.getElementById("borderLayer");
   layer.innerHTML = "";
@@ -842,13 +872,14 @@ function sumDict(obj) {
   return Object.values(obj).reduce((a, b) => a + (Number(b) || 0), 0);
 }
 
-// Draw this turn's crossing summary (hulls sailed + losses) as a compact text card anchored
-// seaward of the target beaches, so a projected map reads "where the ships are / how many were
-// lost" without opening the phase-detail table. Game-wide crossing totals (what the data is).
+// Show this turn's crossing summary (hulls sailed + losses) as an HTML card pinned to the theater
+// panel — a game-scale readout ("where the ships are / how many were lost") that doesn't belong in
+// the front view's tactical crop. Hidden on turns with no crossing and on pre-P2a bundles.
 function renderShipAnnotation(turnNumber) {
-  const layer = document.getElementById("shipLayer");
-  if (!layer) return;
-  layer.replaceChildren();
+  const box = document.getElementById("shipAnnotation");
+  if (!box) return;
+  box.classList.remove("show");
+  box.replaceChildren();
   if (!SHIP_STATS) return;
   const row = SHIP_STATS.get(turnNumber);
   if (!row) return;
@@ -860,48 +891,14 @@ function renderShipAnnotation(turnNumber) {
   const bnsLost = row.bns_lost_at_sea || 0;
   if (sailed === 0 && destroyed === 0 && damaged === 0 && bnsLost === 0) return; // no crossing
 
-  // Anchor seaward of the target beaches (west of their centroid); fall back to all beaches.
-  const beachById = new Map(GEO.beaches.map(b => [b.id, b]));
-  const targets = (row.target_beaches && row.target_beaches.length)
-    ? row.target_beaches : GEO.beaches.map(b => b.id);
-  const centers = targets
-    .map(id => beachById.get(id))
-    .filter(Boolean)
-    .map(b => GEO.centers.get(b.hex_id))
-    .filter(Boolean);
-  if (centers.length === 0) return;
-  const cx = centers.reduce((a, c) => a + c[0], 0) / centers.length;
-  const cy = centers.reduce((a, c) => a + c[1], 0) / centers.length;
-  const radius = GEO.radii.get(beachById.get(targets[0])?.hex_id) || 20;
-
-  const line1 = "⚓ " + sailed + " hulls → " + (targets.length ? "beach " + targets.join(",") : "sea");
-  const line2 = "✖ " + destroyed + " sunk · " + damaged + " dmg · " + bnsLost + " bn lost at sea";
-  // Position the card west (seaward) of the beaches; nudge fully into the viewport if it runs off.
-  const fs = Math.max(13, radius * 0.85);
-  const padX = fs * 0.5, lineH = fs * 1.25;
-  const wide = Math.max(line1.length, line2.length) * fs * 0.52;
-  let bx = cx - radius * 3.2 - wide;
-  let by = cy - lineH;
-  if (bx < 2) bx = 2;
-  if (by < 2) by = 2;
-
-  const rect = svgEl("rect", {
-    x: bx.toFixed(1), y: by.toFixed(1),
-    width: (wide + 2 * padX).toFixed(1), height: (2 * lineH + padX).toFixed(1),
-    rx: (fs * 0.3).toFixed(1),
-    fill: "rgba(13,20,38,0.82)", stroke: "rgba(255,255,255,0.65)", "stroke-width": "1",
-  });
-  layer.appendChild(rect);
-  for (const [i, text] of [line1, line2].entries()) {
-    const t = svgEl("text", {
-      x: (bx + padX).toFixed(1), y: (by + padX * 0.6 + lineH * (i + 0.75)).toFixed(1),
-      "font-size": fs.toFixed(1), "font-weight": "700",
-      fill: i === 0 ? "#ffffff" : "#ffd166",
-      "font-family": "-apple-system, Segoe UI, Roboto, sans-serif",
-    });
-    t.textContent = text;
-    layer.appendChild(t);
-  }
+  const targets = (row.target_beaches && row.target_beaches.length) ? row.target_beaches : [];
+  const dest = targets.length ? "beach " + targets.join(",") : "sea";
+  box.appendChild(el("div", { text: "⚓ " + sailed + " hulls → " + dest }));
+  box.appendChild(el("div", {
+    class: "loss",
+    text: "✖ " + destroyed + " sunk · " + damaged + " dmg · " + bnsLost + " bn lost at sea",
+  }));
+  box.classList.add("show");
 }
 
 function renderTurn(turnIndex) {
@@ -1035,8 +1032,14 @@ function updateZoomViewport(ownerMap) {
   }
   zoomView.classList.remove("empty");
   const pad = ZOOM_PAD_FRAC * Math.max(maxX - minX, maxY - minY, 1);
-  const x = minX - pad, y = minY - pad;
-  const w = (maxX - minX) + 2 * pad, h = (maxY - minY) + 2 * pad;
+  let x = minX - pad, y = minY - pad;
+  let w = (maxX - minX) + 2 * pad, h = (maxY - minY) + 2 * pad;
+  // Grow the shorter axis to the panel's pixel aspect ratio so xMidYMid-meet fills the panel with
+  // surrounding map instead of letterboxing the beachhead against empty white. Centered, so the
+  // cluster stays put. Falls back to the full-map aspect before first layout gives client sizes.
+  const panelAspect = (zoomSvg.clientWidth || VIEWPORT_W) / (zoomSvg.clientHeight || VIEWPORT_H);
+  if (w / h < panelAspect) { const nw = h * panelAspect; x -= (nw - w) / 2; w = nw; }
+  else if (w / h > panelAspect) { const nh = w / panelAspect; y -= (nh - h) / 2; h = nh; }
   zoomSvg.setAttribute("viewBox",
     x.toFixed(1) + " " + y.toFixed(1) + " " + w.toFixed(1) + " " + h.toFixed(1));
 }
@@ -1275,6 +1278,25 @@ function positionChartMarker(svgId, turnIndex) {
   marker.setAttribute("x2", x);
 }
 
+// Per-turn cumulative ship losses (destroyed + damaged) for shipChart, aligned to TURNS order.
+// Prefers the stored running series (ship_stats.cumulative.series) so the chart and the bundle
+// share ONE computed cumulative — no client re-derivation that could drift from build_ship_stats.
+// Falls back to a client recompute for pre-P2a bundles that carry no ship_stats.
+function cumulativeShipLossSeries() {
+  if (SHIP_SERIES) {
+    const byTurn = new Map(
+      SHIP_SERIES.map(s => [s.turn_number, (s.destroyed || 0) + (s.damaged || 0)]));
+    return TURNS.map(t => byTurn.get(t.turn_number) ?? 0);
+  }
+  let cumDestroyed = 0, cumDamaged = 0;
+  return TURNS.map(t => {
+    const cc = ((t.digest || {}).antiship_summary || {}).crossing_casualties || {};
+    cumDestroyed += cc.destroyed || 0;
+    cumDamaged += cc.damaged || 0;
+    return cumDestroyed + cumDamaged;
+  });
+}
+
 function buildCharts() {
   CHART_REGISTRY = {};
   const censusSeries = TURNS.map(t => {
@@ -1282,13 +1304,7 @@ function buildCharts() {
     return { red: c.china_battalions_on_taiwan || 0, green: c.taiwan_battalions_on_taiwan || 0 };
   });
 
-  let cumDestroyed = 0, cumDamaged = 0;
-  const shipSeries = TURNS.map(t => {
-    const cc = ((t.digest || {}).antiship_summary || {}).crossing_casualties || {};
-    cumDestroyed += cc.destroyed || 0;
-    cumDamaged += cc.damaged || 0;
-    return cumDestroyed + cumDamaged;
-  });
+  const shipSeries = cumulativeShipLossSeries();
 
   drawLineChart("censusChart", [
     { series: censusSeries.map(d => d.red), color: "var(--red)" },
