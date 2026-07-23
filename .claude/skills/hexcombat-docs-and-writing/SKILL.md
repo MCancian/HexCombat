@@ -23,7 +23,7 @@ code headers were correct.
 | Procedures (how to build/debug/verify/author) | `.claude/skills/` |
 | Incident history (root cause, evidence, rejected fixes) | `hexcombat-failure-archaeology` |
 | Why (decision changelog, 3–5 lines + pointers) | `docs/DECISIONS.md`; pre-2026-07-10 history verbatim in `docs/archive/PLAN.md` |
-| Work in flight | `docs/plans/NNNN-*.md` + index `docs/plans/README.md`; track-level: `docs/plans/BACKLOG.md` |
+| Work in flight | `docs/plans/NNNN-*.md` + index `docs/plans/README.md`; tech debt: `docs/plans/BACKLOG.md` |
 | Lessons + triage | `docs/RETROSPECTIVES.md` (append-only, dated) |
 | Dead/finished documents | `docs/archive/` — never in the orientation path |
 

@@ -22,7 +22,8 @@ Every fact has exactly one home. Don't hunt for it elsewhere:
 | You need… | Go to |
 |---|---|
 | What works today | `docs/STATUS.md` |
-| What's next / work in flight | `docs/plans/BACKLOG.md` + `docs/plans/README.md` (plan index) |
+| What's next / work in flight | `docs/plans/README.md` (plan index) |
+| Tech debt / hygiene queue | `docs/plans/BACKLOG.md` |
 | How a module works | its `docs/systems/<module>.md` (data flow, files, TIV divergences) |
 | Module internals / boundaries | the code header: `scripts/resolvers/*.gd`, `GameState.gd` |
 | A procedure (build, debug, author, verify…) | `.claude/skills/README.md` task→skill map |

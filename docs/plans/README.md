@@ -48,10 +48,9 @@ plan to act, the closeout wasn't done.
 | 0004 | [Port TIV ship-count & crossing model (sealift gap)](../archive/0004-port-ship-crossing-sealift-model.md) | ✅ Shipped 2026-07-12 — cross-turn ship lifecycle + follow-on echelons + escort SAM magazine; facts in `docs/systems/amphibious-offload.md` §8, `docs/DECISIONS.md` |
 | 0001 | [Crossing-lethality calibration (D3-D)](../archive/0001-crossing-lethality-calibration.md) | ✅ Shipped 2026-07-11 — dial-in facts in `docs/systems/ijfs.md`, `hexcombat-config-and-knobs`, `docs/DECISIONS.md` |
 
-## Track-level forward work
+## Tech Debt & Hygiene
 
-See [BACKLOG.md](BACKLOG.md) — live tracks only (completed tracks live in `docs/STATUS.md` as
-present-tense behavior, history in `docs/archive/`).
+See [BACKLOG.md](BACKLOG.md) for a running list of technical debt, hygiene issues, and refactor observations logged by agents.
 
 ## Parked refinements (no plan until a concrete need)
 
