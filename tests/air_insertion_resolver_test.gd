@@ -206,6 +206,70 @@ func test_an_emptied_brigade_leaves_the_pool() -> void:
 		AirInsertionSummary.REASON_POOL_EMPTY)
 
 
+## A 5-hex line: BEACH - A - B, and C off on its own. Red holds the beach, A and C.
+const CORRIDOR := {
+	"beach": ["a"],
+	"a": ["beach", "b"],
+	"b": ["a"],
+	"c": ["d"],
+	"d": ["c"],
+}
+const RED_HELD := {"beach": true, "a": true, "c": true}
+
+
+func _corridor_neighbors() -> Callable:
+	return func(hex_id: String) -> Array: return CORRIDOR.get(hex_id, [])
+
+
+func _corridor_is_red() -> Callable:
+	return func(hex_id: String) -> bool: return RED_HELD.has(hex_id)
+
+
+func test_a_brigade_on_the_corridor_is_supplied() -> void:
+	var isolated := AirInsertionResolver.isolated_brigades(
+		["ABN-1"], {"ABN-1": "a"}, ["beach"], _corridor_is_red(), _corridor_neighbors())
+	assert_dict(isolated).is_empty()
+
+
+func test_a_brigade_touching_the_corridor_is_supplied() -> void:
+	# "b" is not Red-held — it is the contested tip of the advance — but it touches Red-held "a",
+	# which chains back to the beach.
+	var isolated := AirInsertionResolver.isolated_brigades(
+		["ABN-1"], {"ABN-1": "b"}, ["beach"], _corridor_is_red(), _corridor_neighbors())
+	assert_dict(isolated).is_empty()
+
+
+func test_a_brigade_dropped_in_the_deep_rear_is_isolated() -> void:
+	# "c" is Red-held — the drop took the hex — but no chain of Red hexes reaches the beach.
+	var isolated := AirInsertionResolver.isolated_brigades(
+		["ABN-1"], {"ABN-1": "c"}, ["beach"], _corridor_is_red(), _corridor_neighbors())
+	assert_bool(isolated.has("ABN-1")).is_true()
+
+
+func test_a_lodgement_green_still_holds_is_not_a_supply_root() -> void:
+	var isolated := AirInsertionResolver.isolated_brigades(
+		["ABN-1"], {"ABN-1": "a"}, ["nowhere"], _corridor_is_red(), _corridor_neighbors())
+	assert_bool(isolated.has("ABN-1")).is_true()
+
+
+func test_brigades_not_on_the_map_are_not_isolated() -> void:
+	# Nothing has landed yet (or the formation died on the way in) — there is nobody to starve.
+	var isolated := AirInsertionResolver.isolated_brigades(
+		["ABN-1"], {"ABN-1": ""}, ["beach"], _corridor_is_red(), _corridor_neighbors())
+	assert_dict(isolated).is_empty()
+
+
+func test_isolation_only_overrides_supply_for_the_named_brigades() -> void:
+	var units: Array = [
+		{"brigade_id": "ABN-1", "type": "Airborne Combined Arms Battalion", "supply_effectiveness": 1.0},
+		{"brigade_id": "PLA-71-2-Amphibious", "type": "Amphibious Infantry Battalion", "supply_effectiveness": 1.0},
+	]
+	# Full theatre pool: the beachhead brigade fights at 1.0, the cut-off one does not.
+	CombatResolver.inject_supply_effectiveness(units, Brigade.Team.RED, 5000.0, 0.5, {"ABN-1": true})
+	assert_float(float((units[0] as Dictionary)["supply_effectiveness"])).is_equal_approx(0.5, 0.0001)
+	assert_float(float((units[1] as Dictionary)["supply_effectiveness"])).is_equal_approx(1.0, 0.0001)
+
+
 func test_the_serialized_summary_omits_the_application_manifests() -> void:
 	var state := _state()
 	var summary := AirInsertionResolver.resolve(

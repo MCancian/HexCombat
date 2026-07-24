@@ -4,6 +4,10 @@ extends Resource
 var feba_base_km: float = 2.0
 var red_supply_pool: float = 0.0
 var red_out_of_supply_effectiveness: float = 1.0
+# Air-landed Red brigades with no held corridor back to a lodgement (plan 0032), brigade_id -> true.
+# They fight out of supply regardless of the theatre DOS pool. Empty for every scenario that does
+# not opt into air insertion, and for every landed brigade that has since linked up.
+var isolated_red_brigade_ids: Dictionary = {}
 var unscreened_support_strength: float = 0.5
 var maneuver_casualty_weight: float = 4.0
 var support_casualty_weight: float = 1.0

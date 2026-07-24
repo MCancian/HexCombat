@@ -37,6 +37,63 @@ static func attrition_rate(
 	return clampf(rate, 0.0, 1.0)
 
 
+## Which air-landed brigades are fighting on their own (plan 0032, USER call 2026-07-24: dropped
+## battalions are out of supply until connected to the beach). Returns brigade_id -> true.
+##
+## Connected means a chain of Red-held hexes runs from the brigade back to a lodgement — a held
+## landing beach or a Red-usable port/airbridge. A brigade counts as connected when its own hex is
+## on that chain OR merely touches it, so a formation fighting at the tip of a corridor is supplied
+## while one dropped in the deep rear is not; the corridor has to actually reach it.
+##
+## Pure: the map arrives as Callables, so nothing here touches an autoload.
+##   is_red_hex:   Callable(hex_id) -> bool
+##   neighbors_of: Callable(hex_id) -> Array
+static func isolated_brigades(
+	landed_brigade_ids: Array,
+	brigade_hexes: Dictionary,
+	source_hexes: Array,
+	is_red_hex: Callable,
+	neighbors_of: Callable,
+) -> Dictionary:
+	var isolated: Dictionary = {}
+	if landed_brigade_ids.is_empty():
+		return isolated
+
+	# Flood the Red-held corridor outward from every lodgement.
+	var connected: Dictionary = {}
+	var frontier: Array[String] = []
+	for source_value in source_hexes:
+		var source_hex := String(source_value)
+		if connected.has(source_hex) or not bool(is_red_hex.call(source_hex)):
+			continue
+		connected[source_hex] = true
+		frontier.append(source_hex)
+	while not frontier.is_empty():
+		var hex_id: String = frontier.pop_back()
+		for neighbor_value in neighbors_of.call(hex_id):
+			var neighbor := String(neighbor_value)
+			if connected.has(neighbor) or not bool(is_red_hex.call(neighbor)):
+				continue
+			connected[neighbor] = true
+			frontier.append(neighbor)
+
+	for brigade_id_value in landed_brigade_ids:
+		var brigade_id := String(brigade_id_value)
+		var hex_id := String(brigade_hexes.get(brigade_id, ""))
+		if hex_id.is_empty():
+			continue  # not on the map (destroyed, or nothing landed yet) — nothing to supply
+		if connected.has(hex_id):
+			continue
+		var touching := false
+		for neighbor_value in neighbors_of.call(hex_id):
+			if connected.has(String(neighbor_value)):
+				touching = true
+				break
+		if not touching:
+			isolated[brigade_id] = true
+	return isolated
+
+
 ## Extract the air-defence picture `resolve` wants from an IJFS phase summary. The sole home for
 ## which IJFS fields the air path reads, so the turn conductor and the LLM observation cannot drift
 ## apart on it — and pure, so callers that must not touch autoloads can use it too.

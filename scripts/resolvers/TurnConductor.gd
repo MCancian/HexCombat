@@ -231,6 +231,40 @@ static func resolve_air_insertion_turn(state: GameStateData, dice: Dice) -> AirI
 	return summary
 
 
+## Air-landed brigades currently cut off from the beachhead (plan 0032) — they fight out of supply
+## even with a full theatre pool. Recomputed every combat, so a corridor punched through this turn
+## supplies them and a corridor cut isolates them again.
+static func isolated_air_landed_brigades(state: GameStateData) -> Dictionary:
+	if state.air_insertion_state == null or state.air_insertion_state.landed.is_empty():
+		return {}
+	var brigade_hexes: Dictionary = {}
+	for brigade_id_value in state.air_insertion_state.landed:
+		var brigade: Brigade = GameData.get_brigade(String(brigade_id_value))
+		if brigade != null and not brigade.destroyed:
+			brigade_hexes[brigade.id] = brigade.hex_id
+	return AirInsertionResolver.isolated_brigades(
+		state.air_insertion_state.landed, brigade_hexes, red_lodgement_hexes(state),
+		func(hex_id: String) -> bool:
+			var hex_state: HexState = GameData.hex_states.get(hex_id, null)
+			return hex_state != null and hex_state.owner == HexOwner.RED,
+		func(hex_id: String) -> Array: return GameData.get_neighbors(hex_id))
+
+
+## Where Red's supply enters the island: the scenario's landing beaches plus any port/airbridge Red
+## can offload through. These are the roots the corridor flood starts from — the same nodes that
+## physically feed the buildup, so "connected to the beach" means what it says.
+static func red_lodgement_hexes(state: GameStateData) -> Array:
+	var hexes: Array = []
+	for reserve_entry_value in GameData.red_ship_reserve:
+		var reserve_entry: Dictionary = reserve_entry_value
+		hexes.append(String(reserve_entry["beach_hex"]))
+	if state.infrastructure_state != null:
+		for node_value in InfrastructureResolver.red_offload_nodes(
+				state.infrastructure_state, GameData.infrastructure, owner_by_hex()):
+			hexes.append(String((node_value as Dictionary)["hex_id"]))
+	return hexes
+
+
 ## Any placed, passable hex is a drop zone (USER design call 2026-07-24: land on any hex). Unlike
 ## mobilization, enemy-held and contested ground is explicitly legal — bypassing the crossing is the
 ## whole point, and an opposed drop is paid for by the ground combat that follows in the same turn.
@@ -692,6 +726,7 @@ static func resolve_combat_at(state: GameStateData, hex_id: String, dice: Dice) 
 	rules.feba_base_km = GameData.feba_base_km
 	rules.red_supply_pool = pool
 	rules.red_out_of_supply_effectiveness = GameData.red_out_of_supply_effectiveness
+	rules.isolated_red_brigade_ids = isolated_air_landed_brigades(state)
 	rules.unscreened_support_strength = GameData.unscreened_support_strength
 	rules.maneuver_casualty_weight = GameData.maneuver_casualty_weight
 	rules.support_casualty_weight = GameData.support_casualty_weight

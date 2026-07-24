@@ -13,14 +13,27 @@ extends RefCounted
 ## Mirrors TIV boots_combat_service._inject_supply_effectiveness: Red maneuver units fight at
 ## full effectiveness while the Red DOS pool is positive, and at out_of_supply_effectiveness once
 ## it is exhausted (<= 0). Green has no DOS model, so its effectiveness stays 1.0.
-static func inject_supply_effectiveness(units: Array, team: int, red_supply_pool: float, out_of_supply_effectiveness: float) -> void:
+##
+## isolated_brigade_ids (plan 0032) overrides that per brigade: an air-landed formation with no Red
+## corridor back to a lodgement fights out of supply no matter how full the theatre pool is — the
+## DOS tonnage exists, it just cannot reach a battalion behind enemy lines. Empty (the default) is
+## the pre-0032 behaviour exactly.
+static func inject_supply_effectiveness(
+	units: Array, team: int, red_supply_pool: float, out_of_supply_effectiveness: float,
+	isolated_brigade_ids: Dictionary = {}
+) -> void:
 	if team != Brigade.Team.RED:
 		return
-	var eff: float = 1.0 if red_supply_pool > 0.0 else out_of_supply_effectiveness
-	if eff == 1.0:
+	var pool_effectiveness: float = 1.0 if red_supply_pool > 0.0 else out_of_supply_effectiveness
+	if pool_effectiveness == 1.0 and isolated_brigade_ids.is_empty():
 		return
 	for unit in units:
-		if unit is Dictionary:
+		if not (unit is Dictionary):
+			continue
+		var eff := pool_effectiveness
+		if isolated_brigade_ids.has(String(unit.get("brigade_id", ""))):
+			eff = out_of_supply_effectiveness
+		if eff != 1.0:
 			unit["supply_effectiveness"] = eff
 
 
@@ -51,9 +64,9 @@ static func resolve_at(
 	var defender_support_units := CombatForces.support_units(defender_brigades)
 	var attacker_support := CombatForces.support_counts(attacker_brigades)
 	var defender_support := CombatForces.support_counts(defender_brigades)
-	inject_supply_effectiveness(attacker_units, Brigade.Team.RED, rules.red_supply_pool, rules.red_out_of_supply_effectiveness)
+	inject_supply_effectiveness(attacker_units, Brigade.Team.RED, rules.red_supply_pool, rules.red_out_of_supply_effectiveness, rules.isolated_red_brigade_ids)
 	inject_supply_effectiveness(defender_units, Brigade.Team.GREEN, rules.red_supply_pool, rules.red_out_of_supply_effectiveness)
-	inject_supply_effectiveness(attacker_support_units, Brigade.Team.RED, rules.red_supply_pool, rules.red_out_of_supply_effectiveness)
+	inject_supply_effectiveness(attacker_support_units, Brigade.Team.RED, rules.red_supply_pool, rules.red_out_of_supply_effectiveness, rules.isolated_red_brigade_ids)
 	inject_supply_effectiveness(defender_support_units, Brigade.Team.GREEN, rules.red_supply_pool, rules.red_out_of_supply_effectiveness)
 	var result := CombatCalculator.resolve_map_attack(
 		dice,
