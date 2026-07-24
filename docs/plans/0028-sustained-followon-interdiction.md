@@ -104,6 +104,22 @@ a partially-landed brigade's drowned BNs (and combat over-counted its strength).
 finding above (margin +9.1→+3.1, 93% PLA at 64/turn) and every prior census-based number over-stated
 PLA strength and are being re-run against the fixed engine.**
 
+### Corrected flip curve (fixed engine, N=20, `selfplay_default`, `scenario_default`)
+
+Sub-strike sweep re-run on the fix. Off-island interdiction flips the scenario at a **~30–60× lower**
+level than the buggy engine showed — the ghost-landing bug had been propping up the whole PLA
+position (drowned BNs counted as present AND fighting):
+
+| sub strikes/turn | 0 | 8 | 16 | 24 | 32 | 48 | 64 |
+|---|---|---|---|---|---|---|---|
+| **PLA win %** | 100 | 90 | 30 | 15 | 10 | 10 | 0 |
+
+Knife-edge **~12–14/turn**, ≥85% ROC by ~24, reliable flip (0% PLA) by ~48–64 — vs the buggy 512
+knife-edge / 1024 reliable. Within a plausible combined ROC-sub + allied-air + external-ASM
+interdiction; the "structural inevitability" finding was partly a bug artifact. Specs:
+`tools/sweeps/off_island_flip{,_fine}.json`. **Still to re-run on the fix: the Q2 port-neutralization
+comparison (`off_island_flip_noport`) and any other census-based study.**
+
 ## Objectives
 
 1. Stage-1 spike + written verdict (which cause dominates late-wave immunity; cheapest seam) → USER
