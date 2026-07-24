@@ -19,6 +19,19 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-24 — Q2 re-run on the fix: "Taipei port is a no-op" overturned; port aids the defender under interdiction.**
+  - **Who**: Agent (Opus 4.8), continuing the ghost-landing-bug re-baselines.
+  - **What**: Re-ran `off_island_flip_noport` on the fixed engine at the fine grid `[0…64]` (old
+    `[0…2048]` grid saturates post-fix). At zero interdiction the port is still a wash (both 100% PLA),
+    but under active off-island interdiction, neutralizing the port (`auto_jlsf false`) *raises* PLA
+    win% in the knife-edge band (16→60% vs 30%, 24→25% vs 15%) — it removes attritable auto-JLSF lift
+    the off-island shooters would otherwise sink. Same substitute/antagonism mechanism as off-island ×
+    offload-throttle. Added a general `--flip` multi-series mode to `tools/mc_chart.py`.
+  - **Pointers**: full curves + mechanism in `docs/plans/0028-sustained-followon-interdiction.md`
+    ("Q2 re-run on the fix"); deck chart `docs/reports/assets/off_island_flip_curve.svg` (spec
+    `docs/reports/assets/off_island_flip_curve.flip.json`). Deck slide 6's "structural inevitability" framing now rests on
+    a bug artifact — flagged to USER for an editorial call (not rewritten).
+
 - **2026-07-24 — Crossing-drowning roster fix: drowned BNs are now real casualties (correctness bug).**
   - **Who**: Agent (Opus 4.8), USER call to fix (found while investigating the off-island-strike flip).
   - **What**: Battalions that drown in the anti-ship crossing were removed from `ship_reserve` but

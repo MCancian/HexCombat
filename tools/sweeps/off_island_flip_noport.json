@@ -8,7 +8,7 @@
     "data/scenarios/scenario_default.json:auto_jlsf"
   ],
   "grid": [
-    [0, 64, 128, 256, 512, 1024, 2048],
+    [0, 8, 16, 24, 32, 48, 64],
     [false]
   ],
   "seeds": [

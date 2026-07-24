@@ -1,0 +1,27 @@
+{
+  "title": "Off-island interdiction flips the crossing",
+  "subtitle": "PLA win rate vs sustained off-island sub-strikes/turn — flips at a plausible ~14, not 512",
+  "xlabel": "off-island submarine strikes per turn",
+  "knife_edge": [12, 16],
+  "footnote": "20 seeds/point · selfplay_default · scenario_default · fixed engine · commit a314735",
+  "series": [
+    {
+      "label": "Taipei port intact",
+      "color": "#3b82f6",
+      "points": [
+        {"x": 0, "rate": 1.00}, {"x": 8, "rate": 0.90}, {"x": 16, "rate": 0.30},
+        {"x": 24, "rate": 0.15}, {"x": 32, "rate": 0.10}, {"x": 48, "rate": 0.10},
+        {"x": 64, "rate": 0.00}
+      ]
+    },
+    {
+      "label": "port neutralized",
+      "color": "#8b5cf6",
+      "points": [
+        {"x": 0, "rate": 1.00}, {"x": 8, "rate": 1.00}, {"x": 16, "rate": 0.60},
+        {"x": 24, "rate": 0.25}, {"x": 32, "rate": 0.15}, {"x": 48, "rate": 0.10},
+        {"x": 64, "rate": 0.00}
+      ]
+    }
+  ]
+}

@@ -283,15 +283,99 @@ def build_crossing_svg(sens: dict) -> str:
     )
 
 
+def build_flip_svg(spec: dict) -> str:
+    """A multi-series flip curve: PLA win rate vs an integer knob value, one polyline per series
+    (e.g. port intact vs port neutralized), with a 50% coin-flip line and a knife-edge band shaded
+    around the steepest crossing. Pure function of the spec's series points. Series are direct-
+    labelled at their right end and a compact legend names them, per the dataviz two-entity rule.
+
+    spec = {title, subtitle, xlabel, footnote?, knife_edge?: [lo, hi],
+            series: [{label, color, points: [{x, rate}...]}...]}
+    """
+    series = spec["series"]
+    xs = sorted({p["x"] for s in series for p in s["points"]})
+    x_lo, x_hi = xs[0], xs[-1]
+    plot_l, plot_r, plot_t, plot_b = 66, 566, 100, 296
+
+    def mx(v):
+        return plot_l + (v - x_lo) / (x_hi - x_lo) * (plot_r - plot_l)
+
+    def my(rate):  # rate in [0,1]
+        return plot_b - rate * (plot_b - plot_t)
+
+    parts: list[str] = []
+    parts.append(text(60, 34, spec["title"], 20, INK, "700", "start", "Outfit"))
+    parts.append(text(60, 58, spec["subtitle"], 12, MUTED))
+
+    # Y gridlines 0/50/100%.
+    for rate, lab in ((0.0, "0%"), (0.5, "50%"), (1.0, "100%")):
+        y = my(rate)
+        parts.append('<line x1="%s" y1="%.1f" x2="%s" y2="%.1f" stroke="%s" stroke-width="1"/>'
+                     % (plot_l, y, plot_r, y, GRID))
+        parts.append(text(plot_l - 8, y + 4, lab, 11, FAINT, "400", "end"))
+
+    # Knife-edge band (the flip zone) shaded across the plot height.
+    band = spec.get("knife_edge")
+    if band:
+        parts.append('<rect x="%.1f" y="%s" width="%.1f" height="%s" fill="rgba(139,92,246,0.10)"/>'
+                     % (mx(band[0]), plot_t, mx(band[1]) - mx(band[0]), plot_b - plot_t))
+        parts.append(text((mx(band[0]) + mx(band[1])) / 2, plot_t + 14, "knife-edge",
+                          11, VIOLET, "700", "middle"))
+
+    # 50% coin-flip line.
+    parts.append('<line x1="%s" y1="%.1f" x2="%s" y2="%.1f" stroke="%s" stroke-width="1.5" '
+                 'stroke-dasharray="5 4"/>' % (plot_l, my(0.5), plot_r, my(0.5), VIOLET))
+    parts.append(text(plot_r - 2, my(0.5) - 7, "coin-flip", 10.5, VIOLET, "600", "end"))
+
+    # X ticks + labels (from the union of series x-values).
+    parts.append('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width="1.5"/>'
+                 % (plot_l, plot_b, plot_r, plot_b, "rgba(255,255,255,0.25)"))
+    for xv in xs:
+        x = mx(xv)
+        parts.append('<line x1="%.1f" y1="%s" x2="%.1f" y2="%s" stroke="%s" stroke-width="1"/>'
+                     % (x, plot_b, x, plot_b + 5, "rgba(255,255,255,0.25)"))
+        parts.append(text(x, plot_b + 19, "%d" % xv, 10, MUTED, "400", "middle"))
+    parts.append(text((plot_l + plot_r) / 2, plot_b + 38, spec["xlabel"], 12, MUTED, "400", "middle"))
+
+    # One polyline + markers per series; direct-label the right end.
+    for si, s in enumerate(series):
+        pts = sorted(s["points"], key=lambda p: p["x"])
+        color = s.get("color", BLUE if si == 0 else VIOLET)
+        line = " ".join("%.1f,%.1f" % (mx(p["x"]), my(p["rate"])) for p in pts)
+        parts.append('<polyline points="%s" fill="none" stroke="%s" stroke-width="2.5" '
+                     'stroke-linejoin="round" stroke-linecap="round"/>' % (line, color))
+        for p in pts:
+            parts.append('<circle cx="%.1f" cy="%.1f" r="4.5" fill="%s" stroke="#0a0e17" '
+                         'stroke-width="2"/>' % (mx(p["x"]), my(p["rate"]), color))
+        # Legend swatch + label, stacked top-right inside the plot.
+        ly = plot_t + 40 + si * 20
+        parts.append('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width="2.5"/>'
+                     % (plot_r - 150, ly, plot_r - 130, ly, color))
+        parts.append(text(plot_r - 124, ly + 4, s["label"], 11, INK, "600", "start"))
+
+    footnote = spec.get("footnote", "")
+    if footnote:
+        parts.append(text((plot_l + plot_r) / 2, 322, footnote, 10.5, FAINT, "400", "middle"))
+    return (
+        '<svg viewBox="0 0 %d 336" width="100%%" role="img" '
+        'aria-label="%s" xmlns="http://www.w3.org/2000/svg" style="max-width:100%%;height:auto;">'
+        '\n  %s\n</svg>' % (WIDTH, esc(spec["title"]), "\n  ".join(parts))
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--summary", default="")
     parser.add_argument("--sensitivity", default="")
     parser.add_argument("--crossing", default="", help="Sweep sensitivity JSON → crossing-curve SVG.")
+    parser.add_argument("--flip", default="", help="Multi-series flip-curve spec JSON → flip SVG.")
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
 
-    if args.crossing:
+    if args.flip:
+        spec = json.loads(Path(args.flip).read_text(encoding="utf-8"))
+        svg = build_flip_svg(spec)
+    elif args.crossing:
         sens = json.loads(Path(args.crossing).read_text(encoding="utf-8"))
         svg = build_crossing_svg(sens)
     else:

@@ -117,8 +117,31 @@ position (drowned BNs counted as present AND fighting):
 Knife-edge **~12–14/turn**, ≥85% ROC by ~24, reliable flip (0% PLA) by ~48–64 — vs the buggy 512
 knife-edge / 1024 reliable. Within a plausible combined ROC-sub + allied-air + external-ASM
 interdiction; the "structural inevitability" finding was partly a bug artifact. Specs:
-`tools/sweeps/off_island_flip{,_fine}.json`. **Still to re-run on the fix: the Q2 port-neutralization
-comparison (`off_island_flip_noport`) and any other census-based study.**
+`tools/sweeps/off_island_flip{,_fine}.json`. Deck-ready overlay chart:
+`docs/reports/assets/off_island_flip_curve.svg` (from `tools/mc_chart.py --flip
+docs/reports/assets/off_island_flip_curve.flip.json`, a new general multi-series flip mode).
+
+### Q2 re-run on the fix — "Taipei port is a no-op" is overturned (2026-07-24)
+
+Re-ran `off_island_flip_noport` on the fixed engine, **rescaled to the fine band** `[0,8,16,24,32,48,64]`
+(the old `[0…2048]` grid saturates on the fix, so a port comparison there is measured entirely in the
+reliable-flip regime — useless). With-port curve = the fine sweep above (`auto_jlsf` default `true`);
+no-port = `auto_jlsf false` (seized ports don't auto-queue attritable JLSF lift):
+
+| sub strikes/turn | 0 | 8 | 16 | 24 | 32 | 48 | 64 |
+|---|---|---|---|---|---|---|---|
+| **PLA win %, port intact** | 100 | 90 | 30 | 15 | 10 | 10 | 0 |
+| **PLA win %, port neutralized** | 100 | 100 | 60 | 25 | 15 | 10 | 0 |
+
+The buggy conclusion ("port is a no-op" — both curves flipped identically at ~512–1024) is **wrong**.
+On the fix: at **zero** interdiction the port is still a wash (both 100%), but under active off-island
+interdiction, **neutralizing the port *helps the PLA*** — it removes the auto-JLSF amphibious lift that
+the off-island shooters would otherwise sink at sea. The port's "free logistics" becomes attritable
+tonnage that *aids the defender* once there is a sustained sea toll. Same substitute/antagonism
+mechanism as the off-island × offload-throttle pairing (§ shipped-2026-07-23). So port neutralization
+is not a lever ROC wants when it holds off-island interdiction; it is mildly counterproductive in the
+knife-edge band (16–32). (N=20/point; the interior differences are marginal per point but monotone —
+no-port ≥ port PLA% at every interior level.) Curves overlaid in the flip chart above.
 
 ## Objectives
 
