@@ -127,10 +127,17 @@ def write_manifest(sweep_dir, name, scenario, knobs, grid, seeds, runtime_mode, 
 
 def render_report(name):
     print("Delegating report generation to Python...")
-    subprocess.run(
+    result = subprocess.run(
         [sys.executable, str(REPO_ROOT / "tools" / "make_sweep_report.py"), "--sweep", name],
-        check=True,
+        check=False,
     )
+    if result.returncode != 0:
+        # The report is a convenience view; the cell rollups are the real artifact and are already
+        # written. A report-format problem must NOT discard a completed (often long) sweep — warn
+        # loudly and leave the data intact rather than exiting non-zero.
+        print("WARNING: report generation failed (exit %d); cell data in "
+              "reports/sweeps/%s/cells is complete and unaffected." % (result.returncode, name),
+              file=sys.stderr)
 
 
 def require_scenario_file(scenario):

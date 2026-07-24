@@ -7,6 +7,7 @@ Godot), never by filename — cell ids are human-readable labels only.
 
 import argparse
 import glob
+import itertools
 import json
 import os
 import sys
@@ -98,9 +99,11 @@ def render_1d(lines, manifest, cells, metric_name, metric_fn):
         lines.append("| " + " | ".join(row) + " |")
 
 
-def render_2d(lines, manifest, cells, metric_fn):
+def render_2d_table(lines, manifest, cells, metric_fn, prefix=()):
+    """A knob[0] × knob[1] table. `prefix` pins the trailing knobs' values (empty for a pure 2-D
+    sweep), so faceted N-D sweeps reuse this by calling once per trailing-knob combination."""
     knobs = manifest["knobs"]
-    y_vals, x_vals = manifest["grid"]
+    y_vals, x_vals = manifest["grid"][0], manifest["grid"][1]
 
     header = [f"{knob_leaf(knobs[0])}\\{knob_leaf(knobs[1])}"] + [fmt_value(x) for x in x_vals]
     lines.append("| " + " | ".join(header) + " |")
@@ -109,9 +112,21 @@ def render_2d(lines, manifest, cells, metric_fn):
     for y in y_vals:
         row = [str(y)]
         for x in x_vals:
-            cell = find_cell(cells, knobs, (y, x))
+            cell = find_cell(cells, knobs, (y, x) + prefix)
             row.append(str(metric_fn(cell)) if cell else "N/A")
         lines.append("| " + " | ".join(row) + " |")
+
+
+def render_faceted(lines, manifest, cells, metric_fn):
+    """A grid with 3+ knobs: one knob[0]×knob[1] table per combination of the trailing knobs,
+    each under a subheading naming the pinned facet values."""
+    knobs = manifest["knobs"]
+    facet_knobs = knobs[2:]
+    for facet in itertools.product(*manifest["grid"][2:]):
+        lines.append("")
+        lines.append("### " + ", ".join("%s=%s" % (knob_leaf(k), fmt_value(v))
+                                         for k, v in zip(facet_knobs, facet)))
+        render_2d_table(lines, manifest, cells, metric_fn, prefix=tuple(facet))
 
 
 def render_markdown(manifest, cells, out_path):
@@ -131,10 +146,9 @@ def render_markdown(manifest, cells, out_path):
     if len(grid) == 1:
         render_1d(lines, manifest, cells, metric_name, metric_fn)
     elif len(grid) == 2:
-        render_2d(lines, manifest, cells, metric_fn)
+        render_2d_table(lines, manifest, cells, metric_fn)
     else:
-        print(f"Unsupported grid dimensionality: {len(grid)}", file=sys.stderr)
-        sys.exit(1)
+        render_faceted(lines, manifest, cells, metric_fn)
 
     floor_cell = next((c for c in cells if is_floor_cell(c)), None)
     if floor_cell:

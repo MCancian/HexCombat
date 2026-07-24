@@ -25,7 +25,9 @@ INK = "#e2e8f0"
 MUTED = "#94a3b8"
 FAINT = "#64748b"
 GRID = "rgba(255,255,255,0.08)"
+AXIS = "rgba(255,255,255,0.25)"  # axis/tick lines — brighter than the recessive gridlines
 BAR_TOP = "#60a5fa"  # lighter blue for the rounded data-end, per marks spec
+SURFACE = "#0a0e17"  # deck background — the surface marks/rings punch against
 
 WIDTH = 600
 HEIGHT = 560
@@ -41,6 +43,38 @@ def text(x, y, content, size, color, weight="400", anchor="start", font="Inter",
         'font-weight="%s" fill="%s" text-anchor="%s"%s>%s</text>'
         % (x, y, font, size, weight, color, anchor, (" " + extra) if extra else "", esc(content))
     )
+
+
+def svg_document(width, height, aria_label: str, parts: list[str]) -> str:
+    """The self-contained <svg> wrapper every builder shares — viewBox, responsive sizing, and the
+    joined body. aria_label is escaped, so callers pass raw text."""
+    return (
+        '<svg viewBox="0 0 %d %d" width="100%%" role="img" aria-label="%s" '
+        'xmlns="http://www.w3.org/2000/svg" style="max-width:100%%;height:auto;">\n  %s\n</svg>'
+        % (width, height, esc(aria_label), "\n  ".join(parts))
+    )
+
+
+def win_rate_gridlines(plot_l, plot_r, my) -> list[str]:
+    """The 0 / 50 / 100 % horizontal gridlines + labels for a win-rate y-axis (my maps rate→y).
+    Shared by every win-rate curve."""
+    parts: list[str] = []
+    for rate, lab in ((0.0, "0%"), (0.5, "50%"), (1.0, "100%")):
+        y = my(rate)
+        parts.append('<line x1="%s" y1="%.1f" x2="%s" y2="%.1f" stroke="%s" stroke-width="1"/>'
+                     % (plot_l, y, plot_r, y, GRID))
+        parts.append(text(plot_l - 8, y + 4, lab, 11, FAINT, "400", "end"))
+    return parts
+
+
+def coin_flip_line(plot_l, plot_r, my) -> list[str]:
+    """The dashed 50 % coin-flip reference line + its label, shared by every win-rate curve."""
+    y = my(0.5)
+    return [
+        '<line x1="%s" y1="%.1f" x2="%s" y2="%.1f" stroke="%s" stroke-width="1.5" '
+        'stroke-dasharray="5 4"/>' % (plot_l, y, plot_r, y, VIOLET),
+        text(plot_r - 2, y - 7, "coin-flip", 10.5, VIOLET, "600", "end"),
+    ]
 
 
 def histogram_panel(summary: dict) -> list[str]:
@@ -104,12 +138,12 @@ def histogram_panel(summary: dict) -> list[str]:
 
     # X axis line, ticks (from margin 0), label.
     parts.append('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width="1.5"/>'
-                 % (plot_l, plot_b, plot_r, plot_b, "rgba(255,255,255,0.25)"))
+                 % (plot_l, plot_b, plot_r, plot_b, AXIS))
     tick = 0
     while tick <= hi - 1:
         x = mx(tick)
         parts.append('<line x1="%.1f" y1="%s" x2="%.1f" y2="%s" stroke="%s" stroke-width="1"/>'
-                     % (x, plot_b, x, plot_b + 5, "rgba(255,255,255,0.25)"))
+                     % (x, plot_b, x, plot_b + 5, AXIS))
         parts.append(text(x, plot_b + 19, "+%d" % tick if tick > 0 else "0", 11, MUTED, "400", "middle"))
         tick += 5
     parts.append(
@@ -182,7 +216,7 @@ def sensitivity_panel(sens: dict) -> list[str]:
     for p in points:
         cx, cy = mx(p["value"]), my(p["crossing_loss_pct"])
         parts.append('<circle cx="%.1f" cy="%.1f" r="4.5" fill="%s" stroke="%s" stroke-width="2"/>'
-                     % (cx, cy, VIOLET, "#0a0e17"))
+                     % (cx, cy, VIOLET, SURFACE))
         parts.append(text(mx(p["value"]), plot_b + 18, "%.1f" % p["value"], 10.5, MUTED, "400", "middle"))
     parts.append(text((plot_l + plot_r) / 2, plot_b + 36, "intel_locked_antiship_strike_bonus",
                       11, FAINT, "400", "middle"))
@@ -195,12 +229,8 @@ def build_svg(summary: dict, sens: dict | None) -> str:
     if sens:
         body.append('<line x1="60" y1="360" x2="564" y2="360" stroke="%s" stroke-width="1"/>' % GRID)
         body += sensitivity_panel(sens)
-    return (
-        '<svg viewBox="0 0 %d %d" width="100%%" role="img" '
-        'aria-label="Monte Carlo victory-margin distribution across %d seeds" '
-        'xmlns="http://www.w3.org/2000/svg" style="max-width:100%%;height:auto;">\n  %s\n</svg>'
-        % (WIDTH, height, summary["n_games"], "\n  ".join(body))
-    )
+    aria = "Monte Carlo victory-margin distribution across %d seeds" % summary["n_games"]
+    return svg_document(WIDTH, height, aria, body)
 
 
 def build_crossing_svg(sens: dict) -> str:
@@ -232,11 +262,7 @@ def build_crossing_svg(sens: dict) -> str:
                       12, MUTED))
 
     # Y gridlines 0/50/100%.
-    for rate, lab in ((0.0, "0%"), (0.5, "50%"), (1.0, "100%")):
-        y = my(rate)
-        parts.append('<line x1="%s" y1="%.1f" x2="%s" y2="%.1f" stroke="%s" stroke-width="1"/>'
-                     % (plot_l, y, plot_r, y, GRID))
-        parts.append(text(plot_l - 8, y + 4, lab, 11, FAINT, "400", "end"))
+    parts += win_rate_gridlines(plot_l, plot_r, my)
 
     # Culmination zone shading left of the crossing.
     if cross_x is not None:
@@ -244,9 +270,7 @@ def build_crossing_svg(sens: dict) -> str:
                      % (mx(x_lo), plot_t, mx(cross_x) - mx(x_lo), plot_b - plot_t))
 
     # 50% coin-flip line.
-    parts.append('<line x1="%s" y1="%.1f" x2="%s" y2="%.1f" stroke="%s" stroke-width="1.5" '
-                 'stroke-dasharray="5 4"/>' % (plot_l, my(0.5), plot_r, my(0.5), VIOLET))
-    parts.append(text(plot_r - 2, my(0.5) - 7, "coin-flip", 10.5, VIOLET, "600", "end"))
+    parts += coin_flip_line(plot_l, plot_r, my)
 
     # The win-rate line + markers.
     line = " ".join("%.1f,%.1f" % (mx(p["offload_rate"]), my(p["red_win_rate"])) for p in points)
@@ -254,10 +278,10 @@ def build_crossing_svg(sens: dict) -> str:
                  'stroke-linejoin="round" stroke-linecap="round"/>' % (line, BLUE))
     for p in points:
         cx, cy = mx(p["offload_rate"]), my(p["red_win_rate"])
-        parts.append('<circle cx="%.1f" cy="%.1f" r="4.5" fill="%s" stroke="#0a0e17" stroke-width="2"/>'
-                     % (cx, cy, BAR_TOP))
+        parts.append('<circle cx="%.1f" cy="%.1f" r="4.5" fill="%s" stroke="%s" stroke-width="2"/>'
+                     % (cx, cy, BAR_TOP, SURFACE))
         parts.append('<line x1="%.1f" y1="%s" x2="%.1f" y2="%s" stroke="%s" stroke-width="1"/>'
-                     % (cx, plot_b, cx, plot_b + 5, "rgba(255,255,255,0.25)"))
+                     % (cx, plot_b, cx, plot_b + 5, AXIS))
         parts.append(text(cx, plot_b + 19, "%d" % p["offload_rate"], 10, MUTED, "400", "middle"))
 
     # Crossing callout.
@@ -272,15 +296,10 @@ def build_crossing_svg(sens: dict) -> str:
     parts.append(text(mx(baseline), my(1.0) - 10, "baseline %s" % f"{baseline:,}", 10.5, FAINT, "400", "end"))
 
     parts.append('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width="1.5"/>'
-                 % (plot_l, plot_b, plot_r, plot_b, "rgba(255,255,255,0.25)"))
+                 % (plot_l, plot_b, plot_r, plot_b, AXIS))
     parts.append(text((plot_l + plot_r) / 2, plot_b + 38, "beach offload throughput (short tons/day)",
                       12, MUTED, "400", "middle"))
-    return (
-        '<svg viewBox="0 0 %d 336" width="100%%" role="img" '
-        'aria-label="PLA win rate versus beach offload throughput" '
-        'xmlns="http://www.w3.org/2000/svg" style="max-width:100%%;height:auto;">\n  %s\n</svg>'
-        % (WIDTH, "\n  ".join(parts))
-    )
+    return svg_document(WIDTH, 336, "PLA win rate versus beach offload throughput", parts)
 
 
 def build_flip_svg(spec: dict) -> str:
@@ -308,11 +327,7 @@ def build_flip_svg(spec: dict) -> str:
     parts.append(text(60, 58, spec["subtitle"], 12, MUTED))
 
     # Y gridlines 0/50/100%.
-    for rate, lab in ((0.0, "0%"), (0.5, "50%"), (1.0, "100%")):
-        y = my(rate)
-        parts.append('<line x1="%s" y1="%.1f" x2="%s" y2="%.1f" stroke="%s" stroke-width="1"/>'
-                     % (plot_l, y, plot_r, y, GRID))
-        parts.append(text(plot_l - 8, y + 4, lab, 11, FAINT, "400", "end"))
+    parts += win_rate_gridlines(plot_l, plot_r, my)
 
     # Knife-edge band (the flip zone) shaded across the plot height.
     band = spec.get("knife_edge")
@@ -323,17 +338,15 @@ def build_flip_svg(spec: dict) -> str:
                           11, VIOLET, "700", "middle"))
 
     # 50% coin-flip line.
-    parts.append('<line x1="%s" y1="%.1f" x2="%s" y2="%.1f" stroke="%s" stroke-width="1.5" '
-                 'stroke-dasharray="5 4"/>' % (plot_l, my(0.5), plot_r, my(0.5), VIOLET))
-    parts.append(text(plot_r - 2, my(0.5) - 7, "coin-flip", 10.5, VIOLET, "600", "end"))
+    parts += coin_flip_line(plot_l, plot_r, my)
 
     # X ticks + labels (from the union of series x-values).
     parts.append('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width="1.5"/>'
-                 % (plot_l, plot_b, plot_r, plot_b, "rgba(255,255,255,0.25)"))
+                 % (plot_l, plot_b, plot_r, plot_b, AXIS))
     for xv in xs:
         x = mx(xv)
         parts.append('<line x1="%.1f" y1="%s" x2="%.1f" y2="%s" stroke="%s" stroke-width="1"/>'
-                     % (x, plot_b, x, plot_b + 5, "rgba(255,255,255,0.25)"))
+                     % (x, plot_b, x, plot_b + 5, AXIS))
         parts.append(text(x, plot_b + 19, "%d" % xv, 10, MUTED, "400", "middle"))
     parts.append(text((plot_l + plot_r) / 2, plot_b + 38, spec["xlabel"], 12, MUTED, "400", "middle"))
 
@@ -345,8 +358,8 @@ def build_flip_svg(spec: dict) -> str:
         parts.append('<polyline points="%s" fill="none" stroke="%s" stroke-width="2.5" '
                      'stroke-linejoin="round" stroke-linecap="round"/>' % (line, color))
         for p in pts:
-            parts.append('<circle cx="%.1f" cy="%.1f" r="4.5" fill="%s" stroke="#0a0e17" '
-                         'stroke-width="2"/>' % (mx(p["x"]), my(p["rate"]), color))
+            parts.append('<circle cx="%.1f" cy="%.1f" r="4.5" fill="%s" stroke="%s" '
+                         'stroke-width="2"/>' % (mx(p["x"]), my(p["rate"]), color, SURFACE))
         # Legend swatch + label, stacked top-right inside the plot.
         ly = plot_t + 40 + si * 20
         parts.append('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width="2.5"/>'
@@ -356,11 +369,7 @@ def build_flip_svg(spec: dict) -> str:
     footnote = spec.get("footnote", "")
     if footnote:
         parts.append(text((plot_l + plot_r) / 2, 322, footnote, 10.5, FAINT, "400", "middle"))
-    return (
-        '<svg viewBox="0 0 %d 336" width="100%%" role="img" '
-        'aria-label="%s" xmlns="http://www.w3.org/2000/svg" style="max-width:100%%;height:auto;">'
-        '\n  %s\n</svg>' % (WIDTH, esc(spec["title"]), "\n  ".join(parts))
-    )
+    return svg_document(WIDTH, 336, spec["title"], parts)
 
 
 # Diverging heat scale (dataviz blue↔red pair, tuned to the deck's dark surface). PLA-favored → blue,
@@ -418,7 +427,7 @@ def build_heat_svg(spec: dict) -> str:
                 fill = heat_color(v)
                 parts.append('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="3" fill="%s"/>'
                              % (cx + gap / 2, cy + gap / 2, cell - gap, cell - gap, fill))
-                ink = "#0a0e17" if _luma(tuple(int(fill[i:i + 2], 16) for i in (1, 3, 5))) > 0.6 else INK
+                ink = SURFACE if _luma(tuple(int(fill[i:i + 2], 16) for i in (1, 3, 5))) > 0.6 else INK
                 parts.append(text(cx + cell / 2, cy + cell / 2 + 4, "%d" % round(v), 12, ink, "700", "middle"))
         # X-axis labels under each panel.
         for c, xv in enumerate(xs):
@@ -446,11 +455,7 @@ def build_heat_svg(spec: dict) -> str:
     foot = spec.get("footnote", "")
     if foot:
         parts.append(text(bx0 + bw / 2, height - 6, foot, 10, FAINT, "400", "middle"))
-    return (
-        '<svg viewBox="0 0 %d %d" width="100%%" role="img" aria-label="%s" '
-        'xmlns="http://www.w3.org/2000/svg" style="max-width:100%%;height:auto;">\n  %s\n</svg>'
-        % (width, height, esc(spec["title"]), "\n  ".join(parts))
-    )
+    return svg_document(width, height, spec["title"], parts)
 
 
 def main() -> int:

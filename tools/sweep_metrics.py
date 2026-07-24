@@ -79,12 +79,17 @@ def maneuver_attrition_pct(cell_data):
 
 
 def red_win_rate(cell_data):
-    """Share of decided games the record marks as a Red win (winner is lowercase in records)."""
+    """Share of ALL games that ended in a Red victory (%), NOT decided-games-only.
+
+    Every resolved record carries a `winner` key; an undecided game (hit the turn cap with no
+    victory) has it present but empty, so it lands in the denominator and counts as a non-win.
+    That is deliberate: a PLA that fails to conquer within the horizon is a PLA loss for the sweep.
+    """
     wins = 0
     total = 0
     for record in cell_data["samples"]:
         if "winner" in record:
-            total += 1
+            total += 1  # all valid records — decided AND undecided (empty winner)
             if str(record["winner"]).lower() == "red":
                 wins += 1
     if total == 0:
