@@ -1,0 +1,23 @@
+{
+  "_comment": "Plan 0029 Tier A2: does phasing the ROC reserve in bend the census race? Sweeps how many of the OOB's 12 reserve infantry brigades start off-map in mobilization (0 = the pre-0029 laydown, 12 = the whole reserve establishment mobilizes). Green seat is roc_defense (the concentrating defender from Tier A1) so arriving brigades actually walk to the front; Red is the selfplay_default baseline the Tier A1 measurement used, so cell 0 reproduces that reference (Red 30/30, margin mean +6.2).",
+  "sweep_name": "roc_mobilization",
+  "scenario": "scenario_default",
+  "matchup": "selfplay_default:roc_defense",
+  "turns": 30,
+  "knobs": [
+    "data/scenarios/scenario_default.json:green_mobilization.held_back_brigades"
+  ],
+  "grid": [
+    [0, 4, 8, 12]
+  ],
+  "seeds": [
+    20260624, 20260625, 20260626, 20260627, 20260628, 20260629,
+    20260630, 20260631, 20260632, 20260633, 20260634, 20260635,
+    20260636, 20260637, 20260638, 20260639, 20260640, 20260641,
+    20260642, 20260643, 20260644, 20260645, 20260646, 20260647,
+    20260648, 20260649, 20260650, 20260651, 20260652, 20260653
+  ],
+  "metrics": [
+    "red_win_rate"
+  ]
+}

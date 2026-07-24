@@ -1,0 +1,25 @@
+{
+  "_comment": "Plan 0029 Tier A2 follow-up: with the whole reserve establishment held back (12 brigades), does WHEN it arrives matter as much as that it arrives? Sweeps first_release_turn at fixed held_back_brigades=12; same scenario/matchup/seeds as roc_mobilization so the cells are directly comparable (its held_back=12 cell is this sweep's first_release_turn=4).",
+  "sweep_name": "roc_mobilization_timing",
+  "scenario": "scenario_default",
+  "matchup": "selfplay_default:roc_defense",
+  "turns": 30,
+  "knobs": [
+    "data/scenarios/scenario_default.json:green_mobilization.held_back_brigades",
+    "data/scenarios/scenario_default.json:green_mobilization.first_release_turn"
+  ],
+  "grid": [
+    [12],
+    [2, 4, 8, 12]
+  ],
+  "seeds": [
+    20260624, 20260625, 20260626, 20260627, 20260628, 20260629,
+    20260630, 20260631, 20260632, 20260633, 20260634, 20260635,
+    20260636, 20260637, 20260638, 20260639, 20260640, 20260641,
+    20260642, 20260643, 20260644, 20260645, 20260646, 20260647,
+    20260648, 20260649, 20260650, 20260651, 20260652, 20260653
+  ],
+  "metrics": [
+    "red_win_rate"
+  ]
+}

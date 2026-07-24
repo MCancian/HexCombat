@@ -129,6 +129,47 @@ e2e (hold all 12, assert census dips then rises and every brigade arrives); gold
 default 0. Then sweep `held_back_brigades` 0/4/8/12 with `roc_defense` in the Green seat and report
 the census curves.
 
+### Shipped 2026-07-24 — mechanic + measurement
+
+**Mechanic shipped** (commit `7d1cc7b`, gate ALL PHASES GREEN): `green_mobilization` scenario block,
+`MobilizationState`/`MobilizationSummary`, `MobilizationStateBuilder`/`MobilizationResolver`, a
+mobilization phase between offload and movement, IJFS append-on-arrival, observation + record
+surfacing, `tools/validate_mobilization.gd` + 16 GdUnit cases. Facts:
+`docs/systems/roc-mobilization.md`. Default `held_back_brigades: 0` ⇒ inert, golden byte-stable.
+
+**Measured** (30 seeds/cell, `selfplay_default` vs `roc_defense`, `scenario_default`, 30 turns —
+full report: `docs/reports/2026-07-24-roc-mobilization-sweep.md`):
+
+| held_back_brigades | 0 | 4 | 8 | 12 |
+|---|---|---|---|---|
+| Red win rate | **100%** | 93.3% | 90.0% | **83.3%** |
+| mean turns to decision | 20.0 | 21.0 | 21.8 | 22.4 |
+
+**The first defender-side lever to move the win rate off 100%** — and it does it without adding a
+single battalion, purely by keeping 36 of the 124 BNs off-map (uncensused, unstrikable) through the
+front-loaded fires campaign. Green's census curve stops being monotone: at held_back 12 it *rises*
+t5→t8 (60→62) and plateaus to t14 where the baseline fell 89→53. 17% of seeds now survive the
+horizon with the ROC ahead (mean −11.6).
+
+It does **not** flip the median game: 83% are still PLA decisive, because the structural cause is
+untouched — the bottomless `auto_seed_followon_pool` reservoir against a *finite* 36-BN injection.
+The reserve buys turns, not victory.
+
+Release timing (`first_release_turn` 2/4/8/12 at held_back 12) is nearly flat (90%→80%, inside the
+noise at n=30) and its weak gradient favours *later* mobilization — a model boundary, not advice:
+off-map is a sanctuary with no modelled cost, because the deny-only victory rule scores presence
+only. See the report's caveat.
+
+### Open after Tier A2
+
+- **Mobilization × logistics throttle** (2-D): the decisive lever found so far is beach offload
+  throughput (plan 0028); this sweep held it at default. Obvious next cell — does a finite defender
+  reservoir flip the outcome once the attacker's buildup rate is capped?
+- **Cost of staying unmobilized** (USER design call): today an off-map brigade cedes census and
+  ground but is invulnerable, so the model mildly rewards withholding. A mobilization cost (ground
+  control, political, or a readiness penalty on late arrivals) would close it.
+- **Tier B** (Green counterattack) remains gated on 0003 + the USER counterattack call.
+
 ## Objectives
 
 1. Tier A: reserve-mobilization pool and/or a repositioning Green policy; golden byte-stable when the

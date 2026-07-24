@@ -30,6 +30,10 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
     byte-stable.
   - **Pointers**: `docs/systems/roc-mobilization.md`; `docs/plans/0029-dynamic-roc-defense.md`
     (Tier A2); knobs in `data/knobs/registry.json` group `mobilization`.
+  - **Measured** (30 seeds/cell): holding 0/4/8/12 reserve brigades back → Red win rate
+    100%/93.3%/90.0%/83.3%. First defender-side lever to move it off 100%, but it does not flip the
+    median game (finite reserve vs bottomless follow-on pool).
+    `docs/reports/2026-07-24-roc-mobilization-sweep.md`.
 
 - **2026-07-24 — validate_cleanup's golden pin was corrected: it had been re-baselined in the wrong scenario.**
   - **Who**: Agent (Opus 5), found by the plan-0029 gate run.

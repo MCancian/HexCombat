@@ -124,7 +124,15 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   offload and movement — the same seam as Red's reinforcement — and consumes no dice. Total force is
   unchanged; the lever is exposure timing (off-map battalions sit out the front-loaded fires
   campaign). Coverage: `tools/validate_mobilization.gd` + `tests/mobilization_*_test.gd`.
-  Detail: `docs/systems/roc-mobilization.md`.
+  Detail: `docs/systems/roc-mobilization.md`. **Measured (2026-07-24, 30 seeds/cell,
+  `selfplay_default` vs `roc_defense`, `scenario_default`, 30 turns):** holding 0/4/8/12 reserve
+  brigades back takes the Red win rate 100% → 93.3% → 90.0% → **83.3%** and pushes mean decision
+  from turn 20.0 to 22.4 — the first defender-side lever to move the win rate off 100%, with no
+  extra force. Green's census curve stops being monotone (rises t5→t8, plateaus to t14 where the
+  baseline fell 89→53); 17% of seeds survive the horizon with the ROC ahead. It does **not** flip
+  the median game: a finite 36-BN reserve cannot beat the bottomless follow-on pool. Release timing
+  is nearly flat and its weak "later is better" gradient is a model artifact (off-map is a sanctuary
+  with no modelled cost). Report: `docs/reports/2026-07-24-roc-mobilization-sweep.md`.
 - **D5 Front-line / cleanup** — `FrontLineService` (polyline → hex redistribution), cleanup phase.
 - **Victory conditions** — end-of-cleanup census of PLA vs ROC battalions *present* on Taiwan (landed
   only: a brigade's battalions still at sea in `ship_reserve` are excluded even after its first BN
