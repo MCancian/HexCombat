@@ -2018,6 +2018,17 @@
 	"schema": "hexcombat.llm_action_result",
 	"seed": 20260624,
 	"turn_result": {
+		"air_insertion_summary": {
+			"attrition_by_class": {},
+			"battalions_landed": 0,
+			"battalions_lost": 0,
+			"caps_after": {},
+			"caps_before": {},
+			"drops": [],
+			"pending_battalions": 0,
+			"pending_brigades": 0,
+			"rejected": []
+		},
 		"antiship_summary": {
 			"bns_lost_at_sea": 8,
 			"crossing_casualties": {

@@ -66,6 +66,10 @@ var victory_config: Dictionary = {}  # scenario 'victory' block (loss_check_arm,
 # scenario that does not opt in — held_back_brigades defaults to 0, which is the pre-0029 laydown.
 var green_mobilization: Dictionary = {}
 var mobilization_holdback: Array = []
+# PLAAF air insertion (plan 0032): the scenario 'red_air_insertion' block — per-turn lift caps,
+# first permitted turn, and the attrition coefficients. Empty for every scenario that does not opt
+# in, which builds an empty pool and leaves the phase inert.
+var red_air_insertion: Dictionary = {}
 # Research bypass (plan 0012): WeGo phases resolve_turn skips wholesale, so a calibration sweep
 # can run standard full games while isolating one phase's effect (e.g. IJFS maneuver attrition
 # with no ground fighting). Names must come from DISABLEABLE_PHASES — anything else fails loud at
@@ -307,6 +311,8 @@ func load_scenario(path: String) -> void:
 	victory_config = victory_value if victory_value is Dictionary else {}
 	var mobilization_value: Variant = scenario.get("green_mobilization", {})
 	green_mobilization = mobilization_value if mobilization_value is Dictionary else {}
+	var air_insertion_value: Variant = scenario.get("red_air_insertion", {})
+	red_air_insertion = air_insertion_value if air_insertion_value is Dictionary else {}
 	red_ship_reserve = _parse_ship_reserve_entries(scenario.get("red_ship_reserve", []), "red_ship_reserve")
 	red_followon_reserve = _parse_ship_reserve_entries(scenario.get("red_followon_reserve", []), "red_followon_reserve")
 	# Opt-in ONLY: when true and no explicit red_followon_reserve is given, the mainland pool

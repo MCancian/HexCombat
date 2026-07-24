@@ -116,6 +116,15 @@ var mobilization_state: MobilizationState:
 var last_mobilization_summary: MobilizationSummary:
 	get: return data.last_mobilization_summary
 	set(value): data.last_mobilization_summary = value
+var air_insertion_state: AirInsertionState:
+	get: return data.air_insertion_state
+	set(value): data.air_insertion_state = value
+var last_air_insertion_summary: AirInsertionSummary:
+	get: return data.last_air_insertion_summary
+	set(value): data.last_air_insertion_summary = value
+var air_insert_orders: Array:
+	get: return data.air_insert_orders
+	set(value): data.air_insert_orders = value
 var game_over: bool:
 	get: return data.game_over
 	set(value): data.game_over = value
@@ -180,6 +189,9 @@ func reset_to_scenario() -> void:
 	data.last_cleanup_summary = null
 	_rebuild_mobilization_state()
 	data.last_mobilization_summary = null
+	_rebuild_air_insertion_state()
+	data.last_air_insertion_summary = null
+	data.air_insert_orders = []
 	data.game_over = false
 	data.winner = ""
 	data._china_has_landed = false
@@ -325,6 +337,19 @@ func resolve_mobilization_turn() -> MobilizationSummary:
 	return TurnConductor.resolve_mobilization_turn(data)
 
 
+## Red battalions waiting to fly plus the per-turn lift budgets (plan 0032). The PLAAF Airborne
+## Corps is never placed by a scenario, so the pool is simply every unplaced air-lifted Red brigade.
+func _rebuild_air_insertion_state() -> void:
+	data.air_insertion_state = GameStateBuilder.build_air_insertion_state(
+		GameData.red_air_insertion, GameData.brigades)
+
+
+## Test-called surface (tests/air_insertion_*) — pure logic lives in
+## TurnConductor/AirInsertionResolver.
+func resolve_air_insertion_turn(dice: Dice) -> AirInsertionSummary:
+	return TurnConductor.resolve_air_insertion_turn(data, dice)
+
+
 func _rebuild_ship_reserve() -> void:
 	data.ship_reserve = GameStateBuilder.build_ship_reserve(GameData.red_ship_reserve, GameData.brigades)
 
@@ -392,6 +417,7 @@ func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> Tur
 	result.antiship_summary = data.last_antiship_summary.to_dict() if data.last_antiship_summary != null else {}
 	result.offload_summary = data.last_offload_summary.duplicate(true)
 	result.mobilization_summary = data.last_mobilization_summary.to_dict() if data.last_mobilization_summary != null else {}
+	result.air_insertion_summary = data.last_air_insertion_summary.to_dict() if data.last_air_insertion_summary != null else {}
 	result.frontline_summary = data.last_frontline_summary.to_dict() if data.last_frontline_summary != null else {}
 	result.cleanup_summary = data.last_cleanup_summary.to_dict() if data.last_cleanup_summary != null else {}
 	result.events = TurnEventLog.build(self)

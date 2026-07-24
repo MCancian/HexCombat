@@ -41,6 +41,12 @@ static func resolve_turn(state: GameStateData, dice: Dice = null) -> void:
 	# Red's (offload) and before movement, so arrivals are on the map for this turn's combat but only
 	# take orders next planning phase. Dice-free -> the golden stream is untouched.
 	state.last_mobilization_summary = resolve_mobilization_turn(state)
+	# Air insertion (plan 0032): Red's OTHER reinforcement path sits at the same seam as its sea
+	# one and Green's mobilization, and — critically — AFTER the IJFS phase, because the attrition
+	# a drop takes is read off the air-defence picture those fires just produced. Landing before
+	# movement means a drop onto Green ground is contested and fought in the SAME turn, which is
+	# how an opposed insertion is paid for. Its own dice substream; no orders => no draws.
+	state.last_air_insertion_summary = resolve_air_insertion_turn(state, dice)
 
 	# disable_phases (plan 0012): a scenario/override can skip the ground WeGo phases wholesale so
 	# calibration sweeps run standard games while isolating the sea/IJFS phases. Buffered orders
@@ -177,6 +183,73 @@ static func resolve_mobilization_turn(state: GameStateData) -> MobilizationSumma
 	GameData.recompute_hex_ownership()
 	EventBus.mobilization_resolved.emit(summary.to_dict())
 	return summary
+
+
+# --- Air insertion (plan 0032) — Red's non-amphibious reinforcement phase ----------------------
+
+## Fly this turn's ordered battalions onto the island. The resolver decides who flies, who dies and
+## what the lift loses; this wrapper owns the GameData mutation (set_brigade_hex for the survivors,
+## apply_casualty for the losses), the ownership recompute and the EventBus emit — the same split
+## OffloadResolver and MobilizationResolver use.
+##
+## The air-defence picture comes from THIS turn's IJFS summary (post-strike), so suppressing SAMs
+## before dropping visibly pays off; the MANPADS layer is read separately because it is deliberately
+## outside the AD-health metric. An empty pool or no orders leaves state and RNG untouched.
+static func resolve_air_insertion_turn(state: GameStateData, dice: Dice) -> AirInsertionSummary:
+	var summary := AirInsertionResolver.resolve(
+		state.air_insertion_state, state.air_insert_orders, state.turn_number,
+		air_defence_threat(state), AirInsertionStateBuilder.attrition_config(GameData.red_air_insertion),
+		func(hex_id: String) -> bool: return hex_can_receive_insertion(hex_id),
+		dice)
+	# One-shot orders, consumed on resolution like jlsf_orders — an unflown drop is not re-attempted
+	# next turn behind the player's back.
+	state.air_insert_orders = []
+	if summary.drops.is_empty():
+		EventBus.air_insertion_resolved.emit(summary.to_dict())
+		return summary
+
+	for drop_value in summary.drops:
+		var drop: Dictionary = drop_value
+		var brigade_id := String(drop["brigade_id"])
+		# Losses first: a battalion shot down on the way in never reaches the hex, and killing it
+		# before the landing keeps a brigade that lost its whole packet off the map entirely.
+		for lost_value in drop["lost_bns"]:
+			apply_casualty({"brigade_id": brigade_id, "type": String((lost_value as Dictionary)["type"])})
+		if drop["first_landing"]:
+			GameData.set_brigade_hex(brigade_id, String(drop["hex_id"]))
+			continue
+		# Follow-up packets reinforce the brigade where it already stands — a formation occupies one
+		# hex, so a second drop cannot put half of it somewhere else. OrderValidator enforces that
+		# the target matches; a mismatch here is an order that slipped through, not a game state.
+		var landed_brigade: Brigade = GameData.get_brigade(brigade_id)
+		if landed_brigade != null and landed_brigade.hex_id != String(drop["hex_id"]):
+			push_error("Air insertion follow-up for %s targeted %s but the brigade is at %s" % [
+				brigade_id, drop["hex_id"], landed_brigade.hex_id])
+	GameData.recompute_hex_ownership()
+	EventBus.air_insertion_resolved.emit(summary.to_dict())
+	return summary
+
+
+## This turn's post-strike air-defence picture, as AirInsertionResolver.resolve wants it. Reads the
+## IJFS summary rather than the IJFS state so the phase stays decoupled from IJFS internals.
+static func air_defence_threat(state: GameStateData) -> Dictionary:
+	var ad_health: Dictionary = state.last_ijfs_summary.get("taiwan_ad_health_after", {})
+	var manpads: Dictionary = state.last_ijfs_summary.get("manpads", {})
+	var ready_by_to: Dictionary = manpads.get("ready_systems_by_to", {})
+	return {
+		"ad_health": float(ad_health.get("effective_ad_health", 0.0)),
+		"manpads_ready_systems": int(ready_by_to.get("total", 0)),
+	}
+
+
+## Any placed, passable hex is a drop zone (USER design call 2026-07-24: land on any hex). Unlike
+## mobilization, enemy-held and contested ground is explicitly legal — bypassing the crossing is the
+## whole point, and an opposed drop is paid for by the ground combat that follows in the same turn.
+static func hex_can_receive_insertion(hex_id: String) -> bool:
+	if not GameData.hex_states.has(hex_id):
+		return false
+	var terrain: TerrainType = GameData.get_terrain(hex_id)
+	return terrain != null and not terrain.impassable
 
 
 ## A mobilizing brigade may form up on a placed, passable hex that the enemy neither holds nor
@@ -411,7 +484,7 @@ static func resolve_cleanup_phase(state: GameStateData) -> Dictionary:
 	# consumes no dice, so the golden RNG stream is unaffected.
 	var outcome := CleanupResolver.resolve(
 		state.antiship_systems, GameData.brigades, state.ship_reserve, GameData.victory_config,
-		state.turn_number, state._china_has_landed)
+		state.turn_number, state._china_has_landed, air_insertion_pool(state))
 	state._china_has_landed = bool(outcome["china_has_landed"])
 	state.last_cleanup_summary = outcome["summary"]
 	state.game_over = state.last_cleanup_summary.game_over
@@ -421,7 +494,14 @@ static func resolve_cleanup_phase(state: GameStateData) -> Dictionary:
 
 
 static func taiwan_battalion_census(state: GameStateData) -> Dictionary:
-	return CleanupResolver.census(GameData.brigades, state.ship_reserve, GameData.victory_config)
+	return CleanupResolver.census(
+		GameData.brigades, state.ship_reserve, GameData.victory_config, air_insertion_pool(state))
+
+
+## Battalions still waiting to fly, in the census's {brigade_id, bns} entry shape. Empty when no
+## scenario opted into air insertion.
+static func air_insertion_pool(state: GameStateData) -> Array:
+	return state.air_insertion_state.pool if state.air_insertion_state != null else []
 
 
 # --- D5-A Frontline phase — redistribute Red brigades along a drawn polyline -------------------

@@ -31,13 +31,17 @@ DEP_CEILINGS = {
     # commit time, well above the plan's ~8-12 prediction (which assumed a looser/untyped
     # forwarding mechanism; the typed-property design was chosen deliberately after a generic
     # _get/_set override proved unreliable for legitimately-null fields).
-    "scripts/GameState.gd": 27,
+    # 27 -> 29 (plan 0032): AirInsertionState / AirInsertionSummary forwarding properties, the same
+    # typed-property tax every phase's state pays here.
+    "scripts/GameState.gd": 29,
     # TurnConductor.gd legitimately depends on every phase resolver it orchestrates (IjfsResolver,
     # SealiftResolver, AntishipResolver, OffloadResolver, InfrastructureResolver, SupplyResolver,
     # CleanupResolver, FrontlineResolver, CombatResolver, …) — that is cohesion, not lamination.
     # Ceiling here catches it acquiring UNRELATED responsibilities (the god-object failure mode),
     # not the resolver fan-out that is its actual job. Measured 32 at commit time.
-    "scripts/resolvers/TurnConductor.gd": 36,
+    # 36 -> 38 (plan 0032): AirInsertionResolver + AirInsertionStateBuilder, i.e. one more phase in
+    # the fan-out this ceiling explicitly does not police.
+    "scripts/resolvers/TurnConductor.gd": 38,
 }
 
 FUNC_RE = re.compile(r"^(\s*)(static\s+)?func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*)$")

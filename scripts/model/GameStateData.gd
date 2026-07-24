@@ -28,6 +28,15 @@ var infrastructure_state: InfrastructureState = null
 # movement. Empty pending list (the default) => the phase is a no-op.
 var mobilization_state: MobilizationState = null
 var last_mobilization_summary: MobilizationSummary = null
+# PLAAF air insertion (plan 0032): the pool of Red battalions waiting to fly, the per-turn lift
+# budgets, and this turn's drops. Built at scenario load, drained by AirInsertionResolver each turn
+# at the same seam as the other reinforcement phases. Empty pool (the default) => the phase is a
+# no-op that consumes no dice.
+var air_insertion_state: AirInsertionState = null
+var last_air_insertion_summary: AirInsertionSummary = null
+# Pending air_insert orders for this planning phase: [{brigade_id, target_hex}] in issue order,
+# which is also the order the shared per-class lift budget is spent in. Red-only.
+var air_insert_orders: Array = []
 var jlsf_orders: Array[String] = []  # port/airbridge ids with a pending explicit deploy_jlsf order
 var pending_lost_at_sea: int = 0
 var supply_state: SupplyState

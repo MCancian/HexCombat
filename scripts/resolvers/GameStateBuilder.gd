@@ -71,3 +71,9 @@ static func build_ijfs_state(
 ## green_mobilization / holdback both come from GameData's scenario load.
 static func build_mobilization_state(green_mobilization: Dictionary, holdback: Array) -> MobilizationState:
 	return MobilizationStateBuilder.build(green_mobilization, holdback)
+
+
+## Red battalions waiting to fly plus the per-turn lift budgets (plan 0032). red_air_insertion comes
+## from GameData's scenario load; absent block => empty pool => the phase is inert.
+static func build_air_insertion_state(red_air_insertion: Dictionary, brigades: Dictionary) -> AirInsertionState:
+	return AirInsertionStateBuilder.build(red_air_insertion, brigades)

@@ -25,6 +25,12 @@ static func build(state: GameStateType) -> Array[TurnEvent]:
 		events.append(_event(seq, "mobilization", "", "Green", state.last_mobilization_summary.to_dict()))
 		seq += 1
 
+	# Same rule for air insertion (plan 0032): only when something actually flew, so a scenario that
+	# never opts in produces the pre-0032 event log byte for byte.
+	if state.last_air_insertion_summary != null and not state.last_air_insertion_summary.drops.is_empty():
+		events.append(_event(seq, "air_insertion", "", "Red", state.last_air_insertion_summary.to_dict()))
+		seq += 1
+
 	for team in [Brigade.Team.RED, Brigade.Team.GREEN]:
 		for order in state.orders_for(team):
 			var mo: MoveOrder = order

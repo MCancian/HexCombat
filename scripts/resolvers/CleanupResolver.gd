@@ -13,20 +13,29 @@ extends RefCounted
 ## Count PLA (RED) vs ROC (GREEN) battalions on the hexes that count as "on Taiwan".
 ## victory_config.taiwan_hexes null => every placed hex counts (correct for the main-island
 ## scenario; offshore islands can't be distinguished until terrain/land data exists). Counts
-## PRESENT (landed) battalions only: brigades wholly at sea (no hex_id) are excluded, AND a
-## partially-landed brigade's battalions still waiting on ships (tracked in ship_reserve) are
-## subtracted, so at-sea BNs don't inflate China's count.
-static func census(brigades: Dictionary, ship_reserve: Array, victory_config: Dictionary) -> Dictionary:
+## PRESENT (landed) battalions only: brigades wholly off-map (no hex_id) are excluded, AND a
+## partially-arrived brigade's battalions that have not made it ashore yet are subtracted, so they
+## don't inflate China's count.
+##
+## There are two ways to be a battalion of an on-map brigade that is not itself on the map: still
+## on a ship (ship_reserve) and still waiting to fly (AirInsertionState.pool, plan 0032). Both use
+## the same {brigade_id, bns} entry shape, so both are walked here by one path.
+static func census(
+	brigades: Dictionary, ship_reserve: Array, victory_config: Dictionary, air_pool: Array = []
+) -> Dictionary:
 	var counted: Variant = victory_config.get("taiwan_hexes", null)
 	var use_filter := counted is Array
 	var hex_filter: Dictionary = {}
 	if use_filter:
 		for h in counted:
 			hex_filter[String(h)] = true
-	var at_sea_by_brigade: Dictionary = {}
-	for reserve_entry_value in ship_reserve:
-		var reserve_entry: Dictionary = reserve_entry_value
-		at_sea_by_brigade[String(reserve_entry["brigade_id"])] = (reserve_entry["bns"] as Array).size()
+	var not_ashore_by_brigade: Dictionary = {}
+	for pending_pool in [ship_reserve, air_pool]:
+		for entry_value in pending_pool:
+			var entry: Dictionary = entry_value
+			var pending_brigade_id := String(entry["brigade_id"])
+			not_ashore_by_brigade[pending_brigade_id] = int(
+				not_ashore_by_brigade.get(pending_brigade_id, 0)) + (entry["bns"] as Array).size()
 
 	var red := 0
 	var green := 0
@@ -36,8 +45,8 @@ static func census(brigades: Dictionary, ship_reserve: Array, victory_config: Di
 			continue
 		if use_filter and not hex_filter.has(brigade.hex_id):
 			continue
-		var at_sea := int(at_sea_by_brigade.get(brigade.id, 0))
-		var bn := maxi(0, brigade.get_battalion_count() - at_sea)
+		var not_ashore := int(not_ashore_by_brigade.get(brigade.id, 0))
+		var bn := maxi(0, brigade.get_battalion_count() - not_ashore)
 		if brigade.team == Brigade.Team.RED:
 			red += bn
 		elif brigade.team == Brigade.Team.GREEN:
@@ -55,6 +64,7 @@ static func resolve(
 	victory_config: Dictionary,
 	turn_number: int,
 	china_has_landed_before: bool,
+	air_pool: Array = [],
 ) -> Dictionary:
 	var reset_count := 0
 	for system_value in antiship_systems:
@@ -69,7 +79,7 @@ static func resolve(
 	# equivalent (AntishipSystem has no moved/unavailable split; quantity is recomputed each turn).
 	# Brigade per-turn flags are reset in begin_next_turn, so cleanup does not duplicate them.
 
-	var census_counts := census(brigades, ship_reserve, victory_config)
+	var census_counts := census(brigades, ship_reserve, victory_config, air_pool)
 	var china_has_landed := china_has_landed_before or int(census_counts[Brigade.TEAM_KEY_RED]) > 0
 	var arm := String(victory_config.get("loss_check_arm", "unconditional"))
 	var verdict := VictoryConditions.evaluate(
