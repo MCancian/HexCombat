@@ -113,7 +113,16 @@ def render_2d_table(lines, manifest, cells, metric_fn, prefix=()):
         row = [str(y)]
         for x in x_vals:
             cell = find_cell(cells, knobs, (y, x) + prefix)
-            row.append(str(metric_fn(cell)) if cell else "N/A")
+            if cell is None:
+                row.append("N/A")
+                continue
+            val = metric_fn(cell)
+            if isinstance(val, dict):
+                # Multi-column metrics (e.g. maneuver_attrition_pct) only render in the 1-D report,
+                # which spreads them across columns; a 2-D/faceted cell has nowhere to put them.
+                sys.exit("2-D/faceted reports support only scalar metrics; this metric is "
+                         "multi-column — sweep it 1-D, or add a scalar summary metric.")
+            row.append(str(val))
         lines.append("| " + " | ".join(row) + " |")
 
 

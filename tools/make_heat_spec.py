@@ -43,10 +43,13 @@ def main() -> int:
 
     # (x, y, cond) -> win%.
     table: dict = {}
+    grid_knobs = (x_knob, y_knob, cond_knob)
     for cell_file in glob.glob(os.path.join(args.sweep_dir, "cells", "*.json")):
         with open(cell_file) as f:
             cell = json.load(f)
         ov = cell["overrides"]
+        if any(k not in ov for k in grid_knobs):
+            continue  # an out-of-band cell (e.g. a mines-only floor cell) — not part of this grid
         table[(ov[x_knob], ov[y_knob], ov[cond_knob])] = red_win_rate(cell)
 
     missing = [(x, y, c) for c in conds for y in ys for x in xs if (x, y, c) not in table]

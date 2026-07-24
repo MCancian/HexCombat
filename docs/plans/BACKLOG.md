@@ -19,6 +19,14 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
 
 *(Agents: append new technical debt and hygiene observations here)*
 
+- [ ] **mc_chart.py degenerate-input crashes (pre-existing, found 2026-07-24 gem-explore review).** Two
+  chart builders crash on an empty/degenerate summary rather than failing loud: `histogram_panel`
+  `first = next(i for i, b ... if b["count"] > 0)` raises `StopIteration` if every margin bin is zero
+  (empty batch); `sensitivity_panel` `min(xs)`/`max(xs)` raises `ValueError` on an empty `points` list.
+  Only reachable with a 0-game batch, so low priority — guard both with a clear "no data" message when
+  a real empty-batch case appears. (The `--flip`/`--heat`/`make_heat_spec` degenerate paths were
+  already guarded in the 2026-07-24 review round.)
+
 - [ ] **Inert knob-registry entries (found 2026-07-23, MC sweep investigation).** Two knobs are
   dumped into every record but do NOT affect the sim (overriding them yields byte-identical games),
   so a sweep on either silently reports false robustness:

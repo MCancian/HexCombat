@@ -317,6 +317,8 @@ def build_flip_svg(spec: dict) -> str:
     """
     series = spec["series"]
     xs = sorted({p["x"] for s in series for p in s["points"]})
+    if not xs:
+        raise SystemExit("--flip spec has no series points to plot")
     x_lo, x_hi = xs[0], xs[-1]
     plot_l, plot_r, plot_t, plot_b = 66, 566, 100, 296
 
