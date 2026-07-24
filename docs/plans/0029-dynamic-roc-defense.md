@@ -49,6 +49,29 @@ USER counterattack design call that 0003 already flags.**
 - Only escalate to **Tier B** if Tier A is insufficient AND the USER wants Green to counterattack;
   Tier B starts by executing 0003's team-stamping step, then the mechanic.
 
+## Tier A progress (2026-07-23)
+
+**Repositioning shipped + measured — necessary but NOT sufficient.** Built `roc_defense`
+(`scripts/RocDefensePolicy.gd`, registered in `PolicyCatalog`): every Green brigade steps toward the
+nearest red/contested threat instead of the `selfplay_default` wander; holds pre-landing. Extracted
+the shared id-geometry into `scripts/PolicyGeometry.gd` (repointed `GarrisonDrawPolicy` off its private
+copies).
+
+Result — `selfplay_default`(Red) vs `roc_defense`(Green), N=30, `scenario_default`: **Red still wins
+30/30** (margin mean +6.2 vs the +8 wander baseline). It transforms the *battle* — Red present crashes
+73→48, Green 65→42 — Green now actually fights and destroys far more Red, but **can't flip the
+outcome**: every Red battalion it kills is refilled by the bottomless follow-on while Green's losses
+are permanent, and moving Green raises its IJFS "active" detectability. **You cannot out-position an
+infinite-reserve attacker.** Confirms the thread-1 thesis from the defender side: the decisive lever
+is a defender *reservoir*, not positioning.
+
+**Next (needs a USER force-structure call):** give ROC its own reserve. Three models to choose from —
+(a) new reserve OOB brigades (invents ROC reserve force structure), (b) hold some of the existing 32
+brigades off-map and phase them in (redistributes the current force), (c) a battalion
+regeneration/replacement rate (destroyed Green BNs reconstitute over turns — models mobilization
+without inventing units). Each is a small injection mechanic + a sweepable rate/size knob; (c) is the
+cleanest and most self-contained. **Surfaced to USER for the model + realistic numbers before building.**
+
 ## Objectives
 
 1. Tier A: reserve-mobilization pool and/or a repositioning Green policy; golden byte-stable when the

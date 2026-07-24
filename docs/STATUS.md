@@ -111,7 +111,9 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   `tools/validate_victory_hexes.gd`); `null` counts every placed hex (the golden default).
 - **AI-readiness (Track E)** — `GameState.play_turn(red, green, dice) -> TurnResult`, per-turn event
   log, `LLMGameAPI` observation/action contract (JSON-schema-gated), headless self-play harness.
-  Deterministic scripted policies: `inland_clear`, `garrison_draw`, `noop`, `selfplay_default`.
+  Deterministic scripted policies: `inland_clear`, `garrison_draw`, `noop`, `selfplay_default`,
+  `roc_defense` (plan 0029 Tier A — concentrating defender: every Green brigade steps toward the
+  nearest red/contested threat, holds pre-landing; shared id-geometry in `scripts/PolicyGeometry.gd`).
 - **Scenario selection (research harness B1)** — any headless process picks its scenario via the
   `--scenario=<id-or-path>` user arg or `HEXCOMBAT_SCENARIO` env var (`ScenarioCatalog`; arg wins,
   no selection = `data/scenarios/scenario_default.json` so all pins hold). Variant files live in

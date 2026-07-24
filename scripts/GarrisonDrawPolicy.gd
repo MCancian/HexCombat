@@ -18,19 +18,19 @@ func build_actions(observation: Dictionary) -> Array:
 			var to_number: int = game_data.beach_to_to[beach_id]
 			var beach = game_data.beaches[beach_id]
 			_beach_to_to[String(beach.hex_id)] = to_number
-		
+
 		for brigade_id in game_data.brigades:
 			var brigade = game_data.brigades[brigade_id]
 			if brigade.team == Brigade.Team.GREEN:
 				_brigade_to_number[String(brigade_id)] = brigade.to_number
-		
+
 		var content := FileAccess.get_file_as_string("res://data/policies/garrison_draw.json")
 		var parsed: Dictionary = JSON.parse_string(content)
 		parsed = DataOverrides.apply("data/policies/garrison_draw.json", parsed)
 		_draw_fraction = float(parsed.get("draw_fraction", 0.0))
 
 	var landing_tos := {}
-	
+
 	var occupied_hexes: Array = observation.get("occupied_hexes", [])
 	for hex_info in occupied_hexes:
 		var owner: String = hex_info.get("owner", "")
@@ -38,7 +38,7 @@ func build_actions(observation: Dictionary) -> Array:
 			var hex_id: String = hex_info.get("hex_id", "")
 			if _beach_to_to.has(hex_id):
 				landing_tos[_beach_to_to[hex_id]] = true
-				
+
 	var brigades_obs: Array = observation.get("brigades", [])
 	for b in brigades_obs:
 		if b.get("team", "") == "Red":
@@ -48,7 +48,7 @@ func build_actions(observation: Dictionary) -> Array:
 
 	var in_landing: Array[String] = []
 	var other_to: Array[String] = []
-	
+
 	var legal_moves: Dictionary = observation.get("legal_moves", {})
 	for bid in legal_moves.keys():
 		var lm: Dictionary = legal_moves[bid]
@@ -59,13 +59,13 @@ func build_actions(observation: Dictionary) -> Array:
 				in_landing.append(bid_str)
 			else:
 				other_to.append(bid_str)
-				
+
 	other_to.sort()
 	var draw_count := int(ceil(other_to.size() * _draw_fraction))
 	var drawn_brigades := {}
 	for i in range(draw_count):
 		drawn_brigades[other_to[i]] = true
-		
+
 	var landing_hexes: Array[String] = []
 	for hex_id in _beach_to_to:
 		if landing_tos.has(_beach_to_to[hex_id]):
@@ -79,29 +79,29 @@ func build_actions(observation: Dictionary) -> Array:
 	var actions: Array = []
 	var brigade_ids: Array = legal_moves.keys()
 	brigade_ids.sort()
-	
+
 	for bid in brigade_ids:
 		var lm: Dictionary = legal_moves[bid]
 		if String(lm.get("team", "")) != "Green":
 			continue
-			
+
 		var from_hex := String(lm.get("from_hex", ""))
 		var tactical: Array = lm.get("tactical", [])
 		if tactical.is_empty():
 			continue
-			
+
 		var b_is_drawn: bool = drawn_brigades.has(bid)
 		var b_is_in_landing: bool = in_landing.has(bid)
-		
+
 		var best_target := ""
-		
+
 		if b_is_drawn and not landing_hexes.is_empty():
-			best_target = _find_closest_hex(tactical, landing_hexes)
+			best_target = PolicyGeometry.nearest_hex_by_id(tactical, landing_hexes)
 		elif b_is_in_landing and not red_hexes.is_empty():
-			best_target = _find_closest_hex(tactical, red_hexes)
+			best_target = PolicyGeometry.nearest_hex_by_id(tactical, red_hexes)
 		else:
 			continue
-			
+
 		if best_target != "" and best_target != from_hex:
 			actions.append({
 				"type": "move",
@@ -110,33 +110,5 @@ func build_actions(observation: Dictionary) -> Array:
 				"target_hex": best_target,
 				"mode": Movement.MODE_TACTICAL,
 			})
-			
+
 	return actions
-
-static func _find_closest_hex(candidates: Array, targets: Array[String]) -> String:
-	var best_hex := ""
-	var min_dist := 999999
-	
-	var sorted_candidates := candidates.duplicate()
-	sorted_candidates.sort()
-	
-	for c_val in sorted_candidates:
-		var candidate := String(c_val)
-		var c_coord := _parse_coord(candidate)
-		var d := 999999
-		for t in targets:
-			var t_coord := _parse_coord(t)
-			var dist := HexMath.distance(c_coord, t_coord)
-			if dist < d:
-				d = dist
-		if d < min_dist:
-			min_dist = d
-			best_hex = candidate
-			
-	return best_hex
-
-static func _parse_coord(hex_id: String) -> Vector2i:
-	var parts := hex_id.split("_")
-	if parts.size() >= 3:
-		return Vector2i(parts[1].to_int(), parts[2].to_int())
-	return Vector2i.ZERO
