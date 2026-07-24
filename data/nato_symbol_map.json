@@ -2,7 +2,9 @@
   "description": "Maps each brigade nato_type (from the PLA + ROC OOBs) to a NATO-style unit symbol SVG under assets/symbols/. Adding a new force type is a data change: add its nato_type here. Filenames must exist in assets/symbols/.",
   "symbol_dir": "res://assets/symbols",
   "nato_type_to_symbol": {
+    "air-assault": "air_assault_force.svg",
     "air-defense": "air_defence.svg",
+    "airborne": "airborne_infantry.svg",
     "amphibious": "amphibious_infantry.svg",
     "area-command": "headquarters.svg",
     "armor": "armour.svg",

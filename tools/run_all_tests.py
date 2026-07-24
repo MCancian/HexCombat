@@ -86,7 +86,7 @@ write_phase("Phase 2/4 — Smoke (boot main scene headless)")
 exit_code, out = invoke_godot(["--quit-after", "30"])
 print(out)
 smoke_ok = True
-for marker in ["Loaded 466 hexes", "Loaded 143 brigades", "Spawned 466 hex cells", "Rendered 32 brigade markers"]:
+for marker in ["Loaded 466 hexes", "Loaded 149 brigades", "Spawned 466 hex cells", "Rendered 32 brigade markers"]:
     if marker not in out:
         failures.append(f"Smoke: missing expected marker '{marker}'")
         smoke_ok = False

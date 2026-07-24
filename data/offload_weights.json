@@ -4,12 +4,14 @@
   "weights": {
     "Air Assault Infantry Battalion": 1100,
     "Air Defense Battalion": 2750,
+    "Airborne Combined Arms Battalion": 1100,
     "Amphibious Infantry Battalion": 2200,
     "Armor Battalion": 3300,
     "Attack Helicopter Battalion": 1100,
     "Combined Arms Battalion": 2200,
     "Field Artillery Battalion": 3300,
     "Infantry Battalion (Reserve)": 1100,
+    "Mechanized Airborne Combined Arms Battalion": 2200,
     "Mechanized Artillery Battalion": 3300,
     "Mechanized Infantry Battalion": 2200,
     "Reconnaissance Battalion": 1100,
@@ -26,12 +28,23 @@
   },
   "multipliers": {
     "beach": {
-      "amphibious": {"Military_Amphibious": 0.5, "default": 1.0},
-      "standard": {"Civilian_Amphibious": 2.0, "Civilian_Non_Amphibious": 2.0, "default": 1.0},
+      "amphibious": {
+        "Military_Amphibious": 0.5,
+        "default": 1.0
+      },
+      "standard": {
+        "Civilian_Amphibious": 2.0,
+        "Civilian_Non_Amphibious": 2.0,
+        "default": 1.0
+      },
       "default": 1.0
     },
-    "port": {"default": 1.0},
-    "airbridge": {"default": 1.0},
+    "port": {
+      "default": 1.0
+    },
+    "airbridge": {
+      "default": 1.0
+    },
     "default": 1.0
   }
 }

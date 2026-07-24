@@ -5,15 +5,22 @@ class_name UnitStats
 # multiplier) and excluded from maneuver_units (see CombatForces). Their `strength` here is therefore
 # NOT used as maneuver combat strength — helicopters (rotary_wing) contribute at the rotary_wing support
 # multiplier (1.3) in both HexCombat and TIV, so the helicopter strength value is intentionally low/dead.
+#
+# NOTE: the two PLAAF Airborne Corps types (plan 0032) are anchored on the pre-existing fallback
+# category defs rather than invented: light airborne takes the "Airborne" category's 1.3, and the
+# ZBD-03-equipped mechanized airborne sits at 1.4 — above light airborne, below the 1.5 of a fully
+# mechanized Combined Arms Battalion, matching where the "Air Assault" category already sits.
 const TYPE_DEFS := {
 	"Air Assault Infantry Battalion": {"category": "Air Assault", "strength": 1.4, "tags": ["infantry", "air_assault"]},
 	"Air Defense Battalion": {"category": "Air Defense", "strength": 0.9, "tags": ["air_defense"]},
+	"Airborne Combined Arms Battalion": {"category": "Airborne", "strength": 1.3, "tags": ["infantry", "airborne"]},
 	"Amphibious Infantry Battalion": {"category": "Amphibious", "strength": 1.2, "tags": ["infantry", "amphibious"]},
 	"Armor Battalion": {"category": "Armor", "strength": 2.0, "tags": ["armor"]},
 	"Attack Helicopter Battalion": {"category": "Helicopter", "strength": 0.5, "tags": ["aviation", "rotary_wing", "attack"]},
 	"Combined Arms Battalion": {"category": "Mechanized", "strength": 1.5, "tags": ["maneuver", "mechanized"]},
 	"Field Artillery Battalion": {"category": "Towed Artillery", "strength": 0.8, "tags": ["artillery"]},
 	"Infantry Battalion (Reserve)": {"category": "Reserve Infantry", "strength": 0.5, "tags": ["infantry", "reserve"]},
+	"Mechanized Airborne Combined Arms Battalion": {"category": "Airborne", "strength": 1.4, "tags": ["infantry", "airborne", "mechanized"]},
 	"Mechanized Artillery Battalion": {"category": "Mechanized Artillery", "strength": 1.3, "tags": ["artillery", "mechanized"]},
 	"Mechanized Infantry Battalion": {"category": "Mechanized Infantry", "strength": 1.5, "tags": ["infantry", "mechanized"]},
 	"Reconnaissance Battalion": {"category": "Recon", "strength": 0.7, "tags": ["recon"]},

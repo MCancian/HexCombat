@@ -43,7 +43,8 @@ static func build(red_followon_reserve: Array, red_ship_reserve: Array, brigades
 ## Resolve the follow-on echelon entries fed into the mainland pool. An explicit scenario
 ## red_followon_reserve wins verbatim (curated echelon, e.g. roc_full_defense). Otherwise, ONLY when
 ## auto_seed is true, the pool is AUTO-SEEDED as the deep mainland force: every RED brigade not in the
-## first wave and not already on the map, round-robin assigned across the first-wave beaches. A
+## first wave, not already on the map, and not air-lifted (plan 0032 — the PLAAF Airborne Corps
+## reaches Taiwan by air or not at all), round-robin assigned across the first-wave beaches. A
 ## brigade is atomic — it inherits one beach and all its battalions land there. Brigades are walked in
 ## OOB (insertion) order so the pool order — and thus the crossing order the resolver embarks in — is
 ## deterministic. The real crossing throttle is amphibious lift capacity (SealiftResolver's
@@ -69,6 +70,8 @@ static func resolve_followon_reserve(explicit: Array, red_ship_reserve: Array, b
 		if first_wave_ids.has(brigade.id):
 			continue
 		if brigade.hex_id != "":  # already placed on the map, not a mainland follow-on
+			continue
+		if LiftClass.is_air_lifted(brigade):  # plan 0032: the air corps never queues for a hull
 			continue
 		var beach: Dictionary = red_ship_reserve[beach_index % red_ship_reserve.size()]
 		beach_index += 1

@@ -3790,6 +3790,196 @@
           "qty": 1
         }
       ]
+    },
+    {
+      "brigade_id": "PLAAF-ABN-127-Airborne",
+      "name": "127th Airborne Brigade (PLAAF Airborne Corps)",
+      "team": "Red",
+      "number": 127,
+      "origin_theater": "Southern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "airborne",
+      "composition": [
+        {
+          "type": "Airborne Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLAAF-ABN-128-Airborne",
+      "name": "128th Airborne Brigade (PLAAF Airborne Corps)",
+      "team": "Red",
+      "number": 128,
+      "origin_theater": "Western",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "airborne",
+      "composition": [
+        {
+          "type": "Airborne Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLAAF-ABN-130-Air-Assault",
+      "name": "130th Air Assault Brigade (PLAAF Airborne Corps)",
+      "team": "Red",
+      "number": 130,
+      "origin_theater": null,
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "air-assault",
+      "composition": [
+        {
+          "type": "Air Assault Infantry Battalion",
+          "qty": 3
+        },
+        {
+          "type": "Utility Helicopter Battalion",
+          "qty": 6
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLAAF-ABN-131-Airborne",
+      "name": "131st Airborne Brigade (PLAAF Airborne Corps)",
+      "team": "Red",
+      "number": 131,
+      "origin_theater": null,
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "airborne",
+      "composition": [
+        {
+          "type": "Mechanized Airborne Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLAAF-ABN-133-Airborne",
+      "name": "133rd Airborne Brigade (PLAAF Airborne Corps)",
+      "team": "Red",
+      "number": 133,
+      "origin_theater": "Northern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "airborne",
+      "composition": [
+        {
+          "type": "Mechanized Airborne Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Mechanized Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "brigade_id": "PLAAF-ABN-134-Airborne",
+      "name": "134th Airborne Brigade (PLAAF Airborne Corps)",
+      "team": "Red",
+      "number": 134,
+      "origin_theater": "Eastern",
+      "to_number": null,
+      "lat": null,
+      "lon": null,
+      "nato_type": "airborne",
+      "composition": [
+        {
+          "type": "Airborne Combined Arms Battalion",
+          "qty": 4
+        },
+        {
+          "type": "Field Artillery Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Air Defense Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Support Battalion",
+          "qty": 1
+        },
+        {
+          "type": "Service Support Battalion",
+          "qty": 1
+        }
+      ]
     }
   ]
 }

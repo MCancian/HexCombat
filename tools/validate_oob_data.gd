@@ -4,9 +4,10 @@ extends SceneTree
 
 const PLA_OOB_PATH := "res://data/pla_ground_forces.json"
 const ROC_OOB_PATH := "res://data/roc_ground_forces.json"
-const EXPECTED_PLA_BRIGADES := 111
+# 111 line/support brigades + the 6-brigade PLAAF Airborne Corps added by plan 0032.
+const EXPECTED_PLA_BRIGADES := 117
 const EXPECTED_ROC_BRIGADES := 32
-const EXPECTED_COMBINED_BRIGADES := 143
+const EXPECTED_COMBINED_BRIGADES := 149
 
 var _failures: Array[String] = []
 
