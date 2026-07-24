@@ -1,0 +1,25 @@
+{
+  "sweep_name": "off_island_offload_heat",
+  "scenario": "scenario_default",
+  "matchup": "selfplay_default",
+  "turns": 30,
+  "knobs": [
+    "data/antiship/antiship_crossing_config.json:off_island_strike.shooters[0].systems_per_turn",
+    "data/beaches.json:beaches[*].offload_rate",
+    "data/scenarios/scenario_default.json:auto_jlsf"
+  ],
+  "grid": [
+    [0, 8, 16, 24, 32, 48, 64],
+    [4400, 3000, 2200, 1600, 1200, 900, 600],
+    [true, false]
+  ],
+  "seeds": [
+    20260624, 20260625, 20260626, 20260627, 20260628, 20260629,
+    20260630, 20260631, 20260632, 20260633, 20260634, 20260635,
+    20260636, 20260637, 20260638, 20260639, 20260640, 20260641,
+    20260642, 20260643
+  ],
+  "metrics": [
+    "red_win_rate"
+  ]
+}

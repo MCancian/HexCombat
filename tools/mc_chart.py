@@ -363,16 +363,110 @@ def build_flip_svg(spec: dict) -> str:
     )
 
 
+# Diverging heat scale (dataviz blue↔red pair, tuned to the deck's dark surface). PLA-favored → blue,
+# ROC-favored → red, 50% coin-flip → neutral gray. CVD-safe (validated ΔE ~32 pole separation); each
+# cell also prints its win% so identity is never colour-alone.
+HEAT_PLA = (0x4f, 0x9d, 0xff)   # #4f9dff
+HEAT_MID = (0x64, 0x74, 0x8b)   # #64748b  neutral gray at 50%
+HEAT_ROC = (0xff, 0x6b, 0x6b)   # #ff6b6b
+
+
+def _lerp(a, b, t):
+    return tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(3))
+
+
+def heat_color(pct: float) -> str:
+    """Diverging blue↔red about the 50% coin-flip; returns an #rrggbb string."""
+    t = (pct - 50.0) / 50.0  # [-1, 1]
+    rgb = _lerp(HEAT_MID, HEAT_PLA, t) if t >= 0 else _lerp(HEAT_MID, HEAT_ROC, -t)
+    return "#%02x%02x%02x" % rgb
+
+
+def _luma(rgb):
+    return (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255.0
+
+
+def build_heat_svg(spec: dict) -> str:
+    """Two side-by-side diverging heatmaps (one per port condition): PLA win % over a
+    strikes/turn (x) × beach-throughput (y) grid. Each cell is colour-coded and prints its win%.
+    Pure function of the spec's panel matrices."""
+    xs, ys = spec["x"], spec["y"]
+    panels = spec["panels"]
+    ncol, nrow = len(xs), len(ys)
+    cell = 40
+    gap = 3                       # surface gap between cells
+    pw = ncol * cell              # plot width
+    ph = nrow * cell              # plot height
+    y_lab = 54                    # width reserved for y-axis labels (left of panel A)
+    panel_gap = 44
+    px0 = [y_lab + 6, y_lab + 6 + pw + panel_gap]  # left edge of each panel's plot
+    plot_t = 84
+    width = px0[1] + pw + 14
+    height = plot_t + ph + 112    # room for x labels, colorbar, footnote (footnote clears the bar labels)
+
+    parts: list[str] = []
+    parts.append(text(y_lab, 34, spec["title"], 19, INK, "700", "start", "Outfit"))
+    parts.append(text(y_lab, 56, spec.get("subtitle", ""), 12, MUTED))
+
+    for pi, panel in enumerate(panels):
+        ox = px0[pi]
+        parts.append(text(ox + pw / 2, plot_t - 14, panel["label"], 13.5, INK, "700", "middle", "Outfit"))
+        for r in range(nrow):
+            for c in range(ncol):
+                v = panel["cells"][r][c]
+                cx, cy = ox + c * cell, plot_t + r * cell
+                fill = heat_color(v)
+                parts.append('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="3" fill="%s"/>'
+                             % (cx + gap / 2, cy + gap / 2, cell - gap, cell - gap, fill))
+                ink = "#0a0e17" if _luma(tuple(int(fill[i:i + 2], 16) for i in (1, 3, 5))) > 0.6 else INK
+                parts.append(text(cx + cell / 2, cy + cell / 2 + 4, "%d" % round(v), 12, ink, "700", "middle"))
+        # X-axis labels under each panel.
+        for c, xv in enumerate(xs):
+            parts.append(text(ox + c * cell + cell / 2, plot_t + ph + 18, "%d" % xv, 10.5, MUTED, "400", "middle"))
+        parts.append(text(ox + pw / 2, plot_t + ph + 38, spec["xlabel"], 11.5, MUTED, "600", "middle"))
+
+    # Y-axis labels (shared; left of panel A) + rotated axis title.
+    for r, yv in enumerate(ys):
+        parts.append(text(y_lab, plot_t + r * cell + cell / 2 + 4, "%s" % f"{yv:,}", 10.5, MUTED, "400", "end"))
+    parts.append('<text x="14" y="%.1f" font-family="Inter, sans-serif" font-size="11.5" '
+                 'font-weight="600" fill="%s" text-anchor="middle" transform="rotate(-90 14 %.1f)">%s</text>'
+                 % (plot_t + ph / 2, MUTED, plot_t + ph / 2, esc(spec["ylabel"])))
+
+    # Colorbar legend: ROC ← coin-flip → PLA.
+    by = plot_t + ph + 58
+    bx0, bw = px0[0], pw + panel_gap + pw
+    steps = 40
+    for i in range(steps):
+        pct = i / (steps - 1) * 100.0
+        parts.append('<rect x="%.1f" y="%s" width="%.1f" height="12" fill="%s"/>'
+                     % (bx0 + i / steps * bw, by, bw / steps + 0.6, heat_color(pct)))
+    parts.append(text(bx0, by + 30, "ROC holds (0%)", 10.5, HEAT_ROC, "600", "start"))
+    parts.append(text(bx0 + bw / 2, by + 30, "50% coin-flip", 10.5, MUTED, "600", "middle"))
+    parts.append(text(bx0 + bw, by + 30, "PLA wins (100%)", 10.5, HEAT_PLA, "600", "end"))
+    foot = spec.get("footnote", "")
+    if foot:
+        parts.append(text(bx0 + bw / 2, height - 6, foot, 10, FAINT, "400", "middle"))
+    return (
+        '<svg viewBox="0 0 %d %d" width="100%%" role="img" aria-label="%s" '
+        'xmlns="http://www.w3.org/2000/svg" style="max-width:100%%;height:auto;">\n  %s\n</svg>'
+        % (width, height, esc(spec["title"]), "\n  ".join(parts))
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--summary", default="")
     parser.add_argument("--sensitivity", default="")
     parser.add_argument("--crossing", default="", help="Sweep sensitivity JSON → crossing-curve SVG.")
     parser.add_argument("--flip", default="", help="Multi-series flip-curve spec JSON → flip SVG.")
+    parser.add_argument("--heat", default="", help="Two-panel diverging heatmap spec JSON → heat SVG.")
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
 
-    if args.flip:
+    if args.heat:
+        spec = json.loads(Path(args.heat).read_text(encoding="utf-8"))
+        svg = build_heat_svg(spec)
+    elif args.flip:
         spec = json.loads(Path(args.flip).read_text(encoding="utf-8"))
         svg = build_flip_svg(spec)
     elif args.crossing:

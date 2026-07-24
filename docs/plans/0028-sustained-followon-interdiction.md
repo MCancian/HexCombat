@@ -143,6 +143,29 @@ is not a lever ROC wants when it holds off-island interdiction; it is mildly cou
 knife-edge band (16–32). (N=20/point; the interior differences are marginal per point but monotone —
 no-port ≥ port PLA% at every interior level.) Curves overlaid in the flip chart above.
 
+### 2-D map — off-island strikes × beach throttle × port (2026-07-24)
+
+USER asked for the two levers as heatmaps. Ran `off_island_offload_heat` (7 strikes × 7 offload × 2
+port, 20 seeds = 1,960 games, ~20 min at `--parallel 28` on the 112-core box). Cells = PLA win %.
+Charts: `docs/reports/assets/off_island_offload_heat.svg` (from `tools/mc_chart.py --heat`, fed by
+`tools/make_heat_spec.py` which reuses `sweep_metrics.red_win_rate`; spec `.heat.json` alongside).
+
+Two structural reads:
+
+1. **Beach throttle dominates.** At offload ≤ ~1,600 t/day the entire grid is a PLA shutout (0%)
+   *regardless of strikes* — the throttle culminates the invasion on its own (consistent with the
+   ~1,330 t/day culmination in [[mc-offload-throughput]] / deck slide 7). Off-island strikes only bite
+   in the contested high-throughput band (2,200–4,400), where they flip the outcome left→right.
+2. **Port neutralization is antagonistic in 2-D too.** Across the contested band, `port neutralized`
+   is uniformly bluer (higher PLA win %) than `port intact` — e.g. offload 3,000 × 24 strikes: intact
+   30% vs neutralized 45%; 3,000 × 32: intact 5% vs neutralized 40%. Same substitute mechanism: the
+   port's auto-JLSF lift is attritable tonnage the off-island shooters convert into defender value.
+
+So the two interdiction levers are **substitutes, not complements** — throttling the beach is the
+decisive constraint; sea attrition only matters where throughput is left generous, and it is *helped*
+by leaving the port's JLSF lift on the water to be sunk. Some per-cell MC noise at N=20; the two
+patterns above are monotone across the grid.
+
 ## Objectives
 
 1. Stage-1 spike + written verdict (which cause dominates late-wave immunity; cheapest seam) → USER

@@ -19,6 +19,16 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-24 — 2-D map of the two interdiction levers (strikes × beach throttle × port); they are substitutes.**
+  - **Who**: Agent (Opus 4.8), USER request (two heatmaps).
+  - **What**: `off_island_offload_heat` sweep (7×7×2, 20 seeds, 1,960 games). PLA win % shows (1) beach
+    offload ≤ ~1,600 t/day is a PLA shutout regardless of strikes — the throttle is the decisive lever;
+    (2) off-island strikes only bite in the high-throughput band, and port-neutralized > port-intact
+    PLA win % there — the port's auto-JLSF lift is attritable defender value. The levers are
+    substitutes, not complements. Added `mc_chart.py --heat` + `tools/make_heat_spec.py`.
+  - **Pointers**: `docs/plans/0028-...md` ("2-D map"); charts `docs/reports/assets/off_island_offload_heat.svg`
+    (spec `.heat.json`).
+
 - **2026-07-24 — Q2 re-run on the fix: "Taipei port is a no-op" overturned; port aids the defender under interdiction.**
   - **Who**: Agent (Opus 4.8), continuing the ghost-landing-bug re-baselines.
   - **What**: Re-ran `off_island_flip_noport` on the fixed engine at the fine grid `[0…64]` (old
