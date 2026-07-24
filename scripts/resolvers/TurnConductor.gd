@@ -198,7 +198,8 @@ static func resolve_mobilization_turn(state: GameStateData) -> MobilizationSumma
 static func resolve_air_insertion_turn(state: GameStateData, dice: Dice) -> AirInsertionSummary:
 	var summary := AirInsertionResolver.resolve(
 		state.air_insertion_state, state.air_insert_orders, state.turn_number,
-		air_defence_threat(state), AirInsertionStateBuilder.attrition_config(GameData.red_air_insertion),
+		AirInsertionResolver.threat_from_ijfs_summary(state.last_ijfs_summary),
+		AirInsertionStateBuilder.attrition_config(GameData.red_air_insertion),
 		func(hex_id: String) -> bool: return hex_can_receive_insertion(hex_id),
 		dice)
 	# One-shot orders, consumed on resolution like jlsf_orders — an unflown drop is not re-attempted
@@ -228,18 +229,6 @@ static func resolve_air_insertion_turn(state: GameStateData, dice: Dice) -> AirI
 	GameData.recompute_hex_ownership()
 	EventBus.air_insertion_resolved.emit(summary.to_dict())
 	return summary
-
-
-## This turn's post-strike air-defence picture, as AirInsertionResolver.resolve wants it. Reads the
-## IJFS summary rather than the IJFS state so the phase stays decoupled from IJFS internals.
-static func air_defence_threat(state: GameStateData) -> Dictionary:
-	var ad_health: Dictionary = state.last_ijfs_summary.get("taiwan_ad_health_after", {})
-	var manpads: Dictionary = state.last_ijfs_summary.get("manpads", {})
-	var ready_by_to: Dictionary = manpads.get("ready_systems_by_to", {})
-	return {
-		"ad_health": float(ad_health.get("effective_ad_health", 0.0)),
-		"manpads_ready_systems": int(ready_by_to.get("total", 0)),
-	}
 
 
 ## Any placed, passable hex is a drop zone (USER design call 2026-07-24: land on any hex). Unlike

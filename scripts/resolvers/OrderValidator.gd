@@ -79,6 +79,64 @@ static func add_commit_order(state: GameStateData, team: Brigade.Team, brigade_i
 	return OrderResult.accept()
 
 
+## Order one brigade of the PLAAF air corps to fly onto a hex this turn (plan 0032). Red-only.
+##
+## Unlike a move order there is no allowance or adjacency check — the whole point of the mechanic is
+## that lift reaches anywhere, including hexes the enemy holds (a drop onto Green ground is paid for
+## by the ground combat that follows in the same turn). What IS checked: the brigade actually flies,
+## it still has battalions waiting, the hex exists and is passable, and — once the brigade has put
+## its first packet down — that follow-up packets reinforce it where it stands, because a formation
+## occupies one hex.
+##
+## How MUCH flies is not decided here: the per-class lift budget is spent at resolution, in order
+## issue order, and an order that finds the budget already gone is reported in the phase summary
+## rather than rejected now (the budget can be eroded by losses between planning and resolution).
+static func add_air_insert_order(
+	state: GameStateData, team: Brigade.Team, brigade_id: String, target_hex: String
+) -> OrderResult:
+	if state.phase != GameStateData.Phase.PLANNING:
+		return OrderResult.reject(OrderResult.Code.WRONG_PHASE, "Cannot add air insert order outside PLANNING phase")
+	if team != Brigade.Team.RED:
+		return OrderResult.reject(OrderResult.Code.TEAM_MISMATCH, "air_insert is a Red order")
+
+	var brigade: Brigade = GameData.get_brigade(brigade_id)
+	if brigade == null:
+		return OrderResult.reject(OrderResult.Code.UNKNOWN_BRIGADE, "Air insert order references unknown brigade_id: %s" % brigade_id)
+	if brigade.destroyed:
+		return OrderResult.reject(OrderResult.Code.DESTROYED, "Destroyed brigade cannot be inserted: %s" % brigade_id)
+	if not LiftClass.is_air_lifted(brigade):
+		return OrderResult.reject(OrderResult.Code.NOT_AIR_LIFTED, "Brigade is not air-lifted: %s" % brigade_id)
+	if target_hex not in GameData.hex_lookup:
+		return OrderResult.reject(OrderResult.Code.UNKNOWN_HEX, "Air insert order references unknown target_hex: %s" % target_hex)
+
+	var terrain: TerrainType = GameData.get_terrain(target_hex)
+	if terrain == null or terrain.impassable:
+		return OrderResult.reject(OrderResult.Code.IMPASSABLE_HEX, "Air insert target hex is impassable: %s" % target_hex)
+
+	var air_state: AirInsertionState = state.air_insertion_state
+	if air_state == null or air_state.entry_for(brigade_id).is_empty():
+		return OrderResult.reject(OrderResult.Code.NO_LIFT_REMAINING, "Brigade has no battalions waiting to fly: %s" % brigade_id)
+	if brigade.hex_id != "" and brigade.hex_id != target_hex:
+		return OrderResult.reject(OrderResult.Code.BRIGADE_ALREADY_LANDED, "Brigade %s is already on %s; follow-up battalions must reinforce it there, not %s" % [brigade_id, brigade.hex_id, target_hex])
+
+	for pending_value in state.air_insert_orders:
+		var pending: Dictionary = pending_value
+		if String(pending["brigade_id"]) == brigade_id:
+			return OrderResult.reject(OrderResult.Code.DUPLICATE_AIR_INSERT, "Brigade already has a pending air insert order this turn: %s" % brigade_id)
+
+	state.air_insert_orders.append({"brigade_id": brigade_id, "target_hex": target_hex})
+	return OrderResult.accept()
+
+
+## Brigades that could legally receive an air_insert order right now. Mirrors
+## eligible_commit_brigades' role for the LLM contract; the logic itself lives on AirInsertionState
+## so the observation can build the same list without reaching the GameData singleton.
+static func eligible_air_insert_brigades(state: GameStateData) -> Array:
+	if state.air_insertion_state == null:
+		return []
+	return state.air_insertion_state.eligible_orders(GameData.brigades, state.air_insert_orders)
+
+
 static func eligible_commit_brigades(state: GameStateData, team: Brigade.Team, target_hex: String) -> Array:
 	if target_hex not in GameData.hex_lookup:
 		push_error("Commit eligibility requested for unknown target_hex: %s" % target_hex)

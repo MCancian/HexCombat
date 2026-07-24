@@ -73,6 +73,37 @@ func pending_brigades(lift_class: String = "") -> int:
 	return total
 
 
+## Brigades that could legally receive an air_insert order right now: pool entries that are neither
+## destroyed nor already ordered this turn. Each row:
+##   {brigade_id, lift_class, battalions_waiting, locked_hex}
+## locked_hex is "" until the brigade's first packet lands and, after that, the ONLY legal target —
+## a formation occupies one hex, so follow-up battalions reinforce it where it stands.
+##
+## brigades: brigade_id -> Brigade (the same argument-not-autoload shape MobilizationState uses), so
+## both the order validator and the observation can call this without either reaching a singleton.
+func eligible_orders(brigades: Dictionary, pending_orders: Array) -> Array:
+	var ordered: Dictionary = {}
+	for pending_value in pending_orders:
+		ordered[String((pending_value as Dictionary)["brigade_id"])] = true
+
+	var eligible: Array = []
+	for entry_value in pool:
+		var entry: Dictionary = entry_value
+		var brigade_id := String(entry["brigade_id"])
+		if ordered.has(brigade_id):
+			continue
+		var brigade: Brigade = brigades.get(brigade_id, null)
+		if brigade == null or brigade.destroyed:
+			continue
+		eligible.append({
+			"brigade_id": brigade_id,
+			"lift_class": String(entry["lift_class"]),
+			"battalions_waiting": (entry["bns"] as Array).size(),
+			"locked_hex": brigade.hex_id,
+		})
+	return eligible
+
+
 ## The pool entry for a brigade, or {} when it has nothing left to fly.
 func entry_for(brigade_id: String) -> Dictionary:
 	for entry_value in pool:

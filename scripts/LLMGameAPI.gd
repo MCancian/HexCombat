@@ -30,6 +30,7 @@ static func observation(perspective_team: String = "") -> Dictionary:
 		"occupied_hexes": _occupied_hex_observations(),
 		"ship_reserve": _ship_reserve_observations(),
 		"mobilization": _mobilization_observation(),
+		"air_insertion": _air_insertion_observation(),
 		"supply_state": _supply_state_observation(),
 		"infrastructure": _infrastructure_observations(),
 		"ijfs": _ijfs_observation(),
@@ -74,6 +75,8 @@ static func apply_agent_response(response: Dictionary) -> Dictionary:
 				_apply_commit_action(action, errors)
 			"deploy_jlsf":
 				_apply_deploy_jlsf_action(action, errors)
+			"air_insert":
+				_apply_air_insert_action(action, errors)
 			"end_turn":
 				if not action.has("seed"):
 					errors.append("end_turn action requires an explicit seed for reproducibility")
@@ -100,7 +103,8 @@ static func rules_summary() -> Dictionary:
 			"administrative": "Longer range; costs all current organization and prevents commit support this turn."
 		},
 		"combat": "After movement, any hex containing both Red and Green brigades is contested and resolves one combat round.",
-		"legal_actions": "Use legal_moves and legal_commits from this observation. Do not invent brigade IDs or hex IDs.",
+		"air_insertion": "Red may fly airborne / air-assault brigades onto ANY passable hex, bypassing the sea crossing, up to a per-turn battalion cap per lift class. Every battalion the air defences kill also destroys one battalion of lift permanently, so the cap only ever falls. Drop onto enemy-held ground and the hex is contested and fought the same turn.",
+		"legal_actions": "Use legal_moves and legal_commits from this observation, and air_insertion.eligible for air_insert. Do not invent brigade IDs or hex IDs.",
 		"randomness": "Every end_turn action must include an explicit seed so runs are reproducible."
 	}
 
@@ -113,6 +117,7 @@ static func field_glossary() -> Dictionary:
 		"legal_moves": "Authoritative target hex lists by brigade and movement mode.",
 		"legal_commits": "Authoritative adjacent support options by target hex and team.",
 		"mobilization": "ROC reserve formations not yet on the map: `pending` lists each brigade with the garrison hex it will form up on and the turn it is due; `arrived` logs those already released. Off-map brigades cannot be ordered, are not counted in the victory census, and cannot be struck.",
+		"air_insertion": "Red's air path onto Taiwan: `caps` is the battalions-per-turn each lift class can still fly (it falls permanently as airframes are lost, compare `initial_caps`), `eligible` lists the brigades that can be ordered — with `locked_hex` set once a brigade is ashore, meaning follow-up battalions must reinforce it there — and `estimated_attrition` is the fraction a packet would lose at the last resolved turn's air-defence picture.",
 		"last_contested_hexes": "Hex IDs that were contested in the most recently resolved turn.",
 		"last_combat": "Combat summaries from the most recently resolved turn. Empty before any combat or if no contested hex produced combat.",
 		"turn_result": "Structured record of the turn just resolved (only populated when resolved=true): turn_number, contested_hexes, combat_summaries, phase summaries, and an ordered `events` log."
@@ -166,6 +171,18 @@ static func _apply_commit_action(action: Dictionary, errors: Array[String]) -> v
 	var result: OrderResult = _game_state().add_commit_order(team, brigade_id, target_hex)
 	if not result.ok:
 		errors.append("commit rejected: %s -> %s: %s" % [brigade_id, target_hex, result.message])
+
+
+static func _apply_air_insert_action(action: Dictionary, errors: Array[String]) -> void:
+	var team_value: Variant = _parse_action_team(action, errors)
+	if team_value == null:
+		return
+	var team: Brigade.Team = team_value
+	var brigade_id := String(action.get("brigade_id", ""))
+	var target_hex := String(action.get("target_hex", ""))
+	var result: OrderResult = _game_state().add_air_insert_order(team, brigade_id, target_hex)
+	if not result.ok:
+		errors.append("air_insert rejected: %s -> %s: %s" % [brigade_id, target_hex, result.message])
 
 
 static func _apply_deploy_jlsf_action(action: Dictionary, errors: Array[String]) -> void:
@@ -296,6 +313,44 @@ static func _mobilization_observation() -> Dictionary:
 		"pending": pending,
 		"arrived": state.released.duplicate(true),
 	}
+
+
+## Air insertion (plan 0032): the lift Red still has, who is waiting to fly, and what a drop would
+## cost RIGHT NOW at the current air-defence picture. Both seats see it — the corps' existence is no
+## secret and Green's air defences are what set the price — but only Red can act on it.
+## All zeros/empty for scenarios that do not opt in.
+static func _air_insertion_observation() -> Dictionary:
+	var state: AirInsertionState = _game_state().air_insertion_state
+	if state == null or state.pool.is_empty():
+		return {
+			"pending_brigades": 0, "pending_battalions": 0, "first_turn": 1,
+			"caps": {}, "initial_caps": {}, "estimated_attrition": {}, "eligible": [],
+			"landed": [], "history": [],
+		}
+	return {
+		"pending_brigades": state.pending_brigades(),
+		"pending_battalions": state.pending_battalions(),
+		"first_turn": state.first_turn,
+		"caps": state.caps.duplicate(),
+		"initial_caps": state.initial_caps.duplicate(),
+		"estimated_attrition": _estimated_insertion_attrition(),
+		"eligible": state.eligible_orders(_game_data().brigades, _game_state().air_insert_orders),
+		"landed": state.landed.duplicate(),
+		"history": state.history.duplicate(true),
+	}
+
+
+## Fraction of an inserting packet each lift class would lose if it flew against the LAST resolved
+## turn's air-defence picture. An estimate, not a promise: this turn's IJFS runs before the drop, so
+## suppressing more air defence first lowers the real number.
+static func _estimated_insertion_attrition() -> Dictionary:
+	var threat := AirInsertionResolver.threat_from_ijfs_summary(_game_state().last_ijfs_summary)
+	var config := AirInsertionStateBuilder.attrition_config(_game_data().red_air_insertion)
+	var estimates: Dictionary = {}
+	for lift_class in LiftClass.ALL:
+		estimates[lift_class] = AirInsertionResolver.attrition_rate(
+			lift_class, float(threat["ad_health"]), int(threat["manpads_ready_systems"]), config)
+	return estimates
 
 
 static func _supply_state_observation() -> Dictionary:

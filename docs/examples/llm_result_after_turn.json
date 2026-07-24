@@ -1,6 +1,17 @@
 {
 	"errors": [],
 	"observation": {
+		"air_insertion": {
+			"caps": {},
+			"eligible": [],
+			"estimated_attrition": {},
+			"first_turn": 1,
+			"history": [],
+			"initial_caps": {},
+			"landed": [],
+			"pending_battalions": 0,
+			"pending_brigades": 0
+		},
 		"antiship": {
 			"bns_lost_at_sea": 8,
 			"crossing_casualties": {
@@ -536,6 +547,7 @@
 			}
 		],
 		"field_glossary": {
+			"air_insertion": "Red's air path onto Taiwan: `caps` is the battalions-per-turn each lift class can still fly (it falls permanently as airframes are lost, compare `initial_caps`), `eligible` lists the brigades that can be ordered — with `locked_hex` set once a brigade is ashore, meaning follow-up battalions must reinforce it there — and `estimated_attrition` is the fraction a packet would lose at the last resolved turn's air-defence picture.",
 			"battalions": "Current battalion count remaining in the brigade.",
 			"feba_km": "Forward edge of battle movement/progress in kilometers within a contested hex.",
 			"last_combat": "Combat summaries from the most recently resolved turn. Empty before any combat or if no contested hex produced combat.",
@@ -1966,8 +1978,9 @@
 		"phase": "planning",
 		"protocol_version": "0.1.0",
 		"rules_summary": {
+			"air_insertion": "Red may fly airborne / air-assault brigades onto ANY passable hex, bypassing the sea crossing, up to a per-turn battalion cap per lift class. Every battalion the air defences kill also destroys one battalion of lift permanently, so the cap only ever falls. Drop onto enemy-held ground and the hex is contested and fought the same turn.",
 			"combat": "After movement, any hex containing both Red and Green brigades is contested and resolves one combat round.",
-			"legal_actions": "Use legal_moves and legal_commits from this observation. Do not invent brigade IDs or hex IDs.",
+			"legal_actions": "Use legal_moves and legal_commits from this observation, and air_insertion.eligible for air_insert. Do not invent brigade IDs or hex IDs.",
 			"movement": {
 				"administrative": "Longer range; costs all current organization and prevents commit support this turn.",
 				"tactical": "Shorter range; costs less organization."

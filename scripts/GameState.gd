@@ -202,6 +202,10 @@ func add_move_order(team: Brigade.Team, brigade_id: String, target_hex: String, 
 	return OrderValidator.add_move_order(data, team, brigade_id, target_hex, mode)
 
 
+func add_air_insert_order(team: Brigade.Team, brigade_id: String, target_hex: String) -> OrderResult:
+	return OrderValidator.add_air_insert_order(data, team, brigade_id, target_hex)
+
+
 ## Full WeGo turn resolution — delegates to TurnConductor (plan 0014 P3); see that class's header
 ## and inline comments for the phase-order/RNG-substream rationale.
 func resolve_turn(dice: Dice = null) -> void:
@@ -439,6 +443,8 @@ func _apply_order(order: Dictionary, team: Brigade.Team) -> void:
 				data.jlsf_orders.append(String(order.get("port_id", "")))
 			else:
 				push_error("deploy_jlsf is a Red order")
+		"air_insert":
+			add_air_insert_order(team, String(order["brigade_id"]), String(order["target_hex"]))
 		_:
 			push_error("Unknown order kind: %s" % kind)
 

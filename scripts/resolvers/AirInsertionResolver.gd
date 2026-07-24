@@ -37,6 +37,19 @@ static func attrition_rate(
 	return clampf(rate, 0.0, 1.0)
 
 
+## Extract the air-defence picture `resolve` wants from an IJFS phase summary. The sole home for
+## which IJFS fields the air path reads, so the turn conductor and the LLM observation cannot drift
+## apart on it — and pure, so callers that must not touch autoloads can use it too.
+static func threat_from_ijfs_summary(ijfs_summary: Dictionary) -> Dictionary:
+	var ad_health: Dictionary = ijfs_summary.get("taiwan_ad_health_after", {})
+	var manpads: Dictionary = ijfs_summary.get("manpads", {})
+	var ready_by_to: Dictionary = manpads.get("ready_systems_by_to", {})
+	return {
+		"ad_health": float(ad_health.get("effective_ad_health", 0.0)),
+		"manpads_ready_systems": int(ready_by_to.get("total", 0)),
+	}
+
+
 ## Resolve this turn's air insertions.
 ##
 ## orders:  [{brigade_id: String, target_hex: String}] in issue order — the player's priority, and

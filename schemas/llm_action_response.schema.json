@@ -36,6 +36,16 @@
           },
           {
             "type": "object",
+            "required": ["type", "team", "brigade_id", "target_hex"],
+            "properties": {
+              "type": {"const": "air_insert"},
+              "team": {"const": "Red"},
+              "brigade_id": {"type": "string"},
+              "target_hex": {"type": "string"}
+            }
+          },
+          {
+            "type": "object",
             "required": ["type", "seed"],
             "properties": {
               "type": {"const": "end_turn"},
