@@ -9,6 +9,28 @@ Settled battles. Primary sources: `docs/DECISIONS.md` (+ pre-2026-07-10 history 
 `docs/archive/PLAN.md` → Decisions) and `docs/RETROSPECTIVES.md`
 (lessons, dated entries). Newest lessons get APPENDED here when they close an investigation.
 
+### Ghost-landing: drowned crossing BNs counted as ashore (2026-07-24)
+- **Symptom:** at high off-island anti-ship fire, the T1 crossing wave was ~annihilated (81 BNs,
+  78 lost at sea, ~3 survive) yet the census reported 16 PLA battalions on Taiwan; delivery
+  appeared to continue with no surviving lift. Surfaced by USER ("what is delivering supplies if
+  all ships are sunk?").
+- **Root cause:** a drowned BN was removed from `ship_reserve` (`AntishipResolver.
+  remaining_reserve_after_losses`) but NOT from `Brigade.composition`. The victory census
+  (`CleanupResolver.census` = `get_battalion_count - at_sea`) counts a brigade the moment ONE BN
+  lands; drowned BNs had left `at_sea` but not the roster, so a partially-landed brigade's drowned
+  BNs were counted as present — and ground combat read the same inflated roster.
+- **Evidence:** trace of a 1024-strike game — census 16 vs ~3 real survivors; after the fix, 2.
+  The two loss paths diverged: ground `apply_casualty` shrinks the roster, the crossing didn't.
+- **Impact:** biased ONLY Red (Green never crosses), most at high crossing attrition — so every
+  census-based result over-stated PLA strength. The plan-0028 flip finding (knife-edge 512,
+  reliable 1024 sub-strikes/turn) was a bug artifact; corrected values are ~12–14 knife-edge,
+  ~48–64 reliable (a ~30–60× shift). The "structural inevitability" of a PLA win was partly this.
+- **Status:** fixed (`TurnConductor.apply_crossing_casualties`, commit bff4a1c) — drowned BNs are
+  deleted from their rosters, consumes no dice. Golden headless turn byte-stable (scripted fight is
+  pre-placed, no crossing); deliberate re-baselines `validate_golden_victory` 25→12 and
+  `validate_cleanup` `casualties=6/feba=0.34`→`7/2.24`. Detail: `docs/DECISIONS.md` 2026-07-24,
+  `docs/systems/amphibious-offload.md` §7.
+
 ### Hex adjacency: offset coords treated as axial (2026-06-29)
 - **Symptom:** none visible — combat/support aggregation quietly used wrong neighbors for weeks.
 - **Root cause:** `HexMath` treated the grid's stored **odd-r offset** row/col as **axial**.
