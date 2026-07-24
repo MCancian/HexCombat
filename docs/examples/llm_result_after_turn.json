@@ -67,7 +67,7 @@
 		},
 		"brigades": [
 			{
-				"battalions": 9,
+				"battalions": 7,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_43_16",
@@ -80,7 +80,7 @@
 				"team": "Red"
 			},
 			{
-				"battalions": 9,
+				"battalions": 8,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_44_15",
@@ -93,7 +93,7 @@
 				"team": "Red"
 			},
 			{
-				"battalions": 7,
+				"battalions": 6,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_43_14",
@@ -106,7 +106,7 @@
 				"team": "Red"
 			},
 			{
-				"battalions": 9,
+				"battalions": 6,
 				"destroyed": false,
 				"fought_this_turn": false,
 				"hex_id": "hex_43_13",
@@ -867,28 +867,28 @@
 				"attacker_brigade_ids": [
 					"PLA-73-14-Amphibious"
 				],
-				"attacker_losses": 2,
+				"attacker_losses": 1,
 				"combat_detail": {
 					"attacker": {
-						"maneuver_combat_power": 7.0,
-						"maneuver_unit_count": 8,
+						"maneuver_combat_power": 6.1,
+						"maneuver_unit_count": 7,
 						"support_breakdown": {
-							"artillery": 0.8,
+							"artillery": 0.0,
 							"cas": 0.0,
 							"crbm": 0.0,
 							"rocket_artillery": 0.0,
 							"rotary_wing": 0.0
 						},
-						"support_combat_power": 0.8,
+						"support_combat_power": 0.0,
 						"support_counts": {
-							"artillery": 1,
+							"artillery": 0,
 							"cas": 0,
 							"crbm": 0,
 							"rocket_artillery": 0,
 							"rotary_wing": 0
 						},
-						"support_unit_count": 1,
-						"total_combat_power_unmodified": 7.8,
+						"support_unit_count": 0,
+						"total_combat_power_unmodified": 6.1,
 						"unscreened": false
 					},
 					"defender": {
@@ -917,18 +917,18 @@
 					},
 					"feba": {
 						"base_km": 3.5,
-						"movement_km": -1.81263157894737,
+						"movement_km": -2.42113744075829,
 						"roll_factor": 0.82
 					},
 					"losses": {
-						"attacker": 2,
-						"attacker_loss_rate": 0.2004,
+						"attacker": 1,
+						"attacker_loss_rate": 0.209466666666667,
 						"defender": 0,
-						"defender_loss_rate": 0.124
+						"defender_loss_rate": 0.112666666666667
 					},
 					"ratios": {
-						"terrain_modified": 0.52,
-						"unmodified": 1.04
+						"terrain_modified": 0.406666666666667,
+						"unmodified": 0.813333333333333
 					},
 					"result": "Defender Advantage",
 					"rolls": {
@@ -941,7 +941,7 @@
 					"BDE-584"
 				],
 				"defender_losses": 0,
-				"feba_movement_km": -1.81263157894737,
+				"feba_movement_km": -2.42113744075829,
 				"hex_id": "hex_43_14",
 				"owner_after": "contested"
 			}
@@ -1513,7 +1513,7 @@
 					"BDE-584",
 					"PLA-73-14-Amphibious"
 				],
-				"feba_km": -1.81263157894737,
+				"feba_km": -2.42113744075829,
 				"hex_id": "hex_43_14",
 				"neighbors": [
 					"hex_42_14",
@@ -1997,8 +1997,8 @@
 			}
 		],
 		"supply_state": {
-			"current_dos_equivalent": 74.6666666666667,
-			"current_dos_tons": 11200.0,
+			"current_dos_equivalent": 78.3333333333333,
+			"current_dos_tons": 11750.0,
 			"day_count": 1
 		},
 		"turn": 2,
@@ -2077,7 +2077,7 @@
 		},
 		"cleanup_summary": {
 			"antiship_systems_reset": 50,
-			"china_battalions_on_taiwan": 22,
+			"china_battalions_on_taiwan": 15,
 			"game_over": false,
 			"taiwan_battalions_on_taiwan": 107,
 			"victory_reason": "",
@@ -2088,28 +2088,28 @@
 				"attacker_brigade_ids": [
 					"PLA-73-14-Amphibious"
 				],
-				"attacker_losses": 2,
+				"attacker_losses": 1,
 				"combat_detail": {
 					"attacker": {
-						"maneuver_combat_power": 7.0,
-						"maneuver_unit_count": 8,
+						"maneuver_combat_power": 6.1,
+						"maneuver_unit_count": 7,
 						"support_breakdown": {
-							"artillery": 0.8,
+							"artillery": 0.0,
 							"cas": 0.0,
 							"crbm": 0.0,
 							"rocket_artillery": 0.0,
 							"rotary_wing": 0.0
 						},
-						"support_combat_power": 0.8,
+						"support_combat_power": 0.0,
 						"support_counts": {
-							"artillery": 1,
+							"artillery": 0,
 							"cas": 0,
 							"crbm": 0,
 							"rocket_artillery": 0,
 							"rotary_wing": 0
 						},
-						"support_unit_count": 1,
-						"total_combat_power_unmodified": 7.8,
+						"support_unit_count": 0,
+						"total_combat_power_unmodified": 6.1,
 						"unscreened": false
 					},
 					"defender": {
@@ -2138,18 +2138,18 @@
 					},
 					"feba": {
 						"base_km": 3.5,
-						"movement_km": -1.81263157894737,
+						"movement_km": -2.42113744075829,
 						"roll_factor": 0.82
 					},
 					"losses": {
-						"attacker": 2,
-						"attacker_loss_rate": 0.2004,
+						"attacker": 1,
+						"attacker_loss_rate": 0.209466666666667,
 						"defender": 0,
-						"defender_loss_rate": 0.124
+						"defender_loss_rate": 0.112666666666667
 					},
 					"ratios": {
-						"terrain_modified": 0.52,
-						"unmodified": 1.04
+						"terrain_modified": 0.406666666666667,
+						"unmodified": 0.813333333333333
 					},
 					"result": "Defender Advantage",
 					"rolls": {
@@ -2162,7 +2162,7 @@
 					"BDE-584"
 				],
 				"defender_losses": 0,
-				"feba_movement_km": -1.81263157894737,
+				"feba_movement_km": -2.42113744075829,
 				"hex_id": "hex_43_14",
 				"owner_after": "contested"
 			}
@@ -2518,28 +2518,28 @@
 					"attacker_brigade_ids": [
 						"PLA-73-14-Amphibious"
 					],
-					"attacker_losses": 2,
+					"attacker_losses": 1,
 					"combat_detail": {
 						"attacker": {
-							"maneuver_combat_power": 7.0,
-							"maneuver_unit_count": 8,
+							"maneuver_combat_power": 6.1,
+							"maneuver_unit_count": 7,
 							"support_breakdown": {
-								"artillery": 0.8,
+								"artillery": 0.0,
 								"cas": 0.0,
 								"crbm": 0.0,
 								"rocket_artillery": 0.0,
 								"rotary_wing": 0.0
 							},
-							"support_combat_power": 0.8,
+							"support_combat_power": 0.0,
 							"support_counts": {
-								"artillery": 1,
+								"artillery": 0,
 								"cas": 0,
 								"crbm": 0,
 								"rocket_artillery": 0,
 								"rotary_wing": 0
 							},
-							"support_unit_count": 1,
-							"total_combat_power_unmodified": 7.8,
+							"support_unit_count": 0,
+							"total_combat_power_unmodified": 6.1,
 							"unscreened": false
 						},
 						"defender": {
@@ -2568,18 +2568,18 @@
 						},
 						"feba": {
 							"base_km": 3.5,
-							"movement_km": -1.81263157894737,
+							"movement_km": -2.42113744075829,
 							"roll_factor": 0.82
 						},
 						"losses": {
-							"attacker": 2,
-							"attacker_loss_rate": 0.2004,
+							"attacker": 1,
+							"attacker_loss_rate": 0.209466666666667,
 							"defender": 0,
-							"defender_loss_rate": 0.124
+							"defender_loss_rate": 0.112666666666667
 						},
 						"ratios": {
-							"terrain_modified": 0.52,
-							"unmodified": 1.04
+							"terrain_modified": 0.406666666666667,
+							"unmodified": 0.813333333333333
 						},
 						"result": "Defender Advantage",
 						"rolls": {
@@ -2592,7 +2592,7 @@
 						"BDE-584"
 					],
 					"defender_losses": 0,
-					"feba_movement_km": -1.81263157894737,
+					"feba_movement_km": -2.42113744075829,
 					"hex_id": "hex_43_14",
 					"owner_after": "contested"
 				},
@@ -2604,7 +2604,7 @@
 			{
 				"data": {
 					"antiship_systems_reset": 50,
-					"china_battalions_on_taiwan": 22,
+					"china_battalions_on_taiwan": 15,
 					"game_over": false,
 					"taiwan_battalions_on_taiwan": 107,
 					"victory_reason": "",

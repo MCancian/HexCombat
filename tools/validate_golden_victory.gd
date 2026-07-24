@@ -28,8 +28,13 @@ const MAX_TURNS := 40
 # Re-baselined 2026-07-17 for Plan 0009 follow-up (USER call): IJFS maneuver casualties now include
 # the multi-day warmup kills (previously only the final warmup day reached the OOB), so far more ROC
 # maneuver battalions die in the pre-invasion campaign. Was 26/88.
+# Re-baselined 2026-07-24 for the crossing-drowning roster fix (plan 0028 follow-up): battalions
+# that drown in the crossing are now deleted from their brigade rosters, so the victory census no
+# longer ghost-lands drowned BNs of a partially-landed brigade (the census counted
+# get_battalion_count - at_sea, and drowned BNs had left at_sea but not the roster). China's count
+# drops; Taiwan is unchanged (Green never crosses). Was china=25.
 const EXPECTED_GAME_OVER := false
-const EXPECTED_CHINA := 25
+const EXPECTED_CHINA := 12
 const EXPECTED_TAIWAN := 76
 
 var _failures: Array[String] = []

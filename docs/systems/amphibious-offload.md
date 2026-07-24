@@ -135,6 +135,18 @@ two `ShipLoadingModel` simplifications below diverge, and both are intentional/c
 - `lost_at_sea` is threaded through `pending_lost_at_sea` (D3-F writes, D0-C reads) but the
   ship-loss-to-BN-casualty wiring is deferred pending the D3 crossing model integration.
 
+### Crossing losses are casualties (2026-07-24)
+
+A BN that drowns in the crossing is **dead** and is deleted from its `Brigade.composition`, not just
+from `ship_reserve`. `TurnConductor.apply_crossing_casualties()` runs at the crossing-loss
+application (before `remaining_reserve_after_losses` rebuilds the reserve), mapping each drowned id
+back to its `(brigade_id, battalion type)` via the pre-removal reserve entries and applying one
+roster casualty per drowned BN through the shared `apply_casualty` (consumes no dice). Before this,
+drowned BNs left `ship_reserve` but stayed in the roster, so the victory census
+(`CleanupResolver.census` = `get_battalion_count - at_sea`) and ground combat both counted a
+partially-landed brigade's drowned "ghost" BNs as present. This is the ONLY difference between the
+crossing and ground-combat loss paths now — both shrink the roster.
+
 ## 8. Sealift lifecycle (plan 0004, 2026-07-12)
 
 Sustained amphibious lift across the game. Replaces the pre-0004 one-shot `ship_reserve` (built once

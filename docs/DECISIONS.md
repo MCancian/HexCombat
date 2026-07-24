@@ -19,6 +19,22 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-24 — Crossing-drowning roster fix: drowned BNs are now real casualties (correctness bug).**
+  - **Who**: Agent (Opus 4.8), USER call to fix (found while investigating the off-island-strike flip).
+  - **What**: Battalions that drown in the anti-ship crossing were removed from `ship_reserve` but
+    left in `Brigade.composition`. The victory census (`CleanupResolver.census` = `get_battalion_count
+    - at_sea`) therefore **ghost-landed** a partially-landed brigade's drowned BNs (they had left
+    `at_sea` but not the roster), and ground combat over-counted the same brigade's strength. Fixed by
+    deleting drowned BNs from their rosters at the crossing-loss application
+    (`TurnConductor.apply_crossing_casualties`, mirrors ground `apply_casualty`; consumes no dice).
+  - **Impact / re-baseline**: golden headless turn byte-stable (scripted fight is pre-placed, no
+    crossing). Deliberate re-baselines: `validate_golden_victory` china 25→**12** (Taiwan 76 unchanged
+    — Green never crosses), `validate_cleanup` `casualties=6/feba=0.34`→**`casualties=7/feba=2.24`**,
+    fixture `docs/examples/llm_result_after_turn.json` regenerated (partially-landed Red brigades lose
+    their drowned BNs). Facts: `docs/systems/amphibious-offload.md` → "Crossing losses are casualties";
+    incident in `hexcombat-failure-archaeology`. All prior census-based research numbers (incl. plan
+    0028's flip sweep) over-stated PLA strength and are being re-run.
+
 - **2026-07-23 — Off-island fleet strikes (sustained interdiction) built; ROC OOB verified complete.**
   - **Who**: Agent (Opus 4.8), USER direction (verify ROC inventory incl. reservists; then focus on
     off-island strikes on the amphibious fleet).

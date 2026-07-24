@@ -26,7 +26,11 @@ const TARGET_HEX := GoldenScript.TARGET_HEX
 # the multi-day warmup kills (previously only the final warmup day reached the OOB), so more ROC
 # maneuver battalions are removed before the scripted fight, shifting its contributors. Was
 # "casualties=8, feba=-0.23".
-const EXPECTED_COMBAT_FINGERPRINT := "casualties=6, feba=0.34"
+# Re-baselined 2026-07-24 for the crossing-drowning roster fix (plan 0028 follow-up): drowned
+# battalions are now deleted from their brigade rosters, so a partially-landed brigade fights with
+# only its surviving BNs (was over-counting drowned "ghost" BNs in combat strength). The scripted
+# fight's contributors shift accordingly. Was "casualties=6, feba=0.34".
+const EXPECTED_COMBAT_FINGERPRINT := "casualties=7, feba=2.24"
 
 var _failures: Array[String] = []
 var GameData: Node = null

@@ -281,6 +281,12 @@ static func resolve_antiship_turn(state: GameStateData, dice: Dice) -> Dictionar
 	# reserve AND their cohorts, and flip the surviving crossers to offloading (plan 0004 D3).
 	apply_crossing_hull_losses(state, outcome["destroyed_by_type"])
 	var lost_ids: Array = outcome["lost_ids"]
+	# Drowned crossers are dead: delete them from their brigade rosters. Run BEFORE the reserve is
+	# rebuilt, because mapping each drowned id back to its brigade + battalion type needs the
+	# pre-removal entries. Without this the victory census (get_battalion_count - at_sea) ghost-lands
+	# a partially-landed brigade's drowned BNs, and combat over-counts its strength (mirrors the
+	# ground-combat apply_casualty, which is the only other roster-shrinking path).
+	apply_crossing_casualties(state.ship_reserve, lost_ids)
 	state.ship_reserve = AntishipResolver.remaining_reserve_after_losses(state.ship_reserve, lost_ids)
 	SealiftResolver.drain_bn_ids(state.sealift_state, lost_ids, GameData.amphibious_return_time_turns)
 	SealiftResolver.flip_sent_to_offloading(state.sealift_state)
@@ -689,6 +695,26 @@ static func find_retreat_hex(from_hex: String, team: Brigade.Team) -> String:
 		if owner == friendly_owner or owner == HexOwner.NONE:
 			return neighbor_id
 	return ""
+
+
+## Delete drowned crossing BNs from their brigade rosters so a dead battalion stops existing
+## everywhere (census, combat strength, offload) — not just in ship_reserve. Maps each drowned id
+## back to (brigade_id, battalion type) via the PRE-removal reserve entries, then applies one
+## roster casualty per drowned BN through the shared apply_casualty (consumes no dice → golden RNG
+## stream unaffected). See the call site in resolve_antiship_turn for why the ghost-landing mattered.
+static func apply_crossing_casualties(ship_reserve: Array, lost_ids: Array) -> void:
+	if lost_ids.is_empty():
+		return
+	var lost: Dictionary = {}
+	for id in lost_ids:
+		lost[String(id)] = true
+	for entry_value in ship_reserve:
+		var entry: Dictionary = entry_value
+		var brigade_id := String(entry.get("brigade_id", ""))
+		for bn_value in entry.get("bns", []):
+			var bn: Dictionary = bn_value
+			if lost.has(String(bn.get("id", ""))):
+				apply_casualty({"brigade_id": brigade_id, "type": String(bn.get("type", ""))})
 
 
 static func apply_casualty(casualty: Dictionary) -> void:
