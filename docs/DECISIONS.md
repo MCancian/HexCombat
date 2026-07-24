@@ -23,9 +23,11 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   - **Who**: Agent (Opus 4.8), USER request (two heatmaps).
   - **What**: `off_island_offload_heat` sweep (7×7×2, 20 seeds, 1,960 games). PLA win % shows (1) beach
     offload ≤ ~1,600 t/day is a PLA shutout regardless of strikes — the throttle is the decisive lever;
-    (2) off-island strikes only bite in the high-throughput band, and port-neutralized > port-intact
-    PLA win % there — the port's auto-JLSF lift is attritable defender value. The levers are
-    substitutes, not complements. Added `mc_chart.py --heat` + `tools/make_heat_spec.py`.
+    (2) off-island strikes only bite in the high-throughput band, and denying the port (`auto_jlsf false`)
+    > port-intact PLA win % there — verified as a **crowding-out** effect (JLSF logistics cargo displaces
+    combat BNs in the scarce crossing/offload pipeline; +18 combat BNs on a traced flip seed, drownings
+    equal), NOT sinking and NOT the census bug. The levers are substitutes. Added `mc_chart.py --heat` +
+    `tools/make_heat_spec.py`.
   - **Pointers**: `docs/plans/0028-...md` ("2-D map"); charts `docs/reports/assets/off_island_offload_heat.svg`
     (spec `.heat.json`).
 
@@ -33,10 +35,12 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   - **Who**: Agent (Opus 4.8), continuing the ghost-landing-bug re-baselines.
   - **What**: Re-ran `off_island_flip_noport` on the fixed engine at the fine grid `[0…64]` (old
     `[0…2048]` grid saturates post-fix). At zero interdiction the port is still a wash (both 100% PLA),
-    but under active off-island interdiction, neutralizing the port (`auto_jlsf false`) *raises* PLA
-    win% in the knife-edge band (16→60% vs 30%, 24→25% vs 15%) — it removes attritable auto-JLSF lift
-    the off-island shooters would otherwise sink. Same substitute/antagonism mechanism as off-island ×
-    offload-throttle. Added a general `--flip` multi-series mode to `tools/mc_chart.py`.
+    but under active off-island interdiction, denying the port (`auto_jlsf false`) *raises* PLA win%
+    in the knife-edge band (16→60% vs 30%, 24→25% vs 15%). Traced mechanism = **crowding-out**: JLSF
+    logistics cargo shares the scarce attritable crossing/offload pipeline with combat BNs and doesn't
+    add combat census, so the port active lands fewer combat BNs (+18 on a traced flip seed; drownings
+    equal — NOT sinking, NOT the census bug). Substitute family with off-island × offload-throttle.
+    Added a general `--flip` multi-series mode to `tools/mc_chart.py`.
   - **Pointers**: full curves + mechanism in `docs/plans/0028-sustained-followon-interdiction.md`
     ("Q2 re-run on the fix"); deck chart `docs/reports/assets/off_island_flip_curve.svg` (spec
     `docs/reports/assets/off_island_flip_curve.flip.json`). Deck slide 6's "structural inevitability" framing now rests on

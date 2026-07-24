@@ -134,14 +134,25 @@ no-port = `auto_jlsf false` (seized ports don't auto-queue attritable JLSF lift)
 | **PLA win %, port neutralized** | 100 | 100 | 60 | 25 | 15 | 10 | 0 |
 
 The buggy conclusion ("port is a no-op" — both curves flipped identically at ~512–1024) is **wrong**.
-On the fix: at **zero** interdiction the port is still a wash (both 100%), but under active off-island
-interdiction, **neutralizing the port *helps the PLA*** — it removes the auto-JLSF amphibious lift that
-the off-island shooters would otherwise sink at sea. The port's "free logistics" becomes attritable
-tonnage that *aids the defender* once there is a sustained sea toll. Same substitute/antagonism
-mechanism as the off-island × offload-throttle pairing (§ shipped-2026-07-23). So port neutralization
-is not a lever ROC wants when it holds off-island interdiction; it is mildly counterproductive in the
-knife-edge band (16–32). (N=20/point; the interior differences are marginal per point but monotone —
-no-port ≥ port PLA% at every interior level.) Curves overlaid in the flip chart above.
+On the fix: at **zero** interdiction the port is a wash (both 100%), but in the contested band,
+**denying the port (`auto_jlsf false`) *raises* PLA win %** (16: 60% vs 30%; 24: 25% vs 15%).
+
+**Verified mechanism (traced, NOT the earlier hand-wave).** My first gloss — "the off-island shooters
+sink the extra JLSF lift" — is **wrong**: matched cells show near-identical crossing drownings
+(~35 vs ~35 BNs). Tracing a flip seed (20260629 @ 3000×32): turn 1 is identical (JLSF only fires once a
+port is seized), but **port-intact ends with 18 *fewer* PLA combat BNs on Taiwan** (35 vs 53), losing
+the `china_majority` it otherwise wins. Driver: `auto_jlsf` injects JLSF *logistics* cargo
+(`jlsf_lift_bn_equiv`=4 BN-equiv/seized port) into the **same attritable crossing + capacity-limited
+offload pipeline** as combat battalions (`JlsfCargo.queue_deployments` → `SealiftResolver` JLSF
+pseudo-entries → offload). That cargo consumes scarce crossing/offload slots and repairs the port
+(`InfrastructureResolver.tick` gates repair on `jlsf == ARRIVED`) but does **not** add to the combat
+census — so within the 30-turn horizon it *crowds out* combat BNs and the port-repair payoff doesn't
+recoup the displacement. This is a real **crowding-out/substitute** effect (same family as
+off-island × offload), **not** the ghost-landing census bug — that bug *inflated* Red; here Red is
+*lower* with the port active. **Balance-relevant for USER**: an emergent result that pushing logistics
+through a contested crossing dilutes combat power; whether the port-repair payoff should dominate over
+a longer horizon is a design call. (N=20/point; per-cell noise, but the direction is monotone and the
+traced census gap is large.) Curves overlaid in the flip chart above.
 
 ### 2-D map — off-island strikes × beach throttle × port (2026-07-24)
 
@@ -156,15 +167,17 @@ Two structural reads:
    *regardless of strikes* — the throttle culminates the invasion on its own (consistent with the
    ~1,330 t/day culmination in [[mc-offload-throughput]] / deck slide 7). Off-island strikes only bite
    in the contested high-throughput band (2,200–4,400), where they flip the outcome left→right.
-2. **Port neutralization is antagonistic in 2-D too.** Across the contested band, `port neutralized`
+2. **Denying the port helps the PLA here too.** Across the contested band, `port neutralized`
    is uniformly bluer (higher PLA win %) than `port intact` — e.g. offload 3,000 × 24 strikes: intact
-   30% vs neutralized 45%; 3,000 × 32: intact 5% vs neutralized 40%. Same substitute mechanism: the
-   port's auto-JLSF lift is attritable tonnage the off-island shooters convert into defender value.
+   30% vs neutralized 45%; 3,000 × 32: intact 5% vs neutralized 40%. Same **crowding-out** mechanism as
+   the Q2 trace above: `auto_jlsf`'s logistics cargo displaces combat BNs in the scarce crossing/offload
+   pipeline, so the PLA lands fewer *combat* battalions within the horizon (not a sinking effect —
+   drownings are equal; verified +18 combat BNs on a traced flip seed).
 
 So the two interdiction levers are **substitutes, not complements** — throttling the beach is the
-decisive constraint; sea attrition only matters where throughput is left generous, and it is *helped*
-by leaving the port's JLSF lift on the water to be sunk. Some per-cell MC noise at N=20; the two
-patterns above are monotone across the grid.
+decisive constraint; and (counter-intuitively) the captured port's auto-JLSF logistics is a net
+*liability* in the contested regime because it crowds combat power out of the crossing. Some per-cell
+MC noise at N=20; the two patterns above are monotone across the grid.
 
 ## Objectives
 
