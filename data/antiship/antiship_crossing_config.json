@@ -45,6 +45,13 @@
     "3":  { "p_detect": 0.1, "p_destroy_if_detected": 0.2, "p_intercept_before_launch": 0.1 },
     "23": { "p_detect": 0.5, "p_destroy_if_detected": 0.7, "p_intercept_before_launch": 0.6 }
   },
+  "off_island_strike": {
+    "_comment": "Sustained interdiction of the crossing fleet from OFF-ISLAND assets (ROC submarines, allied/air), independent of on-island IJFS suppression + depletion. Each shooter appends `systems_per_turn` firing rows (no TO location => global reach, no range gate, no C2 suppression) to the crossing plan EVERY turn, so the follow-on keeps paying a toll after the on-island salvo is spent. `type` = a combat-catalog launcher id (6 = Harpoon_Sub_II submarine, 3 = Harpoon_Air_II/SLAM-ER air). Default 0 => byte-stable off; sweep systems_per_turn to size the off-island threat.",
+    "shooters": [
+      { "type": "6", "systems_per_turn": 0 },
+      { "type": "3", "systems_per_turn": 0 }
+    ]
+  },
   "ship_profiles": {
     "CG": { "target_value": 5, "terminal_defense_capability": "High", "vulnerability": "Low" },
     "DDG": { "target_value": 5, "terminal_defense_capability": "High", "vulnerability": "Low" },

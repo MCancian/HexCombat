@@ -87,6 +87,20 @@
       "sweepable": true
     },
     {
+      "id": "off_island_submarine_strikes",
+      "path": "data/antiship/antiship_crossing_config.json:off_island_strike.shooters[0].systems_per_turn",
+      "label": "Off-island submarine (Harpoon_Sub_II) launchers firing on the crossing per turn — sustained interdiction independent of on-island IJFS suppression (plan 0028). Compresses the PLA margin + drowns more fleet but does not flip alone (offload rate is the binding constraint).",
+      "group": "antiship",
+      "sweepable": true
+    },
+    {
+      "id": "off_island_air_strikes",
+      "path": "data/antiship/antiship_crossing_config.json:off_island_strike.shooters[1].systems_per_turn",
+      "label": "Off-island air (Harpoon_Air_II / SLAM-ER) launchers firing on the crossing per turn — sustained interdiction independent of on-island IJFS suppression (plan 0028).",
+      "group": "antiship",
+      "sweepable": true
+    },
+    {
       "id": "screen_target_preference",
       "path": "data/antiship/antiship_crossing_config.json:screen_target_preference",
       "label": "Escort-screen target preference weight",

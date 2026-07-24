@@ -63,6 +63,36 @@ writeback across phases → report cost to USER before building.
 - **Flip target:** sweep it and look for a monotone crossing where the follow-on's cumulative delivery
   plateaus below the ROC census — the same success shape as the offload-throughput curve.
 
+## Progress — off-island fleet strikes shipped (2026-07-23)
+
+USER direction: focus the sustained toll on **off-island** shooters (ROC submarines, allied/air) —
+assets the PLA can't suppress the way it suppresses on-island coastal launchers. Built as a
+default-off config lever:
+
+- `data/antiship/antiship_crossing_config.json` → `off_island_strike.shooters[]` (`type` = a
+  combat-catalog launcher id — `6` = `Harpoon_Sub_II` submarine, `3` = `Harpoon_Air_II`/`SLAM-ER`
+  air; `systems_per_turn` = launchers firing each turn).
+- `AntishipResolver._append_off_island_strikes` appends those as **location-less** firing rows every
+  turn, after the on-island writeback/attrition. No `location` ⇒ `AntishipCrossing` skips the range
+  gate (whole-strait reach) and they bypass per-TO IJFS suppression + depletion — so the follow-on
+  keeps paying a toll after the on-island salvo is spent. Rows still run the full
+  escort → terminal-defense gauntlet. Registry knobs `off_island_submarine_strikes` /
+  `off_island_air_strikes`; default 0 ⇒ golden byte-stable. Test: `tests/off_island_strike_test.gd`.
+
+**Finding (sweep `off_island_submarine_strikes` 0→64, N=15, `scenario_default`):** it works as a
+sustained lever — late-turn (follow-on) drownings rise 1→18 BNs, total fleet drownings 26→54, and the
+PLA margin compresses monotonically +9.1 → +3.1. **But it does not flip the outcome alone** (100% PLA
+to 32/turn; 93% at 64): the follow-on reservoir is bottomless and the *binding* constraint is offload
+*rate*, not sea attrition, so Red just sends more. Per USER ("a knob needn't flip alone") this is a
+kept, first-class lever. **Antagonistic with the offload throttle** (a surprise): off-island 32 +
+offload 1,600 gives *more* PLA wins (95%) than offload 1,600 alone (80%) — sinking ships at sea thins
+the beach queue, so the binding offload throughput keeps pace better. The two are substitutes, not
+complements.
+
+**Still open (the mine/re-seed half of this plan):** mines are swept into a cleared lane once; a
+re-seeding / degrading-lane model would be the *on-approach* sustained toll to pair with off-island
+fires. Not built.
+
 ## Objectives
 
 1. Stage-1 spike + written verdict (which cause dominates late-wave immunity; cheapest seam) → USER

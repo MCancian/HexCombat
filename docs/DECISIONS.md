@@ -19,6 +19,21 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-23 — Off-island fleet strikes (sustained interdiction) built; ROC OOB verified complete.**
+  - **Who**: Agent (Opus 4.8), USER direction (verify ROC inventory incl. reservists; then focus on
+    off-island strikes on the amphibious fleet).
+  - **What**: Verified HexCombat's ROC OOB is byte-complete vs TIV `unit_hierarchy.json` — all 32
+    brigades / 124 battalions incl. all 12 reserve infantry brigades, all placed in `scenario_default`.
+    Built off-island fleet strikes: `off_island_strike.shooters[]` config + `AntishipResolver.
+    _append_off_island_strikes` appends location-less (whole-strait, no-IJFS-suppression) firing rows
+    every turn; registry knobs `off_island_{submarine,air}_strikes`, default 0 (golden byte-stable),
+    test `tests/off_island_strike_test.gd`. It sustains the toll (late-turn drownings 1→18) and
+    compresses the margin but doesn't flip alone (offload rate binds; reservoir bottomless); found it
+    *antagonistic* with the offload throttle (sea losses thin the beach queue). Consistent with USER's
+    "a knob needn't flip alone."
+  - **Where the facts landed**: `docs/plans/0028-sustained-followon-interdiction.md` (progress + finding),
+    `docs/STATUS.md` (D3 bullet), `data/knobs/registry.json`, `data/antiship/antiship_crossing_config.json`.
+
 - **2026-07-23 — Invasion outcome is logistics-bound; found the flip lever + fixed a phantom knob.**
   - **Who**: Agent (Opus 4.8), driven by USER's "which dial flips it / isn't the follow-on
     throughput-limited" question.

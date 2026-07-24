@@ -71,6 +71,7 @@ static func resolve(
 		antiship_systems, plan["allocation_plan"], plan["destroyed_firing_plan"],
 		crossing_config["launch_attrition"], dice)
 	var systems_fired: Array = attrition["systems_fired"]
+	_append_off_island_strikes(systems_fired, crossing_config)
 
 	# Sent fleet (D3-D BN<->ship mapping): the sealift phase already committed which hulls sail this
 	# turn, so build the crossing snapshots straight from sent_by_type (deterministic ship_type order)
@@ -118,6 +119,20 @@ static func _collect_crossing_wave(crossing_reserve: Array) -> Dictionary:
 			bns_at_sea.append(bn)
 		beach_set[int(entry.get("locked_beach", 0))] = true
 	return {"bns_at_sea": bns_at_sea, "beach_set": beach_set}
+
+
+## Append OFF-ISLAND firing rows to the on-island firing plan. These model ROC submarines /
+## allied air / external ASM: they fire on the crossing wave EVERY turn independent of the
+## on-island IJFS writeback (no per-TO suppression, no launch attrition from _apply_writeback),
+## and carry no `location`, so AntishipCrossing skips the range gate (whole-strait reach). This is
+## the sustained toll the depleting on-island salvo lacks (plan 0028). Default systems_per_turn 0
+## => no rows appended => byte-stable. The rows still run the full escort/terminal-defense gauntlet.
+static func _append_off_island_strikes(systems_fired: Array, crossing_config: Dictionary) -> void:
+	var off_island: Dictionary = crossing_config.get("off_island_strike", {})
+	for shooter in off_island.get("shooters", []):
+		var launchers := int(shooter.get("systems_per_turn", 0))
+		if launchers > 0:
+			systems_fired.append({"type": String(shooter.get("type", "")), "systems_fired": launchers})
 
 
 static func _no_wave_result(lost_at_sea_accumulator: float) -> Dictionary:

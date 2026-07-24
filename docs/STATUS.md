@@ -77,6 +77,16 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   (2026-07-18; superseded plan 0001's ~25%-of-36-BN target) via `data/ijfs/ijfs_scenario.json`'s
   `intel_locked_antiship_strike_bonus` (0.20) and `prelanding.intel.exquisite_intel.antiship.initial_count`
   (36) — see `docs/archive/0001-crossing-lethality-calibration.md`.
+  **Off-island fleet strikes (plan 0028, 2026-07-23):** `off_island_strike.shooters[]` in
+  `antiship_crossing_config.json` (`type` = combat-catalog launcher — `6` submarine `Harpoon_Sub_II`,
+  `3` air `Harpoon_Air_II`/`SLAM-ER`; `systems_per_turn`) appends **location-less** firing rows every
+  turn (`AntishipResolver._append_off_island_strikes`) so the follow-on faces sustained interdiction
+  independent of on-island IJFS suppression/depletion — the toll the front-loaded on-island salvo
+  lacks (turn-1 carries ~96% of baseline at-sea losses, follow-on crosses at ~3%). Registry knobs
+  `off_island_{submarine,air}_strikes`; default 0 ⇒ golden byte-stable. It's a real sustained lever
+  (margin +9→+3, fleet drownings 26→54 over subs 0→64) but does NOT flip alone (offload *rate* is the
+  binding constraint, reservoir is bottomless) and is antagonistic with the offload throttle (sinking
+  ships thins the beach queue). Detail: `docs/plans/0028-sustained-followon-interdiction.md`.
 - **D4 IJFS** (joint/air-missile fires) — detection → targeting → strike → suppression, with a
   multi-day pre-invasion warmup (exquisite intel) on the first turn. Per-(TO,type) writeback feeds D3.
   **IJFS now also attrits ground forces:** Green/ROC maneuver battalions are IJFS targets
