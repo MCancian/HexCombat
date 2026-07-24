@@ -302,6 +302,61 @@
             letter-spacing: 1px;
             margin-top: 0.5rem;
         }
+
+        /* ---- Print / PDF export ----
+           On screen the deck is a horizontal filmstrip (100vw slides moved by
+           translateX). That never paginates, so for print we un-do the filmstrip
+           and let each slide rest on its own page. fitSlidesForPrint() (in the
+           script below) scales down any slide whose content overruns 1080px. */
+        @media print {
+            @page { size: 1920px 1080px; margin: 0; }
+
+            html, body {
+                width: 1920px;
+                height: auto;
+                overflow: visible;
+                background: var(--bg-color);
+            }
+
+            .bg-glow, .bg-glow-2,
+            .progress-bar, .controls { display: none !important; }
+
+            .presentation-container {
+                display: block;
+                transform: none !important;
+                width: 1920px;
+                height: auto;
+            }
+
+            .slide {
+                min-width: 0;
+                width: 1920px;
+                height: 1080px;
+                overflow: hidden;
+                page-break-after: always;
+                break-after: page;
+            }
+            .slide:last-child { page-break-after: auto; break-after: auto; }
+
+            /* Content-boxes are normally revealed only on .active — force visible.
+               (fitSlidesForPrint overrides this transform with an !important
+               inline scale for slides that need shrinking.) */
+            .content-box,
+            .slide.active .content-box {
+                opacity: 1 !important;
+                transform: none !important;
+            }
+
+            /* Skia's PDF backend fails to paint elements (and their children)
+               that use backdrop-filter — they come out blank. The ambient glass
+               effect is meaningless on a flat print background anyway, so drop it. */
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -327,11 +382,10 @@
                     <h1 style="font-size: 5rem; text-shadow: 0 10px 30px rgba(0,0,0,0.8);">HexCombat</h1>
                     <p style="font-size: 1.4rem; color: #cbd5e1; text-shadow: 0 5px 15px rgba(0,0,0,0.8);">
                         Two LLMs fought a militarily-literate invasion of Taiwan — no human in the loop.
-                        Turn one: <strong style="color:#fff;">148 hulls sailed, 29 sunk</strong> before they reached the beach.
                     </p>
-                    <p style="margin-top: 2rem; color: #64748b; font-size: 0.95rem; display: flex; align-items: center;">
-                        <span style="display: inline-block; width: 8px; height: 8px; background: #22c55e; border-radius: 50%; margin-right: 8px; box-shadow: 0 0 10px #22c55e; animation: blink 2s infinite;"></span>
-                        Live Agent Inference Active
+                    <p style="margin-top: 2rem; color: #94a3b8; font-size: 1.1rem; border-left: 3px solid var(--accent-primary); padding-left: 1rem;">
+                        <strong>Matt Cancian</strong><br>
+                        Wargaming Department
                     </p>
                 </div>
 
@@ -388,7 +442,7 @@
             <div class="content-box grid-2">
                 <div>
                     <h2>The Mission</h2>
-                    <p>HexCombat is not just a game; it is an analytical instrument. Originally ported from TaiwanInvasionViewer, it serves two core purposes:</p>
+                    <p>HexCombat is an LLM-built version of the manual boardgame developed for CSIS / MIT research.</p>
                     
                     <ul class="feature-list" style="margin-top: 2rem;">
                         <li><strong>Primary: AI-vs-AI Research Instrument</strong><br>
@@ -399,7 +453,7 @@
                     </ul>
                 </div>
                 <div class="image-container">
-                    <img src="../reports/recent_screenshot.png" alt="HexCombat Terrain View" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMDI3Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+VGVycmFpbiBNYXAgVmlldzwvdGV4dD48L3N2Zz4='">
+                    <img src="reports/assets/presentation/manual_game.jpg" alt="Manual Boardgame" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMDI3Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+TWFudWFsIEdhbWU8L3RleHQ+PC9zdmc+'">
                 </div>
             </div>
         </div>
@@ -411,7 +465,7 @@
                 <!-- Left Side: Detail View -->
                 <div>
                     <h2 style="margin-bottom: 1rem;">Deep Simulation Mechanics</h2>
-                    <p style="margin-bottom: 2rem;">A rigorous port of the TIV mathematics. The <strong>Amphibious Offload</strong> system models the primary bottleneck of the invasion with exacting detail.</p>
+                    <p style="margin-bottom: 2rem;"></p>
                     
                     <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 16px; margin-bottom: 2rem;">
                         <h3 style="color: #fff; font-size: 1.3rem; margin-bottom: 0.5rem;">Capacity & Throughput</h3>
@@ -518,40 +572,18 @@
                     <img src="reports/assets/presentation/deck-game-board-t3.png" alt="LLM-vs-LLM game board, turn 3: theater + front beachhead" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMDI3Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+R2FtZSBCb2FyZDwvdGV4dD48L3N2Zz4='">
                 </div>
                 <div>
-                    <h2>Watch One Game</h2>
+                    <h2>One Game's Results</h2>
                     <p><strong>Full ROC Defense — Northern Beachhead</strong>, seed 20260710. Red (PLA) and Green (ROC), both driven by an LLM through the JSON API — 30 turns, start to finish.</p>
                     <ul class="feature-list">
                         <li><strong>Turn 1 — the assault crosses.</strong> 148 hulls sail at four beaches; ROC anti-ship fire and mines sink 29, damage 21, drown 10 battalions at sea.</li>
                         <li><strong>Mid-game — the beachhead.</strong> The <em>Front</em> view auto-frames the largest contested cluster — PLA lodgement against the ROC counter-attack, hex by hex.</li>
                         <li><strong>Turn 30 — no decisive winner.</strong> Final census Red&nbsp;4 : Green&nbsp;59 battalions ashore: the landing is contained, not thrown back.</li>
                     </ul>
-                    <p style="font-size: 0.95rem; color:#64748b;">Rendered from the headless replay into one self-contained briefing page — projectable in a talk, no live game required.</p>
                 </div>
             </div>
         </div>
 
-        <!-- Slide 5: Game Records & Reports -->
-        <div class="slide">
-            <div class="content-box grid-2">
-                <div class="image-container">
-                    <img src="reports/assets/presentation/deck-beachhead-t6.png" alt="Beachhead front view, turn 6" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMDI3Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RGVmZW5zZSBWaWV3PC90ZXh0Pjwvc3ZnPg=='">
-                </div>
-                <div>
-                    <h2>Game Reports & Outcomes</h2>
-                    <p>Post-simulation, HexCombat generates comprehensive HTML briefing reports. These reports merge the game record and replay log into an interactive artifact.</p>
-                    <ul class="feature-list">
-                        <li>Interactive turn-by-turn playback</li>
-                        <li>SITREPs authored locally by LLM commanders</li>
-                        <li>Live outcome trend charts (battalion census, PLA ship losses)</li>
-                        <li>Data export to JSON for Monte Carlo analysis</li>
-                    </ul>
-                    <div style="margin-top: 2rem;">
-                        <a href="../reports/report_100/index.html" class="btn" target="_blank">View Live Game Record 100</a>
-                        <a href="../reports/batches/" class="btn btn-outline" target="_blank">View Batch Data</a>
-                    </div>
-                </div>
-            </div>
-        </div>
+
 
         <!-- Slide 6: Research Instrument — Monte Carlo (SCAFFOLD: next agent fills #mc-distribution) -->
         <div class="slide">
@@ -559,7 +591,7 @@
                 <h2 style="text-align: center; display: block; margin-bottom: 2rem;">Not One Game — Thousands</h2>
                 <div class="grid-2">
                     <div>
-                        <p>One game is an anecdote. Because every game is <strong>deterministic under a seed</strong> — hierarchical, per-phase RNG, so the same seed reproduces the game exactly — HexCombat runs the same matchup across hundreds of seeds headlessly and reads the <strong>distribution of outcomes</strong>.</p>
+                        <p>One game is an anecdote. Because every game is <strong>deterministic under a seed</strong> — hierarchical, per-phase RNG, so the same seed reproduces the game exactly — HexCombat runs the same matchup across hundreds of seeds headlessly (without the LLMs, using scripted deterministic play) and reads the <strong>distribution of outcomes</strong>.</p>
                         <p>Parameter sweeps turn a single knob — beach capacity, mine density, CRBM maneuver — and measure how the outcome curve shifts. This is the primary mission: an <strong>instrument</strong>, not a match.</p>
                         <div class="stats-grid">
                             <div class="stat-card"><div class="stat-value">1 → N</div><div class="stat-label">Seeds per matchup</div></div>
@@ -627,7 +659,7 @@
   <text x="525.0" y="392" font-family="Inter, sans-serif" font-size="11" font-weight="400" fill="#94a3b8" text-anchor="middle">turns to decision</text>
 </svg>
                         <p style="margin:0.9rem 0 0; font-size:0.78rem; color:#64748b; line-height:1.5;">
-                            200 seeds · <code style="color:#94a3b8;">selfplay_default</code> both seats · <code style="color:#94a3b8;">scenario_default</code> · 30-turn cap · commit <code style="color:#94a3b8;">0cf2136</code>, re-run on the ghost-landing-fixed engine (baseline margin barely moved, +8.0&nbsp;&rarr;&nbsp;+8.6 &mdash; the census bug distorted the <em>interdiction</em> regime, not this default). At the default configuration the PLA wins <strong>every</strong> seed &mdash; the follow-on draws on the whole mainland order of battle and no campaign clock caps the buildup. But this is <strong>not beyond the defender&rsquo;s reach</strong>: two identifiable levers flip it &mdash; sustained <strong>off-island anti-ship interdiction</strong> (~14 strikes/turn is a coin-flip, ~48+/turn a reliable ROC hold) and <strong>throttling beach/port throughput</strong> below ~1,600&nbsp;t/day (the invasion culminates &mdash; next slide). An earlier reading called the PLA win &ldquo;structural &mdash; no dial moves it&rdquo;; that rested partly on a census bug that over-counted PLA strength ~30&ndash;60&times; in the interdiction regime. Corrected: the PLA wins the <em>default</em>, but the outcome is <strong>contingent on interdiction capacity</strong>, not predetermined.</p>
+                            200 seeds · <code style="color:#94a3b8;">scripted_default</code> both seats · <code style="color:#94a3b8;">scenario_default</code> · 30-turn cap. At the default configuration the PLA wins every seed. But this is not beyond the defender's reach: two identifiable levers flip it — sustained off-island anti-ship interdiction and throttling beach/port throughput.</p>
                     </div>
                 </div>
             </div>
@@ -711,7 +743,7 @@
                     <svg viewBox="0 0 678 476" width="100%" role="img" aria-label="Off-island interdiction × beach throttle — where the crossing flips" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;">
   <text x="54" y="34" font-family="Outfit, sans-serif" font-size="19" font-weight="700" fill="#e2e8f0" text-anchor="start">Off-island interdiction × beach throttle — where the crossing flips</text>
   <text x="54" y="56" font-family="Inter, sans-serif" font-size="12" font-weight="400" fill="#94a3b8" text-anchor="start">PLA win % over 20 seeds · scenario_default · selfplay_default · fixed engine</text>
-  <text x="200.0" y="70" font-family="Outfit, sans-serif" font-size="13.5" font-weight="700" fill="#e2e8f0" text-anchor="middle">Taipei port intact</text>
+  <text x="200.0" y="70" font-family="Outfit, sans-serif" font-size="13.5" font-weight="700" fill="#e2e8f0" text-anchor="middle">port neutralized</text>
   <rect x="61.5" y="85.5" width="37.0" height="37.0" rx="3" fill="#4f9dff"/>
   <text x="80.0" y="108.0" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#e2e8f0" text-anchor="middle">100</text>
   <rect x="101.5" y="85.5" width="37.0" height="37.0" rx="3" fill="#5591dc"/>
@@ -818,7 +850,7 @@
   <text x="280.0" y="382" font-family="Inter, sans-serif" font-size="10.5" font-weight="400" fill="#94a3b8" text-anchor="middle">48</text>
   <text x="320.0" y="382" font-family="Inter, sans-serif" font-size="10.5" font-weight="400" fill="#94a3b8" text-anchor="middle">64</text>
   <text x="200.0" y="402" font-family="Inter, sans-serif" font-size="11.5" font-weight="600" fill="#94a3b8" text-anchor="middle">off-island sub-strikes / turn</text>
-  <text x="524.0" y="70" font-family="Outfit, sans-serif" font-size="13.5" font-weight="700" fill="#e2e8f0" text-anchor="middle">port neutralized</text>
+  <text x="524.0" y="70" font-family="Outfit, sans-serif" font-size="13.5" font-weight="700" fill="#e2e8f0" text-anchor="middle">Taipei port intact</text>
   <rect x="385.5" y="85.5" width="37.0" height="37.0" rx="3" fill="#4f9dff"/>
   <text x="404.0" y="108.0" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#e2e8f0" text-anchor="middle">100</text>
   <rect x="425.5" y="85.5" width="37.0" height="37.0" rx="3" fill="#4f9dff"/>
@@ -979,12 +1011,6 @@
   <text x="362.0" y="470" font-family="Inter, sans-serif" font-size="10" font-weight="400" fill="#64748b" text-anchor="middle">20 seeds/cell · 98 cells · undecided (30-turn cap) counts as non-PLA-win · commit 0d2a57a</text>
 </svg>
                 </div>
-                <p style="max-width: 74ch; margin: 1rem auto 0.9rem; font-size:0.82rem; color:#94a3b8; line-height:1.5; text-align:center;">Read <em>down</em> any column: below <strong>~2,000&nbsp;t/day</strong> the PLA culminates <strong>regardless of how hard the strait is interdicted</strong>. The logistics throttle dominates the sea-interdiction salvo &mdash; and it&rsquo;s the knob almost no model turns.</p>
-                <div class="stats-grid" style="max-width: 720px; margin: 0 auto;">
-                    <div class="stat-card"><div class="stat-value">Throughput</div><div class="stat-label">The decisive variable</div></div>
-                    <div class="stat-card"><div class="stat-value">~2,000</div><div class="stat-label">t/day &middot; below this the PLA culminates</div></div>
-                    <div class="stat-card"><div class="stat-value">Least&nbsp;visible</div><div class="stat-label">Most powerful lever</div></div>
-                </div>
             </div>
         </div>
 
@@ -994,9 +1020,12 @@
                 <h2 style="text-align: center; display: block; margin-bottom: 1.5rem;">500 &rarr; 14: Why It Takes a Human <em>and</em> an AI</h2>
                 <div class="grid-2">
                     <div>
-                        <p>An early run said the ROC would need <strong>~500 off-island Harpoon strikes per turn</strong> to make the invasion inviable. That number is absurd on its face &mdash; and domain intuition said so at once.</p>
-                        <p>That intuition triggered the hunt. The AI developer traced it to a <strong>correctness bug</strong>: battalions that <em>drowned</em> in the strait crossing were still counted as ashore and fighting &mdash; inflating PLA strength <strong>30&ndash;60&times;</strong> in exactly the interdiction regime we were measuring. Fixed, the knife-edge is <strong>~14 strikes/turn</strong>.</p>
-                        <p>Neither half gets there alone. The expert knows 500 is wrong; the AI reads the census code, isolates the ghost, and re-runs thousands of games to prove the fix. <strong>Expert judgment + tireless implementation.</strong></p>
+                        <ul class="feature-list">
+                            <li><strong>Absurd Intuition:</strong> An early run said the ROC would need ~500 off-island Harpoon strikes per turn to make the invasion inviable. That number is absurd on its face.</li>
+                            <li><strong>Bug Hunt:</strong> That intuition triggered the hunt. The AI developer traced it to a correctness bug: battalions that drowned in the strait crossing were still counted as ashore.</li>
+                            <li><strong>The Real Threshold:</strong> Fixed, the knife-edge is ~14 strikes/turn.</li>
+                            <li><strong>Expert Judgment + AI:</strong> The expert knows 500 is wrong; the AI reads the census code, isolates the ghost, and re-runs thousands of games to prove the fix.</li>
+                        </ul>
                         <div class="stats-grid">
                             <div class="stat-card"><div class="stat-value">~500&nbsp;&rarr;&nbsp;14</div><div class="stat-label">Corrected flip threshold</div></div>
                             <div class="stat-card"><div class="stat-value">30&ndash;60&times;</div><div class="stat-label">PLA strength the bug inflated</div></div>
@@ -1068,20 +1097,19 @@
                 <h2 style="text-align: center; display: block; margin-bottom: 2rem;">Honest Limits, Clear Roadmap</h2>
                 <div class="grid-2">
                     <div>
-                        <h3 style="color:#fff; font-size:1.4rem;">What it isn't (yet)</h3>
+                        <h3 style="color:#fff; font-size:1.4rem;">Limits</h3>
                         <ul class="feature-list">
                             <li>LLM play quality is bounded by the model — commanders reason locally, not campaign-deep.</li>
-                            <li>Fidelity is the TIV port; new mechanics are deliberate, USER-directed changes, not free additions.</li>
+                            <li>LLM play requires extensive compute time.</li>
                             <li>Live human-facilitator play is still landing (order entry, front-line draw).</li>
                         </ul>
                     </div>
                     <div>
                         <h3 style="color:#fff; font-size:1.4rem;">Where it's going</h3>
                         <ul class="feature-list">
-                            <li><strong>0024</strong> — order-entry facilitator flow.</li>
-                            <li><strong>0025</strong> — front-line polyline-draw UI.</li>
-                            <li><strong>0026</strong> — live Godot map: camera + interactive HUD + replay screenshotter.</li>
-                            <li><strong>Monte Carlo dashboards</strong> — outcome distributions and sensitivity, folded straight into this deck.</li>
+                            <li><strong>Model Changes:</strong> Ship magazines, ability for Red to switch beaches, etc.</li>
+                            <li><strong>Feature Changes:</strong> Live Godot map, order-entry facilitator flow, front-line polyline-draw UI.</li>
+                            <li><strong>Research Changes:</strong> Monte Carlo dashboards, LLM prompt variants, etc.</li>
                         </ul>
                     </div>
                 </div>
@@ -1139,6 +1167,43 @@
 
         // Initialize
         updateSlider();
+
+        // ---- Print / PDF export fit ----
+        // Under print layout every slide is a fixed 1920x1080 page. Each
+        // .content-box is scaled to fill the page — grown to fill the wasted
+        // margin on light slides, shrunk to fit on heavy ones (e.g. the logistics
+        // heatmap). Scale is bounded by BOTH page dimensions so nothing overflows
+        // or distorts, and capped so sparse slides don't balloon absurdly.
+        // Full-bleed slides without a .content-box (the cover) are left untouched.
+        const PRINT_FILL = 0.94;   // leave a 6% breathing margin
+        const PRINT_MAX_SCALE = 1.5;
+        function fitSlidesForPrint() {
+            slides.forEach((slide) => {
+                const box = slide.querySelector('.content-box');
+                if (!box) return;
+                box.style.removeProperty('transform');
+                const needW = box.scrollWidth, needH = box.scrollHeight;
+                if (!needW || !needH) return;
+                let scale = Math.min(
+                    (slide.clientWidth * PRINT_FILL) / needW,
+                    (slide.clientHeight * PRINT_FILL) / needH
+                );
+                scale = Math.min(scale, PRINT_MAX_SCALE);
+                if (Math.abs(scale - 1) > 0.01) {
+                    box.style.setProperty('transform', `scale(${scale})`, 'important');
+                    box.style.transformOrigin = 'center center';
+                }
+            });
+        }
+        function unfitSlidesAfterPrint() {
+            slides.forEach((slide) => {
+                const box = slide.querySelector('.content-box');
+                if (box) box.style.removeProperty('transform');
+            });
+        }
+        window.__fitSlidesForPrint = fitSlidesForPrint;
+        window.addEventListener('beforeprint', fitSlidesForPrint);
+        window.addEventListener('afterprint', unfitSlidesAfterPrint);
     </script>
 </body>
 </html>
