@@ -330,6 +330,34 @@
       "label": "Support Multiplier Rotary Wing",
       "group": "combat",
       "sweepable": true
+    },
+    {
+      "id": "green_mobilization_held_back_brigades",
+      "path": "scenario:green_mobilization.held_back_brigades",
+      "label": "ROC brigades held in mobilization at start",
+      "group": "mobilization",
+      "sweepable": true
+    },
+    {
+      "id": "green_mobilization_first_release_turn",
+      "path": "scenario:green_mobilization.first_release_turn",
+      "label": "ROC mobilization first release turn",
+      "group": "mobilization",
+      "sweepable": true
+    },
+    {
+      "id": "green_mobilization_release_interval_turns",
+      "path": "scenario:green_mobilization.release_interval_turns",
+      "label": "ROC mobilization release interval (turns)",
+      "group": "mobilization",
+      "sweepable": true
+    },
+    {
+      "id": "green_mobilization_brigades_per_release",
+      "path": "scenario:green_mobilization.brigades_per_release",
+      "label": "ROC brigades released per interval",
+      "group": "mobilization",
+      "sweepable": true
     }
   ]
 }

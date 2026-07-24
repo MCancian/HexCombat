@@ -37,6 +37,10 @@ static func resolve_turn(state: GameStateData, dice: Dice = null) -> void:
 	resolve_sealift_turn(state)
 	resolve_antiship_turn(state, dice)
 	state.last_offload_summary = resolve_offload_turn(state, dice)
+	# ROC mobilization (plan 0029 Tier A2): Green's reinforcement step sits at the same seam as
+	# Red's (offload) and before movement, so arrivals are on the map for this turn's combat but only
+	# take orders next planning phase. Dice-free -> the golden stream is untouched.
+	state.last_mobilization_summary = resolve_mobilization_turn(state)
 
 	# disable_phases (plan 0012): a scenario/override can skip the ground WeGo phases wholesale so
 	# calibration sweeps run standard games while isolating the sea/IJFS phases. Buffered orders
@@ -140,6 +144,54 @@ static func resolve_offload_turn(state: GameStateData, dice: Dice) -> Dictionary
 	return manifest
 
 
+# --- ROC mobilization (plan 0029 Tier A2) — Green reinforcement phase ---------------------------
+
+## Release the Green brigades whose mobilization is complete onto the map. Runs immediately after
+## amphibious offload and before movement/commit: the two sides' reinforcement steps then sit at the
+## same seam, and a brigade that arrives during resolution first takes orders in the NEXT planning
+## phase — exactly like a Red brigade that just landed. Consumes no dice; a scenario with an empty
+## mobilization schedule (the default) leaves state and RNG untouched.
+static func resolve_mobilization_turn(state: GameStateData) -> MobilizationSummary:
+	var summary := MobilizationResolver.resolve(
+		state.mobilization_state, state.turn_number, GameData.brigades,
+		func(garrison_hex: String) -> String:
+			return MobilizationResolver.find_arrival_hex(
+				garrison_hex,
+				func(hex_id: String) -> Array: return GameData.get_neighbors(hex_id),
+				func(hex_id: String) -> bool: return hex_can_receive_mobilized(hex_id)))
+	if summary.arrivals.is_empty():
+		EventBus.mobilization_resolved.emit(summary.to_dict())
+		return summary
+
+	var arrived: Array = []
+	for arrival_value in summary.arrivals:
+		var arrival: Dictionary = arrival_value
+		var brigade_id := String(arrival["brigade_id"])
+		GameData.set_brigade_hex(brigade_id, String(arrival["hex_id"]))
+		arrived.append(GameData.get_brigade(brigade_id))
+	# A formation only becomes an IJFS maneuver target once it is on the island; append its
+	# per-battalion targets now (append-only, so every existing target keeps its position in the
+	# list and its detection continuity).
+	if state.ijfs_state != null:
+		IjfsResolver.add_maneuver_targets(state.ijfs_state, arrived, state._ijfs_day)
+	GameData.recompute_hex_ownership()
+	EventBus.mobilization_resolved.emit(summary.to_dict())
+	return summary
+
+
+## A mobilizing brigade may form up on a placed, passable hex that the enemy neither holds nor
+## contests. Enemy-held ground is not a mobilization site — taking it back is a counterattack
+## (plan 0029 Tier B), not a reinforcement.
+static func hex_can_receive_mobilized(hex_id: String) -> bool:
+	var hex_state: HexState = GameData.hex_states.get(hex_id, null)
+	if hex_state == null:
+		return false
+	if hex_state.owner == HexOwner.RED or hex_state.owner == HexOwner.CONTESTED:
+		return false
+	var terrain: TerrainType = GameData.get_terrain(hex_id)
+	return terrain != null and not terrain.impassable
+
+
 static func owner_by_hex() -> Dictionary:
 	var owners: Dictionary = {}
 	for hex_id in GameData.hex_states.keys():
@@ -221,7 +273,8 @@ static func ensure_antiship_systems(state: GameStateData) -> void:
 static func rebuild_ijfs_state(state: GameStateData) -> void:
 	# Anti-ship systems must exist first (their containers seed the per-(TO,type) IJFS targets).
 	ensure_antiship_systems(state)
-	state.ijfs_state = GameStateBuilder.build_ijfs_state(state.antiship_containers, GameData.brigades)
+	state.ijfs_state = GameStateBuilder.build_ijfs_state(
+		state.antiship_containers, GameData.brigades, GameData.mobilization_holdback)
 	state._ijfs_day = 0
 
 

@@ -23,6 +23,11 @@ var fleet: Dictionary = {}  # ship name (String) -> ShipState
 # each turn before the crossing. Null only before the first reset_to_scenario.
 var sealift_state: SealiftState = null
 var infrastructure_state: InfrastructureState = null
+# ROC mobilization phase-in (plan 0029 Tier A2): Green brigades still forming plus their release
+# schedule. Built at scenario load, drained by MobilizationResolver each turn between offload and
+# movement. Empty pending list (the default) => the phase is a no-op.
+var mobilization_state: MobilizationState = null
+var last_mobilization_summary: MobilizationSummary = null
 var jlsf_orders: Array[String] = []  # port/airbridge ids with a pending explicit deploy_jlsf order
 var pending_lost_at_sea: int = 0
 var supply_state: SupplyState

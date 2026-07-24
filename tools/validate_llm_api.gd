@@ -32,6 +32,7 @@ const REQUIRED_OBSERVATION_KEYS := [
 	"brigades",
 	"occupied_hexes",
 	"ship_reserve",
+	"mobilization",
 	"supply_state",
 	"infrastructure",
 	"ijfs",

@@ -38,6 +38,7 @@ Current axes:
 | `auto_jlsf` | `false`; `scenario_default` sets `true` | Auto-queue a JLSF deployment to every newly seized port/airbridge (`GameState._consume_jlsf_orders`); explicit `deploy_jlsf` Red orders work regardless |
 | `jlsf_lift_bn_equiv` | `4` | Abstract amphibious-lift cost of one JLSF deployment (`JlsfCargo` pseudo-BNs; attritable in the crossing) |
 | `disable_phases` | `[]` (allowlist: `movement`, `ground_combat` — `GameDataStore.DISABLEABLE_PHASES`) | Research bypass (plan 0012): `GameState.resolve_turn` skips the listed ground WeGo phases wholesale (buffered orders never execute; no dice consumed, so `[]` is byte-identical). No canned sweep sets it — they use the `noop` matchup instead — but it's override-reachable for fast what-if runs |
+| `green_mobilization` | `held_back_brigades` **0** (⇒ mechanic inert, golden byte-stable), `brigade_types` `["reserve"]`, `first_release_turn` 4, `release_interval_turns` 2, `brigades_per_release` 2 | ROC mobilization phase-in (plan 0029 Tier A2): holds eligible Green brigades off-map and releases them on schedule (`MobilizationStateBuilder`/`MobilizationResolver`). All four fields are `scenario:`-prefixed registry knobs (group `mobilization`). Unknown keys and an over-cap `held_back_brigades` fail loud. Detail: `docs/systems/roc-mobilization.md` |
 | `placements` | 4 ROC defenders with hex + `offset_bearing` | Initial placement |
 
 **Scenario variants are first-class** (user objective): a new variant = a new scenario JSON.

@@ -110,6 +110,12 @@ var last_frontline_summary: FrontlineSummary:
 var last_cleanup_summary: CleanupSummary:
 	get: return data.last_cleanup_summary
 	set(value): data.last_cleanup_summary = value
+var mobilization_state: MobilizationState:
+	get: return data.mobilization_state
+	set(value): data.mobilization_state = value
+var last_mobilization_summary: MobilizationSummary:
+	get: return data.last_mobilization_summary
+	set(value): data.last_mobilization_summary = value
 var game_over: bool:
 	get: return data.game_over
 	set(value): data.game_over = value
@@ -172,6 +178,8 @@ func reset_to_scenario() -> void:
 	data.last_sealift_sent_by_type = {}
 	data.last_frontline_summary = null
 	data.last_cleanup_summary = null
+	_rebuild_mobilization_state()
+	data.last_mobilization_summary = null
 	data.game_over = false
 	data.winner = ""
 	data._china_has_landed = false
@@ -305,6 +313,18 @@ func resolve_frontline_phase(polyline_coords: Array) -> Dictionary:
 	return TurnConductor.resolve_frontline_phase(data, polyline_coords)
 
 
+## Green brigades held in mobilization by the scenario, plus their release schedule (plan 0029
+## Tier A2). GameData.load_scenario already left them off-map; this only builds the schedule.
+func _rebuild_mobilization_state() -> void:
+	data.mobilization_state = GameStateBuilder.build_mobilization_state(
+		GameData.green_mobilization, GameData.mobilization_holdback)
+
+
+## Test-called surface (tests/mobilization_*) — pure logic lives in TurnConductor/MobilizationResolver.
+func resolve_mobilization_turn() -> MobilizationSummary:
+	return TurnConductor.resolve_mobilization_turn(data)
+
+
 func _rebuild_ship_reserve() -> void:
 	data.ship_reserve = GameStateBuilder.build_ship_reserve(GameData.red_ship_reserve, GameData.brigades)
 
@@ -371,6 +391,7 @@ func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> Tur
 	result.ijfs_writeback = data.last_ijfs_writeback.to_dict() if data.last_ijfs_writeback != null else {}
 	result.antiship_summary = data.last_antiship_summary.to_dict() if data.last_antiship_summary != null else {}
 	result.offload_summary = data.last_offload_summary.duplicate(true)
+	result.mobilization_summary = data.last_mobilization_summary.to_dict() if data.last_mobilization_summary != null else {}
 	result.frontline_summary = data.last_frontline_summary.to_dict() if data.last_frontline_summary != null else {}
 	result.cleanup_summary = data.last_cleanup_summary.to_dict() if data.last_cleanup_summary != null else {}
 	result.events = TurnEventLog.build(self)

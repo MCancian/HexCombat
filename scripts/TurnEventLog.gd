@@ -19,6 +19,12 @@ static func build(state: GameStateType) -> Array[TurnEvent]:
 		events.append(_event(seq, "antiship", "", "Green", state.last_antiship_summary.to_dict()))
 		seq += 1
 
+	# Only when brigades actually arrived (plan 0029 Tier A2): a scenario that holds nobody back
+	# must produce the same event log as the pre-mobilization engine.
+	if state.last_mobilization_summary != null and not state.last_mobilization_summary.arrivals.is_empty():
+		events.append(_event(seq, "mobilization", "", "Green", state.last_mobilization_summary.to_dict()))
+		seq += 1
+
 	for team in [Brigade.Team.RED, Brigade.Team.GREEN]:
 		for order in state.orders_for(team):
 			var mo: MoveOrder = order

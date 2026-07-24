@@ -140,6 +140,19 @@ static func sync_manpads_to_oob(ijfs_state: IjfsDailyState) -> void:
 		target.metadata["systems_remaining"] = mini(IjfsManpads.systems_remaining(target), cap)
 
 
+## Add "Maneuver Units" targets for brigades that have just come onto the map (plan 0029 Tier A2:
+## a mobilizing ROC brigade is not targetable until it forms up on the island). APPEND-ONLY — the
+## existing targets keep their list positions and their detection continuity (known_to_red /
+## last_detected_day), and sync_maneuver_targets_to_oob only ever destroys excess targets, so the
+## new rows survive it. Returns how many targets were added.
+static func add_maneuver_targets(ijfs_state: IjfsDailyState, brigades: Array, current_day: int) -> int:
+	if ijfs_state == null or brigades.is_empty():
+		return 0
+	var added := IjfsLoaders.build_maneuver_targets(brigades, maxi(1, current_day))
+	ijfs_state.targets.append_array(added)
+	return added.size()
+
+
 ## D4-H (2d follow-up): keep the live "Maneuver Units" IJFS target count in sync with the OOB
 ## each turn. For each (brigade_id, unit_type) group, if more targets are still alive than the
 ## brigade has battalions of that type, mark the excess `destroyed` (highest target_id first,

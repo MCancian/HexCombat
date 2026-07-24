@@ -72,6 +72,63 @@ regeneration/replacement rate (destroyed Green BNs reconstitute over turns — m
 without inventing units). Each is a small injection mechanic + a sweepable rate/size knob; (c) is the
 cleanest and most self-contained. **Surfaced to USER for the model + realistic numbers before building.**
 
+## Tier A2 — mobilization phase-in (USER call 2026-07-24: model **(b)**)
+
+USER chose **(b) phase in existing brigades**, and **deny-only** victory (no Green win arm — a
+successful defense reads as "no decision inside the horizon" plus the census curve, not a win rate).
+
+### Why (b) is more than a reshuffle
+
+The ROC OOB already contains the answer: **12 of the 32 brigades are `nato_type: "reserve"`**
+(BDE-911…943, 3 `Infantry Battalion (Reserve)` each = **36 of the 124 BNs, 29% of the force**).
+Modelling those as *mobilizing* rather than *fielded at H-hour* invents nothing — it corrects a
+laydown that currently assumes the entire reserve establishment is manned, equipped and standing on
+its garrison hex on D-Day.
+
+Total Green battalions are unchanged, so this is not free force. The lever is **exposure timing**:
+an off-map mobilizing brigade is not an IJFS target and not in the victory census. Held-back
+battalions sit out the front-loaded fires campaign (the CRBM/exquisite-intel warmup that does most
+of its damage in the opening turns) and arrive intact afterwards, into a fight the `roc_defense`
+policy then walks them toward. Green trades early census presence for late-arriving intact mass —
+the first thing in this model that bends the Green curve upward.
+
+### Mechanic
+
+A **mobilization phase** in `resolve_turn`, placed immediately after amphibious offload and before
+movement/commit — i.e. the Green reinforcement step sits at exactly the same seam as Red's
+(offload), and units that arrive in resolution get orders on the *next* planning phase, same as
+Red's landed brigades.
+
+- **Scenario block** `green_mobilization` (`held_back_brigades: 0` default ⇒ nothing held ⇒
+  byte-identical to today's laydown ⇒ golden safe):
+  `{held_back_brigades, brigade_types:["reserve"], first_release_turn, release_interval_turns,
+  brigades_per_release}`.
+- **Selection** — eligible = placed Green brigades whose `nato_type` is in `brigade_types`, in
+  `brigade_id` order; the first `held_back_brigades` of them start **off-map** (`hex_id == ""`,
+  the same "not present" state Red's at-sea brigades already use, so census / IJFS targeting /
+  legal-moves / observation all exclude them with no special-casing).
+- **Release** — from `first_release_turn`, every `release_interval_turns`, `brigades_per_release`
+  brigades arrive at their **real garrison hex** (the placement the scenario gave them). If that hex
+  is RED/CONTESTED at release, the brigade arrives at the nearest non-enemy passable hex (BFS,
+  id-sorted, bounded); if there is none it stays pending and retries next turn.
+- **IJFS coupling** — maneuver targets are built for **on-map** Green brigades only; a released
+  brigade's per-battalion targets are appended to the live IJFS state on arrival (append-only, so
+  existing targets' detection continuity and ordering are untouched).
+
+### Knobs (sweepable, `scenario:` prefix)
+
+`green_mobilization.held_back_brigades` (0…12), `.first_release_turn`, `.release_interval_turns`,
+`.brigades_per_release`. Default schedule: first release **turn 4**, **2 brigades every 2 turns** —
+12 brigades fielded by turn 14 (turn = 1 day), matching a reserve mobilization that starts reporting
+inside a week and produces formed units through D+14.
+
+### Verification / measurement
+
+GdUnit coverage for selection + release + displaced arrival; `tools/validate_mobilization.gd` as an
+e2e (hold all 12, assert census dips then rises and every brigade arrives); golden byte-stable at
+default 0. Then sweep `held_back_brigades` 0/4/8/12 with `roc_defense` in the Green seat and report
+the census curves.
+
 ## Objectives
 
 1. Tier A: reserve-mobilization pool and/or a repositioning Green policy; golden byte-stable when the

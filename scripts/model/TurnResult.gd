@@ -8,6 +8,7 @@ class_name TurnResult
 @export var ijfs_writeback: Dictionary = {}
 @export var antiship_summary: Dictionary = {}
 @export var offload_summary: Dictionary = {}
+@export var mobilization_summary: Dictionary = {}
 @export var frontline_summary: Dictionary = {}
 @export var cleanup_summary: Dictionary = {}
 @export var events: Array = []
@@ -30,6 +31,7 @@ func to_dict() -> Dictionary:
 		"ijfs_writeback": ijfs_writeback.duplicate(true),
 		"antiship_summary": antiship_summary.duplicate(true),
 		"offload_summary": offload_summary.duplicate(true),
+		"mobilization_summary": mobilization_summary.duplicate(true),
 		"frontline_summary": frontline_summary.duplicate(true),
 		"cleanup_summary": cleanup_summary.duplicate(true),
 		"events": events_out,

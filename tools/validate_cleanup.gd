@@ -30,7 +30,14 @@ const TARGET_HEX := GoldenScript.TARGET_HEX
 # battalions are now deleted from their brigade rosters, so a partially-landed brigade fights with
 # only its surviving BNs (was over-counting drowned "ghost" BNs in combat strength). The scripted
 # fight's contributors shift accordingly. Was "casualties=6, feba=0.34".
-const EXPECTED_COMBAT_FINGERPRINT := "casualties=7, feba=2.24"
+# Corrected 2026-07-24 (same day, plan 0029 gate run): that re-baseline was taken with NO scenario
+# selection, i.e. against scenario_default — but run_all_tests exports HEXCOMBAT_SCENARIO=
+# scenario_golden, so the pin never matched the gate and this validator was red on main. Re-measured
+# UNDER THE GATE'S SCENARIO (scenario_golden), which is the only environment this pin is asserted in
+# — the same trap already recorded for validate_golden_victory. Behaviour unchanged: the drowning fix
+# is exactly as shipped, only the pin's measurement environment is corrected.
+# Was (default-scenario, never gate-valid) "casualties=7, feba=2.24".
+const EXPECTED_COMBAT_FINGERPRINT := "casualties=5, feba=-0.72"
 
 var _failures: Array[String] = []
 var GameData: Node = null

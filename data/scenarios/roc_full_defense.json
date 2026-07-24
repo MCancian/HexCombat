@@ -6,6 +6,14 @@
   "feba_base_km": 3.5,
   "red_out_of_supply_effectiveness": 0.5,
   "stacking_soft_cap": 6,
+  "_green_mobilization_comment": "Plan 0029 Tier A2 — same block and semantics as scenario_default.json (held_back_brigades = 0 holds nobody back; raise it to phase the OOB's reserve infantry brigades in over the opening turns).",
+  "green_mobilization": {
+    "held_back_brigades": 0,
+    "brigade_types": ["reserve"],
+    "first_release_turn": 4,
+    "release_interval_turns": 2,
+    "brigades_per_release": 2
+  },
   "victory": {
     "_comment": "End-of-cleanup victory census of battalions ON TAIWAN. loss_check_arm: 'unconditional' (default) | 'after_first_landing' | 'after_turn:<N>'. taiwan_hexes: the 462-hex main island (largest connected component of data/taiwan_hex_grid.json; regenerate with tools/gen_main_island_hexes.py), excluding offshore Green/Orchid Island hexes so units there never count; guarded by tools/validate_victory_hexes.gd. null would count ALL placed hexes.",
     "loss_check_arm": "after_first_landing",

@@ -19,6 +19,28 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-24 — ROC gets a mobilization phase-in: model (b), phase in EXISTING brigades; no Green win arm.**
+  - **Who**: USER (force-structure call, plan 0029 Tier A2), asked with three models on the table
+    (new reserve OOB brigades / hold existing brigades back / battalion regeneration rate).
+  - **What**: a scenario may hold eligible Green brigades (default: the OOB's 12 `reserve` infantry
+    brigades, 36 of 124 BNs) off-map and release them on a schedule. Nothing is invented — the lever
+    is exposure timing, since off-map battalions are outside the census and outside IJFS targeting.
+    Victory stays PLA-decisive-or-nothing (USER: deny-only); a successful defense reads as "no
+    decision in the horizon" plus the census curve. Default `held_back_brigades: 0` ⇒ golden
+    byte-stable.
+  - **Pointers**: `docs/systems/roc-mobilization.md`; `docs/plans/0029-dynamic-roc-defense.md`
+    (Tier A2); knobs in `data/knobs/registry.json` group `mobilization`.
+
+- **2026-07-24 — validate_cleanup's golden pin was corrected: it had been re-baselined in the wrong scenario.**
+  - **Who**: Agent (Opus 5), found by the plan-0029 gate run.
+  - **What**: the same-day `bff4a1c` re-baseline (crossing-drowning roster fix) measured the
+    fingerprint with NO scenario selected (⇒ `scenario_default`), but `run_all_tests` exports
+    `HEXCOMBAT_SCENARIO=scenario_golden`, so the pin never matched the gate and `validate_cleanup`
+    was red on `main`. Re-measured under the gate's scenario: `casualties=5, feba=-0.72`. No
+    behaviour change — the drowning fix ships exactly as before; only the pin's measurement
+    environment is corrected. Same trap already recorded for `validate_golden_victory`.
+  - **Pointers**: `tools/validate_cleanup.gd` (comment block above `EXPECTED_COMBAT_FINGERPRINT`).
+
 - **2026-07-24 — 2-D map of the two interdiction levers (strikes × beach throttle × port); they are substitutes.**
   - **Who**: Agent (Opus 4.8), USER request (two heatmaps).
   - **What**: `off_island_offload_heat` sweep (7×7×2, 20 seeds, 1,960 games). PLA win % shows (1) beach
@@ -28,7 +50,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
     combat BNs in the scarce crossing/offload pipeline; +18 combat BNs on a traced flip seed, drownings
     equal), NOT sinking and NOT the census bug. The levers are substitutes. Added `mc_chart.py --heat` +
     `tools/make_heat_spec.py`.
-  - **Pointers**: `docs/plans/0028-...md` ("2-D map"); charts `docs/reports/assets/off_island_offload_heat.svg`
+  - **Pointers**: `docs/plans/0028-sustained-followon-interdiction.md` ("2-D map"); charts `docs/reports/assets/off_island_offload_heat.svg`
     (spec `.heat.json`).
 
 - **2026-07-24 — Q2 re-run on the fix: "Taipei port is a no-op" overturned; port aids the defender under interdiction.**

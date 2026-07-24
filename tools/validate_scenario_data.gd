@@ -18,6 +18,7 @@ const VALID_LOSS_CHECK_ARMS := ["unconditional", "after_first_landing"]  # + "af
 
 var _failures: Array[String] = []
 var _coord_set: Dictionary = {}  # Vector2i -> true, for land-neighbor counts
+var _brigade_nato_types: Dictionary = {}  # brigade_id -> nato_type (green_mobilization eligibility)
 
 
 func _initialize() -> void:
@@ -120,7 +121,48 @@ func _validate_scenario(path: String, scenario_data: Dictionary, brigade_teams: 
 		used_brigades[brigade_id] = true
 
 	_validate_victory(label, scenario_data, hex_coords)
+	_validate_green_mobilization(label, scenario_data, placements, brigade_teams)
 	print("%s: placements=%d red_ship_reserve=%d" % [label, placements.size(), reserve.size()])
+
+
+## ROC mobilization phase-in (plan 0029 Tier A2): the block must be well-formed, its knobs sane, and
+## held_back_brigades must not exceed the eligible pool — a scenario that silently holds back fewer
+## brigades than the researcher asked for would misreport every sweep cell above the cap.
+func _validate_green_mobilization(
+	label: String, scenario_data: Dictionary, placements: Array, brigade_teams: Dictionary
+) -> void:
+	var block_value: Variant = scenario_data.get("green_mobilization", null)
+	if block_value == null:
+		return
+	if not (block_value is Dictionary):
+		_fail("%s: green_mobilization block must be a Dictionary" % label)
+		return
+	var block: Dictionary = block_value
+	for key_value in block.keys():
+		var key := String(key_value)
+		if not key.begins_with("_") and not MobilizationStateBuilder.KNOWN_KEYS.has(key):
+			_fail("%s: unknown green_mobilization key: %s" % [label, key])
+	for positive_key in ["first_release_turn", "release_interval_turns", "brigades_per_release"]:
+		if block.has(positive_key) and int(block[positive_key]) < 1:
+			_fail("%s: green_mobilization %s must be >= 1" % [label, positive_key])
+
+	var types: Dictionary = {}
+	for type_value in block.get("brigade_types", MobilizationStateBuilder.DEFAULT_BRIGADE_TYPES):
+		types[String(type_value).to_lower()] = true
+	var eligible := 0
+	for placement_value in placements:
+		var placement: Dictionary = placement_value
+		var brigade_id := String(placement.get("brigade_id", ""))
+		if String(brigade_teams.get(brigade_id, "")) != "Green":
+			continue
+		if types.has(String(_brigade_nato_types.get(brigade_id, "")).to_lower()):
+			eligible += 1
+	var held_back := int(block.get(MobilizationStateBuilder.HELD_BACK_KEY, 0))
+	if held_back < 0:
+		_fail("%s: green_mobilization %s must be >= 0" % [label, MobilizationStateBuilder.HELD_BACK_KEY])
+	elif held_back > eligible:
+		_fail("%s: green_mobilization %s=%d exceeds the %d eligible placed brigades (types: %s)" % [
+			label, MobilizationStateBuilder.HELD_BACK_KEY, held_back, eligible, ", ".join(types.keys())])
 
 
 func _validate_victory(label: String, scenario_data: Dictionary, hex_coords: Dictionary) -> void:
@@ -257,6 +299,8 @@ func _read_beach_ids() -> Dictionary:
 	return ids
 
 
+## Also fills _brigade_nato_types (brigade_id -> nato_type), which the green_mobilization check needs
+## to size the eligible pool.
 func _build_brigade_team_lookup(oobs: Array[Dictionary]) -> Dictionary:
 	var lookup := {}
 	for data in oobs:
@@ -265,6 +309,7 @@ func _build_brigade_team_lookup(oobs: Array[Dictionary]) -> Dictionary:
 			var brigade_id := String(brigade.get("brigade_id", ""))
 			if not brigade_id.is_empty():
 				lookup[brigade_id] = String(brigade.get("team", ""))
+				_brigade_nato_types[brigade_id] = String(brigade.get("nato_type", ""))
 	return lookup
 
 

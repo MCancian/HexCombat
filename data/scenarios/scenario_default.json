@@ -23,6 +23,14 @@
     "loss_check_arm": "after_first_landing",
     "taiwan_hexes": null
   },
+  "_green_mobilization_comment": "Plan 0029 Tier A2 (USER call 2026-07-24, model (b)): a slice of the EXISTING ROC force starts off-map in mobilization instead of standing on its garrison hex at H-hour, and phases in over the opening turns — no invented force structure. held_back_brigades = 0 (default) holds nobody back and is byte-identical to the pre-0029 laydown; raise it (research knob, max = the eligible pool) to trade early census presence for battalions that sit out the front-loaded fires campaign. Eligible = placed Green brigades whose nato_type is in brigade_types (the OOB's 12 reserve infantry brigades), in brigade_id order; brigades_per_release of them arrive every release_interval_turns from first_release_turn. Turn = 1 day, so the default schedule fields all 12 by turn 14.",
+  "green_mobilization": {
+    "held_back_brigades": 0,
+    "brigade_types": ["reserve"],
+    "first_release_turn": 4,
+    "release_interval_turns": 2,
+    "brigades_per_release": 2
+  },
   "red_ship_reserve": [
     {
       "brigade_id": "PLA-71-2-Amphibious",

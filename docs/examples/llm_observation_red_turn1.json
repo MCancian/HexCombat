@@ -437,6 +437,7 @@
 		"last_contested_hexes": "Hex IDs that were contested in the most recently resolved turn.",
 		"legal_commits": "Authoritative adjacent support options by target hex and team.",
 		"legal_moves": "Authoritative target hex lists by brigade and movement mode.",
+		"mobilization": "ROC reserve formations not yet on the map: `pending` lists each brigade with the garrison hex it will form up on and the turn it is due; `arrived` logs those already released. Off-map brigades cannot be ordered, are not counted in the victory census, and cannot be struck.",
 		"organization": "0-100 readiness value affected by movement and combat.",
 		"turn_result": "Structured record of the turn just resolved (only populated when resolved=true): turn_number, contested_hexes, combat_summaries, phase summaries, and an ordered `events` log."
 	},
@@ -4376,6 +4377,12 @@
 			"Red",
 			"Green"
 		]
+	},
+	"mobilization": {
+		"arrived": [],
+		"pending": [],
+		"pending_battalions": 0,
+		"pending_brigades": 0
 	},
 	"objectives": [],
 	"occupied_hexes": [

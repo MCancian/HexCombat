@@ -111,6 +111,20 @@ returns + embark the crossing wave)** → anti-ship crossing → amphibious offl
   SEAD/strike squadrons island-wide, deteriorating via usage, bombardment, and TO ground losses
   (`IjfsManpads.gd`; spec in `docs/systems/ijfs.md` → "MANPADS layer"; surfaced as
   `ijfs_summary.manpads`).
+- **ROC mobilization phase-in (plan 0029 Tier A2, USER call 2026-07-24)** — a scenario may hold a
+  slice of the **existing** ROC force off-map "in mobilization" and phase it in over the opening
+  turns, instead of standing the whole OOB (including its 12 reserve infantry brigades, 36 of 124
+  BNs) on its garrison hexes at H-hour. Scenario block `green_mobilization`
+  (`held_back_brigades` — **0 by default, so nothing changes and golden stays byte-stable** —
+  `brigade_types`, `first_release_turn`, `release_interval_turns`, `brigades_per_release`; all four
+  are `scenario:`-prefixed registry knobs). Held brigades are `hex_id == ""`, the same not-present
+  state Red's at-sea brigades use, so the census, legal moves and IJFS targeting exclude them; on
+  release they arrive at their real garrison hex (or the nearest non-enemy passable hex, else defer)
+  and their maneuver targets are appended to the live IJFS state. The phase runs between amphibious
+  offload and movement — the same seam as Red's reinforcement — and consumes no dice. Total force is
+  unchanged; the lever is exposure timing (off-map battalions sit out the front-loaded fires
+  campaign). Coverage: `tools/validate_mobilization.gd` + `tests/mobilization_*_test.gd`.
+  Detail: `docs/systems/roc-mobilization.md`.
 - **D5 Front-line / cleanup** — `FrontLineService` (polyline → hex redistribution), cleanup phase.
 - **Victory conditions** — end-of-cleanup census of PLA vs ROC battalions *present* on Taiwan (landed
   only: a brigade's battalions still at sea in `ship_reserve` are excluded even after its first BN

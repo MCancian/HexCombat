@@ -61,6 +61,11 @@ var combat_attacker_advantage_ratio: float = 1.2
 var combat_defender_advantage_ratio: float = 0.85
 var default_combat_strength: float = 1.0
 var victory_config: Dictionary = {}  # scenario 'victory' block (loss_check_arm, taiwan_hexes)
+# ROC mobilization phase-in (plan 0029 Tier A2): the scenario 'green_mobilization' block, and the
+# brigades it holds off-map at load ([{brigade_id, garrison_hex}], release order). Empty for every
+# scenario that does not opt in — held_back_brigades defaults to 0, which is the pre-0029 laydown.
+var green_mobilization: Dictionary = {}
+var mobilization_holdback: Array = []
 # Research bypass (plan 0012): WeGo phases resolve_turn skips wholesale, so a calibration sweep
 # can run standard full games while isolating one phase's effect (e.g. IJFS maneuver attrition
 # with no ground fighting). Names must come from DISABLEABLE_PHASES — anything else fails loud at
@@ -300,6 +305,8 @@ func load_scenario(path: String) -> void:
 	default_combat_strength = float(scenario.get("default_combat_strength", 1.0))
 	var victory_value: Variant = scenario.get("victory", {})
 	victory_config = victory_value if victory_value is Dictionary else {}
+	var mobilization_value: Variant = scenario.get("green_mobilization", {})
+	green_mobilization = mobilization_value if mobilization_value is Dictionary else {}
 	red_ship_reserve = _parse_ship_reserve_entries(scenario.get("red_ship_reserve", []), "red_ship_reserve")
 	red_followon_reserve = _parse_ship_reserve_entries(scenario.get("red_followon_reserve", []), "red_followon_reserve")
 	# Opt-in ONLY: when true and no explicit red_followon_reserve is given, the mainland pool
@@ -313,6 +320,16 @@ func load_scenario(path: String) -> void:
 	jlsf_lift_bn_equiv = maxi(1, int(scenario.get("jlsf_lift_bn_equiv", 4)))
 	disabled_phases = _parse_disabled_phases(scenario.get("disable_phases", []))
 
+	# Plan 0029 Tier A2: brigades in mobilization are placed nowhere — their placement supplies the
+	# garrison hex they will arrive on, but they start off-map (hex_id ""), so the census, IJFS
+	# targeting and legal moves all treat them as not present until MobilizationResolver releases
+	# them. Empty for every scenario that does not opt in (held_back_brigades = 0).
+	mobilization_holdback = MobilizationStateBuilder.select_held_back(
+		green_mobilization, placements, brigades)
+	var held_back_ids: Dictionary = {}
+	for entry_value in mobilization_holdback:
+		held_back_ids[String((entry_value as Dictionary)["brigade_id"])] = true
+
 	var count := 0
 	for placement in placements:
 		var brigade_id := String(placement.get("brigade_id", ""))
@@ -325,11 +342,16 @@ func load_scenario(path: String) -> void:
 		if placement_team != brigade.team:
 			push_error("Scenario placement team mismatch for %s: placement=%s OOB=%s" % [brigade_id, String(placement.get("team", "")), Brigade.team_name(brigade.team)])
 
-		set_brigade_hex(brigade_id, String(placement.get("hex", "")))
 		brigade.entry_bearing = float(placement.get("offset_bearing", 0.0))
+		if held_back_ids.has(brigade_id):
+			remove_brigade_from_map(brigade_id)
+			continue
+
+		set_brigade_hex(brigade_id, String(placement.get("hex", "")))
 		count += 1
 
-	print_debug("Loaded scenario '%s': %d placements" % [scenario_name, count])
+	print_debug("Loaded scenario '%s': %d placements, %d brigades mobilizing" % [
+		scenario_name, count, mobilization_holdback.size()])
 
 
 # Validates + normalizes a ship-reserve-shaped scenario list (first echelon or follow-on pool) and

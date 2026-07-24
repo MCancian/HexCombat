@@ -29,6 +29,7 @@ static func observation(perspective_team: String = "") -> Dictionary:
 		"brigades": _brigade_observations(),
 		"occupied_hexes": _occupied_hex_observations(),
 		"ship_reserve": _ship_reserve_observations(),
+		"mobilization": _mobilization_observation(),
 		"supply_state": _supply_state_observation(),
 		"infrastructure": _infrastructure_observations(),
 		"ijfs": _ijfs_observation(),
@@ -111,6 +112,7 @@ static func field_glossary() -> Dictionary:
 		"battalions": "Current battalion count remaining in the brigade.",
 		"legal_moves": "Authoritative target hex lists by brigade and movement mode.",
 		"legal_commits": "Authoritative adjacent support options by target hex and team.",
+		"mobilization": "ROC reserve formations not yet on the map: `pending` lists each brigade with the garrison hex it will form up on and the turn it is due; `arrived` logs those already released. Off-map brigades cannot be ordered, are not counted in the victory census, and cannot be struck.",
 		"last_contested_hexes": "Hex IDs that were contested in the most recently resolved turn.",
 		"last_combat": "Combat summaries from the most recently resolved turn. Empty before any combat or if no contested hex produced combat.",
 		"turn_result": "Structured record of the turn just resolved (only populated when resolved=true): turn_number, contested_hexes, combat_summaries, phase summaries, and an ordered `events` log."
@@ -269,6 +271,31 @@ static func _ship_reserve_observations() -> Array:
 			"bns_remaining": (reserve_entry["bns"] as Array).size()
 		})
 	return result
+
+
+## ROC mobilization (plan 0029 Tier A2): the Green reinforcements still forming and when each is due.
+## Both seats see it — Red's IJFS planning is entitled to know an unmobilized reserve exists, and it
+## is a pure schedule (no hidden intent). All zeros/empty for scenarios that hold nobody back.
+static func _mobilization_observation() -> Dictionary:
+	var state: MobilizationState = _game_state().mobilization_state
+	if state == null:
+		return {"pending_brigades": 0, "pending_battalions": 0, "pending": [], "arrived": []}
+	var pending: Array = []
+	for entry_value in state.pending:
+		var entry: Dictionary = entry_value
+		var brigade: Brigade = _game_data().get_brigade(String(entry["brigade_id"]))
+		pending.append({
+			"brigade_id": String(entry["brigade_id"]),
+			"garrison_hex": String(entry["garrison_hex"]),
+			"release_turn": int(entry["release_turn"]),
+			"battalions": brigade.get_battalion_count() if brigade != null else 0,
+		})
+	return {
+		"pending_brigades": pending.size(),
+		"pending_battalions": state.pending_battalions(_game_data().brigades),
+		"pending": pending,
+		"arrived": state.released.duplicate(true),
+	}
 
 
 static func _supply_state_observation() -> Dictionary:
