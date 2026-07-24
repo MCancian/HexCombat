@@ -34,7 +34,8 @@ def main() -> int:
     p.add_argument("--out", required=True)
     args = p.parse_args()
 
-    manifest = json.load(open(os.path.join(args.sweep_dir, "sweep.json")))
+    with open(os.path.join(args.sweep_dir, "sweep.json")) as f:
+        manifest = json.load(f)
     x_knob, y_knob, cond_knob = manifest["knobs"]
     xs, ys, conds = manifest["grid"]
     if sorted(conds) != [False, True]:
@@ -43,7 +44,8 @@ def main() -> int:
     # (x, y, cond) -> win%.
     table: dict = {}
     for cell_file in glob.glob(os.path.join(args.sweep_dir, "cells", "*.json")):
-        cell = json.load(open(cell_file))
+        with open(cell_file) as f:
+            cell = json.load(f)
         ov = cell["overrides"]
         table[(ov[x_knob], ov[y_knob], ov[cond_knob])] = red_win_rate(cell)
 

@@ -126,7 +126,7 @@ def render_faceted(lines, manifest, cells, metric_fn):
         lines.append("")
         lines.append("### " + ", ".join("%s=%s" % (knob_leaf(k), fmt_value(v))
                                          for k, v in zip(facet_knobs, facet)))
-        render_2d_table(lines, manifest, cells, metric_fn, prefix=tuple(facet))
+        render_2d_table(lines, manifest, cells, metric_fn, prefix=facet)  # product() already yields a tuple
 
 
 def render_markdown(manifest, cells, out_path):

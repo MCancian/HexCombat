@@ -193,6 +193,8 @@ def sensitivity_panel(sens: dict) -> list[str]:
     y_hi = ((max(ys) // 10) + 1) * 10
 
     def mx(v):
+        if x_hi == x_lo:  # a single grid point — pin it to the plot centre instead of dividing by 0
+            return (plot_l + plot_r) / 2
         return plot_l + (v - x_lo) / (x_hi - x_lo) * (plot_r - plot_l)
 
     def my(v):
@@ -243,6 +245,8 @@ def build_crossing_svg(sens: dict) -> str:
     baseline = sens.get("baseline", x_hi)
 
     def mx(v):
+        if x_hi == x_lo:  # a single grid point — pin it to the plot centre instead of dividing by 0
+            return (plot_l + plot_r) / 2
         return plot_l + (v - x_lo) / (x_hi - x_lo) * (plot_r - plot_l)
 
     def my(rate):  # rate in [0,1]
@@ -317,6 +321,8 @@ def build_flip_svg(spec: dict) -> str:
     plot_l, plot_r, plot_t, plot_b = 66, 566, 100, 296
 
     def mx(v):
+        if x_hi == x_lo:  # a single grid point — pin it to the plot centre instead of dividing by 0
+            return (plot_l + plot_r) / 2
         return plot_l + (v - x_lo) / (x_hi - x_lo) * (plot_r - plot_l)
 
     def my(rate):  # rate in [0,1]
@@ -324,7 +330,7 @@ def build_flip_svg(spec: dict) -> str:
 
     parts: list[str] = []
     parts.append(text(60, 34, spec["title"], 20, INK, "700", "start", "Outfit"))
-    parts.append(text(60, 58, spec["subtitle"], 12, MUTED))
+    parts.append(text(60, 58, spec.get("subtitle", ""), 12, MUTED))
 
     # Y gridlines 0/50/100%.
     parts += win_rate_gridlines(plot_l, plot_r, my)
@@ -384,11 +390,17 @@ def _lerp(a, b, t):
     return tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(3))
 
 
+def _hex(rgb) -> str:
+    """An (r, g, b) tuple → an "#rrggbb" string. The HEAT_* poles are tuples so they can be
+    interpolated; anywhere they're used as an SVG colour they must go through this."""
+    return "#%02x%02x%02x" % rgb
+
+
 def heat_color(pct: float) -> str:
     """Diverging blue↔red about the 50% coin-flip; returns an #rrggbb string."""
     t = (pct - 50.0) / 50.0  # [-1, 1]
     rgb = _lerp(HEAT_MID, HEAT_PLA, t) if t >= 0 else _lerp(HEAT_MID, HEAT_ROC, -t)
-    return "#%02x%02x%02x" % rgb
+    return _hex(rgb)
 
 
 def _luma(rgb):
@@ -449,9 +461,9 @@ def build_heat_svg(spec: dict) -> str:
         pct = i / (steps - 1) * 100.0
         parts.append('<rect x="%.1f" y="%s" width="%.1f" height="12" fill="%s"/>'
                      % (bx0 + i / steps * bw, by, bw / steps + 0.6, heat_color(pct)))
-    parts.append(text(bx0, by + 30, "ROC holds (0%)", 10.5, HEAT_ROC, "600", "start"))
+    parts.append(text(bx0, by + 30, "ROC holds (0%)", 10.5, _hex(HEAT_ROC), "600", "start"))
     parts.append(text(bx0 + bw / 2, by + 30, "50% coin-flip", 10.5, MUTED, "600", "middle"))
-    parts.append(text(bx0 + bw, by + 30, "PLA wins (100%)", 10.5, HEAT_PLA, "600", "end"))
+    parts.append(text(bx0 + bw, by + 30, "PLA wins (100%)", 10.5, _hex(HEAT_PLA), "600", "end"))
     foot = spec.get("footnote", "")
     if foot:
         parts.append(text(bx0 + bw / 2, height - 6, foot, 10, FAINT, "400", "middle"))

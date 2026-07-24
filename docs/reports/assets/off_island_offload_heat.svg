@@ -263,8 +263,8 @@
   <rect x="618.7" y="422" width="15.7" height="12" fill="#5199f3"/>
   <rect x="633.8" y="422" width="15.7" height="12" fill="#509bf9"/>
   <rect x="648.9" y="422" width="15.7" height="12" fill="#4f9dff"/>
-  <text x="60" y="452" font-family="Inter, sans-serif" font-size="10.5" font-weight="600" fill="(255, 107, 107)" text-anchor="start">ROC holds (0%)</text>
+  <text x="60" y="452" font-family="Inter, sans-serif" font-size="10.5" font-weight="600" fill="#ff6b6b" text-anchor="start">ROC holds (0%)</text>
   <text x="362.0" y="452" font-family="Inter, sans-serif" font-size="10.5" font-weight="600" fill="#94a3b8" text-anchor="middle">50% coin-flip</text>
-  <text x="664" y="452" font-family="Inter, sans-serif" font-size="10.5" font-weight="600" fill="(79, 157, 255)" text-anchor="end">PLA wins (100%)</text>
+  <text x="664" y="452" font-family="Inter, sans-serif" font-size="10.5" font-weight="600" fill="#4f9dff" text-anchor="end">PLA wins (100%)</text>
   <text x="362.0" y="470" font-family="Inter, sans-serif" font-size="10" font-weight="400" fill="#64748b" text-anchor="middle">20 seeds/cell · 98 cells · undecided (30-turn cap) counts as non-PLA-win · commit 0d2a57a</text>
 </svg>
