@@ -24,10 +24,11 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   so a sweep on either silently reports false robustness:
   - `combat_defender_advantage_ratio` / `combat_attacker_advantage_ratio` — recorded but never reach
     `CombatResolver`. Either wire them into the combat math or drop them from `data/knobs/registry.json`.
-  - `offload_operational_port_rate` — port throughput is the `OffloadRates.OPERATIONAL_PORT` GDScript
-    constant, not loaded from `offload_rates.json`, so it's not DataOverrides-sweepable (now marked
-    `sweepable:false`). To make it a real lever, load `offload_rates.json` through `GameData._read_json`
-    (routes through DataOverrides) and have `InfrastructureResolver` read the loaded rate. Same applies
-    to the other `OffloadRates` constants (beach base uses `beaches.json:offload_rate` and already works).
+  - `offload_operational_port_rate` — **now owned by plan 0031 (Objective 0, USER 2026-07-24)**: port
+    throughput is the `OffloadRates.OPERATIONAL_PORT` GDScript constant, not loaded from
+    `offload_rates.json`, so it's not DataOverrides-sweepable (now marked `sweepable:false`). To make
+    it a real lever, load `offload_rates.json` through `GameData._read_json` (routes through
+    DataOverrides) and have `InfrastructureResolver` read the loaded rate. Same applies to the other
+    `OffloadRates` constants (beach base uses `beaches.json:offload_rate` and already works).
   - Consider a gate check that fails when a `sweepable:true` registry knob's override doesn't actually
     apply (would have caught the phantom `offload_beach_base_rate` path).

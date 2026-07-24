@@ -49,10 +49,10 @@ online is the contest.
   sub-state; `InfrastructureResolver.tick` already gates repair on `jlsf == ARRIVED` and Red-held.
   Add a continuous `capacity` field to the port node; drive throughput off it in
   `red_offload_nodes` instead of the discrete `OPERATIONAL_PORT/DEGRADED_PORT` branch.
-- **Prerequisite (open backlog item):** `offload_operational_port_rate` is a hardcoded
-  `OffloadRates.OPERATIONAL_PORT` constant, NOT loaded through `DataOverrides`, so port throughput is
-  not currently tunable/sweepable. Wire `offload_rates.json` through `GameData._read_json` first
-  (BACKLOG "Inert knob-registry entries") so `max_port_rate` is a real knob.
+- **Step 0 of this plan (absorbed from BACKLOG, USER 2026-07-24):** `offload_operational_port_rate`
+  is a hardcoded `OffloadRates.OPERATIONAL_PORT` constant, NOT loaded through `DataOverrides`, so port
+  throughput is not tunable/sweepable. First wire `offload_rates.json` through `GameData._read_json`
+  so `max_port_rate` is a real knob; then build the continuous capacity on top.
 - HIMARS: a ROC on-island launcher type fed into the existing IJFS target pool so it is
   detectable/attritable; its surviving count each turn scales the on-island suppression.
 
@@ -68,27 +68,33 @@ online is the contest.
 
 ## Objectives
 
-1. Continuous port `capacity` state + JLSF-driven repair + throughput read; default start 0 %;
-   golden byte-stable when the new suppression inputs are all zero and repair reproduces today's
-   behavior (**this is the load-bearing byte-stability check — pin it before adding suppression**).
+0. **Prereq (absorbed from BACKLOG):** load `offload_rates.json` through `GameData._read_json` /
+   `DataOverrides` so `max_port_rate` is a real, sweepable knob (today it is a hardcoded constant).
+1. Continuous port `capacity` state + JLSF-driven repair + throughput read (throughput =
+   `capacity × max_port_rate`). **Default start 0 % (USER 2026-07-24)** — a captured port delivers
+   nothing until repaired. This is a deliberate behavior change from today's free auto-repair, so the
+   golden is **re-baselined** (see Verification), NOT held byte-stable.
 2. Off-island fires knob + HIMARS-on-island suppression (HIMARS in the IJFS target pool).
 3. Sweep: off-island fires × HIMARS × JLSF-repair → does the port stay suppressed below the
-   culmination throughput? Deck-ready chart (`mc_chart.py --flip`/`--heat`).
+   culmination throughput? Deck-ready chart (`mc_chart.py --flip`/`--heat`); refresh deck slides 6/7
+   for the new baseline.
 
 ## Verification
 
-- Golden byte-stable at defaults that reproduce current port behavior (see objective 1 caveat —
-  default 0 % start is a *behavior change* from today's auto-repair, so this needs a deliberate
-  golden re-baseline OR a compatibility flag defaulting to today's behavior; **USER call on which**).
+- **Deliberate golden re-baseline (USER 2026-07-24):** 0 %-start is the default, so the captured-port
+  outcome changes and `validate_golden_victory` is re-baselined under the new behavior (per
+  `hexcombat-change-control`'s re-baseline rules); the 200-seed baseline distribution and deck slides
+  6/7 are refreshed to match. **No compatibility flag** — today's free auto-repair is retired.
 - GdUnit for the capacity tick (repair up, fires down, clamp, HIMARS attrition feeding suppression).
 - A sweep produces a sensitivity crossing on port throughput / PLA win rate.
 
 ## Dependencies / notes
 
 - Depends on [[0030-jlsf-first-class-cohort]] for legible JLSF flow (repair is JLSF-driven).
-- Prereq: the `offload_operational_port_rate` DataOverrides wiring (BACKLOG).
+- The `offload_operational_port_rate` DataOverrides wiring is Objective 0 of this plan (absorbed from
+  BACKLOG, USER 2026-07-24).
 - Operationalizes the decisive lever from [[0028-sustained-followon-interdiction]]; pairs with the
   defender-reservoir thread in [[0029-dynamic-roc-defense]] (both are ROC ways to plateau the PLA).
-- ⚠️ Default 0 % start throughput changes the baseline outcome vs today (the port currently comes
-  online for free) — expect a golden re-baseline and a shift in the 200-seed baseline distribution;
-  coordinate with the deck (slide 6/7) after.
+- Default 0 % start throughput changes the baseline outcome vs today (the port currently comes online
+  for free); the golden re-baseline + 200-seed/deck-slide-6-7 refresh is the **accepted plan**
+  (USER 2026-07-24), not an open risk.
