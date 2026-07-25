@@ -41,18 +41,15 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   - Consider a gate check that fails when a `sweepable:true` registry knob's override doesn't actually
     apply (would have caught the phantom `offload_beach_base_rate` path).
 
-- **Air insertion balance dial (plan 0032 follow-up, needs a USER call).** The measured air path is
-  close to free: attrition is `0.75 × effective_ad_health`, and the IJFS warmup has already driven AD
-  health to ~0.24 by turn 1 and ~0.12 by turn 4, so a typical drop loses ~9% and the
-  permanent-airframe brake never engages. Red goes 83% → 97% against the strongest measured defence,
-  and lift quantity saturates (3 BN/turn ≈ 14 BN/turn), so the cap is NOT the lever. If the corps
-  should be a gamble rather than a sure thing the candidates are: raise `max_attrition_at_full_ad`,
-  decouple insertion attrition from AD health so the sky is never fully clear, or gate drops on
-  something scarcer than airframes. Evidence: `docs/reports/2026-07-24-airborne-insertion-sweep.md`.
+- [x] **Air insertion balance dial (plan 0032 follow-up)** — **answered by the USER 2026-07-25**:
+  double the baseline attrition coefficient and gate drops on a sortie cadence (~1 sortie per 2
+  days). Now owned by plan `docs/plans/0036-airborne-cost-and-cadence.md`. Evidence that motivated
+  it: `docs/reports/2026-07-24-airborne-insertion-sweep.md`.
 - **The 2 PLAA air assault brigades are unmodelled (plan 0032).** The USER's source gives the PLAA 15
   aviation brigades, two of them air assault (6 transport + up to 3 infantry BN each); the OOB has 13,
   none air assault. Today only the Airborne Corps' own 130th feeds the rotary-wing lift cap. Adding
-  them is an OOB change plus a `nato_type` retag — decide add-2 vs convert-2 with the USER first.
+  them is an OOB change plus a `nato_type` retag — add-2 vs convert-2 was put to the USER 2026-07-25
+  and the call was **leave unmodelled for now**; re-ask before touching the OOB.
 - **Order-kind dispatch lives in three places.** `GameState._apply_order`, `LLMGameAPI.apply_agent_response`
   and `schemas/llm_action_response.schema.json` each enumerate the order kinds independently. Adding
   `air_insert` (plan 0032) meant editing all three, and the duplication had already rotted: `deploy_jlsf`
