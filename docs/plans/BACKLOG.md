@@ -53,9 +53,18 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   aviation brigades, two of them air assault (6 transport + up to 3 infantry BN each); the OOB has 13,
   none air assault. Today only the Airborne Corps' own 130th feeds the rotary-wing lift cap. Adding
   them is an OOB change plus a `nato_type` retag — decide add-2 vs convert-2 with the USER first.
-- **`DataOverrides` fails silently when the overrides file is unreadable.** An `--overrides` path
-  outside the project directory cannot be read by the flatpak Godot sandbox; `_load_map` push_errors
-  and then returns `{}`, and because the map is empty `DataOverrides.unapplied()` is also empty, so
-  `run_selfplay_game.gd`'s fail-loud check passes. The result is a batch that looks correct and
-  silently ran unoverridden (hit during the plan-0032 study). Cheapest fix: have `run_batch.py` stage
-  the overrides file into the batch directory (inside the repo) before launching.
+- **Order-kind dispatch lives in three places.** `GameState._apply_order`, `LLMGameAPI.apply_agent_response`
+  and `schemas/llm_action_response.schema.json` each enumerate the order kinds independently. Adding
+  `air_insert` (plan 0032) meant editing all three, and the duplication had already rotted: `deploy_jlsf`
+  was missing from the schema until 2026-07-24. Give the kinds one home and derive the dispatch (or at
+  minimum add a gate check that every dispatch arm has a schema variant and vice versa).
+- **`UnitStats.FALLBACK_CATEGORY_DEFS` reachability is unknown.** 90 entries, and NO composition entry in
+  either OOB declares a `category` — the table is reachable only through `_fallback_category_for_type`'s
+  type-name heuristics. Plan 0032 anchored two new airborne strengths on entries that were dead until
+  then. Instrument `_fallback_category_for_type` over both OOBs, list the keys actually hit, and delete
+  or document the rest. Do NOT delete on inspection alone; the matching is indirect.
+- **`CombatResolver` assumes attacker=Red / defender=Green.** `resolve_at` hardcodes it — the two
+  defender-side `inject_supply_effectiveness` calls were no-ops for exactly this reason and were removed
+  2026-07-24, leaving a comment. If Green ever counterattacks (plan 0029 Tier B), supply injection and
+  anything else keyed on side must be driven by each side's actual team, not its role. Ported combat
+  semantics, so a USER-aware change, not a refactor.
