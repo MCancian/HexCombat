@@ -28,7 +28,6 @@ plan to act, the closeout wasn't done.
 | 0029 | [Dynamic ROC defense](0029-dynamic-roc-defense.md) | Medium (research; Tier A policy cheap, Tier B counterattack deep — blocked on 0003 + USER call) | Tier A done (A1 repositioning + A2 mobilization phase-in shipped & measured: Red 100%→83.3%); Tier B still gated |
 | 0030 | [JLSF first-class cohort (legibility)](0030-jlsf-first-class-cohort.md) | Low (refactor; byte-stable observability — enables 0031) | Sketch |
 | 0031 | [Graduated port suppression](0031-graduated-port-suppression.md) | Medium (new mechanic; ROC-only, continuous port capacity, 0%-start default w/ deliberate golden re-baseline + deck refresh, JLSF repair vs off-island fires + IJFS-attritable HIMARS; DataOverrides wiring absorbed as step 0 — design calls settled) | Sketch |
-| 0032 | [Airborne / air-assault insertion](0032-airborne-insertion.md) | Medium (new mechanic; PLA crossing-bypass, per-turn caps 2 air-assault / 7 airborne, contested-hex attrition erodes lift — design calls settled) | Sketch |
 
 | 0016 | [Separate State Data from Autoload](0016-separate-state-data.md) | Medium (hygiene/architecture) | Superseded by 0014 |
 | 0022 | [Red reactive beach-opening (feasibility first)](0022-red-beach-switching.md) | Medium (research; new mechanic, gated on a feasibility spike) | Sketch |
@@ -37,6 +36,7 @@ plan to act, the closeout wasn't done.
 
 | # | Plan | Status |
 |---|------|--------|
+| 0032 | [Airborne / air-assault insertion](../archive/0032-airborne-insertion.md) | ✅ Shipped 2026-07-24 — the plan's premise was false (945 PLA BNs, zero airborne), so this ALSO built the PLAAF Airborne Corps: 6 brigades / 50 BNs in the OOB. Air insertion phase + `air_insert` order + AD-health-keyed attrition with permanent airframe loss + supply isolation until a corridor reaches the drop; `red_airborne` scenario, `air_assault` policy, 5 knobs. Golden byte-stable; `scenario_default` untouched. Measured: Red 83%→97% against the plan-0029 mobilizing defender, median decision 21→11 turns, but lift saturates at 3 BN/turn — balance call open, see `docs/reports/2026-07-24-airborne-insertion-sweep.md`. |
 | 0023 | [Presentation visuals for headless LLM-vs-LLM games](../archive/0023-track-d-orchestration.md) | ✅ Shipped 2026-07-23 — P1 front-view largest-cluster framing (+ `test_clustering.mjs`), P2 canonical `ship_stats` bundle home (gate-guarded by `validate_make_game_bundle.py`) + map crossing annotation, P3 projector header + legend. Reframed presentation-first, swarm dropped; live-facilitator work split to 0024–0026, ocean-spanning pager to 0027. Visual log in `docs/reports/2026-07-23-plan-0023-visual-log.md`. |
 | 0013 | [One home for scenario files](../archive/0013-scenario-files-one-home.md) | ✅ Shipped 2026-07-22 — `scenario_default.json` and `scenario_golden.json` moved to `data/scenarios/`. `ScenarioCatalog` updated. |
 | 0021 | [Garrison draw policy + draw_fraction knob](../archive/0021-garrison-draw-policy.md) | ✅ Shipped 2026-07-21 — `garrison_draw` deterministic policy + `garrison_draw_fraction` knob added to registry. Evaluated via unit tests and batch sweep vs `inland_clear`. |

@@ -1,0 +1,25 @@
+{
+  "_comment": "Plan 0032 objective 3: how much airborne lift does it take to route around the crossing? Sweeps the per-turn airborne battalion cap (0 = the mechanic present but grounded, 7 = the USER-dialled default, 14 = double). Held against the ONE configuration where the defender is not already losing every game: 12 ROC reserve brigades in mobilization (plan 0029's strongest defender-side lever, which takes Red to 83.3%). Green is roc_defense, Red is air_assault (selfplay_default's ground play plus the airborne doctrine), so cell 0 is the no-lift reference and every rise is attributable to the air path alone.",
+  "sweep_name": "airborne_lift",
+  "scenario": "red_airborne",
+  "matchup": "air_assault:roc_defense",
+  "turns": 30,
+  "knobs": [
+    "data/scenarios/red_airborne.json:red_air_insertion.airborne_cap_per_turn",
+    "data/scenarios/red_airborne.json:green_mobilization.held_back_brigades"
+  ],
+  "grid": [
+    [0, 3, 7, 14],
+    [12]
+  ],
+  "seeds": [
+    20260624, 20260625, 20260626, 20260627, 20260628, 20260629,
+    20260630, 20260631, 20260632, 20260633, 20260634, 20260635,
+    20260636, 20260637, 20260638, 20260639, 20260640, 20260641,
+    20260642, 20260643, 20260644, 20260645, 20260646, 20260647,
+    20260648, 20260649, 20260650, 20260651, 20260652, 20260653
+  ],
+  "metrics": [
+    "red_win_rate"
+  ]
+}

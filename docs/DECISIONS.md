@@ -19,6 +19,27 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-24 — Red gets an air path onto Taiwan, and the PLAAF Airborne Corps gets built to fly it.**
+  - **Who**: USER (force structure + attrition model, plan 0032), after the agent found the plan's
+    premise was false: the OOB had 945 PLA battalions and **zero** airborne. USER supplied the corps'
+    real composition and split it 3 light airborne / 2 mechanized airborne / 1 air assault, leaving
+    brigade numbering to the agent (130th takes air assault on the 2024 Taiwan pub; which two are
+    mechanized is a modelling choice, flagged as unsourced).
+  - **What**: 6 brigades / 50 BNs appended to the OOB, flown onto any passable hex under a per-turn
+    cap per lift class. USER calls: attrition keyed on Taiwan's air defence (intact = 75% of the
+    packet, ~15% typical after the 3-day warmup — which the linear `0.75 × effective_ad_health`
+    reproduces without a fudge, since measured post-warmup AD health is 0.244); MANPADS hits the
+    rotary-wing lift on top; cap loss is **permanent**; dropped BNs are **out of supply** until
+    connected to the beach; drops are a real order in the contract, not a scenario script. Absent
+    scenario block ⇒ inert ⇒ golden byte-stable.
+  - **Pointers**: `docs/systems/air-insertion.md`; `docs/archive/0032-airborne-insertion.md`; knobs in
+    `data/knobs/registry.json` group `air_insertion` (registry version 1 → 2).
+  - **Measured** (30 seeds/cell): against the plan-0029 mobilizing defender that had held Red to
+    83%, the air path restores Red to 97% and halves median decision (21 → 11 turns). Lift quantity
+    saturates — 3 BN/turn ≈ 14 BN/turn. The permanent-airframe brake barely engages because the IJFS
+    warmup clears the sky before Red wants to drop.
+    `docs/reports/2026-07-24-airborne-insertion-sweep.md`.
+
 - **2026-07-24 — ROC gets a mobilization phase-in: model (b), phase in EXISTING brigades; no Green win arm.**
   - **Who**: USER (force-structure call, plan 0029 Tier A2), asked with three models on the table
     (new reserve OOB brigades / hold existing brigades back / battalion regeneration rate).

@@ -1,6 +1,6 @@
 ---
 title: "0032: Airborne / air-assault insertion — a non-amphibious path that bypasses the crossing"
-status: "Sketch"
+status: "Shipped 2026-07-24"
 created: "2026-07-24"
 ---
 
@@ -76,3 +76,24 @@ mechanic, not the units.
 - The PLA counterpart to the ROC-side [[0029-dynamic-roc-defense]] and port-throttle
   [[0031-graduated-port-suppression]] — a PLA lever to route *around* the contested crossing rather
   than force more through it.
+
+---
+
+## Closeout (shipped 2026-07-24)
+
+**Shipped**: the PLAAF Airborne Corps in the OOB (6 brigades / 50 BNs — the plan's premise that the
+units already existed was false), the air insertion phase, the `air_insert` order, supply isolation
+for landed brigades, the `red_airborne` scenario, the `air_assault` policy, and five registry knobs.
+Golden byte-stable throughout; `scenario_default` deliberately untouched.
+
+**Facts landed in**: `docs/systems/air-insertion.md` (the module),
+`docs/reports/2026-07-24-airborne-insertion-sweep.md` (the measurement), `docs/STATUS.md` (the
+bullet), `docs/DECISIONS.md` (the USER calls), `tools/validate_air_insertion.gd` (the PASS line).
+
+**Objectives 1 and 2 met; objective 3 answered — and the answer raises a balance question.** The air
+path takes Red from 83% to 97% against the strongest measured defence and halves time to decision,
+but lift quantity saturates (3 BN/turn ≈ 14) because the IJFS warmup clears the sky before Red wants
+to drop, so a typical packet loses only ~9% and the permanent-airframe brake never really engages.
+Whether an almost-free corps is the intended design is a USER call; the report lists the levers.
+Also still open: the 2 PLAA air assault brigades (the OOB has 13 aviation brigades against the 15
+the source gives), and a deep-drop doctrine that accepts isolation is untested.

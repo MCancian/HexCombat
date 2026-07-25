@@ -40,3 +40,22 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
     `OffloadRates` constants (beach base uses `beaches.json:offload_rate` and already works).
   - Consider a gate check that fails when a `sweepable:true` registry knob's override doesn't actually
     apply (would have caught the phantom `offload_beach_base_rate` path).
+
+- **Air insertion balance dial (plan 0032 follow-up, needs a USER call).** The measured air path is
+  close to free: attrition is `0.75 × effective_ad_health`, and the IJFS warmup has already driven AD
+  health to ~0.24 by turn 1 and ~0.12 by turn 4, so a typical drop loses ~9% and the
+  permanent-airframe brake never engages. Red goes 83% → 97% against the strongest measured defence,
+  and lift quantity saturates (3 BN/turn ≈ 14 BN/turn), so the cap is NOT the lever. If the corps
+  should be a gamble rather than a sure thing the candidates are: raise `max_attrition_at_full_ad`,
+  decouple insertion attrition from AD health so the sky is never fully clear, or gate drops on
+  something scarcer than airframes. Evidence: `docs/reports/2026-07-24-airborne-insertion-sweep.md`.
+- **The 2 PLAA air assault brigades are unmodelled (plan 0032).** The USER's source gives the PLAA 15
+  aviation brigades, two of them air assault (6 transport + up to 3 infantry BN each); the OOB has 13,
+  none air assault. Today only the Airborne Corps' own 130th feeds the rotary-wing lift cap. Adding
+  them is an OOB change plus a `nato_type` retag — decide add-2 vs convert-2 with the USER first.
+- **`DataOverrides` fails silently when the overrides file is unreadable.** An `--overrides` path
+  outside the project directory cannot be read by the flatpak Godot sandbox; `_load_map` push_errors
+  and then returns `{}`, and because the map is empty `DataOverrides.unapplied()` is also empty, so
+  `run_selfplay_game.gd`'s fail-loud check passes. The result is a batch that looks correct and
+  silently ran unoverridden (hit during the plan-0032 study). Cheapest fix: have `run_batch.py` stage
+  the overrides file into the batch directory (inside the repo) before launching.
