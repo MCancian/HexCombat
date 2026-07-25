@@ -70,7 +70,17 @@ Otherwise `{game_over: false}`.
 - `"after_turn:N"` — armed when `turn_number > N`.
 
 **Census caveat — `taiwan_hexes: null` (line 885):**
-`_taiwan_battalion_census()` counts the *present* (landed) battalions of brigades with a non-empty `hex_id`. The scenario config hook `taiwan_hexes` can restrict to a hex-id array, but defaults to `null` (= every placed hex counts). This is correct for the main-island-only scenario because offshore islands cannot be distinguished until terrain/land classification data exists. Brigades still wholly at sea (`hex_id == ""`) are excluded, so China reads 0 until it lands — AND for a partially-landed brigade (its `hex_id` is set once the first BN lands) the battalions still waiting on ships (tracked in `ship_reserve`) are subtracted, so neither at-sea nor lost-at-sea BNs inflate China's count.
+`_taiwan_battalion_census()` counts the *present* (landed) battalions of brigades with a non-empty `hex_id`. The scenario config hook `taiwan_hexes` can restrict to a hex-id array, but defaults to `null` (= every placed hex counts). This is correct for the main-island-only scenario because offshore islands cannot be distinguished until terrain/land classification data exists. Brigades still wholly at sea (`hex_id == ""`) are excluded, so China reads 0 until it lands.
+
+**Not-ashore pools (plan 0034).** A brigade's `hex_id` is set the moment its FIRST battalion lands, so the census must subtract every battalion of it that is still off-map. There are three such pools and `GameStateData.pending_battalion_pools()` is the **only** enumeration of them — `CleanupResolver.census` takes that list and `PendingBattalions.by_brigade` sums it:
+
+| Pool | Meaning |
+|---|---|
+| `GameStateData.ship_reserve` | at sea — crossing, or waiting to offload |
+| `SealiftState.mainland_pool` | still on the mainland, waiting for a hull |
+| `AirInsertionState.pool` | waiting to fly (plan 0032) |
+
+A pool missing from that list is counted as ashore, inventing battalions for its side. `mainland_pool` is in the list because `SealiftResolver._embark_followon` packs battalions into whatever hulls are ready and so drains an entry **partially** — a brigade can be ashore with battalions still on the mainland. That case was live and uncaught until 2026-07-25: a 20-turn `scenario_default` game inflated Red's census by up to 8 battalions (turn 20 read 57 when 49 were ashore). **Add new off-map pools to `pending_battalion_pools()`, not to a census signature.**
 
 **`game_over` / `winner` propagation:**
 - `GameState.gd` lines 67–68 hold the live state; `resolve_cleanup_phase` (lines 866–867) sets them.

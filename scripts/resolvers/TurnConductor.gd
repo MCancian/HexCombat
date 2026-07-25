@@ -511,8 +511,8 @@ static func resolve_cleanup_phase(state: GameStateData) -> Dictionary:
 	# Pure work (flag reset, victory census + verdict, activity latch) lives in CleanupResolver;
 	# consumes no dice, so the golden RNG stream is unaffected.
 	var outcome := CleanupResolver.resolve(
-		state.antiship_systems, GameData.brigades, state.ship_reserve, GameData.victory_config,
-		state.turn_number, state._china_has_landed, air_insertion_pool(state))
+		state.antiship_systems, GameData.brigades, state.pending_battalion_pools(),
+		GameData.victory_config, state.turn_number, state._china_has_landed)
 	state._china_has_landed = bool(outcome["china_has_landed"])
 	state.last_cleanup_summary = outcome["summary"]
 	state.game_over = state.last_cleanup_summary.game_over
@@ -523,13 +523,7 @@ static func resolve_cleanup_phase(state: GameStateData) -> Dictionary:
 
 static func taiwan_battalion_census(state: GameStateData) -> Dictionary:
 	return CleanupResolver.census(
-		GameData.brigades, state.ship_reserve, GameData.victory_config, air_insertion_pool(state))
-
-
-## Battalions still waiting to fly, in the census's {brigade_id, bns} entry shape. Empty when no
-## scenario opted into air insertion.
-static func air_insertion_pool(state: GameStateData) -> Array:
-	return state.air_insertion_state.pool if state.air_insertion_state != null else []
+		GameData.brigades, state.pending_battalion_pools(), GameData.victory_config)
 
 
 # --- D5-A Frontline phase — redistribute Red brigades along a drawn polyline -------------------

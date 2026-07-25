@@ -70,3 +70,22 @@ var last_cleanup_summary: CleanupSummary = null
 var game_over: bool = false
 var winner: String = ""
 var _china_has_landed: bool = false  # latch for the "after_first_landing" loss-check arm
+
+
+## Every pool of battalions that belong to a brigade but are NOT ashore on Taiwan, in the shared
+## {brigade_id, …, bns: […]} entry shape (plan 0034). The victory census subtracts all of them from
+## each brigade's composition, because a brigade counts as present the moment its FIRST battalion
+## lands while the rest is still in a pool.
+##
+## ADD NEW OFF-MAP POOLS HERE — this list is the only enumeration of them. A pool missing from it is
+## silently counted as ashore, which credits its side with battalions that do not exist: the
+## ghost-landing failure family (2026-07-24, commit bff4a1c), and the reason `mainland_pool` is in
+## this list — SealiftResolver drains it partially, so a brigade can be ashore with battalions still
+## waiting for a hull on the mainland.
+func pending_battalion_pools() -> Array:
+	var pools: Array = [ship_reserve]
+	if sealift_state != null:
+		pools.append(sealift_state.mainland_pool)
+	if air_insertion_state != null:
+		pools.append(air_insertion_state.pool)
+	return pools

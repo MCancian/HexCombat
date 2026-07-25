@@ -21,16 +21,14 @@ static func build(red_ship_reserve: Array, brigades: Dictionary) -> Array:
 			continue
 
 		var bns: Array = []
-		var battalion_index := 1
-		for battalion in brigade.composition:
-			var typed_battalion: Battalion = battalion
-			var type_slug := typed_battalion.type.to_lower().replace(" ", "_")
-			for _qty_index in range(typed_battalion.qty):
-				bns.append({
-					"id": "%s-%s-%d" % [brigade_id, type_slug, battalion_index],
-					"type": typed_battalion.type
-				})
-				battalion_index += 1
+		for instance_value in PendingBattalions.instances(brigade):
+			var instance: Dictionary = instance_value
+			var battalion_type := String(instance["type"])
+			var type_slug := battalion_type.to_lower().replace(" ", "_")
+			bns.append({
+				"id": "%s-%s-%d" % [brigade_id, type_slug, int(instance["index"])],
+				"type": battalion_type
+			})
 
 		reserve.append({
 			"brigade_id": brigade_id,

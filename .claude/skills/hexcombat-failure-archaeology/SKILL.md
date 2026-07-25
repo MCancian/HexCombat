@@ -9,6 +9,27 @@ Settled battles. Primary sources: `docs/DECISIONS.md` (+ pre-2026-07-10 history 
 `docs/archive/PLAN.md` → Decisions) and `docs/RETROSPECTIVES.md`
 (lessons, dated entries). Newest lessons get APPENDED here when they close an investigation.
 
+### Mainland pool counted as ashore — the ghost-landing family, second instance (2026-07-25)
+- **Symptom:** none visible. No gate phase, validator or test was watching; the full gate ran ALL
+  PHASES GREEN both before and after the fix. Found only because plan 0034 went looking.
+- **Root cause:** `CleanupResolver.census` subtracted `ship_reserve` and the air pool but **not**
+  `SealiftState.mainland_pool`. `SealiftResolver._embark_followon` packs BNs into whatever hulls are
+  ready and so drains a pool entry **partially** (`kept`/`moved`) — a brigade lands, `hex_id` is set,
+  and its still-on-the-mainland battalions are counted as on Taiwan.
+- **Evidence:** 20-turn `scenario_default`, seed 20260624, `selfplay_default` both seats: 5 phantom
+  BNs from turn 6 (`PLA-71-71-Air-Defense`), 8 by turn 19 (`PLA-72-10-Light-Mechanized`). Red's
+  turn-20 census 57 → 49 after the fix; Green identical throughout (only Red has a follow-on pool).
+- **Investigation trap worth remembering:** the first probe reported a clean zero and nearly closed
+  the question. It read `action["kind"]` where policy actions use `"type"`, so it passed NO orders
+  and ran empty-orders self-play — the window only opens once Red actually fights. **A probe that
+  finds nothing must first prove it reproduces the ordinary case.**
+- **Status:** fixed (plan 0034). `GameStateData.pending_battalion_pools()` is now the sole
+  enumeration of off-map pools and `census` takes that list, so the next pool joins by being added
+  there. Golden untouched (`scenario_golden` has no follow-on pool). Detail: `docs/DECISIONS.md`
+  2026-07-25, `docs/systems/frontline-cleanup-victory.md` → "Not-ashore pools".
+- **Live consequence:** every study measured on the `scenario_default` census before 2026-07-25
+  over-states Red.
+
 ### Ghost-landing: drowned crossing BNs counted as ashore (2026-07-24)
 - **Symptom:** at high off-island anti-ship fire, the T1 crossing wave was ~annihilated (81 BNs,
   78 lost at sea, ~3 survive) yet the census reported 16 PLA battalions on Taiwan; delivery

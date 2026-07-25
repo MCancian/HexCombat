@@ -19,6 +19,24 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-25 — One home for "battalions not ashore"; it uncovered a live census over-count.**
+  - **Who**: agent (plan 0034, a refactor the USER queued). The bug was not the plan's premise — the
+    plan called the missing-pool failure hypothetical; a probe found it happening.
+  - **What**: `GameStateData.pending_battalion_pools()` is now the sole enumeration of the three
+    off-map pools and `CleanupResolver.census` takes that list (`PendingBattalions.by_brigade` sums
+    it; `.instances` de-dupes the two manifest builders, both id conventions kept verbatim).
+    `SealiftState.mainland_pool` was never subtracted, and `SealiftResolver._embark_followon` drains
+    entries **partially**, so a brigade ashore with battalions still awaiting a hull had those
+    battalions counted as on Taiwan — always in Red's favour. Measured on `scenario_default`
+    (seed 20260624, `selfplay_default` both seats): Red's turn-20 census 57 → **49**, Green unchanged.
+  - **Gate**: ALL PHASES GREEN with **no pin moved** — no validator was watching this, which is the
+    real finding. `scenario_golden` has no follow-on pool, so the golden was never exposed.
+  - **Pointers**: `docs/systems/frontline-cleanup-victory.md` → "Not-ashore pools";
+    `docs/archive/0034-pending-battalion-pools.md`; `tests/victory_present_census_test.gd`.
+  - **Open**: published studies built on the `scenario_default` census (the 100%-Red Monte Carlo
+    distribution, plan 0029's 83.3%, plan 0032's 97%) were all measured with the inflated count. The
+    correction weakens Red. Re-running them is a USER call on compute, not a technical one.
+
 - **2026-07-24 — Red gets an air path onto Taiwan, and the PLAAF Airborne Corps gets built to fly it.**
   - **Who**: USER (force structure + attrition model, plan 0032), after the agent found the plan's
     premise was false: the OOB had 945 PLA battalions and **zero** airborne. USER supplied the corps'

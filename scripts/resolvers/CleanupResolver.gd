@@ -17,11 +17,12 @@ extends RefCounted
 ## partially-arrived brigade's battalions that have not made it ashore yet are subtracted, so they
 ## don't inflate China's count.
 ##
-## There are two ways to be a battalion of an on-map brigade that is not itself on the map: still
-## on a ship (ship_reserve) and still waiting to fly (AirInsertionState.pool, plan 0032). Both use
-## the same {brigade_id, bns} entry shape, so both are walked here by one path.
+## `pending_pools` is every off-map battalion pool, in the shared {brigade_id, bns} entry shape —
+## assemble it with GameStateData.pending_battalion_pools(), the one place that knows the full list.
+## Passing a partial list here is the ghost-landing failure mode: the omitted pool's battalions get
+## counted as ashore (plan 0034).
 static func census(
-	brigades: Dictionary, ship_reserve: Array, victory_config: Dictionary, air_pool: Array = []
+	brigades: Dictionary, pending_pools: Array, victory_config: Dictionary
 ) -> Dictionary:
 	var counted: Variant = victory_config.get("taiwan_hexes", null)
 	var use_filter := counted is Array
@@ -29,13 +30,7 @@ static func census(
 	if use_filter:
 		for h in counted:
 			hex_filter[String(h)] = true
-	var not_ashore_by_brigade: Dictionary = {}
-	for pending_pool in [ship_reserve, air_pool]:
-		for entry_value in pending_pool:
-			var entry: Dictionary = entry_value
-			var pending_brigade_id := String(entry["brigade_id"])
-			not_ashore_by_brigade[pending_brigade_id] = int(
-				not_ashore_by_brigade.get(pending_brigade_id, 0)) + (entry["bns"] as Array).size()
+	var not_ashore_by_brigade := PendingBattalions.by_brigade(pending_pools)
 
 	var red := 0
 	var green := 0
@@ -60,11 +55,10 @@ static func census(
 static func resolve(
 	antiship_systems: Array,
 	brigades: Dictionary,
-	ship_reserve: Array,
+	pending_pools: Array,
 	victory_config: Dictionary,
 	turn_number: int,
 	china_has_landed_before: bool,
-	air_pool: Array = [],
 ) -> Dictionary:
 	var reset_count := 0
 	for system_value in antiship_systems:
@@ -79,7 +73,7 @@ static func resolve(
 	# equivalent (AntishipSystem has no moved/unavailable split; quantity is recomputed each turn).
 	# Brigade per-turn flags are reset in begin_next_turn, so cleanup does not duplicate them.
 
-	var census_counts := census(brigades, ship_reserve, victory_config, air_pool)
+	var census_counts := census(brigades, pending_pools, victory_config)
 	var china_has_landed := china_has_landed_before or int(census_counts[Brigade.TEAM_KEY_RED]) > 0
 	var arm := String(victory_config.get("loss_check_arm", "unconditional"))
 	var verdict := VictoryConditions.evaluate(

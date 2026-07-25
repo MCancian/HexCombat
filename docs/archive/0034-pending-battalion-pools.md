@@ -1,8 +1,18 @@
 ---
 title: "0034: One home for 'battalions not yet ashore'"
-status: "Sketch"
+status: "Shipped"
 created: "2026-07-24"
+closed: "2026-07-25"
 ---
+
+> **CLOSED 2026-07-25.** Shipped as designed, but NOT as a pure refactor: the "a pool the census does
+> not know about" failure the plan called hypothetical was already live — `SealiftState.mainland_pool`
+> was never subtracted, inflating Red's `scenario_default` census by up to 8 battalions.
+> Durable facts: `docs/systems/frontline-cleanup-victory.md` → "Not-ashore pools", `docs/STATUS.md`
+> → Victory conditions, `docs/DECISIONS.md` 2026-07-25. Enforcement landed as
+> `GameStateData.pending_battalion_pools()` (the pools live on that value object) rather than as a
+> registry inside `PendingBattalions` — `TurnConductor` was at its dependency ceiling, and the object
+> that owns the fields is the right home for enumerating them.
 
 # Plan 0034: One home for pending-battalion pools
 

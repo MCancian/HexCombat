@@ -46,6 +46,40 @@ func test_partially_landed_brigade_counts_only_landed_bns() -> void:
 	assert_int(after_red - baseline_red).is_less(total)
 
 
+func test_brigade_ashore_with_battalions_still_on_the_mainland() -> void:
+	# Plan 0034: SealiftResolver._embark_followon drains mainland_pool entries PARTIALLY (it packs
+	# BNs into whatever hulls are ready), so a brigade can be ashore while battalions of it are
+	# still on the mainland waiting for lift. Those must not count as "on Taiwan" — before the
+	# PendingBattalions consolidation the census walked ship_reserve + the air pool only, and a
+	# 20-turn scenario_default game inflated Red's census by up to 8 battalions this way.
+	var entry := _red_reserve_entry()
+	var brigade_id := String(entry["brigade_id"])
+	var brigade: Brigade = GameData.get_brigade(brigade_id)
+	var reserve_bns: Array = entry["bns"]
+	var stranded := int(reserve_bns.size() / 2)
+	assert_int(stranded).is_greater(0)
+
+	var baseline_red := int(GameState._taiwan_battalion_census()["red"])
+
+	# Land the brigade, but move half its battalions into the mainland pool instead of ashore.
+	GameData.set_brigade_hex(brigade_id, String(entry["beach_hex"]))
+	var stranded_bns: Array = []
+	for i in range(stranded):
+		stranded_bns.append(reserve_bns[i])
+	entry["bns"] = []
+	assert_object(GameState.sealift_state).is_not_null()
+	GameState.sealift_state.mainland_pool.append({
+		"brigade_id": brigade_id,
+		"locked_beach": int(entry["locked_beach"]),
+		"beach_hex": String(entry["beach_hex"]),
+		"offset_bearing": float(entry["offset_bearing"]),
+		"bns": stranded_bns,
+	})
+
+	var after_red := int(GameState._taiwan_battalion_census()["red"])
+	assert_int(after_red - baseline_red).is_equal(brigade.get_battalion_count() - stranded)
+
+
 func test_fully_landed_brigade_counts_full_composition() -> void:
 	var entry := _red_reserve_entry()
 	var brigade_id := String(entry["brigade_id"])

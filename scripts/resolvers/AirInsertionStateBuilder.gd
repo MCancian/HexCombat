@@ -81,12 +81,12 @@ static func build(config: Dictionary, brigades: Dictionary) -> AirInsertionState
 ## observation can walk an air pool entry and a ship_reserve entry with one code path.
 static func battalion_manifest(brigade: Brigade) -> Array:
 	var manifest: Array = []
-	var index := 0
-	for battalion_value in brigade.composition:
-		var battalion: Battalion = battalion_value
-		for _qty_index in range(battalion.qty):
-			index += 1
-			manifest.append({"id": "%s-AIR-%d" % [brigade.id, index], "type": battalion.type})
+	for instance_value in PendingBattalions.instances(brigade):
+		var instance: Dictionary = instance_value
+		manifest.append({
+			"id": "%s-AIR-%d" % [brigade.id, int(instance["index"])],
+			"type": String(instance["type"]),
+		})
 	return manifest
 
 
