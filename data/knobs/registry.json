@@ -1,6 +1,6 @@
 {
   "description": "Canonical registry of research knobs (plan 0018). Every game record dumps the resolved value of these via KnobRegistry.resolve_all, so any two records \u2014 from any sweep \u2014 sit in a common knob-space and are comparable. Adding a knob is a deliberate one-line entry here. Each 'path' is a file prefix + a JsonPath: prefix 'scenario:' resolves against the ACTIVE scenario file (variants work), '<data/rel/file.json>:' is a literal file; the dot-path/array grammar after ':' is JsonPath's (scripts/JsonPath.gd header is the canonical spec \u2014 'name[*]'/'name[]' = every array element, 'name[N]' = one). 'kind' replaces 'path' for values not in a data file (llm_model from env, prompt_hash from the sidecar). 'sweepable': true = overridable via DataOverrides (scalars AND array knobs, e.g. sweep beaches[*].capacity_battalions to scale every beach at once); false = dump-only. DISTINCT from scenario content \u2014 see hexcombat-config-and-knobs.",
-  "version": 1,
+  "version": 2,
   "knobs": [
     {
       "id": "red_dos_start",
@@ -89,14 +89,14 @@
     {
       "id": "off_island_submarine_strikes",
       "path": "data/antiship/antiship_crossing_config.json:off_island_strike.shooters[0].systems_per_turn",
-      "label": "Off-island submarine (Harpoon_Sub_II) launchers firing on the crossing per turn — sustained interdiction independent of on-island IJFS suppression (plan 0028). Compresses the PLA margin + drowns more fleet but does not flip alone (offload rate is the binding constraint).",
+      "label": "Off-island submarine (Harpoon_Sub_II) launchers firing on the crossing per turn \u2014 sustained interdiction independent of on-island IJFS suppression (plan 0028). Compresses the PLA margin + drowns more fleet but does not flip alone (offload rate is the binding constraint).",
       "group": "antiship",
       "sweepable": true
     },
     {
       "id": "off_island_air_strikes",
       "path": "data/antiship/antiship_crossing_config.json:off_island_strike.shooters[1].systems_per_turn",
-      "label": "Off-island air (Harpoon_Air_II / SLAM-ER) launchers firing on the crossing per turn — sustained interdiction independent of on-island IJFS suppression (plan 0028).",
+      "label": "Off-island air (Harpoon_Air_II / SLAM-ER) launchers firing on the crossing per turn \u2014 sustained interdiction independent of on-island IJFS suppression (plan 0028).",
       "group": "antiship",
       "sweepable": true
     },
@@ -357,6 +357,41 @@
       "path": "scenario:green_mobilization.brigades_per_release",
       "label": "ROC brigades released per interval",
       "group": "mobilization",
+      "sweepable": true
+    },
+    {
+      "id": "air_insertion_airborne_cap",
+      "path": "scenario:red_air_insertion.airborne_cap_per_turn",
+      "label": "Airborne battalions liftable per turn",
+      "group": "air_insertion",
+      "sweepable": true
+    },
+    {
+      "id": "air_insertion_air_assault_cap",
+      "path": "scenario:red_air_insertion.air_assault_cap_per_turn",
+      "label": "Air assault battalions liftable per turn",
+      "group": "air_insertion",
+      "sweepable": true
+    },
+    {
+      "id": "air_insertion_first_turn",
+      "path": "scenario:red_air_insertion.first_turn",
+      "label": "First turn air insertion is permitted",
+      "group": "air_insertion",
+      "sweepable": true
+    },
+    {
+      "id": "air_insertion_max_attrition_at_full_ad",
+      "path": "scenario:red_air_insertion.max_attrition_at_full_ad",
+      "label": "Insertion losses vs intact Taiwan air defence",
+      "group": "air_insertion",
+      "sweepable": true
+    },
+    {
+      "id": "air_insertion_manpads_max_attrition",
+      "path": "scenario:red_air_insertion.manpads_max_attrition",
+      "label": "Extra rotary-wing losses at full MANPADS threat",
+      "group": "air_insertion",
       "sweepable": true
     }
   ]

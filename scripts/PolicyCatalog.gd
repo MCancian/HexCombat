@@ -19,6 +19,8 @@ static func create(policy_id: String) -> Object:
 			return GarrisonDrawPolicy.new()
 		"roc_defense":
 			return RocDefensePolicy.new()
+		"air_assault":
+			return AirAssaultPolicy.new()
 		"noop":
 			return NoopPolicy.new()
 		"llm_local":
@@ -37,4 +39,7 @@ static func create_for_seat(policy_id: String, seat: String, log_path: String = 
 
 
 static func known_ids() -> Array[String]:
-	return ["selfplay_default", "inland_clear", "noop", "llm_local", "garrison_draw", "roc_defense"]
+	return [
+		"selfplay_default", "inland_clear", "noop", "llm_local", "garrison_draw", "roc_defense",
+		"air_assault",
+	]

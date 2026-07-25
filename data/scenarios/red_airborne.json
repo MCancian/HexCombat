@@ -1,0 +1,257 @@
+{
+  "name": "Taiwan Invasion - PLAAF Airborne Insertion",
+  "description": "scenario_default plus the plan-0032 air path: the PLAAF Airborne Corps flies onto the island under a per-turn lift cap instead of queueing for a hull. Everything else is the research default, so a batch against scenario_default isolates the air path.",
+  "turn_length_days": 1,
+  "red_dos_start": 100,
+  "feba_base_km": 3.5,
+  "red_out_of_supply_effectiveness": 0.5,
+  "unscreened_support_strength": 0.5,
+  "maneuver_casualty_weight": 4.0,
+  "support_casualty_weight": 1.0,
+  "stacking_soft_cap": 6,
+  "_followon_comment": "auto_seed_followon_pool opts this scenario into the deep mainland pool: with no explicit red_followon_reserve, the pool auto-seeds from the OOB (every RED brigade not in red_ship_reserve), round-robin across the first-wave beaches. Sustained sealift is gated by amphibious lift capacity + the return cycle, not by pool size. scenario_golden omits this flag and stays a one-shot assault.",
+  "auto_seed_followon_pool": true,
+  "amphibious_return_time_turns": 3,
+  "_offload_weights_comment": "use_offload_weight_matrix applies data/offload_weights.json (per-type transport weight x bn_class/ship_category multipliers) to day-N offload costs. scenario_golden omits this flag and keeps the flat TONS_PER_BN cost.",
+  "use_offload_weight_matrix": true,
+  "_jlsf_comment": "auto_jlsf: every newly seized port/airbridge auto-queues a JLSF logistics deployment (jlsf_lift_bn_equiv BN-equiv of amphibious lift, attritable in the crossing) that repairs it seized->degraded->operational. Explicit deploy_jlsf orders work regardless of this flag.",
+  "auto_jlsf": true,
+  "_disable_phases_comment": "Research bypass (plan 0012): phases resolve_turn skips (allowed: movement, ground_combat). Empty = full turn; sweep overrides set it (e.g. CRBM maneuver isolation).",
+  "disable_phases": [],
+  "victory": {
+    "_comment": "End-of-cleanup victory census of battalions ON TAIWAN. loss_check_arm: 'unconditional' (default) | 'after_first_landing' | 'after_turn:<N>'. taiwan_hexes: null counts ALL placed hexes (correct for this main-island scenario; offshore islands can't be distinguished until terrain/land data exists — see PLAN.md Victory conditions); set to a hex-id array to restrict the census.",
+    "loss_check_arm": "after_first_landing",
+    "taiwan_hexes": null
+  },
+  "_green_mobilization_comment": "Plan 0029 Tier A2 (USER call 2026-07-24, model (b)): a slice of the EXISTING ROC force starts off-map in mobilization instead of standing on its garrison hex at H-hour, and phases in over the opening turns — no invented force structure. held_back_brigades = 0 (default) holds nobody back and is byte-identical to the pre-0029 laydown; raise it (research knob, max = the eligible pool) to trade early census presence for battalions that sit out the front-loaded fires campaign. Eligible = placed Green brigades whose nato_type is in brigade_types (the OOB's 12 reserve infantry brigades), in brigade_id order; brigades_per_release of them arrive every release_interval_turns from first_release_turn. Turn = 1 day, so the default schedule fields all 12 by turn 14.",
+  "green_mobilization": {
+    "held_back_brigades": 0,
+    "brigade_types": [
+      "reserve"
+    ],
+    "first_release_turn": 4,
+    "release_interval_turns": 2,
+    "brigades_per_release": 2
+  },
+  "red_air_insertion": {
+    "_comment": "Air insertion (plan 0032). Caps are battalions per turn per lift class, USER-dialled 2026-07-24. Attrition = max_attrition_at_full_ad x Taiwan's effective_ad_health, plus manpads_max_attrition x the MANPADS threat fraction for rotary-wing lift. Every battalion lost also destroys one battalion of lift, permanently.",
+    "enabled": true,
+    "airborne_cap_per_turn": 7,
+    "air_assault_cap_per_turn": 2,
+    "first_turn": 1,
+    "max_attrition_at_full_ad": 0.75,
+    "manpads_max_attrition": 0.25
+  },
+  "red_ship_reserve": [
+    {
+      "brigade_id": "PLA-71-2-Amphibious",
+      "locked_beach": 1,
+      "beach_hex": "hex_44_16",
+      "offset_bearing": 315
+    },
+    {
+      "brigade_id": "PLA-72-5-Amphibious",
+      "locked_beach": 2,
+      "beach_hex": "hex_44_15",
+      "offset_bearing": 0
+    },
+    {
+      "brigade_id": "PLA-73-14-Amphibious",
+      "locked_beach": 3,
+      "beach_hex": "hex_43_14",
+      "offset_bearing": 0
+    },
+    {
+      "brigade_id": "PLA-74-1-Amphibious",
+      "locked_beach": 4,
+      "beach_hex": "hex_43_13",
+      "offset_bearing": 270
+    }
+  ],
+  "placements": [
+    {
+      "brigade_id": "BDE-21",
+      "team": "Green",
+      "hex": "hex_44_17"
+    },
+    {
+      "brigade_id": "BDE-234",
+      "team": "Green",
+      "hex": "hex_31_8"
+    },
+    {
+      "brigade_id": "BDE-269",
+      "team": "Green",
+      "hex": "hex_42_15"
+    },
+    {
+      "brigade_id": "BDE-333",
+      "team": "Green",
+      "hex": "hex_11_5"
+    },
+    {
+      "brigade_id": "BDE-43",
+      "team": "Green",
+      "hex": "hex_12_7"
+    },
+    {
+      "brigade_id": "BDE-542",
+      "team": "Green",
+      "hex": "hex_40_12"
+    },
+    {
+      "brigade_id": "BDE-564",
+      "team": "Green",
+      "hex": "hex_16_3"
+    },
+    {
+      "brigade_id": "BDE-58",
+      "team": "Green",
+      "hex": "hex_32_8"
+    },
+    {
+      "brigade_id": "BDE-584",
+      "team": "Green",
+      "hex": "hex_43_14"
+    },
+    {
+      "brigade_id": "BDE-586",
+      "team": "Green",
+      "hex": "hex_30_7"
+    },
+    {
+      "brigade_id": "BDE-601",
+      "team": "Green",
+      "hex": "hex_40_14"
+    },
+    {
+      "brigade_id": "BDE-602",
+      "team": "Green",
+      "hex": "hex_32_9"
+    },
+    {
+      "brigade_id": "BDE-621",
+      "team": "Green",
+      "hex": "hex_43_17"
+    },
+    {
+      "brigade_id": "BDE-66",
+      "team": "Green",
+      "hex": "hex_12_5"
+    },
+    {
+      "brigade_id": "BDE-77",
+      "team": "Green",
+      "hex": "hex_13_4"
+    },
+    {
+      "brigade_id": "BDE-862",
+      "team": "Green",
+      "hex": "hex_40_15"
+    },
+    {
+      "brigade_id": "BDE-911",
+      "team": "Green",
+      "hex": "hex_44_20"
+    },
+    {
+      "brigade_id": "BDE-912",
+      "team": "Green",
+      "hex": "hex_42_17"
+    },
+    {
+      "brigade_id": "BDE-913",
+      "team": "Green",
+      "hex": "hex_41_16"
+    },
+    {
+      "brigade_id": "BDE-914",
+      "team": "Green",
+      "hex": "hex_39_11"
+    },
+    {
+      "brigade_id": "BDE-921",
+      "team": "Green",
+      "hex": "hex_31_7"
+    },
+    {
+      "brigade_id": "BDE-922",
+      "team": "Green",
+      "hex": "hex_30_8"
+    },
+    {
+      "brigade_id": "BDE-923",
+      "team": "Green",
+      "hex": "hex_28_9"
+    },
+    {
+      "brigade_id": "BDE-924",
+      "team": "Green",
+      "hex": "hex_25_7"
+    },
+    {
+      "brigade_id": "BDE-931",
+      "team": "Green",
+      "hex": "hex_13_6"
+    },
+    {
+      "brigade_id": "BDE-941",
+      "team": "Green",
+      "hex": "hex_39_19"
+    },
+    {
+      "brigade_id": "BDE-942",
+      "team": "Green",
+      "hex": "hex_29_18"
+    },
+    {
+      "brigade_id": "BDE-943",
+      "team": "Green",
+      "hex": "hex_13_13"
+    },
+    {
+      "brigade_id": "BDE-99",
+      "team": "Green",
+      "hex": "hex_13_5"
+    },
+    {
+      "brigade_id": "BDE-GDU",
+      "team": "Green",
+      "hex": "hex_44_16"
+    },
+    {
+      "brigade_id": "BDE-HD",
+      "team": "Green",
+      "hex": "hex_28_18"
+    },
+    {
+      "brigade_id": "BDE-LY",
+      "team": "Green",
+      "hex": "hex_38_20"
+    }
+  ],
+  "_combat_comment": "support_multipliers, base loss rates, ratio slopes, FEBA shift, and default strength are all configurable combat parameters.",
+  "support_multipliers": {
+    "artillery": 0.8,
+    "rocket_artillery": 1.2,
+    "cas": 1.4,
+    "crbm": 0.6,
+    "rotary_wing": 1.3
+  },
+  "combat_base_loss_rate": 0.2,
+  "combat_attacker_ratio_slope": 0.08,
+  "combat_defender_ratio_slope": 0.1,
+  "combat_loss_roll_midpoint": 50.0,
+  "combat_loss_roll_scale": 1000.0,
+  "combat_min_loss_rate": 0.05,
+  "combat_max_attacker_loss_rate": 0.45,
+  "combat_max_defender_loss_rate": 0.5,
+  "feba_balance_gain": 2.0,
+  "feba_balance_clamp": 2.0,
+  "feba_roll_factor_min": 0.75,
+  "feba_roll_factor_span": 0.5,
+  "combat_min_effective_strength": 0.1,
+  "combat_attacker_advantage_ratio": 1.2,
+  "combat_defender_advantage_ratio": 0.85,
+  "default_combat_strength": 1.0
+}
