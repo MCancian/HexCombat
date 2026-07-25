@@ -57,9 +57,9 @@ func _all_lost() -> ScriptedDice:
 
 func test_clear_skies_land_the_whole_packet_up_to_the_cap() -> void:
 	var state := _state()
-	var summary := AirInsertionResolver.resolve(
+	var summary: AirInsertionSummary = AirInsertionResolver.resolve(
 		state, [{"brigade_id": "ABN-1", "target_hex": "hex_5_5"}], 1,
-		THREAT_CLEAR, CONFIG, _any_hex(), _all_survive())
+		THREAT_CLEAR, CONFIG, _any_hex(), _all_survive())["summary"]
 
 	assert_int(summary.battalions_landed).is_equal(AIRBORNE_CAP)
 	assert_int(summary.battalions_lost).is_equal(0)
@@ -72,14 +72,13 @@ func test_clear_skies_land_the_whole_packet_up_to_the_cap() -> void:
 	var drop: Dictionary = summary.drops[0]
 	assert_int(drop["sent"]).is_equal(AIRBORNE_CAP)
 	assert_bool(drop["first_landing"]).is_true()
-	assert_int((drop["landed_bns"] as Array).size()).is_equal(AIRBORNE_CAP)
 
 
 func test_losses_erode_the_cap_permanently() -> void:
 	var state := _state()
-	var summary := AirInsertionResolver.resolve(
+	var summary: AirInsertionSummary = AirInsertionResolver.resolve(
 		state, [{"brigade_id": "ABN-1", "target_hex": "hex_5_5"}], 1,
-		THREAT_TURN_1, CONFIG, _any_hex(), _all_lost())
+		THREAT_TURN_1, CONFIG, _any_hex(), _all_lost())["summary"]
 
 	assert_int(summary.battalions_landed).is_equal(0)
 	assert_int(summary.battalions_lost).is_equal(AIRBORNE_CAP)
@@ -91,9 +90,9 @@ func test_losses_erode_the_cap_permanently() -> void:
 	assert_array(state.landed).is_empty()
 
 	# The next turn's order finds no lift left.
-	var next_summary := AirInsertionResolver.resolve(
+	var next_summary: AirInsertionSummary = AirInsertionResolver.resolve(
 		state, [{"brigade_id": "ABN-1", "target_hex": "hex_5_5"}], 2,
-		THREAT_CLEAR, CONFIG, _any_hex(), _all_survive())
+		THREAT_CLEAR, CONFIG, _any_hex(), _all_survive())["summary"]
 	assert_int(next_summary.battalions_landed).is_equal(0)
 	assert_str(String((next_summary.rejected[0] as Dictionary)["reason"])).is_equal(
 		AirInsertionSummary.REASON_CAP_EXHAUSTED)
@@ -101,10 +100,10 @@ func test_losses_erode_the_cap_permanently() -> void:
 
 func test_the_air_assault_cap_is_separate_from_the_airborne_cap() -> void:
 	var state := _state()
-	var summary := AirInsertionResolver.resolve(
+	var summary: AirInsertionSummary = AirInsertionResolver.resolve(
 		state,
 		[{"brigade_id": "ABN-1", "target_hex": "hex_5_5"}, {"brigade_id": "AA-1", "target_hex": "hex_6_6"}],
-		1, THREAT_CLEAR, CONFIG, _any_hex(), _all_survive())
+		1, THREAT_CLEAR, CONFIG, _any_hex(), _all_survive())["summary"]
 
 	assert_int(summary.drops.size()).is_equal(2)
 	assert_int(summary.battalions_landed).is_equal(AIRBORNE_CAP + AIR_ASSAULT_CAP)
@@ -113,10 +112,10 @@ func test_the_air_assault_cap_is_separate_from_the_airborne_cap() -> void:
 
 func test_one_class_budget_is_shared_across_that_class_orders() -> void:
 	var state := _state()
-	var summary := AirInsertionResolver.resolve(
+	var summary: AirInsertionSummary = AirInsertionResolver.resolve(
 		state,
 		[{"brigade_id": "ABN-1", "target_hex": "hex_5_5"}, {"brigade_id": "ABN-2", "target_hex": "hex_6_6"}],
-		1, THREAT_CLEAR, CONFIG, _any_hex(), _all_survive())
+		1, THREAT_CLEAR, CONFIG, _any_hex(), _all_survive())["summary"]
 
 	# First order spends the whole 7-BN budget; the second gets nothing this turn.
 	assert_int(summary.battalions_landed).is_equal(AIRBORNE_CAP)
@@ -153,8 +152,8 @@ func test_intact_air_defences_destroy_three_quarters_of_the_lift() -> void:
 func test_no_orders_consumes_no_dice_and_changes_nothing() -> void:
 	var state := _state()
 	# An empty ScriptedDice push_errors on any draw, so this passing IS the no-dice proof.
-	var summary := AirInsertionResolver.resolve(
-		state, [], 1, THREAT_TURN_1, CONFIG, _any_hex(), ScriptedDice.new([]))
+	var summary: AirInsertionSummary = AirInsertionResolver.resolve(
+		state, [], 1, THREAT_TURN_1, CONFIG, _any_hex(), ScriptedDice.new([]))["summary"]
 
 	assert_array(summary.drops).is_empty()
 	assert_int(summary.battalions_landed).is_equal(0)
@@ -165,9 +164,9 @@ func test_no_orders_consumes_no_dice_and_changes_nothing() -> void:
 func test_drops_before_the_first_permitted_turn_are_rejected() -> void:
 	var state := _state()
 	state.first_turn = 3
-	var summary := AirInsertionResolver.resolve(
+	var summary: AirInsertionSummary = AirInsertionResolver.resolve(
 		state, [{"brigade_id": "ABN-1", "target_hex": "hex_5_5"}], 2,
-		THREAT_CLEAR, CONFIG, _any_hex(), ScriptedDice.new([]))
+		THREAT_CLEAR, CONFIG, _any_hex(), ScriptedDice.new([]))["summary"]
 
 	assert_array(summary.drops).is_empty()
 	assert_str(String((summary.rejected[0] as Dictionary)["reason"])).is_equal(
@@ -177,9 +176,9 @@ func test_drops_before_the_first_permitted_turn_are_rejected() -> void:
 
 func test_an_unlandable_hex_is_rejected_without_spending_lift() -> void:
 	var state := _state()
-	var summary := AirInsertionResolver.resolve(
+	var summary: AirInsertionSummary = AirInsertionResolver.resolve(
 		state, [{"brigade_id": "ABN-1", "target_hex": "hex_ocean"}], 1,
-		THREAT_CLEAR, CONFIG, func(_hex_id: String) -> bool: return false, ScriptedDice.new([]))
+		THREAT_CLEAR, CONFIG, func(_hex_id: String) -> bool: return false, ScriptedDice.new([]))["summary"]
 
 	assert_array(summary.drops).is_empty()
 	assert_str(String((summary.rejected[0] as Dictionary)["reason"])).is_equal(
@@ -191,17 +190,17 @@ func test_an_unlandable_hex_is_rejected_without_spending_lift() -> void:
 func test_an_emptied_brigade_leaves_the_pool() -> void:
 	var state := _state()
 	state.pool = [{"brigade_id": "ABN-1", "lift_class": LiftClass.AIRBORNE, "bns": _manifest("ABN-1", 3)}]
-	var summary := AirInsertionResolver.resolve(
+	var summary: AirInsertionSummary = AirInsertionResolver.resolve(
 		state, [{"brigade_id": "ABN-1", "target_hex": "hex_5_5"}], 1,
-		THREAT_CLEAR, CONFIG, _any_hex(), _all_survive())
+		THREAT_CLEAR, CONFIG, _any_hex(), _all_survive())["summary"]
 
 	assert_int(summary.battalions_landed).is_equal(3)
 	assert_array(state.pool).is_empty()
 	assert_int(summary.pending_brigades).is_equal(0)
 
-	var next_summary := AirInsertionResolver.resolve(
+	var next_summary: AirInsertionSummary = AirInsertionResolver.resolve(
 		state, [{"brigade_id": "ABN-1", "target_hex": "hex_5_5"}], 2,
-		THREAT_CLEAR, CONFIG, _any_hex(), _all_survive())
+		THREAT_CLEAR, CONFIG, _any_hex(), _all_survive())["summary"]
 	assert_str(String((next_summary.rejected[0] as Dictionary)["reason"])).is_equal(
 		AirInsertionSummary.REASON_POOL_EMPTY)
 
@@ -270,13 +269,22 @@ func test_isolation_only_overrides_supply_for_the_named_brigades() -> void:
 	assert_float(float((units[1] as Dictionary)["supply_effectiveness"])).is_equal_approx(1.0, 0.0001)
 
 
-func test_the_serialized_summary_omits_the_application_manifests() -> void:
+## The report and the application manifests are separate return values (the OffloadResolver shape):
+## the summary is pure report and serializes whole, the landings carry the battalions to place and
+## the battalions to kill.
+func test_landings_carry_the_manifests_and_the_summary_stays_report_only() -> void:
 	var state := _state()
-	var summary := AirInsertionResolver.resolve(
+	var outcome := AirInsertionResolver.resolve(
 		state, [{"brigade_id": "ABN-1", "target_hex": "hex_5_5"}], 1,
-		THREAT_CLEAR, CONFIG, _any_hex(), _all_survive())
+		THREAT_TURN_1, CONFIG, _any_hex(), _all_lost())
+
+	var summary: AirInsertionSummary = outcome["summary"]
+	var landing: Dictionary = (outcome["landings"] as Array)[0]
+	assert_int((landing["lost_bns"] as Array).size()).is_equal(AIRBORNE_CAP)
+	assert_array(landing["landed_bns"]).is_empty()
+	assert_str(String(landing["brigade_id"])).is_equal("ABN-1")
 
 	var drop: Dictionary = (summary.to_dict()["drops"] as Array)[0]
 	assert_bool(drop.has("landed_bns")).is_false()
 	assert_bool(drop.has("lost_bns")).is_false()
-	assert_int(int(drop["landed"])).is_equal(AIRBORNE_CAP)
+	assert_int(int(drop["lost"])).is_equal(AIRBORNE_CAP)

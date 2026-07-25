@@ -36,6 +36,14 @@
           },
           {
             "type": "object",
+            "required": ["type", "port_id"],
+            "properties": {
+              "type": {"const": "deploy_jlsf"},
+              "port_id": {"type": "string"}
+            }
+          },
+          {
+            "type": "object",
             "required": ["type", "team", "brigade_id", "target_hex"],
             "properties": {
               "type": {"const": "air_insert"},

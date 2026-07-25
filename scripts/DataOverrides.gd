@@ -7,6 +7,12 @@ const OVERRIDES_ENV_VAR := "HEXCOMBAT_OVERRIDES"
 static var _is_initialized := false
 static var _cached_map: Dictionary = {}
 static var _applied_keys: Dictionary = {}
+## Why the requested override map could not be loaded, or "" when it loaded (or none was requested).
+## A load failure MUST NOT read as "no overrides": that silently produces an unoverridden run that
+## looks correct. Entrypoints call load_error() and refuse to play — see run_selfplay_game.gd.
+## (The trap that motivated this: an --overrides path outside the project directory, which the
+## flatpak Godot sandbox cannot read, produced a whole batch of silently unoverridden games.)
+static var _load_error: String = ""
 
 
 ## Programmatic injection of the override map. Used by in-process sweeps.
@@ -15,6 +21,7 @@ static func set_map(new_map: Dictionary) -> void:
 	_cached_map = new_map.duplicate(true)
 	_is_initialized = true
 	_applied_keys.clear()
+	_load_error = ""
 
 
 ## Lazily load the override map from args/env, cache it, and return it.
@@ -22,10 +29,19 @@ static func map() -> Dictionary:
 	if _is_initialized:
 		return _cached_map
 	
+	_load_error = ""
 	_cached_map = _load_map(OS.get_cmdline_user_args(), OS.get_environment(OVERRIDES_ENV_VAR))
 	_is_initialized = true
 	_applied_keys.clear()
 	return _cached_map
+
+
+## "" when the override map loaded (or none was requested); otherwise why it did not. Callers that
+## produce research artifacts must treat a non-empty value as fatal — an unoverridden game recorded
+## as an overridden one is worse than no game at all.
+static func load_error() -> String:
+	map()  # force the lazy load so the error is populated
+	return _load_error
 
 
 ## Pure core for loading the map from OS state strings.
@@ -44,16 +60,27 @@ static func _load_map(user_args: PackedStringArray, env_value: String) -> Dictio
 	var parsed: Variant
 	if selection.begins_with("{"):
 		parsed = JSON.parse_string(selection)
-		assert(typeof(parsed) == TYPE_DICTIONARY, "Inline --overrides JSON must be a Dictionary")
+		if typeof(parsed) != TYPE_DICTIONARY:
+			return _fail_load("inline --overrides JSON is not a Dictionary: %s" % selection)
 	else:
+		# NOTE: unreadable here usually means "outside the project directory" — the flatpak Godot
+		# sandbox cannot read those, and returning {} would silently run the game unoverridden.
 		if not FileAccess.file_exists(selection):
-			push_error("Overrides file not found: %s" % selection)
-			assert(false, "Overrides file not found")
+			return _fail_load("overrides file not found or unreadable (is it outside the project directory?): %s" % selection)
 		var content := FileAccess.get_file_as_string(selection)
 		parsed = JSON.parse_string(content)
-		assert(typeof(parsed) == TYPE_DICTIONARY, "Overrides file must contain a JSON Dictionary")
+		if typeof(parsed) != TYPE_DICTIONARY:
+			return _fail_load("overrides file does not contain a JSON Dictionary: %s" % selection)
 	
 	return parsed as Dictionary
+
+
+## Record why loading failed and return an empty map. The empty map is NOT the outcome — callers
+## must check load_error(); it exists only so partially-initialized state stays well-typed.
+static func _fail_load(reason: String) -> Dictionary:
+	_load_error = reason
+	push_error("DataOverrides: %s" % reason)
+	return {}
 
 
 ## Apply the override map to a just-parsed JSON dictionary. Returns the mutated dictionary.

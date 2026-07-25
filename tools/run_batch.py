@@ -301,6 +301,27 @@ def make_report(godot: str, batch_dir: Path) -> bool:
     return "REPORT OK:" in result.stdout and (batch_dir / "report.md").is_file()
 
 
+def check_overrides_readable(overrides: str) -> None:
+    """Fail before any game runs if Godot will not be able to read the override map.
+
+    The Godot sandbox can only read inside the project directory, so an --overrides path outside it
+    is unreadable there even though Python can open it happily. That combination used to produce a
+    whole batch of silently unoverridden games whose manifest claimed the overrides were applied.
+    Godot now refuses to play at all in that case; this check turns the resulting pile of failed
+    games into one clear message up front.
+    """
+    if not overrides:
+        return
+    path = Path(overrides).resolve()
+    if not path.is_file():
+        raise SystemExit("overrides file not found: %s" % overrides)
+    if not path.is_relative_to(REPO_ROOT.resolve()):
+        raise SystemExit(
+            "overrides file must live inside the project directory (the Godot sandbox cannot read "
+            "outside it): %s\nCopy it under the repo, e.g. reports/, and pass that path." % path
+        )
+
+
 def run_batch(
     args: argparse.Namespace,
     scenarios: list[str],
@@ -308,6 +329,7 @@ def run_batch(
     seeds: list[int],
     godot: str,
 ) -> int:
+    check_overrides_readable(args.overrides)
     warn_live_llm_parallel(matchups, args.parallel)
     batch_dir = REPO_ROOT / args.out_root / args.name
     games_dir = batch_dir / "games"

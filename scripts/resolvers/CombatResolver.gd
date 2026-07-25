@@ -64,10 +64,12 @@ static func resolve_at(
 	var defender_support_units := CombatForces.support_units(defender_brigades)
 	var attacker_support := CombatForces.support_counts(attacker_brigades)
 	var defender_support := CombatForces.support_counts(defender_brigades)
+	# Only the attacker is injected: this resolver's attacker is always RED and its defender always
+	# GREEN (see the header), and Green has no DOS model, so the two defender-side calls this used to
+	# make returned immediately by construction. If the attacker/defender roles are ever generalised,
+	# supply injection has to be keyed on each side's actual team.
 	inject_supply_effectiveness(attacker_units, Brigade.Team.RED, rules.red_supply_pool, rules.red_out_of_supply_effectiveness, rules.isolated_red_brigade_ids)
-	inject_supply_effectiveness(defender_units, Brigade.Team.GREEN, rules.red_supply_pool, rules.red_out_of_supply_effectiveness)
 	inject_supply_effectiveness(attacker_support_units, Brigade.Team.RED, rules.red_supply_pool, rules.red_out_of_supply_effectiveness, rules.isolated_red_brigade_ids)
-	inject_supply_effectiveness(defender_support_units, Brigade.Team.GREEN, rules.red_supply_pool, rules.red_out_of_supply_effectiveness)
 	var result := CombatCalculator.resolve_map_attack(
 		dice,
 		attacker_units,

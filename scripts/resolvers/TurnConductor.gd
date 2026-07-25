@@ -60,6 +60,9 @@ static func resolve_turn(state: GameStateData, dice: Dice = null) -> void:
 		state.last_contested_hexes.clear()
 	else:
 		state.last_contested_hexes = find_contested_hexes()
+	# Supply corridors are fixed for the whole combat loop (ownership is only recomputed after it),
+	# so the air-landing isolation flood runs once here rather than once per contested hex.
+	state.isolated_air_landed_brigades = isolated_air_landed_brigades(state)
 	var combat_summaries: Array[CombatSummary] = []
 	# Per-hex combat substream (plan 0010): each contested hex draws from its OWN dice stream derived
 	# from the root turn seed, so a design tweak that changes the roll count in one hex's fight never
@@ -196,36 +199,38 @@ static func resolve_mobilization_turn(state: GameStateData) -> MobilizationSumma
 ## before dropping visibly pays off; the MANPADS layer is read separately because it is deliberately
 ## outside the AD-health metric. An empty pool or no orders leaves state and RNG untouched.
 static func resolve_air_insertion_turn(state: GameStateData, dice: Dice) -> AirInsertionSummary:
-	var summary := AirInsertionResolver.resolve(
+	var outcome := AirInsertionResolver.resolve(
 		state.air_insertion_state, state.air_insert_orders, state.turn_number,
 		AirInsertionResolver.threat_from_ijfs_summary(state.last_ijfs_summary),
 		AirInsertionStateBuilder.attrition_config(GameData.red_air_insertion),
 		func(hex_id: String) -> bool: return hex_can_receive_insertion(hex_id),
 		dice)
+	var summary: AirInsertionSummary = outcome["summary"]
 	# One-shot orders, consumed on resolution like jlsf_orders — an unflown drop is not re-attempted
 	# next turn behind the player's back.
 	state.air_insert_orders = []
-	if summary.drops.is_empty():
+	var landings: Array = outcome["landings"]
+	if landings.is_empty():
 		EventBus.air_insertion_resolved.emit(summary.to_dict())
 		return summary
 
-	for drop_value in summary.drops:
-		var drop: Dictionary = drop_value
-		var brigade_id := String(drop["brigade_id"])
+	for landing_value in landings:
+		var landing: Dictionary = landing_value
+		var brigade_id := String(landing["brigade_id"])
 		# Losses first: a battalion shot down on the way in never reaches the hex, and killing it
 		# before the landing keeps a brigade that lost its whole packet off the map entirely.
-		for lost_value in drop["lost_bns"]:
+		for lost_value in landing["lost_bns"]:
 			apply_casualty({"brigade_id": brigade_id, "type": String((lost_value as Dictionary)["type"])})
-		if drop["first_landing"]:
-			GameData.set_brigade_hex(brigade_id, String(drop["hex_id"]))
+		if landing["first_landing"]:
+			GameData.set_brigade_hex(brigade_id, String(landing["hex_id"]))
 			continue
 		# Follow-up packets reinforce the brigade where it already stands — a formation occupies one
 		# hex, so a second drop cannot put half of it somewhere else. OrderValidator enforces that
 		# the target matches; a mismatch here is an order that slipped through, not a game state.
 		var landed_brigade: Brigade = GameData.get_brigade(brigade_id)
-		if landed_brigade != null and landed_brigade.hex_id != String(drop["hex_id"]):
+		if landed_brigade != null and landed_brigade.hex_id != String(landing["hex_id"]):
 			push_error("Air insertion follow-up for %s targeted %s but the brigade is at %s" % [
-				brigade_id, drop["hex_id"], landed_brigade.hex_id])
+				brigade_id, landing["hex_id"], landed_brigade.hex_id])
 	GameData.recompute_hex_ownership()
 	EventBus.air_insertion_resolved.emit(summary.to_dict())
 	return summary
@@ -726,7 +731,7 @@ static func resolve_combat_at(state: GameStateData, hex_id: String, dice: Dice) 
 	rules.feba_base_km = GameData.feba_base_km
 	rules.red_supply_pool = pool
 	rules.red_out_of_supply_effectiveness = GameData.red_out_of_supply_effectiveness
-	rules.isolated_red_brigade_ids = isolated_air_landed_brigades(state)
+	rules.isolated_red_brigade_ids = state.isolated_air_landed_brigades
 	rules.unscreened_support_strength = GameData.unscreened_support_strength
 	rules.maneuver_casualty_weight = GameData.maneuver_casualty_weight
 	rules.support_casualty_weight = GameData.support_casualty_weight

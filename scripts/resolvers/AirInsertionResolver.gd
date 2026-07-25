@@ -118,9 +118,11 @@ static func threat_from_ijfs_summary(ijfs_summary: Dictionary) -> Dictionary:
 ##          hexes ARE legal drop zones (USER design call: land on any hex); the cost of dropping
 ##          onto the enemy is the ground combat that follows in the same turn, not a special rule.
 ##
-## Mutates `state` (pool drained, caps eroded, history/landed appended) and returns the summary.
-## The returned drops carry the battalion manifests the caller must apply: `landed_bns` to place,
-## `lost_bns` to kill.
+## Mutates `state` (pool drained, caps eroded, history/landed appended) and returns
+##   {"summary": AirInsertionSummary, "landings": Array}
+## — the same split OffloadResolver uses. `summary` is the report (and the JSON contract); each
+## landing is {brigade_id, hex_id, first_landing, landed_bns, lost_bns}, the manifests the caller
+## applies: `landed_bns` to place, `lost_bns` to kill.
 static func resolve(
 	state: AirInsertionState,
 	orders: Array,
@@ -129,16 +131,17 @@ static func resolve(
 	config: Dictionary,
 	hex_can_receive: Callable,
 	dice: Dice,
-) -> AirInsertionSummary:
+) -> Dictionary:
 	var summary := AirInsertionSummary.new()
+	var landings: Array = []
 	if state == null:
-		return summary
+		return {"summary": summary, "landings": landings}
 
 	summary.caps_before = state.caps.duplicate()
 	summary.caps_after = state.caps.duplicate()
 	if orders.is_empty():
 		_finish(summary, state)
-		return summary
+		return {"summary": summary, "landings": landings}
 
 	if turn_number < state.first_turn:
 		for order_value in orders:
@@ -147,7 +150,7 @@ static func resolve(
 				"reason": AirInsertionSummary.REASON_BEFORE_FIRST_TURN,
 			})
 		_finish(summary, state)
-		return summary
+		return {"summary": summary, "landings": landings}
 
 	# Budget is per turn and shared across every order of a class; caps themselves are eroded
 	# permanently by losses further down.
@@ -208,6 +211,11 @@ static func resolve(
 			"lost": lost_bns.size(),
 			"attrition_rate": rate,
 			"first_landing": first_landing,
+		})
+		landings.append({
+			"brigade_id": brigade_id,
+			"hex_id": target_hex,
+			"first_landing": first_landing,
 			"landed_bns": landed_bns,
 			"lost_bns": lost_bns,
 		})
@@ -226,7 +234,7 @@ static func resolve(
 	_drop_empty_entries(state)
 	summary.caps_after = state.caps.duplicate()
 	_finish(summary, state)
-	return summary
+	return {"summary": summary, "landings": landings}
 
 
 static func _drop_empty_entries(state: AirInsertionState) -> void:

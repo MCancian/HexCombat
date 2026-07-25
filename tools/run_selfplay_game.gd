@@ -39,6 +39,14 @@ func _initialize() -> void:
 	if args.has("model"):
 		OS.set_environment("HEXCOMBAT_LLM_MODEL", String(args["model"]))
 
+	# Checked BEFORE any game runs: a requested override map that failed to load must never be
+	# mistaken for "no overrides", or the batch records an unoverridden game as an overridden one.
+	var overrides_error := DataOverrides.load_error()
+	if not overrides_error.is_empty():
+		push_error("Refusing to play: %s" % overrides_error)
+		quit(1)
+		return
+
 	var red_policy := PolicyCatalog.create_for_seat(red_policy_id, "Red", _log_path)
 	var green_policy := PolicyCatalog.create_for_seat(green_policy_id, "Green", _log_path)
 	if red_policy == null or green_policy == null:

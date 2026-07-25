@@ -11,11 +11,10 @@ class_name AirInsertionSummary
 
 ## Insertions resolved this turn, in order. Each entry:
 ##   {brigade_id: String, lift_class: String, hex_id: String, sent: int, landed: int, lost: int,
-##    attrition_rate: float, first_landing: bool, landed_bns: Array, lost_bns: Array}
+##    attrition_rate: float, first_landing: bool}
 ## `sent` is the packet that flew (landed + lost); `first_landing` marks the drop that puts the
-## brigade on the map for the first time. The two `*_bns` manifests are how the resolver hands the
-## caller the battalions to place and the battalions to kill — application detail, deliberately
-## NOT serialized by to_dict (see DROP_REPORT_KEYS).
+## brigade on the map for the first time. Report only — the per-battalion manifests the caller must
+## apply travel beside the summary, in resolve()'s "landings" (the shape OffloadResolver uses).
 @export var drops: Array = []
 
 ## Orders that could not fly, in order. Each entry: {brigade_id: String, reason: String}.
@@ -42,18 +41,10 @@ const REASON_CAP_EXHAUSTED := "cap_exhausted"
 const REASON_POOL_EMPTY := "pool_empty"
 const REASON_BEFORE_FIRST_TURN := "before_first_turn"
 
-## The drop fields that are part of the JSON contract, in order. The per-battalion manifests the
-## resolver attaches for its caller are excluded: they are how landings and casualties get applied,
-## not something a reader of the event log or the observation needs.
-const DROP_REPORT_KEYS: Array[String] = [
-	"brigade_id", "lift_class", "hex_id", "sent", "landed", "lost", "attrition_rate",
-	"first_landing",
-]
-
 
 func to_dict() -> Dictionary:
 	return {
-		"drops": reported_drops(),
+		"drops": drops.duplicate(true),
 		"rejected": rejected.duplicate(true),
 		"battalions_landed": battalions_landed,
 		"battalions_lost": battalions_lost,
@@ -63,15 +54,3 @@ func to_dict() -> Dictionary:
 		"pending_brigades": pending_brigades,
 		"pending_battalions": pending_battalions,
 	}
-
-
-## `drops` projected onto DROP_REPORT_KEYS — the serializable view.
-func reported_drops() -> Array:
-	var reported: Array = []
-	for drop_value in drops:
-		var drop: Dictionary = drop_value
-		var row: Dictionary = {}
-		for key in DROP_REPORT_KEYS:
-			row[key] = drop[key]
-		reported.append(row)
-	return reported

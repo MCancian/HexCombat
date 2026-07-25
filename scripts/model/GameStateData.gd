@@ -37,6 +37,10 @@ var last_air_insertion_summary: AirInsertionSummary = null
 # Pending air_insert orders for this planning phase: [{brigade_id, target_hex}] in issue order,
 # which is also the order the shared per-class lift budget is spent in. Red-only.
 var air_insert_orders: Array = []
+# Air-landed brigades with no Red corridor back to a lodgement, brigade_id -> true. Recomputed ONCE
+# per turn immediately before the combat loop (ownership is fixed for its duration) and read by
+# every contested hex, rather than re-flooding the map per hex. Empty whenever nothing has air-landed.
+var isolated_air_landed_brigades: Dictionary = {}
 var jlsf_orders: Array[String] = []  # port/airbridge ids with a pending explicit deploy_jlsf order
 var pending_lost_at_sea: int = 0
 var supply_state: SupplyState

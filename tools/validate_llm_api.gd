@@ -18,34 +18,10 @@ const REQUIRED_RESULT_KEYS := [
 	"turn_result",
 	"observation"
 ]
-const REQUIRED_OBSERVATION_KEYS := [
-	"protocol_version",
-	"schema",
-	"scenario",
-	"turn",
-	"phase",
-	"turn_length_days",
-	"perspective_team",
-	"rules_summary",
-	"field_glossary",
-	"map_summary",
-	"brigades",
-	"occupied_hexes",
-	"ship_reserve",
-	"mobilization",
-	"air_insertion",
-	"supply_state",
-	"infrastructure",
-	"ijfs",
-	"antiship",
-	"legal_moves",
-	"legal_commits",
-	"pending_orders",
-	"pending_commitments",
-	"last_contested_hexes",
-	"last_combat",
-	"objectives"
-]
+## Required observation keys come from the schema, not a second hand-maintained copy: the schema's
+## `required` array IS the contract, and keeping a duplicate list here meant every new observation
+## block had to be added twice (and could silently be added only once).
+var _required_observation_keys: Array = []
 const EXAMPLE_PATHS := [
 	"res://docs/examples/llm_observation_red_turn1.json",
 	"res://docs/examples/llm_action_response_move_end_turn.json",
@@ -67,6 +43,9 @@ func _game_state() -> Node:
 
 
 func _initialize() -> void:
+	_required_observation_keys = _schema_required_keys("res://schemas/llm_observation.schema.json")
+	if _required_observation_keys.is_empty():
+		_fail("observation schema declared no required keys — the contract cannot be checked")
 	_game_data().load_all()
 	_game_state().reset_to_scenario()
 	_provision_red_mover_for_validation()
@@ -81,7 +60,7 @@ func _initialize() -> void:
 
 func _validate_observation_shape() -> void:
 	var observation := LLMGameAPI.observation("Red")
-	for key in REQUIRED_OBSERVATION_KEYS:
+	for key in _required_observation_keys:
 		if not observation.has(key):
 			_fail("observation missing required key: %s" % key)
 	_assert_equal_string("protocol_version", String(observation.get("protocol_version", "")), LLMGameAPI.PROTOCOL_VERSION)
@@ -173,9 +152,19 @@ func _validate_examples_parse_and_apply() -> void:
 
 	var example_observation = _read_json("res://docs/examples/llm_observation_red_turn1.json")
 	if example_observation is Dictionary:
-		for key in REQUIRED_OBSERVATION_KEYS:
+		for key in _required_observation_keys:
 			if not (example_observation as Dictionary).has(key):
 				_fail("observation example missing required key: %s" % key)
+
+
+## The schema's `required` array is the observation contract; this validator reads it rather than
+## keeping a second copy that could drift (or be updated only on one side).
+func _schema_required_keys(path: String) -> Array:
+	var parsed = _read_json(path)
+	if not (parsed is Dictionary):
+		return []
+	var required = (parsed as Dictionary).get("required", [])
+	return required if required is Array else []
 
 
 func _provision_red_mover_for_validation() -> void:

@@ -1,6 +1,25 @@
 extends RefCounted
 class_name LLMGameAPI
 
+## The JSON observation/action contract for LLM and self-play seats.
+##
+## LOAD-BEARING INVARIANT — this file must NEVER name an autoload or anything that does.
+## Not `GameData`, `EventBus`, `GameState`, nor the classes that reference them
+## (`TurnConductor`, `OrderValidator`, …). Runtime state is reached through the `_game_data()` /
+## `_game_state()` accessors below, which resolve by NODE PATH at call time.
+##
+## Why: the validators and the batch runner load this script from `-s` SceneTree tools, where
+## autoload singletons are not registered as identifiers yet. A direct reference compiles fine in
+## the game and fails the tool scripts with `Identifier not found: GameData` — an error that names
+## a file nowhere near the edit. Plan 0032 broke this and took four validators plus the batch
+## runner down with it.
+##
+## If you need logic that lives behind an autoload-touching class, give that logic a pure home
+## which takes its inputs as arguments (see `AirInsertionState.eligible_orders` and
+## `AirInsertionResolver.threat_from_ijfs_summary`) and call THAT from here.
+##
+## Enforced by `tools/validate_llm_api_purity.gd`, which loads this script with no autoloads present.
+
 const PROTOCOL_VERSION := "0.1.0"
 const OBSERVATION_SCHEMA := "hexcombat.llm_observation"
 const ACTION_RESPONSE_SCHEMA := "hexcombat.llm_action_response"
