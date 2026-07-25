@@ -46,6 +46,16 @@ regression is not.
   interim progress to poll. Give each a brief that names the exact files to read and asks for
   numbered findings with severity (blocker/should-fix/nit), `file:line` evidence, and a concrete fix.
 - **Every prompt must say REVIEW ONLY — do not modify files.** Only the primary agent writes code.
+  This is load-bearing, not belt-and-braces: `--agent explore` is **not honoured by every opencode
+  model** — `nemotron-3-ultra-free` prints *"agent 'explore' is a subagent, not a primary agent.
+  Falling back to default agent"* and runs under the **writing** `build` agent (observed 2026-07-25).
+  So the prompt text is the only thing stopping a reviewer from editing the repo. **Run
+  `git status --short` after every consultation round** and treat any unexpected modification as the
+  reviewer having gone out of bounds. `gem-explore` has also written a review artifact into the repo
+  root despite the instruction (2026-07-25) — delete strays immediately, because a file written by
+  one reviewer **contaminates the others**: a concurrently-running model read that artifact off disk
+  and returned it verbatim as its own review, which looks like independent corroboration and is not.
+  Treat identical findings from two models as one review until proven otherwise.
 - **Evaluate, don't obey.** They are frequently wrong or already-handled; verify each finding against
   the code before acting, and say so plainly when one is rejected. Reviewers have caught real
   blockers here (an ordering bug that would have silently collapsed a mechanic) *and* asserted
