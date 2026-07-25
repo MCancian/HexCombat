@@ -27,10 +27,35 @@ not guess game design.
    per commit.
 4. Verify yourself: `pwsh -File tools/run_all_tests.ps1` → **ALL PHASES GREEN** (verdict rules in
    `hexcombat-validation-and-qa`; flake handling in `hexcombat-debugging-playbook`).
-5. Record per `hexcombat-docs-and-writing` (STATUS / Decisions / RETROSPECTIVES / backlog
+5. **Consult before committing** (USER standing instruction 2026-07-25). Nothing is committed until
+   `opencode` and `agy`/`gem-explore` have reviewed it — **review-only, they never implement.** This
+   applies to plans *and* to the finished diff; a plan gets reviewed before code is written, the diff
+   before it is committed. See "Consultation" below.
+6. Record per `hexcombat-docs-and-writing` (STATUS / Decisions / RETROSPECTIVES / backlog
    check-off), then commit. **Push at milestones**, not every micro-commit.
-6. Pause and surface to the user on: a genuine design decision, a gate you can't get green after
+7. Pause and surface to the user on: a genuine design decision, a gate you can't get green after
    a couple of focused attempts, or anything destructive/irreversible.
+
+## Consultation (review-only, before every commit)
+
+The USER is non-coding and cannot review the technical soundness of a plan or a diff themselves, so
+two or three independent model reads substitute for that. They are cheap; a wrong plan or a silent
+regression is not.
+
+- **Run them in parallel, in the background** — each buffers its output until exit, so there is no
+  interim progress to poll. Give each a brief that names the exact files to read and asks for
+  numbered findings with severity (blocker/should-fix/nit), `file:line` evidence, and a concrete fix.
+- **Every prompt must say REVIEW ONLY — do not modify files.** Only the primary agent writes code.
+- **Evaluate, don't obey.** They are frequently wrong or already-handled; verify each finding against
+  the code before acting, and say so plainly when one is rejected. Reviewers have caught real
+  blockers here (an ordering bug that would have silently collapsed a mechanic) *and* asserted
+  problems that did not exist.
+- **Models:** `opencode run -m opencode/deepseek-v4-flash-free --agent explore` (fast, good at
+  "which files did you miss"); `opencode run -m opencode/nemotron-3-ultra-free --agent explore`;
+  `GEM_TIMEOUT=15m gem-explore "…"` (deepest reasoning about semantics and consequences — worth the
+  wait). Bare `agy -p` has timed out on multi-file reviews; prefer the `gem-explore` wrapper with an
+  extended `GEM_TIMEOUT`. The USER can also run a prompt through `agy` by hand if a review needs more
+  room than the wrapper allows.
 
 Commit messages end with the `Co-Authored-By` trailer + session link the harness specifies for
 the acting model. Never commit `.mcp.json`.
@@ -39,10 +64,11 @@ the acting model. Never commit `.mcp.json`.
 
 - **agy** (Antigravity CLI): Use to run commands or tasks from the terminal. Use `agy -p "task"` to run a single prompt non-interactively and print the response (great for one-off tasks). Use `agy -i "task"` to start an interactive session with an initial prompt. You can also append `-c` to continue your most recent conversation.
 - **opencode** (`Bash(opencode *)` is allowed): `opencode run -m opencode/deepseek-v4-flash-free
-  "task"` (add `-s <session>` for continuity, `--agent explore` for read-only). Small free model —
-  suitable for broad file surveys, mechanical renames, log mining; NOT for golden-touching,
-  RNG-adjacent, or architectural work. Hand it a self-contained brief; review its diff for scope
-  drift; re-run all verification yourself.
+  "task"` (add `-s <session>` for continuity, `--agent explore` for read-only). Also available:
+  `opencode/nemotron-3-ultra-free`. Small free models — suitable for broad file surveys, mechanical
+  renames, log mining, and the review pass above; NOT for golden-touching, RNG-adjacent, or
+  architectural work. Hand it a self-contained brief; review its diff for scope drift; re-run all
+  verification yourself. `opencode models` lists what is available.
 - **Godot MCP** (`mcp__godot__*`, config in `.mcp.json`): launch/run the project, read debug
   output — for visual/runtime verification that headless gates can't cover
   (`hexcombat-run-and-operate` has the screenshot path).

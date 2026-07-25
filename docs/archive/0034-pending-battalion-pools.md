@@ -13,6 +13,15 @@ closed: "2026-07-25"
 > `GameStateData.pending_battalion_pools()` (the pools live on that value object) rather than as a
 > registry inside `PendingBattalions` — `TurnConductor` was at its dependency ceiling, and the object
 > that owns the fields is the right home for enumerating them.
+>
+> **Objective 2 was delivered in its weaker form — know this before trusting it.** The plan asked for
+> a mechanism making it *impossible* for a new pool to escape the census. What exists is *one obvious
+> place to add it*: `census()` now takes a single pool list instead of named parameters, and both
+> callers pass `pending_battalion_pools()`, so there is exactly one seam. A new pool still escapes if
+> someone adds a parameter back to `census()`, or writes an independent battalion count. GDScript
+> offers no compile-time check here, and shape-sniffing the pools reflectively fails on the case that
+> matters (a brand-new pool starts empty, so it is indistinguishable from any other empty Array).
+> Treat the enumeration as a convention with a single enforcement point, not a guarantee.
 
 # Plan 0034: One home for pending-battalion pools
 
