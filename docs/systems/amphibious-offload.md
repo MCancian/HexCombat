@@ -72,12 +72,18 @@ static func build_sent_snapshots(bn_count, carriers, screen) -> Dictionary   # l
 static func resolve_bn_losses(destroyed_by_ship_type, capacity_by_type,
   bns_at_sea, accumulator, dice) -> Dictionary                               # line 119
 
-# GameState (scripts/GameState.gd)
-func ship_reserve_priority_order() -> Array[String]          # line 295
-func resolve_offload_turn(dice: Dice) -> Dictionary          # line 303
-func register_ship_losses(bn_equiv_lost: int) -> void        # line 998
-func _rebuild_ship_reserve() -> void                         # line 961
-func _rebuild_fleet() -> void                                # line 1002
+# ReinforcementPhases (scripts/resolvers/ReinforcementPhases.gd) — the offload/sealift phases
+static func ship_reserve_priority_order(state: GameStateData) -> Array[String]
+static func resolve_offload_turn(state: GameStateData, dice: Dice) -> Dictionary
+
+# FiresPhases (scripts/resolvers/FiresPhases.gd) — the crossing that feeds the offload seam
+static func register_ship_losses(state: GameStateData, bn_equiv_lost: int) -> void
+
+# GameState (scripts/GameState.gd) — the autoload façade external callers use
+func ship_reserve_priority_order() -> Array[String]
+func resolve_offload_turn(dice: Dice) -> Dictionary
+func _rebuild_ship_reserve() -> void
+func _rebuild_fleet() -> void
 ```
 
 ## 6. Data flow
@@ -99,7 +105,7 @@ func _rebuild_fleet() -> void                                # line 1002
     - `ShipLoadingModel.build_sent_snapshots()` (called from `_build_sent_fleet`, line 676)
       derives the crossing fleet from remaining at-sea BNs for D3 anti-ship resolution.
     - `ShipLoadingModel.resolve_bn_losses()` converts D3 crossing ship losses into BN
-      casualties via `pending_lost_at_sea` → `TurnConductor.register_ship_losses()` (line 998).
+      casualties via `pending_lost_at_sea` → `FiresPhases.register_ship_losses()`.
     - Emits `EventBus.offload_resolved` (line 368).
 
 ## 7. TIV-port fidelity notes

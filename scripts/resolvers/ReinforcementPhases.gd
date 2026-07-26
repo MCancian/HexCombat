@@ -72,7 +72,7 @@ static func merge_reserve_entry(state: GameStateData, entry_value) -> void:
 ## Reproject the fleet ShipState bins from the sealift state (the single source of truth for where
 ## hulls are): surviving_sent/offloading from cohorts, returning from the pipeline, ready as the
 ## remainder of the surviving fleet. Keeps ShipState.validate()'s invariants honest (plan 0004).
-## Called from the crossing too (TurnConductor.resolve_antiship_turn) — hull losses reproject.
+## Called from the crossing too (FiresPhases.resolve_antiship_turn) — hull losses reproject.
 static func project_sealift_onto_fleet(state: GameStateData) -> void:
 	var sent: Dictionary = {}
 	var offloading: Dictionary = {}

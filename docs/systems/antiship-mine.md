@@ -9,7 +9,7 @@ Resolves **Green coastal anti-ship missile strikes** against the **Red amphibiou
 | File | Role |
 |---|---|
 | `scripts/resolvers/AntishipResolver.gd` | Pure resolver (Phase C): `resolve()` — applies the IJFS writeback, builds the firing plan, resolves launch attrition/crossing/mines, converts ship losses to BNs lost at sea. Read its header for the purity boundary with `GameState`. |
-| `scripts/GameState.gd` | Thin wrapper: `resolve_antiship_turn(dice)` derives the independent substream, materializes the TO-adjacency map, delegates to `AntishipResolver.resolve()`, then assigns `ship_reserve`/`fleet` fields, calls `register_ship_losses`, and owns the `EventBus.antiship_resolved` emit. |
+| `scripts/resolvers/FiresPhases.gd` | Thin wrapper (plan 0038): `resolve_antiship_turn(dice)` derives the independent substream, materializes the TO-adjacency map, delegates to `AntishipResolver.resolve()`, then assigns `ship_reserve`/`fleet` fields, calls `register_ship_losses`, and owns the `EventBus.antiship_resolved` emit. `GameState` forwards to it under the same method name. |
 | `scripts/AntishipCalculator.gd` | D3-B2 firing-plan + launch attrition |
 | `scripts/AntishipCrossing.gd` | D3-B3 6-stage crossing-damage model |
 | `scripts/AntishipMagazine.gd` | Magazine/ammo reservation + deduction |

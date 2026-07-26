@@ -33,7 +33,10 @@ DEP_CEILINGS = {
     # _get/_set override proved unreliable for legitimately-null fields).
     # 27 -> 29 (plan 0032): AirInsertionState / AirInsertionSummary forwarding properties, the same
     # typed-property tax every phase's state pays here.
-    "scripts/GameState.gd": 29,
+    # 29 -> 28 (plan 0038 step 2): `_build_warmup_context` and `_mine_ship_meta` now delegate through
+    # FiresPhases instead of naming IjfsResolver/AntishipResolver directly, so the façade trades two
+    # resolver deps for one module dep. LOWERED, not held, so the slack cannot be silently re-spent.
+    "scripts/GameState.gd": 28,
     # TurnConductor.gd legitimately depends on every phase resolver it orchestrates (IjfsResolver,
     # SealiftResolver, AntishipResolver, OffloadResolver, InfrastructureResolver, SupplyResolver,
     # CleanupResolver, FrontlineResolver, CombatResolver, …) — that is cohesion, not lamination.
@@ -45,12 +48,17 @@ DEP_CEILINGS = {
     # ReinforcementPhases and the roster-shrinking seam to RosterMutations, so their resolvers and
     # value types left with them. LOWERED to the newly-measured value, per the plan — the headroom
     # bought is locked in rather than silently re-spent by the next mechanic.
-    "scripts/resolvers/TurnConductor.gd": 28,
+    # 28 -> 22 (plan 0038 step 2): the fires phases (IJFS + anti-ship) moved to FiresPhases, taking
+    # IjfsResolver, AntishipResolver, SealiftResolver, GameStateBuilder, Theaters, ShipDef, ShipState.
+    "scripts/resolvers/TurnConductor.gd": 22,
     # ReinforcementPhases.gd (plan 0038): owns the four "force arrives" phases and their resolvers.
     # Ceilinged from birth because a phase-owning module is exactly where a god-object would be
     # laundered back in — a NEW arrival phase belongs here (and may justify a small bump), an
     # unrelated responsibility does not. Measured 22 at commit time.
     "scripts/resolvers/ReinforcementPhases.gd": 22,
+    # FiresPhases.gd (plan 0038 step 2): owns IJFS + the anti-ship/mine crossing defence. Same
+    # reasoning as ReinforcementPhases — ceilinged from birth. Measured 14 at commit time.
+    "scripts/resolvers/FiresPhases.gd": 14,
 }
 
 FUNC_RE = re.compile(r"^(\s*)(static\s+)?func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*)$")

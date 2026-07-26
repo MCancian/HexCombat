@@ -20,7 +20,13 @@ created: "2026-07-25"
   `ReinforcementPhases` and still calls `apply_casualty`, which ground combat also calls, so leaving
   the seam in `TurnConductor` would have made the two modules a reference cycle. Splitting it into
   its own commit was impossible: alone it takes `TurnConductor` to 39 and breaches the ceiling.
-- Steps 2 (`FiresPhases`) and 3 (`TurnClosure`) still to do, one commit each.
+- **Step 2 — `FiresPhases` — SHIPPED 2026-07-25.** IJFS + anti-ship/mine crossing defence (and the
+  hull-loss application and `register_ship_losses` that are the crossing's output) measured
+  `TurnConductor` 28 → **22**, ceiling lowered. `GameState.gd` went 29 → **28** — better than the
+  swap the plan hoped for, because `_build_warmup_context` and `_mine_ship_meta` now route through
+  `FiresPhases` instead of naming `IjfsResolver`/`AntishipResolver` directly, trading two resolver
+  deps for one module dep. That spare dep is what step 3 will spend.
+- Step 3 (`TurnClosure`) still to do.
 
 `scripts/resolvers/TurnConductor.gd` measures **ndeps = 38 against a ceiling of 38** (`tools/gd_metrics.py:44`).
 Zero headroom. The next mechanic that adds a phase resolver breaks the gate, and

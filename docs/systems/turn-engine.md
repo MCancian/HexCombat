@@ -8,7 +8,7 @@ gameplay-relevant cycle:
 | Autoload | Role | Node |
 |---|---|---|
 | `GameData` | **Static data service** — loads JSON (hexes, OOBs, scenario, beaches, ships, theaters) into typed `Resource` objects once at startup. Holds all lookups (`hex_lookup`, `neighbor_lookup`, `brigades_by_hex`, etc.). | `scripts/GameData.gd` |
-| `GameState` | **Runtime turn/phase state** — a thin autoload shell (plan 0014): the state itself lives in `GameStateData`, the resolution in `TurnConductor` + `ReinforcementPhases`, and this autoload keeps the typed forwarding properties, the delegating wrappers external callers use, and the lifecycle (`reset_to_scenario`, `begin_next_turn`, `play_turn`). | `scripts/GameState.gd` |
+| `GameState` | **Runtime turn/phase state** — a thin autoload shell (plan 0014): the state itself lives in `GameStateData`, the resolution in `TurnConductor` + `FiresPhases` + `ReinforcementPhases`, and this autoload keeps the typed forwarding properties, the delegating wrappers external callers use, and the lifecycle (`reset_to_scenario`, `begin_next_turn`, `play_turn`). | `scripts/GameState.gd` |
 | `EventBus` | **Signal hub** — decouples subsystems via typed Godot signals (`phase_changed`, `turn_resolved`, `combat_resolved`, etc.). | `scripts/EventBus.gd` |
 | `Dice` / `SeededDice` | **Injectable RNG abstraction** — base `Dice` (abstract, `RefCounted`), `SeededDice` (deterministic via `RandomNumberGenerator` with seeded `derive()` sub-streams). | `scripts/Dice.gd`, `scripts/SeededDice.gd` |
 
@@ -17,7 +17,8 @@ gameplay-relevant cycle:
 | File | Lines | Role |
 |---|---|---|
 | `scripts/GameState.gd` | 452 | Autoload shell: `Phase` enum (PLANNING/RESOLUTION/END) re-export, typed forwarding properties onto `data: GameStateData`, delegating wrappers (`resolve_turn()`, `resolve_offload_turn()`, …), lifecycle `reset_to_scenario()` / `begin_next_turn()` / `play_turn()` |
-| `scripts/resolvers/TurnConductor.gd` | 563 | Turn orchestration proper: `resolve_turn()` holds the ordered phase list (§4), plus the phases it still owns — IJFS, anti-ship, movement, ground combat, FEBA retreats, supply, cleanup, frontline |
+| `scripts/resolvers/TurnConductor.gd` | 404 | Turn orchestration proper: `resolve_turn()` holds the ordered phase list (§4), plus the phases it still owns — movement, ground combat, FEBA retreats, supply, cleanup, frontline |
+| `scripts/resolvers/FiresPhases.gd` | 191 | The fires phases (plan 0038): IJFS joint/air-missile fires and the Green anti-ship + mine defence of the crossing, which share the anti-ship firing systems |
 | `scripts/resolvers/ReinforcementPhases.gd` | 345 | The four "force arrives" phases (plan 0038): sealift, amphibious offload, ROC mobilization, air insertion, and their arrival-site rules |
 | `scripts/resolvers/RosterMutations.gd` | 91 | The roster-shrinking seam every kill path shares: `apply_casualty`, `apply_crossing_casualties`, and the `pending_pool_roster_violations` tripwire |
 | `scripts/GameData.gd` | 546 | Data loading: `load_hex_grid()`, `load_brigades()`, `load_scenario()`, `load_theaters()`, `load_beaches()`, `load_ships()`. Indexes: `brigades`, `brigades_by_hex`, `hex_lookup`, `neighbor_lookup`, `hex_states`, `ship_defs`, `beaches`, `active_tos`, `to_adjacency`, `beach_to_to` |
@@ -59,10 +60,10 @@ PLANNING  ── resolve_turn() ──►  RESOLUTION  ── begin_next_turn() 
 `TurnConductor.resolve_turn` is the ONE place the order is written down; the phase modules own how a
 phase resolves, never when it runs. The resolution runs exactly this pipeline:
 
-1. **IJFS** — `TurnConductor.resolve_ijfs_turn(dice)` — Red joint/air-missile fires: multi-day pre-invasion warmup on first call, single-day cycles thereafter. Builds/strikes anti-ship targets, SAMs, and maneuver units. Sub-stream: `dice.derive("ijfs:<turn>:<day>")`.
-2. **IJFS maneuver casualties** — `TurnConductor.apply_ijfs_maneuver_casualties()` — the warmup's writeback reduces the ground OOB before combat. Deterministic, no dice.
+1. **IJFS** — `FiresPhases.resolve_ijfs_turn(dice)` — Red joint/air-missile fires: multi-day pre-invasion warmup on first call, single-day cycles thereafter. Builds/strikes anti-ship targets, SAMs, and maneuver units. Sub-stream: `dice.derive("ijfs:<turn>:<day>")`.
+2. **IJFS maneuver casualties** — `FiresPhases.apply_ijfs_maneuver_casualties()` — the warmup's writeback reduces the ground OOB before combat. Deterministic, no dice.
 3. **Sealift** — `ReinforcementPhases.resolve_sealift_turn()` — ticks the ship return/reload pipeline and embarks this turn's wave BEFORE the crossing, so anti-ship attrits exactly the hulls that sail. Dice-free.
-4. **Anti-ship** — `TurnConductor.resolve_antiship_turn(dice)` — Green coastal anti-ship fires + mine warfare against the Red crossing. Applies IJFS writeback (destroyed/suppressed launchers), resolves firing plan, crossing damage, mine losses; drowned BNs leave their rosters via `RosterMutations.apply_crossing_casualties`. Sub-stream: `dice.derive("antiship:<turn>")`.
+4. **Anti-ship** — `FiresPhases.resolve_antiship_turn(dice)` — Green coastal anti-ship fires + mine warfare against the Red crossing. Applies IJFS writeback (destroyed/suppressed launchers), resolves firing plan, crossing damage, mine losses; drowned BNs leave their rosters via `RosterMutations.apply_crossing_casualties`. Sub-stream: `dice.derive("antiship:<turn>")`.
 5. **Offload** — `ReinforcementPhases.resolve_offload_turn(dice)` — surviving BNs land at beaches/ports; infrastructure lifecycle ticks every turn. Applies `pending_lost_at_sea` from the crossing.
 6. **ROC mobilization** — `ReinforcementPhases.resolve_mobilization_turn()` — Green's reinforcement step at the same seam as Red's. Dice-free.
 7. **Air insertion** — `ReinforcementPhases.resolve_air_insertion_turn(dice)` — Red's non-amphibious arrival path, after IJFS because the drop's attrition reads the air-defence picture those fires produced. Own sub-stream.

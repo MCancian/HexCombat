@@ -3,8 +3,9 @@ class_name GameStateType
 
 ## Runtime-state autoload — now a thin shell (plan 0014): the mutable state itself lives in
 ## `data: GameStateData` (scripts/model/GameStateData.gd), the scenario-load builders in
-## `GameStateBuilder`, turn orchestration in `TurnConductor` (with the arrival phases — sealift,
-## offload, mobilization, air insertion — in `ReinforcementPhases`, plan 0038), and order legality in
+## `GameStateBuilder`, turn orchestration in `TurnConductor` — with the arrival phases (sealift,
+## offload, mobilization, air insertion) in `ReinforcementPhases` and the fires phases (IJFS,
+## anti-ship) in `FiresPhases`, plan 0038 — and order legality in
 ## `OrderValidator` (all scripts/resolvers/, all static, all taking `GameStateData` — never this
 ## autoload — as their first argument). What remains here: the typed forwarding properties that
 ## keep the pre-refactor `GameState.<field>` API byte-stable for external callers, a handful of
@@ -268,7 +269,7 @@ func resolve_supply_turn() -> Dictionary:
 # --- IJFS (D4) — Red joint/air-missile fires daily phase ----------------------------------------
 
 func resolve_ijfs_turn(dice: Dice) -> Dictionary:
-	return TurnConductor.resolve_ijfs_turn(data, dice)
+	return FiresPhases.resolve_ijfs_turn(data, dice)
 
 
 func _build_warmup_context(
@@ -278,39 +279,39 @@ func _build_warmup_context(
 	firing_capacity_config: Dictionary,
 	release_rules: Array,
 ) -> Dictionary:
-	return IjfsResolver.build_warmup_context(
+	return FiresPhases.build_warmup_context(
 		x_day, z_day, total_days, rules, exquisite_intel, attrition_profile,
 		firing_capacity_config, release_rules)
 
 
-## Test-called surface (tests/ijfs/*) — pure logic lives in TurnConductor.
+## Test-called surface (tests/ijfs/*) — pure logic lives in FiresPhases.
 func _rebuild_ijfs_state() -> void:
-	TurnConductor.rebuild_ijfs_state(data)
+	FiresPhases.rebuild_ijfs_state(data)
 
 
-## Test-called surface (tests/ijfs/ijfs_maneuver_posture_test.gd) — pure logic lives in TurnConductor.
+## Test-called surface (tests/ijfs/ijfs_maneuver_posture_test.gd) — pure logic lives in FiresPhases.
 func _update_maneuver_posture() -> void:
-	TurnConductor.update_maneuver_posture(data)
+	FiresPhases.update_maneuver_posture(data)
 
 
-## Test-called surface (tests/ijfs/ijfs_maneuver_sync_test.gd) — pure logic lives in TurnConductor.
+## Test-called surface (tests/ijfs/ijfs_maneuver_sync_test.gd) — pure logic lives in FiresPhases.
 func _sync_maneuver_targets_to_oob() -> void:
-	TurnConductor.sync_maneuver_targets_to_oob(data)
+	FiresPhases.sync_maneuver_targets_to_oob(data)
 
 
-## Test-called surface (tests/ijfs/ijfs_maneuver_consume_test.gd) — pure logic lives in TurnConductor.
+## Test-called surface (tests/ijfs/ijfs_maneuver_consume_test.gd) — pure logic lives in FiresPhases.
 func _apply_ijfs_maneuver_casualties() -> void:
-	TurnConductor.apply_ijfs_maneuver_casualties(data)
+	FiresPhases.apply_ijfs_maneuver_casualties(data)
 
 
 func resolve_antiship_turn(dice: Dice) -> Dictionary:
-	return TurnConductor.resolve_antiship_turn(data, dice)
+	return FiresPhases.resolve_antiship_turn(data, dice)
 
 
 ## Test-called surface (tests/mine_neutralization_override_test.gd) — pure logic lives in
-## AntishipResolver; no GameStateData involved (unaffected by plan 0014 P3).
+## FiresPhases/AntishipResolver; no GameStateData involved.
 func _mine_ship_meta(transit_config: Dictionary) -> Dictionary:
-	return AntishipResolver.mine_ship_meta(GameData.ship_defs, transit_config)
+	return FiresPhases.mine_ship_meta(transit_config)
 
 
 # --- D5-C Cleanup phase — end-of-turn per-system flag reset ------------------------------------

@@ -28,7 +28,7 @@ fires) and ground-casualty accumulation (open half).
 | `scripts/model/ijfs/IjfsPairing.gd` | Resource model: munition-target effect pairing | `state.py` (PairingRule dataclass) |
 | `scripts/model/ijfs/IjfsSquadron.gd` | Resource model: squadron state (class, role, alive, losses) | `state.py` (SquadronState dataclass) |
 | `scripts/resolvers/IjfsResolver.gd` | Pure resolver (Phase C): `resolve()` orchestrates the daily pipeline call (warmup loop or single plain day), `build_warmup_context()`, `compute_writeback()`, maneuver-target sync/posture/consume. Read its header for the purity boundary with `GameState`. | TIV warmup driver + write-outputs aggregation |
-| `scripts/GameState.gd` | Thin wrapper: `resolve_ijfs_turn()` lazily builds `ijfs_state` then delegates to `IjfsResolver.resolve()`; `_build_warmup_context()` delegates to `IjfsResolver.build_warmup_context()`. Owns the `EventBus.ijfs_resolved` emit and cross-turn field writes (`_ijfs_day`, `last_ijfs_summary`, `last_ijfs_writeback`). | — |
+| `scripts/resolvers/FiresPhases.gd` | Thin wrapper (plan 0038): `resolve_ijfs_turn()` lazily builds `ijfs_state` then delegates to `IjfsResolver.resolve()`; `build_warmup_context()` delegates to `IjfsResolver.build_warmup_context()`. Owns the `EventBus.ijfs_resolved` emit and cross-turn field writes (`_ijfs_day`, `last_ijfs_summary`, `last_ijfs_writeback`). `GameState` forwards to it under the same method names. | — |
 
 ## 3. Daily Pipeline — Stage Order in `IjfsEngine.run_daily`
 

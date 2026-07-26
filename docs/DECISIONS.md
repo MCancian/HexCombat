@@ -19,6 +19,15 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-25 — TurnConductor phase extraction, step 2 (plan 0038; agent judgment).** The fires
+  phases — IJFS and the Green anti-ship/mine defence of the crossing, which share the anti-ship
+  firing systems — moved to `FiresPhases`, together with the crossing's output application
+  (`apply_crossing_hull_losses`, `register_ship_losses`). `TurnConductor` 28 → 22 and `GameState.gd`
+  29 → **28**, both ceilings lowered: the façade's two IJFS/anti-ship test surfaces
+  (`_build_warmup_context`, `_mine_ship_meta`) now route through `FiresPhases`, trading two resolver
+  deps for one module dep. Pure move — every moved body verified byte-identical, no pin moved, gate
+  green. Facts: `docs/systems/turn-engine.md` §2/§4, `ijfs.md`, `antiship-mine.md`, module headers.
+
 - **2026-07-25 — TurnConductor phase extraction, step 1 (plan 0038; agent judgment).** The four
   arrival phases (sealift, amphibious offload, ROC mobilization, air insertion) moved to
   `ReinforcementPhases`; `TurnConductor.resolve_turn` keeps the whole ordered call list, so modules

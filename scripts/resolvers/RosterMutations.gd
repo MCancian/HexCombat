@@ -9,9 +9,9 @@ extends RefCounted
 ## lives beside it.
 ##
 ## Static and GameData-only: no GameStateData is needed except by the tripwire, and no phase module
-## owns it — combat (TurnConductor), the crossing (TurnConductor) and air insertion
-## (ReinforcementPhases) all call in. Extracting it is what keeps those two modules a DAG rather
-## than a reference cycle. Consumes no dice, so the golden RNG stream is unaffected.
+## owns it — combat (TurnConductor), the crossing (FiresPhases) and air insertion
+## (ReinforcementPhases) all call in. Extracting it is what keeps those modules a DAG rather than a
+## reference cycle. Consumes no dice, so the golden RNG stream is unaffected.
 
 
 static func apply_casualty(casualty: Dictionary) -> void:
@@ -41,7 +41,7 @@ static func apply_casualty(casualty: Dictionary) -> void:
 ## everywhere (census, combat strength, offload) — not just in ship_reserve. Maps each drowned id
 ## back to (brigade_id, battalion type) via the PRE-removal reserve entries, then applies one
 ## roster casualty per drowned BN through the shared apply_casualty (consumes no dice → golden RNG
-## stream unaffected). See the call site in TurnConductor.resolve_antiship_turn for why the
+## stream unaffected). See the call site in FiresPhases.resolve_antiship_turn for why the
 ## ghost-landing mattered.
 static func apply_crossing_casualties(ship_reserve: Array, lost_ids: Array) -> void:
 	if lost_ids.is_empty():
