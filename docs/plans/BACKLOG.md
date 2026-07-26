@@ -19,6 +19,16 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
 
 *(Agents: append new technical debt and hygiene observations here)*
 
+- [ ] **The front-line phase is the last non-pipeline occupant of `TurnConductor`
+  (raised independently by `opencode/deepseek-v4-flash-free` and `gem-explore` in the plan-0038 step-3
+  diff review, 2026-07-25).** After plan 0038, `TurnConductor` is the turn's ORDER plus the phases
+  whose application interleaves with it (movement, ground combat, FEBA retreats).
+  `resolve_frontline_phase` + `frontline_hex_centers` are not in the turn pipeline at all — they take
+  operator-drawn polyline coordinates and are reachable only through the `GameState` façade — and
+  they are the sole reason `TurnConductor` still names `FrontlineResolver`. Plan 0038 flagged this as
+  "a separate, optional tidy" and deliberately left it. Cost: one small module, one façade
+  redirection, ~2 deps. Do it only if something else brings you into this file.
+
 - [ ] **Validator harness: `_fail` / `_finish` / asserts are copy-pasted across the validators
   (found 2026-07-25, refactor review).** Measured: `func _fail` in **30 of 36** `tools/validate_*.gd`,
   `_finish` in 31, `_assert_equal_int` in 12, `_assert_true` in 11. A `tools/ValidatorHarness.gd`

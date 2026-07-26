@@ -9,9 +9,13 @@ extends RefCounted
 ## which is what makes it unit-testable against a GameStateData built from scratch. GameState.gd's
 ## resolve_* methods are now one-line delegating wrappers to these.
 ##
-## Plan 0038: the "force arrives" phases (sealift, offload, ROC mobilization, air insertion) live in
-## `ReinforcementPhases` and the roster-shrinking seam in `RosterMutations`. `resolve_turn` below
-## still holds the full ordered call list — the modules own the HOW of a phase, never the WHEN.
+## Plan 0038: the phases themselves live in sibling modules — arrivals (sealift, offload, ROC
+## mobilization, air insertion) in `ReinforcementPhases`, fires (IJFS, anti-ship) in `FiresPhases`,
+## end-of-turn accounting (supply, cleanup) in `TurnClosure`, and the roster-shrinking seam they all
+## share in `RosterMutations`. What is left here is the turn's ORDER plus the phases whose
+## application interleaves with it: movement, ground combat, FEBA retreats, and the façade-only
+## front-line phase. `resolve_turn` below still holds the full ordered call list — the modules own
+## the HOW of a phase, never the WHEN.
 
 const FEBA_RETREAT_THRESHOLD_KM := 10.0
 
@@ -87,8 +91,8 @@ static func resolve_turn(state: GameStateData, dice: Dice = null) -> void:
 	for summary in combat_summaries:
 		summary.owner_after = String(GameData.hex_states[summary.hex_id].owner)
 	state.last_combat_summaries = combat_summaries.duplicate()
-	resolve_supply_turn(state)
-	resolve_cleanup_phase(state)
+	TurnClosure.resolve_supply_turn(state)
+	TurnClosure.resolve_cleanup_phase(state)
 
 	# Debug-only invariant (refactor item 4): at the settled end of a turn the brigade↔hex indexes
 	# must be consistent. Gated on OS.is_debug_build() so the validator is never called in release;
@@ -104,47 +108,6 @@ static func resolve_turn(state: GameStateData, dice: Dice = null) -> void:
 	EventBus.phase_changed.emit(state.phase)
 	EventBus.combat_resolved.emit(combat_summaries)
 	EventBus.turn_resolved.emit(state.turn_number)
-
-
-static func resolve_supply_turn(state: GameStateData) -> Dictionary:
-	assert(state.supply_state != null, "resolve_supply_turn requires supply_state")
-	var units := active_red_battalion_units(state)
-	var moved_ids: Array[String] = []
-	var engaged_ids: Array[String] = []
-	for brigade_value in GameData.brigades.values():
-		var brigade: Brigade = brigade_value
-		if brigade.team != Brigade.Team.RED or brigade.destroyed or brigade.hex_id.is_empty():
-			continue
-		if brigade.moved_this_turn:
-			moved_ids.append(brigade.id)
-		if brigade.fought_this_turn:
-			engaged_ids.append(brigade.id)
-
-	var summary := SupplyResolver.resolve(state.supply_state, units, moved_ids, engaged_ids, state.turn_number)
-	EventBus.supply_updated.emit(summary)
-	return summary
-
-
-# --- D5-C Cleanup phase — end-of-turn per-system flag reset ------------------------------------
-
-static func resolve_cleanup_phase(state: GameStateData) -> Dictionary:
-	GameData.recompute_hex_ownership()
-	# Pure work (flag reset, victory census + verdict, activity latch) lives in CleanupResolver;
-	# consumes no dice, so the golden RNG stream is unaffected.
-	var outcome := CleanupResolver.resolve(
-		state.antiship_systems, GameData.brigades, state.pending_battalion_pools(),
-		GameData.victory_config, state.turn_number, state._china_has_landed)
-	state._china_has_landed = bool(outcome["china_has_landed"])
-	state.last_cleanup_summary = outcome["summary"]
-	state.game_over = state.last_cleanup_summary.game_over
-	state.winner = state.last_cleanup_summary.winner
-	EventBus.cleanup_resolved.emit(state.last_cleanup_summary.to_dict())
-	return state.last_cleanup_summary.to_dict()
-
-
-static func taiwan_battalion_census(state: GameStateData) -> Dictionary:
-	return CleanupResolver.census(
-		GameData.brigades, state.pending_battalion_pools(), GameData.victory_config)
 
 
 # --- D5-A Frontline phase — redistribute Red brigades along a drawn polyline -------------------
@@ -172,32 +135,6 @@ static func resolve_frontline_phase(state: GameStateData, polyline_coords: Array
 		GameData.set_brigade_hex(String(brigade_id), String(state.last_frontline_summary.moves[brigade_id]))
 	EventBus.frontline_resolved.emit(state.last_frontline_summary.to_dict())
 	return state.last_frontline_summary.to_dict()
-
-
-## Red battalions drawing Taiwan-theater supply. Only battalions ASHORE eat (plan 0037, USER call
-## 2026-07-25): one still at sea, on the mainland, or waiting to fly is not being supplied across the
-## strait by this pool. Same not-ashore definition combat uses, so a brigade's fighting strength and
-## its ration bill always describe the same battalions.
-static func active_red_battalion_units(state: GameStateData) -> Array:
-	var units: Array = []
-	# A FRESH recompute, not the combat loop's cached map: the supply phase runs after combat, and a
-	# future phase order could drain a pool in between. Pools are unchanged today, so this is the same
-	# value line 70 computed — but the bill must not depend on that staying true.
-	var not_ashore := state.refresh_not_ashore_by_type()
-	for brigade_value in GameData.brigades.values():
-		var brigade: Brigade = brigade_value
-		if brigade.team != Brigade.Team.RED or brigade.destroyed or brigade.hex_id.is_empty():
-			continue
-		var brigade_not_ashore: Dictionary = not_ashore.get(brigade.id, {})
-		for battalion_value in brigade.composition:
-			var battalion: Battalion = battalion_value
-			for _qty_index in range(Brigade.landed_qty(battalion, brigade_not_ashore)):
-				units.append({
-					"brigade_id": brigade.id,
-					"type": battalion.type,
-					"brigade_type": brigade.nato_type,
-				})
-	return units
 
 
 static func apply_move_orders(state: GameStateData, team: Brigade.Team) -> void:
@@ -247,6 +184,12 @@ static func defender_combat_modifier(hex_id: String) -> float:
 static func inject_supply_effectiveness(state: GameStateData, units: Array, team: int) -> void:
 	var pool: float = state.supply_state.current_dos_tons if state.supply_state != null else 1.0
 	CombatResolver.inject_supply_effectiveness(units, team, pool, GameData.red_out_of_supply_effectiveness)
+
+
+# Delegating wrapper (test-called surface) — pure logic lives in CombatResolver. Routed through the
+# combat owner rather than named on the GameState façade, like every other phase surface.
+static func brigade_ids(brigades: Array) -> Array[String]:
+	return CombatResolver.brigade_ids(brigades)
 
 
 # Thin wrapper: gathers contributors (board/commitment state), delegates the dice-consuming combat

@@ -8,7 +8,7 @@ gameplay-relevant cycle:
 | Autoload | Role | Node |
 |---|---|---|
 | `GameData` | **Static data service** — loads JSON (hexes, OOBs, scenario, beaches, ships, theaters) into typed `Resource` objects once at startup. Holds all lookups (`hex_lookup`, `neighbor_lookup`, `brigades_by_hex`, etc.). | `scripts/GameData.gd` |
-| `GameState` | **Runtime turn/phase state** — a thin autoload shell (plan 0014): the state itself lives in `GameStateData`, the resolution in `TurnConductor` + `FiresPhases` + `ReinforcementPhases`, and this autoload keeps the typed forwarding properties, the delegating wrappers external callers use, and the lifecycle (`reset_to_scenario`, `begin_next_turn`, `play_turn`). | `scripts/GameState.gd` |
+| `GameState` | **Runtime turn/phase state** — a thin autoload shell (plan 0014): the state itself lives in `GameStateData`, the resolution in `TurnConductor` + `FiresPhases` + `ReinforcementPhases` + `TurnClosure`, and this autoload keeps the typed forwarding properties, the delegating wrappers external callers use, and the lifecycle (`reset_to_scenario`, `begin_next_turn`, `play_turn`). | `scripts/GameState.gd` |
 | `EventBus` | **Signal hub** — decouples subsystems via typed Godot signals (`phase_changed`, `turn_resolved`, `combat_resolved`, etc.). | `scripts/EventBus.gd` |
 | `Dice` / `SeededDice` | **Injectable RNG abstraction** — base `Dice` (abstract, `RefCounted`), `SeededDice` (deterministic via `RandomNumberGenerator` with seeded `derive()` sub-streams). | `scripts/Dice.gd`, `scripts/SeededDice.gd` |
 
@@ -17,9 +17,10 @@ gameplay-relevant cycle:
 | File | Lines | Role |
 |---|---|---|
 | `scripts/GameState.gd` | 452 | Autoload shell: `Phase` enum (PLANNING/RESOLUTION/END) re-export, typed forwarding properties onto `data: GameStateData`, delegating wrappers (`resolve_turn()`, `resolve_offload_turn()`, …), lifecycle `reset_to_scenario()` / `begin_next_turn()` / `play_turn()` |
-| `scripts/resolvers/TurnConductor.gd` | 404 | Turn orchestration proper: `resolve_turn()` holds the ordered phase list (§4), plus the phases it still owns — movement, ground combat, FEBA retreats, supply, cleanup, frontline |
+| `scripts/resolvers/TurnConductor.gd` | 347 | Turn orchestration proper: `resolve_turn()` holds the ordered phase list (§4), plus the phases whose application interleaves with it — movement, ground combat, FEBA retreats — and the façade-only front-line phase |
 | `scripts/resolvers/FiresPhases.gd` | 191 | The fires phases (plan 0038): IJFS joint/air-missile fires and the Green anti-ship + mine defence of the crossing, which share the anti-ship firing systems |
 | `scripts/resolvers/ReinforcementPhases.gd` | 345 | The four "force arrives" phases (plan 0038): sealift, amphibious offload, ROC mobilization, air insertion, and their arrival-site rules |
+| `scripts/resolvers/TurnClosure.gd` | 81 | The end-of-turn accounting pair (plan 0038): supply bills who fought, cleanup censuses who is left and decides victory |
 | `scripts/resolvers/RosterMutations.gd` | 91 | The roster-shrinking seam every kill path shares: `apply_casualty`, `apply_crossing_casualties`, and the `pending_pool_roster_violations` tripwire |
 | `scripts/GameData.gd` | 546 | Data loading: `load_hex_grid()`, `load_brigades()`, `load_scenario()`, `load_theaters()`, `load_beaches()`, `load_ships()`. Indexes: `brigades`, `brigades_by_hex`, `hex_lookup`, `neighbor_lookup`, `hex_states`, `ship_defs`, `beaches`, `active_tos`, `to_adjacency`, `beach_to_to` |
 | `scripts/Dice.gd` | 37 | Abstract base: `roll_d100()`, `choose_indices()`, `randf()`, `weighted_choice()`, `weighted_choices()`, `shuffle_indices()`, `derive()` |
@@ -73,8 +74,8 @@ phase resolves, never when it runs. The resolution runs exactly this pipeline:
 11. **Ground combat** — for each contested hex, `resolve_combat_at(hex_id, dice.derive("combat:<turn>:<hex>"))` runs `CombatResolver.resolve_at()`, applies casualties through `RosterMutations.apply_casualty`, accumulates FEBA movement.
 12. **FEBA retreats** — `apply_feba_retreats()` pushes retreating brigades out of hexes where `|feba_km| ≥ 10km`.
 13. **Hex ownership** — `GameData.recompute_hex_ownership()`: RED-only → RED, GREEN-only → GREEN, both → CONTESTED; each combat summary is then annotated with `owner_after`.
-14. **Supply** — `resolve_supply_turn()`: `SupplyResolver.resolve` bills every LANDED Red battalion, decrements `supply_state.current_dos_tons`. Runs after combat so the bill covers who actually fought.
-15. **Cleanup** — `resolve_cleanup_phase()`: resets `antiship_system` per-turn flags, runs the Taiwan battalion census, evaluates victory for game-over.
+14. **Supply** — `TurnClosure.resolve_supply_turn()`: `SupplyResolver.resolve` bills every LANDED Red battalion, decrements `supply_state.current_dos_tons`. Runs after combat so the bill covers who actually fought.
+15. **Cleanup** — `TurnClosure.resolve_cleanup_phase()`: recomputes hex ownership a second time (retreats in step 12 can have moved brigades since step 13), resets `antiship_system` per-turn flags, runs the Taiwan battalion census, evaluates victory for game-over.
 16. **End-of-turn tripwires** (debug builds only) — `GameData.validate_runtime_indexes()` and `RosterMutations.pending_pool_roster_violations()` assert at the settled boundary.
 
 `resolve_frontline_phase` is **not** in this pipeline: it takes operator-drawn polyline coordinates

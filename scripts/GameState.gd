@@ -4,9 +4,10 @@ class_name GameStateType
 ## Runtime-state autoload — now a thin shell (plan 0014): the mutable state itself lives in
 ## `data: GameStateData` (scripts/model/GameStateData.gd), the scenario-load builders in
 ## `GameStateBuilder`, turn orchestration in `TurnConductor` — with the arrival phases (sealift,
-## offload, mobilization, air insertion) in `ReinforcementPhases` and the fires phases (IJFS,
-## anti-ship) in `FiresPhases`, plan 0038 — and order legality in
-## `OrderValidator` (all scripts/resolvers/, all static, all taking `GameStateData` — never this
+## offload, mobilization, air insertion) in `ReinforcementPhases`, the fires phases (IJFS, anti-ship)
+## in `FiresPhases` and the end-of-turn accounting (supply, cleanup) in `TurnClosure`, plan 0038 —
+## and order legality in `OrderValidator` (all scripts/resolvers/, all static, all taking
+## `GameStateData` — never this
 ## autoload — as their first argument). What remains here: the typed forwarding properties that
 ## keep the pre-refactor `GameState.<field>` API byte-stable for external callers, a handful of
 ## one-line delegating wrappers kept because GdUnit tests call them directly on the autoload, and
@@ -263,7 +264,7 @@ func _rebuild_infrastructure_state() -> void:
 
 
 func resolve_supply_turn() -> Dictionary:
-	return TurnConductor.resolve_supply_turn(data)
+	return TurnClosure.resolve_supply_turn(data)
 
 
 # --- IJFS (D4) — Red joint/air-missile fires daily phase ----------------------------------------
@@ -317,12 +318,12 @@ func _mine_ship_meta(transit_config: Dictionary) -> Dictionary:
 # --- D5-C Cleanup phase — end-of-turn per-system flag reset ------------------------------------
 
 func resolve_cleanup_phase() -> Dictionary:
-	return TurnConductor.resolve_cleanup_phase(data)
+	return TurnClosure.resolve_cleanup_phase(data)
 
 
-## Test-called surface (tests/victory_present_census_test.gd) — pure logic lives in TurnConductor.
+## Test-called surface (tests/victory_present_census_test.gd) — pure logic lives in TurnClosure.
 func _taiwan_battalion_census() -> Dictionary:
-	return TurnConductor.taiwan_battalion_census(data)
+	return TurnClosure.taiwan_battalion_census(data)
 
 
 # --- D5-A Frontline phase — redistribute Red brigades along a drawn polyline -------------------
@@ -395,9 +396,9 @@ func _combat_contributors_for(team: Brigade.Team, hex_id: String) -> Array:
 	return TurnConductor.combat_contributors_for(data, team, hex_id)
 
 
-# Delegating wrapper (test-called surface) — pure logic lives in CombatResolver.
+# Delegating wrapper (test-called surface) — pure logic lives in TurnConductor / CombatResolver.
 func _brigade_ids(brigades: Array) -> Array[String]:
-	return CombatResolver.brigade_ids(brigades)
+	return TurnConductor.brigade_ids(brigades)
 
 
 ## Play a full turn from a bulk-order spec: buffers every order, resolves, and

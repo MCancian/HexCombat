@@ -19,6 +19,16 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-25 — TurnConductor phase extraction COMPLETE, step 3 (plan 0038; agent judgment).**
+  Supply + cleanup — the end-of-turn accounting pair — moved to `TurnClosure`, finishing the plan:
+  `TurnConductor` is now the turn's ORDER plus the phases whose application interleaves with it
+  (movement, ground combat, FEBA retreats), at **ndeps 20 of a former 38** and 347 of a former 957
+  loc. `GameState.gd` held at 28 (`_brigade_ids` routed through `TurnConductor`, the combat owner).
+  Pure move, no pin moved, gate green. **Deliberately left:** the front-line phase, which is not in
+  the turn pipeline at all — both diff reviewers flagged it, and it is now a BACKLOG item rather than
+  scope creep. Facts: `docs/archive/0038-turnconductor-phase-extraction.md` (closeout),
+  `docs/systems/turn-engine.md` §2/§4, module headers.
+
 - **2026-07-25 — TurnConductor phase extraction, step 2 (plan 0038; agent judgment).** The fires
   phases — IJFS and the Green anti-ship/mine defence of the crossing, which share the anti-ship
   firing systems — moved to `FiresPhases`, together with the crossing's output application
@@ -56,7 +66,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
     both are now views on `split_units`. `GameData.snapshot_state`'s `pending_pools` default was
     removed (defaulting to `[]` silently returned whole rosters — the 0034/0037 bug).
   - **Gate**: ALL PHASES GREEN, **no pin moved** — the combat refactor is byte-stable.
-  - **Pointers**: `docs/plans/0038-turnconductor-phase-extraction.md` (the ceiling problem this review
+  - **Pointers**: `docs/archive/0038-turnconductor-phase-extraction.md` (the ceiling problem this review
     surfaced and did NOT fix); `hexcombat-failure-archaeology` → "The gate 'hang' that was two separate
     illusions"; `docs/plans/BACKLOG.md` for three items deliberately deferred.
   - **Rejected on measurement**: extracting `TurnConductor`'s roster-mutation trio to buy ceiling

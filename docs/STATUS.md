@@ -23,7 +23,8 @@ cross-phase field assignment, and combat casualty/FEBA/retreat application (whic
 conductor deliberately: per-hex application interleaves with the next hex's contributor
 gathering). The four **arrival** phases (sealift, amphibious offload, ROC mobilization, air
 insertion) live in **`ReinforcementPhases`**, the two **fires** phases (IJFS, anti-ship + mines) in
-**`FiresPhases`**, and the roster-shrinking seam every kill path shares
+**`FiresPhases`**, the end-of-turn accounting pair (supply, cleanup) in **`TurnClosure`**, and the
+roster-shrinking seam every kill path shares
 (`apply_casualty`, `apply_crossing_casualties`, and the pool/roster tripwire) in
 **`RosterMutations`** — `TurnConductor.resolve_turn` still holds the whole ordered call list, so the
 modules own how a phase resolves and never when it runs (plan 0038). Runtime state itself is the plain **`GameStateData`** value object

@@ -1,32 +1,53 @@
 ---
 title: "0038: TurnConductor phase extraction — buy back dependency headroom"
-status: "In progress"
+status: "Shipped"
 created: "2026-07-25"
 ---
 
 # Plan 0038: TurnConductor phase extraction
 
-## Progress
+## Closeout — SHIPPED 2026-07-25
 
-- **Step 1 — `ReinforcementPhases` — SHIPPED 2026-07-25.** Measured 38 → **28**; ceiling lowered to
-  28 in the same commit. `GameState.gd` held at 29 of 29 (`ship_reserve_priority_order` moved with
-  the offload group, so the new module dep was a swap, not an addition). Estimates in the table below
-  were upper bounds and the move beat them: `HexState` and `SealiftState` left too, because their
-  last references went with the moved functions.
-  **One deviation:** `RosterMutations` (`apply_casualty`, `apply_crossing_casualties`,
-  `pending_pool_roster_violations`) had to be extracted in the SAME commit. It is listed under "Not
-  in scope" below as a cohesion-only change that buys no headroom — that measurement stands (it costs
-  `TurnConductor` +1) — but it is a *prerequisite*, not an option: air insertion moved into
-  `ReinforcementPhases` and still calls `apply_casualty`, which ground combat also calls, so leaving
-  the seam in `TurnConductor` would have made the two modules a reference cycle. Splitting it into
-  its own commit was impossible: alone it takes `TurnConductor` to 39 and breaches the ceiling.
-- **Step 2 — `FiresPhases` — SHIPPED 2026-07-25.** IJFS + anti-ship/mine crossing defence (and the
-  hull-loss application and `register_ship_losses` that are the crossing's output) measured
-  `TurnConductor` 28 → **22**, ceiling lowered. `GameState.gd` went 29 → **28** — better than the
-  swap the plan hoped for, because `_build_warmup_context` and `_mine_ship_meta` now route through
-  `FiresPhases` instead of naming `IjfsResolver`/`AntishipResolver` directly, trading two resolver
-  deps for one module dep. That spare dep is what step 3 will spend.
-- Step 3 (`TurnClosure`) still to do.
+**Result: `TurnConductor.gd` ndeps 38 → 20, loc 957 → 347. `GameState.gd` 29 → 28.** Every ceiling
+lowered to the newly-measured value in the commit that earned it, so the headroom is locked in.
+Three commits, one per step, each with ALL PHASES GREEN and **no pinned validator value moved** —
+every moved function body was machine-diffed against its pre-move version and is byte-identical
+except for deliberate call-target and dead-line-number comment edits.
+
+| Step | Module | `TurnConductor` | Commit |
+|---|---|---|---|
+| 1 | `ReinforcementPhases` (sealift, offload, ROC mobilization, air insertion) + `RosterMutations` | 38 → 28 | `47cddb3` |
+| 2 | `FiresPhases` (IJFS, anti-ship + mines, and the crossing's output application) | 28 → 22 | `1b70aab` |
+| 3 | `TurnClosure` (supply, cleanup) | 22 → 20 | this commit |
+
+Where the facts landed: module headers (`scripts/resolvers/*.gd`), `docs/systems/turn-engine.md`
+§2/§4 (which also got the pre-0014 architecture and the wrong 3-phase pipeline corrected),
+`docs/STATUS.md`, `docs/DECISIONS.md` (three entries), `tools/gd_metrics.py` DEP_CEILINGS.
+
+**Two deviations from the plan as written, both recorded in DECISIONS:**
+
+1. **`RosterMutations` was a prerequisite, not the optional cohesion change the plan filed under "Not
+   in scope".** The plan's measurement of it stands — extracting the roster trio buys no headroom and
+   costs `TurnConductor` +1 — but once air insertion moved into `ReinforcementPhases`, both that
+   module and `TurnConductor` (ground combat, the crossing) called `apply_casualty`, so leaving the
+   seam where it was would have made them a reference cycle. It could not be its own commit either:
+   alone it takes `TurnConductor` to 39 and breaches the ceiling.
+2. **`GameState.gd` did better than the swap the plan hoped for.** Steps 1-3 each moved a façade
+   surface into the module that owns it (`ship_reserve_priority_order` → `ReinforcementPhases`,
+   `_build_warmup_context`/`_mine_ship_meta` → `FiresPhases`, `_brigade_ids` → `TurnConductor`), so
+   the façade traded resolver deps for module deps and ended at 28 of 28 rather than breaching.
+
+**Estimates were upper bounds and every step beat them**, because a dep leaves only when its LAST
+reference does and several went with the first group that claimed them (`HexState`, `SealiftState`,
+`Battalion`, `GameStateBuilder`, `Theaters`, `ShipDef`, `ShipState`).
+
+**Deliberately not done:** the front-line phase, which the plan called "a separate, optional tidy",
+still sits in `TurnConductor` and is the sole reason it names `FrontlineResolver`. Both diff
+reviewers raised it; it is now a `docs/plans/BACKLOG.md` item rather than scope creep here.
+
+---
+
+## Original plan (for the record)
 
 `scripts/resolvers/TurnConductor.gd` measures **ndeps = 38 against a ceiling of 38** (`tools/gd_metrics.py:44`).
 Zero headroom. The next mechanic that adds a phase resolver breaks the gate, and

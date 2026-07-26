@@ -36,6 +36,8 @@ DEP_CEILINGS = {
     # 29 -> 28 (plan 0038 step 2): `_build_warmup_context` and `_mine_ship_meta` now delegate through
     # FiresPhases instead of naming IjfsResolver/AntishipResolver directly, so the façade trades two
     # resolver deps for one module dep. LOWERED, not held, so the slack cannot be silently re-spent.
+    # 28 -> 28 (plan 0038 step 3): +TurnClosure, -CombatResolver (`_brigade_ids` routes through
+    # TurnConductor, the combat owner, like every other phase surface). A swap, not growth.
     "scripts/GameState.gd": 28,
     # TurnConductor.gd legitimately depends on every phase resolver it orchestrates (IjfsResolver,
     # SealiftResolver, AntishipResolver, OffloadResolver, InfrastructureResolver, SupplyResolver,
@@ -50,7 +52,9 @@ DEP_CEILINGS = {
     # bought is locked in rather than silently re-spent by the next mechanic.
     # 28 -> 22 (plan 0038 step 2): the fires phases (IJFS + anti-ship) moved to FiresPhases, taking
     # IjfsResolver, AntishipResolver, SealiftResolver, GameStateBuilder, Theaters, ShipDef, ShipState.
-    "scripts/resolvers/TurnConductor.gd": 22,
+    # 22 -> 20 (plan 0038 step 3): supply + cleanup moved to TurnClosure, taking CleanupResolver,
+    # SupplyResolver and Battalion. What is left is the turn ORDER plus movement/combat/FEBA/frontline.
+    "scripts/resolvers/TurnConductor.gd": 20,
     # ReinforcementPhases.gd (plan 0038): owns the four "force arrives" phases and their resolvers.
     # Ceilinged from birth because a phase-owning module is exactly where a god-object would be
     # laundered back in — a NEW arrival phase belongs here (and may justify a small bump), an
@@ -59,6 +63,9 @@ DEP_CEILINGS = {
     # FiresPhases.gd (plan 0038 step 2): owns IJFS + the anti-ship/mine crossing defence. Same
     # reasoning as ReinforcementPhases — ceilinged from birth. Measured 14 at commit time.
     "scripts/resolvers/FiresPhases.gd": 14,
+    # TurnClosure.gd (plan 0038 step 3): the end-of-turn accounting pair (supply bills who fought,
+    # cleanup censuses who is left). Measured 7 at commit time.
+    "scripts/resolvers/TurnClosure.gd": 7,
 }
 
 FUNC_RE = re.compile(r"^(\s*)(static\s+)?func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*)$")

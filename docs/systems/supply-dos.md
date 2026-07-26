@@ -66,7 +66,7 @@ A unit that **both moved and fought** burns the full base (300 or 150). Each omi
 
 ## 5. Consumption summary — `calculate_consumption(units, moved_brigade_ids, engaged_brigade_ids, day)` (line 68)
 
-Iterates all landed Red battalions (`TurnConductor.active_red_battalion_units()`), classifies each, sums per-unit tons, and builds a by-brigade breakdown. Only battalions ASHORE are billed (plan 0037): the function subtracts the off-map pools, so a brigade's ration bill and its fighting strength always name the same battalions.
+Iterates all landed Red battalions (`TurnClosure.active_red_battalion_units()`), classifies each, sums per-unit tons, and builds a by-brigade breakdown. Only battalions ASHORE are billed (plan 0037): the function subtracts the off-map pools, so a brigade's ration bill and its fighting strength always name the same battalions.
 
 Returns a Dictionary with fields (see lines 127–142):
 
@@ -89,7 +89,7 @@ Returns a Dictionary with fields (see lines 127–142):
 Called at the end of each combat turn (line 194, after `_apply_feba_retreats()` and `recompute_hex_ownership()`).
 
 ```
-1. Collect landed Red battalions via TurnConductor.active_red_battalion_units().
+1. Collect landed Red battalions via TurnClosure.active_red_battalion_units().
 2. Build moved_brigade_ids (brigade.moved_this_turn) and engaged_brigade_ids (brigade.fought_this_turn).
 3. Call DosConsumption.calculate_consumption(...).
 4. Deduct red_dos_consumed_tons from supply_state.current_dos_tons (clamped to 0).
@@ -110,7 +110,7 @@ A second driver was added by plan 0032: `CombatRules.isolated_red_brigade_ids` f
 resolve_combat_turn()
   → (resolve combats, FEBA, ownership)
   → resolve_supply_turn()          [line 194]
-    → TurnConductor.active_red_battalion_units()
+    → TurnClosure.active_red_battalion_units()
     → DosConsumption.calculate_consumption() [line 398]
     → supply_state.current_dos_tons -= consumed [line 401]
     → EventBus.supply_updated.emit() [line 407]
