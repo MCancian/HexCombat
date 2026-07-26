@@ -39,7 +39,7 @@ teardown *after* everything passed (see `hexcombat-debugging-playbook`). Green o
 | Cleanup fingerprint | post-turn ownership/state hash | `tools/validate_cleanup.gd` |
 | Golden victory e2e | deterministic terminal outcome (turn, winner, census) | `tools/validate_golden_victory.gd` — its PASS line is truth |
 | Self-play | 4-turn full-game determinism + index health | `tools/validate_headless_selfplay.gd` |
-| JSON fixtures | byte-compare of `docs/examples/*.json` | `tools/validate_fixtures.gd` + `tools/LLMFixtures.gd` |
+| JSON fixtures | committed `docs/examples/*.json` must survive regeneration | the gate's "Fixture Generation & Drift Validation" phase in `tools/run_all_tests.py` — it re-runs the exporters, then `git diff --exit-code docs/examples/` |
 | API contract | observation/action/result required keys ↔ schemas | `tools/validate_llm_api.gd` + `schemas/*.schema.json` |
 | RNG purity | no global `randi()`/`randf()` in logic | `tools/validate_no_global_rng.gd` |
 
@@ -69,7 +69,13 @@ change-control event (`hexcombat-change-control`).
 
 ## Fixtures
 
-Committed under `docs/examples/`, regenerated ONLY via `tools/export_llm_*.gd`, byte-compared
-every gate run. If your change legitimately grows the JSON contract: update schema + regenerate
-fixture + update `REQUIRED_*_KEYS` in `validate_llm_api.gd` (the duplication is a deliberate
-drift cross-check), in the same commit.
+Committed under `docs/examples/`, regenerated ONLY via `tools/export_llm_*.gd`. The gate regenerates
+them every run and then `git diff --exit-code docs/examples/`, so drift shows up as an unexpected
+working-tree change rather than as a validator failure. If your change legitimately grows the JSON
+contract: update schema + commit the regenerated fixture + update `REQUIRED_*_KEYS` in
+`validate_llm_api.gd` (the duplication is a deliberate drift cross-check), in the same commit.
+
+`tools/validate_skill_references.gd` keeps this file honest in one narrow respect: every fully
+concrete `` `tools/…gd` `` path a skill cites must exist. Placeholders and globs
+(`validate_<thing>.gd`, `validate_*.gd`) are skipped by design, and a line marked `(historical)` is
+exempt.

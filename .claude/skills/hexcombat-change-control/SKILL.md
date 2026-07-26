@@ -32,10 +32,10 @@ re-baseline history is in `docs/DECISIONS.md` (pre-2026-07-10: `docs/archive/PLA
   Re-baselining requires: (1) the user's call or an explicit correctness argument recorded in
   docs/DECISIONS.md, (2) updating the pinned values everywhere (`validate_headless_turn`,
   `validate_cleanup` fingerprint, `docs/STATUS.md`, fixtures, tests keyed to the old values).
-- The item-8 gate (`tools/validate_fixtures.gd`) byte-compares committed `docs/examples/*.json`
-  every run — serialization drift fails loud. If it fires, regenerate via `tools/export_llm_*.gd`
-  and **review the diff**: intended contract growth → commit the regen; unintended → your change
-  leaked into the JSON contract.
+- The gate's fixture-drift phase re-runs the exporters and then `git diff --exit-code docs/examples/`
+  every run, so serialization drift fails loud as an unexpected working-tree change. If it fires,
+  **review the diff**: intended contract growth → commit the regenerated JSON; unintended → your change
+  leaked into the JSON contract. (It reports as "Fixture drift: LLMFixtures changed docs/examples/".)
 
 ## Non-negotiables (with the incident behind each)
 

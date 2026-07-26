@@ -98,15 +98,13 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   2026-07-24, leaving a comment. If Green ever counterattacks (plan 0029 Tier B), supply injection and
   anything else keyed on side must be driven by each side's actual team, not its role. Ported combat
   semantics, so a USER-aware change, not a refactor.
-- **Four skills point at `tools/validate_fixtures.gd`, which no longer exists.** Fixture drift is now
-  checked by the git-diff block in `tools/run_all_tests.py`, not by a validator. The stale references are
-  in `hexcombat-validation-and-qa` (golden inventory row), `hexcombat-change-control` ("the item-8
-  gate"), `hexcombat-debugging-playbook` (a triage row keyed on "`validate_fixtures.gd` red", a state
-  that can no longer occur) and `hexcombat-gamestate-decomposition-campaign`. A tracked orphan
-  `tools/validate_fixtures.gd.uid` should go with them. Note the general hole this exposes:
-  `tools/validate_doc_anchors.gd` covers `docs/` and `tools/`, so nothing gates dead path citations
-  inside `.claude/skills/**` — worth considering as part of the fix, since a skill is the first thing an
-  agent reads.
+- **`docs/*.md` and `docs/plans/*.md` have no anchor gate.** `tools/validate_doc_anchors.gd` scans
+  `res://docs/systems` only, and `tools/validate_skill_references.gd` scans `.claude/skills` only, so
+  `STATUS.md`, `DECISIONS.md`, `RETROSPECTIVES.md` and every plan can cite a dead path unnoticed —
+  which is how four skills came to point at a validator that had been deleted. Extending one of the two
+  to cover them is cheap; the obstacle is that those files legitimately DISCUSS dead paths, so they need
+  the `(historical)` escape marker applied first or the gate will fire on the record of the very cleanup
+  that removed them.
 - **`docs/STATUS.md` quotes golden pins in prose, against the one-home rule.** Two places name pinned
   validator output directly: the re-baselined golden `casualties`/`feba` pair, and the 40-turn stalemate
   census. `hexcombat-docs-and-writing` is explicit that the validator's `PASS:` line is the only home for
@@ -128,3 +126,21 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   did not subtract pools — so a leftover with a plausible name is worth removing rather than tolerating.
   Found 2026-07-26 by a diff reviewer during plan 0040; out of scope there, which touched no production
   code.
+- **Four `tools/` validators duplicate a comment/string stripper and a `.gd` directory walker — decided
+  2026-07-26 NOT to unify, revisit only with new evidence.** `validate_tool_script_purity.gd`,
+  `validate_no_global_rng.gd`, `validate_doc_anchors.gd` and `validate_combat_rules_threading.gd` each
+  carry their own, with differing semantics. The tempting reason to unify was to fix the shared
+  escaped-quote hole (`"say \"hi\""` ends the string match early and exposes the middle as code) in one
+  place instead of four. Rejected on two measurements: (1) that hole fails in the LOUD direction —
+  blanking leaves more text exposed, not less, so it yields a spurious FAIL, never a silent pass, in
+  every current consumer; (2) `validate_tool_script_purity.gd` needs TWO stripper modes, not one — it
+  finds `preload("res://…")` paths with a comments-only pass that deliberately PRESERVES strings, so a
+  naive unification would silently stop finding preloads, turning a gate into a false negative. That is a
+  worse outcome than the duplication. If unified later, the acceptance test is per-validator stdout
+  byte-identical AND each still FINDING what it found — a validator that finds fewer things is not
+  output-neutral even when its wording is unchanged. Note this is a DIFFERENT item from the
+  `_fail`/`_finish` harness dedup above, which remains worth doing on its own terms — a reviewer proposed
+  the harness migration as a substitute for this one, and it is not: it addresses different duplication,
+  and doing it wholesale would change output (27 of 38 validators still have their own helpers, and
+  `ValidatorHarness`'s docstring records that several deviate deliberately), which is why that item
+  correctly says slices-with-the-gate-green rather than a sweep.

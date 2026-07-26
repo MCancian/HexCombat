@@ -24,8 +24,9 @@ After EVERY extraction, all three, in order:
    of truth for the golden casualties/FEBA values, never a number copied into this doc.
    Byte-stable — if the validator's output moved, the extraction changed behavior: **revert and
    re-derive, never re-baseline.**
-3. `pwsh -File tools/run_all_tests.ps1` → ALL PHASES GREEN (incl. `validate_fixtures`
-   byte-compare and `validate_golden_victory`'s `PASS:` line for the terminal census).
+3. `pwsh -File tools/run_all_tests.ps1` → ALL PHASES GREEN (incl. the fixture-drift phase, which
+   regenerates `docs/examples/` and `git diff --exit-code`s it, and `validate_golden_victory`'s
+   `PASS:` line for the terminal census).
 
 One extraction per commit. If a step can't go green in two focused attempts → stop, record in
 a Sketch plan in docs/plans/, surface to the user.

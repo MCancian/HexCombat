@@ -19,6 +19,26 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-26 — Skills are now gated against dead `.gd` citations; the fixture-drift references they
+  carried are corrected (agent judgment, from a refactor review the USER asked for).**
+  - **What**: `tools/validate_skill_references.gd` fails when a skill cites a fully concrete
+    `` `tools/…gd` `` path that does not exist. Four skills named `tools/validate_fixtures.gd`, deleted
+    some time ago — fixture drift is now the gate's regenerate-then-`git diff --exit-code docs/examples/`
+    phase. One was a `hexcombat-debugging-playbook` triage row keyed on that validator going red, i.e. an
+    instruction to debug a state that can no longer occur. All four corrected; the orphan
+    `tools/validate_fixtures.gd.uid` deleted.
+  - **Why gate skills at all**: a skill is the first thing an agent reads and is read as instruction, not
+    description. `validate_doc_anchors.gd` guards `docs/systems` only, so nothing watched them.
+  - **Deliberately narrow, because a reviewer was right that this could be a trap**: skills legitimately
+    write `validate_<thing>.gd`, `validate_*.gd`, `<Phase>Resolver.gd`. Tokens carrying a glob or a
+    placeholder are skipped, and `(historical)` exempts a line. Measured before writing it: over the whole
+    skill tree the rule produced exactly one hit — the real one — and no false positives.
+  - **Gate**: ALL PHASES GREEN, no pin moved. Four mutations proved it: a reintroduced dead citation
+    fails, placeholders and globs do not, `(historical)` suppresses, and a broken scan root fails loudly
+    rather than passing vacuously.
+  - **Pointers**: `.claude/skills/hexcombat-validation-and-qa` §Fixtures; remaining gap (`docs/*.md` and
+    `docs/plans/*.md` are still ungated) in `docs/plans/BACKLOG.md`.
+
 - **2026-07-26 — The combat-knob correspondence is gated; plan 0040 lands option (c) only (agent
   judgment, on the USER's own sequencing note).**
   - **Who**: agent, following the execution order in `docs/plans/README.md` for the risk-buydown group.
