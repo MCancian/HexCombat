@@ -66,7 +66,7 @@ A unit that **both moved and fought** burns the full base (300 or 150). Each omi
 
 ## 5. Consumption summary — `calculate_consumption(units, moved_brigade_ids, engaged_brigade_ids, day)` (line 68)
 
-Iterates all landed Red battalions (`_active_red_battalion_units()` — `GameState.gd`), classifies each, sums per-unit tons, and builds a by-brigade breakdown.
+Iterates all landed Red battalions (`TurnConductor.active_red_battalion_units()`), classifies each, sums per-unit tons, and builds a by-brigade breakdown. Only battalions ASHORE are billed (plan 0037): the function subtracts the off-map pools, so a brigade's ration bill and its fighting strength always name the same battalions.
 
 Returns a Dictionary with fields (see lines 127–142):
 
@@ -89,7 +89,7 @@ Returns a Dictionary with fields (see lines 127–142):
 Called at the end of each combat turn (line 194, after `_apply_feba_retreats()` and `recompute_hex_ownership()`).
 
 ```
-1. Collect landed Red battalions via _active_red_battalion_units().
+1. Collect landed Red battalions via TurnConductor.active_red_battalion_units().
 2. Build moved_brigade_ids (brigade.moved_this_turn) and engaged_brigade_ids (brigade.fought_this_turn).
 3. Call DosConsumption.calculate_consumption(...).
 4. Deduct red_dos_consumed_tons from supply_state.current_dos_tons (clamped to 0).
@@ -100,7 +100,9 @@ Called at the end of each combat turn (line 194, after `_apply_feba_retreats()` 
 
 **Initial pool:** `_rebuild_supply_state()` (line 992) sets `current_dos_tons = GameData.red_dos_start * TONS_PER_DOS` (100 × 150 = 15 000 tons in `scenario_default.json` line 5).
 
-**Supply effectiveness:** `CombatCalculator._unit_supply_effectiveness()` (line 227) reads `supply_effectiveness` from the unit Dictionary (defaults to 1.0). Currently, `supply_effectiveness` is **always 1.0** — the pool-depletion → modifier linkage is deferred to the D4 IJFS phase (see comment at `GameState.gd`). The field is present on every BN (`Brigade.gd`, `UnitManager.gd`, `CombatForces.gd`) but currently unused in resolution.
+**Supply effectiveness — LIVE, not deferred.** `CombatCalculator._unit_supply_effectiveness()` reads `supply_effectiveness` from the unit Dictionary (defaults to 1.0), and `CombatResolver.inject_supply_effectiveness` (called from `TurnConductor.resolve_combat_at`) sets it: Red maneuver and support units fight at 1.0 while `red_supply_pool > 0.0`, and at `GameData.red_out_of_supply_effectiveness` (**0.5** by default, scenario-overridable) once the pool is exhausted. Green has no DOS model, so its effectiveness is always 1.0.
+
+A second driver was added by plan 0032: `CombatRules.isolated_red_brigade_ids` forces the out-of-supply value for any air-landed brigade with no Red corridor back to a lodgement, regardless of how full the theatre pool is — the tonnage exists, it just cannot reach a battalion behind enemy lines.
 
 **Flow summary (GameState.gd):**
 
@@ -108,7 +110,7 @@ Called at the end of each combat turn (line 194, after `_apply_feba_retreats()` 
 resolve_combat_turn()
   → (resolve combats, FEBA, ownership)
   → resolve_supply_turn()          [line 194]
-    → _active_red_battalion_units() [line 944]
+    → TurnConductor.active_red_battalion_units()
     → DosConsumption.calculate_consumption() [line 398]
     → supply_state.current_dos_tons -= consumed [line 401]
     → EventBus.supply_updated.emit() [line 407]

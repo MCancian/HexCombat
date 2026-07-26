@@ -118,7 +118,8 @@ GameData autoloads in `_ready()` → `load_all()` (line 40–52):
 | `data/beaches.json` | `load_beaches()` | `beaches` (id→BeachDef: capacity, offload_rate, category, etc.) |
 | `data/ships.json` | `load_ships()` | `ship_defs` (id→ShipDef: capacity, category, decoy flag, etc.) |
 
-Key helpers: `set_brigade_hex()` (line 273) mutates position + updates `brigades_by_hex` index; `recompute_hex_ownership()` (line 290) resets every hex's owner from brigade presence; `snapshot_state()` (line 514) returns a deterministic key-sorted dict for golden testing.
+Key helpers: `set_brigade_hex()` (line 273) mutates position + updates `brigades_by_hex` index; `recompute_hex_ownership()` (line 290) resets every hex's owner from brigade presence; `snapshot_state(pending_pools)` returns a deterministic key-sorted dict for golden testing; the pools
+argument is required and makes it report battalions ashore rather than whole rosters (plan 0037).
 
 ## 8. TIV Relationship
 

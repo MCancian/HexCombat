@@ -35,7 +35,7 @@ Current axes:
 | `amphibious_return_time_turns` | `0`; `scenario_default`/`roc_full_defense` use `3` | Freed-hull return delay (`SealiftResolver`) |
 | `escort_reload_time_turns` | `0` (magazine off); `roc_full_defense` uses `4` | Escort SAM reload cycle |
 | `use_offload_weight_matrix` | `false` (flat TONS_PER_BN); `scenario_default` sets `true` | Day-N offload cost = per-type weight × bn_class/ship_category multiplier (`data/offload_weights.json` → `OffloadCostModel`; plan 0006) |
-| `auto_jlsf` | `false`; `scenario_default` sets `true` | Auto-queue a JLSF deployment to every newly seized port/airbridge (`GameState._consume_jlsf_orders`); explicit `deploy_jlsf` Red orders work regardless |
+| `auto_jlsf` | `false`; `scenario_default` sets `true` | Auto-queue a JLSF deployment to every newly seized port/airbridge (`TurnConductor.consume_jlsf_orders`); explicit `deploy_jlsf` Red orders work regardless |
 | `jlsf_lift_bn_equiv` | `4` | Abstract amphibious-lift cost of one JLSF deployment (`JlsfCargo` pseudo-BNs; attritable in the crossing) |
 | `disable_phases` | `[]` (allowlist: `movement`, `ground_combat` — `GameDataStore.DISABLEABLE_PHASES`) | Research bypass (plan 0012): `GameState.resolve_turn` skips the listed ground WeGo phases wholesale (buffered orders never execute; no dice consumed, so `[]` is byte-identical). No canned sweep sets it — they use the `noop` matchup instead — but it's override-reachable for fast what-if runs |
 | `green_mobilization` | `held_back_brigades` **0** (⇒ mechanic inert, golden byte-stable), `brigade_types` `["reserve"]`, `first_release_turn` 4, `release_interval_turns` 2, `brigades_per_release` 2 | ROC mobilization phase-in (plan 0029 Tier A2): holds eligible Green brigades off-map and releases them on schedule (`MobilizationStateBuilder`/`MobilizationResolver`). All four fields are `scenario:`-prefixed registry knobs (group `mobilization`). Unknown keys and an over-cap `held_back_brigades` fail loud. Detail: `docs/systems/roc-mobilization.md` |
@@ -62,8 +62,9 @@ Anything hard-coded that a variant would want to vary is a bug — promote it to
 ## Code-resident constants (single-source rule)
 
 Unit strengths live ONLY in `UnitStats.TYPE_DEFS`; DOS constants only in `DosConsumption.gd`
-(300/150/150); offload only in `OffloadRates.gd`. `CombatCalculator.SUPPORT_MULTIPLIERS` is a code
-constant today — data-driven promotion is fine if a scenario variant needs it.
+(300/150/150); offload only in `OffloadRates.gd`. Support multipliers are ALREADY scenario-driven —
+`GameData.support_multipliers` (loaded from the scenario key `support_multipliers`) threaded through
+`CombatRules.support_multipliers`; there is no `CombatCalculator.SUPPORT_MULTIPLIERS` constant to promote.
 `CombatCalculator.resolve_map_attack`'s `feba_base_km` is a required param (no default) — real
 callers always pass the scenario value; there is no fallback to silently diverge to.
 

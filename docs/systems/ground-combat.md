@@ -105,13 +105,15 @@ Fallback categories (`FALLBACK_CATEGORY_DEFS`) provide strength/tag values for u
 
 ## 6. Force aggregation (`CombatForces`)
 
-`maneuver_units(brigades)`: iterates each brigade's `composition`, skips battalions where `is_support_type()` returns true (tag `"artillery"` or `"rotary_wing"`), and emits one `{brigade_id, type, supply_effectiveness:1.0}` dict per `battalion.qty`.
+`split_units(brigades, not_ashore_by_type := {})` is the single implementation: it walks each brigade's `composition` once and buckets battalions by `is_support_type()` (tag `"artillery"` or `"rotary_wing"`), emitting one `{brigade_id, type, supply_effectiveness:1.0}` dict per battalion **ashore** — `Brigade.landed_qty(battalion, brigade_not_ashore)`, NOT `battalion.qty` (see DIVERGENCE 5 in §9). `maneuver_units()` and `support_units()` are one-line views on it, kept for callers that want one half.
 
-`support_counts(brigades)`: sums `battalion.qty` by support type, routing via tags: `"rocket"` → `rocket_artillery`, `"artillery"` → `artillery`, `"rotary_wing"` → `rotary_wing`. Does not count `cas` or `crbm` — those are external munition strikes, not organic battalions.
+`support_counts(brigades, not_ashore_by_type := {})`: sums `Brigade.landed_qty(...)` by support type, routing via tags: `"rocket"` → `rocket_artillery`, `"artillery"` → `artillery`, `"rotary_wing"` → `rotary_wing`. Does not count `cas` or `crbm` — those are external munition strikes, not organic battalions.
 
 `TurnConductor.resolve_combat_at()` gathers forces per hex via `TurnConductor.combat_contributors_for()`, which collects:
-- Brigades **already in** the hex (not destroyed, not admin-moved, matching team).
+- Brigades **already in** the hex (not destroyed, not admin-moved, matching team, **and with at least one battalion ashore**).
 - Brigades with a **commit order** targeting that hex (same filters, deduped by `seen`).
+
+The "at least one battalion ashore" test is load-bearing, not a tidy-up: `CombatCalculator` floors a degenerate zero-strength side to `combat_min_effective_strength`, so a brigade holding a hex with its whole composition still at sea would otherwise fight — and inflict real casualties — with nobody on the island.
 
 It then delegates the dice-consuming core to `CombatResolver.resolve_at` (`scripts/resolvers/CombatResolver.gd`) — read that class's header for the resolver/`GameState` purity split. Red is always assigned as attacker, Green as defender.
 

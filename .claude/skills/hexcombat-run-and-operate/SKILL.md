@@ -56,7 +56,9 @@ python3 tools/run_sweep.py --spec tools/sweeps/antiship_crossing.json     # para
 
 - Turn events: `TurnResult.to_dict().events` — ordered `ijfs → antiship → move → commit → combat →
   frontline → cleanup` rollups (the seed for narrative reporting).
-- Deterministic state snapshot for comparisons: `GameData.snapshot_state()` (key-sorted).
+- Deterministic state snapshot for comparisons: `GameData.snapshot_state(GameState.data.pending_battalion_pools())`
+  (key-sorted). The pools argument is REQUIRED — it is what makes the snapshot report battalions ashore
+  rather than whole rosters (plan 0037).
 - Victory: `game_over` / `winner` on GameState, TurnResult, and the observation.
 
 ## Rules of operation

@@ -33,7 +33,7 @@ description: Template for adding a NEW game phase or mechanic to the decomposed 
    `tools/validate_headless_<phase>.gd` (behavior); auto-picked-up by the gate.
 8. **GdUnit tests** — resolver in isolation (ScriptedDice for roll control); mirror source-oracle
    test cases when porting.
-9. **Observation surfacing** — new player-relevant state goes into `LLMGameAPI.get_observation()`
+9. **Observation surfacing** — new player-relevant state goes into `LLMGameAPI.observation()`
    + `schemas/` + `REQUIRED_*_KEYS` + fixture regen (one commit). New phases must never break the
    observation contract; AI agents and validators read it.
 10. **Golden discipline** — a new phase that consumes dice or moves units WILL change golden

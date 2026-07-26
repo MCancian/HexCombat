@@ -80,7 +80,7 @@ Otherwise `{game_over: false}`.
 | `SealiftState.mainland_pool` | still on the mainland, waiting for a hull |
 | `AirInsertionState.pool` | waiting to fly (plan 0032) |
 
-A pool missing from that list is counted as ashore, inventing battalions for its side. `mainland_pool` is in the list because `SealiftResolver._embark_followon` packs battalions into whatever hulls are ready and so drains an entry **partially** — a brigade can be ashore with battalions still on the mainland. That case was live and uncaught until 2026-07-25: a 20-turn `scenario_default` game inflated Red's census by up to 8 battalions (turn 20 read 57 when 49 were ashore). **Add new off-map pools to `pending_battalion_pools()`, not to a census signature.**
+A pool missing from that list is counted as ashore, inventing battalions for its side. `mainland_pool` is in the list because `SealiftResolver._embark_followon` packs battalions into whatever hulls are ready and so drains an entry **partially** — a brigade can be ashore with battalions still on the mainland. That case was live and uncaught until 2026-07-25: a 20-turn `scenario_default` game inflated Red's census by up to 8 battalions (turn 20 read 57 when 49 were ashore). **Add new off-map pools to `pending_battalion_pools()`, not to a census signature.** This is now enforced: `tools/validate_pool_enumeration.gd` walks live state for anything shaped like a pool (`{brigade_id, bns}`) and fails if that array is not among the ones `pending_battalion_pools()` returns — so a pool nobody registered is caught by its shape, not by someone remembering the rule.
 
 **`game_over` / `winner` propagation:**
 - `GameState.gd` lines 67–68 hold the live state; `resolve_cleanup_phase` (lines 866–867) sets them.

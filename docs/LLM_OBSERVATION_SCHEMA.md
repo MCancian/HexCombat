@@ -80,7 +80,8 @@ Each item in `brigades`:
 | `team` | string | `Red` or `Green`. |
 | `nato_type` | string | Unit type key used for rendering/symbols. |
 | `hex_id` | string | Current hex. |
-| `battalions` | integer | Current battalion count in the brigade. |
+| `battalions` | integer | Battalions **ashore on Taiwan** and able to fight this turn. A brigade appears on the map from its FIRST landed battalion, so this can be well below its full roster (plan 0037). |
+| `battalions_not_ashore` | integer | Battalions that exist but are NOT on the island — at sea, on the mainland awaiting a hull, or waiting to fly. They neither fight nor consume supply. `battalions + battalions_not_ashore` is the full surviving roster. |
 | `organization` | number | Readiness value, 0-100. |
 | `destroyed` | boolean | True if destroyed. |
 | `moved_this_turn` | boolean | True after movement is applied this turn. |

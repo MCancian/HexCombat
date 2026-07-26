@@ -22,7 +22,7 @@ project's history nearly shipped wrong fixes because the symptom pattern-matched
 | GdUnit reports 0 suites / no statistics | Run didn't complete (crash mid-run or bad path) | Re-run with output captured; look for the first SCRIPT ERROR — the suite list stops there. |
 | A config value seems to have no effect | Silent-default dead config (`dict.get(key, default)`) | Grep the consumer for `.get(`; verify the producer's exact key spelling; check allowlist asserts. This is the exquisite-intel bug class — treat any "knob does nothing" as this until proven otherwise. |
 | Windowed run looks wrong but gate is green | View-layer bug or projection issue | Screenshot via `tools/capture_screenshot.gd` and inspect; the gate doesn't cover pixels. |
-| Nondeterminism only across machines/builds | Float or dict-ordering divergence | Compare `GameData.snapshot_state()` dumps; bisect by phase using the per-phase validators (`validate_headless_ijfs/antiship/offload`). |
+| Nondeterminism only across machines/builds | Float or dict-ordering divergence | Compare `GameData.snapshot_state(GameState.data.pending_battalion_pools())` dumps; bisect by phase using the per-phase validators (`validate_headless_ijfs/antiship/offload`). |
 | Brigade↔hex lookups inconsistent mid-investigation | Runtime index desync | Call `GameData.validate_runtime_indexes()` (read-only, returns violation strings). A debug-build assert already runs it at end of `resolve_turn`. |
 
 ## Bisecting a broken turn
@@ -30,7 +30,8 @@ project's history nearly shipped wrong fixes because the symptom pattern-matched
 The turn pipeline is IJFS → antiship → offload → move/commit → combat → frontline → cleanup.
 Each phase has a standalone validator (`tools/validate_headless_<phase>.gd` or the phase's
 `validate_*.gd`). Run them in pipeline order; the first red one owns the bug. For state questions,
-snapshot before/after the suspect phase via `GameData.snapshot_state()` and diff.
+snapshot before/after the suspect phase via `GameData.snapshot_state(GameState.data.pending_battalion_pools())`
+and diff (the pools argument is required).
 
 ## Traps that cost real time (each with its story)
 

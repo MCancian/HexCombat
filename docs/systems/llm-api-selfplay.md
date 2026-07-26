@@ -32,9 +32,11 @@ Structured JSON action API so LLM agents (and the self-play harness) can drive H
 
 Returns a Dictionary. Verified keys (from `tools/validate_llm_api.gd`):
 
-`protocol_version`, `schema`, `scenario`, `turn`, `phase`, `turn_length_days`, `perspective_team`, `rules_summary`, `field_glossary`, `map_summary`, `brigades`, `occupied_hexes`, `ship_reserve`, `supply_state`, `ijfs`, `antiship`, `legal_moves`, `legal_commits`, `pending_orders`, `pending_commitments`, `last_contested_hexes`, `last_combat`, `objectives`.
+All 29 keys the live `observation()` returns, in source order:
 
-Additionally, the live `observation()` at `scripts/LLMGameAPI.gd` includes `game_over` and `winner`.
+`protocol_version`, `schema`, `scenario`, `turn`, `phase`, `turn_length_days`, `perspective_team`, `rules_summary`, `field_glossary`, `map_summary`, `brigades`, `occupied_hexes`, `ship_reserve`, `mainland_pool`, `mobilization`, `air_insertion`, `supply_state`, `infrastructure`, `ijfs`, `antiship`, `legal_moves`, `legal_commits`, `pending_orders`, `pending_commitments`, `last_contested_hexes`, `last_combat`, `objectives`, `game_over`, `winner`.
+
+`tools/validate_llm_api.gd` asserts the required subset; `schemas/llm_observation.schema.json` is the contract. If this list and `LLMGameAPI.observation()` ever disagree, the code is right.
 
 **Cross-link:** Full field-level schema, types, enums, and action examples → `docs/LLM_OBSERVATION_SCHEMA.md`.
 
@@ -50,6 +52,7 @@ Additionally, the live `observation()` at `scripts/LLMGameAPI.gd` includes `game
 | `pending_commitments` | `_pending_commitments()` | `LLMGameAPI.gd` |
 | `last_combat` | `_last_combat_summaries()` | `LLMGameAPI.gd` |
 | `ship_reserve` | `_ship_reserve_observations()` | `LLMGameAPI.gd` |
+| `mainland_pool` | `_mainland_pool_observations()` | `LLMGameAPI.gd` (follow-on BNs still awaiting a hull) |
 | `supply_state` | `_supply_state_observation()` | `LLMGameAPI.gd` |
 | `ijfs` | `_ijfs_observation()` | `LLMGameAPI.gd` (includes `maneuver_casualties` inside writeback) |
 | `antiship` | `_antiship_observation()` | `LLMGameAPI.gd` |
