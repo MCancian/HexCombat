@@ -21,7 +21,11 @@ ships, theaters, beaches. `EventBus` for signals. **Every phase's logic lives in
 its methods take a `GameStateData` value object as their first argument, own the EventBus emits,
 cross-phase field assignment, and combat casualty/FEBA/retreat application (which stays in the
 conductor deliberately: per-hex application interleaves with the next hex's contributor
-gathering). Runtime state itself is the plain **`GameStateData`** value object
+gathering). The four **arrival** phases (sealift, amphibious offload, ROC mobilization, air
+insertion) live in **`ReinforcementPhases`**, and the roster-shrinking seam every kill path shares
+(`apply_casualty`, `apply_crossing_casualties`, and the pool/roster tripwire) in
+**`RosterMutations`** — `TurnConductor.resolve_turn` still holds the whole ordered call list, so the
+modules own how a phase resolves and never when it runs (plan 0038). Runtime state itself is the plain **`GameStateData`** value object
 (`scripts/model/`); **`GameState` (autoload) is a thin state-holder** — it owns one
 `GameStateData` and exposes delegating wrappers to `TurnConductor` (turns), `OrderValidator`
 (order validation), and `GameStateBuilder` (scenario construction), plus typed forwarding
@@ -31,9 +35,11 @@ follow `.claude/skills/hexcombat-add-phase-resolver`. Order validation (`add_mov
 `push_error`, so callers — the LLM API included — can branch on the rejection and surface its
 reason (plan 0017).
 
-**Turn resolution order** (`resolve_turn`): IJFS air/missile fires → **sealift (tick ship
-returns + embark the crossing wave)** → anti-ship crossing → amphibious offload → movement & commit
-→ ground combat → front-line → cleanup (+ victory census).
+**Turn resolution order** (`resolve_turn`): IJFS air/missile fires → IJFS maneuver casualties →
+**sealift (tick ship returns + embark the crossing wave)** → anti-ship crossing → amphibious offload
+→ ROC mobilization → air insertion → movement & commit → ground combat → FEBA retreats → hex
+ownership → supply → cleanup (+ victory census). The front-line phase is **not** in this pipeline —
+it takes operator-drawn polyline coordinates and is called only through the `GameState` façade.
 
 **Phases / subsystems implemented:**
 - **Ground combat** (BOOTS slice M0–M7): movement, commit, combat resolution, FEBA, casualties,

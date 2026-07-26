@@ -21,7 +21,7 @@ anti-ship crossing model and converts ship losses into BN casualties.
 | `data/infrastructure.json` | 5 ports + 8 main-island airbridges (explicit `hex_id` + `to_number`) |
 | `data/offload_weights.json` | Per-BN-type transport weights + bn_class map + multiplier matrix |
 | `scripts/ShipLoadingModel.gd` | BN-to-ship fleet derivation (forward) and ship-loss-to-BN-casualty (backward) |
-| `scripts/GameState.gd` | `resolve_offload_turn()` orchestrator; `ship_reserve` state; `_rebuild_ship_reserve()` expansion |
+| `scripts/resolvers/ReinforcementPhases.gd` | `resolve_offload_turn()` / `resolve_sealift_turn()` orchestrators (plan 0038); `GameState` forwards to them and owns `ship_reserve` state + `_rebuild_ship_reserve()` expansion |
 | `scripts/model/BeachDef.gd` | Beach `Resource` — offload_rate, floating_piers, jackup_barge, lat/lng, advance_direction |
 | `data/beaches.json` | 9 beach sites with offload_rate in short tons/day and infrastructure counts |
 | `data/offload_rates.json` | Base rates: beach_base=4400, jackup_barge=4400, floating_pier=2200, port/airbridge variants |
@@ -138,7 +138,7 @@ two `ShipLoadingModel` simplifications below diverge, and both are intentional/c
 ### Crossing losses are casualties (2026-07-24)
 
 A BN that drowns in the crossing is **dead** and is deleted from its `Brigade.composition`, not just
-from `ship_reserve`. `TurnConductor.apply_crossing_casualties()` runs at the crossing-loss
+from `ship_reserve`. `RosterMutations.apply_crossing_casualties()` runs at the crossing-loss
 application (before `remaining_reserve_after_losses` rebuilds the reserve), mapping each drowned id
 back to its `(brigade_id, battalion type)` via the pre-removal reserve entries and applying one
 roster casualty per drowned BN through the shared `apply_casualty` (consumes no dice). Before this,
@@ -286,14 +286,14 @@ BY DESIGN (~turn 2); the land→vacate→land loop is the intended tempo and is 
 
 **JLSF pipeline.** A seized node repairs only after a Joint Logistics Support Force deployment:
 an explicit Red order `{"kind": "deploy_jlsf", "port_id": ...}` or the `auto_jlsf` scenario
-policy (auto-queue for every newly seized node). `TurnConductor.consume_jlsf_orders` pushes a
+policy (auto-queue for every newly seized node). `ReinforcementPhases.consume_jlsf_orders` pushes a
 `JlsfCargo` pseudo pool entry (`brigade_id "JLSF:<id>"`, `cargo: "jlsf"`,
 `jlsf_lift_bn_equiv` pseudo-BNs, a real locked beach in the node's TO) to the FRONT of the
 mainland pool; it rides the §8 pipeline unchanged — consumes ready amphibious lift, takes real
 crossing attrition, frees its hulls on delivery. `OffloadResolver` lands it tons-free when the
 node hex is Red-held (else it stays in the reserve for a later turn); arrival flips the node's `jlsf` marker
 to `arrived` and starts the repair clock. A deployment lost whole at sea is reconciled by
-`TurnConductor.reconcile_lost_jlsf` (marker back to `none`; auto-policy may re-queue). The JLSF is
+`ReinforcementPhases.reconcile_lost_jlsf` (marker back to `none`; auto-policy may re-queue). The JLSF is
 never a `Brigade` — invisible to census/combat/movement. LLM surface: `deploy_jlsf` action +
 `infrastructure` observation block (schema + fixtures regenerated).
 

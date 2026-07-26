@@ -99,7 +99,7 @@ Investigating "how many off-island strikes flip the scenario" (extended sub-stri
 0→2048/turn) surfaced a **correctness bug**: drowned crossing BNs were removed from `ship_reserve`
 but left in `Brigade.composition`, so the victory census (`get_battalion_count - at_sea`) ghost-landed
 a partially-landed brigade's drowned BNs (and combat over-counted its strength). Fixed
-(`TurnConductor.apply_crossing_casualties`) — see `docs/DECISIONS.md` 2026-07-24 and
+(`RosterMutations.apply_crossing_casualties`) — see `docs/DECISIONS.md` 2026-07-24 and
 `docs/systems/amphibious-offload.md` §7 "Crossing losses are casualties". **Consequence: the flip
 finding above (margin +9.1→+3.1, 93% PLA at 64/turn) and every prior census-based number over-stated
 PLA strength and are being re-run against the fixed engine.**

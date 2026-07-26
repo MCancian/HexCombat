@@ -19,6 +19,19 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-25 — TurnConductor phase extraction, step 1 (plan 0038; agent judgment).** The four
+  arrival phases (sealift, amphibious offload, ROC mobilization, air insertion) moved to
+  `ReinforcementPhases`; `TurnConductor.resolve_turn` keeps the whole ordered call list, so modules
+  own how a phase resolves and never when it runs. `ndeps` 38 → 28 with the ceiling **lowered** to 28
+  in the same commit (`tools/gd_metrics.py`); `GameState.gd` held at 29 of 29 because
+  `ship_reserve_priority_order` moved with the offload group, swapping one dep for another.
+  **Deviation from the plan:** `RosterMutations` (`apply_casualty` + `apply_crossing_casualties` +
+  the pool/roster tripwire) was not optional — combat and air insertion both call `apply_casualty`,
+  so leaving it in `TurnConductor` would have made the two modules a reference cycle; the plan had
+  filed it as a separate cohesion-only change that buys no headroom (still true: it costs +1).
+  Pure move — every moved body verified byte-identical, no pin moved, gate green.
+  Facts: `docs/systems/turn-engine.md` §2/§4, `docs/STATUS.md`, module headers.
+
 - **2026-07-25 — Gate hardening: the two silent-failure holes this session fell into are now gated.**
   - **Who**: agent, from a refactor review the USER asked to be run past `gem-explore` and `opencode`.
   - **What**: (1) `tools/validate_tool_script_purity.gd` replaces `validate_llm_api_purity.gd` — the
@@ -163,7 +176,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
     - at_sea`) therefore **ghost-landed** a partially-landed brigade's drowned BNs (they had left
     `at_sea` but not the roster), and ground combat over-counted the same brigade's strength. Fixed by
     deleting drowned BNs from their rosters at the crossing-loss application
-    (`TurnConductor.apply_crossing_casualties`, mirrors ground `apply_casualty`; consumes no dice).
+    (`RosterMutations.apply_crossing_casualties`, mirrors ground `apply_casualty`; consumes no dice).
   - **Impact / re-baseline**: golden headless turn byte-stable (scripted fight is pre-placed, no
     crossing). Deliberate re-baselines: `validate_golden_victory` china 25→**12** (Taiwan 76 unchanged
     — Green never crosses), `validate_cleanup` `casualties=6/feba=0.34`→**`casualties=7/feba=2.24`**,

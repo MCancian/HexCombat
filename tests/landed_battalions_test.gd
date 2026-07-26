@@ -35,7 +35,7 @@ func test_landed_qty_subtracts_by_type() -> void:
 
 
 func test_landed_qty_clamps_at_zero() -> void:
-	# The pools should never claim more than the roster holds (TurnConductor.pending_pool_roster_
+	# The pools should never claim more than the roster holds (RosterMutations.pending_pool_roster_
 	# violations is the tripwire for that), but if they ever do, the subtraction must not go negative
 	# and hand a side imaginary strength via a negative unit count.
 	var brigade := _brigade("R1")
@@ -183,7 +183,7 @@ func test_pending_pool_roster_violations_catches_a_desync() -> void:
 		"brigade_id": "TEST-RED-DESYNC",
 		"bns": [{"id": "d1", "type": "Amphibious Infantry Battalion"}],
 	}]
-	assert_array(TurnConductor.pending_pool_roster_violations(GameState.data)).is_empty()
+	assert_array(RosterMutations.pending_pool_roster_violations(GameState.data)).is_empty()
 
 	# Now claim more Field Artillery at sea than the brigade owns: the mirror-image of the
 	# ghost-landing bug, where something killed a battalion that was never ashore.
@@ -195,7 +195,7 @@ func test_pending_pool_roster_violations_catches_a_desync() -> void:
 			{"id": "d3", "type": "Field Artillery Battalion"},
 		],
 	}]
-	var violations := TurnConductor.pending_pool_roster_violations(GameState.data)
+	var violations := RosterMutations.pending_pool_roster_violations(GameState.data)
 	assert_int(violations.size()).is_equal(1)
 	assert_str(violations[0]).contains("TEST-RED-DESYNC")
 	_reset_fixture()

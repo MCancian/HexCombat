@@ -45,7 +45,7 @@ Every study measured before 2026-07-25 over-states Red because of these.
 
 ### What guards it now
 
-- `TurnConductor.pending_pool_roster_violations` (`:915`) — end-of-turn, debug builds only.
+- `RosterMutations.pending_pool_roster_violations` — end-of-turn, debug builds only.
 - `GameData.validate_runtime_indexes` (`GameData.gd:805`) — end-of-turn, debug builds only.
 - `tools/validate_pool_enumeration.gd` — catches a pool missing from the *enumeration*, not a pool
   that disagrees with the roster.

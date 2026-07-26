@@ -3,7 +3,8 @@ class_name GameStateType
 
 ## Runtime-state autoload — now a thin shell (plan 0014): the mutable state itself lives in
 ## `data: GameStateData` (scripts/model/GameStateData.gd), the scenario-load builders in
-## `GameStateBuilder`, turn orchestration in `TurnConductor`, and order legality in
+## `GameStateBuilder`, turn orchestration in `TurnConductor` (with the arrival phases — sealift,
+## offload, mobilization, air insertion — in `ReinforcementPhases`, plan 0038), and order legality in
 ## `OrderValidator` (all scripts/resolvers/, all static, all taking `GameStateData` — never this
 ## autoload — as their first argument). What remains here: the typed forwarding properties that
 ## keep the pre-refactor `GameState.<field>` API byte-stable for external callers, a handful of
@@ -248,11 +249,11 @@ func commitments_for(team: Brigade.Team) -> Array:
 
 
 func ship_reserve_priority_order() -> Array[String]:
-	return OffloadResolver.priority_order(data.ship_reserve)
+	return ReinforcementPhases.ship_reserve_priority_order(data)
 
 
 func resolve_offload_turn(dice: Dice) -> Dictionary:
-	return TurnConductor.resolve_offload_turn(data, dice)
+	return ReinforcementPhases.resolve_offload_turn(data, dice)
 
 
 func _rebuild_infrastructure_state() -> void:
@@ -336,9 +337,10 @@ func _rebuild_mobilization_state() -> void:
 		GameData.green_mobilization, GameData.mobilization_holdback)
 
 
-## Test-called surface (tests/mobilization_*) — pure logic lives in TurnConductor/MobilizationResolver.
+## Test-called surface (tests/mobilization_*) — pure logic lives in
+## ReinforcementPhases/MobilizationResolver.
 func resolve_mobilization_turn() -> MobilizationSummary:
-	return TurnConductor.resolve_mobilization_turn(data)
+	return ReinforcementPhases.resolve_mobilization_turn(data)
 
 
 ## Red battalions waiting to fly plus the per-turn lift budgets (plan 0032). The PLAAF Airborne
@@ -349,9 +351,9 @@ func _rebuild_air_insertion_state() -> void:
 
 
 ## Test-called surface (tests/air_insertion_*) — pure logic lives in
-## TurnConductor/AirInsertionResolver.
+## ReinforcementPhases/AirInsertionResolver.
 func resolve_air_insertion_turn(dice: Dice) -> AirInsertionSummary:
-	return TurnConductor.resolve_air_insertion_turn(data, dice)
+	return ReinforcementPhases.resolve_air_insertion_turn(data, dice)
 
 
 func _rebuild_ship_reserve() -> void:
@@ -369,7 +371,7 @@ func _rebuild_sealift_state() -> void:
 ## records the sailing fleet for the crossing, and reprojects the fleet ShipState bins from the
 ## advanced sealift state.
 func resolve_sealift_turn() -> void:
-	TurnConductor.resolve_sealift_turn(data)
+	ReinforcementPhases.resolve_sealift_turn(data)
 
 
 func _rebuild_supply_state() -> void:

@@ -41,7 +41,16 @@ DEP_CEILINGS = {
     # not the resolver fan-out that is its actual job. Measured 32 at commit time.
     # 36 -> 38 (plan 0032): AirInsertionResolver + AirInsertionStateBuilder, i.e. one more phase in
     # the fan-out this ceiling explicitly does not police.
-    "scripts/resolvers/TurnConductor.gd": 38,
+    # 38 -> 28 (plan 0038): the arrival phases (sealift/offload/mobilization/air insertion) moved to
+    # ReinforcementPhases and the roster-shrinking seam to RosterMutations, so their resolvers and
+    # value types left with them. LOWERED to the newly-measured value, per the plan — the headroom
+    # bought is locked in rather than silently re-spent by the next mechanic.
+    "scripts/resolvers/TurnConductor.gd": 28,
+    # ReinforcementPhases.gd (plan 0038): owns the four "force arrives" phases and their resolvers.
+    # Ceilinged from birth because a phase-owning module is exactly where a god-object would be
+    # laundered back in — a NEW arrival phase belongs here (and may justify a small bump), an
+    # unrelated responsibility does not. Measured 22 at commit time.
+    "scripts/resolvers/ReinforcementPhases.gd": 22,
 }
 
 FUNC_RE = re.compile(r"^(\s*)(static\s+)?func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*)$")

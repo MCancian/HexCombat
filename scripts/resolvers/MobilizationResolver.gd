@@ -6,7 +6,7 @@ extends RefCounted
 ## not a roll — so a scenario that holds nobody back is byte-identical to the pre-0029 engine.
 ##
 ## Purity boundary: this drains MobilizationState and reports what should arrive where; the caller
-## (TurnConductor.resolve_mobilization_turn) owns the GameData mutation (set_brigade_hex) and the
+## (ReinforcementPhases.resolve_mobilization_turn) owns the GameData mutation (set_brigade_hex) and the
 ## IJFS target append, exactly as OffloadResolver leaves landing application to its wrapper. Live map
 ## knowledge enters through the `arrival_hex_for` Callable so no autoload is touched here.
 

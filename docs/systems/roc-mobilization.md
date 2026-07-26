@@ -22,7 +22,7 @@ This is the defender-side answer to the research question in `docs/plans/0029-dy
 | `scripts/model/MobilizationSummary.gd` | `MobilizationSummary` (Resource). Per-turn result: `arrivals`, `deferred`, `battalions_arrived`, `pending_brigades`, `pending_battalions`. `to_dict()` is the JSON contract. |
 | `scripts/resolvers/MobilizationStateBuilder.gd` | Pure builder. `select_held_back()` picks WHICH brigades start off-map; `build()` turns that list into the release schedule. |
 | `scripts/resolvers/MobilizationResolver.gd` | Pure resolver. `resolve()` releases due brigades; `find_arrival_hex()` is the BFS fallback when a garrison hex is overrun. Consumes no dice. |
-| `scripts/resolvers/TurnConductor.gd` | `resolve_mobilization_turn()` — the wrapper: applies `GameData.set_brigade_hex`, appends IJFS targets, recomputes ownership, emits `EventBus.mobilization_resolved`. `hex_can_receive_mobilized()` is the arrival-site rule. |
+| `scripts/resolvers/ReinforcementPhases.gd` | `resolve_mobilization_turn()` — the wrapper: applies `GameData.set_brigade_hex`, appends IJFS targets, recomputes ownership, emits `EventBus.mobilization_resolved`. `hex_can_receive_mobilized()` is the arrival-site rule. |
 | `scripts/GameData.gd` | Parses the scenario `green_mobilization` block into `green_mobilization`; `load_scenario` computes `mobilization_holdback` BEFORE the placement loop and leaves those brigades off-map. |
 | `scripts/GameState.gd` | Holds `mobilization_state` / `last_mobilization_summary` (on `GameStateData`), `_rebuild_mobilization_state()` at scenario reset. |
 | `scripts/resolvers/IjfsResolver.gd` | `add_maneuver_targets()` — append-only IJFS targets for brigades that just arrived. |
@@ -75,7 +75,7 @@ observation array, and combat.
 2. otherwise the nearest available hex by BFS ring, ties broken by hex id (`displaced: true`);
 3. otherwise nothing — the brigade stays pending and retries next turn (`deferred`).
 
-"Available" (`TurnConductor.hex_can_receive_mobilized`) = a placed, passable hex that is neither
+"Available" (`ReinforcementPhases.hex_can_receive_mobilized`) = a placed, passable hex that is neither
 RED nor CONTESTED. Enemy-held ground is not a mobilization site: taking it back is a counterattack
 (plan 0029 Tier B), not a reinforcement. The search is bounded by
 `MobilizationResolver.MAX_ARRIVAL_SEARCH_RINGS` (6) — beyond that the sector is gone and waiting a

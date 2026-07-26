@@ -1,10 +1,26 @@
 ---
 title: "0038: TurnConductor phase extraction — buy back dependency headroom"
-status: "Sketch"
+status: "In progress"
 created: "2026-07-25"
 ---
 
 # Plan 0038: TurnConductor phase extraction
+
+## Progress
+
+- **Step 1 — `ReinforcementPhases` — SHIPPED 2026-07-25.** Measured 38 → **28**; ceiling lowered to
+  28 in the same commit. `GameState.gd` held at 29 of 29 (`ship_reserve_priority_order` moved with
+  the offload group, so the new module dep was a swap, not an addition). Estimates in the table below
+  were upper bounds and the move beat them: `HexState` and `SealiftState` left too, because their
+  last references went with the moved functions.
+  **One deviation:** `RosterMutations` (`apply_casualty`, `apply_crossing_casualties`,
+  `pending_pool_roster_violations`) had to be extracted in the SAME commit. It is listed under "Not
+  in scope" below as a cohesion-only change that buys no headroom — that measurement stands (it costs
+  `TurnConductor` +1) — but it is a *prerequisite*, not an option: air insertion moved into
+  `ReinforcementPhases` and still calls `apply_casualty`, which ground combat also calls, so leaving
+  the seam in `TurnConductor` would have made the two modules a reference cycle. Splitting it into
+  its own commit was impossible: alone it takes `TurnConductor` to 39 and breaches the ceiling.
+- Steps 2 (`FiresPhases`) and 3 (`TurnClosure`) still to do, one commit each.
 
 `scripts/resolvers/TurnConductor.gd` measures **ndeps = 38 against a ceiling of 38** (`tools/gd_metrics.py:44`).
 Zero headroom. The next mechanic that adds a phase resolver breaks the gate, and

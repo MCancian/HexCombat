@@ -77,7 +77,7 @@ Settled battles. Primary sources: `docs/DECISIONS.md` (+ pre-2026-07-10 history 
   census-based result over-stated PLA strength. The plan-0028 flip finding (knife-edge 512,
   reliable 1024 sub-strikes/turn) was a bug artifact; corrected values are ~12–14 knife-edge,
   ~48–64 reliable (a ~30–60× shift). The "structural inevitability" of a PLA win was partly this.
-- **Status:** fixed (`TurnConductor.apply_crossing_casualties`, commit bff4a1c) — drowned BNs are
+- **Status:** fixed (`RosterMutations.apply_crossing_casualties`, commit bff4a1c) — drowned BNs are
   deleted from their rosters, consumes no dice. Golden headless turn byte-stable (scripted fight is
   pre-placed, no crossing); deliberate re-baselines `validate_golden_victory` 25→12 and
   `validate_cleanup` `casualties=6/feba=0.34`→`7/2.24`. Detail: `docs/DECISIONS.md` 2026-07-24,

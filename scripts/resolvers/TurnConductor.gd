@@ -8,6 +8,10 @@ extends RefCounted
 ## runtime state — but this class NEVER takes the GameState autoload singleton as a parameter,
 ## which is what makes it unit-testable against a GameStateData built from scratch. GameState.gd's
 ## resolve_* methods are now one-line delegating wrappers to these.
+##
+## Plan 0038: the "force arrives" phases (sealift, offload, ROC mobilization, air insertion) live in
+## `ReinforcementPhases` and the roster-shrinking seam in `RosterMutations`. `resolve_turn` below
+## still holds the full ordered call list — the modules own the HOW of a phase, never the WHEN.
 
 const FEBA_RETREAT_THRESHOLD_KM := 10.0
 
@@ -34,19 +38,19 @@ static func resolve_turn(state: GameStateData, dice: Dice = null) -> void:
 	# Sealift (plan 0004): tick the ship return/reload pipeline and embark this turn's wave (first
 	# echelon adopted, follow-on echelons loaded onto ready amphibious lift) BEFORE the crossing, so
 	# the anti-ship phase attrits exactly the hulls that sail. Dice-free -> combat golden unaffected.
-	resolve_sealift_turn(state)
+	ReinforcementPhases.resolve_sealift_turn(state)
 	resolve_antiship_turn(state, dice)
-	state.last_offload_summary = resolve_offload_turn(state, dice)
+	state.last_offload_summary = ReinforcementPhases.resolve_offload_turn(state, dice)
 	# ROC mobilization (plan 0029 Tier A2): Green's reinforcement step sits at the same seam as
 	# Red's (offload) and before movement, so arrivals are on the map for this turn's combat but only
 	# take orders next planning phase. Dice-free -> the golden stream is untouched.
-	state.last_mobilization_summary = resolve_mobilization_turn(state)
+	state.last_mobilization_summary = ReinforcementPhases.resolve_mobilization_turn(state)
 	# Air insertion (plan 0032): Red's OTHER reinforcement path sits at the same seam as its sea
 	# one and Green's mobilization, and — critically — AFTER the IJFS phase, because the attrition
 	# a drop takes is read off the air-defence picture those fires just produced. Landing before
 	# movement means a drop onto Green ground is contested and fought in the SAME turn, which is
 	# how an opposed insertion is paid for. Its own dice substream; no orders => no draws.
-	state.last_air_insertion_summary = resolve_air_insertion_turn(state, dice)
+	state.last_air_insertion_summary = ReinforcementPhases.resolve_air_insertion_turn(state, dice)
 
 	# disable_phases (plan 0012): a scenario/override can skip the ground WeGo phases wholesale so
 	# calibration sweeps run standard games while isolating the sea/IJFS phases. Buffered orders
@@ -62,7 +66,7 @@ static func resolve_turn(state: GameStateData, dice: Dice = null) -> void:
 		state.last_contested_hexes = find_contested_hexes()
 	# Supply corridors are fixed for the whole combat loop (ownership is only recomputed after it),
 	# so the air-landing isolation flood runs once here rather than once per contested hex.
-	state.isolated_air_landed_brigades = isolated_air_landed_brigades(state)
+	state.isolated_air_landed_brigades = ReinforcementPhases.isolated_air_landed_brigades(state)
 	# Who is actually ashore is likewise fixed for the combat loop: every arrival phase (offload,
 	# mobilization, air insertion) has already run this turn and the pools do not change again until
 	# next turn's sealift. Computing it ONCE means two hexes cannot disagree about who is present
@@ -93,244 +97,13 @@ static func resolve_turn(state: GameStateData, dice: Dice = null) -> void:
 	if OS.is_debug_build():
 		var index_violations := GameData.validate_runtime_indexes()
 		assert(index_violations.is_empty(), "runtime index desync at end of resolve_turn: %s" % "; ".join(index_violations))
-		var roster_violations := pending_pool_roster_violations(state)
+		var roster_violations := RosterMutations.pending_pool_roster_violations(state)
 		assert(roster_violations.is_empty(), "roster/pool desync at end of resolve_turn: %s" % "; ".join(roster_violations))
 
 	state.phase = GameStateData.Phase.END
 	EventBus.phase_changed.emit(state.phase)
 	EventBus.combat_resolved.emit(combat_summaries)
 	EventBus.turn_resolved.emit(state.turn_number)
-
-
-static func resolve_offload_turn(state: GameStateData, dice: Dice) -> Dictionary:
-	assert(dice != null, "resolve_offload_turn requires a Dice instance")
-	# Infrastructure lifecycle ticks every offload phase (plan 0006), even with an empty reserve:
-	# ground combat can seize a port hex long after the last beach landing. Ownership here is last
-	# turn's post-combat state — the producer->consumer edge is combat ownership -> next offload.
-	var infra_nodes: Array = []
-	if state.infrastructure_state != null:
-		var owner_by_hex_map := owner_by_hex()
-		InfrastructureResolver.tick(state.infrastructure_state, GameData.infrastructure, owner_by_hex_map)
-		infra_nodes = InfrastructureResolver.red_offload_nodes(state.infrastructure_state, GameData.infrastructure, owner_by_hex_map)
-
-	if state.ship_reserve.is_empty():
-		var empty_manifest := OffloadResolver.empty_manifest()
-		empty_manifest["lost_at_sea"] = state.pending_lost_at_sea
-		# D3-F applies lost_at_sea to the reserve; D0-C only threads the value.
-		state.pending_lost_at_sea = 0
-		EventBus.offload_resolved.emit(empty_manifest)
-		return empty_manifest
-
-	var cost_config: Dictionary = GameData.offload_weights if GameData.use_offload_weight_matrix else {}
-	var outcome := OffloadResolver.resolve(
-		state.turn_number, state.ship_reserve, GameData.beaches, GameData.brigades,
-		infra_nodes, cost_config, GameData.beach_to_to, owner_by_hex())
-	for landing_value in outcome["landings"]:
-		var landing: Dictionary = landing_value
-		var brigade_id := String(landing["brigade_id"])
-		GameData.set_brigade_hex(brigade_id, String(landing["beach_hex"]))
-		GameData.get_brigade(brigade_id).entry_bearing = float(landing["offset_bearing"])
-	state.ship_reserve = outcome["remaining_ship_reserve"]
-	GameData.recompute_hex_ownership()
-
-	var manifest: Dictionary = outcome["manifest"]
-	# Drain the landed BNs from their offloading cohorts; a fully-offloaded cohort frees its hulls
-	# into the return/reload pipeline (or straight back to ready when return time is 0) — plan 0004 D4.
-	var landed_ids: Array = []
-	for landed_value in manifest["manifest_landed"]:
-		landed_ids.append(String((landed_value as Dictionary)["bn_id"]))
-	# JLSF deliveries (plan 0006): the detachment is ashore at its node — start the repair clock
-	# and free its hulls like any landed cargo.
-	for arrival_value in outcome.get("jlsf_arrivals", []):
-		var arrival: Dictionary = arrival_value
-		var port_id := String(arrival["port_id"])
-		if state.infrastructure_state != null and state.infrastructure_state.nodes.has(port_id):
-			state.infrastructure_state.nodes[port_id]["jlsf"] = InfrastructureState.JLSF_ARRIVED
-		for bn_id_value in arrival["bn_ids"]:
-			landed_ids.append(String(bn_id_value))
-	if state.sealift_state != null:
-		SealiftResolver.drain_bn_ids(state.sealift_state, landed_ids, GameData.amphibious_return_time_turns)
-		project_sealift_onto_fleet(state)
-	reconcile_lost_jlsf(state)
-
-	manifest["lost_at_sea"] = state.pending_lost_at_sea
-	# D3-F applies lost_at_sea to the reserve; D0-C only threads the value.
-	state.pending_lost_at_sea = 0
-	EventBus.offload_resolved.emit(manifest)
-	return manifest
-
-
-# --- ROC mobilization (plan 0029 Tier A2) — Green reinforcement phase ---------------------------
-
-## Release the Green brigades whose mobilization is complete onto the map. Runs immediately after
-## amphibious offload and before movement/commit: the two sides' reinforcement steps then sit at the
-## same seam, and a brigade that arrives during resolution first takes orders in the NEXT planning
-## phase — exactly like a Red brigade that just landed. Consumes no dice; a scenario with an empty
-## mobilization schedule (the default) leaves state and RNG untouched.
-static func resolve_mobilization_turn(state: GameStateData) -> MobilizationSummary:
-	var summary := MobilizationResolver.resolve(
-		state.mobilization_state, state.turn_number, GameData.brigades,
-		func(garrison_hex: String) -> String:
-			return MobilizationResolver.find_arrival_hex(
-				garrison_hex,
-				func(hex_id: String) -> Array: return GameData.get_neighbors(hex_id),
-				func(hex_id: String) -> bool: return hex_can_receive_mobilized(hex_id)))
-	if summary.arrivals.is_empty():
-		EventBus.mobilization_resolved.emit(summary.to_dict())
-		return summary
-
-	var arrived: Array = []
-	for arrival_value in summary.arrivals:
-		var arrival: Dictionary = arrival_value
-		var brigade_id := String(arrival["brigade_id"])
-		GameData.set_brigade_hex(brigade_id, String(arrival["hex_id"]))
-		arrived.append(GameData.get_brigade(brigade_id))
-	# A formation only becomes an IJFS maneuver target once it is on the island; append its
-	# per-battalion targets now (append-only, so every existing target keeps its position in the
-	# list and its detection continuity).
-	if state.ijfs_state != null:
-		IjfsResolver.add_maneuver_targets(state.ijfs_state, arrived, state._ijfs_day)
-	GameData.recompute_hex_ownership()
-	EventBus.mobilization_resolved.emit(summary.to_dict())
-	return summary
-
-
-# --- Air insertion (plan 0032) — Red's non-amphibious reinforcement phase ----------------------
-
-## Fly this turn's ordered battalions onto the island. The resolver decides who flies, who dies and
-## what the lift loses; this wrapper owns the GameData mutation (set_brigade_hex for the survivors,
-## apply_casualty for the losses), the ownership recompute and the EventBus emit — the same split
-## OffloadResolver and MobilizationResolver use.
-##
-## The air-defence picture comes from THIS turn's IJFS summary (post-strike), so suppressing SAMs
-## before dropping visibly pays off; the MANPADS layer is read separately because it is deliberately
-## outside the AD-health metric. An empty pool or no orders leaves state and RNG untouched.
-static func resolve_air_insertion_turn(state: GameStateData, dice: Dice) -> AirInsertionSummary:
-	var outcome := AirInsertionResolver.resolve(
-		state.air_insertion_state, state.air_insert_orders, state.turn_number,
-		AirInsertionResolver.threat_from_ijfs_summary(state.last_ijfs_summary),
-		AirInsertionStateBuilder.attrition_config(GameData.red_air_insertion),
-		func(hex_id: String) -> bool: return hex_can_receive_insertion(hex_id),
-		dice)
-	var summary: AirInsertionSummary = outcome["summary"]
-	# One-shot orders, consumed on resolution like jlsf_orders — an unflown drop is not re-attempted
-	# next turn behind the player's back.
-	state.air_insert_orders = []
-	var landings: Array = outcome["landings"]
-	if landings.is_empty():
-		EventBus.air_insertion_resolved.emit(summary.to_dict())
-		return summary
-
-	for landing_value in landings:
-		var landing: Dictionary = landing_value
-		var brigade_id := String(landing["brigade_id"])
-		# Losses first: a battalion shot down on the way in never reaches the hex, and killing it
-		# before the landing keeps a brigade that lost its whole packet off the map entirely.
-		for lost_value in landing["lost_bns"]:
-			apply_casualty({"brigade_id": brigade_id, "type": String((lost_value as Dictionary)["type"])})
-		if landing["first_landing"]:
-			GameData.set_brigade_hex(brigade_id, String(landing["hex_id"]))
-			continue
-		# Follow-up packets reinforce the brigade where it already stands — a formation occupies one
-		# hex, so a second drop cannot put half of it somewhere else. OrderValidator enforces that
-		# the target matches; a mismatch here is an order that slipped through, not a game state.
-		var landed_brigade: Brigade = GameData.get_brigade(brigade_id)
-		if landed_brigade != null and landed_brigade.hex_id != String(landing["hex_id"]):
-			push_error("Air insertion follow-up for %s targeted %s but the brigade is at %s" % [
-				brigade_id, landing["hex_id"], landed_brigade.hex_id])
-	GameData.recompute_hex_ownership()
-	EventBus.air_insertion_resolved.emit(summary.to_dict())
-	return summary
-
-
-## Air-landed brigades currently cut off from the beachhead (plan 0032) — they fight out of supply
-## even with a full theatre pool. Recomputed every combat, so a corridor punched through this turn
-## supplies them and a corridor cut isolates them again.
-static func isolated_air_landed_brigades(state: GameStateData) -> Dictionary:
-	if state.air_insertion_state == null or state.air_insertion_state.landed.is_empty():
-		return {}
-	var brigade_hexes: Dictionary = {}
-	for brigade_id_value in state.air_insertion_state.landed:
-		var brigade: Brigade = GameData.get_brigade(String(brigade_id_value))
-		if brigade != null and not brigade.destroyed:
-			brigade_hexes[brigade.id] = brigade.hex_id
-	return AirInsertionResolver.isolated_brigades(
-		state.air_insertion_state.landed, brigade_hexes, red_lodgement_hexes(state),
-		func(hex_id: String) -> bool:
-			var hex_state: HexState = GameData.hex_states.get(hex_id, null)
-			return hex_state != null and hex_state.owner == HexOwner.RED,
-		func(hex_id: String) -> Array: return GameData.get_neighbors(hex_id))
-
-
-## Where Red's supply enters the island: the scenario's landing beaches plus any port/airbridge Red
-## can offload through. These are the roots the corridor flood starts from — the same nodes that
-## physically feed the buildup, so "connected to the beach" means what it says.
-static func red_lodgement_hexes(state: GameStateData) -> Array:
-	var hexes: Array = []
-	for reserve_entry_value in GameData.red_ship_reserve:
-		var reserve_entry: Dictionary = reserve_entry_value
-		hexes.append(String(reserve_entry["beach_hex"]))
-	if state.infrastructure_state != null:
-		for node_value in InfrastructureResolver.red_offload_nodes(
-				state.infrastructure_state, GameData.infrastructure, owner_by_hex()):
-			hexes.append(String((node_value as Dictionary)["hex_id"]))
-	return hexes
-
-
-## Any placed, passable hex is a drop zone (USER design call 2026-07-24: land on any hex). Unlike
-## mobilization, enemy-held and contested ground is explicitly legal — bypassing the crossing is the
-## whole point, and an opposed drop is paid for by the ground combat that follows in the same turn.
-static func hex_can_receive_insertion(hex_id: String) -> bool:
-	if not GameData.hex_states.has(hex_id):
-		return false
-	var terrain: TerrainType = GameData.get_terrain(hex_id)
-	return terrain != null and not terrain.impassable
-
-
-## A mobilizing brigade may form up on a placed, passable hex that the enemy neither holds nor
-## contests. Enemy-held ground is not a mobilization site — taking it back is a counterattack
-## (plan 0029 Tier B), not a reinforcement.
-static func hex_can_receive_mobilized(hex_id: String) -> bool:
-	var hex_state: HexState = GameData.hex_states.get(hex_id, null)
-	if hex_state == null:
-		return false
-	if hex_state.owner == HexOwner.RED or hex_state.owner == HexOwner.CONTESTED:
-		return false
-	var terrain: TerrainType = GameData.get_terrain(hex_id)
-	return terrain != null and not terrain.impassable
-
-
-static func owner_by_hex() -> Dictionary:
-	var owners: Dictionary = {}
-	for hex_id in GameData.hex_states.keys():
-		owners[String(hex_id)] = String((GameData.hex_states[hex_id] as HexState).owner)
-	return owners
-
-
-## A JLSF deployment lost whole at sea (its pseudo-BNs all drowned in the crossing) leaves no
-## pool or reserve trace; reset its node marker so a new deployment can be ordered/auto-queued.
-static func reconcile_lost_jlsf(state: GameStateData) -> void:
-	if state.infrastructure_state == null:
-		return
-	for id_value in state.infrastructure_state.nodes.keys():
-		var node: Dictionary = state.infrastructure_state.nodes[id_value]
-		var marker := String(node["jlsf"])
-		if marker != InfrastructureState.JLSF_QUEUED and marker != InfrastructureState.JLSF_ENROUTE:
-			continue
-		var brigade_id := JlsfCargo.brigade_id_for(String(id_value))
-		if not reserve_or_pool_has(state, brigade_id):
-			node["jlsf"] = InfrastructureState.JLSF_NONE
-
-
-static func reserve_or_pool_has(state: GameStateData, brigade_id: String) -> bool:
-	for entry_value in state.ship_reserve:
-		if String((entry_value as Dictionary).get("brigade_id", "")) == brigade_id:
-			return true
-	if state.sealift_state != null:
-		for entry_value in state.sealift_state.mainland_pool:
-			if String((entry_value as Dictionary).get("brigade_id", "")) == brigade_id:
-				return true
-	return false
 
 
 static func resolve_supply_turn(state: GameStateData) -> Dictionary:
@@ -447,7 +220,7 @@ static func resolve_antiship_turn(state: GameStateData, dice: Dice) -> Dictionar
 	# pre-removal entries. Without this the victory census (get_battalion_count - at_sea) ghost-lands
 	# a partially-landed brigade's drowned BNs, and combat over-counts its strength (mirrors the
 	# ground-combat apply_casualty, which is the only other roster-shrinking path).
-	apply_crossing_casualties(state.ship_reserve, lost_ids)
+	RosterMutations.apply_crossing_casualties(state.ship_reserve, lost_ids)
 	state.ship_reserve = AntishipResolver.remaining_reserve_after_losses(state.ship_reserve, lost_ids)
 	SealiftResolver.drain_bn_ids(state.sealift_state, lost_ids, GameData.amphibious_return_time_turns)
 	SealiftResolver.flip_sent_to_offloading(state.sealift_state)
@@ -455,7 +228,7 @@ static func resolve_antiship_turn(state: GameStateData, dice: Dice) -> Dictionar
 	# reload threshold (plan 0004 D5). No-op when the magazine is unmodelled (escort_sam empty).
 	SealiftResolver.apply_escort_consumption(
 		state.sealift_state, outcome["escort_sam_consumed"], GameData.escort_reload_time_turns)
-	project_sealift_onto_fleet(state)
+	ReinforcementPhases.project_sealift_onto_fleet(state)
 	register_ship_losses(state, int(outcome["bn_equiv_lost"]))
 	state.last_antiship_summary = outcome["summary"]
 	state.last_antiship_summary.wave_bns = wave_bns
@@ -586,97 +359,6 @@ static func active_red_battalion_units(state: GameStateData) -> Array:
 	return units
 
 
-## Sealift phase (plan 0004): advance the ship return pipeline and embark this turn's crossing wave.
-## Dice-free and pure (SealiftResolver); this wrapper merges the newly-embarked BNs into the reserve,
-## records the sailing fleet for the crossing, and reprojects the fleet ShipState bins from the
-## advanced sealift state.
-static func resolve_sealift_turn(state: GameStateData) -> void:
-	if state.sealift_state == null:
-		return
-	var ready_by_type: Dictionary = {}
-	for ship_type in state.fleet.keys():
-		ready_by_type[String(ship_type)] = int((state.fleet[ship_type] as ShipState).ready)
-
-	consume_jlsf_orders(state)
-	var outcome := SealiftResolver.resolve(
-		state.sealift_state, state.ship_reserve, ready_by_type, GameData.ship_defs)
-
-	for entry_value in outcome["embarked_reserve_entries"]:
-		var entry: Dictionary = entry_value
-		# A JLSF deployment that got hulls this turn is now enroute (plan 0006).
-		if JlsfCargo.is_jlsf_entry(entry) and state.infrastructure_state != null:
-			var port_id := String(entry.get("port_id", ""))
-			if state.infrastructure_state.nodes.has(port_id):
-				state.infrastructure_state.nodes[port_id]["jlsf"] = InfrastructureState.JLSF_ENROUTE
-		merge_reserve_entry(state, entry)
-	state.last_sealift_sent_by_type = outcome["sent_by_type"]
-	project_sealift_onto_fleet(state)
-
-
-## Consume the deploy_jlsf order buffer through the JlsfCargo queueing policy (plan 0006). New
-## pseudo-entries go to the FRONT of the mainland pool (logistics open the port gate before more
-## troops help); JlsfCargo.queue_deployments owns ordering + marker flips.
-static func consume_jlsf_orders(state: GameStateData) -> void:
-	if state.infrastructure_state == null or state.sealift_state == null:
-		state.jlsf_orders.clear()
-		return
-	var entries := JlsfCargo.queue_deployments(
-		state.jlsf_orders, state.infrastructure_state, GameData.infrastructure, GameData.beaches,
-		GameData.beach_to_to, GameData.auto_jlsf, GameData.jlsf_lift_bn_equiv)
-	state.jlsf_orders.clear()
-	for entry in entries:
-		state.sealift_state.mainland_pool.push_front(entry)
-
-
-## Merge a newly-embarked reserve entry into ship_reserve: append its BNs to the brigade's existing
-## entry (a follow-on brigade already partway across) or add a new entry.
-static func merge_reserve_entry(state: GameStateData, entry_value) -> void:
-	var entry: Dictionary = entry_value
-	var brigade_id := String(entry["brigade_id"])
-	for existing_value in state.ship_reserve:
-		var existing: Dictionary = existing_value
-		if String(existing["brigade_id"]) == brigade_id:
-			(existing["bns"] as Array).append_array(entry["bns"])
-			return
-	state.ship_reserve.append(entry)
-
-
-## Reproject the fleet ShipState bins from the sealift state (the single source of truth for where
-## hulls are): surviving_sent/offloading from cohorts, returning from the pipeline, ready as the
-## remainder of the surviving fleet. Keeps ShipState.validate()'s invariants honest (plan 0004).
-static func project_sealift_onto_fleet(state: GameStateData) -> void:
-	var sent: Dictionary = {}
-	var offloading: Dictionary = {}
-	var returning: Dictionary = {}
-	for cohort_value in state.sealift_state.cohorts:
-		var cohort: Dictionary = cohort_value
-		var bucket: Dictionary = sent if String(cohort["state"]) == SealiftState.STATE_SENT else offloading
-		for ship_type in (cohort["hulls_by_type"] as Dictionary).keys():
-			bucket[String(ship_type)] = int(bucket.get(String(ship_type), 0)) + int(cohort["hulls_by_type"][ship_type])
-	for ship_type in state.sealift_state.return_pipeline.keys():
-		for slot_value in (state.sealift_state.return_pipeline[ship_type] as Array):
-			returning[String(ship_type)] = int(returning.get(String(ship_type), 0)) + int((slot_value as Dictionary)["count"])
-	# Escort types reloading SAMs are away from the screen: all their surviving hulls are busy
-	# (returning) until reload completes (plan 0004 D5).
-	for ship_type in state.sealift_state.escort_reload.keys():
-		var reloading_state: ShipState = state.fleet.get(String(ship_type), null)
-		if reloading_state != null:
-			returning[String(ship_type)] = int(returning.get(String(ship_type), 0)) + reloading_state.fleet_surviving_total
-
-	for ship_type in state.fleet.keys():
-		var ship_state: ShipState = state.fleet[ship_type]
-		var ss := int(sent.get(String(ship_type), 0))
-		var of := int(offloading.get(String(ship_type), 0))
-		var rt := int(returning.get(String(ship_type), 0))
-		ship_state.surviving_sent = ss
-		ship_state.sent_original = ss
-		ship_state.offloading = of
-		ship_state.returning = rt
-		ship_state.ready = ship_state.fleet_surviving_total - ss - of - rt
-		assert(ship_state.ready >= 0, "sealift projection: negative ready for %s (surviving=%d busy=%d)" % [ship_type, ship_state.fleet_surviving_total, ss + of + rt])
-		assert(ship_state.validate(), "sealift projection broke ShipState invariant for %s" % ship_type)
-
-
 static func apply_move_orders(state: GameStateData, team: Brigade.Team) -> void:
 	for order in state.orders[team]:
 		var move_order: MoveOrder = order
@@ -777,9 +459,9 @@ static func resolve_combat_at(state: GameStateData, hex_id: String, dice: Dice) 
 
 	var result: CombatResult = outcome["result"]
 	for casualty in result.attacker_casualties:
-		apply_casualty(casualty)
+		RosterMutations.apply_casualty(casualty)
 	for casualty in result.defender_casualties:
-		apply_casualty(casualty)
+		RosterMutations.apply_casualty(casualty)
 
 	GameData.hex_states[hex_id].feba_km = GameData.hex_states[hex_id].feba_km + result.feba_movement_km
 	for brigade_value in attacker_brigades + defender_brigades:
@@ -879,79 +561,3 @@ static func find_retreat_hex(from_hex: String, team: Brigade.Team) -> String:
 		if owner == friendly_owner or owner == HexOwner.NONE:
 			return neighbor_id
 	return ""
-
-
-## Delete drowned crossing BNs from their brigade rosters so a dead battalion stops existing
-## everywhere (census, combat strength, offload) — not just in ship_reserve. Maps each drowned id
-## back to (brigade_id, battalion type) via the PRE-removal reserve entries, then applies one
-## roster casualty per drowned BN through the shared apply_casualty (consumes no dice → golden RNG
-## stream unaffected). See the call site in resolve_antiship_turn for why the ghost-landing mattered.
-static func apply_crossing_casualties(ship_reserve: Array, lost_ids: Array) -> void:
-	if lost_ids.is_empty():
-		return
-	var lost: Dictionary = {}
-	for id in lost_ids:
-		lost[String(id)] = true
-	for entry_value in ship_reserve:
-		var entry: Dictionary = entry_value
-		var brigade_id := String(entry.get("brigade_id", ""))
-		for bn_value in entry.get("bns", []):
-			var bn: Dictionary = bn_value
-			if lost.has(String(bn.get("id", ""))):
-				apply_casualty({"brigade_id": brigade_id, "type": String(bn.get("type", ""))})
-
-
-## Tripwire for the mirror image of the ghost-landing bug (plan 0037): a brigade's roster must never
-## hold FEWER battalions of a type than its off-map pools claim are waiting. If it does, something
-## killed a battalion that was not ashore — apply_casualty shrinks `composition` by type and never
-## touches the pools, so the pool entry would survive as a claim on a roster slot that no longer
-## exists, and the census would silently under-count for the rest of the game.
-##
-## Checked at the END of resolve_turn, not inside apply_casualty, because the invariant is
-## transiently false BY DESIGN mid-turn: apply_crossing_casualties deletes drowned battalions from
-## their rosters while they are still listed in ship_reserve (it maps ids via the pre-removal
-## entries), and the reserve is pruned immediately afterwards. End-of-turn is the settled boundary,
-## the same reasoning as the runtime-index assert beside it.
-static func pending_pool_roster_violations(state: GameStateData) -> Array[String]:
-	var violations: Array[String] = []
-	var not_ashore := state.refresh_not_ashore_by_type()
-	for brigade_id_value in not_ashore:
-		var brigade_id := String(brigade_id_value)
-		var brigade: Brigade = GameData.get_brigade(brigade_id)
-		if brigade == null:
-			continue  # JLSF pseudo-entries carry a cargo brigade_id with no OOB brigade behind it
-		var qty_by_type: Dictionary = {}
-		for battalion_value in brigade.composition:
-			var battalion: Battalion = battalion_value
-			qty_by_type[battalion.type] = int(qty_by_type.get(battalion.type, 0)) + battalion.qty
-		var brigade_not_ashore: Dictionary = not_ashore[brigade_id]
-		for battalion_type in brigade_not_ashore:
-			var pending := int(brigade_not_ashore[battalion_type])
-			var roster := int(qty_by_type.get(battalion_type, 0))
-			if roster < pending:
-				violations.append("%s/%s: roster %d < pending %d" % [
-					brigade_id, battalion_type, roster, pending])
-	return violations
-
-
-static func apply_casualty(casualty: Dictionary) -> void:
-	var brigade_id := String(casualty["brigade_id"])
-	var casualty_type := String(casualty["type"])
-	var brigade: Brigade = GameData.get_brigade(brigade_id)
-	if brigade == null:
-		push_error("Combat casualty references unknown brigade_id: %s" % brigade_id)
-		return
-
-	for index in range(brigade.composition.size()):
-		var battalion: Battalion = brigade.composition[index]
-		if battalion.type != casualty_type:
-			continue
-		battalion.qty -= 1
-		if battalion.qty <= 0:
-			brigade.composition.remove_at(index)
-		if brigade.get_battalion_count() == 0:
-			brigade.destroyed = true
-			GameData.remove_brigade_from_map(brigade_id)
-		return
-
-	push_error("Combat casualty references missing battalion type '%s' in brigade %s" % [casualty_type, brigade_id])

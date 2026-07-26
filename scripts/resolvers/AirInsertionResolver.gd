@@ -7,7 +7,7 @@ extends RefCounted
 ## which ones came down alive and where.
 ##
 ## Purity boundary: this drains the pool, erodes the caps and reports what should arrive where; the
-## CALLER (TurnConductor.resolve_air_insertion_turn) owns the GameData mutation — set_brigade_hex
+## CALLER (ReinforcementPhases.resolve_air_insertion_turn) owns the GameData mutation — set_brigade_hex
 ## for the landings, apply_casualty for the losses — and the IJFS target bookkeeping, exactly as
 ## OffloadResolver and MobilizationResolver leave application to their wrappers. Live map knowledge
 ## enters through the `hex_can_receive` Callable so no autoload is touched here.
