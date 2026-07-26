@@ -7,13 +7,13 @@ const HEX_GRID_PATH := "res://data/taiwan_hex_grid.json"
 const THEATERS_PATH := "res://data/theaters.json"
 const BEACHES_PATH := "res://data/beaches.json"
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("Infrastructure data validation")
 
 
 func _initialize() -> void:
 	print("=== Infrastructure data validation ===")
 	_validate_all()
-	_finish()
+	_h.finish(self)
 
 
 func _validate_all() -> void:
@@ -52,53 +52,53 @@ func _validate_all() -> void:
 func _parse_infrastructure() -> Dictionary:
 	var file := FileAccess.open(INFRA_PATH, FileAccess.READ)
 	if file == null:
-		_fail("Could not open %s" % INFRA_PATH)
+		_h.fail("Could not open %s" % INFRA_PATH)
 		return {}
 
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if not (parsed is Dictionary):
-		_fail("infrastructure.json did not parse to a Dictionary")
+		_h.fail("infrastructure.json did not parse to a Dictionary")
 		return {}
 
 	var infra_list: Variant = (parsed as Dictionary).get("infrastructure", null)
 	if not (infra_list is Array):
-		_fail("infrastructure.json missing or non-Array 'infrastructure' key")
+		_h.fail("infrastructure.json missing or non-Array 'infrastructure' key")
 		return {}
 
 	if infra_list.is_empty():
-		_fail("infrastructure.json 'infrastructure' array is empty")
+		_h.fail("infrastructure.json 'infrastructure' array is empty")
 		return {}
 
 	var result: Dictionary = {}
 	var seen_ids: Dictionary = {}
 	for entry_data in infra_list:
 		if not (entry_data is Dictionary):
-			_fail("infrastructure.json entry is not a Dictionary")
+			_h.fail("infrastructure.json entry is not a Dictionary")
 			continue
 		var entry: Dictionary = entry_data
 		var id_val: String = String(entry.get("id", ""))
 		if id_val.is_empty():
-			_fail("infrastructure.json entry missing or empty 'id'")
+			_h.fail("infrastructure.json entry missing or empty 'id'")
 			continue
 		if seen_ids.has(id_val):
-			_fail("infrastructure.json duplicate id: '%s'" % id_val)
+			_h.fail("infrastructure.json duplicate id: '%s'" % id_val)
 			continue
 		seen_ids[id_val] = true
 
 		var kind: String = String(entry.get("kind", ""))
 		if kind != "port" and kind != "airbridge":
-			_fail("infrastructure.json entry '%s' kind '%s' not in {port, airbridge}" % [id_val, kind])
+			_h.fail("infrastructure.json entry '%s' kind '%s' not in {port, airbridge}" % [id_val, kind])
 			continue
 
 		var name: String = String(entry.get("name", ""))
 		if name.is_empty():
-			_fail("infrastructure.json entry '%s' missing or empty 'name'" % id_val)
+			_h.fail("infrastructure.json entry '%s' missing or empty 'name'" % id_val)
 			continue
 
 		var lat: float = float(entry.get("lat", 0.0))
 		var lng: float = float(entry.get("lng", 0.0))
 		if is_zero_approx(lat) or is_zero_approx(lng):
-			_fail("infrastructure.json entry '%s' lat/lng is zero" % id_val)
+			_h.fail("infrastructure.json entry '%s' lat/lng is zero" % id_val)
 			continue
 
 		result[id_val] = {
@@ -118,18 +118,18 @@ func _parse_infrastructure() -> Dictionary:
 func _parse_hex_grid() -> Array[Dictionary]:
 	var file := FileAccess.open(HEX_GRID_PATH, FileAccess.READ)
 	if file == null:
-		_fail("Could not open %s" % HEX_GRID_PATH)
+		_h.fail("Could not open %s" % HEX_GRID_PATH)
 		return []
 
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if not (parsed is Dictionary):
-		_fail("taiwan_hex_grid.json did not parse to a Dictionary")
+		_h.fail("taiwan_hex_grid.json did not parse to a Dictionary")
 		return []
 
 	var root: Dictionary = parsed
 	var hexes_data: Variant = root.get("hexes", null)
 	if not (hexes_data is Array):
-		_fail("taiwan_hex_grid.json missing 'hexes' array")
+		_h.fail("taiwan_hex_grid.json missing 'hexes' array")
 		return []
 
 	var result: Array[Dictionary] = []
@@ -157,17 +157,17 @@ func _parse_hex_grid() -> Array[Dictionary]:
 func _parse_active_tos() -> Array[int]:
 	var file := FileAccess.open(THEATERS_PATH, FileAccess.READ)
 	if file == null:
-		_fail("Could not open %s" % THEATERS_PATH)
+		_h.fail("Could not open %s" % THEATERS_PATH)
 		return []
 
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if not (parsed is Dictionary):
-		_fail("theaters.json did not parse to a Dictionary")
+		_h.fail("theaters.json did not parse to a Dictionary")
 		return []
 
 	var tos: Variant = (parsed as Dictionary).get("active_tos", null)
 	if not (tos is Array):
-		_fail("theaters.json missing 'active_tos' array")
+		_h.fail("theaters.json missing 'active_tos' array")
 		return []
 
 	var result: Array[int] = []
@@ -179,17 +179,17 @@ func _parse_active_tos() -> Array[int]:
 func _parse_beaches() -> Array[Dictionary]:
 	var file := FileAccess.open(BEACHES_PATH, FileAccess.READ)
 	if file == null:
-		_fail("Could not open %s" % BEACHES_PATH)
+		_h.fail("Could not open %s" % BEACHES_PATH)
 		return []
 
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if not (parsed is Dictionary):
-		_fail("beaches.json did not parse to a Dictionary")
+		_h.fail("beaches.json did not parse to a Dictionary")
 		return []
 
 	var beaches_list: Variant = (parsed as Dictionary).get("beaches", null)
 	if not (beaches_list is Array):
-		_fail("beaches.json missing 'beaches' array")
+		_h.fail("beaches.json missing 'beaches' array")
 		return []
 
 	var result: Array[Dictionary] = []
@@ -240,27 +240,27 @@ func _validate_entries(infra: Dictionary, hexes: Array[Dictionary], active_tos: 
 		# Check 3: hex_id exists in grid
 		var hex_id: String = entry.hex_id
 		if hex_id == "" or not hex_lookup.has(hex_id):
-			_fail("infrastructure.json entry '%s' hex_id '%s' not found in hex grid" % [entry.id, hex_id])
+			_h.fail("infrastructure.json entry '%s' hex_id '%s' not found in hex grid" % [entry.id, hex_id])
 			continue
 
 		# Check 4: to_number in active_tos
 		var to_n: int = entry.to_number
 		if not to_set.has(to_n):
-			_fail("infrastructure.json entry '%s' to_number %d not in active_tos" % [entry.id, to_n])
+			_h.fail("infrastructure.json entry '%s' to_number %d not in active_tos" % [entry.id, to_n])
 			continue
 
 		# Check 5: geometry — nearest hex center
 		var closest_hex_id: String = _nearest_hex(entry.lat, entry.lng, hexes)
 		if closest_hex_id != hex_id:
-			_fail("infrastructure.json entry '%s' hex_id '%s' is not nearest hex; closest is '%s'" % [entry.id, hex_id, closest_hex_id])
+			_h.fail("infrastructure.json entry '%s' hex_id '%s' is not nearest hex; closest is '%s'" % [entry.id, hex_id, closest_hex_id])
 
 		# Check 6: TO consistency via nearest beach
 		var nearest_beach_id: int = _nearest_beach(entry.lat, entry.lng, beaches)
 		var expected_to: int = beach_to_to.get(nearest_beach_id, -1)
 		if expected_to == -1:
-			_fail("infrastructure.json entry '%s' nearest beach %d not in beach_to_to" % [entry.id, nearest_beach_id])
+			_h.fail("infrastructure.json entry '%s' nearest beach %d not in beach_to_to" % [entry.id, nearest_beach_id])
 		elif to_n != expected_to:
-			_fail("infrastructure.json entry '%s' to_number %d != nearest beach %d to_number %d" % [entry.id, to_n, nearest_beach_id, expected_to])
+			_h.fail("infrastructure.json entry '%s' to_number %d != nearest beach %d to_number %d" % [entry.id, to_n, nearest_beach_id, expected_to])
 
 
 func _nearest_hex(lat: float, lng: float, hexes: Array[Dictionary]) -> String:
@@ -289,19 +289,3 @@ func _nearest_beach(lat: float, lng: float, beaches: Array[Dictionary]) -> int:
 			best_dist = d
 			best_id = b.id
 	return best_id
-
-
-func _fail(message: String) -> void:
-	_failures.append(message)
-	push_error(message)
-
-
-func _finish() -> void:
-	if _failures.is_empty():
-		print("PASS: Infrastructure data validation succeeded")
-		quit(0)
-		return
-	print("FAIL: Infrastructure data validation found %d issue(s):" % _failures.size())
-	for failure in _failures:
-		print("  - %s" % failure)
-	quit(1)

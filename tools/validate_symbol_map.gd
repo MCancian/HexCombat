@@ -8,7 +8,7 @@ extends SceneTree
 const SYMBOL_MAP_PATH := "res://data/nato_symbol_map.json"
 const OOB_PATHS := ["res://data/pla_ground_forces.json", "res://data/roc_ground_forces.json"]
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("symbol map validation")
 
 
 func _initialize() -> void:
@@ -17,8 +17,8 @@ func _initialize() -> void:
 	var symbol_dir := String(map_doc.get("symbol_dir", "res://assets/symbols"))
 	var mapping = map_doc.get("nato_type_to_symbol", null)
 	if not (mapping is Dictionary) or (mapping as Dictionary).is_empty():
-		_fail("nato_type_to_symbol missing or empty in %s" % SYMBOL_MAP_PATH)
-		_finish()
+		_h.fail("nato_type_to_symbol missing or empty in %s" % SYMBOL_MAP_PATH)
+		_h.finish(self)
 		return
 
 	# 1) Every map entry resolves to a loadable Texture2D.
@@ -30,22 +30,22 @@ func _initialize() -> void:
 	print("Distinct nato_types in OOBs (%d): %s" % [used.size(), ", ".join(used)])
 	for nato_type in used:
 		if not (mapping as Dictionary).has(nato_type):
-			_fail("OOB nato_type '%s' has no symbol mapping" % nato_type)
+			_h.fail("OOB nato_type '%s' has no symbol mapping" % nato_type)
 
-	_finish()
+	_h.finish(self)
 
 
 func _check_symbol_loads(symbol_dir: String, filename: String, context: String) -> void:
 	if filename.is_empty():
-		_fail("%s: empty symbol filename" % context)
+		_h.fail("%s: empty symbol filename" % context)
 		return
 	var path := "%s/%s" % [symbol_dir, filename]
 	if not ResourceLoader.exists(path):
-		_fail("%s: symbol resource not found: %s" % [context, path])
+		_h.fail("%s: symbol resource not found: %s" % [context, path])
 		return
 	var res := load(path)
 	if res == null or not (res is Texture2D):
-		_fail("%s: %s did not load as Texture2D" % [context, path])
+		_h.fail("%s: %s did not load as Texture2D" % [context, path])
 
 
 func _used_nato_types() -> Array[String]:
@@ -63,26 +63,10 @@ func _used_nato_types() -> Array[String]:
 func _read_json(path: String) -> Dictionary:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
-		_fail("Could not open %s" % path)
+		_h.fail("Could not open %s" % path)
 		return {}
 	var parsed = JSON.parse_string(file.get_as_text())
 	if not (parsed is Dictionary):
-		_fail("%s did not parse to a Dictionary" % path)
+		_h.fail("%s did not parse to a Dictionary" % path)
 		return {}
 	return parsed
-
-
-func _fail(message: String) -> void:
-	_failures.append(message)
-	push_error(message)
-
-
-func _finish() -> void:
-	if _failures.is_empty():
-		print("PASS: symbol map validation succeeded")
-		quit(0)
-		return
-	print("FAIL: symbol map validation found %d issue(s):" % _failures.size())
-	for failure in _failures:
-		print("  - %s" % failure)
-	quit(1)

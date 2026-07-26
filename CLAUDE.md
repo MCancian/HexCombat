@@ -36,36 +36,24 @@ not guess game design.
 7. Pause and surface to the user on: a genuine design decision, a gate you can't get green after
    a couple of focused attempts, or anything destructive/irreversible.
 
-## Consultation (review-only, before every commit)
+## Consultation (review-only, twice per unit of work)
 
 The USER is non-coding and cannot review the technical soundness of a plan or a diff themselves, so
 two or three independent model reads substitute for that. They are cheap; a wrong plan or a silent
-regression is not.
+regression is not. **Two rounds are required:**
 
-- **Run them in parallel, in the background** — each buffers its output until exit, so there is no
-  interim progress to poll. Give each a brief that names the exact files to read and asks for
-  numbered findings with severity (blocker/should-fix/nit), `file:line` evidence, and a concrete fix.
-- **Every prompt must say REVIEW ONLY — do not modify files.** Only the primary agent writes code.
-  This is load-bearing, not belt-and-braces: `--agent explore` is **not honoured by every opencode
-  model** — `nemotron-3-ultra-free` prints *"agent 'explore' is a subagent, not a primary agent.
-  Falling back to default agent"* and runs under the **writing** `build` agent (observed 2026-07-25).
-  So the prompt text is the only thing stopping a reviewer from editing the repo. **Run
-  `git status --short` after every consultation round** and treat any unexpected modification as the
-  reviewer having gone out of bounds. `gem-explore` has also written a review artifact into the repo
-  root despite the instruction (2026-07-25) — delete strays immediately, because a file written by
-  one reviewer **contaminates the others**: a concurrently-running model read that artifact off disk
-  and returned it verbatim as its own review, which looks like independent corroboration and is not.
-  Treat identical findings from two models as one review until proven otherwise.
-- **Evaluate, don't obey.** They are frequently wrong or already-handled; verify each finding against
-  the code before acting, and say so plainly when one is rejected. Reviewers have caught real
-  blockers here (an ordering bug that would have silently collapsed a mechanic) *and* asserted
-  problems that did not exist.
-- **Models:** `opencode run -m opencode/deepseek-v4-flash-free --agent explore` (fast, good at
-  "which files did you miss"); `opencode run -m opencode/nemotron-3-ultra-free --agent explore`;
-  `GEM_TIMEOUT=15m gem-explore "…"` (deepest reasoning about semantics and consequences — worth the
-  wait). Bare `agy -p` has timed out on multi-file reviews; prefer the `gem-explore` wrapper with an
-  extended `GEM_TIMEOUT`. The USER can also run a prompt through `agy` by hand if a review needs more
-  room than the wrapper allows.
+- **Before implementation** — the plan → `.claude/skills/hexcombat-plan-review`
+- **Before committing** — the finished diff, gate already green → `.claude/skills/hexcombat-diff-review`
+
+Those skills own the brief format, the model table and their known weaknesses, the reviewer-safety
+rules, and how to evaluate findings rather than obey them. **Read the relevant one before each round**
+rather than improvising a prompt — an unguided reviewer reads the wrong five files and returns a
+summary of your own work.
+
+The two rules worth knowing before you get there: **every prompt must say REVIEW ONLY** (`--agent
+explore` is not honoured by every opencode model — they fall back to the *writing* `build` agent), and
+**run `git status --short` after every round**, because a stray file written by one reviewer
+contaminates the others and produces fake corroboration.
 
 Commit messages end with the `Co-Authored-By` trailer + session link the harness specifies for
 the acting model. Never commit `.mcp.json`.

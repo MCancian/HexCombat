@@ -23,6 +23,8 @@ Frontmatter descriptions are the triggers — read the skill before doing its ki
 | Extract logic out of GameState / resolver-boundary questions | `hexcombat-gamestate-decomposition-campaign` (campaign COMPLETE — kept as the record of method) |
 | Write/modify any function or test (quality budgets, naming, magic numbers) | `hexcombat-code-quality` |
 | Finish/plan/record anything (docs of record) | `hexcombat-docs-and-writing` |
+| Have a plan drafted, before writing any code | `hexcombat-plan-review` |
+| Have a green gate and be about to commit | `hexcombat-diff-review` |
 
 Diagnostics/measurement guidance is folded into `validation-and-qa` (evidence),
 `debugging-playbook` (triage), and `run-and-operate` (tools) — there is no separate

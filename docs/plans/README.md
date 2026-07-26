@@ -30,11 +30,42 @@ plan to act, the closeout wasn't done.
 | 0031 | [Graduated port suppression](0031-graduated-port-suppression.md) | Medium (new mechanic; ROC-only, continuous port capacity, 0%-start default w/ deliberate golden re-baseline + deck refresh, JLSF repair vs off-island fires + IJFS-attritable HIMARS; DataOverrides wiring absorbed as step 0 — design calls settled) | Sketch |
 | 0033 | [Brigade organization](0033-brigade-organization.md) | Medium (new mechanic; USER intends to build on it — currently a monotonic decay to zero that nothing reads and the observation misdescribes; design calls open) | Sketch |
 | 0035 | [Scenario variant inheritance](0035-scenario-inheritance.md) | Medium (refactor; variants are full copies of the default, so "differs only in X" is unchecked — comparability is the research product) | Sketch |
+| 0039 | [One truth about where a battalion is](0039-battalion-location-single-truth.md) | **High (risk buydown; the seam behind BOTH silent census bugs — location is derived by subtraction across 7 mutation paths, guarded only by after-the-fact tripwires). Large: data-model change with a serialization boundary. Step 1 is independently valuable** | Sketch |
+| 0040 | [CombatRules — stop hand-threading 26 fields](0040-combatrules-threading.md) | Medium (risk buydown; a field added but not threaded is a silently-inert knob, no gate watches it. Recommended path is the completeness validator ALONE — ~1h — not the restructure) | Sketch |
+| 0041 | [One pattern for reaching an autoload](0041-autoload-access-one-pattern.md) | Low (ergonomics; the failure is already CAUGHT by validate_tool_script_purity — this makes the correct pattern obvious rather than remembered) | Sketch |
 | 0038 | [TurnConductor phase extraction](0038-turnconductor-phase-extraction.md) | Medium (refactor; ndeps 38 of 38 — the next phase resolver breaks the gate and the ceiling may not be raised. Pure restructuring, no design calls, no behaviour change; byte-stability is the whole acceptance test) | Sketch |
 | 0036 | [Airborne cost and sortie cadence](0036-airborne-cost-and-cadence.md) | Medium (balance; USER call 2026-07-25 answering the plan-0032 dial — double baseline attrition + 1 sortie per 2 days; `red_airborne` only, golden untouched, `validate_air_insertion` pin re-baselines) | Sketch |
 
 | 0016 | [Separate State Data from Autoload](0016-separate-state-data.md) | Medium (hygiene/architecture) | Superseded by 0014 |
 | 0022 | [Red reactive beach-opening (feasibility first)](0022-red-beach-switching.md) | Medium (research; new mechanic, gated on a feasibility spike) | Sketch |
+
+## Execution order for the risk-buydown group (0038 → 0040 → 0039, with 0041 as filler)
+
+Set 2026-07-25 after the session that shipped plans 0034/0037 and the gate hardening. These four are
+sequenced, not independent — do them in this order unless the USER redirects.
+
+1. **0038 — TurnConductor phase extraction.** FIRST, because it is a *prerequisite*, not a priority
+   judgement: `TurnConductor` sits at its dependency ceiling (38 of 38), plan 0037 already had to
+   reshape its design mid-implementation to avoid breaching it, and **0039 touches that file
+   repeatedly**. Doing 0039 first means fighting the ceiling while also changing the data model.
+   No design calls; byte-stability is the whole acceptance test.
+2. **0040 — but only option (c), the completeness validator.** ~1 hour, no production code touched,
+   removes a silent-failure class. Cheap enough to land between the two large items, and it does not
+   touch `TurnConductor`, so it is not blocked by the ceiling. Defer option (a) indefinitely.
+3. **0039 — one truth about battalion location.** The real prize and the real work. Needs 0038 done
+   first for headroom. **Stop after its step 1 if that does not go green cheaply** — step 1 alone
+   converts an undetectable desync into a loud one at every turn boundary, which is most of the risk
+   for a fraction of the effort.
+4. **0041 — autoload access.** Filler. Independent of the others; slot it in whenever. Ranked last
+   deliberately: the failure it prevents is already caught by a gate that names the file and line, so
+   this is legibility, not risk.
+
+**Not in this group and not blocked by it:** 0036 (airborne balance dial — the USER's call is already
+made, golden untouched, self-contained). If the USER wants a visible game change rather than
+infrastructure, 0036 is the one to do first.
+
+**Standing caveat, unrelated to sequencing:** every study measured before 2026-07-25 over-states Red
+(census correction + landed-only combat). Re-running them is an open USER decision on compute.
 
 ## Archived
 
