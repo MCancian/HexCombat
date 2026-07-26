@@ -16,37 +16,35 @@ static func is_support_type(unit_type: String) -> bool:
 	return UnitStats.has_tag(unit_type, "artillery") or UnitStats.has_tag(unit_type, "rotary_wing")
 
 
-static func maneuver_units(brigades: Array, not_ashore_by_type: Dictionary = {}) -> Array:
-	var units: Array = []
+## Maneuver and support units for a force, in ONE pass: {"maneuver": [...], "support": [...]}.
+##
+## The single implementation. `maneuver_units` and `support_units` are views onto it — they used to be
+## byte-identical bodies differing only by a `not` on the support test, which meant the landed
+## subtraction lived twice. `CombatResolver` needs both halves for each side anyway, so the combined
+## form is also the one that walks each composition once instead of twice.
+static func split_units(brigades: Array, not_ashore_by_type: Dictionary = {}) -> Dictionary:
+	var maneuver: Array = []
+	var support: Array = []
 	for brigade_value in brigades:
 		var brigade: Brigade = brigade_value
 		var brigade_not_ashore: Dictionary = not_ashore_by_type.get(brigade.id, {})
 		for battalion in brigade.composition:
-			if is_support_type(battalion.type):
-				continue
-			for i in range(Brigade.landed_qty(battalion, brigade_not_ashore)):
-				units.append({
+			var bucket: Array = support if is_support_type(battalion.type) else maneuver
+			for _landed_index in range(Brigade.landed_qty(battalion, brigade_not_ashore)):
+				bucket.append({
 					"brigade_id": brigade.id,
 					"type": battalion.type,
 					"supply_effectiveness": 1.0
 				})
-	return units
+	return {"maneuver": maneuver, "support": support}
+
+
+static func maneuver_units(brigades: Array, not_ashore_by_type: Dictionary = {}) -> Array:
+	return split_units(brigades, not_ashore_by_type)["maneuver"]
+
 
 static func support_units(brigades: Array, not_ashore_by_type: Dictionary = {}) -> Array:
-	var units: Array = []
-	for brigade_value in brigades:
-		var brigade: Brigade = brigade_value
-		var brigade_not_ashore: Dictionary = not_ashore_by_type.get(brigade.id, {})
-		for battalion in brigade.composition:
-			if not is_support_type(battalion.type):
-				continue
-			for i in range(Brigade.landed_qty(battalion, brigade_not_ashore)):
-				units.append({
-					"brigade_id": brigade.id,
-					"type": battalion.type,
-					"supply_effectiveness": 1.0
-				})
-	return units
+	return split_units(brigades, not_ashore_by_type)["support"]
 
 
 static func support_counts(brigades: Array, not_ashore_by_type: Dictionary = {}) -> Dictionary:

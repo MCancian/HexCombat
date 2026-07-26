@@ -18,7 +18,8 @@ class_name LLMGameAPI
 ## which takes its inputs as arguments (see `AirInsertionState.eligible_orders` and
 ## `AirInsertionResolver.threat_from_ijfs_summary`) and call THAT from here.
 ##
-## Enforced by `tools/validate_llm_api_purity.gd`, which loads this script with no autoloads present.
+## Enforced by `tools/validate_tool_script_purity.gd`, which applies this rule to EVERY class a `-s`
+## tool names at compile time (72 of them today), not just this file — see its header.
 
 const PROTOCOL_VERSION := "0.1.0"
 const OBSERVATION_SCHEMA := "hexcombat.llm_observation"

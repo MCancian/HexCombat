@@ -29,8 +29,11 @@ Settled battles. Primary sources: `docs/DECISIONS.md` (+ pre-2026-07-10 history 
   `GameState.data.pending_battalion_pools()`. Naming the autoload directly compiles fine in the
   running game and fails under a `-s` SceneTree tool (`Identifier not found: GameState`), where
   autoloads are not registered as identifiers. This is the **same trap** the header of
-  `scripts/LLMGameAPI.gd` documents and `tools/validate_llm_api_purity.gd` enforces — but the purity
-  validator only guards `LLMGameAPI.gd`, and `SelfPlayRunner` is outside its reach.
+  `scripts/LLMGameAPI.gd` documents — but the purity validator then guarded only `LLMGameAPI.gd`, and
+  `SelfPlayRunner` was outside its reach. **Closed 2026-07-25:** `tools/validate_tool_script_purity.gd`
+  now derives the guarded set as the transitive compile-time closure of `tools/*.gd` and
+  fails with the offending `file:line`, and `run_all_tests.py` passes `--quit-after` so the same class
+  of failure can no longer hang the gate.
 - **Fix:** use the file's own node-path accessor (`_gs()`), which every such script already has.
   **Rule: in any script a `-s` tool can load, reach autoloads through a `get_node()` accessor,
   never by name.**

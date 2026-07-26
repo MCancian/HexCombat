@@ -112,7 +112,15 @@ else:
     def run_validator(v, idx):
         # We assign an isolated user_data_dir for each parallel run to avoid cache contention
         user_dir = os.path.join(tempfile.gettempdir(), f"hexcombat_val_{idx}")
-        code, text = invoke_godot(["-s", f"res://tools/{v}"], user_data_dir=user_dir)
+        # --quit-after is the DEADLOCK BREAKER (2026-07-25). A validator whose *dependency* class
+        # fails to compile still runs _initialize and prints its banner, but the failed call never
+        # reaches quit(), so the SceneTree spins forever and this thread pool never completes — the
+        # gate hangs with no diagnostic (measured: ~10 min per run, twice, before it was diagnosed).
+        # Every validator does all its work synchronously inside _initialize and quits there, so the
+        # main loop only ever iterates when something has ALREADY gone wrong; any frame budget breaks
+        # the hang and none can truncate healthy work. The SCRIPT ERROR the failure prints is then
+        # caught by saw_fail below, so the hang degrades to a loud, named failure.
+        code, text = invoke_godot(["--quit-after", "300", "-s", f"res://tools/{v}"], user_data_dir=user_dir)
         return v, code, text
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count() or 4) as executor:
@@ -127,8 +135,12 @@ else:
             if saw_fail:
                 failures.append(f"Validation {v}: FAIL/SCRIPT ERROR in output")
             elif not saw_pass:
+                # A validator that exits 0 while printing no PASS marker used to be reported OK. That
+                # is a vacuous pass: a validator that silently does nothing looks identical to one
+                # that verified everything (the DataOverrides silent-failure family). Every validator
+                # prints a PASS line, so requiring it costs nothing and closes the hole.
                 if exit_code == 0:
-                    cecho("green", f"{v} OK.")
+                    failures.append(f"Validation {v}: exited 0 but printed no PASS marker (did it actually run?)")
                 elif is_teardown_flake(exit_code):
                     warnings.append(f"Validation {v}: teardown-flake exit {exit_code}, no failure markers — ignored")
                     cecho("green", f"{v} OK (teardown-flake exit ignored).")

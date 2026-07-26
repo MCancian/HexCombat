@@ -196,9 +196,7 @@ brigade's fighting strength and its ration bill always describe the same battali
 unaffected — it has no off-map pools. Pins that moved: `tools/validate_dos_consumption.gd` and
 `tools/validate_cleanup.gd` (their PASS lines are truth, not this doc).
 
-**Terrain modifiers — ACTIVE since 2026-07-09 (Track F).** `CombatCalculator.gd`'s own
-`TERRAIN_MODIFIERS` dict is dead code (superseded, left untouched — see
-`.claude/skills/hexcombat-config-and-knobs`). The live path is
+**Terrain modifiers — ACTIVE since 2026-07-09 (Track F).** The live path is
 `TurnConductor.defender_combat_modifier()` (reads `GameData.get_terrain(hex_id).defender_modifier`,
 falling back to `1.0` for an unclassified hex) → passed as `defender_terrain_modifier` into
 `CombatResolver.resolve_at` → `CombatCalculator.resolve_map_attack`. Full terrain data model,

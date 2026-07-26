@@ -373,6 +373,18 @@ GdUnit4 suites under `tests/`. Must end **ALL PHASES GREEN**. A debug-only asser
 so any silent brigade↔hex index desync fails loud in every debug/test/headless turn (compiled out of
 release).
 
+**Gate anti-silence properties (2026-07-25).** Three ways the gate could previously lie, now closed:
+a validator that exits 0 while printing **no `PASS:` marker** is a failure rather than an OK (a
+validator that silently does nothing used to look identical to one that verified everything); every
+validator is invoked with `--quit-after`, so a dependency class that fails to compile produces a named
+failure instead of an unbounded hang (`_initialize` runs and prints its banner, but the failed call
+never reaches `quit()`); and `tools/validate_tool_script_purity.gd` derives its guarded set as the
+**transitive compile-time closure of `tools/*.gd`** rather than one named file, so any class a `-s`
+tool pulls in is checked for autoload identifiers. `tools/validate_pool_enumeration.gd` closes the
+ghost-landing family structurally: it walks live state for anything shaped like an off-map battalion
+pool and fails if `GameStateData.pending_battalion_pools()` does not return it, so a new pool is caught
+by its **shape** rather than by someone remembering to register it.
+
 ## What is NOT done (see `docs/plans/`)
 
 - **Graphics** (Track 5): anti-ship/mine visualization, front-line draw UI (D5-D), unit/HUD polish.

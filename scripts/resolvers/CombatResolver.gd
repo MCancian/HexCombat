@@ -62,10 +62,12 @@ static func resolve_at(
 	# landed battalion, but the rest of its composition may still be at sea, on the mainland, or
 	# waiting to fly. One map serves both sides — Green simply has no entries in it.
 	var not_ashore: Dictionary = rules.not_ashore_by_type
-	var attacker_units := CombatForces.maneuver_units(attacker_brigades, not_ashore)
-	var defender_units := CombatForces.maneuver_units(defender_brigades, not_ashore)
-	var attacker_support_units := CombatForces.support_units(attacker_brigades, not_ashore)
-	var defender_support_units := CombatForces.support_units(defender_brigades, not_ashore)
+	var attacker_split := CombatForces.split_units(attacker_brigades, not_ashore)
+	var defender_split := CombatForces.split_units(defender_brigades, not_ashore)
+	var attacker_units: Array = attacker_split["maneuver"]
+	var defender_units: Array = defender_split["maneuver"]
+	var attacker_support_units: Array = attacker_split["support"]
+	var defender_support_units: Array = defender_split["support"]
 	var attacker_support := CombatForces.support_counts(attacker_brigades, not_ashore)
 	var defender_support := CombatForces.support_counts(defender_brigades, not_ashore)
 	# Only the attacker is injected: this resolver's attacker is always RED and its defender always

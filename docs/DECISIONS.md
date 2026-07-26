@@ -19,6 +19,28 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-25 — Gate hardening: the two silent-failure holes this session fell into are now gated.**
+  - **Who**: agent, from a refactor review the USER asked to be run past `gem-explore` and `opencode`.
+  - **What**: (1) `tools/validate_tool_script_purity.gd` replaces `validate_llm_api_purity.gd` — the
+    guarded set is now the **transitive compile-time closure of `tools/*.gd`** — by `class_name` or by
+    literal `preload` path — not one hand-picked file; `SelfPlayRunner` was outside the old gate and broke exactly there. (2)
+    `run_all_tests.py` passes `--quit-after` to every validator, so a dependency that fails to compile
+    degrades from an unbounded hang to a named failure (verified: plain run hangs, `--quit-after`
+    exits). (3) A validator that exits 0 while printing **no PASS marker** is now a failure, not an OK.
+    (4) New `tools/validate_pool_enumeration.gd` walks live state for anything shaped like an off-map
+    battalion pool and fails if `pending_battalion_pools()` does not return it — a **structural** check,
+    so it finds a pool nobody registered. Verified against the real 0034 bug.
+  - **Also**: `CombatForces.maneuver_units`/`support_units` were byte-identical but for one `not`;
+    both are now views on `split_units`. `GameData.snapshot_state`'s `pending_pools` default was
+    removed (defaulting to `[]` silently returned whole rosters — the 0034/0037 bug).
+  - **Gate**: ALL PHASES GREEN, **no pin moved** — the combat refactor is byte-stable.
+  - **Pointers**: `docs/plans/0038-turnconductor-phase-extraction.md` (the ceiling problem this review
+    surfaced and did NOT fix); `hexcombat-failure-archaeology` → "The gate 'hang' that was two separate
+    illusions"; `docs/plans/BACKLOG.md` for three items deliberately deferred.
+  - **Rejected on measurement**: extracting `TurnConductor`'s roster-mutation trio to buy ceiling
+    headroom — it references only deps the file keeps, so it buys none. Recorded in plan 0038 so it is
+    not re-proposed.
+
 - **2026-07-25 — Only battalions that have LANDED fight, eat, and are reported.**
   - **Who**: USER, twice — *"only the battalions that have landed in a brigade should count for
     combat. The LLMs should only account for those too"*, and separately *"yes — only landed eat"*

@@ -19,6 +19,29 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
 
 *(Agents: append new technical debt and hygiene observations here)*
 
+- [ ] **Validator harness: `_fail` / `_finish` / asserts are copy-pasted across the validators
+  (found 2026-07-25, refactor review).** Measured: `func _fail` in **30 of 36** `tools/validate_*.gd`,
+  `_finish` in 31, `_assert_equal_int` in 12, `_assert_true` in 11. A `tools/ValidatorHarness.gd`
+  owning the assert vocabulary would remove the duplication. **Note the claim that failed review:**
+  this does NOT fix the gate-hang class — a script that fails to COMPILE never runs, harness included
+  (caught by gem-explore; two other models wrongly agreed it would). That hole is closed separately by
+  `--quit-after` in `run_all_tests.py`. So this is deduplication only, worth doing when validators are
+  being touched anyway, in slices of 5-6 with the gate green between. Good `opencode` delegation.
+- [ ] **Doc-anchor validator checks links, not symbols (found 2026-07-25).** `tools/validate_doc_anchors.gd`
+  matches `ClassName.member` in backticks, so a doc naming a bare `CONSTANT` that no longer exists
+  passes — `docs/systems/ground-combat.md` described `CombatCalculator.TERRAIN_MODIFIERS` as "dead code,
+  left untouched" long after the symbol was deleted (fixed 2026-07-25). Extending the check to bare
+  backticked ALL_CAPS identifiers was considered and **deferred deliberately**: `PI`, `INFINITY` and
+  ordinary prose constants would false-positive, and neither reviewer had a scoping rule that survived
+  scrutiny. Needs a real rule before it is built.
+- [ ] **Combat-loop caches live as mutable fields on `GameStateData` (found 2026-07-25).**
+  `isolated_air_landed_brigades` (`:43`) and `not_ashore_by_type` (`:49`) are both computed once per
+  turn at `TurnConductor:65`/`:70` and read by every contested hex; nothing enforces that a third such
+  cache follows the rule or that either is cleared between turns. A `begin_combat_loop(state)`
+  returning a context value object would make staleness impossible by construction. **Deferred:**
+  reviewers split on risk/reward — the caches are correct today and the change touches
+  `CombatResolver.resolve_at`'s signature for no behavioural gain. Do it when that seam is open anyway.
+
 - [ ] **mc_chart.py degenerate-input crashes (pre-existing, found 2026-07-24 gem-explore review).** Two
   chart builders crash on an empty/degenerate summary rather than failing loud: `histogram_panel`
   `first = next(i for i, b ... if b["count"] > 0)` raises `StopIteration` if every margin bin is zero

@@ -835,12 +835,14 @@ func validate_runtime_indexes() -> Array[String]:
 
 ## Deterministic, key-sorted state snapshot for golden-test / AI byte-comparison.
 ## Returns a plain Dictionary with brigade positions/status and hex ownership.
-func snapshot_state(pending_pools: Array = []) -> Dictionary:
+func snapshot_state(pending_pools: Array) -> Dictionary:
 	var brigade_snap := {}
 	# Landed battalions only (plan 0037): this snapshot is written into every game record as
 	# final_snapshot, so it must agree with the victory census printed beside it. The pools arrive as
 	# an argument rather than being read off GameState — GameData is the CONTENT autoload and must not
-	# depend on runtime state.
+	# depend on runtime state. REQUIRED, deliberately: a default of [] would silently report whole
+	# rosters, which is precisely the bug plans 0034 and 0037 fixed, and no gate would notice.
+	# Callers pass GameState.data.pending_battalion_pools().
 	var not_ashore := PendingBattalions.by_brigade_and_type(pending_pools)
 	var bids := brigades.keys()
 	bids.sort()

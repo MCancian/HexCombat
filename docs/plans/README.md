@@ -30,6 +30,7 @@ plan to act, the closeout wasn't done.
 | 0031 | [Graduated port suppression](0031-graduated-port-suppression.md) | Medium (new mechanic; ROC-only, continuous port capacity, 0%-start default w/ deliberate golden re-baseline + deck refresh, JLSF repair vs off-island fires + IJFS-attritable HIMARS; DataOverrides wiring absorbed as step 0 — design calls settled) | Sketch |
 | 0033 | [Brigade organization](0033-brigade-organization.md) | Medium (new mechanic; USER intends to build on it — currently a monotonic decay to zero that nothing reads and the observation misdescribes; design calls open) | Sketch |
 | 0035 | [Scenario variant inheritance](0035-scenario-inheritance.md) | Medium (refactor; variants are full copies of the default, so "differs only in X" is unchecked — comparability is the research product) | Sketch |
+| 0038 | [TurnConductor phase extraction](0038-turnconductor-phase-extraction.md) | Medium (refactor; ndeps 38 of 38 — the next phase resolver breaks the gate and the ceiling may not be raised. Pure restructuring, no design calls, no behaviour change; byte-stability is the whole acceptance test) | Sketch |
 | 0036 | [Airborne cost and sortie cadence](0036-airborne-cost-and-cadence.md) | Medium (balance; USER call 2026-07-25 answering the plan-0032 dial — double baseline attrition + 1 sortie per 2 days; `red_airborne` only, golden untouched, `validate_air_insertion` pin re-baselines) | Sketch |
 
 | 0016 | [Separate State Data from Autoload](0016-separate-state-data.md) | Medium (hygiene/architecture) | Superseded by 0014 |
