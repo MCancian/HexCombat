@@ -30,44 +30,82 @@ plan to act, the closeout wasn't done.
 | 0031 | [Graduated port suppression](0031-graduated-port-suppression.md) | Medium (new mechanic; ROC-only, continuous port capacity, 0%-start default w/ deliberate golden re-baseline + deck refresh, JLSF repair vs off-island fires + IJFS-attritable HIMARS; DataOverrides wiring absorbed as step 0 — design calls settled) | Sketch |
 | 0033 | [Brigade organization](0033-brigade-organization.md) | Medium (new mechanic; USER intends to build on it — currently a monotonic decay to zero that nothing reads and the observation misdescribes; design calls open) | Sketch |
 | 0035 | [Scenario variant inheritance](0035-scenario-inheritance.md) | Medium (refactor; variants are full copies of the default, so "differs only in X" is unchecked — comparability is the research product) | Sketch |
-| 0039 | [One truth about where a battalion is](0039-battalion-location-single-truth.md) | **High (risk buydown; the seam behind BOTH silent census bugs — location is derived by subtraction across 7 mutation paths, guarded only by after-the-fact tripwires). Large: data-model change with a serialization boundary. Step 1 is independently valuable** | Sketch |
+| 0039 | [One truth about where a battalion is](0039-battalion-location-single-truth.md) | Superseded — a derived ledger cannot catch the historical one-sided transition bug | **Superseded by 0044** |
 | 0040 | [CombatRules — stop hand-threading 26 fields](../archive/0040-combatrules-threading.md) | Medium (risk buydown; a field added but not threaded is a silently-inert knob, no gate watches it. Recommended path was the completeness validator ALONE — not the restructure) | **Complete 2026-07-26** — option (c) shipped as `tools/validate_combat_rules_threading.gd`, no production code touched; (a) deferred indefinitely, (b) blocked by tool purity |
 | 0041 | [One pattern for reaching an autoload](0041-autoload-access-one-pattern.md) | Low (ergonomics; the failure is already CAUGHT by validate_tool_script_purity — this makes the correct pattern obvious rather than remembered) | Sketch |
+| 0042 | [Mutation-authority foundation](0042-mutation-authority-foundation.md) | **High — establishes the controller/API rule and staged enforcement gate** | Sketch |
+| 0043 | [Anti-ship mutation authority](0043-antiship-mutation-authority.md) | **High — first vertical slice + USER-ruled permanent launch destruction** | Sketch |
+| 0044 | [Force mutation authority](0044-force-mutation-authority.md) | **High — brigades, battalions, manifests, placement; replaces 0039** | Sketch |
+| 0045 | [Sealift/fleet mutation authority](0045-sealift-fleet-mutation-authority.md) | High — hull/cohort/pipeline conservation and one writer | Sketch |
+| 0046 | [IJFS mutation authority](0046-ijfs-mutation-authority.md) | High — targets, munitions, squadrons, typed stocks and writeback | Sketch |
+| 0047 | [Map/infrastructure mutation authority](0047-map-infrastructure-mutation-authority.md) | High — ownership, FEBA, seizure, repair and JLSF lifecycle | Sketch |
+| 0048 | [Reinforcement-state mutation authority](0048-reinforcement-state-mutation-authority.md) | High — mobilization and air-insertion capacity/history | Sketch |
+| 0049 | [Accounting/turn mutation authority](0049-accounting-turn-mutation-authority.md) | High — supply, orders, latches, phase and result application | Sketch |
+| 0050 | [Mutation-authority campaign closeout](0050-mutation-authority-enforcement-closeout.md) | High — independent audit, hard enforcement, deterministic closeout | Sketch |
 | 0036 | [Airborne cost and sortie cadence](0036-airborne-cost-and-cadence.md) | Medium (balance; USER call 2026-07-25 answering the plan-0032 dial — double baseline attrition + 1 sortie per 2 days; `red_airborne` only, golden untouched, `validate_air_insertion` pin re-baselines) | Sketch |
 
 | 0016 | [Separate State Data from Autoload](0016-separate-state-data.md) | Medium (hygiene/architecture) | Superseded by 0014 |
 | 0022 | [Red reactive beach-opening (feasibility first)](0022-red-beach-switching.md) | Medium (research; new mechanic, gated on a feasibility spike) | Sketch |
 
-## Execution order for the risk-buydown group (0038 → 0040 → 0039, with 0041 as filler)
+## Mutation-authority campaign — required sequence
 
-Set 2026-07-25 after the session that shipped plans 0034/0037 and the gate hardening. These four are
-sequenced, not independent — do them in this order unless the USER redirects.
+**USER direction:** every gameplay-relevant mutable aggregate gets one controller/API; calculators
+return outcomes, only the authority applies them, and cross-aggregate transitions prove exact deltas.
+This is a uniform mutation discipline, **not** one universal state representation or God controller.
+No new autoloads; `GameStateData` stays data-only; `TurnConductor` keeps phase order.
 
-1. ~~**0038 — TurnConductor phase extraction.**~~ ✅ **DONE 2026-07-25** (38 → 20; 0039 now has room
-   to work in that file). Kept below for the reasoning. FIRST, because it is a *prerequisite*, not a priority
-   judgement: `TurnConductor` sits at its dependency ceiling (38 of 38), plan 0037 already had to
-   reshape its design mid-implementation to avoid breaching it, and **0039 touches that file
-   repeatedly**. Doing 0039 first means fighting the ceiling while also changing the data model.
-   No design calls; byte-stability is the whole acceptance test.
-2. ~~**0040 — but only option (c), the completeness validator.**~~ ✅ **DONE 2026-07-26**
-   (`tools/validate_combat_rules_threading.gd`; no production code touched, no pin moved). Kept below
-   for the reasoning. ~1 hour, removes a silent-failure class. Cheap enough to land between the two
-   large items, and it does not touch `TurnConductor`, so it is not blocked by the ceiling. Option (a)
-   stays deferred indefinitely — revisit only if a knob is actually added and the hand-threading is felt.
-3. **0039 — one truth about battalion location.** The real prize and the real work. Needs 0038 done
-   first for headroom. **Stop after its step 1 if that does not go green cheaply** — step 1 alone
-   converts an undetectable desync into a loud one at every turn boundary, which is most of the risk
-   for a fraction of the effort.
-4. **0041 — autoload access.** Filler. Independent of the others; slot it in whenever. Ranked last
-   deliberately: the failure it prevents is already caught by a gate that names the file and line, so
-   this is legibility, not risk.
+The campaign is intentionally serial. Each plan establishes APIs the next plan consumes, and every
+step touches deterministic turn-path state. Only one migration family lands per commit, with the full
+gate green before the next begins.
 
-**Not in this group and not blocked by it:** 0036 (airborne balance dial — the USER's call is already
-made, golden untouched, self-contained). If the USER wants a visible game change rather than
-infrastructure, 0036 is the one to do first.
+1. **0042 — foundation and enforceability gate.** Inventory write forms, prove the source gate can
+   detect direct and nested mutations, establish the ownership manifest, and register anti-ship in
+   migration mode. **Stop the campaign** if enforcement would be a regex that misses aliases while
+   claiming completeness; choose a proven narrower mechanism first.
+2. **0043 — anti-ship pilot and permanent destruction.** First complete vertical slice. Separate
+   launch calculation from state application; keep IJFS and launch destruction permanently, keep
+   suppression transient, remove contradictory writers, then measure the deliberate outcome change.
+   This plan is the pattern review point: later controllers copy only what survived it.
+3. **0044 — force authority.** Brigades, battalion roster counts, manifests, map placement and exact
+   casualty/transfer deltas. This supersedes 0039: a ledger derived from already-drifted inputs cannot
+   detect the ghost-landing bug. Keep counts and serialized BN ids; instances remain deferred.
+4. **0045 — sealift/fleet authority.** Hull buckets, cohorts, return pipeline and escort ammunition;
+   reconcile exact BN ids with the force authority. Eliminate temporarily invalid fleet state between
+   loss booking and projection.
+5. **0046 — IJFS authority.** Persistent targets, munition inventory, squadrons, typed MANPADS stock,
+   carry-over and cumulative writeback. Preserve every conditional RNG draw.
+6. **0047 — map/infrastructure authorities.** FEBA, sticky ownership, seizure, repair and JLSF node
+   lifecycle. Preserve current zero-ashore territorial-control behavior and phase timing.
+7. **0048 — reinforcement-state authorities.** Mobilization pending/released state and air-insertion
+   capacity/history, coordinated with force and IJFS authorities.
+8. **0049 — accounting and turn lifecycle.** Supply balance/history, order buffers, legal phase/turn
+   transitions, victory latches and result application. It invokes domain reset APIs rather than
+   editing their fields.
+9. **0050 — hard enforcement and closeout.** Independent source/runtime/contract sweep, remove all
+   legacy-writer allowances, run multi-scenario deterministic games, obtain two read-only external
+   reviews, update canonical docs, and archive the campaign.
 
-**Standing caveat, unrelated to sequencing:** every study measured before 2026-07-25 over-states Red
-(census correction + landed-only combat). Re-running them is an open USER decision on compute.
+### Interaction with existing plans
+
+- **0039 is superseded by 0044.** Do not implement its derived-ledger step.
+- **0033 brigade organization** should wait for 0044 or add no new Brigade writer.
+- **0002 per-hull escort magazines** should wait for 0043 and 0045.
+- **0031 graduated port suppression** should wait for 0047 unless the USER explicitly prioritizes
+  the mechanic first; otherwise both plans would redesign the same node transitions.
+- **0036 airborne balance** may proceed as data/balance work, but any new air-state mutation waits for
+  0048.
+- **0041 autoload access** remains independent low-priority filler; it does not substitute for this
+  campaign's mutation enforcement.
+- Plans 0030 and other observability-only work may proceed if they do not add protected state writers.
+
+**Change-control rule:** 0042 and authority-only migration commits are byte-stable refactors. Plan
+0043 contains one separately committed, USER-approved behavior change and may deliberately move only
+reachable anti-ship outcomes/fixtures. No later plan may rebaseline to make an architectural migration
+pass.
+
+**Standing research caveats:** studies before the landed-only/census corrections over-state Red, and
+studies before 0043 will also reflect resurrecting launch-attrition losses. Records remain identified
+by commit/version; do not combine pre/post populations without naming the behavior boundary.
 
 ## Archived
 
@@ -110,3 +148,20 @@ One-liners; detail in `docs/archive/port_audit.md`:
   calibration only).
 - Deliberately NOT ported (TIV-specific): SQL/DB writeback, mine same-day re-preview baseline,
   Streamlit dashboards — list in `docs/archive/port_audit.md` §Intentionally skipped.
+
+## Required architecture review before implementation
+
+No plan in the 0042–0050 campaign may move from `Sketch` until independent agents review the
+architecture and sequencing against the current source. Review is read-only; reviewers leave the
+working tree unchanged. Use this prompt:
+
+> Review plans 0042–0050 in `docs/plans/` and the mutation-authority sequencing in
+> `docs/plans/README.md` against the current HexCombat source. Do not modify any files. Determine
+> whether the proposed aggregate boundaries, controller/API rule, cross-aggregate transaction model,
+> enforcement strategy, dependency ordering, commit granularity, RNG/serialization safeguards, and
+> validation plans are correct and implementable. Identify missed mutable state or direct-write forms,
+> controllers likely to become God objects, circular dependencies, false-confidence risks in the
+> source gate, steps ordered too early or too late, and conflicts with active plans. Challenge the
+> anti-ship pilot and the replacement of plan 0039 especially. Return ranked findings with exact file
+> evidence, concrete plan amendments, and a clear verdict: approve sequencing, approve with changes,
+> or redesign before implementation. Do not implement fixes or edit plans.

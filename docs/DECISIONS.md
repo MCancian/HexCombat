@@ -19,6 +19,12 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-26 — Every mutable gameplay aggregate will have one enforced mutation authority;
+  anti-ship launch destruction will persist (USER).** Calculators/resolvers compute outcomes, domain
+  `*Transitions` APIs alone apply protected state, and cross-aggregate operations prove exact deltas;
+  this is shared mutation discipline, not one God controller/universal state shape. Sequence:
+  `docs/plans/README.md` → “Mutation-authority campaign”, plans 0042–0050; current behavior is unchanged until shipment.
+
 - **2026-07-26 — Skills are now gated against dead `.gd` citations; the fixture-drift references they
   carried are corrected (agent judgment, from a refactor review the USER asked for).**
   - **What**: `tools/validate_skill_references.gd` fails when a skill cites a fully concrete
