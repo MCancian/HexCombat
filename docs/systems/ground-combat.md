@@ -203,3 +203,23 @@ unaffected — it has no off-map pools. Pins that moved: `tools/validate_dos_con
 falling back to `1.0` for an unclassified hex) → passed as `defender_terrain_modifier` into
 `CombatResolver.resolve_at` → `CombatCalculator.resolve_map_attack`. Full terrain data model,
 per-class values, and rendering: `docs/systems/terrain.md`.
+
+## The combat-knob correspondence
+
+Every tunable the combat maths reads arrives on a `CombatRules` instance that
+`TurnConductor.resolve_combat_at` fills in by hand, one line per field, most of them copied straight off
+the same-named `GameData` property. Adding a knob is therefore three edits in three files, in order.
+
+- **Enforcement**: `tools/validate_combat_rules_threading.gd` runs in the gate and fails if a
+  `CombatRules` field is declared but not populated by `TurnConductor.resolve_combat_at`, is fed from a
+  differently-named `GameData` property, is written in a second place, or is never read by
+  `CombatCalculator` / `CombatResolver`. Without it, a forgotten assignment line left the field on its
+  declared default: combat ran, the gate stayed green, and the knob did nothing.
+- **The four fields not copied from `GameData`** — `red_supply_pool`, `isolated_red_brigade_ids`,
+  `not_ashore_by_type`, `defender_terrain_modifier` — are computed per turn or per hex. They are listed
+  as exceptions in the validator with the reason, and the validator also fails if one of them silently
+  becomes a plain `GameData` copy.
+- **`CombatRules` defaults are not the scenario values** and deliberately differ from `GameData` for
+  `feba_base_km` and `red_out_of_supply_effectiveness`. They are the neutral values the unit tests
+  construct against, so changing one is a golden-drift event; the validator does not check parity for
+  exactly this reason.

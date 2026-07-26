@@ -393,6 +393,14 @@ ghost-landing family structurally: it walks live state for anything shaped like 
 pool and fails if `GameStateData.pending_battalion_pools()` does not return it, so a new pool is caught
 by its **shape** rather than by someone remembering to register it.
 
+`tools/validate_combat_rules_threading.gd` closes the same family for combat knobs: every field
+declared on `CombatRules` must be assigned in `TurnConductor.resolve_combat_at`, sourced from the
+same-named `GameData` property (or listed as a computed exception with a reason), written nowhere else,
+and read by something. A knob added to `CombatRules` without its assignment line used to keep its
+declared default silently — combat ran, the gate stayed green, and the knob did nothing. The reader set
+is derived from the source rather than hand-listed, and the validator fails if its own anchors stop
+resolving, so a refactor cannot turn it into a vacuous PASS.
+
 ## What is NOT done (see `docs/plans/`)
 
 - **Graphics** (Track 5): anti-ship/mine visualization, front-line draw UI (D5-D), unit/HUD polish.

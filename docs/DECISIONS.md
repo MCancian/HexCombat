@@ -19,6 +19,27 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-26 — The combat-knob correspondence is gated; plan 0040 lands option (c) only (agent
+  judgment, on the USER's own sequencing note).**
+  - **Who**: agent, following the execution order in `docs/plans/README.md` for the risk-buydown group.
+  - **What**: `tools/validate_combat_rules_threading.gd` — a pure static-analysis validator, **no
+    production code touched**. It fails if a `CombatRules` field is declared but never assigned in
+    `TurnConductor.resolve_combat_at`, is assigned but not declared, is assigned twice, is fed from a
+    differently-named `GameData` property (or one that no longer exists there), is computed locally
+    without being a documented exception, is written anywhere else, or is never read. The reader set and
+    the local variable name are **derived from the source**, not hand-listed, and check 0 fails if its
+    own anchors stop resolving — so a file move like plan 0038's cannot turn it into a vacuous PASS.
+  - **Why (c) and not (a)**: the risk was the silent no-op knob, not the verbosity, and the verbosity is
+    at least honest and greppable. Option (a) touches the combat path for no behavioural gain, so it
+    stays **deferred indefinitely** per `docs/plans/README.md` — revisit only when a knob is actually
+    added and the hand-threading is felt. Option (b) remains blocked by the tool-purity rule.
+  - **Gate**: ALL PHASES GREEN, no pin moved (nothing in `scripts/` changed). Ten deliberate mutations
+    were applied to the real tree and reverted to prove the validator goes red for each failure it
+    claims to catch, and stays green when the local variable is merely renamed.
+  - **Pointers**: `docs/systems/ground-combat.md` §"The combat-knob correspondence", `docs/STATUS.md`
+    (gate anti-silence properties), `docs/archive/0040-combatrules-threading.md` (closeout, incl. the
+    reviewer findings accepted and rejected).
+
 - **2026-07-25 — TurnConductor phase extraction COMPLETE, step 3 (plan 0038; agent judgment).**
   Supply + cleanup — the end-of-turn accounting pair — moved to `TurnClosure`, finishing the plan:
   `TurnConductor` is now the turn's ORDER plus the phases whose application interleaves with it

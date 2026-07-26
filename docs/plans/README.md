@@ -31,7 +31,7 @@ plan to act, the closeout wasn't done.
 | 0033 | [Brigade organization](0033-brigade-organization.md) | Medium (new mechanic; USER intends to build on it — currently a monotonic decay to zero that nothing reads and the observation misdescribes; design calls open) | Sketch |
 | 0035 | [Scenario variant inheritance](0035-scenario-inheritance.md) | Medium (refactor; variants are full copies of the default, so "differs only in X" is unchecked — comparability is the research product) | Sketch |
 | 0039 | [One truth about where a battalion is](0039-battalion-location-single-truth.md) | **High (risk buydown; the seam behind BOTH silent census bugs — location is derived by subtraction across 7 mutation paths, guarded only by after-the-fact tripwires). Large: data-model change with a serialization boundary. Step 1 is independently valuable** | Sketch |
-| 0040 | [CombatRules — stop hand-threading 26 fields](0040-combatrules-threading.md) | Medium (risk buydown; a field added but not threaded is a silently-inert knob, no gate watches it. Recommended path is the completeness validator ALONE — ~1h — not the restructure) | Sketch |
+| 0040 | [CombatRules — stop hand-threading 26 fields](../archive/0040-combatrules-threading.md) | Medium (risk buydown; a field added but not threaded is a silently-inert knob, no gate watches it. Recommended path was the completeness validator ALONE — not the restructure) | **Complete 2026-07-26** — option (c) shipped as `tools/validate_combat_rules_threading.gd`, no production code touched; (a) deferred indefinitely, (b) blocked by tool purity |
 | 0041 | [One pattern for reaching an autoload](0041-autoload-access-one-pattern.md) | Low (ergonomics; the failure is already CAUGHT by validate_tool_script_purity — this makes the correct pattern obvious rather than remembered) | Sketch |
 | 0036 | [Airborne cost and sortie cadence](0036-airborne-cost-and-cadence.md) | Medium (balance; USER call 2026-07-25 answering the plan-0032 dial — double baseline attrition + 1 sortie per 2 days; `red_airborne` only, golden untouched, `validate_air_insertion` pin re-baselines) | Sketch |
 
@@ -49,9 +49,11 @@ sequenced, not independent — do them in this order unless the USER redirects.
    reshape its design mid-implementation to avoid breaching it, and **0039 touches that file
    repeatedly**. Doing 0039 first means fighting the ceiling while also changing the data model.
    No design calls; byte-stability is the whole acceptance test.
-2. **0040 — but only option (c), the completeness validator.** ~1 hour, no production code touched,
-   removes a silent-failure class. Cheap enough to land between the two large items, and it does not
-   touch `TurnConductor`, so it is not blocked by the ceiling. Defer option (a) indefinitely.
+2. ~~**0040 — but only option (c), the completeness validator.**~~ ✅ **DONE 2026-07-26**
+   (`tools/validate_combat_rules_threading.gd`; no production code touched, no pin moved). Kept below
+   for the reasoning. ~1 hour, removes a silent-failure class. Cheap enough to land between the two
+   large items, and it does not touch `TurnConductor`, so it is not blocked by the ceiling. Option (a)
+   stays deferred indefinitely — revisit only if a knob is actually added and the hand-threading is felt.
 3. **0039 — one truth about battalion location.** The real prize and the real work. Needs 0038 done
    first for headroom. **Stop after its step 1 if that does not go green cheaply** — step 1 alone
    converts an undetectable desync into a loud one at every turn boundary, which is most of the risk

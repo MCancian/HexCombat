@@ -98,3 +98,33 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   2026-07-24, leaving a comment. If Green ever counterattacks (plan 0029 Tier B), supply injection and
   anything else keyed on side must be driven by each side's actual team, not its role. Ported combat
   semantics, so a USER-aware change, not a refactor.
+- **Four skills point at `tools/validate_fixtures.gd`, which no longer exists.** Fixture drift is now
+  checked by the git-diff block in `tools/run_all_tests.py`, not by a validator. The stale references are
+  in `hexcombat-validation-and-qa` (golden inventory row), `hexcombat-change-control` ("the item-8
+  gate"), `hexcombat-debugging-playbook` (a triage row keyed on "`validate_fixtures.gd` red", a state
+  that can no longer occur) and `hexcombat-gamestate-decomposition-campaign`. A tracked orphan
+  `tools/validate_fixtures.gd.uid` should go with them. Note the general hole this exposes:
+  `tools/validate_doc_anchors.gd` covers `docs/` and `tools/`, so nothing gates dead path citations
+  inside `.claude/skills/**` — worth considering as part of the fix, since a skill is the first thing an
+  agent reads.
+- **`docs/STATUS.md` quotes golden pins in prose, against the one-home rule.** Two places name pinned
+  validator output directly: the re-baselined golden `casualties`/`feba` pair, and the 40-turn stalemate
+  census. `hexcombat-docs-and-writing` is explicit that the validator's `PASS:` line is the only home for
+  a pin and that no doc quotes one — these rotted twice on 2026-07-09 alone, which is why the rule
+  exists. Replace both with a pointer to the owning validator. Found 2026-07-26 by a diff reviewer while
+  reviewing plan 0040; pre-existing, so deliberately not fixed inside that commit.
+- **`hexcombat-plan-review`'s launch snippet cannot work as written.** It backgrounds
+  `opencode run` twice plus `gem-explore` simultaneously; two concurrent `opencode run` invocations make
+  the second die with `database is locked` (the shared session DB does not tolerate it). Observed twice
+  on 2026-07-26, costing two review slots. Fix: run the two opencode models serially and `gem-explore`
+  alongside either one, and say so in both `hexcombat-plan-review` and `hexcombat-diff-review`. Consider
+  also recording `deepseek-v4-flash-free`'s stall-with-no-final-message and nemotron's
+  `Streaming response failed` as expected flakes with a retry policy, so the next agent does not read a
+  missing write-up as a clean review.
+- **`CombatCalculator._normalize_support` is dead code.** It is a one-line pass-through returning
+  `normalize_support(raw_support)` and is called from nowhere in `scripts/`, `tests/` or `tools/` (the real
+  callers use `normalize_support` directly, including `tools/validate_combat_data.gd`). Delete it. It is
+  the shape that trapped an editor before — `Brigade.to_combat_units` was a live-looking function that
+  did not subtract pools — so a leftover with a plausible name is worth removing rather than tolerating.
+  Found 2026-07-26 by a diff reviewer during plan 0040; out of scope there, which touched no production
+  code.
