@@ -228,10 +228,6 @@ static func normalize_support(raw_support: Dictionary) -> Dictionary:
 	}
 
 
-static func _normalize_support(raw_support: Dictionary) -> Dictionary:
-	return normalize_support(raw_support)
-
-
 static func _to_count(value) -> int:
 	if value == null:
 		return 0
