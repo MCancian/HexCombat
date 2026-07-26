@@ -26,6 +26,7 @@
 	"brigades": [
 		{
 			"battalions": 3,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_44_17",
@@ -39,6 +40,7 @@
 		},
 		{
 			"battalions": 5,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_31_8",
@@ -52,6 +54,7 @@
 		},
 		{
 			"battalions": 5,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_42_15",
@@ -65,6 +68,7 @@
 		},
 		{
 			"battalions": 5,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_11_5",
@@ -78,6 +82,7 @@
 		},
 		{
 			"battalions": 5,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_12_7",
@@ -91,6 +96,7 @@
 		},
 		{
 			"battalions": 5,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_40_12",
@@ -104,6 +110,7 @@
 		},
 		{
 			"battalions": 5,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_16_3",
@@ -117,6 +124,7 @@
 		},
 		{
 			"battalions": 5,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_32_8",
@@ -130,6 +138,7 @@
 		},
 		{
 			"battalions": 5,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_43_14",
@@ -143,6 +152,7 @@
 		},
 		{
 			"battalions": 5,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_30_7",
@@ -156,6 +166,7 @@
 		},
 		{
 			"battalions": 3,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_40_14",
@@ -169,6 +180,7 @@
 		},
 		{
 			"battalions": 3,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_32_9",
@@ -182,6 +194,7 @@
 		},
 		{
 			"battalions": 7,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_43_17",
@@ -195,6 +208,7 @@
 		},
 		{
 			"battalions": 4,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_12_5",
@@ -208,6 +222,7 @@
 		},
 		{
 			"battalions": 4,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_13_4",
@@ -221,6 +236,7 @@
 		},
 		{
 			"battalions": 5,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_40_15",
@@ -234,6 +250,7 @@
 		},
 		{
 			"battalions": 3,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_44_20",
@@ -247,6 +264,7 @@
 		},
 		{
 			"battalions": 3,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_42_17",
@@ -260,6 +278,7 @@
 		},
 		{
 			"battalions": 3,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_41_16",
@@ -273,6 +292,7 @@
 		},
 		{
 			"battalions": 3,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_39_11",
@@ -286,6 +306,7 @@
 		},
 		{
 			"battalions": 3,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_31_7",
@@ -299,6 +320,7 @@
 		},
 		{
 			"battalions": 3,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_30_8",
@@ -312,6 +334,7 @@
 		},
 		{
 			"battalions": 3,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_28_9",
@@ -325,6 +348,7 @@
 		},
 		{
 			"battalions": 3,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_25_7",
@@ -338,6 +362,7 @@
 		},
 		{
 			"battalions": 3,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_13_6",
@@ -351,6 +376,7 @@
 		},
 		{
 			"battalions": 3,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_39_19",
@@ -364,6 +390,7 @@
 		},
 		{
 			"battalions": 3,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_29_18",
@@ -377,6 +404,7 @@
 		},
 		{
 			"battalions": 3,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_13_13",
@@ -390,6 +418,7 @@
 		},
 		{
 			"battalions": 4,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_13_5",
@@ -403,6 +432,7 @@
 		},
 		{
 			"battalions": 5,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_44_16",
@@ -416,6 +446,7 @@
 		},
 		{
 			"battalions": 2,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_28_18",
@@ -429,6 +460,7 @@
 		},
 		{
 			"battalions": 3,
+			"battalions_not_ashore": 0,
 			"destroyed": false,
 			"fought_this_turn": false,
 			"hex_id": "hex_38_20",
@@ -443,12 +475,14 @@
 	],
 	"field_glossary": {
 		"air_insertion": "Red's air path onto Taiwan: `caps` is the battalions-per-turn each lift class can still fly (it falls permanently as airframes are lost, compare `initial_caps`), `eligible` lists the brigades that can be ordered — with `locked_hex` set once a brigade is ashore, meaning follow-up battalions must reinforce it there — and `estimated_attrition` is the fraction a packet would lose at the last resolved turn's air-defence picture.",
-		"battalions": "Current battalion count remaining in the brigade.",
+		"battalions": "Battalions of the brigade that are ASHORE on Taiwan and can fight this turn. A brigade appears on the map from its FIRST landed battalion, so this can be well below its full roster.",
+		"battalions_not_ashore": "Battalions of the brigade that exist but are NOT on the island — still at sea, on the mainland waiting for a hull, or waiting to fly. They neither fight nor consume supply. battalions + battalions_not_ashore is the brigade's full surviving roster.",
 		"feba_km": "Forward edge of battle movement/progress in kilometers within a contested hex.",
 		"last_combat": "Combat summaries from the most recently resolved turn. Empty before any combat or if no contested hex produced combat.",
 		"last_contested_hexes": "Hex IDs that were contested in the most recently resolved turn.",
 		"legal_commits": "Authoritative adjacent support options by target hex and team.",
 		"legal_moves": "Authoritative target hex lists by brigade and movement mode.",
+		"mainland_pool": "Red follow-on battalions still on the mainland waiting for lift, per brigade. The queue BEHIND ship_reserve: read both to tell whether the reinforcement flow is hull-limited or simply exhausted.",
 		"mobilization": "ROC reserve formations not yet on the map: `pending` lists each brigade with the garrison hex it will form up on and the turn it is due; `arrived` logs those already released. Off-map brigades cannot be ordered, are not counted in the victory census, and cannot be struck.",
 		"organization": "0-100 readiness value affected by movement and combat.",
 		"turn_result": "Structured record of the turn just resolved (only populated when resolved=true): turn_number, contested_hexes, combat_summaries, phase summaries, and an ordered `events` log."
@@ -4372,6 +4406,7 @@
 			"team": "Green"
 		}
 	},
+	"mainland_pool": [],
 	"map_summary": {
 		"hex_count": 466,
 		"movement_modes": [

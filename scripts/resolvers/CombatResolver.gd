@@ -58,12 +58,16 @@ static func resolve_at(
 	if attacker_brigades.is_empty() or defender_brigades.is_empty():
 		return {"result": null, "summary": null}
 
-	var attacker_units := CombatForces.maneuver_units(attacker_brigades)
-	var defender_units := CombatForces.maneuver_units(defender_brigades)
-	var attacker_support_units := CombatForces.support_units(attacker_brigades)
-	var defender_support_units := CombatForces.support_units(defender_brigades)
-	var attacker_support := CombatForces.support_counts(attacker_brigades)
-	var defender_support := CombatForces.support_counts(defender_brigades)
+	# Only battalions actually ashore fight (plan 0037): a brigade counts as present from its first
+	# landed battalion, but the rest of its composition may still be at sea, on the mainland, or
+	# waiting to fly. One map serves both sides — Green simply has no entries in it.
+	var not_ashore: Dictionary = rules.not_ashore_by_type
+	var attacker_units := CombatForces.maneuver_units(attacker_brigades, not_ashore)
+	var defender_units := CombatForces.maneuver_units(defender_brigades, not_ashore)
+	var attacker_support_units := CombatForces.support_units(attacker_brigades, not_ashore)
+	var defender_support_units := CombatForces.support_units(defender_brigades, not_ashore)
+	var attacker_support := CombatForces.support_counts(attacker_brigades, not_ashore)
+	var defender_support := CombatForces.support_counts(defender_brigades, not_ashore)
 	# Only the attacker is injected: this resolver's attacker is always RED and its defender always
 	# GREEN (see the header), and Green has no DOS model, so the two defender-side calls this used to
 	# make returned immediately by construction. If the attacker/defender roles are ever generalised,

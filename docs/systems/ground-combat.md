@@ -12,7 +12,7 @@ Resolve ground combat when Red and Green brigades occupy the same hex after move
 | `scripts/CombatForces.gd` | Force aggregation — flattens brigades into maneuver-unit arrays and support-count dicts, filtering by tags. |
 | `scripts/UnitStats.gd` | `TYPE_DEFS` strength/tags table + `FALLBACK_CATEGORY_DEFS`. Lookups: `strength_for_type()`, `has_tag()`. |
 | `scripts/model/CombatResult.gd` | `Resource` holding strength, ratio, losses, casualties, `feba_movement_km`, and full `combat_detail` dict. |
-| `scripts/model/Brigade.gd` | Brigade resource with `to_combat_units()`, composition of `Battalion[]`. |
+| `scripts/model/Brigade.gd` | Brigade resource: composition of `Battalion[]`, plus `landed_qty()` / `landed_battalion_count()` — the single home of the "which battalions are actually ashore" rule (plan 0037). Unit expansion for combat lives in `CombatForces`, which delegates here. |
 | `scripts/model/Battalion.gd` | Single battalion type + qty; `combat_strength` getter delegates to `UnitStats`. |
 | `scripts/model/MoveOrder.gd` | Move order: `brigade_id`, `target_hex`, `mode` ("tactical"/"administrative"). |
 | `scripts/model/CommitOrder.gd` | Commit order: `brigade_id`, `target_hex` (no mode — always tactical). |
@@ -181,6 +181,20 @@ Was hardcoded `2.0`; now `GameData.feba_base_km` (loaded from scenario `feba_bas
 to match TIV's `_load_feba_base_km`) and passed by `TurnConductor.resolve_combat_at`. The golden pin
 that moved when this landed lives in `tools/validate_headless_turn.gd` — that validator's PASS
 line is truth, not this doc.
+
+**DIVERGENCE 5 — only LANDED battalions fight (2026-07-25, USER call, plan 0037).** TIV expands a
+brigade's whole `composition` into combat units. HexCombat subtracts the battalions that are not
+ashore — at sea, on the mainland awaiting a hull, or waiting to fly — because a brigade's `hex_id` is
+set by its FIRST landed battalion while the rest of the roster is still off-map. The rule lives in
+`Brigade.landed_qty` and reaches combat through `CombatForces` (all three functions, `support_counts`
+included) via `CombatRules.not_ashore_by_type`, which `TurnConductor` computes ONCE per turn before
+the combat loop so two hexes cannot disagree about who is present. A brigade with zero battalions
+ashore is excluded from `combat_contributors_for` entirely: `CombatCalculator` floors a degenerate
+zero-strength side to `combat_min_effective_strength`, so an empty contributor would fight with
+phantom strength. Red supply (`active_red_battalion_units`) applies the same subtraction, so a
+brigade's fighting strength and its ration bill always describe the same battalions. Green is
+unaffected — it has no off-map pools. Pins that moved: `tools/validate_dos_consumption.gd` and
+`tools/validate_cleanup.gd` (their PASS lines are truth, not this doc).
 
 **Terrain modifiers — ACTIVE since 2026-07-09 (Track F).** `CombatCalculator.gd`'s own
 `TERRAIN_MODIFIERS` dict is dead code (superseded, left untouched — see

@@ -19,6 +19,29 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-25 — Only battalions that have LANDED fight, eat, and are reported.**
+  - **Who**: USER, twice — *"only the battalions that have landed in a brigade should count for
+    combat. The LLMs should only account for those too"*, and separately *"yes — only landed eat"*
+    for supply. This deliberately diverges from the TIV port, which counts whole compositions.
+  - **What**: `Brigade.landed_qty` is now the single home of the rule (`composition.qty` minus the
+    off-map pool count for that type, clamped at 0). `CombatForces`, `TurnConductor.active_red_
+    battalion_units`, `LLMGameAPI._brigade_observations` and `GameData.snapshot_state` all read
+    through it. A brigade with **nothing** ashore is no longer a combat contributor at all —
+    `CombatCalculator` floors a zero-strength side to `combat_min_effective_strength`, so leaving it
+    in would have let a formation with nobody on the island inflict real casualties.
+  - **Gate**: ALL PHASES GREEN after a **deliberate re-baseline** of two pins (change-control:
+    ported combat math changed on USER instruction). `validate_dos_consumption` 36 → 16 units
+    (2800 → 1600 t idle, 5600 → 3200 t moved); `validate_cleanup` `casualties=5, feba=-0.72` →
+    `casualties=3, feba=-2.66`. Direction is the expected one — Red is the side with pools, so Red
+    fights weaker early. `validate_golden_victory`, `validate_headless_turn` and
+    `validate_air_insertion` did **not** move (their scenarios land whole formations).
+  - **Pointers**: `docs/systems/ground-combat.md` → DIVERGENCE 5; `docs/systems/air-insertion.md` §9
+    (the "consumes full DOS" note was reversed); `docs/archive/0037-landed-battalions-only.md`;
+    `tests/landed_battalions_test.gd`.
+  - **Open**: this compounds the 0034 census correction and bites harder — it changes the fighting,
+    not just the counting. Every study measured before today over-states Red. Re-running them is
+    still a USER call.
+
 - **2026-07-25 — One home for "battalions not ashore"; it uncovered a live census over-count.**
   - **Who**: agent (plan 0034, a refactor the USER queued). The bug was not the plan's premise — the
     plan called the missing-pool failure hypothetical; a probe found it happening.

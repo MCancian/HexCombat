@@ -164,9 +164,11 @@ resolved turn's picture, `pending_*`, `landed`, `history`.
 - **The PLAA's two air assault brigades are not modelled.** The USER's sources give the PLAA 15
   aviation brigades, two of them air assault; the OOB has 13, none air assault. Only the Airborne
   Corps' own air assault brigade feeds the rotary-wing cap.
-- **A partially-arrived brigade consumes full DOS.** `active_red_battalion_units` counts a landed
-  brigade's whole composition once its first battalion is ashore. This matches the pre-existing
-  sealift behaviour rather than diverging from it.
+- **A partially-arrived brigade consumes DOS only for the battalions ashore** (plan 0037, USER call
+  2026-07-25). `active_red_battalion_units` subtracts the off-map pools, so battalions still waiting
+  to fly neither fight nor eat. This reverses the note that stood here from plan 0032 ("a partially-
+  arrived brigade consumes full DOS"), which described the pre-existing sealift behaviour; sealift
+  changed at the same time, so the two paths still agree.
 - **No landing-zone attrition term.** The plan's original design call (Green-held/contested hexes
   inflict high attrition) was superseded by the USER's air-defence-keyed model; the cost of an
   opposed drop is now the ground combat itself.

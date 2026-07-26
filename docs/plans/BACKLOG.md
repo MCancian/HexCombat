@@ -19,26 +19,6 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
 
 *(Agents: append new technical debt and hygiene observations here)*
 
-- [ ] **A partially-landed brigade FIGHTS at full strength (found 2026-07-25, gem-explore review of
-  plan 0034).** The census now subtracts battalions that are not ashore, but ground combat does not:
-  `CombatForces.maneuver_units` / `support_units` (`scripts/CombatForces.gd:9`, `:24`) walk the whole
-  `brigade.composition` and emit one unit per `qty`. A brigade's `hex_id` is set by its FIRST landed
-  battalion, so a formation with 4 of 8 battalions ashore fights with 8 — its at-sea and
-  still-on-the-mainland battalions swing rifles from the boat. This is **not** the ghost-landing bug
-  (those battalions are alive, just elsewhere) and it is bigger in scope than the census one: it
-  perturbs every contested hex every turn, not just the terminal count. Both loss paths already
-  shrink `composition`, so the fix is a not-ashore subtraction, not a roster change — feed
-  `PendingBattalions` (a `by_brigade_and_type` variant) into unit generation.
-  **Not a free bug fix:** it changes ported combat math and moves the golden, so it needs a USER call
-  and a deliberate re-baseline. The supply-side twin IS deliberate and documented
-  (`docs/systems/air-insertion.md` → "A partially-arrived brigade consumes full DOS"); whether combat
-  should match supply or diverge from it is exactly the question to put to the USER.
-- [ ] **The LLM observation cannot see the mainland pool (same review).** `_ship_reserve_observations`
-  (`scripts/LLMGameAPI.gd:301`) enumerates `ship_reserve` only, so an LLM seat has no way to know how
-  many of its battalions are still queued for a hull — while `brigade_observations` reports each
-  brigade's full battalion count. An agent reasoning about its own force therefore sees strength that
-  is not on the island. Additive contract change; gate is `tools/validate_llm_api.gd` + the schemas.
-
 - [ ] **mc_chart.py degenerate-input crashes (pre-existing, found 2026-07-24 gem-explore review).** Two
   chart builders crash on an empty/degenerate summary rather than failing loud: `histogram_panel`
   `first = next(i for i, b ... if b["count"] > 0)` raises `StopIteration` if every margin bin is zero

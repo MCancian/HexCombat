@@ -42,7 +42,7 @@ func _initialize() -> void:
 		_fail("play_turn returned null")
 		_finish()
 		return
-	var snap_facade: Dictionary = GameData.snapshot_state()
+	var snap_facade: Dictionary = GameData.snapshot_state(GameState.data.pending_battalion_pools())
 
 	# Assert equality: façade must be byte-identical to manual sequence.
 	_assert_dicts_equal("snapshot equality", snap_manual, snap_facade)
@@ -67,7 +67,7 @@ func _initialize() -> void:
 	var result2: TurnResult = GameState.play_turn(
 		[{"kind": "move", "brigade_id": RED_MOVER_ID, "target_hex": TARGET_HEX, "mode": Movement.MODE_TACTICAL}],
 		[], SeededDice.new(DICE_SEED))
-	var snap_facade2: Dictionary = GameData.snapshot_state()
+	var snap_facade2: Dictionary = GameData.snapshot_state(GameState.data.pending_battalion_pools())
 	_assert_dicts_equal("determinism snapshot", snap_facade, snap_facade2)
 	_assert_dicts_equal("determinism result", result.to_dict(), result2.to_dict())
 
@@ -87,7 +87,7 @@ func _run_path_a() -> Dictionary:
 	GameState.resolve_offload_turn(SeededDice.new(DICE_SEED))
 	GameState.add_move_order(Brigade.Team.RED, RED_MOVER_ID, TARGET_HEX, Movement.MODE_TACTICAL)
 	GameState.resolve_turn(SeededDice.new(DICE_SEED))
-	return GameData.snapshot_state()
+	return GameData.snapshot_state(GameState.data.pending_battalion_pools())
 
 
 func _assert_dicts_equal(label: String, a: Dictionary, b: Dictionary) -> void:

@@ -61,16 +61,28 @@ func get_battalion_count() -> int:
 	return total
 
 
-func to_combat_units() -> Array:
-	var units: Array = []
+## How many of `battalion` are actually ashore on Taiwan, given this brigade's not-ashore map
+## ({battalion_type: count}, from PendingBattalions.by_brigade_and_type).
+##
+## THE SINGLE HOME OF THE LANDED RULE (plan 0037, USER call 2026-07-25). `composition` is the roster
+## of battalions that EXIST, not the roster that is HERE: a brigade's `hex_id` is set the moment its
+## FIRST battalion lands, while the rest may still be at sea, on the mainland waiting for a hull, or
+## waiting to fly. Combat, supply and the LLM observation all read through here so they can never
+## disagree about who is present. Clamped at 0 — the subtraction never invents negative strength, and
+## combat can never kill more of a type than landed.
+static func landed_qty(battalion: Battalion, brigade_not_ashore: Dictionary) -> int:
+	return maxi(0, battalion.qty - int(brigade_not_ashore.get(battalion.type, 0)))
+
+
+## Battalions of this brigade ashore, all types. The "is this formation actually present?" test — a
+## brigade holding a hex with every battalion still at sea must NOT be a combat contributor, because
+## CombatCalculator floors a zero-strength side to combat_min_effective_strength and it would
+## otherwise fight, and inflict casualties, with nobody on the island.
+func landed_battalion_count(brigade_not_ashore: Dictionary) -> int:
+	var total := 0
 	for battalion in composition:
-		for i in range(battalion.qty):
-			units.append({
-				"brigade_id": id,
-				"type": battalion.type,
-				"supply_effectiveness": 1.0
-			})
-	return units
+		total += landed_qty(battalion, brigade_not_ashore)
+	return total
 
 
 func adjust_organization(delta: float) -> void:

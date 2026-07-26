@@ -63,6 +63,11 @@ static func resolve_turn(state: GameStateData, dice: Dice = null) -> void:
 	# Supply corridors are fixed for the whole combat loop (ownership is only recomputed after it),
 	# so the air-landing isolation flood runs once here rather than once per contested hex.
 	state.isolated_air_landed_brigades = isolated_air_landed_brigades(state)
+	# Who is actually ashore is likewise fixed for the combat loop: every arrival phase (offload,
+	# mobilization, air insertion) has already run this turn and the pools do not change again until
+	# next turn's sealift. Computing it ONCE means two hexes cannot disagree about who is present
+	# (plan 0037).
+	state.refresh_not_ashore_by_type()
 	var combat_summaries: Array[CombatSummary] = []
 	# Per-hex combat substream (plan 0010): each contested hex draws from its OWN dice stream derived
 	# from the root turn seed, so a design tweak that changes the roll count in one hex's fight never
@@ -88,6 +93,8 @@ static func resolve_turn(state: GameStateData, dice: Dice = null) -> void:
 	if OS.is_debug_build():
 		var index_violations := GameData.validate_runtime_indexes()
 		assert(index_violations.is_empty(), "runtime index desync at end of resolve_turn: %s" % "; ".join(index_violations))
+		var roster_violations := pending_pool_roster_violations(state)
+		assert(roster_violations.is_empty(), "roster/pool desync at end of resolve_turn: %s" % "; ".join(roster_violations))
 
 	state.phase = GameStateData.Phase.END
 	EventBus.phase_changed.emit(state.phase)
@@ -328,7 +335,7 @@ static func reserve_or_pool_has(state: GameStateData, brigade_id: String) -> boo
 
 static func resolve_supply_turn(state: GameStateData) -> Dictionary:
 	assert(state.supply_state != null, "resolve_supply_turn requires supply_state")
-	var units := active_red_battalion_units()
+	var units := active_red_battalion_units(state)
 	var moved_ids: Array[String] = []
 	var engaged_ids: Array[String] = []
 	for brigade_value in GameData.brigades.values():
@@ -553,15 +560,24 @@ static func resolve_frontline_phase(state: GameStateData, polyline_coords: Array
 	return state.last_frontline_summary.to_dict()
 
 
-static func active_red_battalion_units() -> Array:
+## Red battalions drawing Taiwan-theater supply. Only battalions ASHORE eat (plan 0037, USER call
+## 2026-07-25): one still at sea, on the mainland, or waiting to fly is not being supplied across the
+## strait by this pool. Same not-ashore definition combat uses, so a brigade's fighting strength and
+## its ration bill always describe the same battalions.
+static func active_red_battalion_units(state: GameStateData) -> Array:
 	var units: Array = []
+	# A FRESH recompute, not the combat loop's cached map: the supply phase runs after combat, and a
+	# future phase order could drain a pool in between. Pools are unchanged today, so this is the same
+	# value line 70 computed — but the bill must not depend on that staying true.
+	var not_ashore := state.refresh_not_ashore_by_type()
 	for brigade_value in GameData.brigades.values():
 		var brigade: Brigade = brigade_value
 		if brigade.team != Brigade.Team.RED or brigade.destroyed or brigade.hex_id.is_empty():
 			continue
+		var brigade_not_ashore: Dictionary = not_ashore.get(brigade.id, {})
 		for battalion_value in brigade.composition:
 			var battalion: Battalion = battalion_value
-			for _qty_index in range(battalion.qty):
+			for _qty_index in range(Brigade.landed_qty(battalion, brigade_not_ashore)):
 				units.append({
 					"brigade_id": brigade.id,
 					"type": battalion.type,
@@ -726,6 +742,7 @@ static func resolve_combat_at(state: GameStateData, hex_id: String, dice: Dice) 
 	rules.red_supply_pool = pool
 	rules.red_out_of_supply_effectiveness = GameData.red_out_of_supply_effectiveness
 	rules.isolated_red_brigade_ids = state.isolated_air_landed_brigades
+	rules.not_ashore_by_type = state.not_ashore_by_type
 	rules.unscreened_support_strength = GameData.unscreened_support_strength
 	rules.maneuver_casualty_weight = GameData.maneuver_casualty_weight
 	rules.support_casualty_weight = GameData.support_casualty_weight
@@ -774,12 +791,21 @@ static func resolve_combat_at(state: GameStateData, hex_id: String, dice: Dice) 
 	return summary
 
 
+## Brigades of `team` that actually fight at `hex_id`.
+##
+## A brigade with NO battalions ashore is excluded (plan 0037). It is not merely a contributor worth
+## zero: CombatCalculator floors a zero-strength side to combat_min_effective_strength, so leaving it
+## in would have it fight — and inflict real casualties — with its whole composition still at sea.
+## It keeps its hex_id and still holds ground for ownership; it just brings nobody to the battle.
 static func combat_contributors_for(state: GameStateData, team: Brigade.Team, hex_id: String) -> Array:
 	var contributors: Array = []
 	var seen := {}
+	var not_ashore := state.not_ashore_by_type
 	for brigade_id_value in GameData.get_brigades_in_hex(hex_id):
 		var brigade: Brigade = GameData.get_brigade(String(brigade_id_value))
 		if brigade == null or brigade.destroyed or brigade.moved_admin_this_turn or brigade.team != team:
+			continue
+		if brigade.landed_battalion_count(not_ashore.get(brigade.id, {})) <= 0:
 			continue
 		contributors.append(brigade)
 		seen[brigade.id] = true
@@ -792,6 +818,8 @@ static func combat_contributors_for(state: GameStateData, team: Brigade.Team, he
 		if brigade == null or brigade.destroyed or brigade.moved_admin_this_turn or brigade.team != team:
 			continue
 		if brigade.id in seen:
+			continue
+		if brigade.landed_battalion_count(not_ashore.get(brigade.id, {})) <= 0:
 			continue
 		contributors.append(brigade)
 		seen[brigade.id] = true
@@ -871,6 +899,39 @@ static func apply_crossing_casualties(ship_reserve: Array, lost_ids: Array) -> v
 			var bn: Dictionary = bn_value
 			if lost.has(String(bn.get("id", ""))):
 				apply_casualty({"brigade_id": brigade_id, "type": String(bn.get("type", ""))})
+
+
+## Tripwire for the mirror image of the ghost-landing bug (plan 0037): a brigade's roster must never
+## hold FEWER battalions of a type than its off-map pools claim are waiting. If it does, something
+## killed a battalion that was not ashore — apply_casualty shrinks `composition` by type and never
+## touches the pools, so the pool entry would survive as a claim on a roster slot that no longer
+## exists, and the census would silently under-count for the rest of the game.
+##
+## Checked at the END of resolve_turn, not inside apply_casualty, because the invariant is
+## transiently false BY DESIGN mid-turn: apply_crossing_casualties deletes drowned battalions from
+## their rosters while they are still listed in ship_reserve (it maps ids via the pre-removal
+## entries), and the reserve is pruned immediately afterwards. End-of-turn is the settled boundary,
+## the same reasoning as the runtime-index assert beside it.
+static func pending_pool_roster_violations(state: GameStateData) -> Array[String]:
+	var violations: Array[String] = []
+	var not_ashore := state.refresh_not_ashore_by_type()
+	for brigade_id_value in not_ashore:
+		var brigade_id := String(brigade_id_value)
+		var brigade: Brigade = GameData.get_brigade(brigade_id)
+		if brigade == null:
+			continue  # JLSF pseudo-entries carry a cargo brigade_id with no OOB brigade behind it
+		var qty_by_type: Dictionary = {}
+		for battalion_value in brigade.composition:
+			var battalion: Battalion = battalion_value
+			qty_by_type[battalion.type] = int(qty_by_type.get(battalion.type, 0)) + battalion.qty
+		var brigade_not_ashore: Dictionary = not_ashore[brigade_id]
+		for battalion_type in brigade_not_ashore:
+			var pending := int(brigade_not_ashore[battalion_type])
+			var roster := int(qty_by_type.get(battalion_type, 0))
+			if roster < pending:
+				violations.append("%s/%s: roster %d < pending %d" % [
+					brigade_id, battalion_type, roster, pending])
+	return violations
 
 
 static func apply_casualty(casualty: Dictionary) -> void:

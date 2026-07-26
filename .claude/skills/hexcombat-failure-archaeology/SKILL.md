@@ -9,6 +9,34 @@ Settled battles. Primary sources: `docs/DECISIONS.md` (+ pre-2026-07-10 history 
 `docs/archive/PLAN.md` → Decisions) and `docs/RETROSPECTIVES.md`
 (lessons, dated entries). Newest lessons get APPENDED here when they close an investigation.
 
+### The gate "hang" that was two separate illusions (2026-07-25)
+- **Symptom:** the full gate appeared to hang. Its redirected output file sat at **0 bytes** for
+  many minutes, and `ps -eo pid,args | grep godot` returned **nothing**, so the run looked both
+  stalled and dead. Three shells were left open across a context compaction chasing it.
+- **Two independent causes, either one enough to mislead:**
+  1. **`ps` is blind in this sandbox.** It reports no processes even while a detached job is
+     demonstrably writing to disk. *Never* conclude "nothing is running" from `ps` here — check
+     whether the output file is **growing** instead.
+  2. **`run_all_tests.py` block-buffers when stdout is a file.** Nothing appears until exit. Launch
+     it as `env PYTHONUNBUFFERED=1 bash tools/run_all_tests.sh > log 2>&1` or you are flying blind.
+     (The same buffering makes `cmd | grep | tail` show nothing — redirect to a file and poll it.)
+- **The REAL hang, once the output was visible:** a validator that never reported.
+  `validate_headless_selfplay.gd` had failed to **compile**, so `_initialize` never reached
+  `quit()` and the SceneTree spun forever, and the Phase-3 thread pool never completed. Diagnostic:
+  diff the set of `tools/validate_*.gd` against the validator names that appear in the log — the
+  one that never printed is the one wedged.
+- **Root cause of that compile failure:** `SelfPlayRunner.gd` was patched to call
+  `GameState.data.pending_battalion_pools()`. Naming the autoload directly compiles fine in the
+  running game and fails under a `-s` SceneTree tool (`Identifier not found: GameState`), where
+  autoloads are not registered as identifiers. This is the **same trap** the header of
+  `scripts/LLMGameAPI.gd` documents and `tools/validate_llm_api_purity.gd` enforces — but the purity
+  validator only guards `LLMGameAPI.gd`, and `SelfPlayRunner` is outside its reach.
+- **Fix:** use the file's own node-path accessor (`_gs()`), which every such script already has.
+  **Rule: in any script a `-s` tool can load, reach autoloads through a `get_node()` accessor,
+  never by name.**
+- **Status:** fixed (plan 0037). A hung gate is worth ~15 minutes; the diagnosis order that works is
+  *is the file growing? → is output buffered? → which validator never printed?*
+
 ### Mainland pool counted as ashore — the ghost-landing family, second instance (2026-07-25)
 - **Symptom:** none visible. No gate phase, validator or test was watching; the full gate ran ALL
   PHASES GREEN both before and after the fix. Found only because plan 0034 went looking.

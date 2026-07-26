@@ -21,16 +21,38 @@ extends RefCounted
 ## pending_battalion_pools() -> by_brigade() and so cannot accidentally see a partial list.
 
 
-## brigade_id -> number of its battalions not ashore, summed across every supplied pool. A brigade
-## split across pools (embarking in echelons, so part at sea and part on the mainland) sums.
-static func by_brigade(pools: Array) -> Dictionary:
+## brigade_id -> {battalion_type: count} not ashore, across every supplied pool (plan 0037).
+##
+## The type breakdown is what combat needs: WHICH type is missing decides whether the absent
+## battalion was a maneuver unit or a support one, and those are weighted differently in strength and
+## in casualty selection. It is exact rather than apportioned because pool entries carry each
+## battalion's `type`, inherited from `composition` when the pool was built — so a pool BN's type
+## always names a real composition entry of the same brigade.
+static func by_brigade_and_type(pools: Array) -> Dictionary:
 	var not_ashore: Dictionary = {}
 	for pool_value in pools:
 		for entry_value in pool_value as Array:
 			var entry: Dictionary = entry_value
 			var brigade_id := String(entry["brigade_id"])
-			not_ashore[brigade_id] = int(not_ashore.get(brigade_id, 0)) + (entry["bns"] as Array).size()
+			var by_type: Dictionary = not_ashore.get(brigade_id, {})
+			for bn_value in entry["bns"] as Array:
+				var battalion_type := String((bn_value as Dictionary)["type"])
+				by_type[battalion_type] = int(by_type.get(battalion_type, 0)) + 1
+			not_ashore[brigade_id] = by_type
 	return not_ashore
+
+
+## brigade_id -> total battalions not ashore. Derived from by_brigade_and_type rather than counted
+## separately, so the census and combat can never disagree about who is present.
+static func by_brigade(pools: Array) -> Dictionary:
+	var totals: Dictionary = {}
+	var by_type := by_brigade_and_type(pools)
+	for brigade_id in by_type:
+		var total := 0
+		for battalion_type in by_type[brigade_id]:
+			total += int(by_type[brigade_id][battalion_type])
+		totals[brigade_id] = total
+	return totals
 
 
 ## One entry per battalion INSTANCE of a brigade, as {type, index} with a 1-based index running

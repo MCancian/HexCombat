@@ -48,6 +48,7 @@ static func observation(perspective_team: String = "") -> Dictionary:
 		"brigades": _brigade_observations(),
 		"occupied_hexes": _occupied_hex_observations(),
 		"ship_reserve": _ship_reserve_observations(),
+		"mainland_pool": _mainland_pool_observations(),
 		"mobilization": _mobilization_observation(),
 		"air_insertion": _air_insertion_observation(),
 		"supply_state": _supply_state_observation(),
@@ -132,7 +133,9 @@ static func field_glossary() -> Dictionary:
 	return {
 		"feba_km": "Forward edge of battle movement/progress in kilometers within a contested hex.",
 		"organization": "0-100 readiness value affected by movement and combat.",
-		"battalions": "Current battalion count remaining in the brigade.",
+		"battalions": "Battalions of the brigade that are ASHORE on Taiwan and can fight this turn. A brigade appears on the map from its FIRST landed battalion, so this can be well below its full roster.",
+		"battalions_not_ashore": "Battalions of the brigade that exist but are NOT on the island — still at sea, on the mainland waiting for a hull, or waiting to fly. They neither fight nor consume supply. battalions + battalions_not_ashore is the brigade's full surviving roster.",
+		"mainland_pool": "Red follow-on battalions still on the mainland waiting for lift, per brigade. The queue BEHIND ship_reserve: read both to tell whether the reinforcement flow is hull-limited or simply exhausted.",
 		"legal_moves": "Authoritative target hex lists by brigade and movement mode.",
 		"legal_commits": "Authoritative adjacent support options by target hex and team.",
 		"mobilization": "ROC reserve formations not yet on the map: `pending` lists each brigade with the garrison hex it will form up on and the turn it is due; `arrived` logs those already released. Off-map brigades cannot be ordered, are not counted in the victory census, and cannot be struck.",
@@ -256,17 +259,20 @@ static func _placed_brigade_count() -> int:
 
 static func _brigade_observations() -> Array:
 	var result: Array = []
+	var not_ashore := _not_ashore_by_brigade()
 	for brigade_value in _game_data().brigades.values():
 		var brigade: Brigade = brigade_value
 		if brigade.hex_id.is_empty():
 			continue
+		var landed := brigade.landed_battalion_count(not_ashore.get(brigade.id, {}))
 		result.append({
 			"id": brigade.id,
 			"name": brigade.name,
 			"team": Brigade.team_name(brigade.team),
 			"nato_type": brigade.nato_type,
 			"hex_id": brigade.hex_id,
-			"battalions": brigade.get_battalion_count(),
+			"battalions": landed,
+			"battalions_not_ashore": brigade.get_battalion_count() - landed,
 			"organization": brigade.organization,
 			"destroyed": brigade.destroyed,
 			"moved_this_turn": brigade.moved_this_turn,
@@ -292,6 +298,34 @@ static func _occupied_hex_observations() -> Array:
 			"brigades": brigade_ids.duplicate(),
 			"neighbors": _game_data().get_neighbors(hex_id),
 			"terrain": terrain.name if terrain != null else ""
+		})
+	return result
+
+
+## brigade_id -> {battalion_type: count} NOT ashore on Taiwan — still at sea, on the mainland waiting
+## for a hull, or waiting to fly (plan 0037). `battalions` reports the landed remainder (via
+## `Brigade.landed_battalion_count`, the single home of the rule), so a seat never plans with force
+## that is not on the island, and `battalions_not_ashore` makes the difference explicit rather than
+## something the model has to infer. Built once per observation, not once per brigade.
+static func _not_ashore_by_brigade() -> Dictionary:
+	return PendingBattalions.by_brigade_and_type(_game_state().data.pending_battalion_pools())
+
+
+## The follow-on troops still on the mainland waiting for lift (SealiftState.mainland_pool). Without
+## this a seat can see the sea queue but not the queue behind it, and cannot tell whether its
+## reinforcement flow is hull-limited or exhausted.
+static func _mainland_pool_observations() -> Array:
+	var result: Array = []
+	var sealift: SealiftState = _game_state().sealift_state
+	if sealift == null:
+		return result
+	for entry_value in sealift.mainland_pool:
+		var entry: Dictionary = entry_value
+		result.append({
+			"brigade_id": String(entry["brigade_id"]),
+			"locked_beach": int(entry["locked_beach"]),
+			"beach_hex": String(entry["beach_hex"]),
+			"bns_remaining": (entry["bns"] as Array).size()
 		})
 	return result
 
@@ -324,6 +358,10 @@ static func _mobilization_observation() -> Dictionary:
 			"brigade_id": String(entry["brigade_id"]),
 			"garrison_hex": String(entry["garrison_hex"]),
 			"release_turn": int(entry["release_turn"]),
+			# Whole roster deliberately, NOT the landed count (plan 0037): a mobilizing brigade is
+			# wholly off-map (`hex_id == ""`) and has no entries in any battalion pool, so there is
+			# nothing to subtract. If a future mechanic ever parks mobilizing BNs in a pool, this
+			# becomes an over-report and must route through Brigade.landed_battalion_count.
 			"battalions": brigade.get_battalion_count() if brigade != null else 0,
 		})
 	return {

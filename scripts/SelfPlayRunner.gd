@@ -113,7 +113,7 @@ static func _response(actions: Array) -> Dictionary:
 
 static func _game_summary(turn_digests: Array, all_resolved: bool) -> Dictionary:
 	return {
-		"final_snapshot": _gd().snapshot_state(),
+		"final_snapshot": _gd().snapshot_state(_gs().data.pending_battalion_pools()),
 		"turn_digests": turn_digests,
 		"all_resolved": all_resolved,
 		"final_turn": _gs().turn_number,

@@ -37,7 +37,14 @@ const TARGET_HEX := GoldenScript.TARGET_HEX
 # — the same trap already recorded for validate_golden_victory. Behaviour unchanged: the drowning fix
 # is exactly as shipped, only the pin's measurement environment is corrected.
 # Was (default-scenario, never gate-valid) "casualties=7, feba=2.24".
-const EXPECTED_COMBAT_FINGERPRINT := "casualties=5, feba=-0.72"
+# Re-baselined 2026-07-25 for landed-battalions-only combat (plan 0037, USER call): a brigade counts
+# as on-map from its FIRST landed battalion, but now only the battalions actually ASHORE fight. The
+# scripted turn runs one offload turn first, so the Red mover attacks with the 4 Amphibious Infantry
+# BNs that landed rather than its whole 9-BN roster — fewer bodies on both counts, and the FEBA moves
+# against the attacker. Direction is the expected one: Red is the side with off-map pools, Green has
+# none, so removing not-ashore strength can only make the Red attack worse.
+# Was "casualties=5, feba=-0.72".
+const EXPECTED_COMBAT_FINGERPRINT := "casualties=3, feba=-2.66"
 
 var _failures: Array[String] = []
 var GameData: Node = null

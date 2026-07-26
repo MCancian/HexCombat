@@ -596,6 +596,10 @@ func set_hex_feba(hex_id: String, feba_km: float) -> void:
 		hex_states[hex_id].feba_km = feba_km
 
 
+## VIEW LAYER ONLY — counts WHOLE rosters, not landed battalions (plan 0037). Called solely by
+## `UnitManager.get_unit_count_in_hex`, which drives the on-map stack label; nothing in the sim or in
+## a seat's observation reads it, so the drift is cosmetic and deliberately left. If this ever feeds
+## a decision, route it through `Brigade.landed_battalion_count` with the pools passed in.
 func get_unit_count_in_hex(hex_id: String, team: Brigade.Team = Brigade.Team.RED) -> int:
 	var total := 0
 	for brigade_id in get_brigades_in_hex(hex_id):
@@ -831,15 +835,20 @@ func validate_runtime_indexes() -> Array[String]:
 
 ## Deterministic, key-sorted state snapshot for golden-test / AI byte-comparison.
 ## Returns a plain Dictionary with brigade positions/status and hex ownership.
-func snapshot_state() -> Dictionary:
+func snapshot_state(pending_pools: Array = []) -> Dictionary:
 	var brigade_snap := {}
+	# Landed battalions only (plan 0037): this snapshot is written into every game record as
+	# final_snapshot, so it must agree with the victory census printed beside it. The pools arrive as
+	# an argument rather than being read off GameState — GameData is the CONTENT autoload and must not
+	# depend on runtime state.
+	var not_ashore := PendingBattalions.by_brigade_and_type(pending_pools)
 	var bids := brigades.keys()
 	bids.sort()
 	for bid in bids:
 		var b: Brigade = brigades[bid]
 		brigade_snap[bid] = {
 			"hex_id": b.hex_id,
-			"battalions": b.get_battalion_count(),
+			"battalions": b.landed_battalion_count(not_ashore.get(bid, {})),
 			"destroyed": b.destroyed,
 			"team": int(b.team)
 		}

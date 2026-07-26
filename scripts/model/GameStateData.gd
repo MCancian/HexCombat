@@ -41,6 +41,12 @@ var air_insert_orders: Array = []
 # per turn immediately before the combat loop (ownership is fixed for its duration) and read by
 # every contested hex, rather than re-flooding the map per hex. Empty whenever nothing has air-landed.
 var isolated_air_landed_brigades: Dictionary = {}
+# Battalions belonging to an on-map brigade that are NOT ashore (plan 0037),
+# brigade_id -> {battalion_type: count}. Recomputed ONCE per turn immediately before the combat loop,
+# from pending_battalion_pools(), and read by every contested hex — combat fields only the landed
+# remainder, and a brigade with nothing ashore is not a contributor at all. Empty until the first
+# resolve_turn, and empty whenever every brigade is fully landed.
+var not_ashore_by_type: Dictionary = {}
 var jlsf_orders: Array[String] = []  # port/airbridge ids with a pending explicit deploy_jlsf order
 var pending_lost_at_sea: int = 0
 var supply_state: SupplyState
@@ -89,3 +95,12 @@ func pending_battalion_pools() -> Array:
 	if air_insertion_state != null:
 		pools.append(air_insertion_state.pool)
 	return pools
+
+
+## Recompute `not_ashore_by_type` from the pools as they stand right now, and return it (plan 0037).
+## Callers that need the map at a phase boundary other than the combat loop's — the supply bill, the
+## end-of-turn roster check — call this rather than reading the cached field, because a pool can have
+## drained since it was last refreshed.
+func refresh_not_ashore_by_type() -> Dictionary:
+	not_ashore_by_type = PendingBattalions.by_brigade_and_type(pending_battalion_pools())
+	return not_ashore_by_type

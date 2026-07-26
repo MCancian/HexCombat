@@ -1,8 +1,48 @@
 ---
 title: "0037: Only landed battalions fight, eat, and are reported"
-status: "Sketch"
+status: "Shipped"
 created: "2026-07-25"
+closed: "2026-07-25"
 ---
+
+> **CLOSED 2026-07-25.** Shipped as planned, with three deviations, all deliberate:
+>
+> 1. **The landed rule lives on `Brigade`, not `CombatForces`.** `Brigade.landed_qty(battalion,
+>    brigade_not_ashore)` and `Brigade.landed_battalion_count(brigade_not_ashore)` are the single
+>    home; `CombatForces` and `TurnConductor` both delegate. Forced by the dependency ceiling —
+>    routing the rule through `CombatForces`/`PendingBattalions` from `TurnConductor` pushed it to
+>    ndeps=40 against a ceiling of 38 — but it is the better shape anyway: the rule is a property of
+>    the brigade that owns `composition`, and there is now exactly one copy of the arithmetic.
+> 2. **The assert is NOT in `apply_casualty`.** The plan's invariant is transiently false *by design*
+>    mid-turn: `apply_crossing_casualties` deletes drowned battalions from their rosters while they
+>    are still listed in `ship_reserve` (it maps ids via the pre-removal entries) and prunes the
+>    reserve immediately after. The check is `TurnConductor.pending_pool_roster_violations`, asserted
+>    at the settled end-of-turn boundary beside the existing runtime-index assert.
+> 3. **`GameData.snapshot_state` takes the pools as a parameter.** Reading `GameState.data` from it
+>    would invert the dependency — `GameData` is the CONTENT autoload and must not depend on runtime
+>    state. `SelfPlayRunner` and `tools/validate_play_turn.gd` pass them in.
+>
+> **Re-baseline was smaller than predicted.** Two pins moved, not four:
+> `validate_dos_consumption` (36 → 16 units; 2800 → 1600 t idle, 5600 → 3200 t moved) and
+> `validate_cleanup` (`casualties=5, feba=-0.72` → `casualties=3, feba=-2.66`).
+> `validate_golden_victory`, `validate_headless_turn` and `validate_air_insertion` did **not** move —
+> confirming the plan's own cross-check that the change is confined to partially-landed formations.
+> Direction verified: Red fights weaker early, which is the expected sign.
+>
+> **Probed rather than trusted:** after one offload turn the four Red amphibious brigades are ashore
+> with 16 of 36 battalions — exactly their 4 Amphibious Infantry BNs each; every recon,
+> mechanized-artillery, air-defence, support and service-support BN is still at sea. The 36 → 16 drop
+> is the mechanic working, not over-subtraction.
+>
+> **Cost paid on the way:** patching `SelfPlayRunner` to call `GameState.data.pending_battalion_pools()`
+> re-tripped the autoload-identifier trap — the script compiles in-game but not under a `-s` SceneTree
+> tool, so `validate_headless_selfplay` failed to compile, never reached `quit()`, and hung the gate
+> for two full runs. Fixed by using the file's own `_gs()` accessor. See
+> `hexcombat-failure-archaeology`.
+>
+> **The 20-turn `scenario_default` re-measurement in "Verification" was NOT run** — re-running studies
+> is an open USER decision (see `docs/DECISIONS.md` 2026-07-25), not an agent call.
+
 
 # Plan 0037: Only landed battalions fight, eat, and are reported
 

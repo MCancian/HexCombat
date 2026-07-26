@@ -4,8 +4,12 @@ extends SceneTree
 
 const DICE_SEED := 1
 const INITIAL_POOL_TONS := 15000.0
-const IDLE_CONSUMPTION_TONS := 2800
-const MOVED_CONSUMPTION_TONS := 5600
+# RE-BASELINED 2026-07-25 (plan 0037): only battalions ASHORE eat. After one offload turn the four
+# Red amphibious brigades are on-map with 16 of their 36 battalions landed (the 4 Amphibious Infantry
+# BNs each; the recon / mechanized-artillery / air-defence / support / service-support BNs are all
+# still at sea), so the ration bill is 16 units, not 36. 2800 -> 1600 idle, 5600 -> 3200 moved.
+const IDLE_CONSUMPTION_TONS := 1600
+const MOVED_CONSUMPTION_TONS := 3200
 
 var _failures: Array[String] = []
 var GameData: Node = null
@@ -40,11 +44,11 @@ func _validate_idle_consumption() -> void:
 	_assert_equal_int("Red brigades on-map after landing", _red_brigades_on_map(), 4)
 
 	var summary: Dictionary = GameState.resolve_supply_turn()
-	_assert_equal_int("idle unit_count", int(summary["unit_count"]), 36)
-	_assert_equal_int("idle mechanized_unit_count", int(summary["mechanized_unit_count"]), 20)
-	_assert_equal_int("idle non_mechanized_unit_count", int(summary["non_mechanized_unit_count"]), 16)
+	_assert_equal_int("idle unit_count", int(summary["unit_count"]), 16)
+	_assert_equal_int("idle mechanized_unit_count", int(summary["mechanized_unit_count"]), 16)
+	_assert_equal_int("idle non_mechanized_unit_count", int(summary["non_mechanized_unit_count"]), 0)
 	_assert_equal_int("idle red_dos_consumed_tons", int(summary["red_dos_consumed_tons"]), IDLE_CONSUMPTION_TONS)
-	_assert_equal_float("idle pool_after", float(summary["pool_after"]), 12200.0)
+	_assert_equal_float("idle pool_after", float(summary["pool_after"]), 13400.0)
 	_assert_true("idle summary applied", bool(summary["applied"]))
 	_assert_equal_int("idle day_history size", GameState.supply_state.day_history.size(), 1)
 

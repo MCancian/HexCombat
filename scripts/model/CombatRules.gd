@@ -8,6 +8,12 @@ var red_out_of_supply_effectiveness: float = 1.0
 # They fight out of supply regardless of the theatre DOS pool. Empty for every scenario that does
 # not opt into air insertion, and for every landed brigade that has since linked up.
 var isolated_red_brigade_ids: Dictionary = {}
+# Battalions that belong to a contributing brigade but are NOT ashore (plan 0037),
+# brigade_id -> {battalion_type: count}, from PendingBattalions.by_brigade_and_type. Combat fields
+# only the landed remainder. Computed ONCE per turn (ownership and the pools are fixed for the whole
+# combat loop) so two hexes can never disagree about who is present. Empty for Green, which has no
+# off-map pools, and for any force fully ashore.
+var not_ashore_by_type: Dictionary = {}
 var unscreened_support_strength: float = 0.5
 var maneuver_casualty_weight: float = 4.0
 var support_casualty_weight: float = 1.0
