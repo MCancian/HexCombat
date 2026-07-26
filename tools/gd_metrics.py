@@ -38,7 +38,8 @@ DEP_CEILINGS = {
     # resolver deps for one module dep. LOWERED, not held, so the slack cannot be silently re-spent.
     # 28 -> 28 (plan 0038 step 3): +TurnClosure, -CombatResolver (`_brigade_ids` routes through
     # TurnConductor, the combat owner, like every other phase surface). A swap, not growth.
-    "scripts/GameState.gd": 28,
+    # 28 -> 29 (plan 0041): FrontlinePhase extracted from TurnConductor. GameState depends on FrontlinePhase for façade redirection.
+    "scripts/GameState.gd": 29,
     # TurnConductor.gd legitimately depends on every phase resolver it orchestrates (IjfsResolver,
     # SealiftResolver, AntishipResolver, OffloadResolver, InfrastructureResolver, SupplyResolver,
     # CleanupResolver, FrontlineResolver, CombatResolver, …) — that is cohesion, not lamination.
@@ -54,7 +55,8 @@ DEP_CEILINGS = {
     # IjfsResolver, AntishipResolver, SealiftResolver, GameStateBuilder, Theaters, ShipDef, ShipState.
     # 22 -> 20 (plan 0038 step 3): supply + cleanup moved to TurnClosure, taking CleanupResolver,
     # SupplyResolver and Battalion. What is left is the turn ORDER plus movement/combat/FEBA/frontline.
-    "scripts/resolvers/TurnConductor.gd": 20,
+    # 20 -> 18 (plan 0041): FrontlinePhase extracted from TurnConductor.
+    "scripts/resolvers/TurnConductor.gd": 18,
     # ReinforcementPhases.gd (plan 0038): owns the four "force arrives" phases and their resolvers.
     # Ceilinged from birth because a phase-owning module is exactly where a god-object would be
     # laundered back in — a NEW arrival phase belongs here (and may justify a small bump), an

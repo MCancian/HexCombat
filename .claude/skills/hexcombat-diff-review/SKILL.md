@@ -47,8 +47,7 @@ Write it to a file; pass via `"$(cat …)"`.
 
 ## Running them
 
-Identical mechanics to `hexcombat-plan-review` — parallel, background, poll for size to stop
-changing. Same model table, same strengths and weaknesses.
+Identical mechanics to `hexcombat-plan-review` — serial for opencode models, parallel for `gem-explore`, background, poll for size to stop changing. Consider expected flakes (stall, stream fail) and retry if they occur. Same model table, same strengths and weaknesses.
 
 ## Reviewer safety — the same rules apply, and they matter more here
 

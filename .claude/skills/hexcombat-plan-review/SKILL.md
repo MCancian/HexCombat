@@ -59,12 +59,12 @@ progress to poll.
 
 ```bash
 SP=<scratchpad>
-setsid nohup bash -c "opencode run -m opencode/deepseek-v4-flash-free --agent explore \"\$(cat $SP/brief.txt)\" > $SP/rev_deepseek.txt 2>&1" < /dev/null &
-setsid nohup bash -c "opencode run -m opencode/nemotron-3-ultra-free --agent explore \"\$(cat $SP/brief.txt)\" > $SP/rev_nemotron.txt 2>&1" < /dev/null &
-setsid nohup bash -c "GEM_TIMEOUT=15m gem-explore \"\$(cat $SP/brief.txt)\" > $SP/rev_gem.txt 2>&1" < /dev/null &
+setsid nohup bash -c "opencode run -m opencode/deepseek-v4-flash-free --agent explore \"\$(cat \$SP/brief.txt)\" > \$SP/rev_deepseek.txt 2>&1 && opencode run -m opencode/nemotron-3-ultra-free --agent explore \"\$(cat \$SP/brief.txt)\" > \$SP/rev_nemotron.txt 2>&1" < /dev/null &
+setsid nohup bash -c "GEM_TIMEOUT=15m gem-explore \"\$(cat \$SP/brief.txt)\" > \$SP/rev_gem.txt 2>&1" < /dev/null &
 ```
 
 Then poll for size to stop changing (all three), rather than guessing a duration.
+Note: consider expected flakes. `deepseek-v4-flash-free` may stall with no final message, and `nemotron-3-ultra-free` may show `Streaming response failed`. Retry these if they fail.
 
 | Model | Good at | Watch for |
 |---|---|---|

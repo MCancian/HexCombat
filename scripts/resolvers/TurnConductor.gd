@@ -110,31 +110,7 @@ static func resolve_turn(state: GameStateData, dice: Dice = null) -> void:
 	EventBus.turn_resolved.emit(state.turn_number)
 
 
-# --- D5-A Frontline phase — redistribute Red brigades along a drawn polyline -------------------
 
-static func frontline_hex_centers() -> Array:
-	var centers: Array = []
-	for hex_value in GameData.hexes:
-		var hex: Hex = hex_value
-		centers.append({"id": hex.id, "lat": hex.center.x, "lon": hex.center.y})
-	return centers
-
-
-static func resolve_frontline_phase(state: GameStateData, polyline_coords: Array) -> Dictionary:
-	# Only the drawing side's brigades reshuffle along the line — RED here (the amphibious attacker),
-	# mirroring TIV front_line_service's single-side filter. Intentional asymmetry, not a bug; if Green
-	# ever draws front lines, pass its brigades instead.
-	var candidate_brigades: Array = []
-	for brigade_value in GameData.brigades.values():
-		var brigade: Brigade = brigade_value
-		if brigade.team == Brigade.Team.RED and not brigade.destroyed:
-			candidate_brigades.append(brigade)
-
-	state.last_frontline_summary = FrontlineResolver.resolve(polyline_coords, frontline_hex_centers(), candidate_brigades)
-	for brigade_id in state.last_frontline_summary.moves.keys():
-		GameData.set_brigade_hex(String(brigade_id), String(state.last_frontline_summary.moves[brigade_id]))
-	EventBus.frontline_resolved.emit(state.last_frontline_summary.to_dict())
-	return state.last_frontline_summary.to_dict()
 
 
 static func apply_move_orders(state: GameStateData, team: Brigade.Team) -> void:

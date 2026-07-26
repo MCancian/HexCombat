@@ -329,7 +329,7 @@ func _taiwan_battalion_census() -> Dictionary:
 # --- D5-A Frontline phase — redistribute Red brigades along a drawn polyline -------------------
 
 func resolve_frontline_phase(polyline_coords: Array) -> Dictionary:
-	return TurnConductor.resolve_frontline_phase(data, polyline_coords)
+	return FrontlinePhase.resolve_frontline_phase(data, polyline_coords)
 
 
 ## Green brigades held in mobilization by the scenario, plus their release schedule (plan 0029

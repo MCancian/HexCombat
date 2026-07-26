@@ -314,8 +314,8 @@ it takes operator-drawn polyline coordinates and is called only through the `Gam
   take one step into an adjacent passable hex); mountains are impassable
   (`GameData._with_impassable`). Ground combat's defender gets a per-class strength modifier
   (`TurnConductor.defender_combat_modifier` → `CombatResolver.resolve_at`): plains ×1.0, hills ×1.5,
-  urban ×2.0, mountain ×2.0, metropolis ×3.0 — golden currently seed 20260624
-  `casualties=9, feba=1.98` (re-baselined 2026-07-09 for the full-defense laydown). Terrain is
+  urban ×2.0, mountain ×2.0, metropolis ×3.0 — golden outcome is pinned in
+  `tools/validate_headless_turn.gd` (re-baselined 2026-07-09 for the full-defense laydown). Terrain is
   surfaced per-hex in the LLM `occupied_hexes` observation and IS the map fill: every classified
   hex renders pure `TerrainType.color` (USER call — match `terrain_preview.png`); RED/CONTESTED
   ownership renders as a 3px perimeter border around each connected pocket, no interior lines
@@ -324,8 +324,8 @@ it takes operator-drawn polyline coordinates and is called only through the `Gam
 - **Default scenario = full ROC defense (2026-07-09 USER call)** — `data/scenarios/scenario_default.json`
   places all 32 ROC brigades (laydown shared with `roc_full_defense`; beaches 1/3/6/9 garrisoned
   on-hex, every landing beach covered on-hex or adjacent — pinned by `validate_scenario_data.gd`).
-  Under empty-orders self-play the default now runs to the 40-turn stalemate census 24/88 pinned
-  in `validate_golden_victory.gd` (the 4-brigade landing wave cannot out-census 88 ROC battalions;
+  Under empty-orders self-play the default now runs to the 40-turn stalemate census pinned
+  in `validate_golden_victory.gd` (the 4-brigade landing wave cannot out-census the full ROC defense;
   victory FIRING stays covered by `tests/victory_conditions_test.gd`).
 - **Brigade marker rendering (`HexMap`)** — brigades are grouped per hex: same-hex stacks render
   as a 0.62× ring with a ×N count badge at 3+; a lone brigade shrinks to 0.75× and pins to the

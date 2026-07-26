@@ -1,33 +1,12 @@
 # HexCombat — Tech Debt & Hygiene Backlog
 
-This document is strictly a place for agents to dump observations of tech debt, hygiene issues, and necessary refactors encountered during development. 
+This document is strictly a place for agents to dump observations of tech debt, hygiene issues, and necessary refactors encountered during development.
 
 Focused multi-session efforts (features, content, balancing) get a numbered plan in the `docs/plans/` directory and are tracked in [README.md](README.md).
 
 ## Deferred Debt & Hygiene Items
 
-**Code-quality debt deferred from the 2026-07-16 baseline** (report:
-`docs/reports/2026-07-16-code-quality-baseline.md`; actionable items worked under plan 0009):
-
-- [x] **GameState dependency ceiling** — shipped as plan 0014 (2026-07-19): state → `GameStateData`
-  value object, orchestration/construction/validation → `static` `TurnConductor`/`GameStateBuilder`/
-  `OrderValidator` taking `GameStateData`; deps 48→24, ceiling enforced via
-  `gd_metrics.py --check-ceiling`. See `docs/archive/0014-gamestate-dependency-ceiling.md`.
-- [x] **HexMap cosmetic literals**: 93 view-layer color/offset literals — hoisted opportunistically.
-- [x] **Const→data knob promotion**: any const hoisted under 0009 the USER wants tunable moves to
-  `data/*.json` per `hexcombat-config-and-knobs` — one USER call per knob (change-control #7).
-
 *(Agents: append new technical debt and hygiene observations here)*
-
-- [ ] **The front-line phase is the last non-pipeline occupant of `TurnConductor`
-  (raised independently by `opencode/deepseek-v4-flash-free` and `gem-explore` in the plan-0038 step-3
-  diff review, 2026-07-25).** After plan 0038, `TurnConductor` is the turn's ORDER plus the phases
-  whose application interleaves with it (movement, ground combat, FEBA retreats).
-  `resolve_frontline_phase` + `frontline_hex_centers` are not in the turn pipeline at all — they take
-  operator-drawn polyline coordinates and are reachable only through the `GameState` façade — and
-  they are the sole reason `TurnConductor` still names `FrontlineResolver`. Plan 0038 flagged this as
-  "a separate, optional tidy" and deliberately left it. Cost: one small module, one façade
-  redirection, ~2 deps. Do it only if something else brings you into this file.
 
 - [ ] **Validator harness: `_fail` / `_finish` / asserts are copy-pasted across the validators
   (found 2026-07-25, refactor review).** Measured: `func _fail` in **30 of 36** `tools/validate_*.gd`,
@@ -51,18 +30,10 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   returning a context value object would make staleness impossible by construction. **Deferred:**
   reviewers split on risk/reward — the caches are correct today and the change touches
   `CombatResolver.resolve_at`'s signature for no behavioural gain. Do it when that seam is open anyway.
-
-- [ ] **mc_chart.py degenerate-input crashes (pre-existing, found 2026-07-24 gem-explore review).** Two
-  chart builders crash on an empty/degenerate summary rather than failing loud: `histogram_panel`
-  `first = next(i for i, b ... if b["count"] > 0)` raises `StopIteration` if every margin bin is zero
-  (empty batch); `sensitivity_panel` `min(xs)`/`max(xs)` raises `ValueError` on an empty `points` list.
-  Only reachable with a 0-game batch, so low priority — guard both with a clear "no data" message when
-  a real empty-batch case appears. (The `--flip`/`--heat`/`make_heat_spec` degenerate paths were
-  already guarded in the 2026-07-24 review round.)
-
 - [ ] **Inert knob-registry entries (found 2026-07-23, MC sweep investigation).** Two knobs are
   dumped into every record but do NOT affect the sim (overriding them yields byte-identical games),
   so a sweep on either silently reports false robustness:
+
   - `combat_defender_advantage_ratio` / `combat_attacker_advantage_ratio` — recorded but never reach
     `CombatResolver`. Either wire them into the combat math or drop them from `data/knobs/registry.json`.
   - `offload_operational_port_rate` — **now owned by plan 0031 (Objective 0, USER 2026-07-24)**: port
@@ -74,10 +45,7 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   - Consider a gate check that fails when a `sweepable:true` registry knob's override doesn't actually
     apply (would have caught the phantom `offload_beach_base_rate` path).
 
-- [x] **Air insertion balance dial (plan 0032 follow-up)** — **answered by the USER 2026-07-25**:
-  double the baseline attrition coefficient and gate drops on a sortie cadence (~1 sortie per 2
-  days). Now owned by plan `docs/plans/0036-airborne-cost-and-cadence.md`. Evidence that motivated
-  it: `docs/reports/2026-07-24-airborne-insertion-sweep.md`.
+- 
 - **The 2 PLAA air assault brigades are unmodelled (plan 0032).** The USER's source gives the PLAA 15
   aviation brigades, two of them air assault (6 transport + up to 3 infantry BN each); the OOB has 13,
   none air assault. Today only the Airborne Corps' own 130th feeds the rotary-wing lift cap. Adding
@@ -105,27 +73,7 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   to cover them is cheap; the obstacle is that those files legitimately DISCUSS dead paths, so they need
   the `(historical)` escape marker applied first or the gate will fire on the record of the very cleanup
   that removed them.
-- **`docs/STATUS.md` quotes golden pins in prose, against the one-home rule.** Two places name pinned
-  validator output directly: the re-baselined golden `casualties`/`feba` pair, and the 40-turn stalemate
-  census. `hexcombat-docs-and-writing` is explicit that the validator's `PASS:` line is the only home for
-  a pin and that no doc quotes one — these rotted twice on 2026-07-09 alone, which is why the rule
-  exists. Replace both with a pointer to the owning validator. Found 2026-07-26 by a diff reviewer while
-  reviewing plan 0040; pre-existing, so deliberately not fixed inside that commit.
-- **`hexcombat-plan-review`'s launch snippet cannot work as written.** It backgrounds
-  `opencode run` twice plus `gem-explore` simultaneously; two concurrent `opencode run` invocations make
-  the second die with `database is locked` (the shared session DB does not tolerate it). Observed twice
-  on 2026-07-26, costing two review slots. Fix: run the two opencode models serially and `gem-explore`
-  alongside either one, and say so in both `hexcombat-plan-review` and `hexcombat-diff-review`. Consider
-  also recording `deepseek-v4-flash-free`'s stall-with-no-final-message and nemotron's
-  `Streaming response failed` as expected flakes with a retry policy, so the next agent does not read a
-  missing write-up as a clean review.
-- **`CombatCalculator._normalize_support` is dead code.** It is a one-line pass-through returning
-  `normalize_support(raw_support)` and is called from nowhere in `scripts/`, `tests/` or `tools/` (the real
-  callers use `normalize_support` directly, including `tools/validate_combat_data.gd`). Delete it. It is
-  the shape that trapped an editor before — `Brigade.to_combat_units` was a live-looking function that
-  did not subtract pools — so a leftover with a plausible name is worth removing rather than tolerating.
-  Found 2026-07-26 by a diff reviewer during plan 0040; out of scope there, which touched no production
-  code.
+- 
 - **Four `tools/` validators duplicate a comment/string stripper and a `.gd` directory walker — decided
   2026-07-26 NOT to unify, revisit only with new evidence.** `validate_tool_script_purity.gd`,
   `validate_no_global_rng.gd`, `validate_doc_anchors.gd` and `validate_combat_rules_threading.gd` each

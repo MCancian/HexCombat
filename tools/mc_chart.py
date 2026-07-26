@@ -81,8 +81,11 @@ def histogram_panel(summary: dict) -> list[str]:
     margin = summary["margin"]
     bins = margin["bins"]
     # Drop leading/trailing empty bins so the axis frames the real data.
-    first = next(i for i, b in enumerate(bins) if b["count"] > 0)
-    last = max(i for i, b in enumerate(bins) if b["count"] > 0)
+    non_empty = [i for i, b in enumerate(bins) if b["count"] > 0]
+    if not non_empty:
+        return [text(WIDTH / 2, HEIGHT / 2, "No data (empty batch)", 20, MUTED, "700", "middle")]
+    first = non_empty[0]
+    last = non_empty[-1]
     bins = bins[first : last + 1]
     data_lo = bins[0]["start"]
     hi = bins[-1]["end"]
@@ -186,6 +189,8 @@ def histogram_panel(summary: dict) -> list[str]:
 def sensitivity_panel(sens: dict) -> list[str]:
     points = sens["points"]  # list of {"value": float, "crossing_loss_pct": float, "red_win_rate": float}
     plot_l, plot_r, plot_t, plot_b = 60, 564, 420, 512
+    if not points:
+        return [text((plot_l + plot_r) / 2, (plot_t + plot_b) / 2, "No sensitivity data", 15, MUTED, "600", "middle")]
     xs = [p["value"] for p in points]
     ys = [p["crossing_loss_pct"] for p in points]
     x_lo, x_hi = min(xs), max(xs)

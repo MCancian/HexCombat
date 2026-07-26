@@ -460,62 +460,147 @@
 
         <!-- Slide 3: Simulation Systems -->
         <div class="slide">
+            <style>
+                .mechanic-btn {
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid rgba(255,255,255,0.05);
+                    padding: 1.2rem;
+                    border-radius: 12px;
+                    transition: transform 0.2s, background 0.2s;
+                    cursor: pointer;
+                }
+                .mechanic-btn:hover {
+                    background: rgba(255,255,255,0.08);
+                    transform: translateX(10px);
+                }
+                .mechanic-btn.active {
+                    background: rgba(59, 130, 246, 0.15);
+                    border: 1px solid rgba(59, 130, 246, 0.5);
+                    border-left: 4px solid var(--accent-primary);
+                    transform: translateX(10px);
+                }
+                .mechanic-btn p {
+                    font-size: 0.85rem;
+                    margin: 0;
+                    transition: color 0.2s;
+                }
+                .mechanic-btn.active p {
+                    color: #a5b4fc;
+                }
+            </style>
+            
             <div class="content-box grid-2" style="max-width: 1400px; gap: 4rem;">
                 
-                <!-- Left Side: Detail View -->
-                <div>
+                <!-- Left Side: Navigation Cards -->
+                <div style="display: flex; flex-direction: column; gap: 1rem; justify-content: center;">
                     <h2 style="margin-bottom: 1rem;">Deep Simulation Mechanics</h2>
+                    
+                    <div class="mechanic-btn" id="btn-ijfs" onclick="selectMechanic('ijfs')">
+                        <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.2rem;">📡 Integrated Joint Fires (IJFS)</h3>
+                        <p>C4ISR, kill chains, and suppression mathematics.</p>
+                    </div>
+
+                    <div class="mechanic-btn" id="btn-antiship-mine" onclick="selectMechanic('antiship-mine')">
+                        <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.2rem;">🚢 Anti-Ship & Mine Warfare</h3>
+                        <p>Cross-strait attrition and naval minefield clearing rates.</p>
+                    </div>
+
+                    <div class="mechanic-btn active" id="btn-amphibious-offload" onclick="selectMechanic('amphibious-offload')">
+                        <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.2rem;">🌊 Amphibious Offload</h3>
+                        <p>Sealift capacity and beachhead throughput module.</p>
+                    </div>
+
+                    <div class="mechanic-btn" id="btn-ground-combat" onclick="selectMechanic('ground-combat')">
+                        <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.2rem;">⚔️ Ground Combat</h3>
+                        <p>Kinetic engagements, terrain modifiers, and unit cohesion.</p>
+                    </div>
+
+                    <div class="mechanic-btn" id="btn-supply-dos" onclick="selectMechanic('supply-dos')">
+                        <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.2rem;">📦 Supply System</h3>
+                        <p>Logistic lines from nodes and combat penalties for disruption.</p>
+                    </div>
+                </div>
+
+                <!-- Right Side: Detail View -->
+                <div>
                     <p style="margin-bottom: 2rem;"></p>
                     
-                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 16px; margin-bottom: 2rem;">
-                        <h3 style="color: #fff; font-size: 1.3rem; margin-bottom: 0.5rem;">Capacity & Throughput</h3>
-                        <p style="font-size: 0.95rem; margin-bottom: 0;">Day 1 assault maneuver BNs bypass throughput gates. Day 2+ forces compete for daily beach tonnage (2200t / BN). Capacity scales with floating piers and Jack-up barges, but is hard-capped by port availability (Auto-JLSF).</p>
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 16px; margin-bottom: 2rem; min-height: 180px;">
+                        <h3 id="mechanic-title" style="color: #fff; font-size: 1.3rem; margin-bottom: 0.5rem;">Capacity & Throughput</h3>
+                        <p id="mechanic-text" style="font-size: 0.95rem; margin-bottom: 0;">Day 1 assault maneuver BNs bypass throughput gates. Day 2+ forces compete for daily beach tonnage (2200t / BN). Capacity scales with floating piers and Jack-up barges, but is hard-capped by port availability (Auto-JLSF).</p>
                     </div>
 
                     <div class="image-container" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 16px;">
                         <!-- Placeholder for Sankey Chart from subagent -->
-                        <img src="../reports/shots/offload_sankey.png" alt="Offload Flow Sankey Chart" style="width: 100%; height: auto; display: block;" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNDAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEyMDI3Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+U2Fua2V5IENoYXJ0IEdlbmVyYXRpbmc...</R2VuZXJhdGluZy4uLjwvdGV4dD48L3N2Zz4='">
+                        <img id="mechanic-img" src="../reports/shots/offload_sankey.png" alt="Offload Flow Sankey Chart" style="width: 100%; height: auto; display: block;">
                     </div>
                 </div>
 
-                <!-- Right Side: Navigation Cards -->
-                <div style="display: flex; flex-direction: column; gap: 1rem; justify-content: center;">
-                    <a href="systems/html/ijfs.html" style="text-decoration: none; color: inherit;">
-                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 1.2rem; border-radius: 12px; transition: transform 0.2s, background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.transform='translateX(10px)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.transform='translateX(0)'">
-                            <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.2rem;">📡 Integrated Joint Fires (IJFS)</h3>
-                            <p style="font-size: 0.85rem; margin: 0;">C4ISR, kill chains, and suppression mathematics.</p>
-                        </div>
-                    </a>
-
-                    <a href="systems/html/antiship-mine.html" style="text-decoration: none; color: inherit;">
-                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 1.2rem; border-radius: 12px; transition: transform 0.2s, background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.transform='translateX(10px)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.transform='translateX(0)'">
-                            <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.2rem;">🚢 Anti-Ship & Mine Warfare</h3>
-                            <p style="font-size: 0.85rem; margin: 0;">Cross-strait attrition and naval minefield clearing rates.</p>
-                        </div>
-                    </a>
-
-                    <a href="systems/html/amphibious-offload.html" style="text-decoration: none; color: inherit;">
-                        <div style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.5); border-left: 4px solid var(--accent-primary); padding: 1.2rem; border-radius: 12px; transform: translateX(10px);">
-                            <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.2rem;">🌊 Amphibious Offload</h3>
-                            <p style="font-size: 0.85rem; margin: 0; color: #a5b4fc;">Currently viewing the sealift capacity and beachhead throughput module.</p>
-                        </div>
-                    </a>
-
-                    <a href="systems/html/ground-combat.html" style="text-decoration: none; color: inherit;">
-                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 1.2rem; border-radius: 12px; transition: transform 0.2s, background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.transform='translateX(10px)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.transform='translateX(0)'">
-                            <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.2rem;">⚔️ Ground Combat</h3>
-                            <p style="font-size: 0.85rem; margin: 0;">Kinetic engagements, terrain modifiers, and unit cohesion.</p>
-                        </div>
-                    </a>
-
-                    <a href="systems/html/supply-dos.html" style="text-decoration: none; color: inherit;">
-                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 1.2rem; border-radius: 12px; transition: transform 0.2s, background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.transform='translateX(10px)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.transform='translateX(0)'">
-                            <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.2rem;">📦 Supply System</h3>
-                            <p style="font-size: 0.85rem; margin: 0;">Logistic lines from nodes and combat penalties for disruption.</p>
-                        </div>
-                    </a>
-                </div>
             </div>
+
+            <script>
+                const mechanicData = {
+                    'ijfs': {
+                        title: 'Integrated Joint Fires (IJFS)',
+                        text: 'Models Red long-range fires against Green targets. A multi-day warmup ramp applies exquisite intel before D-Day. The daily pipeline resolves ISR detection, targeting, SEAD engagement, and strike hit/miss resolution, suppressing Green AD and scoring ground casualties.',
+                        imgSrc: '../reports/shots/ijfs_pipeline.png',
+                        imgAlt: 'IJFS Pipeline Chart'
+                    },
+                    'antiship-mine': {
+                        title: 'Anti-Ship & Mine Warfare',
+                        text: 'Resolves Green coastal anti-ship missile strikes against the Red amphibious crossing fleet. Evaluates crossing damage across six stages, including minefield danger models and launch attrition, converting hull losses into battalion-equivalent casualties before they reach the beach.',
+                        imgSrc: '../reports/shots/antiship_attrition.png',
+                        imgAlt: 'Anti-Ship Attrition Chart'
+                    },
+                    'amphibious-offload': {
+                        title: 'Capacity & Throughput',
+                        text: 'Day 1 assault maneuver BNs bypass throughput gates. Day 2+ forces compete for daily beach tonnage (2200t / BN). Capacity scales with floating piers and Jack-up barges, but is hard-capped by port availability (Auto-JLSF).',
+                        imgSrc: '../reports/shots/offload_sankey.png',
+                        imgAlt: 'Offload Flow Sankey Chart'
+                    },
+                    'ground-combat': {
+                        title: 'Ground Combat',
+                        text: 'Resolves contested hexes using force-ratio-based mathematics. Aggregates maneuver and support strengths, applying terrain and supply modifiers. Computes deterministic loss rates, casualties, and the resulting FEBA (Forward Edge of Battle Area) shift.',
+                        imgSrc: '../reports/shots/ground_combat_feba.png',
+                        imgAlt: 'Ground Combat FEBA Chart'
+                    },
+                    'supply-dos': {
+                        title: 'Supply System',
+                        text: 'Tracks consumable supply for landed PLA brigades. Computes daily tonnage burden based on unit mechanization, movement, and combat activity. Exhaustion of the supply pool sharply penalizes combat effectiveness, representing logistical culmination.',
+                        imgSrc: '../reports/shots/supply_dos_burn.png',
+                        imgAlt: 'Supply DOS Burn Chart'
+                    }
+                };
+
+                function selectMechanic(id) {
+                    const data = mechanicData[id];
+                    document.getElementById('mechanic-title').innerText = data.title;
+                    document.getElementById('mechanic-text').innerText = data.text;
+                    
+                    const imgEl = document.getElementById('mechanic-img');
+                    imgEl.src = data.imgSrc;
+                    imgEl.alt = data.imgAlt;
+                    
+                    const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400"><rect width="100%" height="100%" fill="#1a2027"/><text x="50%" y="50%" font-family="sans-serif" font-size="20" fill="#64748b" text-anchor="middle" dy=".3em">${data.title} Visual Placeholder</text></svg>`;
+                    imgEl.onerror = function() {
+                        this.onerror = null;
+                        this.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svgContent);
+                    };
+
+                    document.querySelectorAll('.mechanic-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    document.getElementById('btn-' + id).classList.add('active');
+                }
+                
+                // Initialize the fallback onerror for the default image just in case
+                const defaultImgEl = document.getElementById('mechanic-img');
+                const defaultSvgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400"><rect width="100%" height="100%" fill="#1a2027"/><text x="50%" y="50%" font-family="sans-serif" font-size="20" fill="#64748b" text-anchor="middle" dy=".3em">Capacity & Throughput Visual Placeholder</text></svg>`;
+                defaultImgEl.onerror = function() {
+                    this.onerror = null;
+                    this.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(defaultSvgContent);
+                };
+            </script>
         </div>
 
         <!-- Slide 4: LLM Integration & Headless Play -->
