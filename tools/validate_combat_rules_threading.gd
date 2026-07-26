@@ -97,11 +97,18 @@ func _initialize() -> void:
 		declared.size(), RULES_SOURCE.trim_prefix("res://"), assigned.size(),
 		POPULATOR_FUNC, POPULATOR_SOURCE.trim_prefix("res://")])
 
+	var consumers := _consumers()
+	if consumers.is_empty():
+		_h.fail("found no script that takes a rules bag — the consumer derivation broke (looked for scripts naming '%s' under %s), so the write and read checks below would both be vacuous"
+			% [RULES_CLASS, CONSUMER_ROOT.trim_prefix("res://")])
+		_h.finish(self)
+		return
+
 	_check_allowlists_are_live(declared)
 	_check_completeness(declared, assigned)
 	_check_sources(assigned)
-	_check_no_other_writers(declared, block)
-	_check_every_field_is_read(declared)
+	_check_no_other_writers(consumers, declared, block)
+	_check_every_field_is_read(consumers, declared)
 
 	_h.finish(self)
 
@@ -277,12 +284,10 @@ func _check_sources(assigned: Dictionary) -> void:
 ## `if cond: rules.feba_base_km = 9.0` on one line, both matched nothing and the validator printed PASS
 ## over a live second writer. Reproduced, then fixed. Dynamic `set()` writes are checked separately
 ## because their field name is a runtime string this cannot resolve at all.
-func _check_no_other_writers(declared: Dictionary, block: Dictionary) -> void:
-	for path in _consumer_paths():
-		var body := _stripped(path)
-		var idents := _rules_identifiers(body)
-		if idents.is_empty():
-			continue
+func _check_no_other_writers(consumers: Dictionary, declared: Dictionary, block: Dictionary) -> void:
+	for path in consumers.keys():
+		var body: String = consumers[path]["body"]
+		var idents: Array = consumers[path]["idents"]
 		var alternation := _alternation(idents)
 		var write := RegEx.create_from_string(
 			"(?<![A-Za-z0-9_])(?:%s)\\s*\\.\\s*([A-Za-z_][A-Za-z0-9_]*)\\s*(?:[-+*/]?=)(?!=)" % alternation)
@@ -307,22 +312,19 @@ func _check_no_other_writers(declared: Dictionary, block: Dictionary) -> void:
 ## A field that nothing reads is its own bug: a knob that resolves, populates, and changes nothing.
 ## The reader set is DERIVED (every script naming the rules class, minus the class itself and the
 ## populator) rather than hand-listed, so a third reader does not have to be remembered.
-func _check_every_field_is_read(declared: Dictionary) -> void:
+func _check_every_field_is_read(consumers: Dictionary, declared: Dictionary) -> void:
 	var read: Dictionary = {}
-	var readers := _consumer_paths()
-	readers.erase(POPULATOR_SOURCE)
-	for path in readers:
-		var body := _stripped(path)
-		var idents := _rules_identifiers(body)
-		if idents.is_empty():
+	for path in consumers.keys():
+		if path == POPULATOR_SOURCE:
 			continue
+		var body: String = consumers[path]["body"]
 		var deref := RegEx.create_from_string(
-			"(?<![A-Za-z0-9_])(?:%s)\\.([A-Za-z_][A-Za-z0-9_]*)" % _alternation(idents))
+			"(?<![A-Za-z0-9_])(?:%s)\\.([A-Za-z_][A-Za-z0-9_]*)"
+				% _alternation(consumers[path]["idents"]))
 		for found in deref.search_all(body):
 			read[found.get_string(1)] = true
 	if read.is_empty():
-		_h.fail("found no script that reads a rules field — the reader-set derivation broke (looked for scripts naming '%s' under %s)"
-			% [RULES_CLASS, CONSUMER_ROOT.trim_prefix("res://")])
+		_h.fail("consumers were found but not one of them dereferences a rules field — every field below would be reported unread, so the fault is in this check, not in the code it is judging")
 		return
 	for field in declared.keys():
 		if read.has(field):
@@ -347,16 +349,26 @@ func _rules_identifiers(body: String) -> Array:
 	return out.keys()
 
 
-## Every script under CONSUMER_ROOT that names the rules class, minus its own declaration.
-func _consumer_paths() -> Array[String]:
-	var out: Array[String] = []
+## Every script under CONSUMER_ROOT that names the rules class, minus its own declaration, as
+## path -> {body, idents}. Built ONCE: the write check and the read check both need exactly this, and
+## walking res://scripts twice to derive the same answer invites the two halves to disagree about who
+## the consumers are. A file naming the class but binding no identifier to it (a bare
+## `CombatRules.new()` passed straight as an argument, as several tests do) is dropped here, because
+## with no identifier there is nothing for either check to look for.
+func _consumers() -> Dictionary:
+	var out: Dictionary = {}
 	var names := RegEx.create_from_string(
 		"(?<![A-Za-z0-9_])%s(?![A-Za-z0-9_])" % RULES_CLASS)
 	for path in _gd_files(CONSUMER_ROOT):
 		if path == RULES_SOURCE:
 			continue
-		if names.search(_stripped(path)) != null:
-			out.append(path)
+		var body := _stripped(path)
+		if names.search(body) == null:
+			continue
+		var idents := _rules_identifiers(body)
+		if idents.is_empty():
+			continue
+		out[path] = {"body": body, "idents": idents}
 	return out
 
 
