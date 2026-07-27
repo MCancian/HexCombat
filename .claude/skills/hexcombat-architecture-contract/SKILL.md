@@ -77,7 +77,35 @@ documents every write form it detects and every blind spot it does not).
   allowance entry.
 - Aggregates migrate one at a time: one may be strict while the rest are unregistered.
 
-Registered so far: `antiship_establishment` (migration mode; authority lands in plan 0043).
+Registered so far: `antiship_establishment` — **enforced**, authority
+`scripts/transitions/AntishipTransitions.gd`, zero legacy writers (plan 0043).
+
+**The pilot, measured — copy this shape.** `AntishipTransitions` came out at 187 lines, 8 functions
+(5 public mutation operations, 3 private helpers) and 6 dependencies. Read it before writing the
+next authority; the parts that are the pattern rather than the anti-ship domain:
+
+- **Public methods are JOBS, not fields.** `ensure_establishment`, `reset_establishment`,
+  `apply_ijfs_effects`, `apply_launch_attrition`, `reset_transient_flags`. Five is a soft threshold on
+  public mutation OPERATIONS, not a cap on total methods — private helpers do not count, and forcing a
+  split to satisfy a number would create the second writer the whole convention exists to prevent.
+- **The receipt is a typed Resource, not a Dictionary.** `AntishipLaunchOutcome` carries one
+  operation's result plus its own `consistency_error()`; the authority refuses a request that fails it.
+- **Derived fields are recomputed in ONE private function** (`_reproject`) that every campaign write
+  ends with, so no caller has to know the arithmetic. Keep the invariant check there even when it is
+  currently unreachable: it guards the next write added to the file, not today's inputs.
+- **Application is all-or-nothing.** Match and validate every row first, then apply. A half-applied
+  aggregate with the operation still marked unapplied is worse than a refusal.
+- **Guards `push_error` and change nothing; they do NOT `assert(false)`.** A research batch should not
+  die on one bad row, and a guard that only push_errors can be exercised by a test
+  (`assert_error(...).is_push_error(...)`). That is what makes the refusals testable rather than
+  aspirational.
+- **Absence is not zero.** A cumulative source that reports nothing for a row has said nothing about
+  it; reading that as "zero losses" resurrects state. This was a real blocker caught in review.
+- **Distinguish cumulative-ASSIGNED from cumulative-ACCUMULATED sources**, and never merge two
+  sources that count different projections of the same thing — clamp their sum instead of asserting it.
+- **The ceiling is paid for, not raised.** Naming a new authority from a ceilinged phase module means
+  finding a dependency that genuinely leaves. In the pilot that was deleting `Theaters`, whose last
+  caller was re-deriving a map `GameData` already held.
 
 ## Turn engine facts
 

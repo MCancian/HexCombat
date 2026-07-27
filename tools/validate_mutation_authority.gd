@@ -205,10 +205,20 @@ class Ownership:
 	var field_names: Dictionary = {}    # field_name -> true (for the unresolved-receiver backstop)
 	var owner_paths: Dictionary = {}    # path -> true (a model may write its own protected fields)
 	var allowances: Dictionary = {}     # "path|Class.field" -> {aggregate, kind, removal_plan}
-	var allowance_used: Dictionary = {} # same key -> true, filled in by the scan
 	var authority_paths: Dictionary = {}# path -> aggregate id
-	var authority_used: Dictionary = {} # same key -> true, filled in by the scan
 	var mutators: Dictionary = {}       # "Class.method" -> aggregate id
+
+
+## What judging a scan against an Ownership produced: the writes that are NOT permitted, plus which
+## allowances and authorities were actually exercised. The usage record lives here rather than being
+## written back into Ownership, so the same findings can be judged twice against different baselines
+## — which is how the inert-authority direction is proven without hand-building a stripped Ownership.
+class Verdict:
+	extends RefCounted
+
+	var violations: Array[Finding] = []
+	var allowance_used: Dictionary = {}   # "path|Class.field" -> true
+	var authority_used: Dictionary = {}   # authority path -> true
 
 
 func _build_ownership(manifest: Dictionary, corpus: Corpus) -> Ownership:
@@ -301,11 +311,35 @@ func _methods_writing_fields(body: String, class_id: String, ownership: Ownershi
 
 # ── The scan ────────────────────────────────────────────────────────────────────────────────────
 
+## One protected write the scan found, built in ONE place with everything it needs. It used to be an
+## untyped Dictionary assembled in three passes — `_finding` built it, `_scan` bolted on path/line,
+## and the dynamic-set matcher overwrote `symbol` after construction — then read by string key in a
+## dozen places. `display` is why that overwrite existed: a dynamic `set()` is reported against the
+## CLASS, because the key may be computed, so the text shown differs from the key looked up.
+class Finding:
+	extends RefCounted
+
+	var symbol: String
+	var rule: String
+	var aggregate: String
+	var snippet: String
+	var path: String = ""
+	var line: int = 0
+
+	func _init(p_symbol: String, p_rule: String, p_aggregate: String, p_snippet: String) -> void:
+		symbol = p_symbol
+		rule = p_rule
+		aggregate = p_aggregate
+		snippet = p_snippet
+
+	func allowance_key() -> String:
+		return "%s|%s" % [path, symbol]
+
 ## Every protected write the corpus performs, as {path, line, rule, symbol, aggregate, snippet}.
 ## Whether a write is ALLOWED is decided afterwards, so an allowance that matches nothing can be
 ## reported as stale.
-func _scan(corpus: Corpus, ownership: Ownership) -> Array[Dictionary]:
-	var findings: Array[Dictionary] = []
+func _scan(corpus: Corpus, ownership: Ownership) -> Array[Finding]:
+	var findings: Array[Finding] = []
 	for path_value in corpus.stripped.keys():
 		var path := String(path_value)
 		var lines := String(corpus.stripped[path]).split("\n")
@@ -313,8 +347,8 @@ func _scan(corpus: Corpus, ownership: Ownership) -> Array[Dictionary]:
 		var logical := _join_continuations(lines)
 		for index in range(lines.size()):
 			for finding in _scan_line(String(logical[index]), types.at(index), corpus, ownership):
-				finding["path"] = path
-				finding["line"] = index + 1
+				finding.path = path
+				finding.line = index + 1
 				findings.append(finding)
 	return findings
 
@@ -481,8 +515,8 @@ func _resolve(expression: String, types: Dictionary, corpus: Corpus) -> String:
 
 
 func _scan_line(
-		line: String, types: Dictionary, corpus: Corpus, ownership: Ownership) -> Array[Dictionary]:
-	var out: Array[Dictionary] = []
+		line: String, types: Dictionary, corpus: Corpus, ownership: Ownership) -> Array[Finding]:
+	var out: Array[Finding] = []
 	out.append_array(_match_field_writes(line, types, corpus, ownership))
 	out.append_array(_match_cast_writes(line, corpus, ownership))
 	out.append_array(_match_dynamic_sets(line, types, corpus, ownership))
@@ -494,7 +528,7 @@ func _scan_line(
 ## `<receiver expression> . <field> <effect>`, so they are matched together and told apart by the
 ## effect that follows the field.
 func _match_field_writes(
-		line: String, types: Dictionary, corpus: Corpus, ownership: Ownership) -> Array[Dictionary]:
+		line: String, types: Dictionary, corpus: Corpus, ownership: Ownership) -> Array[Finding]:
 	# `<receiver> . <field>` followed by whichever effect identifies the rule. Built from named parts:
 	# one long format string mixing `%` and `+` hid a capture-group off-by-one for two revisions.
 	var target := "(?<![\\w.])(%s)\\s*\\.\\s*([A-Za-z_]\\w*)\\s*" % CHAIN_EXPR
@@ -502,7 +536,7 @@ func _match_field_writes(
 	var container_effect := "(?:\\[[^\\]\\n]*\\])?\\s*\\.\\s*(%s)\\s*\\(" % "|".join(MUTATOR_METHODS)
 	var assign_effect := "(%s)" % ASSIGN_OPS
 	var regex := _regex("%s(?:%s|%s|%s)" % [target, element_effect, container_effect, assign_effect])
-	var out: Array[Dictionary] = []
+	var out: Array[Finding] = []
 	for found in regex.search_all(line):
 		var receiver := found.get_string(1)
 		var field := found.get_string(2)
@@ -515,19 +549,19 @@ func _match_field_writes(
 			rule = "compound_assign"
 		var class_id := _resolve(receiver, types, corpus)
 		var finding := _protected_finding(class_id, field, rule, corpus, ownership, line)
-		if not finding.is_empty():
+		if finding != null:
 			out.append(finding)
 	return out
 
 
 ## `(thing as Model).field = x` — the cast names the type outright, so no inference is needed.
-func _match_cast_writes(line: String, corpus: Corpus, ownership: Ownership) -> Array[Dictionary]:
+func _match_cast_writes(line: String, corpus: Corpus, ownership: Ownership) -> Array[Finding]:
 	var regex := _regex("\\bas\\s+([A-Za-z_]\\w*)\\s*\\)\\s*\\.\\s*([A-Za-z_]\\w*)\\s*(?:\\[[^\\]\\n]*\\])?\\s*(?:%s)" % ASSIGN_OPS)
-	var out: Array[Dictionary] = []
+	var out: Array[Finding] = []
 	for found in regex.search_all(line):
 		var finding := _protected_finding(
 			found.get_string(1), found.get_string(2), "cast_assign", corpus, ownership, line)
-		if not finding.is_empty():
+		if finding != null:
 			out.append(finding)
 	return out
 
@@ -535,11 +569,11 @@ func _match_cast_writes(line: String, corpus: Corpus, ownership: Ownership) -> A
 ## `recv.set("field", x)` and friends. Flagged on ANY protected model regardless of the key, because
 ## the key can be computed and a validator that trusted a literal key would be theatre.
 func _match_dynamic_sets(
-		line: String, types: Dictionary, corpus: Corpus, ownership: Ownership) -> Array[Dictionary]:
+		line: String, types: Dictionary, corpus: Corpus, ownership: Ownership) -> Array[Finding]:
 	var regex := _regex(
 		"(?<![\\w.])(%s)\\s*\\.\\s*(%s)\\s*\\(\\s*(?:&?\"[^\"\\n]*\"|[A-Za-z_]\\w*)"
 		% [CHAIN_EXPR, "|".join(DYNAMIC_SETTERS)])
-	var out: Array[Dictionary] = []
+	var out: Array[Finding] = []
 	for found in regex.search_all(line):
 		var class_id := _resolve(found.get_string(1), types, corpus)
 		if class_id.is_empty():
@@ -548,10 +582,11 @@ func _match_dynamic_sets(
 			if String(key).get_slice(".", 0) != class_id:
 				continue
 			# Reported against the CLASS, not a field: the key may be computed, so naming one
-			# particular field would be a guess dressed up as a finding.
-			var finding := _finding(String(key), "dynamic_set", ownership, line)
-			finding["symbol"] = "%s.<any field, key not statically known>" % class_id
-			out.append(finding)
+			# particular field would be a guess dressed up as a finding. The protected key is still
+			# what resolves the aggregate, which is why `display` is a constructor argument rather
+			# than something written over the finding afterwards.
+			out.append(_finding(String(key), "dynamic_set", ownership, line,
+				"%s.<any field, key not statically known>" % class_id))
 			break
 	return out
 
@@ -559,9 +594,9 @@ func _match_dynamic_sets(
 ## A call to a model method that writes protected fields, from anywhere. `_apply_allowances` lets it
 ## through for the authority and for declared writers, exactly as a direct write would be.
 func _match_mutator_calls(
-		line: String, types: Dictionary, corpus: Corpus, ownership: Ownership) -> Array[Dictionary]:
+		line: String, types: Dictionary, corpus: Corpus, ownership: Ownership) -> Array[Finding]:
 	var regex := _regex("(?<![\\w.])(%s)\\s*\\.\\s*([A-Za-z_]\\w*)\\s*\\(" % CHAIN_EXPR)
-	var out: Array[Dictionary] = []
+	var out: Array[Finding] = []
 	for found in regex.search_all(line):
 		var class_id := _resolve(found.get_string(1), types, corpus)
 		if class_id.is_empty():
@@ -576,64 +611,69 @@ func _match_mutator_calls(
 ## unknown and the field name is protected SOMEWHERE, which is the false-negative backstop.
 func _protected_finding(
 		class_id: String, field: String, rule: String,
-		corpus: Corpus, ownership: Ownership, line: String) -> Dictionary:
+		corpus: Corpus, ownership: Ownership, line: String) -> Finding:
 	# `Variant`/`Object`/`Resource` are annotations that name no class, so they carry exactly as much
 	# information as no annotation at all. Treating them as "resolved, and not protected" was a
 	# silent bypass: one `func apply(row: Variant)` and the gate went blind.
 	if class_id.is_empty() or not corpus.path_of.has(class_id):
 		if not ownership.field_names.has(field):
-			return {}
+			return null
 		return _finding("?.%s" % field, "unresolved_receiver", ownership, line)
 	var key := "%s.%s" % [class_id, field]
 	if not ownership.protected.has(key):
-		return {}
+		return null
 	return _finding(key, rule, ownership, line)
 
 
-func _finding(symbol: String, rule: String, ownership: Ownership, line: String) -> Dictionary:
+## `display` overrides the reported text without changing the key the aggregate is resolved from.
+func _finding(
+		symbol: String, rule: String, ownership: Ownership, line: String,
+		display: String = "") -> Finding:
 	var aggregate := ""
 	if ownership.protected.has(symbol):
 		aggregate = String(ownership.protected[symbol]["aggregate"])
-	return {"symbol": symbol, "rule": rule, "aggregate": aggregate, "snippet": line.strip_edges()}
+	var shown := display if not display.is_empty() else symbol
+	return Finding.new(shown, rule, aggregate, line.strip_edges())
 
 
 # ── Verdict: which findings are allowed, and which allowances are dead ──────────────────────────
 
-## Splits findings into permitted writes (marking their allowance used) and violations. A model may
-## always write its own protected fields — that is where a sanctioned mutator method lives.
-func _apply_allowances(findings: Array[Dictionary], ownership: Ownership) -> Array[Dictionary]:
-	var violations: Array[Dictionary] = []
+## Judges every finding against the manifest and returns BOTH halves of the answer: which writes are
+## not permitted, and which allowances and authorities were exercised getting there. It reads
+## Ownership and writes nothing back into it, so a caller may judge the same findings against a
+## different baseline. A model may always write its own protected fields — that is where a sanctioned
+## mutator method lives.
+func _apply_allowances(findings: Array[Finding], ownership: Ownership) -> Verdict:
+	var verdict := Verdict.new()
 	for finding in findings:
-		var path := String(finding["path"])
-		if ownership.authority_paths.has(path):
-			ownership.authority_used[path] = true
+		if ownership.authority_paths.has(finding.path):
+			verdict.authority_used[finding.path] = true
 			continue
-		if ownership.owner_paths.has(path):
+		if ownership.owner_paths.has(finding.path):
 			continue
-		var key := "%s|%s" % [path, String(finding["symbol"])]
-		if ownership.allowances.has(key):
-			ownership.allowance_used[key] = true
+		if ownership.allowances.has(finding.allowance_key()):
+			verdict.allowance_used[finding.allowance_key()] = true
 			continue
-		violations.append(finding)
-	return violations
+		verdict.violations.append(finding)
+	return verdict
 
 
 ## An authority that writes nothing is not an authority — either the aggregate's writes moved
 ## somewhere else (a bypass the scan should have caught, so the manifest is lying about which model
 ## it protects) or the class is a stub the manifest is treating as shipped.
-func _report_inert_authorities(manifest: Dictionary, ownership: Ownership) -> void:
+func _report_inert_authorities(manifest: Dictionary, verdict: Verdict) -> void:
 	for aggregate_value in manifest.get("aggregates", []):
 		var aggregate: Dictionary = aggregate_value
 		var authority_path := _text(aggregate.get("authority_path", ""))
-		if authority_path.is_empty() or ownership.authority_used.has(authority_path):
+		if authority_path.is_empty() or verdict.authority_used.has(authority_path):
 			continue
 		_fail("E_INERT_AUTHORITY: %s is declared the authority for aggregate '%s' but writes none of its protected fields. Either it is a stub, or the real writes are somewhere this scan is not looking." % [
 			authority_path.trim_prefix("res://"), _text(aggregate.get("id", ""))])
 
 
-func _report_stale_allowances(ownership: Ownership) -> void:
+func _report_stale_allowances(ownership: Ownership, verdict: Verdict) -> void:
 	for key in ownership.allowances.keys():
-		if ownership.allowance_used.has(key):
+		if verdict.allowance_used.has(key):
 			continue
 		var allowance: Dictionary = ownership.allowances[key]
 		_fail("E_STALE_ALLOWANCE: %s no longer writes %s (aggregate '%s', %s allowance). Delete the entry — a dead exception is an open door nobody is watching." % [
@@ -641,7 +681,7 @@ func _report_stale_allowances(ownership: Ownership) -> void:
 			String(allowance["aggregate"]), String(allowance["kind"])])
 
 
-func _report_violations(violations: Array[Dictionary], ownership: Ownership, manifest_path: String) -> void:
+func _report_violations(violations: Array[Finding], ownership: Ownership, manifest_path: String) -> void:
 	for violation in violations:
 		_fail(_diagnostic(violation, ownership, manifest_path))
 
@@ -649,18 +689,16 @@ func _report_violations(violations: Array[Dictionary], ownership: Ownership, man
 ## Failures teach the rule: what was written, how, where, who is allowed to write it instead, and
 ## where the ownership fact lives. A method name is only ever suggested when the manifest names an
 ## authority whose file exists — never invented.
-func _diagnostic(violation: Dictionary, ownership: Ownership, manifest_path: String) -> String:
-	var symbol := String(violation["symbol"])
-	var aggregate := String(violation["aggregate"])
-	var authority := _authority_advice(aggregate, ownership)
-	if String(violation["rule"]) == "unresolved_receiver":
+func _diagnostic(violation: Finding, ownership: Ownership, manifest_path: String) -> String:
+	var authority := _authority_advice(violation.aggregate, ownership)
+	if violation.rule == "unresolved_receiver":
 		return "E_UNRESOLVED_WRITE: %s:%d writes '%s' on a receiver whose type cannot be resolved: `%s`. '%s' is a protected field name, so this write cannot be cleared or blamed. Annotate the receiver (`var row: SomeModel = …`) and the gate will judge it. Ownership: %s" % [
-			String(violation["path"]).trim_prefix("res://"), int(violation["line"]),
-			symbol.trim_prefix("?."), String(violation["snippet"]), symbol.trim_prefix("?."),
+			violation.path.trim_prefix("res://"), violation.line,
+			violation.symbol.trim_prefix("?."), violation.snippet, violation.symbol.trim_prefix("?."),
 			manifest_path.trim_prefix("res://")]
 	return "E_UNAUTHORIZED_WRITE: %s:%d mutates protected %s (%s) outside its authority: `%s`. Aggregate '%s'; %s Ownership: %s" % [
-		String(violation["path"]).trim_prefix("res://"), int(violation["line"]), symbol,
-		String(violation["rule"]), String(violation["snippet"]), aggregate, authority,
+		violation.path.trim_prefix("res://"), violation.line, violation.symbol,
+		violation.rule, violation.snippet, violation.aggregate, authority,
 		manifest_path.trim_prefix("res://")]
 
 
@@ -790,9 +828,10 @@ func _run_real_scan() -> void:
 	_check_authority_dir(manifest, ownership, ".gd")
 	var findings := _scan(corpus, ownership)
 	_guard_vacuous(paths.size(), corpus, ownership, findings.size())
-	_report_violations(_apply_allowances(findings, ownership), ownership, MANIFEST_PATH)
-	_report_stale_allowances(ownership)
-	_report_inert_authorities(manifest, ownership)
+	var verdict := _apply_allowances(findings, ownership)
+	_report_violations(verdict.violations, ownership, MANIFEST_PATH)
+	_report_stale_allowances(ownership, verdict)
+	_report_inert_authorities(manifest, verdict)
 	_print_campaign_progress(manifest, paths.size(), ownership)
 
 
@@ -843,14 +882,15 @@ func _run_self_test() -> void:
 	if not _check_manifest(manifest, corpus, true):
 		return
 	var ownership := _build_ownership(manifest, corpus)
+	var verdict := _apply_allowances(_scan(corpus, ownership), ownership)
 	var actual: Dictionary = {}
-	for violation in _apply_allowances(_scan(corpus, ownership), ownership):
-		actual["%s:%d" % [String(violation["path"]), int(violation["line"])]] = String(violation["rule"])
+	for violation in verdict.violations:
+		actual["%s:%d" % [violation.path, violation.line]] = violation.rule
 	var expected := _fixture_expectations(corpus)
 	_compare_self_test(expected, actual)
 	_check_manifest_error_fixtures(corpus)
 	_check_authority_dir_fixture(manifest, ownership)
-	_check_inert_authority_fixture(manifest, ownership)
+	_check_inert_authority_fixture(manifest, verdict)
 	print("Self-test: %d fixture file(s), %d expected violation(s) reproduced." % [paths.size(), expected.size()])
 
 
@@ -862,16 +902,16 @@ func _check_authority_dir_fixture(manifest: Dictionary, ownership: Ownership) ->
 	_expect_single_error(produced, "E_UNREGISTERED_AUTHORITY_FILE", "authority-directory fixture")
 
 
-## The fixture authority DOES write, so the live check passes there. Re-running it against an empty
-## usage record is how the failing direction gets exercised without a second fixture tree.
-func _check_inert_authority_fixture(manifest: Dictionary, ownership: Ownership) -> void:
-	if not ownership.authority_used.has(_text(Dictionary(manifest["aggregates"][0]).get("authority_path", ""))):
+## The fixture authority DOES write, so the live check passes there. Re-judging the same manifest
+## against an EMPTY usage record is how the failing direction gets exercised without a second fixture
+## tree — and it is only expressible because the usage record is a separate Verdict rather than a side
+## effect written back into Ownership.
+func _check_inert_authority_fixture(manifest: Dictionary, verdict: Verdict) -> void:
+	if not verdict.authority_used.has(_text(Dictionary(manifest["aggregates"][0]).get("authority_path", ""))):
 		_fail("SELF-TEST: the fixture authority wrote nothing, so the inert-authority check is being proven against the wrong baseline.")
 		return
 	var produced := _capture_failures(func() -> void:
-		var inert := Ownership.new()
-		inert.authority_paths = ownership.authority_paths
-		_report_inert_authorities(manifest, inert))
+		_report_inert_authorities(manifest, Verdict.new()))
 	_expect_single_error(produced, "E_INERT_AUTHORITY", "inert-authority fixture")
 
 

@@ -22,6 +22,13 @@ numbers: `docs/reports/2026-07-16-code-quality-baseline.md`. Re-measure anytime:
 `GameState` is the sanctioned exception on deps (turn conductor) — but never ADD a dependency
 to it without checking whether a resolver/builder should own the reference instead.
 
+**Mutation authorities** (`scripts/transitions/*Transitions.gd`) carry one extra soft budget, set from
+the plan-0043 pilot: **≤ 6 public mutation operations**. It is a threshold on public methods that
+CHANGE the aggregate, not a cap on total methods — private helpers and read-only queries do not count.
+On breach, ask whether the aggregate is really two aggregates; do NOT split the file, because a second
+file writing the same fields is the exact failure the convention exists to prevent. Measured pilot:
+`AntishipTransitions`, 187 lines, 5 public operations, 3 private helpers, 6 deps.
+
 ## Magic numbers
 
 Gameplay-relevant numeric literals live in `data/*.json` (if the USER may tune them —
