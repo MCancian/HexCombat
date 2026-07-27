@@ -83,10 +83,17 @@ static func resolve_antiship_turn(state: GameStateData, dice: Dice) -> Dictionar
 	# Captured pre-resolve: drain/flip below mutate the cohorts before the summary is stored.
 	var wave_bns: int = SealiftResolver.sent_cohort_bn_ids(state.sealift_state).size()
 
-	var outcome := AntishipResolver.resolve(
-		state.turn_number, crossing_reserve, state.antiship_systems,
-		state.last_sealift_sent_by_type, GameData.ship_defs, GameData.beach_to_to, GameData.active_tos,
-		GameData.to_adjacency, state.lost_at_sea_accumulator, state.sealift_state.escort_sam, as_dice)
+	var context := AntishipResolutionContext.new()
+	context.crossing_reserve = crossing_reserve
+	context.antiship_systems = state.antiship_systems
+	context.sent_by_type = state.last_sealift_sent_by_type
+	context.ship_defs = GameData.ship_defs
+	context.beach_to_to = GameData.beach_to_to
+	context.active_tos = GameData.active_tos
+	context.to_adjacency = GameData.to_adjacency
+	context.lost_at_sea_accumulator = state.lost_at_sea_accumulator
+	context.escort_sam = state.sealift_state.escort_sam
+	var outcome := AntishipResolver.resolve(state.turn_number, context, as_dice)
 	if outcome["summary"] == null:
 		# Nothing crossed this turn: no fires, no state to apply (pending_lost_at_sea keeps its value).
 		return {}
@@ -166,22 +173,3 @@ static func apply_crossing_hull_losses(state: GameStateData, destroyed_by_type: 
 static func register_ship_losses(state: GameStateData, bn_equiv_lost: int) -> void:
 	state.pending_lost_at_sea = maxi(0, bn_equiv_lost)
 
-
-## Test-called surface (tests/ijfs/ijfs_warmup_context_guard_test.gd, via the GameState façade) —
-## the warmup context itself is IjfsResolver's.
-static func build_warmup_context(
-	x_day: int, z_day: int, total_days: int,
-	rules: Dictionary, exquisite_intel: Dictionary,
-	attrition_profile: String,
-	firing_capacity_config: Dictionary,
-	release_rules: Array,
-) -> Dictionary:
-	return IjfsResolver.build_warmup_context(
-		x_day, z_day, total_days, rules, exquisite_intel, attrition_profile,
-		firing_capacity_config, release_rules)
-
-
-## Test-called surface (tests/mine_neutralization_override_test.gd, via the GameState façade) — the
-## per-hull mine metadata is AntishipResolver's; no GameStateData involved.
-static func mine_ship_meta(transit_config: Dictionary) -> Dictionary:
-	return AntishipResolver.mine_ship_meta(GameData.ship_defs, transit_config)

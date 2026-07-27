@@ -1,5 +1,5 @@
 ## Guards the IJFS warmup_context producer↔consumer key contract (refactor_audit item 1). A typo in
-## GameState._build_warmup_context would otherwise make IjfsEngine.run_daily silently read a default
+## IjfsResolver.build_warmup_context would otherwise make IjfsEngine.run_daily silently read a default
 ## (null/empty) and that config would go dead with no error — the bug class that left exquisite intel
 ## dormant. IjfsEngine.unknown_warmup_keys flags any key the engine doesn't read; run_daily asserts it
 ## is empty.
@@ -8,7 +8,7 @@ extends GdUnitTestSuite
 
 func test_real_producer_emits_only_known_keys() -> void:
 	# The actual producer must not emit a single key the engine won't read (the real regression guard).
-	var wc: Dictionary = GameState._build_warmup_context(1, -3, 4, {}, {}, "even", {}, [])
+	var wc: Dictionary = IjfsResolver.build_warmup_context(1, -3, 4, {}, {}, "even", {}, [])
 	assert_array(IjfsEngine.unknown_warmup_keys(wc)).is_empty()
 
 

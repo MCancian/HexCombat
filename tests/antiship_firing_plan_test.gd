@@ -92,7 +92,7 @@ func test_destroyed_systems_fire_via_destroyed_fire_percentage() -> void:
 	assert_int(int(fired[0]["available_firing"])).is_equal(0)
 	assert_int(int(fired[0]["destroyed_firing"])).is_equal(5)
 	assert_int(int(fired[0]["systems_fired"])).is_equal(5)
-	assert_array(result["launch_attrition"]).is_empty()  # nothing attempted by survivors
+	assert_array(result["outcomes"]).is_empty()  # nothing attempted by survivors
 
 
 # --- allocate_firing_to_rows: proportional largest-remainder -------------------------------------
@@ -137,12 +137,6 @@ func test_resolve_launch_attrition_draw_order_and_inventory() -> void:
 	assert_int(int(fired[0]["attempted_firing"])).is_equal(4)
 	assert_int(int(fired[0]["prelaunch_destroyed"])).is_equal(1)
 	assert_int(int(fired[0]["postlaunch_destroyed"])).is_equal(1)
-
-	var attr: Array = result["launch_attrition"]
-	assert_int(attr.size()).is_equal(1)
-	assert_int(int(attr[0]["launched"])).is_equal(3)
-	assert_int(int(attr[0]["prelaunch_destroyed"])).is_equal(1)
-	assert_int(int(attr[0]["postlaunch_destroyed"])).is_equal(1)
 
 	# The typed receipt AntishipTransitions applies. The calculator itself writes NOTHING: the row it
 	# was built from is still untouched (plan 0043).

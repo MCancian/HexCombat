@@ -143,8 +143,7 @@ static func build_firing_plan(
 
 ## Resolve per-launcher pre/post launch kills. PURE: it rolls the dice and reports, and writes
 ## nothing — AntishipTransitions turns the reported destruction into losses (plan 0043).
-## Returns {"systems_fired": Array[Dictionary], "launch_attrition": Array[Dictionary],
-## "outcomes": Array[AntishipLaunchOutcome]}.
+## Returns {"systems_fired": Array[Dictionary], "outcomes": Array[AntishipLaunchOutcome]}.
 static func resolve_launch_attrition(
 		allocation_plan: Array,
 		destroyed_firing_plan: Dictionary,
@@ -239,14 +238,13 @@ static func _sorted_report_keys(meta: Dictionary) -> Array:
 	return sorted_keys
 
 
-## Shape the three output lists: systems_fired (crossing input), launch_attrition (the human-readable
-## ledger) and outcomes (the typed receipts AntishipTransitions applies). All three are built in the
-## same sorted key order, so the ledger and the state change can always be read side by side.
+## Shape the output lists: systems_fired (crossing input) and outcomes (the typed receipts
+## AntishipTransitions applies). Both are built in the same sorted key order so crossing fire and
+## state changes can always be read side by side.
 static func _build_attrition_reports(
 		sorted_keys: Array, meta: Dictionary, grouped: Dictionary,
 		destroyed_firing_plan: Dictionary) -> Dictionary:
 	var systems_fired: Array = []
-	var launch_attrition: Array = []
 	var outcomes: Array[AntishipLaunchOutcome] = []
 	for key in sorted_keys:
 		var key_meta: Array = meta[key]
@@ -272,19 +270,10 @@ static func _build_attrition_reports(
 				"postlaunch_destroyed": int(summary["postlaunch_destroyed"]),
 			})
 		if int(summary["attempted_firing"]) > 0:
-			launch_attrition.append({
-				"to": int(summary["to"]),
-				"type": summary["type"],
-				"attempted_firing": int(summary["attempted_firing"]),
-				"prelaunch_destroyed": int(summary["prelaunch_destroyed"]),
-				"postlaunch_destroyed": int(summary["postlaunch_destroyed"]),
-				"launched": int(summary["available_firing"]),
-			})
 			outcomes.append(_outcome_from(summary, int(key_meta[0]), int(key_meta[1])))
 
 	return {
 		"systems_fired": systems_fired,
-		"launch_attrition": launch_attrition,
 		"outcomes": outcomes,
 	}
 

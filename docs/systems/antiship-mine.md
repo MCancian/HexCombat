@@ -14,7 +14,7 @@ Resolves **Green coastal anti-ship missile strikes** against the **Red amphibiou
 | `scripts/calc/AntishipCalculator.gd` | D3-B2 firing-plan + launch attrition |
 | `scripts/calc/AntishipCrossing.gd` | D3-B3 6-stage crossing-damage model |
 | `scripts/AntishipMagazine.gd` | Magazine/ammo reservation + deduction |
-| `scripts/AntishipLoaders.gd` | Loads all `data/antiship/*.json` |
+| `scripts/loaders/AntishipLoaders.gd` | Loads all `data/antiship/*.json` |
 | `scripts/calc/MineWarfareService.gd` | D3-C geometric mine danger model |
 | `scripts/ShipLoadingModel.gd` | `resolve_bn_losses` — ship hulls → BN losses |
 | `scripts/model/ShipDef.gd` | Ship template (capacity, category, is_decoy) |
@@ -58,7 +58,7 @@ HexCombat's adaptation of that premise.
 
 1. **Geometry** (`_count_dangerous_mines`): `num_mines` scattered uniformly in a `length × width` field. Fleet takes a randomized straight approach path (random incident angle [30–60°] + entry point [0.3–0.7]). Only mines within `danger_radius` (50 m) of the path line are **dangerous** — typically a handful, not all `num_mines`. Each encounter re-rolls layout + path via the injected Dice.
 2. **Pre-landing clearing**: `assigned_sweepers × prelanding_clear_per_sweeper` dangerous mines cleared. Default `prelanding_clear_per_sweeper = 1` → mainly locates the field, not open the lane.
-3. **Transit**: Surviving crossing fleet runs the lane — **decoys first** (each detonates mines until neutralized, acting as sponges), then real ships by ascending value. Each ship detonates one dangerous mine; neutralization probability from `neutralization_probabilities` keyed by the ship's likelihood label. The label is resolved in `AntishipResolver.mine_ship_meta` (called via `GameState._mine_ship_meta`) with precedence **decoy override > per-hull `ShipDef.mine_neutralization_likelihood` (optional, from `ships.json`) > the transit `neutralization_likelihood_by_category` table** (the fallback; no production hull overrides yet, so today it's purely category-driven). Lane opens after first transit (`lane_cleared`); later waves are safe.
+3. **Transit**: Surviving crossing fleet runs the lane — **decoys first** (each detonates mines until neutralized, acting as sponges), then real ships by ascending value. Each ship detonates one dangerous mine; neutralization probability from `neutralization_probabilities` keyed by the ship's likelihood label. The label is resolved in `AntishipResolver.mine_ship_meta` with precedence **decoy override > per-hull `ShipDef.mine_neutralization_likelihood` (optional, from `ships.json`) > the transit `neutralization_likelihood_by_category` table** (the fallback; no production hull overrides yet, so today it's purely category-driven). Lane opens after first transit (`lane_cleared`); later waves are safe.
 
 **Config knobs** in `data/antiship/minefields.json`: `geometry.{minefield_length, minefield_width, danger_radius, incident_angle_min_deg, incident_angle_max_deg, entry_point_min, entry_point_max}` and `transit.{prelanding_clear_per_sweeper, neutralization_probabilities, neutralization_likelihood_by_category, decoy_neutralization_likelihood}`.
 
@@ -108,7 +108,7 @@ TIV's separate `mine_warfare_service.py` (great-circle `offset_coordinate_meters
 | Function | One-liner |
 |---|---|
 | `AntishipCalculator.build_firing_plan(systems, ijfs, targets, fire_pcts, destroyed_pcts, mag)` → `{allocation_plan, destroyed_firing_plan}` | Build row-level intended firing allocations capped by availability + magazine |
-| `AntishipCalculator.resolve_launch_attrition(systems, plan, destroyed, config, dice)` → `{systems_fired, launch_attrition}` | Per-launcher detect/destroy/intercept draw, mutates system rows |
+| `AntishipCalculator.resolve_launch_attrition(allocation_plan, destroyed_firing_plan, config, dice)` → `{systems_fired, outcomes}` | Per-launcher detect/destroy/intercept draw; pure report rows for `AntishipTransitions` |
 | `AntishipCalculator.allocate_firing_to_rows(qty_list, total)` → `int[]` | Proportional largest-remainder allocation across availability rows |
 | `AntishipCrossing.resolve_crossing_damage(systems_fired, ship_snaps, catalog, config, targets, dice, [active_tos, to_adj])` → `Dict` | 6-stage crossing pipeline (launches → failures → intercept → home → terminal → damage) |
 | `AntishipMagazine.reserve_full_volley(type_id, count)` → `int` | Full-volley-or-nothing: reserve magazines; 0 on shortfall |
@@ -148,7 +148,7 @@ IJFS writeback (cumulative destroyed / this-cycle suppressed)
     │      → allocation_plan
     │
     ├─4. AntishipCalculator.resolve_launch_attrition()   (pure — rolls and reports)
-    │      → systems_fired, launch_attrition, outcomes
+    │      → systems_fired, outcomes
     │        (outcomes go back to AntishipTransitions.apply_launch_attrition()
     │         AFTER the resolver returns, booking the permanent launcher losses)
     │

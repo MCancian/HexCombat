@@ -271,18 +271,6 @@ func resolve_ijfs_turn(dice: Dice) -> Dictionary:
 	return FiresPhases.resolve_ijfs_turn(data, dice)
 
 
-func _build_warmup_context(
-	x_day: int, z_day: int, total_days: int,
-	rules: Dictionary, exquisite_intel: Dictionary,
-	attrition_profile: String,
-	firing_capacity_config: Dictionary,
-	release_rules: Array,
-) -> Dictionary:
-	return FiresPhases.build_warmup_context(
-		x_day, z_day, total_days, rules, exquisite_intel, attrition_profile,
-		firing_capacity_config, release_rules)
-
-
 ## Test-called surface (tests/ijfs/*) — pure logic lives in FiresPhases.
 func _rebuild_ijfs_state() -> void:
 	FiresPhases.rebuild_ijfs_state(data)
@@ -305,12 +293,6 @@ func _apply_ijfs_maneuver_casualties() -> void:
 
 func resolve_antiship_turn(dice: Dice) -> Dictionary:
 	return FiresPhases.resolve_antiship_turn(data, dice)
-
-
-## Test-called surface (tests/mine_neutralization_override_test.gd) — pure logic lives in
-## FiresPhases/AntishipResolver; no GameStateData involved.
-func _mine_ship_meta(transit_config: Dictionary) -> Dictionary:
-	return FiresPhases.mine_ship_meta(transit_config)
 
 
 # --- D5-C Cleanup phase — end-of-turn per-system flag reset ------------------------------------

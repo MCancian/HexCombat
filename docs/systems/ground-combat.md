@@ -8,7 +8,7 @@ Resolve ground combat when Red and Green brigades occupy the same hex after move
 
 | File | Role |
 |---|---|
-| `scripts/CombatCalculator.gd` | Core attack resolver — `resolve_map_attack()`: formula, rolls, loss rates, FEBA, casualty selection. Pure `static func` in `RefCounted`. |
+| `scripts/calc/CombatCalculator.gd` | Core attack resolver — `resolve_map_attack()`: formula, rolls, loss rates, FEBA, casualty selection. Pure `static func` in `RefCounted`. |
 | `scripts/CombatForces.gd` | Force aggregation — flattens brigades into maneuver-unit arrays and support-count dicts, filtering by tags. |
 | `scripts/UnitStats.gd` | `TYPE_DEFS` strength/tags table + `FALLBACK_CATEGORY_DEFS`. Lookups: `strength_for_type()`, `has_tag()`. |
 | `scripts/model/CombatResult.gd` | `Resource` holding strength, ratio, losses, casualties, `feba_movement_km`, and full `combat_detail` dict. |
@@ -71,7 +71,7 @@ Resolve ground combat when Red and Green brigades occupy the same hex after move
 
 ## 4. Casualty selection
 
-`_select_casualties` (`CombatCalculator.gd`):
+`_select_casualties` (`scripts/calc/CombatCalculator.gd`):
 - All maneuver and on-map support units are pooled together.
 - Weight assignment: `MANEUVER_CASUALTY_WEIGHT = 4.0`, `SUPPORT_CASUALTY_WEIGHT = 1.0`.
 - Uses `dice.weighted_choice(weights)` in a loop without replacement (selected indices have their weight set to `0.0`).
@@ -160,7 +160,7 @@ Combat sits at step 7, after all movement and before FEBA retreats/ownership cha
 
 **DIVERGENCE 1 — RNG algorithm.** TIV uses `numpy.random.default_rng(seed)` with `rng.integers(1,101)` and `rng.choice(a, size=k, replace=False)`. HexCombat uses `SeededDice` (`scripts/SeededDice.gd`), which wraps Godot's `RandomNumberGenerator` (`randi_range(1,100)` and Fisher-Yates partial shuffle for `choose_indices`). The roll *sequence* (attacker-loss → defender-loss → feba → casualty indices) matches TIV's same-sequence, but the RNG *algorithm* differs — HexCombat is **not value-identical** to TIV for a given seed. It is self-consistent only.
 
-**DIVERGENCE 2 — combat_detail shape.** TIV includes `"support_power_breakdown"` *and* `"support_unit_count"` per side. HexCombat (`CombatCalculator.gd`) uses key `"support_breakdown"` and omits `"support_unit_count"`. Minor shape divergence.
+**DIVERGENCE 2 — combat_detail shape.** TIV includes `"support_power_breakdown"` *and* `"support_unit_count"` per side. HexCombat (`scripts/calc/CombatCalculator.gd`) uses key `"support_breakdown"` and omits `"support_unit_count"`. Minor shape divergence.
 
 **DIVERGENCE 3 — unit strength values (✅ RESOLVED 2026-06-29 — keep HexCombat's table; see `docs/archive/PORT_FIDELITY_DECISIONS.md`).**
 Ratified as the intended design. Note re helicopters: `rotary_wing` (and `artillery`) battalions are

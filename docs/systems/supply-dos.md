@@ -8,16 +8,16 @@ Red DOS (Days Of Supply) models consumable supply for PLA brigades that have **l
 
 | File | Role |
 |---|---|
-| `scripts/DosConsumption.gd` | `DosConsumption` (RefCounted). Constants, mechanized classification, per-unit tonnage, full-turn consumption summary. Pure logic; no Node/scene dependency. |
+| `scripts/calc/DosConsumption.gd` | `DosConsumption` (RefCounted). Constants, mechanized classification, per-unit tonnage, full-turn consumption summary. Pure logic; no Node/scene dependency. |
 | `scripts/model/SupplyState.gd` | `SupplyState` (Resource). Holds `current_dos_tons: float` and `day_history: Array[Dictionary]`. Lightweight model object. |
 | `scripts/GameState.gd` | Autoload runtime state. Holds `supply_state: SupplyState` (line 48). `resolve_supply_turn()` (line 384) drives consumption each combat turn. `_rebuild_supply_state()` (line 992) initialises the pool. |
 | `scripts/GameData.gd` | Autoload. `red_dos_start: int` (line 18) loaded from scenario JSON (line 176). |
-| `scripts/CombatCalculator.gd` | Reads `supply_effectiveness` from unit dict (line 227–229) — this is where a depleted pool would penalise combat. |
+| `scripts/calc/CombatCalculator.gd` | Reads `supply_effectiveness` from unit dict — this is where a depleted pool would penalise combat. |
 | `scripts/model/Brigade.gd` | Model class. Initialises each BN's `supply_effectiveness: 1.0` (line 42). |
 | `scripts/EventBus.gd` | Fires `supply_updated(summary: Dictionary)` (line 17) so views/logs can react. |
 | `scripts/LLMGameAPI.gd` | Exposes `supply_state` in `get_observation()` (line 32) via `_supply_state_observation()` (line 229). |
 
-## 3. Constants (`DosConsumption.gd`)
+## 3. Constants (`scripts/calc/DosConsumption.gd`)
 
 ```gdscript
 const BASE_MECHANIZED_TONS: int = 300        # line 4

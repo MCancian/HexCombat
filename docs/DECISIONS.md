@@ -19,6 +19,13 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-27 — Legibility sweep made the parameter budget enforceable (agent, plan 0052).**
+  `tools/gd_metrics.py --check-ceiling` now counts wrapped signatures and gates per-function
+  parameter ceilings; `AntishipResolver.resolve` pays down its breach with a typed context. Dead
+  `HexGrid`, `launch_attrition`, and test-only GameState/FiresPhases façades were removed, and the
+  role layout now includes `scripts/calc/` and `scripts/loaders/`. Facts: `docs/STATUS.md`,
+  `.claude/skills/hexcombat-code-quality/SKILL.md`, affected `docs/systems/*`.
+
 - **2026-07-27 — Launchers destroyed during launch attrition stay destroyed (USER call, plan 0043).**
   They used to come back on the next crossing: the firing plan rebuilt `quantity` from
   `original_quantity` minus cumulative IJFS kills alone, overwriting the launch losses. The

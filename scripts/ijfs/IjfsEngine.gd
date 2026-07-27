@@ -31,7 +31,7 @@ const EXQUISITE_INTEL_CATEGORIES := [
 ]
 
 # Every key the engine reads out of warmup_context, via wc.get(...). The producer
-# (GameState._build_warmup_context) must emit only these; an unrecognized key means a typo that would
+# (IjfsResolver.build_warmup_context) must emit only these; an unrecognized key means a typo that would
 # otherwise silently go dead (the class of bug that left exquisite intel dormant). Guarded in run_daily.
 const WARMUP_CONTEXT_KEYS := {
 	"x_day": true, "z_day": true, "sead_enabled": true, "ad_attrition_enabled": true,

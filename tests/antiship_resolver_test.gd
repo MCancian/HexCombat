@@ -22,8 +22,9 @@ func _ship_def(name: String, category: String, capacity := 0.0, is_decoy := fals
 # --- early return -----------------------------------------------------------------------------
 
 func test_no_crossing_wave_returns_null_summary_and_preserves_accumulator() -> void:
-	var result := AntishipResolver.resolve(
-		3, [], [], {}, {}, {}, [], {}, 0.75, {}, SeededDice.new(1))
+	var context := AntishipResolutionContext.new()
+	context.lost_at_sea_accumulator = 0.75
+	var result := AntishipResolver.resolve(3, context, SeededDice.new(1))
 	assert_that(result["summary"]).is_null()
 	assert_array(result["lost_ids"]).is_empty()
 	assert_int(int(result["bn_equiv_lost"])).is_equal(0)
@@ -104,9 +105,18 @@ func test_full_resolve_seeded_smoke_produces_consistent_summary() -> void:
 		"Cargo": _ship_def("Cargo", "Civilian_Cargo", 1.0),
 	}
 
-	var result := AntishipResolver.resolve(
-		2, crossing_reserve, arsenal["systems"], sent_by_type, ship_defs,
-		{1: 1}, [1], {1: [1]}, 0.0, {}, SeededDice.new(20260716))
+	var context := AntishipResolutionContext.new()
+	context.crossing_reserve = crossing_reserve
+	context.antiship_systems = arsenal["systems"]
+	context.sent_by_type = sent_by_type
+	context.ship_defs = ship_defs
+	context.beach_to_to = {1: 1}
+	context.active_tos = [1]
+	context.to_adjacency = {1: [1]}
+	context.lost_at_sea_accumulator = 0.0
+	context.escort_sam = {}
+
+	var result := AntishipResolver.resolve(2, context, SeededDice.new(20260716))
 
 	var summary: AntishipSummary = result["summary"]
 	assert_that(summary).is_not_null()
@@ -129,8 +139,17 @@ func test_full_resolve_seeded_smoke_produces_consistent_summary() -> void:
 
 	# Determinism: same seed, same fresh arsenal -> identical outcome.
 	var arsenal2 := AntishipSystemsBuilder.build()
-	var result2 := AntishipResolver.resolve(
-		2, crossing_reserve.duplicate(true), arsenal2["systems"], sent_by_type, ship_defs,
-		{1: 1}, [1], {1: [1]}, 0.0, {}, SeededDice.new(20260716))
+	var context2 := AntishipResolutionContext.new()
+	context2.crossing_reserve = crossing_reserve.duplicate(true)
+	context2.antiship_systems = arsenal2["systems"]
+	context2.sent_by_type = sent_by_type
+	context2.ship_defs = ship_defs
+	context2.beach_to_to = {1: 1}
+	context2.active_tos = [1]
+	context2.to_adjacency = {1: [1]}
+	context2.lost_at_sea_accumulator = 0.0
+	context2.escort_sam = {}
+
+	var result2 := AntishipResolver.resolve(2, context2, SeededDice.new(20260716))
 	assert_int(int(result2["bn_equiv_lost"])).is_equal(bn_equiv_lost)
 	assert_that(result2["destroyed_by_type"]).is_equal(result["destroyed_by_type"])

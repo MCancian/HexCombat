@@ -28,11 +28,12 @@ roster-shrinking seam every kill path shares
 (`apply_casualty`, `apply_crossing_casualties`, and the pool/roster tripwire) in
 **`RosterMutations`** — `TurnConductor.resolve_turn` still holds the whole ordered call list, so the
 modules own how a phase resolves and never when it runs (plan 0038). **Directories name the role
-(plan 0043):** `scripts/phases/` the coordinators, `scripts/resolvers/` the per-phase resolvers,
-`scripts/builders/` the fresh-state builders, `scripts/calc/` the write-free calculators, and
-`scripts/transitions/` the mutation authorities. `AntishipResolver` stays under `resolvers/` on
-purpose — it still rewrites the caller's `ship_reserve` entries in place, and a mixed file does not
-get to sit in a directory whose claim is that it holds none. Runtime state itself is the plain **`GameStateData`** value object
+(plan 0043/0052):** `scripts/phases/` the coordinators, `scripts/resolvers/` the per-phase resolvers,
+`scripts/builders/` the fresh-state builders, `scripts/calc/` the write-free calculators,
+`scripts/loaders/` the content-to-object loaders, and `scripts/transitions/` the mutation
+authorities. `AntishipResolver` stays under `resolvers/` on purpose — it still rewrites the caller's
+`ship_reserve` entries in place, and a mixed file does not get to sit in a directory whose claim is
+that it holds none. Runtime state itself is the plain **`GameStateData`** value object
 (`scripts/model/`); **`GameState` (autoload) is a thin state-holder** — it owns one
 `GameStateData` and exposes delegating wrappers to `TurnConductor` (turns), `OrderValidator`
 (order validation), and `GameStateBuilder` (scenario construction), plus typed forwarding

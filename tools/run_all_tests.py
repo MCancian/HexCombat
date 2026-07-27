@@ -188,8 +188,8 @@ metrics_result = subprocess.run(
     [sys.executable, os.path.join(SCRIPT_DIR, "gd_metrics.py"), PROJECT_ROOT, os.devnull, "--check-ceiling"],
     stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace")
 print(metrics_result.stdout)
-if metrics_result.returncode != 0 or not re.search(r'(?m)^PASS: dependency ceilings OK', metrics_result.stdout):
-    failures.append(f"Metrics Validation: dependency ceiling breach (exit {metrics_result.returncode})")
+if metrics_result.returncode != 0 or not re.search(r'(?m)^PASS: metric ceilings OK', metrics_result.stdout):
+    failures.append(f"Metrics Validation: metric ceiling breach (exit {metrics_result.returncode})")
 else:
     cecho("green", "Metrics Validation OK.")
 

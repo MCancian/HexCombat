@@ -3,8 +3,8 @@ extends GdUnitTestSuite
 ## Plan 0043 — the Green anti-ship establishment across crossings.
 ##
 ## Two contracts:
-##  1. The ONE-crossing launch-attrition contract — the exact ScriptedDice draw count and order, and
-##     both report arrays. This is the guard on the whole plan: splitting the calculator from the
+##  1. The ONE-crossing launch-attrition contract — the exact ScriptedDice draw count/order and the
+##     fired rows plus typed outcomes. This is the guard on the whole plan: splitting the calculator from the
 ##     mutation authority must not move a single die.
 ##  2. The CROSSING-TO-CROSSING contract the plan exists to establish — losses booked by launch
 ##     attrition are permanent, they add to the IJFS losses rather than replacing them, and neither
@@ -79,14 +79,15 @@ func test_one_crossing_draw_order_and_reports_are_pinned() -> void:
 	assert_int(int(fired[0]["prelaunch_destroyed"])).is_equal(1)
 	assert_int(int(fired[0]["postlaunch_destroyed"])).is_equal(1)
 
-	var attrition: Array = result["launch_attrition"]
-	assert_int(attrition.size()).is_equal(1)
-	assert_int(int(attrition[0]["to"])).is_equal(3)
-	assert_int(int(attrition[0]["type"])).is_equal(23)
-	assert_int(int(attrition[0]["attempted_firing"])).is_equal(4)
-	assert_int(int(attrition[0]["launched"])).is_equal(3)
-	assert_int(int(attrition[0]["prelaunch_destroyed"])).is_equal(1)
-	assert_int(int(attrition[0]["postlaunch_destroyed"])).is_equal(1)
+	var outcomes: Array = result["outcomes"]
+	assert_int(outcomes.size()).is_equal(1)
+	var outcome: AntishipLaunchOutcome = outcomes[0]
+	assert_int(outcome.to_number).is_equal(3)
+	assert_int(outcome.type_id).is_equal(23)
+	assert_int(outcome.attempted).is_equal(4)
+	assert_int(outcome.launched).is_equal(3)
+	assert_int(outcome.prelaunch_destroyed).is_equal(1)
+	assert_int(outcome.postlaunch_destroyed).is_equal(1)
 
 
 # --- 2. two crossings: launch losses are permanent ----------------------------------------------

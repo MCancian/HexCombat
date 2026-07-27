@@ -8,6 +8,7 @@ import json, os, re, sys, hashlib
 from collections import defaultdict
 
 CHECK_CEILING = "--check-ceiling" in sys.argv
+SELF_TEST = "--self-test" in sys.argv
 _positional = [a for a in sys.argv[1:] if not a.startswith("--")]
 
 ROOT = _positional[0] if len(_positional) > 0 else "."
@@ -39,6 +40,8 @@ DEP_CEILINGS = {
     # 28 -> 28 (plan 0038 step 3): +TurnClosure, -CombatResolver (`_brigade_ids` routes through
     # TurnConductor, the combat owner, like every other phase surface). A swap, not growth.
     # 28 -> 29 (plan 0041): FrontlinePhase extracted from TurnConductor. GameState depends on FrontlinePhase for façade redirection.
+    # 29 -> 29 (plan 0052): test-only `_build_warmup_context` / `_mine_ship_meta` façades were
+    # deleted; measured deps stayed flat because the remaining typed forwarding surface dominates.
     "scripts/GameState.gd": 29,
     # TurnConductor.gd legitimately depends on every phase resolver it orchestrates (IjfsResolver,
     # SealiftResolver, AntishipResolver, OffloadResolver, InfrastructureResolver, SupplyResolver,
@@ -67,10 +70,63 @@ DEP_CEILINGS = {
     # Plan 0043 held it at 14 by a one-for-one swap, not a bump: `Theaters` left (its only remaining
     # caller re-derived a map GameData already holds, so the file was deleted) and the anti-ship
     # mutation authority `AntishipTransitions` took its place.
-    "scripts/phases/FiresPhases.gd": 14,
+    # 14 -> 15 (plan 0052): `AntishipResolutionContext` is the typed model that replaces the
+    # anti-ship resolver's 11-parameter signature; this coordinator is the call-site assembler.
+    "scripts/phases/FiresPhases.gd": 15,
     # TurnClosure.gd (plan 0038 step 3): the end-of-turn accounting pair (supply bills who fought,
     # cleanup censuses who is left). Measured 7 at commit time.
     "scripts/phases/TurnClosure.gd": 7,
+}
+
+# Parameter ceilings (plan 0052): a function's measured params exceeding the hard cap of 5 fails
+# the gate with --check-ceiling unless grandfathered here. Keyed by "path::function_name" because
+# parameter counts live per function, not per file. Same ratchet rule as DEP_CEILINGS: each entry is
+# the measured count at the commit that set it; lower after refactors, never raise to hide a breach.
+# Seeded after the multi-line signature counter was fixed so the existing tree stays green while
+# future touched functions have a real, enforceable budget.
+PARAM_HARD_CAP = 5
+PARAM_CEILINGS = {
+    "scripts/calc/CombatCalculator.gd::_force_strengths": 8,
+    "scripts/calc/CombatCalculator.gd::_loss_counts": 6,
+    "scripts/calc/CombatCalculator.gd::_select_casualties": 6,
+    "scripts/calc/CombatCalculator.gd::resolve_map_attack": 8,
+    "scripts/JlsfCargo.gd::queue_deployments": 7,
+    "scripts/LLMGameAPI.gd::_action_result": 6,
+    "scripts/OffloadCalculator.gd::_resolve_day_n": 10,
+    "scripts/OffloadCalculator.gd::resolve_offload_day": 9,
+    "scripts/builders/SealiftStateBuilder.gd::build": 6,
+    "scripts/calc/AntishipCalculator.gd::build_firing_plan": 6,
+    "scripts/calc/AntishipCrossing.gd::_apply_homing": 6,
+    "scripts/calc/AntishipCrossing.gd::_apply_interception": 6,
+    "scripts/calc/AntishipCrossing.gd::_resolve_damage": 6,
+    "scripts/calc/AntishipCrossing.gd::_resolve_launches": 9,
+    "scripts/calc/AntishipCrossing.gd::resolve_crossing_damage": 9,
+    "scripts/calc/MineWarfareService.gd::_apply_beach_outcome": 7,
+    "scripts/calc/MineWarfareService.gd::_beach_result": 8,
+    "scripts/calc/MineWarfareService.gd::_count_dangerous_mines": 9,
+    "scripts/calc/MineWarfareService.gd::resolve_ship_losses": 7,
+    "scripts/ijfs/IjfsDetection.gd::_log_detection": 7,
+    "scripts/ijfs/IjfsDetection.gd::_run_detection_phase": 8,
+    "scripts/ijfs/IjfsDetection.gd::aircraft_detect_target_ids": 7,
+    "scripts/ijfs/IjfsEngagement.gd::resolve_sead_engagement": 6,
+    "scripts/ijfs/IjfsEngine.gd::_append_final_skips": 6,
+    "scripts/ijfs/IjfsEngine.gd::_run_strike_phase": 11,
+    "scripts/ijfs/IjfsEngine.gd::_skip_log": 6,
+    "scripts/ijfs/IjfsManpads.gd::intercepted_strike_log": 6,
+    "scripts/ijfs/IjfsStrike.gd::resolve_strike": 9,
+    "scripts/ijfs/IjfsTargeting.gd::apply_exquisite_intel": 6,
+    "scripts/ijfs/IjfsTargeting.gd::select_munition_with_doctrine": 8,
+    "scripts/resolvers/AirInsertionResolver.gd::resolve": 7,
+    "scripts/resolvers/CleanupResolver.gd::resolve": 6,
+    "scripts/resolvers/IjfsResolver.gd::build_warmup_context": 8,
+    "scripts/resolvers/OffloadResolver.gd::resolve": 8,
+    "tests/batch_report_test.gd::_legacy_record": 7,
+    "tests/batch_report_test.gd::_record": 8,
+    "tests/ijfs/ijfs_loaders_test.gd::_container": 6,
+    "tests/ijfs/ijfs_targeting_test.gd::_pairing": 8,
+    "tests/ijfs/ijfs_targeting_test.gd::_target": 7,
+    "tools/run_selfplay_game.gd::_build_record": 9,
+    "tools/validate_mutation_authority.gd::_protected_finding": 6,
 }
 
 FUNC_RE = re.compile(r"^(\s*)(static\s+)?func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*)$")
@@ -127,6 +183,78 @@ def strip_str_comment(line):
     line = re.sub(r"'(?:[^'\\]|\\.)*'", "''", line)
     return line.split("#")[0]
 
+
+def _signature_params_and_end(lines, start_idx, first_line_after_open):
+    """Count top-level params in a GDScript func signature and return its closing line index.
+
+    The regex has already consumed the function name and the opening "(". Continue across lines
+    until that outer paren closes, counting only commas whose nesting stack is exactly the function
+    parameter list. Commas in default Array/Dictionary literals, Callable signatures, or comments do
+    not split parameters.
+    """
+    stack = ["("]
+    chunks = []
+    idx = start_idx
+    pending = first_line_after_open
+    while idx < len(lines):
+        code = strip_str_comment(pending if idx == start_idx else lines[idx])
+        for ch in code:
+            if ch in "([{":
+                stack.append(ch)
+                chunks.append(ch)
+                continue
+            if ch in ")]}":
+                if ch == ")" and len(stack) == 1 and stack[-1] == "(":
+                    params = "".join(chunks).strip()
+                    if not params:
+                        return 0, idx
+                    return _count_top_level_params(params), idx
+                if stack:
+                    stack.pop()
+                chunks.append(ch)
+                continue
+            chunks.append(ch)
+        chunks.append("\n")
+        idx += 1
+    raise ValueError("unterminated function signature starting at line %d" % (start_idx + 1))
+
+
+def _count_top_level_params(params):
+    depth = 0
+    current = []
+    parts = []
+    for ch in params:
+        if ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            depth = max(0, depth - 1)
+        if ch == "," and depth == 0:
+            parts.append("".join(current))
+            current = []
+            continue
+        current.append(ch)
+    parts.append("".join(current))
+    return len([part for part in parts if part.strip()])
+
+
+def _self_test_signature_params():
+    cases = [
+        (["func a(x: int, y: int) -> void:"], 2, "single-line"),
+        (["func b(", "\tx: int,", "\ty: int,", ") -> void:"], 2, "multi-line"),
+        (["func c(x: Array = [1, 2], y: Dictionary = {\"a\": 1, \"b\": 2}) -> void:"], 2, "default comma"),
+        (["func d(cb: Callable[Array[int], Dictionary], y: int) -> void:"], 2, "nested annotation"),
+        (["func e() -> void:"], 0, "zero params"),
+    ]
+    for lines, expected, label in cases:
+        m = FUNC_RE.match(lines[0])
+        got, _sig_end = _signature_params_and_end(lines, 0, m.group(4))
+        if got != expected:
+            raise AssertionError("%s: expected %d params, got %d" % (label, expected, got))
+
+
+if SELF_TEST or CHECK_CEILING:
+    _self_test_signature_params()
+
 norm_windows = defaultdict(list)  # hash -> [(file, startline)]
 W = 6
 
@@ -180,11 +308,12 @@ for f in files:
         if m:
             if cur: cur["end"] = i; funcs.append(cur)
             indent = len(m.group(1))
-            params = m.group(4)
-            nparams = 0 if params.strip().startswith(")") else params.count(",") + 1
+            nparams, sig_end = _signature_params_and_end(lines, i, m.group(4))
             cur = {"file": rel, "name": m.group(3), "start": i+1, "indent": indent,
-                   "cc": 1, "params": nparams, "returns": 0, "match_arms": 0}
+                   "sig_end": sig_end + 1, "cc": 1, "params": nparams, "returns": 0, "match_arms": 0}
         elif cur is not None:
+            if i + 1 <= cur["sig_end"]:
+                continue
             code = strip_str_comment(raw)
             if code.strip() and (len(raw) - len(raw.lstrip())) <= cur["indent"] and not raw.lstrip().startswith(")"):
                 cur["end"] = i; funcs.append(cur); cur = None; continue
@@ -200,6 +329,7 @@ for f in files:
     if cur: cur["end"] = len(lines); funcs.append(cur)
     for fn in funcs:
         fn.pop("_match_indent", None)
+        fn.pop("sig_end", None)
         fn["len"] = fn["end"] - fn["start"] + 1
     result["functions"].extend(funcs)
 
@@ -257,9 +387,30 @@ if CHECK_CEILING:
             continue
         if info["ndeps"] > ceiling:
             breaches.append("%s: ndeps=%d exceeds ceiling %d" % (rel, info["ndeps"], ceiling))
+
+    functions_by_key = defaultdict(list)
+    for fn in result["functions"]:
+        functions_by_key["%s::%s" % (fn["file"], fn["name"])].append(fn)
+    for key, ceiling in PARAM_CEILINGS.items():
+        matches = functions_by_key.get(key, [])
+        if not matches:
+            breaches.append("%s: not found (ceiling entry stale — function moved/renamed?)" % key)
+            continue
+        for fn in matches:
+            if fn["params"] > ceiling:
+                breaches.append("%s:%d: params=%d exceeds ceiling %d" % (
+                    key, fn["start"], fn["params"], ceiling))
+
+    for fn in result["functions"]:
+        key = "%s::%s" % (fn["file"], fn["name"])
+        if fn["params"] > PARAM_HARD_CAP and key not in PARAM_CEILINGS:
+            breaches.append("%s: params=%d exceeds hard cap %d (add/fix typed context or grandfather ceiling)" % (
+                key, fn["params"], PARAM_HARD_CAP))
+
     if breaches:
-        print("FAIL: dependency ceiling breach(es):")
+        print("FAIL: metric ceiling breach(es):")
         for b in breaches:
             print("  -", b)
         sys.exit(1)
-    print("PASS: dependency ceilings OK (%d file(s) checked)" % len(DEP_CEILINGS))
+    print("PASS: metric ceilings OK (%d file(s), %d function(s) checked)" % (
+        len(DEP_CEILINGS), len(PARAM_CEILINGS)))

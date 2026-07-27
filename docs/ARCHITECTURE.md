@@ -79,7 +79,7 @@ Port traceability (extend per phase under `docs/phases/` as work proceeds):
 | Domain | TaiwanInvasionViewer | HexCombat |
 | --- | --- | --- |
 | Hex grid / pathfinding | `src/core/hex_grid.py` | `scripts/HexMath.gd`, `GameData` |
-| Ground combat | `src/services/boots_calculator.py` | `scripts/CombatCalculator.gd`, `UnitStats.gd` |
+| Ground combat | `src/services/boots_calculator.py` | `scripts/calc/CombatCalculator.gd`, `UnitStats.gd` |
 | Movement / front | `src/services/boots_hex_service.py` | `scripts/Movement.gd`, `GameState` move orders; front-line in `scripts/FrontLineService.gd` |
 
 The full per-system source map (all D1–D5 phases, IJFS, anti-ship/mine) lives in

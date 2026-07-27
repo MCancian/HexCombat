@@ -1,8 +1,13 @@
 ---
 title: "0052: Legibility sweep — an unenforced budget, three dead seams, and the half-finished role layout"
-status: "Sketch"
+status: "✅ Shipped"
 created: "2026-07-27"
+shipped: "2026-07-27"
 ---
+
+> **Closeout:** Shipped 2026-07-27. Durable facts landed in `tools/gd_metrics.py`,
+> `docs/STATUS.md`, `.claude/skills/hexcombat-code-quality/SKILL.md`, and the affected systems docs.
+> Byte-stable validation: canonical gate green; parameter ceiling now reports/enforces real counts.
 
 # Plan 0052: Legibility sweep — an unenforced budget, three dead seams, and the half-finished role layout
 

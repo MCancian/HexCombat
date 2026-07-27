@@ -8,6 +8,9 @@ description: Code-quality budgets and hygiene rules every change must meet — c
 Budgets agents must meet on code they **touch** (not retroactive sweeps). Baseline audit +
 numbers: `docs/reports/2026-07-16-code-quality-baseline.md`. Re-measure anytime:
 `python3 tools/gd_metrics.py . /tmp/m.json` (CC/length/deps/magic/duplication per function/file).
+`python3 tools/gd_metrics.py . /tmp/m.json --check-ceiling` enforces dependency ceilings and the
+per-function parameter grandfather list in `tools/gd_metrics.py`; lower entries after refactors,
+never raise them to hide a breach.
 
 ## Budgets (touched code)
 

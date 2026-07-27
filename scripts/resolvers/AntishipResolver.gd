@@ -39,41 +39,29 @@ const C2_SUPPRESSED_FIRE_MULTIPLIER := 0.70
 ## "accumulator": float}. The caller (GameState) applies hull losses to the sealift cohorts + fleet
 ## and removes the drowned BNs from the reserve — this pure resolver only computes them (plan 0004 D3).
 ##
-## crossing_reserve: the subset of ship_reserve whose BNs actually cross THIS turn (the sealift
-## "sent" cohorts), NOT the whole reserve — offloading BNs are safe ashore and are not re-attrited.
-## sent_by_type: the sailing fleet (cohort carrier hulls + ready escort screen) the sealift phase
-## committed this turn; the crossing model runs attrition against exactly these hulls.
-static func resolve(
-	turn_number: int,
-	crossing_reserve: Array,
-	antiship_systems: Array,
-	sent_by_type: Dictionary,
-	ship_defs: Dictionary,
-	beach_to_to: Dictionary,
-	active_tos: Array,
-	to_adjacency: Dictionary,
-	lost_at_sea_accumulator: float,
-	escort_sam: Dictionary,
-	dice: Dice,
-) -> Dictionary:
+## context.crossing_reserve: the subset of ship_reserve whose BNs actually cross THIS turn (the
+## sealift "sent" cohorts), NOT the whole reserve — offloading BNs are safe ashore and are not
+## re-attrited. context.sent_by_type is the sailing fleet (cohort carrier hulls + ready escort
+## screen) the sealift phase committed this turn; the crossing model attrits exactly these hulls.
+static func resolve(turn_number: int, context: AntishipResolutionContext, dice: Dice) -> Dictionary:
 	# The crossing wave = BNs sailing this turn (sent cohorts). No wave -> no anti-ship phase.
-	var wave := _collect_crossing_wave(crossing_reserve)
+	var wave := _collect_crossing_wave(context.crossing_reserve)
 	var bns_at_sea: Array = wave["bns_at_sea"]
 	if bns_at_sea.is_empty():
-		return _no_wave_result(lost_at_sea_accumulator)
+		return _no_wave_result(context.lost_at_sea_accumulator)
 
-	var target_areas := _target_areas_for(wave["beach_set"], beach_to_to)
+	var target_areas := _target_areas_for(wave["beach_set"], context.beach_to_to)
 	var target_beaches: Array = target_areas["beaches"]
 	var target_tos: Array = target_areas["tos"]
 
-	var firing := _firing_inputs(antiship_systems)
+	var firing := _firing_inputs(context.antiship_systems)
 
 	var crossing_config := AntishipLoaders.load_crossing_config(CROSSING_PATH)
 	var combat_catalog := AntishipLoaders.load_combat_catalog(CATALOG_PATH)
 	# Magazine gating is left null for this wiring: rebuilt-per-turn it would start full and never
 	# bind; meaningful gating needs persistent cross-turn magazine state (follow-up, PLAN.md D3-D).
 	var plan := AntishipCalculator.build_firing_plan(
-		antiship_systems, {}, firing["target_locations"], firing["firing_percentages"], {}, null)
+		context.antiship_systems, {}, firing["target_locations"], firing["firing_percentages"], {}, null)
 	var attrition := AntishipCalculator.resolve_launch_attrition(
 		plan["allocation_plan"], plan["destroyed_firing_plan"],
 		crossing_config["launch_attrition"], dice)
@@ -84,21 +72,22 @@ static func resolve(
 	# turn, so build the crossing snapshots straight from sent_by_type (deterministic ship_type order)
 	# instead of re-deriving a minimum-lift fleet here (plan 0004 D3).
 	var crossing := AntishipCrossing.resolve_crossing_damage(
-		systems_fired, _snapshots_from_sent(sent_by_type), combat_catalog, crossing_config,
-		target_tos, dice, active_tos, to_adjacency, escort_sam)
+		systems_fired, _snapshots_from_sent(context.sent_by_type), combat_catalog, crossing_config,
+		target_tos, dice, context.active_tos, context.to_adjacency, context.escort_sam)
 
 	var mine_transit := _resolve_mine_transit(
-		sent_by_type, crossing["destroyed_by_ship_type"], target_beaches, ship_defs, dice)
+		context.sent_by_type, crossing["destroyed_by_ship_type"], target_beaches, context.ship_defs, dice)
 	var destroyed_by_type: Dictionary = mine_transit["destroyed_by_type"]
 
 	# Ship losses -> BNs lost at sea (carry the fractional accumulator across turns). Hull losses are
 	# applied to the sealift cohorts + fleet by the caller; this resolver only computes them.
 	var losses := ShipLoadingModel.resolve_bn_losses(
-		destroyed_by_type, ship_capacity_by_type(ship_defs), bns_at_sea, lost_at_sea_accumulator, dice)
+		destroyed_by_type, ship_capacity_by_type(context.ship_defs), bns_at_sea,
+		context.lost_at_sea_accumulator, dice)
 
 	var summary := AntishipSummary.new()
 	summary.resolved_turn = turn_number
-	summary.sent_by_type = sent_by_type.duplicate(true)
+	summary.sent_by_type = context.sent_by_type.duplicate(true)
 	summary.unliftable_bn = 0
 	summary.systems_fired_count = sum_systems_fired(systems_fired)
 	summary.destroyed_by_ship_type = destroyed_by_type

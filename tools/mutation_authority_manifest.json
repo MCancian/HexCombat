@@ -55,7 +55,7 @@
       ],
       "construction_writers": [
         {
-          "path": "res://scripts/AntishipLoaders.gd",
+          "path": "res://scripts/loaders/AntishipLoaders.gd",
           "why": "load_systems() initialises FRESH, unpublished AntishipSystem rows from the grouping spec before anything holds them. It never accepts live establishment state.",
           "fields": [
             "AntishipSystem.to_number",
