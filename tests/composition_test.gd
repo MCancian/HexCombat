@@ -96,8 +96,8 @@ func test_committed_forces_affect_combat_and_are_marked_fought() -> void:
 	_register_brigade(green_in_hex)
 	_register_brigade(red_committed)
 	GameState.add_commit_order(Brigade.Team.RED, red_committed.id, TARGET_HEX)
-	var red_contributors: Array = GameState._combat_contributors_for(Brigade.Team.RED, TARGET_HEX)
-	assert_array(GameState._brigade_ids(red_contributors)).contains([red_committed.id])
+	var red_contributors: Array = TurnConductor.combat_contributors_for(GameState.data, Brigade.Team.RED, TARGET_HEX)
+	assert_array(TurnConductor.brigade_ids(red_contributors)).contains([red_committed.id])
 	assert_int(CombatForces.maneuver_units(red_contributors).size()).is_equal(3)
 
 	GameState.resolve_turn(ScriptedDice.new([50, 50, 50], [], [], [0, 0]))

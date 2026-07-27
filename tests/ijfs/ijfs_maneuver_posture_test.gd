@@ -1,4 +1,4 @@
-## Verifies GameState._update_maneuver_posture sets posture="active" on the maneuver-unit IJFS targets
+## Verifies FiresPhases.update_maneuver_posture sets posture="active" on the maneuver-unit IJFS targets
 ## of Green brigades that moved/fought last turn, and "hiding" otherwise (overnight item 2c-ii). Pure
 ## data nudge feeding IjfsDetection's posture seam — no detection-math change. Golden-safe because on
 ## turn 1 (the golden turn) all activity flags are false, so every maneuver target stays "hiding".
@@ -30,8 +30,8 @@ func test_active_brigade_targets_become_active_others_hiding() -> void:
 	assert_object(active_brigade).is_not_null()
 	active_brigade.moved_last_turn = true
 
-	GameState._rebuild_ijfs_state()
-	GameState._update_maneuver_posture()
+	FiresPhases.rebuild_ijfs_state(GameState.data)
+	FiresPhases.update_maneuver_posture(GameState.data)
 
 	var saw_active := false
 	var saw_hiding := false
@@ -52,8 +52,8 @@ func test_active_brigade_targets_become_active_others_hiding() -> void:
 
 func test_no_activity_keeps_all_hiding() -> void:
 	# Fresh scenario: no brigade has moved/fought yet (turn 1) → every maneuver target stays "hiding".
-	GameState._rebuild_ijfs_state()
-	GameState._update_maneuver_posture()
+	FiresPhases.rebuild_ijfs_state(GameState.data)
+	FiresPhases.update_maneuver_posture(GameState.data)
 	var checked := false
 	for target_value in GameState.ijfs_state.targets:
 		var target: IjfsTarget = target_value

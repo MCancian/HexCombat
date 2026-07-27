@@ -98,7 +98,7 @@ func _play_once(held_back: int) -> Dictionary:
 	GameState.reset_to_scenario()
 
 	var out := {
-		"green_start": int(GameState._taiwan_battalion_census()[Brigade.TEAM_KEY_GREEN]),
+		"green_start": int(CleanupResolver.census(GameData.brigades, GameState.data.pending_battalion_pools(), GameData.victory_config)[Brigade.TEAM_KEY_GREEN]),
 		"pending_turn1": GameState.mobilization_state.pending.size(),
 		"pending_bns_turn1": GameState.mobilization_state.pending_battalions(GameData.brigades),
 		"green_brigades_turn1": _green_brigades_on_map(),

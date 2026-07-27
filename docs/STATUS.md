@@ -92,7 +92,7 @@ it takes operator-drawn polyline coordinates and is called only through the `Gam
   rate. Facts: `docs/systems/amphibious-offload.md` §9.
 - **D2 Red DOS supply** — supply pool / effectiveness tracking. An exhausted Red pool now degrades Red
   ground-combat strength (`red_out_of_supply_effectiveness`, default 0.5) via
-  `GameState._inject_supply_effectiveness`.
+  `CombatResolver.inject_supply_effectiveness`, threaded by `TurnConductor`.
 - **D3 Anti-ship & mine warfare** — IJFS-fed firing plan → crossing damage (count-based) → **geometric
   mine model** (randomized approach path, dangerous-mine count within `danger_radius`, decoy-sponge
   transit; knobs in `data/antiship/minefields.json`). Ship losses → BNs lost at sea. Crossing
@@ -124,10 +124,10 @@ it takes operator-drawn polyline coordinates and is called only through the `Gam
   multi-day pre-invasion warmup (exquisite intel) on the first turn. Per-(TO,type) writeback feeds D3.
   **IJFS now also attrits ground forces:** Green/ROC maneuver battalions are IJFS targets
   (`build_maneuver_targets`); destroyed ones are removed from the OOB before ground combat
-  (`_apply_ijfs_maneuver_casualties`) — the D4-H ground-casualty linkage. Detectability is biased by
+  (`FiresPhases.apply_ijfs_maneuver_casualties`) — the D4-H ground-casualty linkage. Detectability is biased by
   unit type (mobility/hardness via the `MANEUVER_TYPE_MAP` profile) and by recent activity: a brigade
-  that moved or fought last turn presents an `"active"` posture (`_update_maneuver_posture`), making its
-  maneuver units easier to detect. Each turn `_sync_maneuver_targets_to_oob` retires maneuver targets
+  that moved or fought last turn presents an `"active"` posture (`FiresPhases.update_maneuver_posture`), making its
+  maneuver units easier to detect. Each turn `FiresPhases.sync_maneuver_targets_to_oob` retires maneuver targets
   whose battalions have died (IJFS or ground combat), so the air/missile campaign stops targeting units
   that no longer exist — without disturbing detection continuity for survivors.
   **CRBM heavy-volley maneuver attrition (plan 0009, 2026-07-17 USER call):** two coupled scenario

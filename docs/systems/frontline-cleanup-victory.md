@@ -18,7 +18,7 @@ Front-line is user-driven (requires a drawn polyline). Cleanup + victory are aut
 | `scripts/VictoryConditions.gd` | Pure `static func evaluate()`: win if China majority; if armed + 0 China BNs → Taiwan win. | No TIV equivalent (HexCombat design, settled 2026-06-28). |
 | `scripts/HexOwner.gd` | Constants: `RED`, `GREEN`, `CONTESTED`, `NONE`. | TIV `CleanupHexService.OWNER_MAP` maps same four values. |
 | `scripts/GameData.gd` | `recompute_hex_ownership()` (line 290), `hex_states` dict, `victory_config` from scenario. | TIV `cleanup_hex_service.py` — `update_hex_ownership` per hex (DB persistence). |
-| `scripts/GameState.gd` | Orchestrator: `resolve_frontline_phase()` (line 917), `resolve_cleanup_phase()` (line 843), `_taiwan_battalion_census()` (line 884). Holds `game_over`/`winner` (lines 67–68). | TIV `cleanup_application_service.py` + `cleanup_calculator.py` (system reset). |
+| `scripts/GameState.gd` / `scripts/phases/TurnClosure.gd` / `scripts/phases/FrontlinePhase.gd` | `GameState` exposes `resolve_frontline_phase()` / `resolve_cleanup_phase()` and holds `game_over`/`winner`; `FrontlinePhase` and `TurnClosure` own phase application, including `TurnClosure.taiwan_battalion_census()`. | TIV `cleanup_application_service.py` + `cleanup_calculator.py` (system reset). |
 | `scripts/model/TurnResult.gd` | `game_over: bool`, `winner: String` (lines 13–14). | N/A |
 | `scripts/LLMGameAPI.gd` | Exposes `game_over`/`winner` in observation (lines 42–43). | N/A |
 | `data/scenarios/scenario_default.json` | `victory` block: `loss_check_arm`, `taiwan_hexes` (lines 7–11). | N/A |
@@ -34,7 +34,7 @@ Samples a polyline every `2.0 km` (including original vertices) and maps each sa
 **`distribute_units_along_hexes(unit_ids, hex_sequence)` (line 98)**
 Evenly spaces `N` units across `M` hexes in order. Each unit `k` maps to hex index `floor(k × M / N)`. Returns `{brigade_id: hex_id}`.
 
-**`GameState.resolve_frontline_phase(polyline_coords)` (line 917)**
+**`GameState.resolve_frontline_phase(polyline_coords)`**
 Called externally (not from `resolve_turn` — user draws a line during planning). Finds RED brigades currently in the hex sequence, calls `distribute_units_along_hexes`, applies moves via `GameData.set_brigade_hex`, emits `frontline_resolved`.
 
 Port fidelity: `_polyline_cumulative_lengths`, `_interpolate_along_line`, and `find_hexes_for_polyline` are direct ports. HexCombat uses brigade-level (not battalion-level) distribution and skips TIV's `_get_polyline_coords_in_hex` / `_nearest_point_on_polyline` (no per-hex polygon clipping — all affected hexes in the sequence share one even distribution). Support-battalion HQ offset is not ported (no sub-hex positioning).
@@ -46,10 +46,10 @@ Iterates all hexes; sets owner to `CONTESTED` (both teams present), `RED`, `GREE
 
 Also called after offload (line 363) and in cleanup (line 857), so ownership is up-to-date before the victory census.
 
-**`resolve_cleanup_phase()` (line 843):**
-1. Resets per-turn flags on all anti-ship systems: `fired`, `expended`, `destroyed_this_turn` → 0; `suppressed`, `active` → false.
+**`TurnClosure.resolve_cleanup_phase()`**:
+1. Resets per-turn flags on all anti-ship systems through `AntishipTransitions.reset_transient_flags()`.
 2. Calls `GameData.recompute_hex_ownership()`.
-3. Runs `_taiwan_battalion_census()` → `VictoryConditions.evaluate()`.
+3. Runs `TurnClosure.taiwan_battalion_census()` → `VictoryConditions.evaluate()`.
 
 TIV port: `cleanup_calculator.py` resets `Fired`/`Destroyed_This_Turn`/`Final_Attrition_Pct` and also restores `Quantity_Moved`/`Quantity_Unavailable` → `Quantity_Available`. HexCombat has no moved/unavailable split (`AntishipSystem.quantity` is recomputed each turn from `original_quantity` minus IJFS-cumulative destroyed), so the restore is skipped.
 
@@ -69,8 +69,8 @@ Otherwise `{game_over: false}`.
 - `"after_first_landing"` — armed after `_china_has_landed` latches true (any Red BN on Taiwan, per census).
 - `"after_turn:N"` — armed when `turn_number > N`.
 
-**Census caveat — `taiwan_hexes: null` (line 885):**
-`_taiwan_battalion_census()` counts the *present* (landed) battalions of brigades with a non-empty `hex_id`. The scenario config hook `taiwan_hexes` can restrict to a hex-id array, but defaults to `null` (= every placed hex counts). This is correct for the main-island-only scenario because offshore islands cannot be distinguished until terrain/land classification data exists. Brigades still wholly at sea (`hex_id == ""`) are excluded, so China reads 0 until it lands.
+**Census caveat — `taiwan_hexes: null`:**
+`TurnClosure.taiwan_battalion_census()` counts the *present* (landed) battalions of brigades with a non-empty `hex_id`. The scenario config hook `taiwan_hexes` can restrict to a hex-id array, but defaults to `null` (= every placed hex counts). This is correct for the main-island-only scenario because offshore islands cannot be distinguished until terrain/land classification data exists. Brigades still wholly at sea (`hex_id == ""`) are excluded, so China reads 0 until it lands.
 
 **Not-ashore pools (plan 0034).** A brigade's `hex_id` is set the moment its FIRST battalion lands, so the census must subtract every battalion of it that is still off-map. There are three such pools and `GameStateData.pending_battalion_pools()` is the **only** enumeration of them — `CleanupResolver.census` takes that list and `PendingBattalions.by_brigade` sums it:
 
@@ -83,7 +83,7 @@ Otherwise `{game_over: false}`.
 A pool missing from that list is counted as ashore, inventing battalions for its side. `mainland_pool` is in the list because `SealiftResolver._embark_followon` packs battalions into whatever hulls are ready and so drains an entry **partially** — a brigade can be ashore with battalions still on the mainland. That case was live and uncaught until 2026-07-25: a 20-turn `scenario_default` game inflated Red's census by up to 8 battalions (turn 20 read 57 when 49 were ashore). **Add new off-map pools to `pending_battalion_pools()`, not to a census signature.** This is now enforced: `tools/validate_pool_enumeration.gd` walks live state for anything shaped like a pool (`{brigade_id, bns}`) and fails if that array is not among the ones `pending_battalion_pools()` returns — so a pool nobody registered is caught by its shape, not by someone remembering the rule.
 
 **`game_over` / `winner` propagation:**
-- `GameState.gd` lines 67–68 hold the live state; `resolve_cleanup_phase` (lines 866–867) sets them.
+- `GameState.gd` holds the live state; `TurnClosure.resolve_cleanup_phase` sets it.
 - `TurnResult` (lines 13–14) copies them for the `play_turn` return value.
 - `LLMGameAPI.observation()` exposes them.
 

@@ -1,6 +1,6 @@
 ## Verifies the Red DOS supply pool degrades Red ground-combat effectiveness when exhausted
 ## (PLAN.md Decisions 2026-06-29 supply→combat). The pool→per-unit mapping lives in
-## GameState._inject_supply_effectiveness; CombatCalculator already multiplies maneuver strength by it.
+## TurnConductor.inject_supply_effectiveness; CombatCalculator already multiplies maneuver strength by it.
 extends GdUnitTestSuite
 
 
@@ -24,7 +24,7 @@ func _red_units() -> Array:
 func test_red_full_effectiveness_when_pool_positive() -> void:
 	var units := _red_units()
 	GameState.supply_state.current_dos_tons = 1000.0
-	GameState._inject_supply_effectiveness(units, Brigade.Team.RED)
+	TurnConductor.inject_supply_effectiveness(GameState.data, units, Brigade.Team.RED)
 	for unit in units:
 		assert_float(float(unit["supply_effectiveness"])).is_equal_approx(1.0, 1e-6)
 
@@ -32,7 +32,7 @@ func test_red_full_effectiveness_when_pool_positive() -> void:
 func test_red_degraded_when_pool_exhausted() -> void:
 	var units := _red_units()
 	GameState.supply_state.current_dos_tons = 0.0
-	GameState._inject_supply_effectiveness(units, Brigade.Team.RED)
+	TurnConductor.inject_supply_effectiveness(GameState.data, units, Brigade.Team.RED)
 	for unit in units:
 		assert_float(float(unit["supply_effectiveness"])).is_equal_approx(GameData.red_out_of_supply_effectiveness, 1e-6)
 
@@ -40,7 +40,7 @@ func test_red_degraded_when_pool_exhausted() -> void:
 func test_green_unaffected_by_red_pool() -> void:
 	var units := [{"brigade_id": "G", "type": "Armor Battalion", "supply_effectiveness": 1.0}]
 	GameState.supply_state.current_dos_tons = 0.0
-	GameState._inject_supply_effectiveness(units, Brigade.Team.GREEN)
+	TurnConductor.inject_supply_effectiveness(GameState.data, units, Brigade.Team.GREEN)
 	assert_float(float(units[0]["supply_effectiveness"])).is_equal_approx(1.0, 1e-6)
 
 

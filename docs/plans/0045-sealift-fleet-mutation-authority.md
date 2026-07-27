@@ -100,14 +100,18 @@ first migration, but controller input must validate their full required shape be
    exits before changing ownership.
 3. **Make calculators return plans.** Separate packing, tick decisions, cohort drain decisions, and
    loss calculations from campaign-state writes while preserving deterministic iteration and Dice
-   topology.
+   topology. Coordinate with 0044 before splitting `OffloadCalculator`: its current live writes mix
+   troop manifest membership (`bns`) with cross-turn offload progress (`offload_progress_tons`).
 4. **Centralize fleet projection.** Move all `ShipState` writes, including builder initialization,
    behind `SealiftTransitions`; remove the temporarily invalid between-loss-and-projection state.
 5. **Migrate embark and return.** Authority applies exact hull/BN cohort creation and pipeline ticks.
    Reconcile BN movement receipts with `ForceTransitions` from 0044.
 6. **Migrate crossing losses.** Apply carrier/escort destruction to source buckets and fleet totals in
-   one checked call, then coordinate drowned manifests with the force authority.
-7. **Migrate offload/drain.** Exact landed ids drain cohorts and release hulls through one call.
+   one checked call, then coordinate drowned manifests with the force authority. This is also where
+   the application half of `FiresPhases.resolve_antiship_turn` should be reshaped; do not pre-extract
+   temporary helpers that this migration will immediately replace.
+7. **Migrate offload/drain.** Exact landed ids drain cohorts and release hulls through one call, in
+   lockstep with the 0044 force transfer receipt.
 8. **Migrate escort ammunition.** Consumption/reload/refill becomes authority-only and validates
    magazines after every transition.
 9. **Delete misleading state.** Remove `sent_original` and its vacuous invariant unless preflight

@@ -5,7 +5,7 @@ class_name IjfsWriteback
 ## CUMULATIVE anti-ship destroyed/suppressed totals (keyed by AntishipCalculator.encode_key), the
 ## ground maneuver casualties, and SAM destroyed/suppressed counts. Carried in
 ## GameState.last_ijfs_writeback. Unlike the other phase summaries this has INTERNAL cross-phase
-## consumers — _apply_ijfs_maneuver_casualties reads maneuver_casualties, and resolve_antiship_turn
+## consumers — FiresPhases.apply_ijfs_maneuver_casualties reads maneuver_casualties, and resolve_antiship_turn
 ## reads antiship_destroyed_by_type / antiship_suppressed_by_type to attrit/suppress the Green firing
 ## systems — so a key typo here would silently break the IJFS→casualty/antiship coupling, not just a
 ## display field (refactor_audit item 9, the riskiest summary). to_dict() is the JSON-serialization

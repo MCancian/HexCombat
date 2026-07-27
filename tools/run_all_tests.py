@@ -182,16 +182,14 @@ if gb_result.returncode != 0 or not re.search(r'(?m)^PASS: make_game_bundle vali
 else:
     cecho("green", "Game bundle ship_stats Python validation OK.")
 
-# ---- Metrics Validation (dependency ceilings) ----
-write_phase("Metrics Validation (tools/gd_metrics.py --check-ceiling)")
-metrics_result = subprocess.run(
-    [sys.executable, os.path.join(SCRIPT_DIR, "gd_metrics.py"), PROJECT_ROOT, os.devnull, "--check-ceiling"],
-    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace")
-print(metrics_result.stdout)
-if metrics_result.returncode != 0 or not re.search(r'(?m)^PASS: metric ceilings OK', metrics_result.stdout):
-    failures.append(f"Metrics Validation: metric ceiling breach (exit {metrics_result.returncode})")
+# ---- GDScript metrics validation (fixtures + repository ceilings) ----
+write_phase("GDScript metrics validation (fixtures + ceilings)")
+gd_metrics_fixture = subprocess.run([sys.executable, os.path.join(SCRIPT_DIR, "validate_gd_metrics.py")], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace", env=env)
+print(gd_metrics_fixture.stdout)
+if gd_metrics_fixture.returncode != 0 or not re.search(r'(?m)^PASS: gd_metrics validation succeeded$', gd_metrics_fixture.stdout):
+    failures.append(f"gd_metrics validation: failed (exit {gd_metrics_fixture.returncode})")
 else:
-    cecho("green", "Metrics Validation OK.")
+    cecho("green", "GDScript metrics validation OK.")
 
 # ---- Fixture Generation and Drift Validation ----
 write_phase("Fixture Generation & Drift Validation")

@@ -88,6 +88,11 @@ Authority means one write path, not necessarily one physical Resource. Once ever
 `ForceTransitions`, a later storage move can happen behind that API if measurements justify it.
 Do not combine runtime-state relocation with the mutation migration.
 
+Post-0052 clarification: typed **request/receipt** Resources belong in this plan, but typed
+`ship_reserve` **storage** does not. Keep the existing dictionary arrays byte-stable while write paths
+move behind `ForceTransitions`; a physical storage rewrite waits until after the 0044–0050 authority
+campaign unless a later plan explicitly re-sequences it.
+
 ## Required transition contracts
 
 ### Casualty while ashore
@@ -146,7 +151,8 @@ This must catch the historical ghost-landing shape immediately.
 5. **Crossing transaction.** Apply roster/reserve/cohort loss as one checked operation coordinated
    with the sealift authority if 0045 is not yet shipped. Add deliberate one-side-omitted red tests.
 6. **Embark/offload transfer authority.** Route exact manifest moves through the API; prove roster
-   stability and id-set equality.
+   stability and id-set equality. The troop side of `OffloadCalculator` purity work starts here only
+   after `ForceTransitions` can receive and validate the resulting manifest plan.
 7. **Air insertion and mobilization.** Route pool, casualty, placement, landed/released projections,
    and corresponding receipts through the force authority while preserving Dice order.
 8. **Activity and organization.** Move remaining direct Brigade runtime writes behind the authority.
@@ -154,7 +160,9 @@ This must catch the historical ghost-landing shape immediately.
    until all transfers are authoritative. Demote/delete old tripwires only after equivalent
    authority checks have been seen red.
 10. **Role placement.** Move force calculators/query helpers to `scripts/calc/` only after they no
-    longer mutate protected state. Replace `RosterMutations` with `ForceTransitions`; do not preserve
+    longer mutate protected state. `OffloadCalculator` stays outside `scripts/calc/` until its
+    `offload_progress_tons` and manifest-membership mutations have moved behind authorities. Replace
+    `RosterMutations` with `ForceTransitions`; do not preserve
     it as a second authority. Keep the pending-pool tripwire as an independent query/backstop, either
     private to the authority or in a clearly read-only calculator. Move `.gd.uid` files with scripts
     and update manifest/path anchors in the same mechanical commit.

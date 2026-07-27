@@ -35,9 +35,9 @@ a Sketch plan in docs/plans/, surface to the user.
 
 - **RNG topology** (verified): offload consumes NO dice; IJFS/antiship use derived substreams;
   combat is the sole base-stream consumer. Extractions must not add/reorder/remove a single draw.
-- **Public surface stays stable:** tests/tools call `GameState._rebuild_ijfs_state()`,
-  `resolve_supply_turn()`, etc. directly. Extract the LOGIC; keep the `GameState` method as a
-  thin delegating wrapper. No renames/deletions until a dedicated, attended cleanup step.
+- **Public surface stays stable during an extraction:** external phase methods like
+  `resolve_supply_turn()` stay on `GameState`; test-only private façades may be retired only in a
+  dedicated cleanup that repoints tests/tools to the owning coordinator/resolver first.
 - **Purity boundary:** resolvers get data via params and return data/typed Resources. `EventBus`
   emits and `GameData`/`GameState` autoload access stay in the wrapper.
 - **~8 cross-phase state fields** (`ship_reserve`, `fleet`, `pending_lost_at_sea`,
@@ -53,8 +53,9 @@ Extract in this order, one commit each (line refs may drift — locate by name):
 2. `_rebuild_ship_reserve` → returns the Array; wrapper assigns.
 3. `_rebuild_fleet` → returns the Dictionary; wrapper assigns.
 4. `_rebuild_supply_state` → returns fresh `SupplyState`; wrapper assigns.
-5. `_rebuild_ijfs_state` → takes `antiship_containers` + Green brigades as params, returns
-   `IjfsDailyState`; wrapper keeps `_ensure_antiship_systems()` ordering + `_ijfs_day = 0` reset.
+5. IJFS state rebuild → now `FiresPhases.rebuild_ijfs_state(GameStateData)`: takes
+   `antiship_containers` + Green brigades through the coordinator, returns/assigns `IjfsDailyState`,
+   and keeps anti-ship-establishment ordering + `_ijfs_day = 0` reset.
 
 ### Phase B — dice-free resolvers — ✅ DONE 2026-07-02 (see `tests/resolvers_test.gd` for the isolation-test pattern)
 6. `resolve_supply_turn` → `SupplyResolver.resolve(supply_state, units, moved_ids, engaged_ids,
@@ -74,17 +75,20 @@ with full attention (not as unattended overnight filler).
 10. `resolve_offload_turn` — no dice but writes `GameData` placements + `ship_reserve`.
 11. `resolve_antiship_turn` + its helper cluster (`_build_sent_fleet`, `_apply_ship_losses_to_fleet`,
     `_remove_bns_from_reserve`, `_mine_*`) — derived substream; keep the draw sequence identical.
-12. `resolve_ijfs_turn` + its cluster (`_build_warmup_context`, `_update_maneuver_posture`,
-    `_sync_maneuver_targets_to_oob`, `_apply_ijfs_maneuver_casualties`, `_compute_ijfs_writeback`).
+12. `resolve_ijfs_turn` + its cluster (`IjfsResolver.build_warmup_context`,
+    `FiresPhases.update_maneuver_posture`, `FiresPhases.sync_maneuver_targets_to_oob`,
+    `FiresPhases.apply_ijfs_maneuver_casualties`, `IjfsResolver.compute_writeback`).
 
 ### Phase D — combat core (last; sole base-stream consumer) — ✅ DONE 2026-07-02 (ac20077)
 13. `_resolve_combat_at`'s dice-consuming core → `CombatResolver.resolve_at` (pure). **Scope
-    judgment made here:** `_combat_contributors_for`, `_apply_casualty`, `_apply_feba_retreats`,
-    `_find_retreat_hex` deliberately STAYED in GameState — they are state gathering/application,
+    judgment made here:** combat contributor gathering (now reached as
+    `TurnConductor.combat_contributors_for`), casualty application, FEBA retreats, and retreat-hex
+    selection deliberately stayed with the turn coordinator — they are state gathering/application,
     and per-hex casualty application interleaves with the next hex's contributor gathering
     (ported semantics), so a batch-pure combat phase would change behavior.
-14. Final: `resolve_turn` reads as a legible sequence of resolver calls; wrapper retirement was
-    deferred (test-called surfaces stay as delegating wrappers).
+14. Final: `resolve_turn` reads as a legible sequence of resolver calls. Most external phase
+    surfaces stay as delegating wrappers; purely test-only private façades can be retired in
+    dedicated cleanup commits once callers use the owning coordinator/resolver directly.
 
 Each new resolver gets a focused GdUnit isolation test — that's the payoff of the interface.
 

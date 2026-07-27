@@ -19,6 +19,11 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-27 — Post-0052 quick hygiene follow-up (agent).** `gd_metrics.py` gained a fixture
+  validator in the gate, and the remaining test/tool-only private `GameState` façades were retired in
+  favor of direct calls to `FiresPhases`, `TurnClosure`, and `TurnConductor`. Follow-up planning was
+  filed into 0044/0045 plus `BACKLOG.md`; no gameplay behavior changed. Evidence: full gate.
+
 - **2026-07-27 — Legibility sweep made the parameter budget enforceable (agent, plan 0052).**
   `tools/gd_metrics.py --check-ceiling` now counts wrapped signatures and gates per-function
   parameter ceilings; `AntishipResolver.resolve` pays down its breach with a typed context. Dead

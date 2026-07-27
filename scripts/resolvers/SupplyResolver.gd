@@ -20,6 +20,6 @@ static func resolve(supply_state: SupplyState, units: Array, moved_ids: Array[St
 	summary["pool_before"] = pool_before
 	summary["pool_after"] = supply_state.current_dos_tons
 	# Combat-effectiveness injection from supply exhaustion happens at the combat call site
-	# (GameState._inject_supply_effectiveness), not here.
+	# (CombatResolver.inject_supply_effectiveness via TurnConductor), not here.
 	supply_state.day_history.append(summary)
 	return summary

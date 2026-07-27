@@ -271,26 +271,6 @@ func resolve_ijfs_turn(dice: Dice) -> Dictionary:
 	return FiresPhases.resolve_ijfs_turn(data, dice)
 
 
-## Test-called surface (tests/ijfs/*) — pure logic lives in FiresPhases.
-func _rebuild_ijfs_state() -> void:
-	FiresPhases.rebuild_ijfs_state(data)
-
-
-## Test-called surface (tests/ijfs/ijfs_maneuver_posture_test.gd) — pure logic lives in FiresPhases.
-func _update_maneuver_posture() -> void:
-	FiresPhases.update_maneuver_posture(data)
-
-
-## Test-called surface (tests/ijfs/ijfs_maneuver_sync_test.gd) — pure logic lives in FiresPhases.
-func _sync_maneuver_targets_to_oob() -> void:
-	FiresPhases.sync_maneuver_targets_to_oob(data)
-
-
-## Test-called surface (tests/ijfs/ijfs_maneuver_consume_test.gd) — pure logic lives in FiresPhases.
-func _apply_ijfs_maneuver_casualties() -> void:
-	FiresPhases.apply_ijfs_maneuver_casualties(data)
-
-
 func resolve_antiship_turn(dice: Dice) -> Dictionary:
 	return FiresPhases.resolve_antiship_turn(data, dice)
 
@@ -299,11 +279,6 @@ func resolve_antiship_turn(dice: Dice) -> Dictionary:
 
 func resolve_cleanup_phase() -> Dictionary:
 	return TurnClosure.resolve_cleanup_phase(data)
-
-
-## Test-called surface (tests/victory_present_census_test.gd) — pure logic lives in TurnClosure.
-func _taiwan_battalion_census() -> Dictionary:
-	return TurnClosure.taiwan_battalion_census(data)
 
 
 # --- D5-A Frontline phase — redistribute Red brigades along a drawn polyline -------------------
@@ -362,23 +337,6 @@ func _rebuild_supply_state() -> void:
 
 func _rebuild_fleet() -> void:
 	data.fleet = GameStateBuilder.build_fleet(GameData.ship_defs)
-
-
-## Delegating wrapper (test-called surface: tests/supply_combat_effectiveness_test.gd) — pure
-## logic lives in TurnConductor / CombatResolver.
-func _inject_supply_effectiveness(units: Array, team: int) -> void:
-	TurnConductor.inject_supply_effectiveness(data, units, team)
-
-
-## Delegating wrapper (test-called surface: tests/composition_test.gd) — pure logic lives in
-## TurnConductor.
-func _combat_contributors_for(team: Brigade.Team, hex_id: String) -> Array:
-	return TurnConductor.combat_contributors_for(data, team, hex_id)
-
-
-# Delegating wrapper (test-called surface) — pure logic lives in TurnConductor / CombatResolver.
-func _brigade_ids(brigades: Array) -> Array[String]:
-	return TurnConductor.brigade_ids(brigades)
 
 
 ## Play a full turn from a bulk-order spec: buffers every order, resolves, and

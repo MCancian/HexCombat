@@ -84,7 +84,7 @@ description: Running HexCombat as a research instrument — Monte Carlo batches 
   `docs/LLM_OBSERVATION_SCHEMA.md`). Determinism caveat: LLM decisions aren't seed-reproducible —
   log every observation/action pair so the *game* is replayable even though the *decider* isn't.
 - Victory state: `game_over`/`winner` on GameState/TurnResult/observation; census in
-  `_taiwan_battalion_census` terms (present battalions).
+  `CleanupResolver.census` terms (present battalions).
 - Sweep pattern: `tools/run_sweep.py` orchestration (fixed-seed grid + multi-seed means; every
   cell a parallel `run_batch.py` job set over standard game records) — generalized per plan
   0011, unified on the batch backend per plan 0012.

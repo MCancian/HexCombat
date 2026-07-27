@@ -1,4 +1,4 @@
-## Verifies GameState._sync_maneuver_targets_to_oob retires "Maneuver Units" IJFS targets when their
+## Verifies FiresPhases.sync_maneuver_targets_to_oob retires "Maneuver Units" IJFS targets when their
 ## battalions die — so IJFS stops "shooting at ghosts" (overnight 2d follow-up). Fully-destroyed
 ## brigades lose all their maneuver targets; a partial qty cut destroys exactly the excess (highest
 ## target_id first); an unchanged OOB is a no-op (golden-safe). Only ever sets destroyed — never
@@ -37,25 +37,25 @@ func _first_live_green_brigade() -> Brigade:
 
 
 func test_no_change_is_noop() -> void:
-	GameState._rebuild_ijfs_state()
+	FiresPhases.rebuild_ijfs_state(GameState.data)
 	var brigade := _first_live_green_brigade()
 	var before := _live_maneuver_targets_for(brigade.id).size()
 	assert_int(before).is_greater(0)
-	GameState._sync_maneuver_targets_to_oob()
+	FiresPhases.sync_maneuver_targets_to_oob(GameState.data)
 	assert_int(_live_maneuver_targets_for(brigade.id).size()).is_equal(before)
 
 
 func test_destroyed_brigade_loses_all_maneuver_targets() -> void:
-	GameState._rebuild_ijfs_state()
+	FiresPhases.rebuild_ijfs_state(GameState.data)
 	var brigade := _first_live_green_brigade()
 	assert_int(_live_maneuver_targets_for(brigade.id).size()).is_greater(0)
 	brigade.destroyed = true
-	GameState._sync_maneuver_targets_to_oob()
+	FiresPhases.sync_maneuver_targets_to_oob(GameState.data)
 	assert_int(_live_maneuver_targets_for(brigade.id).size()).is_equal(0)
 
 
 func test_partial_qty_cut_retires_exactly_the_excess() -> void:
-	GameState._rebuild_ijfs_state()
+	FiresPhases.rebuild_ijfs_state(GameState.data)
 	# Find a Green brigade with a battalion type that has qty >= 1 and >1 maneuver targets total.
 	var brigade: Brigade = null
 	var target_type := ""
@@ -78,6 +78,6 @@ func test_partial_qty_cut_retires_exactly_the_excess() -> void:
 		if battalion.type == target_type and battalion.qty > 0:
 			battalion.qty -= 1
 			break
-	GameState._sync_maneuver_targets_to_oob()
+	FiresPhases.sync_maneuver_targets_to_oob(GameState.data)
 	# Exactly one maneuver target retired (the type lost one instance).
 	assert_int(_live_maneuver_targets_for(brigade.id).size()).is_equal(live_before - 1)

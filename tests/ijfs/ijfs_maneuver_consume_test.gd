@@ -1,4 +1,4 @@
-## Verifies GameState._apply_ijfs_maneuver_casualties removes struck battalions from the OOB
+## Verifies FiresPhases.apply_ijfs_maneuver_casualties removes struck battalions from the OOB
 ## (overnight item 2d): IJFS air/missile kills reduce the brigades that fight in ground combat.
 extends GdUnitTestSuite
 
@@ -35,7 +35,7 @@ func test_single_casualty_decrements_qty() -> void:
 	GameState.last_ijfs_writeback = IjfsWriteback.from_dict({"maneuver_casualties": [
 		{"brigade_id": brigade.id, "unit_type": unit_type, "battalion_id": "%s-MU-1" % brigade.id},
 	]})
-	GameState._apply_ijfs_maneuver_casualties()
+	FiresPhases.apply_ijfs_maneuver_casualties(GameState.data)
 	assert_int(_qty_of(brigade, unit_type)).is_equal(before - 1)
 
 
@@ -49,7 +49,7 @@ func test_qty_capped_at_zero_and_brigade_destroyed_when_depleted() -> void:
 		for i in range(battalion.qty + 2):  # +2 over-applies to exercise the cap
 			casualties.append({"brigade_id": brigade.id, "unit_type": battalion.type})
 	GameState.last_ijfs_writeback = IjfsWriteback.from_dict({"maneuver_casualties": casualties})
-	GameState._apply_ijfs_maneuver_casualties()
+	FiresPhases.apply_ijfs_maneuver_casualties(GameState.data)
 	for battalion in brigade.composition:
 		assert_int(battalion.qty).is_equal(0)
 	assert_bool(brigade.destroyed).is_true()
@@ -64,5 +64,5 @@ func test_unknown_brigade_or_type_is_ignored() -> void:
 	var brigade := _first_green_brigade()
 	var unit_type := String(brigade.composition[0].type)
 	var before := _qty_of(brigade, unit_type)
-	GameState._apply_ijfs_maneuver_casualties()
+	FiresPhases.apply_ijfs_maneuver_casualties(GameState.data)
 	assert_int(_qty_of(brigade, unit_type)).is_equal(before)

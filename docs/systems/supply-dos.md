@@ -134,8 +134,9 @@ oracle:
   sets per-brigade `moved`/`in_combat` from the brigade's flag rather than OR-accumulating across its
   BNs as TIV does — functionally identical, since the flag is per-brigade.)
 
-**✅ Supply now feeds combat (2026-06-29).** `GameState._inject_supply_effectiveness(units, team)` sets
-each Red maneuver unit's `supply_effectiveness` before `resolve_map_attack` — `1.0` while the Red DOS
+**✅ Supply now feeds combat (2026-06-29).** `CombatResolver.inject_supply_effectiveness(...)`,
+threaded by `TurnConductor`, sets each Red maneuver unit's `supply_effectiveness` before
+`resolve_map_attack` — `1.0` while the Red DOS
 pool is positive, and `GameData.red_out_of_supply_effectiveness` (scenario knob, default `0.5`) once
 exhausted (≤0); Green is unaffected (no DOS model). This mirrors TIV
 `boots_combat_service._inject_supply_effectiveness`, adapted to HexCombat's single pool (TIV is

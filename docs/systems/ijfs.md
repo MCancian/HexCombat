@@ -71,12 +71,12 @@ in `IjfsEngine.run_daily`'s header comment — read it for the authoritative dra
 - **Green maneuver units (D4-H)**: `IjfsLoaders.build_maneuver_targets` emits one "Maneuver Units"
   target per ROC battalion instance; its `(mobility, hardness, detectability_active/hiding)` come from
   the `MANEUVER_TYPE_MAP` profile (less-mobile/softer → more findable/lethal). `posture` is set each
-  turn by `IjfsResolver.update_maneuver_posture` (called via `GameState._update_maneuver_posture`):
+  turn by `IjfsResolver.update_maneuver_posture`, called by `FiresPhases.update_maneuver_posture`:
   a brigade that moved or fought last turn (the `moved_last_turn`/`fought_last_turn` flags) presents
   `posture="active"` — selecting the higher `detectability_active` label plus the active
   posture/satellite multipliers above — otherwise `"hiding"`. Because `ijfs_state` is built once
-  per scenario, `IjfsResolver.sync_maneuver_targets_to_oob` (called via
-  `GameState._sync_maneuver_targets_to_oob`) also runs each turn to mark `destroyed` the maneuver
+  per scenario, `IjfsResolver.sync_maneuver_targets_to_oob`, called by
+  `FiresPhases.sync_maneuver_targets_to_oob`, also runs each turn to mark `destroyed` the maneuver
   targets in excess of the current OOB qty (battalions killed by IJFS or ground combat), so the
   campaign stops firing at units that no longer exist; it only sets `destroyed` (never
   resurrects), preserving survivors' detection continuity.
@@ -187,7 +187,7 @@ these to reduce `system.quantity` and `fire_pct`.
 |---|---|---|
 | `antiship_destroyed_by_type` | Cumulative `target.destroyed` on Anti-Ship Systems targets | D3 `AntishipResolver.resolve`: reduces system quantity |
 | `antiship_suppressed_by_type` | Cumulative `target.suppressed` on Anti-Ship Systems targets | D3 `AntishipResolver.resolve`: reduces fire percentage proportional to suppressed/available |
-| `maneuver_casualties` | Strike log entries for "Maneuver Units" with `destroyed = true` (carry `brigade_id`/`battalion_id`/`unit_type` from target metadata) | **CLOSED (D4-H)** — `IjfsResolver.apply_maneuver_casualties` (called by `GameState._apply_ijfs_maneuver_casualties`) decrements the struck battalions' `qty` in the OOB before ground combat |
+| `maneuver_casualties` | Strike log entries for "Maneuver Units" with `destroyed = true` (carry `brigade_id`/`battalion_id`/`unit_type` from target metadata) | **CLOSED (D4-H)** — `IjfsResolver.apply_maneuver_casualties` (called by `FiresPhases.apply_ijfs_maneuver_casualties`) decrements the struck battalions' `qty` in the OOB before ground combat |
 | `sam_destroyed` / `sam_suppressed` | Engagement log SEAD outcomes | Summary only |
 
 Anti-ship writeback keys use `AntishipCalculator.encode_key(to_number, type_id)` —
@@ -231,8 +231,8 @@ whole count from the firing plan.
 
 1. **✅ Maneuver-casualties linkage CLOSED 2026-06-29 (overnight 2b–2d).** Green/ROC maneuver battalions
    are now generated as IJFS targets (`IjfsLoaders.build_maneuver_targets`, wired in
-   `_rebuild_ijfs_state`), struck, written back (`maneuver_casualties` populates), and **consumed**
-   (`GameState._apply_ijfs_maneuver_casualties` removes struck battalions from the OOB before ground
+   `FiresPhases.rebuild_ijfs_state`), struck, written back (`maneuver_casualties` populates), and
+   **consumed** (`FiresPhases.apply_ijfs_maneuver_casualties` removes struck battalions from the OOB before ground
    combat). Tests: `ijfs_maneuver_targets_test.gd`, `ijfs_maneuver_consume_test.gd`. The 2c-ii
    detection/lethality bias is the remaining refinement. _Historical (now resolved) description:_
    (a) **No ID bridge** — `maneuver_casualties` is accumulated in `_compute_ijfs_writeback`
