@@ -150,6 +150,10 @@ This must catch the historical ghost-landing shape immediately.
   owner paths too broadly for `GameData.gd`; closeout still requires that gap to be closed.
 - No legacy writers remain for the protected first slice; the DOS-consumption validator now marks
   movement through the same authority façade as production movement.
+- Remaining 0044 work includes deciding where `ForcePlacementReceipt` / casualty / activity receipts
+  are consumed. The current `GameData` façades preserve legacy void surfaces, so receipts mostly prove
+  transitions in tests; before closeout, thread them into summaries/narratives or record an explicit
+  reason they remain internal-only.
 
 ## Commit sequence
 
