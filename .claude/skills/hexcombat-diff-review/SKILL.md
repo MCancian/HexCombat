@@ -47,7 +47,46 @@ Write it to a file; pass via `"$(cat …)"`.
 
 ## Running them
 
-Identical mechanics to `hexcombat-plan-review` — serial for opencode models, parallel for `gem-explore`, background, poll for size to stop changing. Consider expected flakes (stall, stream fail) and retry if they occur. Same model table, same strengths and weaknesses.
+Mechanics, model reliability table, flake detection and the differentiated-roles pattern all live in
+`hexcombat-plan-review` — read that section, it applies unchanged. The short version: **`agy-explore`
+leads (4/4 substantive over the measured session), opencode is optional and unreliable for review
+(1/3 and 0/3), and a reviewer that returns no numbered findings has not reviewed anything** — a flake
+looks exactly like "reviewed, no findings", so check the output is a real review before you trust it.
+
+Two passes matter most on a diff, and they should be separate briefs run in parallel:
+
+- **Missed consumers.** "Name the `file:line` of anything still reading the removed field / old
+  signature / old path — scripts, tools, tests, scenes, docs." Ask for it BY NAME; it is the single
+  most common real finding and reviewers do not volunteer it.
+- **Correctness + timing.** The rule the diff is supposed to implement, stated in one sentence, plus
+  the freshness question: is anything read on the wrong side of a phase boundary?
+
+### If the diff is justified by a measurement, add `agy-verify`
+
+```bash
+agy-verify "reproduce <the measurement>; is the method sound and does it support the conclusion?"
+```
+
+A green gate and a read-only reviewer both miss **methodology** errors, because catching one means
+running the thing. In the 0043 session the two worst errors were exactly that: a validator run
+without the gate's `HEXCOMBAT_SCENARIO` (its pin never matched, and the mismatch was chased as a
+phantom regression), and a hand-rolled turn loop that appeared to run 25 turns, actually resolved
+one, and summed a stale summary 25 times.
+
+`agy-verify` runs in a throwaway detached worktree of HEAD inside the repo, removed on exit. **It
+sees committed state only — commit or stash first.** So on a pre-commit diff review, either commit
+to a scratch branch first, or point it at the previous commit and describe the delta in the prompt.
+
+### And if the code is a port, add the oracle pass
+
+```bash
+agy-explore -d ~/Projects/TaiwanInvasionViewer "does <function> match the source it was ported from?"
+```
+
+TIV is a sibling repo and cheap to read. On plan 0051 this **reversed** the naive reading: the ported
+arithmetic is correct for TIV's inputs and wrong for ours, because the two projects feed the same
+variable different quantities. Reasoning about the oracle from our port is how ported bugs get
+preserved as "faithful".
 
 ## Reviewer safety — the same rules apply, and they matter more here
 

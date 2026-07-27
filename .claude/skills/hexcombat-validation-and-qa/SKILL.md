@@ -52,7 +52,23 @@ change-control event (`hexcombat-change-control`).
 1. `extends SceneTree`, do the checks in `_initialize()` (autoloads are up), print `PASS: <what>`
    or `FAIL: <why>` lines, `quit(0/1)`.
 2. Fail loud and specifically — a validator that prints a vague FAIL costs the next agent an hour.
-3. It is auto-discovered by the gate. Run it standalone first, then the full gate.
+3. It is auto-discovered by the gate. Run it standalone first, then the full gate — but run it the
+   way the GATE runs it, or its verdict is worthless:
+
+   ```bash
+   godot --headless --path . --import                    # class cache, after any new class_name
+   HEXCOMBAT_SCENARIO=scenario_golden \
+     godot --headless --path . --quit-after 300 -s res://tools/validate_<thing>.gd
+   ```
+
+   Both flags are load-bearing and `tools/run_all_tests.py` sets both (lines 22 and 123).
+   **`HEXCOMBAT_SCENARIO=scenario_golden`**: omit it and every pinned validator loads
+   `scenario_default` instead, so its pin compares two different scenarios and reports a FAIL that
+   is nothing but your missing env var. This has burned two separate sessions — 2026-07-24
+   (`validate_golden_victory`, `validate_cleanup`) and again 2026-07-27, where it cost three
+   experiments chasing a phantom regression. **`--quit-after 300`** is the deadlock breaker: a
+   validator whose *dependency* class fails to compile otherwise spins the SceneTree forever with no
+   failure code.
 4. Two layers, by purpose: **validators** = data contracts, cross-system invariants, golden pins,
    port equivalence (dependency-light, agent-friendly); **GdUnit** = unit logic, scene loading,
    input simulation, UI behavior.

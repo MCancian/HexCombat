@@ -11,7 +11,7 @@ Point-in-time audit snapshot. **Not** an orientation doc: current behavior lives
 - Duplication = normalized 6-line sliding windows repeated anywhere in repo.
 - Dependencies = distinct `preload`/`load` + `class_name` token references + autoload references
   per file.
-- Qualitative sweeps: gem-explore (SRP/naming) and opencode (test triviality), both spot-verified
+- Qualitative sweeps: agy-explore (SRP/naming) and opencode (test triviality), both spot-verified
   against source before inclusion; one gem claim was rejected as hallucinated
   (a "230-line `LLMGameAPI._build_observation`" that does not exist).
 - No line-coverage tool exists for headless GDScript here; coverage is reported file-level.

@@ -140,7 +140,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   Facts: `docs/systems/turn-engine.md` §2/§4, `docs/STATUS.md`, module headers.
 
 - **2026-07-25 — Gate hardening: the two silent-failure holes this session fell into are now gated.**
-  - **Who**: agent, from a refactor review the USER asked to be run past `gem-explore` and `opencode`.
+  - **Who**: agent, from a refactor review the USER asked to be run past `agy-explore` and `opencode`.
   - **What**: (1) `tools/validate_tool_script_purity.gd` replaces `validate_llm_api_purity.gd` — the
     guarded set is now the **transitive compile-time closure of `tools/*.gd`** — by `class_name` or by
     literal `preload` path — not one hand-picked file; `SelfPlayRunner` was outside the old gate and broke exactly there. (2)

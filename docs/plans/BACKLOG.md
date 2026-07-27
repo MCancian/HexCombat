@@ -13,7 +13,7 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   `_finish` in 31, `_assert_equal_int` in 12, `_assert_true` in 11. A `tools/ValidatorHarness.gd`
   owning the assert vocabulary would remove the duplication. **Note the claim that failed review:**
   this does NOT fix the gate-hang class — a script that fails to COMPILE never runs, harness included
-  (caught by gem-explore; two other models wrongly agreed it would). That hole is closed separately by
+  (caught by agy-explore; two other models wrongly agreed it would). That hole is closed separately by
   `--quit-after` in `run_all_tests.py`. So this is deduplication only, worth doing when validators are
   being touched anyway, in slices of 5-6 with the gate green between. Good `opencode` delegation.
 - [ ] **Doc-anchor validator checks links, not symbols (found 2026-07-25).** `tools/validate_doc_anchors.gd`

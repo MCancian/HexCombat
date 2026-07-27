@@ -83,7 +83,7 @@ This file serves as an **inbox**. Agents append their lessons here, perform tria
   Reproduce-then-fix-then-re-reproduce was what made it certain.
 - **Run the two opencode reviewers SERIALLY, not in parallel.** Two simultaneous `opencode run`
   invocations make the second die with `database is locked` — the session DB does not tolerate it. That
-  cost this session two review slots before it was diagnosed. `gem-explore` runs fine alongside one of
+  cost this session two review slots before it was diagnosed. `agy-explore` runs fine alongside one of
   them. Worth folding into `hexcombat-plan-review`'s launch snippet, which currently backgrounds all
   three at once.
 
@@ -93,7 +93,7 @@ This file serves as an **inbox**. Agents append their lessons here, perform tria
 - The serial-opencode requirement → **act now** for the record here, **act later** for the skill: the
   launch snippet in `hexcombat-plan-review` backgrounds all three models simultaneously, which
   reproduces the failure. Logged to BACKLOG.
-- Diff round delivered two `gem-explore` passes and no opencode write-up (both free models failed
+- Diff round delivered two `agy-explore` passes and no opencode write-up (both free models failed
   infrastructurally, twice each) → **recorded** in the plan's "Coverage of the two review rounds" with
   what substituted for the missing reads. Not hidden: a future reader must know how thin the independent
   coverage was — and that the one blocker came from the second pass, not the first.
@@ -148,7 +148,7 @@ This file serves as an **inbox**. Agents append their lessons here, perform tria
 ## 2026-07-16 — plan 0009: quality baseline + remediation   (implementer: direct)
 
 **What would you do differently (implementer):**
-- Delegate sweeps must be source-verified before acting: gem-explore invented a 230-line
+- Delegate sweeps must be source-verified before acting: agy-explore invented a 230-line
   `LLMGameAPI._build_observation` that does not exist (the file is ~20 small builders), and the
   first analyzer pass miscounted UnitStats const-table values as magic numbers. Numbers from
   the parser beat prose from a delegate; every claim that drives a change gets a grep first.

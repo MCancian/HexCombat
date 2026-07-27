@@ -28,9 +28,10 @@ not guess game design.
 4. Verify yourself: `pwsh -File tools/run_all_tests.ps1` → **ALL PHASES GREEN** (verdict rules in
    `hexcombat-validation-and-qa`; flake handling in `hexcombat-debugging-playbook`).
 5. **Consult before committing** (USER standing instruction 2026-07-25). Nothing is committed until
-   `opencode` and `agy`/`gem-explore` have reviewed it — **review-only, they never implement.** This
+   **two substantive independent reads** have landed — **review-only, they never implement.** This
    applies to plans *and* to the finished diff; a plan gets reviewed before code is written, the diff
-   before it is committed. See "Consultation" below.
+   before it is committed. A reviewer that returned no findings because it FLAKED does not count as
+   one of the two. See "Consultation" below.
 6. Record per `hexcombat-docs-and-writing` (STATUS / Decisions / RETROSPECTIVES / backlog
    check-off), then commit. **Push at milestones**, not every micro-commit.
 7. Pause and surface to the user on: a genuine design decision, a gate you can't get green after
@@ -39,16 +40,29 @@ not guess game design.
 ## Consultation (review-only, twice per unit of work)
 
 The USER is non-coding and cannot review the technical soundness of a plan or a diff themselves, so
-two or three independent model reads substitute for that. They are cheap; a wrong plan or a silent
-regression is not. **Two rounds are required:**
+independent model reads substitute for that. They are cheap; a wrong plan or a silent regression is
+not. **Two rounds are required:**
 
 - **Before implementation** — the plan → `.claude/skills/hexcombat-plan-review`
 - **Before committing** — the finished diff, gate already green → `.claude/skills/hexcombat-diff-review`
 
-Those skills own the brief format, the model table and their known weaknesses, the reviewer-safety
-rules, and how to evaluate findings rather than obey them. **Read the relevant one before each round**
-rather than improvising a prompt — an unguided reviewer reads the wrong five files and returns a
-summary of your own work.
+Those skills own the brief format, the measured model-reliability table, flake detection, the
+reviewer-safety rules, and how to evaluate findings rather than obey them. **Read the relevant one
+before each round** rather than improvising a prompt — an unguided reviewer reads the wrong five
+files and returns a summary of your own work.
+
+Three things are worth knowing before you get there, because they change what you run:
+
+- **`agy-explore` is the reviewer.** Measured 4/4 substantive over the 0043/0051 session against
+  1/3 and 0/3 for the two free opencode models. opencode is an optional extra, best used early in a
+  session and only for bounded mechanical enumeration ("list every read/write of these fields").
+- **A flake is not a pass.** Both failure shapes return *something* — under 1 KB (died early) or
+  over 10 KB (dumped tool output). No numbered findings means nobody reviewed it. Re-run.
+- **Spend the spare agy budget on different ROLES, not repeats:** fact-check the premises /
+  consequences / "what will a weaker implementer get wrong" / oracle check against TIV
+  (`agy-explore -d ~/Projects/TaiwanInvasionViewer`) / method check (`agy-verify`). Repeats of one
+  brief are correlated noise. The oracle and weaker-implementer roles each produced a blocker that
+  nothing else caught.
 
 The two rules worth knowing before you get there: **every prompt must say REVIEW ONLY** (`--agent
 explore` is not honoured by every opencode model — they fall back to the *writing* `build` agent), and
@@ -60,7 +74,16 @@ the acting model. Never commit `.mcp.json`.
 
 ## Auxiliary tools
 
-- **agy** (Antigravity CLI): Use to run commands or tasks from the terminal. Use `agy -p "task"` to run a single prompt non-interactively and print the response (great for one-off tasks). Use `agy -i "task"` to start an interactive session with an initial prompt. You can also append `-c` to continue your most recent conversation.
+- **agy** (Antigravity CLI) — the primary delegation path, and the USER has spare capacity on it, so
+  prefer it over doing token-heavy reading yourself. Two wrappers (full contract in `~/.claude/AGY.md`):
+  - `agy-explore "task"` — READ-ONLY. Exploration sweeps, large-file summaries, plan/diff review.
+    `-d <dir>` adds a workspace dir, which is how the TIV oracle gets read. `AGY_TIMEOUT=15m` for
+    reviews (default 5m). *(Renamed from `gem-explore` 2026-07-27; `gem` was the old CLI name.)*
+  - `agy-verify "task"` — MAY RUN COMMANDS, sandboxed to a throwaway git worktree of HEAD that is
+    deleted on exit. For "reproduce my measurement; is the method sound?" — the only pass that
+    catches methodology errors, which reading cannot. **Sees committed state only.**
+  - Raw `agy -p` / `agy -i` / `-c` still available, but bare `agy -p` has timed out on multi-file
+    reviews; prefer the wrappers.
 - **opencode** (`Bash(opencode *)` is allowed): `opencode run -m opencode/deepseek-v4-flash-free
   "task"` (add `-s <session>` for continuity, `--agent explore` for read-only). Also available:
   `opencode/nemotron-3-ultra-free`. Small free models — suitable for broad file surveys, mechanical

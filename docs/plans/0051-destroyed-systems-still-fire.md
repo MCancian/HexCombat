@@ -382,7 +382,7 @@ measured consequence), report under `docs/reports/`, plan archived.
 
 ## Review record (2026-07-27, pre-implementation)
 
-Reviewed by `gem-explore`; `nemotron-3-ultra-free` failed with a streaming error (a known flake).
+Reviewed by `agy-explore`; `nemotron-3-ultra-free` failed with a streaming error (a known flake).
 All six of the plan's factual premises were confirmed against the tree. Three blockers came back and
 are folded in above:
 
