@@ -54,6 +54,15 @@ When you finish: update the canonical homes you touched (STATUS bullet, systems 
 - **Resolvers** (`scripts/resolvers/`): one pure class per turn phase; `GameState` methods are
   thin delegating wrappers. Each resolver's header states its purity boundary — read it before
   editing. New phases follow `hexcombat-add-phase-resolver`.
+- **Phase coordinators** (`scripts/phases/`): the WHEN, not the how — `TurnConductor` holds the
+  ordered phase list, the rest group phases that share state (`FiresPhases`, `ReinforcementPhases`,
+  `TurnClosure`, `FrontlinePhase`). A coordinator may call two authorities; it writes neither's
+  fields itself.
+- **Builders** (`scripts/builders/`): produce FRESH state from scenario/content data and hand it
+  back. Nothing holds what they are building yet, which is why the mutation manifest grants them
+  CONSTRUCTION allowances — never confuse one with a resolver.
+- **Calculators** (`scripts/calc/`): compute and report, hold no state, write none that outlives the
+  call. A file that mutates anything live does not belong here, however pure the rest of it is.
 - **Data service — `GameData` autoload**: loads `data/*.json` into typed objects once.
 - **Runtime state — `GameState` autoload**: turn/phase/orders; owns `resolve_turn` (its inline
   comments carry the phase-order and RNG-substream rationale).

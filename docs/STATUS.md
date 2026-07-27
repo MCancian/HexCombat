@@ -15,7 +15,7 @@ spawns independent substreams per phase and per contested hex (`ijfs:<turn>:<day
 `antiship:<turn>`, `combat:<turn>:<hex_id>`), so a roll-count change in one phase or hex never
 scrambles another's dice (`ScriptedDice.derive` returns self, so scripted fixtures are unaffected). `GameData` (autoload) loads hexes, both OOBs (PLA + ROC brigades),
 ships, theaters, beaches. `EventBus` for signals. **Every phase's logic lives in a pure
-`RefCounted` class under `scripts/resolvers/`** (5 builders + `SupplyResolver`,
+`RefCounted` class under `scripts/resolvers/`** (`SupplyResolver`,
 `FrontlineResolver`, `CleanupResolver`, `OffloadResolver`, `AntishipResolver`, `IjfsResolver`,
 `CombatResolver`). Turn orchestration is **`TurnConductor`** (also `RefCounted`, all `static`):
 its methods take a `GameStateData` value object as their first argument, own the EventBus emits,
@@ -27,7 +27,12 @@ insertion) live in **`ReinforcementPhases`**, the two **fires** phases (IJFS, an
 roster-shrinking seam every kill path shares
 (`apply_casualty`, `apply_crossing_casualties`, and the pool/roster tripwire) in
 **`RosterMutations`** — `TurnConductor.resolve_turn` still holds the whole ordered call list, so the
-modules own how a phase resolves and never when it runs (plan 0038). Runtime state itself is the plain **`GameStateData`** value object
+modules own how a phase resolves and never when it runs (plan 0038). **Directories name the role
+(plan 0043):** `scripts/phases/` the coordinators, `scripts/resolvers/` the per-phase resolvers,
+`scripts/builders/` the fresh-state builders, `scripts/calc/` the write-free calculators, and
+`scripts/transitions/` the mutation authorities. `AntishipResolver` stays under `resolvers/` on
+purpose — it still rewrites the caller's `ship_reserve` entries in place, and a mixed file does not
+get to sit in a directory whose claim is that it holds none. Runtime state itself is the plain **`GameStateData`** value object
 (`scripts/model/`); **`GameState` (autoload) is a thin state-holder** — it owns one
 `GameStateData` and exposes delegating wrappers to `TurnConductor` (turns), `OrderValidator`
 (order validation), and `GameStateBuilder` (scenario construction), plus typed forwarding

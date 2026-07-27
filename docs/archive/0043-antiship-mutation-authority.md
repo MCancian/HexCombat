@@ -1,10 +1,24 @@
 ---
 title: "0043: Anti-ship mutation authority and permanent launch destruction"
-status: "In progress"
+status: "✅ Shipped"
 created: "2026-07-26"
 ---
 
 # Plan 0043: Anti-ship mutation authority and permanent launch destruction
+
+**✅ Shipped 2026-07-27 in six commits.** `AntishipTransitions` is the anti-ship establishment's only
+writer (all five legacy-writer exceptions gone, each re-tested with a deliberate direct write);
+launcher losses from launch attrition are permanent, measured over 12 seeds as −5.4 Green shots per
+campaign with no material outcome shift and no pin moved; the two deferred 0042 validator cleanups
+landed; and `scripts/{phases,builders,calc}/` now name the role. Durable facts live in
+`docs/STATUS.md` (D3 + architecture), `docs/systems/antiship-mine.md` §10,
+`docs/systems/turn-engine.md`, `docs/DECISIONS.md`, `AGENTS.md`,
+`hexcombat-architecture-contract`, `hexcombat-code-quality`, and
+`docs/reports/2026-07-27-antiship-permanent-launch-destruction.md`.
+
+**Not done, on purpose:** the optional fourth commit splitting
+`tools/validate_mutation_authority.gd`. It went 1054 → 1094 lines, every per-function budget is still
+met, and the plan gated that split on the pilot making it "grow further". 40 lines is not that.
 
 ## Goal
 
