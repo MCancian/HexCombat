@@ -117,6 +117,11 @@ and `last_antiship_summary` assignment remain outside the authority.
 5. **Transient cleanup.** Give `fired`, `attempted`, `launched`, `expended`, and suppression one
    meaning each; remove dead duplicates rather than maintaining aliases. Keep serialized output
    stable unless a clearly additive field is approved and fixture-reviewed.
+   **Confirmed from source (plan 0042 refactor sweep):** `AntishipCalculator.gd:193-194` increments
+   `fired` and `expended` by the identical `launched` value on the same pass, and nothing reads them
+   apart. This step owns that removal — it was deliberately left alone in 0042 because it is
+   golden-adjacent. Both fields are classified `transient` in the manifest; deleting one is a manifest
+   edit as well as a code edit, and the gate will fail on the stale field until the manifest follows.
 6. **Close the gate.** Remove every anti-ship legacy writer exception from the mutation-authority
    manifest. Deliberately add a direct write in each former writer and confirm the validator fails.
 7. **Measure behavior.** Re-run the accepted crossing calibration and at least one sustained
@@ -126,6 +131,25 @@ and `last_antiship_summary` assignment remain outside the authority.
    manifest entry, snapshots, receipts, diagnostics, and public-method count. Update the architecture
    and code-quality skills from evidence. Any authority method-count guidance is a soft threshold on
    public mutation operations, not a hard total-method cap that would force multiple writers.
+   **Fold in the two validator cleanups deferred from 0042** (both are internal to
+   `tools/validate_mutation_authority.gd`, neither changes what it detects, and this step is the first
+   point where their shape is settled by evidence):
+   - *Split the scan result from the usage record.* `_apply_allowances` currently both filters
+     violations and writes `allowance_used` / `authority_used` back into the `Ownership` object as a
+     side effect. The cost is already visible: `_check_inert_authority_fixture` has to hand-build a
+     stripped `Ownership` to exercise the failing direction. Return a scan result carrying both, so
+     `_report_stale_allowances` and `_report_inert_authorities` become pure functions of it.
+   - *Type the findings.* A finding is an untyped `Dictionary` assembled in three passes — `_finding`
+     builds it, `_scan` bolts on `path`/`line`, and `_match_dynamic_sets` overwrites `symbol` after
+     construction — then read by string key in ~12 places, against `AGENTS.md`'s preference for typed
+     fields over Dictionary blobs. An inner `class Finding` removes the post-hoc mutation and makes
+     the dynamic-set case a constructor argument. Do this second: it is easier once findings already
+     flow through a result object.
+
+   Validation for both: the fixture self-test compares found-vs-expected **exactly** (21 expectations
+   at 0042 close), so any shape regression fails as a false negative rather than silently. Re-run the
+   deliberate stale-allowance experiment as well — remove `system.active = false` from
+   `CleanupResolver` and confirm `E_STALE_ALLOWANCE`.
 9. **Post-pilot role-directory checkpoint — mechanical commits only.** Once steps 1–8 are green:
    - create/use `scripts/phases/` and move the clear coordinators (`TurnConductor`, `FiresPhases`,
      `ReinforcementPhases`, `TurnClosure`, `FrontlinePhase`) with their `.gd.uid` files in one commit;
@@ -145,6 +169,22 @@ and `last_antiship_summary` assignment remain outside the authority.
    with the full byte-stable gate green. Keep class names unchanged during path-only moves. Phase
    coordinators may remain exact temporary legacy writers for later aggregates, but their manifest
    exceptions must name the plan that removes each write.
+
+   **Optional fourth commit — split `tools/validate_mutation_authority.gd`.** It closed 0042 at ~1050
+   lines and 61 functions, 2.4x the next-largest validator (`validate_combat_rules_threading.gd`, 431).
+   Every per-function budget is met (max CC 9, max length 31, no parameter breaches), so this is file
+   size alone — which is why it is optional and last. If the pilot has made it grow further, extract
+   `RefCounted` helpers under `tools/mutation_authority/` along the seams already named in the file:
+   corpus + type resolution, manifest → ownership + manifest checks, matchers + verdict + self-test.
+   Precedent: `tools/ValidatorHarness.gd`.
+
+   Two traps specific to this split, both verified against the current runners:
+   - `run_all_tests.py` globs `tools/validate_*.gd` **non-recursively**, so helpers in a subdirectory
+     are safe under any name — but a helper left at `tools/` top level matching `validate_*` would
+     silently run as its own gate phase and report a vacuous pass.
+   - `validate_tool_script_purity.gd` seeds from top-level `tools/*.gd` and follows references only
+     into `res://scripts`, so helpers under `tools/` fall **outside** its compile-closure scan. They
+     must not name `GameData`/`GameState`/`EventBus`; nothing will catch it if they do.
 
 ## Tests and validation
 
