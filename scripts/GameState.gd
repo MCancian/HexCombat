@@ -228,9 +228,7 @@ func begin_next_turn() -> void:
 
 	for brigade in GameData.brigades.values():
 		var typed_brigade: Brigade = brigade
-		typed_brigade.moved_this_turn = false
-		typed_brigade.moved_admin_this_turn = false
-		typed_brigade.fought_this_turn = false
+		GameData.reset_brigade_turn_flags(typed_brigade)
 	data.orders[Brigade.Team.RED].clear()
 	data.orders[Brigade.Team.GREEN].clear()
 	data.commitments[Brigade.Team.RED].clear()

@@ -134,8 +134,8 @@ static func resolve_offload_turn(state: GameStateData, dice: Dice) -> Dictionary
 	for landing_value in outcome["landings"]:
 		var landing: Dictionary = landing_value
 		var brigade_id := String(landing["brigade_id"])
-		GameData.set_brigade_hex(brigade_id, String(landing["beach_hex"]))
-		GameData.get_brigade(brigade_id).entry_bearing = float(landing["offset_bearing"])
+		GameData.place_brigade_with_bearing(
+			brigade_id, String(landing["beach_hex"]), float(landing["offset_bearing"]), "offload")
 	state.ship_reserve = outcome["remaining_ship_reserve"]
 	GameData.recompute_hex_ownership()
 
@@ -285,7 +285,11 @@ static func resolve_air_insertion_turn(state: GameStateData, dice: Dice) -> AirI
 		# Losses first: a battalion shot down on the way in never reaches the hex, and killing it
 		# before the landing keeps a brigade that lost its whole packet off the map entirely.
 		for lost_value in landing["lost_bns"]:
-			RosterMutations.apply_casualty({"brigade_id": brigade_id, "type": String((lost_value as Dictionary)["type"])})
+			RosterMutations.apply_casualty({
+				"brigade_id": brigade_id,
+				"type": String((lost_value as Dictionary)["type"]),
+				"cause": "air_insertion",
+			})
 		if landing["first_landing"]:
 			GameData.set_brigade_hex(brigade_id, String(landing["hex_id"]))
 			continue

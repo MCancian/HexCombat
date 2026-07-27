@@ -1,6 +1,6 @@
 ---
 title: "0044: Force mutation authority"
-status: "Sketch"
+status: "In progress"
 created: "2026-07-26"
 ---
 
@@ -135,6 +135,21 @@ This must catch the historical ghost-landing shape immediately.
 - old and new index buckets reconcile bidirectionally before return;
 - movement/organization/activity flags are applied through the same authority or a tightly scoped
   force-activity sub-authority, never direct writes in `TurnConductor`.
+
+## Implementation progress
+
+- First enforced slice is live: `ForceTransitions` owns protected Brigade runtime fields and
+  `Battalion.qty` roster decrements via typed location/cause/request/receipt Resources. Production
+  placement, movement/activity, ground-combat casualty, IJFS maneuver casualty, crossing roster loss,
+  air-insertion casualty, retreat, cleanup-latch, and next-turn flag reset call the authority.
+- `RosterMutations` remains temporarily as a compatibility façade plus the pool/roster tripwire; it
+  no longer writes protected roster fields itself.
+- Transport manifest storage (`ship_reserve`, `SealiftState.mainland_pool`, `AirInsertionState.pool`)
+  remains dictionary-shaped and is not yet registered as protected storage. `GameData.brigades_by_hex`
+  is mutated by the authority but not yet source-gated because the current scanner treats hosted
+  owner paths too broadly for `GameData.gd`; closeout still requires that gap to be closed.
+- One legacy writer remains in `tools/mutation_authority_manifest.json`: a validator-only movement flag
+  fixture in `tools/validate_dos_consumption.gd`.
 
 ## Commit sequence
 

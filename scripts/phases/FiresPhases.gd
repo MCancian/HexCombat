@@ -52,7 +52,13 @@ static func sync_maneuver_targets_to_oob(state: GameStateData) -> void:
 
 static func apply_ijfs_maneuver_casualties(state: GameStateData) -> void:
 	var casualties: Array = state.last_ijfs_writeback.maneuver_casualties if state.last_ijfs_writeback != null else []
-	IjfsResolver.apply_maneuver_casualties(casualties, GameData.brigades)
+	for casualty_value in casualties:
+		var casualty: Dictionary = casualty_value
+		RosterMutations.apply_casualty({
+			"brigade_id": String(casualty["brigade_id"]),
+			"type": String(casualty["unit_type"]),
+			"cause": "ijfs_maneuver",
+		})
 
 
 ## D3-D: Green coastal anti-ship fires + mine warfare against the Red amphibious crossing. Threads the
@@ -110,7 +116,7 @@ static func resolve_antiship_turn(state: GameStateData, dice: Dice) -> Dictionar
 	# pre-removal entries. Without this the victory census (get_battalion_count - at_sea) ghost-lands
 	# a partially-landed brigade's drowned BNs, and combat over-counts its strength (mirrors the
 	# ground-combat apply_casualty, which is the only other roster-shrinking path).
-	RosterMutations.apply_crossing_casualties(state.ship_reserve, lost_ids)
+	RosterMutations.apply_crossing_casualties(state.ship_reserve, lost_ids, state.sealift_state)
 	state.ship_reserve = AntishipResolver.remaining_reserve_after_losses(state.ship_reserve, lost_ids)
 	SealiftResolver.drain_bn_ids(state.sealift_state, lost_ids, GameData.amphibious_return_time_turns)
 	SealiftResolver.flip_sent_to_offloading(state.sealift_state)

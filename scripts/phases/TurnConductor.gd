@@ -118,12 +118,7 @@ static func apply_move_orders(state: GameStateData, team: Brigade.Team) -> void:
 		var move_order: MoveOrder = order
 		var brigade: Brigade = GameData.get_brigade(move_order.brigade_id)
 		GameData.set_brigade_hex(move_order.brigade_id, move_order.target_hex)
-		brigade.moved_this_turn = true
-		if move_order.mode == Movement.MODE_ADMINISTRATIVE:
-			brigade.adjust_organization(-Brigade.ADMIN_MOVE_ORG_COST)
-			brigade.moved_admin_this_turn = true
-		else:
-			brigade.adjust_organization(-Brigade.TACTICAL_MOVE_ORG_COST)
+		GameData.mark_brigade_moved(brigade, move_order.mode == Movement.MODE_ADMINISTRATIVE)
 
 
 static func find_contested_hexes() -> Array[String]:
@@ -226,7 +221,7 @@ static func resolve_combat_at(state: GameStateData, hex_id: String, dice: Dice) 
 	GameData.hex_states[hex_id].feba_km = GameData.hex_states[hex_id].feba_km + result.feba_movement_km
 	for brigade_value in attacker_brigades + defender_brigades:
 		var fought_brigade: Brigade = brigade_value
-		fought_brigade.fought_this_turn = true
+		GameData.mark_brigade_fought(fought_brigade)
 
 	var summary: CombatSummary = outcome["summary"]
 	summary.owner_after = String(GameData.hex_states[hex_id].owner)

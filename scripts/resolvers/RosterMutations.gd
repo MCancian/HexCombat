@@ -15,26 +15,17 @@ extends RefCounted
 
 
 static func apply_casualty(casualty: Dictionary) -> void:
-	var brigade_id := String(casualty["brigade_id"])
-	var casualty_type := String(casualty["type"])
-	var brigade: Brigade = GameData.get_brigade(brigade_id)
-	if brigade == null:
-		push_error("Combat casualty references unknown brigade_id: %s" % brigade_id)
-		return
-
-	for index in range(brigade.composition.size()):
-		var battalion: Battalion = brigade.composition[index]
-		if battalion.type != casualty_type:
-			continue
-		battalion.qty -= 1
-		if battalion.qty <= 0:
-			brigade.composition.remove_at(index)
-		if brigade.get_battalion_count() == 0:
-			brigade.destroyed = true
-			GameData.remove_brigade_from_map(brigade_id)
-		return
-
-	push_error("Combat casualty references missing battalion type '%s' in brigade %s" % [casualty_type, brigade_id])
+	var cause := ForceCasualtyCause.Kind.GROUND_COMBAT
+	var source := ForceLocation.Kind.ASHORE
+	if String(casualty.get("cause", "")) == "air_insertion":
+		cause = ForceCasualtyCause.Kind.AIR_INSERTION
+		source = ForceLocation.Kind.AWAITING_AIR_INSERTION
+	elif String(casualty.get("cause", "")) == "ijfs_maneuver":
+		cause = ForceCasualtyCause.Kind.IJFS_MANEUVER
+	ForceTransitions.apply_battalion_casualties(
+		GameData,
+		ForceCasualtyRequest.one(
+			String(casualty["brigade_id"]), String(casualty["type"]), cause, source))
 
 
 ## Delete drowned crossing BNs from their brigade rosters so a dead battalion stops existing
@@ -43,19 +34,9 @@ static func apply_casualty(casualty: Dictionary) -> void:
 ## roster casualty per drowned BN through the shared apply_casualty (consumes no dice → golden RNG
 ## stream unaffected). See the call site in FiresPhases.resolve_antiship_turn for why the
 ## ghost-landing mattered.
-static func apply_crossing_casualties(ship_reserve: Array, lost_ids: Array) -> void:
-	if lost_ids.is_empty():
-		return
-	var lost: Dictionary = {}
-	for id in lost_ids:
-		lost[String(id)] = true
-	for entry_value in ship_reserve:
-		var entry: Dictionary = entry_value
-		var brigade_id := String(entry.get("brigade_id", ""))
-		for bn_value in entry.get("bns", []):
-			var bn: Dictionary = bn_value
-			if lost.has(String(bn.get("id", ""))):
-				apply_casualty({"brigade_id": brigade_id, "type": String(bn.get("type", ""))})
+static func apply_crossing_casualties(ship_reserve: Array, lost_ids: Array, sealift_state: SealiftState) -> void:
+	ForceTransitions.apply_crossing_casualties(
+		GameData, ForceCrossingCasualtyRequest.from_crossing(lost_ids, ship_reserve, sealift_state))
 
 
 ## Tripwire for the mirror image of the ghost-landing bug (plan 0037): a brigade's roster must never

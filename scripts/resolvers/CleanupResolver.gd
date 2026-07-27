@@ -76,8 +76,8 @@ static func resolve(
 	# BEFORE begin_next_turn resets the per-turn flags.
 	for brigade_value in brigades.values():
 		var brigade: Brigade = brigade_value
-		brigade.moved_last_turn = brigade.moved_this_turn or brigade.moved_admin_this_turn
-		brigade.fought_last_turn = brigade.fought_this_turn
+		ForceTransitions.apply_activity(
+			brigade, ForceActivityRequest.make(ForceActivityRequest.Operation.LATCH_PRIOR_FROM_CURRENT))
 
 	var summary := CleanupSummary.new()
 	summary.antiship_systems_reset = reset_count

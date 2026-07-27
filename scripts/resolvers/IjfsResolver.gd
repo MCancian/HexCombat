@@ -194,26 +194,7 @@ static func sync_maneuver_targets_to_oob(ijfs_state: IjfsDailyState, brigades: D
 ## NOTE: ijfs_state (and its maneuver targets) is built once per scenario, so across many turns a
 ## removed battalion can still appear as a target; the qty cap keeps this safe (never negative).
 static func apply_maneuver_casualties(casualties: Array, brigades: Dictionary) -> void:
-	for casualty_value in casualties:
-		var casualty: Dictionary = casualty_value
-		var brigade_id := String(casualty.get("brigade_id", ""))
-		var unit_type := String(casualty.get("unit_type", ""))
-		if brigade_id == "" or unit_type == "":
-			continue
-		var brigade: Brigade = brigades.get(brigade_id)
-		if brigade == null:
-			continue
-		for battalion in brigade.composition:
-			if battalion.type == unit_type and battalion.qty > 0:
-				battalion.qty -= 1
-				break
-		var any_left := false
-		for battalion in brigade.composition:
-			if battalion.qty > 0:
-				any_left = true
-				break
-		if not any_left:
-			brigade.destroyed = true
+	push_error("IjfsResolver.apply_maneuver_casualties moved to ForceTransitions; call FiresPhases.apply_ijfs_maneuver_casualties")
 
 
 ## Aggregates the IJFS ledgers into the writeback seam D3 (anti-ship) and the ground-casualty

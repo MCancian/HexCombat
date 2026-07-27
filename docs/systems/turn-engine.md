@@ -21,8 +21,9 @@ gameplay-relevant cycle:
 | `scripts/phases/FiresPhases.gd` | 191 | The fires phases (plan 0038): IJFS joint/air-missile fires and the Green anti-ship + mine defence of the crossing, which share the anti-ship firing systems |
 | `scripts/phases/ReinforcementPhases.gd` | 345 | The four "force arrives" phases (plan 0038): sealift, amphibious offload, ROC mobilization, air insertion, and their arrival-site rules |
 | `scripts/phases/TurnClosure.gd` | 81 | The end-of-turn accounting pair (plan 0038): supply bills who fought, cleanup censuses who is left and decides victory |
-| `scripts/resolvers/RosterMutations.gd` | 91 | The roster-shrinking seam every kill path shares: `apply_casualty`, `apply_crossing_casualties`, and the `pending_pool_roster_violations` tripwire |
-| `scripts/GameData.gd` | 546 | Data loading: `load_hex_grid()`, `load_brigades()`, `load_scenario()`, `load_theaters()`, `load_beaches()`, `load_ships()`. Indexes: `brigades`, `brigades_by_hex`, `hex_lookup`, `neighbor_lookup`, `hex_states`, `ship_defs`, `beaches`, `active_tos`, `to_adjacency`, `beach_to_to` |
+| `scripts/transitions/ForceTransitions.gd` | current | Force mutation authority (plan 0044): applies Brigade/Battalion roster, placement, destruction, activity, and organization writes through typed requests/receipts; ownership facts live only in `tools/mutation_authority_manifest.json` |
+| `scripts/resolvers/RosterMutations.gd` | current | Compatibility casualty façade plus the `pending_pool_roster_violations` tripwire; roster writes delegate to `ForceTransitions` |
+| `scripts/GameData.gd` | current | Data loading: `load_hex_grid()`, `load_brigades()`, `load_scenario()`, `load_theaters()`, `load_beaches()`, `load_ships()`. Indexes: `brigades`, `brigades_by_hex`, `hex_lookup`, `neighbor_lookup`, `hex_states`, `ship_defs`, `beaches`, `active_tos`, `to_adjacency`, `beach_to_to` |
 | `scripts/Dice.gd` | 37 | Abstract base: `roll_d100()`, `choose_indices()`, `randf()`, `weighted_choice()`, `weighted_choices()`, `shuffle_indices()`, `derive()` |
 | `scripts/SeededDice.gd` | 96 | Concrete: wraps Godot `RandomNumberGenerator` with a fixed seed. `derive(label)` creates an independent sub-stream via `hash(str(seed) + ":" + label)` |
 | `scripts/EventBus.gd` | 21 | Signals: `phase_changed`, `turn_resolved`, `combat_resolved`, `offload_resolved`, `supply_updated`, `ijfs_resolved`, `antiship_resolved`, `frontline_resolved`, `cleanup_resolved` |
@@ -68,11 +69,11 @@ phase resolves, never when it runs. The resolution runs exactly this pipeline:
 5. **Offload** — `ReinforcementPhases.resolve_offload_turn(dice)` — surviving BNs land at beaches/ports; infrastructure lifecycle ticks every turn. Applies `pending_lost_at_sea` from the crossing.
 6. **ROC mobilization** — `ReinforcementPhases.resolve_mobilization_turn()` — Green's reinforcement step at the same seam as Red's. Dice-free.
 7. **Air insertion** — `ReinforcementPhases.resolve_air_insertion_turn(dice)` — Red's non-amphibious arrival path, after IJFS because the drop's attrition reads the air-defence picture those fires produced. Own sub-stream.
-8. **Movement** — `apply_move_orders(RED)` then `apply_move_orders(GREEN)`. Sets `moved_this_turn`, applies organization cost. Skipped when `disabled_phases` contains `movement` (plan 0012).
+8. **Movement** — `apply_move_orders(RED)` then `apply_move_orders(GREEN)`. `ForceTransitions` moves the brigade and applies `moved_this_turn` / organization cost. Skipped when `disabled_phases` contains `movement` (plan 0012).
 9. **Contested hexes** — `find_contested_hexes()` scans every hex for both teams present. Skipped (buffer cleared) when `disabled_phases` contains `ground_combat`.
 10. **Combat-loop snapshots** — `ReinforcementPhases.isolated_air_landed_brigades()` and `GameStateData.refresh_not_ashore_by_type()` are computed ONCE here so no two hexes disagree about supply corridors or who is ashore (plans 0032, 0037).
-11. **Ground combat** — for each contested hex, `resolve_combat_at(hex_id, dice.derive("combat:<turn>:<hex>"))` runs `CombatResolver.resolve_at()`, applies casualties through `RosterMutations.apply_casualty`, accumulates FEBA movement.
-12. **FEBA retreats** — `apply_feba_retreats()` pushes retreating brigades out of hexes where `|feba_km| ≥ 10km`.
+11. **Ground combat** — for each contested hex, `resolve_combat_at(hex_id, dice.derive("combat:<turn>:<hex>"))` runs `CombatResolver.resolve_at()`, applies casualties through `RosterMutations.apply_casualty` → `ForceTransitions`, accumulates FEBA movement.
+12. **FEBA retreats** — `apply_feba_retreats()` pushes retreating brigades out of hexes where `|feba_km| ≥ 10km`; placement updates go through `ForceTransitions`.
 13. **Hex ownership** — `GameData.recompute_hex_ownership()`: RED-only → RED, GREEN-only → GREEN, both → CONTESTED; each combat summary is then annotated with `owner_after`.
 14. **Supply** — `TurnClosure.resolve_supply_turn()`: `SupplyResolver.resolve` bills every LANDED Red battalion, decrements `supply_state.current_dos_tons`. Runs after combat so the bill covers who actually fought.
 15. **Cleanup** — `TurnClosure.resolve_cleanup_phase()`: recomputes hex ownership a second time (retreats in step 12 can have moved brigades since step 13), resets `antiship_system` per-turn flags, runs the Taiwan battalion census, evaluates victory for game-over.
@@ -132,7 +133,7 @@ GameData autoloads in `_ready()` → `load_all()` (line 40–52):
 | `data/beaches.json` | `load_beaches()` | `beaches` (id→BeachDef: capacity, offload_rate, category, etc.) |
 | `data/ships.json` | `load_ships()` | `ship_defs` (id→ShipDef: capacity, category, decoy flag, etc.) |
 
-Key helpers: `set_brigade_hex()` (line 273) mutates position + updates `brigades_by_hex` index; `recompute_hex_ownership()` (line 290) resets every hex's owner from brigade presence; `snapshot_state(pending_pools)` returns a deterministic key-sorted dict for golden testing; the pools
+Key helpers: `set_brigade_hex()` delegates position + `brigades_by_hex` index updates to `ForceTransitions`; `recompute_hex_ownership()` resets every hex's owner from brigade presence; `snapshot_state(pending_pools)` returns a deterministic key-sorted dict for golden testing; the pools
 argument is required and makes it report battalions ashore rather than whole rosters (plan 0037).
 
 ## 8. TIV Relationship

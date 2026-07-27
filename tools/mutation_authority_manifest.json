@@ -70,6 +70,63 @@
         }
       ],
       "legacy_writers": []
+    },
+    {
+      "id": "force",
+      "summary": "The force aggregate migration: brigade roster, runtime placement/activity, and placement-index writes are routed through ForceTransitions. The source gate currently protects Brigade runtime fields; GameData.brigades_by_hex joins once the scanner can distinguish hosted owner writes from construction.",
+      "status": "enforced",
+      "authority_class": "ForceTransitions",
+      "authority_path": "res://scripts/transitions/ForceTransitions.gd",
+      "owned_models": [],
+      "hosted_fields": [
+        {
+          "class": "Brigade",
+          "path": "res://scripts/model/Brigade.gd",
+          "_doc": "Runtime force fields protected during plan 0044. Identity/OOB fields remain construction-only source data and are not registered to avoid generic id/name false positives.",
+          "fields": {
+            "composition": "campaign",
+            "hex_id": "placement",
+            "entry_bearing": "placement",
+            "moved_this_turn": "transient",
+            "moved_admin_this_turn": "transient",
+            "fought_this_turn": "transient",
+            "moved_last_turn": "campaign",
+            "fought_last_turn": "campaign",
+            "destroyed": "campaign",
+            "organization": "campaign"
+          }
+        },
+        {
+          "class": "Battalion",
+          "path": "res://scripts/model/Battalion.gd",
+          "_doc": "Force authority protects surviving battalion quantities; type is identity loaded from OOB data.",
+          "fields": {
+            "qty": "campaign"
+          }
+        }
+      ],
+      "construction_writers": [
+        {
+          "path": "res://scripts/GameData.gd",
+          "why": "load_brigades()/load_scenario() construct fresh Brigade resources and initial placement facts from OOB/scenario data before runtime play mutates them.",
+          "fields": [
+            "Brigade.composition",
+            "Brigade.hex_id",
+            "Brigade.entry_bearing",
+            "Battalion.qty"
+          ]
+        }
+      ],
+      "legacy_writers": [
+        {
+          "path": "res://tools/validate_dos_consumption.gd",
+          "why": "Focused validator marks a fixture brigade as moved to exercise DOS consumption until the test fixture is routed through ForceTransitions.",
+          "removal_plan": "0044-force-mutation-authority",
+          "fields": [
+            "Brigade.moved_this_turn"
+          ]
+        }
+      ]
     }
   ]
 }

@@ -18,7 +18,7 @@ Resolve ground combat when Red and Green brigades occupy the same hex after move
 | `scripts/model/CommitOrder.gd` | Commit order: `brigade_id`, `target_hex` (no mode — always tactical). |
 | `scripts/Movement.gd` | `move_allowance()`: tactical 1/2, administrative 10/20 based on fast-slow mobility. |
 | `scripts/resolvers/CombatResolver.gd` | Pure per-hex combat core (`resolve_at`): builds maneuver/support forces, injects supply effectiveness, calls `CombatCalculator.resolve_map_attack`, builds the `CombatSummary`. Applies nothing — read its header for the full resolver/`GameState` split rationale. |
-| `scripts/GameState.gd` | Thin turn orchestrator — `resolve_turn()` sequences the resolvers (movement → contested-hex discovery → combat → FEBA retreats → …); `_resolve_combat_at()` gathers per-hex contributors and delegates the dice-consuming core to `CombatResolver.resolve_at`, then applies casualties/FEBA/ownership. |
+| `scripts/GameState.gd` / `scripts/phases/TurnConductor.gd` | Thin turn orchestrator — sequences movement → contested-hex discovery → combat → FEBA retreats → …; `resolve_combat_at()` gathers per-hex contributors and delegates the dice-consuming core to `CombatResolver.resolve_at`, then applies casualties via `ForceTransitions` and FEBA/ownership. |
 
 ## 3. Combat formula (transcribed from `CombatCalculator.resolve_map_attack`)
 
@@ -115,7 +115,7 @@ Fallback categories (`FALLBACK_CATEGORY_DEFS`) provide strength/tag values for u
 
 The "at least one battalion ashore" test is load-bearing, not a tidy-up: `CombatCalculator` floors a degenerate zero-strength side to `combat_min_effective_strength`, so a brigade holding a hex with its whole composition still at sea would otherwise fight — and inflict real casualties — with nobody on the island.
 
-It then delegates the dice-consuming core to `CombatResolver.resolve_at` (`scripts/resolvers/CombatResolver.gd`) — read that class's header for the resolver/`GameState` purity split. Red is always assigned as attacker, Green as defender.
+It then delegates the dice-consuming core to `CombatResolver.resolve_at` (`scripts/resolvers/CombatResolver.gd`) — read that class's header for the resolver/`GameState` purity split. Red is always assigned as attacker, Green as defender. Casualty application is a force-aggregate mutation: `TurnConductor` sends the casualty reports through `RosterMutations.apply_casualty`, which delegates the protected `Brigade.composition` / `Battalion.qty` writes and destruction placement to `ForceTransitions`.
 
 ## 7. Movement
 

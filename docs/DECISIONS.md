@@ -19,6 +19,13 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-27 — Force mutations get their first enforced authority slice (agent, plan 0044).**
+  `ForceTransitions` now applies protected Brigade runtime-field writes and `Battalion.qty` roster
+  decrements through typed requests/receipts; production placement, activity, ground/IJFS/crossing/air
+  casualty seams route through it with no golden pin movement. The transport dictionary-storage and
+  `brigades_by_hex` source-gate closeout remain in the in-progress plan. Facts: `docs/STATUS.md`,
+  `docs/systems/turn-engine.md`, `tools/mutation_authority_manifest.json`.
+
 - **2026-07-27 — Anti-ship crossing uses a typed context (agent, 0052 follow-up).**
   `AntishipCrossing.resolve_crossing_damage` now takes `AntishipCrossingContext` plus explicit
   `Dice`; its launch helper reads the same context instead of carrying a 9-parameter signature.

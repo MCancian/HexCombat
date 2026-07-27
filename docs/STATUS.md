@@ -24,10 +24,10 @@ conductor deliberately: per-hex application interleaves with the next hex's cont
 gathering). The four **arrival** phases (sealift, amphibious offload, ROC mobilization, air
 insertion) live in **`ReinforcementPhases`**, the two **fires** phases (IJFS, anti-ship + mines) in
 **`FiresPhases`**, the end-of-turn accounting pair (supply, cleanup) in **`TurnClosure`**, and the
-roster-shrinking seam every kill path shares
-(`apply_casualty`, `apply_crossing_casualties`, and the pool/roster tripwire) in
-**`RosterMutations`** — `TurnConductor.resolve_turn` still holds the whole ordered call list, so the
-modules own how a phase resolves and never when it runs (plan 0038). **Directories name the role
+force-authority seam every brigade placement/activity write and protected roster shrink uses in
+**`ForceTransitions`** (with `RosterMutations` kept as a compatibility wrapper for casualty call sites
+plus the pool/roster tripwire) — `TurnConductor.resolve_turn` still holds the whole ordered call list,
+so the modules own how a phase resolves and never when it runs (plans 0038/0044). **Directories name the role
 (plan 0043/0052):** `scripts/phases/` the coordinators, `scripts/resolvers/` the per-phase resolvers,
 `scripts/builders/` the fresh-state builders, `scripts/calc/` the write-free calculators,
 `scripts/loaders/` the content-to-object loaders, and `scripts/transitions/` the mutation
@@ -430,10 +430,12 @@ paths, dead fields, an unclassified field on an owned model, two aggregates clai
 stale allowance, an unregistered file under `scripts/transitions/`, and a scan that saw nothing all
 fail. Illegal fixtures under `tools/fixtures/mutation_authority/` declare the rule each line must
 trigger and are compared exactly on every run, so a detector that stops working fails as a false
-negative instead of going quietly green. **One aggregate is registered and now ENFORCED —
+negative instead of going quietly green. **Two aggregates are registered and ENFORCED:**
 `antiship_establishment`, whose sole writer is `scripts/transitions/AntishipTransitions.gd` (plan
-0043). All five legacy-writer exceptions are gone**, and each former writer was re-tested with a
-deliberate direct write to confirm the gate names the file, line and write form.
+0043; zero legacy writers), and the first force-authority slice, whose protected Brigade/Battalion
+runtime fields are written by `scripts/transitions/ForceTransitions.gd` (plan 0044; one validator-only
+legacy writer remains named in the manifest). Each former production writer was rerouted through the
+authority seam without moving golden pins.
 
 ## What is NOT done (see `docs/plans/`)
 

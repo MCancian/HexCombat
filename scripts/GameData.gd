@@ -545,20 +545,38 @@ func get_brigades_in_hex(hex_id: String) -> Array:
 
 
 func set_brigade_hex(brigade_id: String, hex_id: String) -> void:
-	var brigade: Brigade = get_brigade(brigade_id)
-	if brigade == null:
+	if hex_id.is_empty():
+		ForceTransitions.remove_brigade_from_map(self, brigade_id)
 		return
-
-	var old_hex := brigade.hex_id
-	brigade.hex_id = hex_id
-	if old_hex != "" and old_hex in brigades_by_hex:
-		brigades_by_hex[old_hex] = brigades_by_hex[old_hex].filter(func(id): return id != brigade_id)
-	if hex_id != "":
-		_add_brigade_to_hex(brigade_id, hex_id)
+	ForceTransitions.place_brigade(self, ForcePlacementRequest.ashore(brigade_id, hex_id, "GameData façade"))
 
 
 func remove_brigade_from_map(brigade_id: String) -> void:
-	set_brigade_hex(brigade_id, "")
+	ForceTransitions.remove_brigade_from_map(self, brigade_id)
+
+
+func place_brigade_with_bearing(brigade_id: String, hex_id: String, bearing: float, phase_label: String) -> void:
+	var request := ForcePlacementRequest.ashore(brigade_id, hex_id, phase_label)
+	request.has_entry_bearing = true
+	request.entry_bearing = bearing
+	ForceTransitions.place_brigade(self, request)
+
+
+func mark_brigade_moved(brigade: Brigade, administrative: bool) -> void:
+	var operation := ForceActivityRequest.Operation.MOVE_TACTICAL
+	if administrative:
+		operation = ForceActivityRequest.Operation.MOVE_ADMIN
+	ForceTransitions.apply_activity(brigade, ForceActivityRequest.make(operation))
+
+
+func mark_brigade_fought(brigade: Brigade) -> void:
+	ForceTransitions.apply_activity(
+		brigade, ForceActivityRequest.make(ForceActivityRequest.Operation.FOUGHT))
+
+
+func reset_brigade_turn_flags(brigade: Brigade) -> void:
+	ForceTransitions.apply_activity(
+		brigade, ForceActivityRequest.make(ForceActivityRequest.Operation.RESET_TURN_FLAGS))
 
 
 # INVARIANT: no else-branch — a hex emptied of brigades KEEPS its last owner. Load-bearing for
