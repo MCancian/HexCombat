@@ -54,12 +54,12 @@ cannot fly while the rest of the formation sails.
 | `scripts/model/LiftClass.gd` | Sole home for the OOB `nato_type` → lift-class map. `airborne` → `AIRBORNE`, `air-assault` → `AIR_ASSAULT`, everything else sea-lifted. |
 | `scripts/model/AirInsertionState.gd` | Cross-turn state: `pool` (battalions waiting to fly, `{brigade_id, lift_class, bns}`), `caps` / `initial_caps` (the airframe ledger), `first_turn`, `landed`, `history`. `eligible_orders(brigades, pending)` builds the order-legality list without touching a singleton. |
 | `scripts/model/AirInsertionSummary.gd` | Per-turn result: `drops`, `rejected`, battalion/cap totals, `attrition_by_class`. `to_dict()` projects drops onto `DROP_REPORT_KEYS` — the per-battalion manifests are application detail, not contract. |
-| `scripts/resolvers/AirInsertionStateBuilder.gd` | Pure builder: pool from the OOB, caps and `attrition_config` from the scenario block. Unknown config keys fail loud. |
+| `scripts/builders/AirInsertionStateBuilder.gd` | Pure builder: pool from the OOB, caps and `attrition_config` from the scenario block. Unknown config keys fail loud. |
 | `scripts/resolvers/AirInsertionResolver.gd` | Pure resolver: `resolve()` flies the packets, `attrition_rate()` is the loss model, `threat_from_ijfs_summary()` is the one place that knows which IJFS fields the air path reads, `isolated_brigades()` is the supply-corridor flood. |
 | `scripts/phases/ReinforcementPhases.gd` | `resolve_air_insertion_turn()` (the wrapper: casualties, landings, ownership, EventBus), `hex_can_receive_insertion()`, `isolated_air_landed_brigades()`, `red_lodgement_hexes()`. |
 | `scripts/resolvers/OrderValidator.gd` | `add_air_insert_order()` + `eligible_air_insert_brigades()`. |
 | `scripts/resolvers/CleanupResolver.gd` | `census()` subtracts battalions not yet ashore — from the ship reserve **and** the air pool. |
-| `scripts/resolvers/SealiftStateBuilder.gd` | Excludes air-lifted brigades from the follow-on auto-seed (the corps never queues for a hull). |
+| `scripts/builders/SealiftStateBuilder.gd` | Excludes air-lifted brigades from the follow-on auto-seed (the corps never queues for a hull). |
 | `scripts/AirAssaultPolicy.gd` | Policy id `air_assault`: selfplay_default plus the standing airborne doctrine. |
 | `scripts/LLMGameAPI.gd` | `_air_insertion_observation()` + the `air_insert` action. |
 | `tools/validate_air_insertion.gd` | End-to-end gate coverage on `red_airborne`. |

@@ -20,7 +20,7 @@ This is the defender-side answer to the research question in `docs/plans/0029-dy
 |---|---|
 | `scripts/model/MobilizationState.gd` | `MobilizationState` (Resource). Cross-turn state: `pending` (brigades still forming, each `{brigade_id, garrison_hex, release_turn}`) and `released` (arrival log). `pending_battalions()` sums the off-map force. |
 | `scripts/model/MobilizationSummary.gd` | `MobilizationSummary` (Resource). Per-turn result: `arrivals`, `deferred`, `battalions_arrived`, `pending_brigades`, `pending_battalions`. `to_dict()` is the JSON contract. |
-| `scripts/resolvers/MobilizationStateBuilder.gd` | Pure builder. `select_held_back()` picks WHICH brigades start off-map; `build()` turns that list into the release schedule. |
+| `scripts/builders/MobilizationStateBuilder.gd` | Pure builder. `select_held_back()` picks WHICH brigades start off-map; `build()` turns that list into the release schedule. |
 | `scripts/resolvers/MobilizationResolver.gd` | Pure resolver. `resolve()` releases due brigades; `find_arrival_hex()` is the BFS fallback when a garrison hex is overrun. Consumes no dice. |
 | `scripts/phases/ReinforcementPhases.gd` | `resolve_mobilization_turn()` — the wrapper: applies `GameData.set_brigade_hex`, appends IJFS targets, recomputes ownership, emits `EventBus.mobilization_resolved`. `hex_can_receive_mobilized()` is the arrival-site rule. |
 | `scripts/GameData.gd` | Parses the scenario `green_mobilization` block into `green_mobilization`; `load_scenario` computes `mobilization_holdback` BEFORE the placement loop and leaves those brigades off-map. |
