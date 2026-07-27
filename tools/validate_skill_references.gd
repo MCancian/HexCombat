@@ -22,7 +22,10 @@ extends SceneTree
 # Prints PASS:/FAIL: for the gate's verdict.
 
 const SKILLS_ROOT := "res://.claude/skills"
-const CODE_PATH_PATTERN := "`((?:tools|scripts|tests)/[A-Za-z0-9_/.-]+\\.gd)`"
+# `.json` is admitted for `tools/` ONLY (plan 0042): tooling metadata a skill points agents at, such
+# as tools/mutation_authority_manifest.json, must exist for the same reason a cited validator must.
+# data/*.json stays out — the skills discuss those as content, often with placeholders.
+const CODE_PATH_PATTERN := "`((?:tools|scripts|tests)/[A-Za-z0-9_/.-]+\\.gd|tools/[A-Za-z0-9_/.-]+\\.json)`"
 
 # A line saying a path is dead is not a dead reference — it is the record of one. Same escape-hatch
 # convention validate_doc_anchors.gd uses, so there is one idiom to learn rather than two.

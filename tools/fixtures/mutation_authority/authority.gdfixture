@@ -1,0 +1,18 @@
+class_name FixtureTransitions
+extends RefCounted
+
+## The aggregate's authority. Every write below is legal, and the scan must report NONE of them —
+## an authority that trips its own gate would make the gate unusable. Never compiled; see README.md.
+
+static func apply_losses(host: FixtureHost, row_index: int, killed: int) -> void:
+	var row: FixtureRow = host.rows_by_index[row_index]
+	row.destroyed_units += killed
+	row.quantity_units -= killed
+	row.tags_by_turn.append(killed)
+	row.profile_by_key["last_kill"] = killed
+	row.apply_kill(0)
+
+
+static func publish(host: FixtureHost, rows: Array) -> void:
+	host.rows_by_index = rows
+	host.rows_built = true

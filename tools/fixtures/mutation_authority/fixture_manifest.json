@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "_doc": "The healthy manifest the source fixtures are scanned against. Kept structurally identical to tools/mutation_authority_manifest.json so the self-test exercises the real code path, not a simplified one.",
+  "scan_roots": ["res://tools/fixtures/mutation_authority"],
+  "scan_excludes": [],
+  "authority_dir": "res://tools/fixtures/mutation_authority/transitions_dir",
+  "aggregates": [
+    {
+      "id": "fixture_aggregate",
+      "summary": "Fixture aggregate: an owned row model plus two claimed fields on a shared host.",
+      "status": "enforced",
+      "planned_authority": null,
+      "authority_class": "FixtureTransitions",
+      "authority_path": "res://tools/fixtures/mutation_authority/authority.gdfixture",
+      "owned_models": [
+        {
+          "class": "FixtureRow",
+          "path": "res://tools/fixtures/mutation_authority/model.gdfixture",
+          "fields": {
+            "row_id": "identity",
+            "quantity_units": "campaign",
+            "destroyed_units": "campaign",
+            "tags_by_turn": "transient",
+            "profile_by_key": "identity"
+          }
+        }
+      ],
+      "hosted_fields": [
+        {
+          "class": "FixtureHost",
+          "path": "res://tools/fixtures/mutation_authority/host.gdfixture",
+          "fields": {
+            "rows_by_index": "campaign",
+            "rows_built": "transient"
+          }
+        }
+      ],
+      "construction_writers": [
+        {
+          "path": "res://tools/fixtures/mutation_authority/construction.gdfixture",
+          "why": "Initialises fresh, unpublished rows.",
+          "fields": [
+            "FixtureRow.row_id",
+            "FixtureRow.quantity_units"
+          ]
+        }
+      ],
+      "legacy_writers": [
+        {
+          "path": "res://tools/fixtures/mutation_authority/legacy.gdfixture",
+          "why": "Still clears the per-turn tag list in place.",
+          "removal_plan": "never — this fixture exists to prove a legacy allowance is honoured.",
+          "fields": [
+            "FixtureRow.tags_by_turn"
+          ]
+        }
+      ]
+    }
+  ]
+}

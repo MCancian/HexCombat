@@ -1,0 +1,23 @@
+class_name FixtureRow
+extends Resource
+
+## Fixture stand-in for a protected aggregate row. Never compiled — see README.md.
+
+@export var row_id: int = 0
+@export var quantity_units: int = 0
+@export var destroyed_units: int = 0
+@export var tags_by_turn: Array = []
+@export var profile_by_key: Dictionary = {}
+
+
+## A sanctioned mutator: the model may write its own protected fields. Calling it from outside the
+## authority is what the `model_mutator` rule catches.
+func apply_kill(count: int) -> void:
+	destroyed_units += count
+	quantity_units -= count
+
+
+## A mutator that only mutates a container IN PLACE — no assignment operator anywhere. Missing this
+## shape means `model.add_tag()` is a silent bypass of the whole gate.
+func add_tag(tag: int) -> void:
+	tags_by_turn.append(tag)

@@ -1,0 +1,1027 @@
+# Run from the project root:
+# godot --headless --path . -s res://tools/validate_mutation_authority.gd
+extends SceneTree
+
+# Enforces the mutation-authority convention (plan 0042):
+#
+#   Every mutable gameplay aggregate has one named authority. Calculators return outcomes; only the
+#   authority applies them.
+#
+# The ownership facts live in ONE machine-readable home, tools/mutation_authority_manifest.json:
+# authority class, protected fields, construction allowances, and temporary legacy writers with the
+# plan that removes each one. Code headers and systems docs point at the manifest; they must never
+# copy its lists, because a copied list rots silently.
+#
+# ── WHY A SOURCE GATE, AND WHAT IT CAN ACTUALLY SEE ──────────────────────────────────────────────
+# Availability of an API does not prevent `system.quantity = 0`. GDScript has no `readonly`, and a
+# passed Resource/Array/Dictionary is always a live alias. So the guard has to read source.
+#
+# Field NAMES alone are not enough: `destroyed` is a field of AntishipSystem, IjfsTarget, ShipState
+# AND Brigade, so scanning for `.destroyed =` flags four unrelated aggregates. This validator
+# therefore resolves the RECEIVER's type first and only then asks whether that (class, field) pair
+# is protected. Measured on the tree at plan 0042: 591 receiver-chain assignments in scripts/, of
+# which 19 had no annotation on the receiver — the house style is typed, so type-directed detection
+# is credible here rather than aspirational.
+#
+# A receiver resolves from, in order: an explicit annotation (member, local, parameter, `for x: T`),
+# `:= T.new()`, `:= call()` through the callee's DECLARED return type, an untyped `for x in arr`
+# where `arr`'s declaration is `Array[T]`, and a dotted chain chased through declared field types.
+# Scopes are per-function over a file-level scope, because `GameData` reuses the name `entry` for
+# four different types in four loaders and a file-global map would call all four ambiguous.
+#
+# DETECTED WRITE FORMS (each proven by a fixture under tools/fixtures/mutation_authority/, compared
+# exactly on every run — a missed form fails this gate as a false negative):
+#   direct_assign       recv.field = x
+#   compound_assign     recv.field += x                    (also -= *= /= %= |= &= ^=)
+#   element_assign      recv.field[k] = x
+#   container_mutate    recv.field.append(...)             (and the other in-place Array/Dictionary
+#                                                           mutators — see MUTATOR_METHODS; an index
+#                                                           in between, recv.field[i].append(x), also
+#                                                           counts)
+#   dynamic_set         recv.set("field", x)               (also set_indexed / set_deferred, and a
+#                                                           &"name" or variable key; reported against
+#                                                           the CLASS, since a computed key names no
+#                                                           particular field)
+#   model_mutator       recv.some_method()                 where some_method is defined ON the
+#                                                           protected model and either assigns a
+#                                                           protected field or mutates one in place —
+#                                                           the bypass a "just add a setter" refactor
+#                                                           creates
+#   cast_assign         (thing as Model).field = x
+#   unresolved_receiver <unknown>.field = x                where `field` is protected on SOME
+#                                                           aggregate and the receiver's type cannot
+#                                                           be resolved. This is the false-NEGATIVE
+#                                                           backstop: an unannotated alias fails
+#                                                           loudly asking to be annotated, instead of
+#                                                           slipping past unseen.
+#
+# KNOWN LIMITS, stated rather than papered over:
+#   - One name bound to two types inside ONE function resolves to "ambiguous", which degrades to
+#     unresolved_receiver (loud), never to silence. Lambdas are not scope boundaries: their
+#     parameters join the enclosing function's scope, so two lambdas in one function that name a
+#     parameter differently will read as ambiguous — again loud, not silent.
+#   - `var row = untyped_expr()` — a bare `=` with no annotation, or a call whose callee declares no
+#     return type — leaves the receiver unresolved. That is reported only when the write targets a
+#     protected field NAME. A protected object reached through a name that collides with nothing
+#     else is therefore the residual blind spot, and the reason field names are kept distinctive.
+#   - Element type is read from DECLARATIONS only. `for row in some_dict.values()` and
+#     `var row = rows[i]` on an untyped Array stay unresolved.
+#   - A protected CONTAINER aliased into a local and mutated through that alias
+#     (`var rows = state.antiship_systems` … `rows.append(x)`) is invisible: the alias is untyped
+#     and `append` is not a protected field name, so neither the type check nor the name backstop
+#     fires. Closing it needs alias dataflow, not a scanner. Today every real mutation reaches these
+#     rows by being PASSED to a function that writes through a typed receiver, which is caught at the
+#     write site; plan 0043 should re-check that when it builds the authority.
+#   - Scope is scan_roots in the manifest (scripts/ + tools/). tests/ is deliberately excluded:
+#     suites legitimately build and mutate their own fixture rows.
+#   - Reflection (`Object.call("set_" + name)`, `Callable`s built from strings) is not modelled. No
+#     such call exists in the tree; if one is added, it is invisible here.
+#
+# The manifest is checked as hard as the source: dead paths, dead fields, an unclassified field
+# added to an owned model, two aggregates claiming one field, a stale allowance that no longer
+# writes anything, and a scan that saw nothing all fail. Prints PASS:/FAIL: for the gate's verdict.
+
+const MANIFEST_PATH := "res://tools/mutation_authority_manifest.json"
+const FIXTURE_DIR := "res://tools/fixtures/mutation_authority"
+const FIXTURE_EXT := ".gdfixture"
+
+const ASSIGN_OPS := "=(?!=)|\\+=|-=|\\*=|/=|%=|\\|=|&=|\\^="
+# A type annotation, keeping any element type: `IjfsTarget`, `Array`, `Array[IjfsTarget]`.
+const TYPE_EXPR := "[A-Za-z_]\\w*(?:\\[[A-Za-z_]\\w*\\])?"
+const MUTATOR_METHODS := [
+	"append", "append_array", "push_back", "push_front", "pop_back", "pop_front", "pop_at",
+	"erase", "clear", "insert", "remove_at", "resize", "sort", "sort_custom", "reverse",
+	"shuffle", "fill", "merge", "assign",
+]
+const DYNAMIC_SETTERS := ["set", "set_indexed", "set_deferred"]
+
+var _failures: Array[String] = []
+var _regex_cache: Dictionary = {}
+
+
+## Compiled once per pattern and reused — the scan matchers run per line, over ~180 files.
+## A RegEx that fails to compile silently returns NO matches, which would turn this gate blind
+## rather than red, so a compile failure is itself a hard failure.
+func _regex(pattern: String) -> RegEx:
+	if _regex_cache.has(pattern):
+		return _regex_cache[pattern]
+	var regex := RegEx.new()
+	if regex.compile(pattern) != OK:
+		_fail("E_VACUOUS: detector pattern failed to compile, so it would match nothing: `%s`" % pattern)
+	_regex_cache[pattern] = regex
+	return regex
+
+
+func _initialize() -> void:
+	print("=== Mutation-authority validation (plan 0042) ===")
+	_run_self_test()
+	_run_real_scan()
+	_finish()
+
+
+# ── Context: the source corpus a scan runs against ──────────────────────────────────────────────
+
+## Everything the scanner needs to know about a set of source files: their stripped bodies, which
+## class each declares, and each class's declared fields and their types. Built once per corpus so
+## the fixture self-test and the real scan share exactly one code path.
+class Corpus:
+	extends RefCounted
+
+	var raw: Dictionary = {}            # path -> original text
+	var stripped: Dictionary = {}       # path -> comments/strings blanked, line numbers preserved
+	var class_of: Dictionary = {}       # path -> class_name
+	var path_of: Dictionary = {}        # class_name -> path
+	var fields_of: Dictionary = {}      # class_name -> {field_name: declared_type}
+	var order_of: Dictionary = {}       # class_name -> Array[String] in declaration order
+	var returns_of: Dictionary = {}     # path -> {method_name: declared return type}
+
+
+func _build_corpus(paths: Array) -> Corpus:
+	var corpus := Corpus.new()
+	for path_value in paths:
+		var path := String(path_value)
+		var text := FileAccess.get_file_as_string(path)
+		corpus.raw[path] = text
+		corpus.stripped[path] = _strip(text)
+		corpus.returns_of[path] = _declared_returns(String(corpus.stripped[path]))
+		var class_id := _class_name_of(String(corpus.stripped[path]))
+		if class_id.is_empty():
+			continue
+		corpus.class_of[path] = class_id
+		corpus.path_of[class_id] = path
+		var declared := _declared_fields(String(corpus.stripped[path]))
+		corpus.fields_of[class_id] = declared["types"]
+		corpus.order_of[class_id] = declared["order"]
+	return corpus
+
+
+## Member `var` declarations of a class body: name -> declared type ("" when untyped). The element
+## type of a typed array is kept (`Array[IjfsTarget]`, not `Array`) because that is what tells the
+## scanner what an untyped `for` over that field is iterating.
+func _declared_fields(body: String) -> Dictionary:
+	var regex := _regex("(?m)^(?:@export(?:\\([^)]*\\))?\\s+|@onready\\s+)*var\\s+([A-Za-z_]\\w*)\\s*(?::\\s*(%s))?" % TYPE_EXPR)
+	var types: Dictionary = {}
+	var order: Array[String] = []
+	for found in regex.search_all(body):
+		var field := found.get_string(1)
+		if types.has(field):
+			continue
+		types[field] = found.get_string(2)
+		order.append(field)
+	return {"types": types, "order": order}
+
+
+## method name -> declared return type, so `var row := _build_row()` resolves as precisely as
+## `var row: SomeModel = _build_row()` would. Without this, the commonest GDScript idiom in this
+## codebase would be permanently unresolvable and every use would have to be hand-annotated.
+func _declared_returns(body: String) -> Dictionary:
+	# The parameter list is matched with one level of nesting rather than `.*?`, so a function with
+	# no declared return type cannot borrow the `-> Type` of the function after it.
+	var regex := _regex("\\bfunc\\s+([A-Za-z_]\\w*)\\s*\\((?:[^()]|\\([^()]*\\))*\\)\\s*->\\s*(%s)" % TYPE_EXPR)
+	var returns: Dictionary = {}
+	for found in regex.search_all(body):
+		returns[found.get_string(1)] = found.get_string(2)
+	return returns
+
+
+# ── Ownership: the manifest reduced to lookup tables ────────────────────────────────────────────
+
+## The manifest's ownership facts in the shape the scanner asks questions in.
+class Ownership:
+	extends RefCounted
+
+	var protected: Dictionary = {}      # "Class.field" -> {aggregate, lifetime}
+	var field_names: Dictionary = {}    # field_name -> true (for the unresolved-receiver backstop)
+	var owner_paths: Dictionary = {}    # path -> true (a model may write its own protected fields)
+	var allowances: Dictionary = {}     # "path|Class.field" -> {aggregate, kind, removal_plan}
+	var allowance_used: Dictionary = {} # same key -> true, filled in by the scan
+	var authority_paths: Dictionary = {}# path -> aggregate id
+	var authority_used: Dictionary = {} # same key -> true, filled in by the scan
+	var mutators: Dictionary = {}       # "Class.method" -> aggregate id
+
+
+func _build_ownership(manifest: Dictionary, corpus: Corpus) -> Ownership:
+	var ownership := Ownership.new()
+	for aggregate_value in manifest.get("aggregates", []):
+		var aggregate: Dictionary = aggregate_value
+		var aggregate_id := _text(aggregate.get("id", ""))
+		_claim_model_fields(ownership, aggregate, aggregate_id, "owned_models")
+		_claim_model_fields(ownership, aggregate, aggregate_id, "hosted_fields")
+		_claim_allowances(ownership, aggregate, aggregate_id, "construction_writers", "construction")
+		_claim_allowances(ownership, aggregate, aggregate_id, "legacy_writers", "legacy")
+		var authority_path := _text(aggregate.get("authority_path", ""))
+		if not authority_path.is_empty():
+			ownership.authority_paths[authority_path] = aggregate_id
+	_collect_model_mutators(ownership, corpus)
+	return ownership
+
+
+func _claim_model_fields(
+		ownership: Ownership, aggregate: Dictionary, aggregate_id: String, section: String) -> void:
+	for entry_value in aggregate.get(section, []):
+		var entry: Dictionary = entry_value
+		var class_id := _text(entry.get("class", ""))
+		ownership.owner_paths[_text(entry.get("path", ""))] = true
+		for field_value in Dictionary(entry.get("fields", {})).keys():
+			var key := "%s.%s" % [class_id, String(field_value)]
+			if ownership.protected.has(key):
+				var prior: Dictionary = ownership.protected[key]
+				_fail("E_DUPLICATE_CLAIM: %s is claimed by both '%s' and '%s' — one field, one aggregate." % [
+					key, String(prior["aggregate"]), aggregate_id])
+				continue
+			ownership.protected[key] = {
+				"aggregate": aggregate_id,
+				"lifetime": String(Dictionary(entry.get("fields", {}))[field_value]),
+			}
+			ownership.field_names[String(field_value)] = true
+
+
+func _claim_allowances(
+		ownership: Ownership, aggregate: Dictionary, aggregate_id: String,
+		section: String, kind: String) -> void:
+	for entry_value in aggregate.get(section, []):
+		var entry: Dictionary = entry_value
+		var path := _text(entry.get("path", ""))
+		for field_value in entry.get("fields", []):
+			ownership.allowances["%s|%s" % [path, String(field_value)]] = {
+				"aggregate": aggregate_id,
+				"kind": kind,
+				"path": path,
+				"symbol": String(field_value),
+				"removal_plan": _text(entry.get("removal_plan", "")),
+			}
+
+
+## Methods DEFINED on a protected model that write one of its own protected fields. Calling one from
+## outside the authority is a bypass dressed as an API, so the scan treats such a call as a write.
+func _collect_model_mutators(ownership: Ownership, corpus: Corpus) -> void:
+	for key in ownership.protected.keys():
+		var class_id := String(key).get_slice(".", 0)
+		if not corpus.path_of.has(class_id):
+			continue
+		var body := String(corpus.stripped[corpus.path_of[class_id]])
+		for method in _methods_writing_fields(body, class_id, ownership):
+			ownership.mutators["%s.%s" % [class_id, method]] = ownership.protected[key]["aggregate"]
+
+
+func _methods_writing_fields(body: String, class_id: String, ownership: Ownership) -> Array[String]:
+	var out: Array[String] = []
+	var lines := body.split("\n")
+	var current := ""
+	var func_regex := _regex("^\\s*(?:static\\s+)?func\\s+([A-Za-z_]\\w*)")
+	var write_regex := _regex(
+		"^\\s+(?:self\\s*\\.\\s*)?([A-Za-z_]\\w*)\\s*(?:\\[[^\\]]*\\])?\\s*(?:(?:%s)|\\.\\s*(?:%s)\\s*\\()"
+		% [ASSIGN_OPS, "|".join(MUTATOR_METHODS)])
+	for line_value in lines:
+		var line := String(line_value)
+		var found := func_regex.search(line)
+		if found != null:
+			current = found.get_string(1)
+			continue
+		if current.is_empty():
+			continue
+		var write := write_regex.search(line)
+		if write == null:
+			continue
+		if ownership.protected.has("%s.%s" % [class_id, write.get_string(1)]) and not out.has(current):
+			out.append(current)
+	return out
+
+
+# ── The scan ────────────────────────────────────────────────────────────────────────────────────
+
+## Every protected write the corpus performs, as {path, line, rule, symbol, aggregate, snippet}.
+## Whether a write is ALLOWED is decided afterwards, so an allowance that matches nothing can be
+## reported as stale.
+func _scan(corpus: Corpus, ownership: Ownership) -> Array[Dictionary]:
+	var findings: Array[Dictionary] = []
+	for path_value in corpus.stripped.keys():
+		var path := String(path_value)
+		var lines := String(corpus.stripped[path]).split("\n")
+		var types := _receiver_types(lines, corpus, path)
+		var logical := _join_continuations(lines)
+		for index in range(lines.size()):
+			for finding in _scan_line(String(logical[index]), types.at(index), corpus, ownership):
+				finding["path"] = path
+				finding["line"] = index + 1
+				findings.append(finding)
+	return findings
+
+
+## A `\`-continued statement collapsed onto the physical line it starts on, with the continuation
+## lines blanked so every reported line number still points at the statement's first line. Without
+## this, `state. \` + newline + `antiship_systems = []` is split across two lines and matches
+## nothing — a write form that disappears by being reformatted is not enforcement.
+func _join_continuations(lines: PackedStringArray) -> PackedStringArray:
+	var joined := lines.duplicate()
+	for index in range(joined.size() - 1, -1, -1):
+		var line := String(joined[index])
+		if not line.strip_edges().ends_with("\\"):
+			continue
+		var head := line.substr(0, line.rfind("\\"))
+		joined[index] = "%s %s" % [head, String(joined[index + 1]).strip_edges()]
+		joined[index + 1] = ""
+	return joined
+
+
+## Per-line `name -> class` maps for one file. Scope matters: `GameData.load_infrastructure` and
+## `GameData.load_beaches` both call their loop variable `entry` with different types, and a
+## file-global map would collapse both to "ambiguous" and report two false positives.
+class TypeMap:
+	extends RefCounted
+
+	var scopes: Array = []                          # Array[Dictionary], 0 = file scope
+	var scope_of_line := PackedInt32Array()
+
+	func at(line_index: int) -> Dictionary:
+		return scopes[scope_of_line[line_index]]
+
+
+## Every type annotation in the file, bucketed by the function it appears in: typed members and
+## locals, `:=` from a constructor, typed loop variables, and typed parameters. A name annotated
+## with two different types WITHIN ONE SCOPE resolves to "?" (ambiguous), which the scan then treats
+## as unresolved and reports loudly rather than guessing.
+func _receiver_types(lines: PackedStringArray, corpus: Corpus, path: String) -> TypeMap:
+	var map := TypeMap.new()
+	map.scope_of_line.resize(lines.size())
+	var file_scope: Dictionary = {}
+	# A class_name is itself a resolvable receiver, for `SomeClass.static_field = x`.
+	for class_id in corpus.path_of.keys():
+		_record_type(file_scope, String(class_id), String(class_id))
+	map.scopes.append(file_scope)
+
+	var boundary := _regex("^\\s*(?:static\\s+)?func\\s+[A-Za-z_]\\w*\\s*\\(")
+	var current := 0
+	var bodies: Array[String] = [""]
+	for index in range(lines.size()):
+		var line := String(lines[index])
+		if boundary.search(line) != null:
+			current = map.scopes.size()
+			map.scopes.append(file_scope.duplicate())
+			bodies.append("")
+		map.scope_of_line[index] = current
+		bodies[current] = "%s\n%s" % [bodies[current], line]
+
+	# Members are declared at file scope but visible everywhere, so they are folded into each
+	# function scope after the fact rather than being resolved through a parent chain.
+	_collect_types(file_scope, bodies[0], corpus, path)
+	for scope_index in range(1, map.scopes.size()):
+		var scope: Dictionary = map.scopes[scope_index]
+		for name in file_scope.keys():
+			_record_type(scope, String(name), String(file_scope[name]))
+		_collect_types(scope, bodies[scope_index], corpus, path)
+	return map
+
+
+func _collect_types(types: Dictionary, body: String, corpus: Corpus, path: String) -> void:
+	var patterns := [
+		"(?m)^\\s*(?:@export(?:\\([^)]*\\))?\\s+|@onready\\s+)*var\\s+([A-Za-z_]\\w*)\\s*:\\s*(%s)" % TYPE_EXPR,
+		"(?m)^\\s*var\\s+([A-Za-z_]\\w*)\\s*:=\\s*([A-Za-z_]\\w*)\\.new\\(\\)",
+		"(?m)\\bfor\\s+([A-Za-z_]\\w*)\\s*:\\s*(%s)\\s+in\\b" % TYPE_EXPR,
+	]
+	for pattern in patterns:
+		var regex := _regex(pattern)
+		for found in regex.search_all(body):
+			_record_type(types, found.get_string(1), found.get_string(2))
+	for name_and_type in _parameter_types(body):
+		_record_type(types, String(name_and_type[0]), String(name_and_type[1]))
+	_infer_from_calls(types, body, corpus, path)
+	_infer_loop_elements(types, body, corpus)
+
+
+## `var row := _build_row()` / `var row := SomeClass.build()` — resolved from the callee's declared
+## return type. Bare calls are looked up in the file's own functions, qualified ones in the named
+## class's.
+func _infer_from_calls(types: Dictionary, body: String, corpus: Corpus, path: String) -> void:
+	var regex := _regex("(?m)^\\s*var\\s+([A-Za-z_]\\w*)\\s*:=\\s*(?:([A-Za-z_]\\w*)\\s*\\.\\s*)?([A-Za-z_]\\w*)\\s*\\(")
+	for found in regex.search_all(body):
+		var owner_class := found.get_string(2)
+		var owner_path := path
+		if not owner_class.is_empty():
+			if not corpus.path_of.has(owner_class):
+				continue
+			owner_path = String(corpus.path_of[owner_class])
+		var returns: Dictionary = corpus.returns_of.get(owner_path, {})
+		var declared := String(returns.get(found.get_string(3), ""))
+		if not declared.is_empty():
+			_record_type(types, found.get_string(1), declared)
+
+
+## `for target in state.targets:` over an `Array[IjfsTarget]` — the element type is right there in
+## the container's declaration, so an untyped loop over a typed array is not a blind spot.
+func _infer_loop_elements(types: Dictionary, body: String, corpus: Corpus) -> void:
+	var regex := _regex("(?m)\\bfor\\s+([A-Za-z_]\\w*)\\s+in\\s+([A-Za-z_]\\w*(?:\\s*\\.\\s*[A-Za-z_]\\w*)*)\\s*:")
+	for found in regex.search_all(body):
+		var container := _resolve(found.get_string(2), types, corpus)
+		if not container.begins_with("Array["):
+			continue
+		_record_type(types, found.get_string(1), container.trim_prefix("Array[").trim_suffix("]"))
+
+
+func _record_type(types: Dictionary, name: String, type_id: String) -> void:
+	if types.has(name) and String(types[name]) != type_id:
+		types[name] = "?"
+		return
+	types[name] = type_id
+
+
+## [[name, type], …] for every annotated parameter of every function signature in the file.
+func _parameter_types(body: String) -> Array:
+	# One level of nesting rather than `.*?`, so a default value like `f(x = g(y)) -> int:` does not
+	# truncate the parameter list and quietly drop the annotations after it.
+	var signature := _regex("\\bfunc(?:\\s+\\w+)?\\s*\\(((?:[^()]|\\([^()]*\\))*)\\)\\s*(?:->|:)")
+	var parameter := _regex("^([A-Za-z_]\\w*)\\s*:\\s*(%s)" % TYPE_EXPR)
+	var out: Array = []
+	for found in signature.search_all(body):
+		for part in found.get_string(1).split(","):
+			var matched := parameter.search(String(part).strip_edges())
+			if matched != null:
+				out.append([matched.get_string(1), matched.get_string(2)])
+	return out
+
+
+## The class a dotted receiver expression evaluates to, or "" when it cannot be resolved. The head
+## comes from the file's annotations; each further component is chased through the declared field
+## types of the class reached so far.
+func _resolve(expression: String, types: Dictionary, corpus: Corpus) -> String:
+	var parts := expression.replace(" ", "").replace("\t", "").split(".")
+	var current := String(types.get(String(parts[0]), ""))
+	if current.is_empty() or current == "?":
+		return ""
+	for index in range(1, parts.size()):
+		var fields: Dictionary = corpus.fields_of.get(current, {})
+		current = String(fields.get(String(parts[index]), ""))
+		if current.is_empty():
+			return ""
+	return current
+
+
+func _scan_line(
+		line: String, types: Dictionary, corpus: Corpus, ownership: Ownership) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	out.append_array(_match_field_writes(line, types, corpus, ownership))
+	out.append_array(_match_cast_writes(line, corpus, ownership))
+	out.append_array(_match_dynamic_sets(line, types, corpus, ownership))
+	out.append_array(_match_mutator_calls(line, types, corpus, ownership))
+	return out
+
+
+## direct_assign / compound_assign / element_assign / container_mutate — all four share one shape,
+## `<receiver expression> . <field> <effect>`, so they are matched together and told apart by the
+## effect that follows the field.
+func _match_field_writes(
+		line: String, types: Dictionary, corpus: Corpus, ownership: Ownership) -> Array[Dictionary]:
+	var regex := _regex(
+		"(?<![\\w.])([A-Za-z_]\\w*(?:\\s*\\.\\s*[A-Za-z_]\\w*)*)\\s*\\.\\s*([A-Za-z_]\\w*)\\s*"
+		+ "(?:(\\[[^\\]\\n]*\\])\\s*(%s)|(?:\\[[^\\]\\n]*\\])?\\s*\\.\\s*(%s)\\s*\\(|(%s))"
+		% [ASSIGN_OPS, "|".join(MUTATOR_METHODS), ASSIGN_OPS])
+	var out: Array[Dictionary] = []
+	for found in regex.search_all(line):
+		var receiver := found.get_string(1)
+		var field := found.get_string(2)
+		var rule := "direct_assign"
+		if not found.get_string(3).is_empty():
+			rule = "element_assign"
+		elif not found.get_string(5).is_empty():
+			rule = "container_mutate"
+		elif not found.get_string(6).begins_with("="):
+			rule = "compound_assign"
+		var class_id := _resolve(receiver, types, corpus)
+		var finding := _protected_finding(class_id, field, rule, corpus, ownership, line)
+		if not finding.is_empty():
+			out.append(finding)
+	return out
+
+
+## `(thing as Model).field = x` — the cast names the type outright, so no inference is needed.
+func _match_cast_writes(line: String, corpus: Corpus, ownership: Ownership) -> Array[Dictionary]:
+	var regex := _regex("\\bas\\s+([A-Za-z_]\\w*)\\s*\\)\\s*\\.\\s*([A-Za-z_]\\w*)\\s*(?:\\[[^\\]\\n]*\\])?\\s*(?:%s)" % ASSIGN_OPS)
+	var out: Array[Dictionary] = []
+	for found in regex.search_all(line):
+		var finding := _protected_finding(
+			found.get_string(1), found.get_string(2), "cast_assign", corpus, ownership, line)
+		if not finding.is_empty():
+			out.append(finding)
+	return out
+
+
+## `recv.set("field", x)` and friends. Flagged on ANY protected model regardless of the key, because
+## the key can be computed and a validator that trusted a literal key would be theatre.
+func _match_dynamic_sets(
+		line: String, types: Dictionary, corpus: Corpus, ownership: Ownership) -> Array[Dictionary]:
+	var regex := _regex(
+		"(?<![\\w.])([A-Za-z_]\\w*(?:\\s*\\.\\s*[A-Za-z_]\\w*)*)\\s*\\.\\s*(%s)\\s*\\(\\s*(?:&?\"[^\"\\n]*\"|[A-Za-z_]\\w*)"
+		% "|".join(DYNAMIC_SETTERS))
+	var out: Array[Dictionary] = []
+	for found in regex.search_all(line):
+		var class_id := _resolve(found.get_string(1), types, corpus)
+		if class_id.is_empty():
+			continue
+		for key in ownership.protected.keys():
+			if String(key).get_slice(".", 0) != class_id:
+				continue
+			# Reported against the CLASS, not a field: the key may be computed, so naming one
+			# particular field would be a guess dressed up as a finding.
+			var finding := _finding(String(key), "dynamic_set", ownership, line)
+			finding["symbol"] = "%s.<any field, key not statically known>" % class_id
+			out.append(finding)
+			break
+	return out
+
+
+## A call to a model method that writes protected fields, from anywhere. `_apply_allowances` lets it
+## through for the authority and for declared writers, exactly as a direct write would be.
+func _match_mutator_calls(
+		line: String, types: Dictionary, corpus: Corpus, ownership: Ownership) -> Array[Dictionary]:
+	var regex := _regex("(?<![\\w.])([A-Za-z_]\\w*(?:\\s*\\.\\s*[A-Za-z_]\\w*)*)\\s*\\.\\s*([A-Za-z_]\\w*)\\s*\\(")
+	var out: Array[Dictionary] = []
+	for found in regex.search_all(line):
+		var class_id := _resolve(found.get_string(1), types, corpus)
+		if class_id.is_empty():
+			continue
+		var key := "%s.%s" % [class_id, found.get_string(2)]
+		if ownership.mutators.has(key):
+			out.append(_finding(key, "model_mutator", ownership, line))
+	return out
+
+
+## A write is interesting when its (class, field) pair is protected — or when the receiver's type is
+## unknown and the field name is protected SOMEWHERE, which is the false-negative backstop.
+func _protected_finding(
+		class_id: String, field: String, rule: String,
+		corpus: Corpus, ownership: Ownership, line: String) -> Dictionary:
+	# `Variant`/`Object`/`Resource` are annotations that name no class, so they carry exactly as much
+	# information as no annotation at all. Treating them as "resolved, and not protected" was a
+	# silent bypass: one `func apply(row: Variant)` and the gate went blind.
+	if class_id.is_empty() or not corpus.path_of.has(class_id):
+		if not ownership.field_names.has(field):
+			return {}
+		return _finding("?.%s" % field, "unresolved_receiver", ownership, line)
+	var key := "%s.%s" % [class_id, field]
+	if not ownership.protected.has(key):
+		return {}
+	return _finding(key, rule, ownership, line)
+
+
+func _finding(symbol: String, rule: String, ownership: Ownership, line: String) -> Dictionary:
+	var aggregate := ""
+	if ownership.protected.has(symbol):
+		aggregate = String(ownership.protected[symbol]["aggregate"])
+	return {"symbol": symbol, "rule": rule, "aggregate": aggregate, "snippet": line.strip_edges()}
+
+
+# ── Verdict: which findings are allowed, and which allowances are dead ──────────────────────────
+
+## Splits findings into permitted writes (marking their allowance used) and violations. A model may
+## always write its own protected fields — that is where a sanctioned mutator method lives.
+func _apply_allowances(findings: Array[Dictionary], ownership: Ownership) -> Array[Dictionary]:
+	var violations: Array[Dictionary] = []
+	for finding in findings:
+		var path := String(finding["path"])
+		if ownership.authority_paths.has(path):
+			ownership.authority_used[path] = true
+			continue
+		if ownership.owner_paths.has(path):
+			continue
+		var key := "%s|%s" % [path, String(finding["symbol"])]
+		if ownership.allowances.has(key):
+			ownership.allowance_used[key] = true
+			continue
+		violations.append(finding)
+	return violations
+
+
+## An authority that writes nothing is not an authority — either the aggregate's writes moved
+## somewhere else (a bypass the scan should have caught, so the manifest is lying about which model
+## it protects) or the class is a stub the manifest is treating as shipped.
+func _report_inert_authorities(manifest: Dictionary, ownership: Ownership) -> void:
+	for aggregate_value in manifest.get("aggregates", []):
+		var aggregate: Dictionary = aggregate_value
+		var authority_path := _text(aggregate.get("authority_path", ""))
+		if authority_path.is_empty() or ownership.authority_used.has(authority_path):
+			continue
+		_fail("E_INERT_AUTHORITY: %s is declared the authority for aggregate '%s' but writes none of its protected fields. Either it is a stub, or the real writes are somewhere this scan is not looking." % [
+			authority_path.trim_prefix("res://"), _text(aggregate.get("id", ""))])
+
+
+func _report_stale_allowances(ownership: Ownership) -> void:
+	for key in ownership.allowances.keys():
+		if ownership.allowance_used.has(key):
+			continue
+		var allowance: Dictionary = ownership.allowances[key]
+		_fail("E_STALE_ALLOWANCE: %s no longer writes %s (aggregate '%s', %s allowance). Delete the entry — a dead exception is an open door nobody is watching." % [
+			String(allowance["path"]).trim_prefix("res://"), String(allowance["symbol"]),
+			String(allowance["aggregate"]), String(allowance["kind"])])
+
+
+func _report_violations(violations: Array[Dictionary], ownership: Ownership, manifest_path: String) -> void:
+	for violation in violations:
+		_fail(_diagnostic(violation, ownership, manifest_path))
+
+
+## Failures teach the rule: what was written, how, where, who is allowed to write it instead, and
+## where the ownership fact lives. A method name is only ever suggested when the manifest names an
+## authority whose file exists — never invented.
+func _diagnostic(violation: Dictionary, ownership: Ownership, manifest_path: String) -> String:
+	var symbol := String(violation["symbol"])
+	var aggregate := String(violation["aggregate"])
+	var authority := _authority_advice(aggregate, ownership)
+	if String(violation["rule"]) == "unresolved_receiver":
+		return "E_UNRESOLVED_WRITE: %s:%d writes '%s' on a receiver whose type cannot be resolved: `%s`. '%s' is a protected field name, so this write cannot be cleared or blamed. Annotate the receiver (`var row: SomeModel = …`) and the gate will judge it. Ownership: %s" % [
+			String(violation["path"]).trim_prefix("res://"), int(violation["line"]),
+			symbol.trim_prefix("?."), String(violation["snippet"]), symbol.trim_prefix("?."),
+			manifest_path.trim_prefix("res://")]
+	return "E_UNAUTHORIZED_WRITE: %s:%d mutates protected %s (%s) outside its authority: `%s`. Aggregate '%s'; %s Ownership: %s" % [
+		String(violation["path"]).trim_prefix("res://"), int(violation["line"]), symbol,
+		String(violation["rule"]), String(violation["snippet"]), aggregate, authority,
+		manifest_path.trim_prefix("res://")]
+
+
+func _authority_advice(aggregate: String, ownership: Ownership) -> String:
+	for path in ownership.authority_paths.keys():
+		if String(ownership.authority_paths[path]) == aggregate:
+			return "route the change through %s and have it return a typed receipt." % String(path).trim_prefix("res://")
+	return "no authority file exists yet; return the outcome from your calculator and let the aggregate's future authority apply it, or add an explicit legacy-writer entry naming the plan that removes it."
+
+
+# ── Manifest checks ─────────────────────────────────────────────────────────────────────────────
+
+## Everything that can be wrong with the manifest itself, checked before its claims are trusted.
+## Returns false when the manifest is too broken for a scan to mean anything.
+func _check_manifest(manifest: Dictionary, corpus: Corpus, strict_paths: bool) -> bool:
+	if int(manifest.get("schema_version", 0)) != 1:
+		_fail("E_MANIFEST_SCHEMA: schema_version must be 1, found %s." % str(manifest.get("schema_version", null)))
+		return false
+	var aggregates: Array = manifest.get("aggregates", [])
+	if aggregates.is_empty():
+		_fail("E_MANIFEST_SCHEMA: no aggregates declared — an empty manifest enforces nothing.")
+		return false
+	for aggregate_value in aggregates:
+		var aggregate: Dictionary = aggregate_value
+		_check_authority(aggregate)
+		_check_model_section(aggregate, corpus, "owned_models", true)
+		_check_model_section(aggregate, corpus, "hosted_fields", false)
+		if strict_paths:
+			_check_writer_paths(aggregate, corpus)
+	return true
+
+
+func _check_authority(aggregate: Dictionary) -> void:
+	var aggregate_id := _text(aggregate.get("id", ""))
+	var status := _text(aggregate.get("status", ""))
+	var authority_path := _text(aggregate.get("authority_path", ""))
+	if status == "enforced":
+		if authority_path.is_empty() or not FileAccess.file_exists(authority_path):
+			_fail("E_NO_AUTHORITY: aggregate '%s' is 'enforced' but its authority_path '%s' does not exist." % [
+				aggregate_id, authority_path])
+		return
+	if status != "migration":
+		_fail("E_MANIFEST_SCHEMA: aggregate '%s' has status '%s'; expected 'migration' or 'enforced'." % [
+			aggregate_id, status])
+		return
+	if _text(aggregate.get("planned_authority", "")).is_empty():
+		_fail("E_NO_AUTHORITY: aggregate '%s' is migration-only, so it must name a planned_authority." % aggregate_id)
+	if not authority_path.is_empty():
+		_fail("E_MANIFEST_SCHEMA: aggregate '%s' is migration-only but declares authority_path '%s'; set status 'enforced' instead." % [
+			aggregate_id, authority_path])
+
+
+## A declared model must exist, declare the class it claims, and — for an OWNED model — classify
+## every mutable field it has. The last rule is what stops a new field appearing unprotected.
+func _check_model_section(
+		aggregate: Dictionary, corpus: Corpus, section: String, exhaustive: bool) -> void:
+	var aggregate_id := _text(aggregate.get("id", ""))
+	for entry_value in aggregate.get(section, []):
+		var entry: Dictionary = entry_value
+		var class_id := _text(entry.get("class", ""))
+		var path := _text(entry.get("path", ""))
+		if not corpus.stripped.has(path):
+			_fail("E_DEAD_PATH: aggregate '%s' declares %s '%s', which is not in the scan corpus." % [
+				aggregate_id, section, path])
+			continue
+		if String(corpus.class_of.get(path, "")) != class_id:
+			_fail("E_DEAD_PATH: aggregate '%s' says %s declares class '%s', but it declares '%s'." % [
+				aggregate_id, path, class_id, String(corpus.class_of.get(path, "<none>"))])
+			continue
+		var declared: Dictionary = corpus.fields_of.get(class_id, {})
+		var claimed: Dictionary = entry.get("fields", {})
+		for field_value in claimed.keys():
+			if not declared.has(String(field_value)):
+				_fail("E_DEAD_FIELD: aggregate '%s' protects %s.%s, which %s no longer declares." % [
+					aggregate_id, class_id, String(field_value), path])
+		if not exhaustive:
+			continue
+		for field_value in corpus.order_of.get(class_id, []):
+			if not claimed.has(String(field_value)):
+				_fail("E_UNCLASSIFIED_FIELD: %s.%s is mutable and unclassified. Owned models classify every field; add it to aggregate '%s' with a lifetime, or move the field to a model this aggregate does not own." % [
+					class_id, String(field_value), aggregate_id])
+
+
+func _check_writer_paths(aggregate: Dictionary, corpus: Corpus) -> void:
+	var aggregate_id := _text(aggregate.get("id", ""))
+	for section in ["construction_writers", "legacy_writers"]:
+		for entry_value in aggregate.get(section, []):
+			var entry: Dictionary = entry_value
+			var path := _text(entry.get("path", ""))
+			if not corpus.stripped.has(path):
+				_fail("E_DEAD_PATH: aggregate '%s' lists %s '%s', which is not in the scan corpus." % [
+					aggregate_id, section, path])
+			if section == "legacy_writers" and _text(entry.get("removal_plan", "")).is_empty():
+				_fail("E_MANIFEST_SCHEMA: legacy writer '%s' (aggregate '%s') has no removal_plan. A legacy writer without an exit is just a permitted writer." % [
+					path, aggregate_id])
+
+
+## scripts/transitions/ is the authority directory. A file living there that no aggregate names is
+## rejected outright, so the directory cannot quietly become a second grab bag of writers: authority
+## is granted to an exact named file, never to everything sharing its folder.
+func _check_authority_dir(manifest: Dictionary, ownership: Ownership, extension: String) -> void:
+	var dir_path := _text(manifest.get("authority_dir", ""))
+	if dir_path.is_empty() or not DirAccess.dir_exists_absolute(dir_path):
+		return
+	for path in _files_with_extension(dir_path, extension):
+		if not ownership.authority_paths.has(path):
+			_fail("E_UNREGISTERED_AUTHORITY_FILE: %s lives in the authority directory but no aggregate in the manifest names it as its authority_path. Authority is granted to an exact named file, never to a directory." % path.trim_prefix("res://"))
+
+
+# ── Runs ────────────────────────────────────────────────────────────────────────────────────────
+
+func _run_real_scan() -> void:
+	var manifest := _read_json(MANIFEST_PATH)
+	if manifest.is_empty():
+		_fail("E_MANIFEST_SCHEMA: %s is missing or unparseable." % MANIFEST_PATH)
+		return
+	var paths: Array[String] = []
+	var excludes: Array = manifest.get("scan_excludes", [])
+	for root_value in manifest.get("scan_roots", []):
+		for path in _gd_files(String(root_value)):
+			if not _excluded(path, excludes):
+				paths.append(path)
+	var corpus := _build_corpus(paths)
+	if not _check_manifest(manifest, corpus, true):
+		return
+	var ownership := _build_ownership(manifest, corpus)
+	_check_authority_dir(manifest, ownership, ".gd")
+	var findings := _scan(corpus, ownership)
+	_guard_vacuous(paths.size(), corpus, ownership, findings.size())
+	_report_violations(_apply_allowances(findings, ownership), ownership, MANIFEST_PATH)
+	_report_stale_allowances(ownership)
+	_report_inert_authorities(manifest, ownership)
+	_print_campaign_progress(manifest, paths.size(), ownership)
+
+
+## A validator that silently scanned nothing looks exactly like one that verified everything — the
+## DataOverrides silent-failure family. Every count that could collapse to zero is asserted.
+func _guard_vacuous(
+		file_count: int, corpus: Corpus, ownership: Ownership, finding_count: int) -> void:
+	if file_count < 50:
+		_fail("E_VACUOUS: scanned only %d file(s); the scan roots resolved to nothing usable." % file_count)
+	if corpus.path_of.is_empty():
+		_fail("E_VACUOUS: no class_name declarations found — receiver resolution would silently see nothing.")
+	if ownership.protected.is_empty():
+		_fail("E_VACUOUS: the manifest protects zero symbols.")
+	if finding_count == 0:
+		_fail("E_VACUOUS: zero protected writes found across the whole tree. Every registered aggregate has at least a construction writer, so this means the scanner matched nothing.")
+
+
+func _print_campaign_progress(manifest: Dictionary, file_count: int, ownership: Ownership) -> void:
+	print("Scanned %d source file(s); %d protected symbol(s) across %d aggregate(s)." % [
+		file_count, ownership.protected.size(), Array(manifest.get("aggregates", [])).size()])
+	var remaining := 0
+	for aggregate_value in manifest.get("aggregates", []):
+		var aggregate: Dictionary = aggregate_value
+		var authority := _text(aggregate.get("planned_authority", null))
+		if authority.is_empty():
+			authority = _text(aggregate.get("authority_class", null))
+		print("  aggregate '%s' [%s] -> %s" % [
+			_text(aggregate.get("id", "")), _text(aggregate.get("status", "")), authority])
+		for entry_value in aggregate.get("legacy_writers", []):
+			var entry: Dictionary = entry_value
+			remaining += 1
+			print("      legacy writer %s (%d field(s)) — removed by: %s" % [
+				_text(entry.get("path", "")).trim_prefix("res://"),
+				Array(entry.get("fields", [])).size(), _text(entry.get("removal_plan", ""))])
+	print("Legacy writers still outstanding: %d." % remaining)
+
+
+## The self-test is the proof that the claims in this file's header are true. Every deliberately
+## illegal fixture declares the rule it expects on the offending line; the scan's output must match
+## that expectation EXACTLY — a missing hit is a false negative, an extra hit a false positive.
+func _run_self_test() -> void:
+	var manifest := _read_json("%s/fixture_manifest.json" % FIXTURE_DIR)
+	var paths := _fixture_files()
+	if manifest.is_empty() or paths.is_empty():
+		_fail("E_VACUOUS: self-test fixtures missing under %s — the detector's claims are unproven." % FIXTURE_DIR)
+		return
+	var corpus := _build_corpus(paths)
+	if not _check_manifest(manifest, corpus, true):
+		return
+	var ownership := _build_ownership(manifest, corpus)
+	var actual: Dictionary = {}
+	for violation in _apply_allowances(_scan(corpus, ownership), ownership):
+		actual["%s:%d" % [String(violation["path"]), int(violation["line"])]] = String(violation["rule"])
+	var expected := _fixture_expectations(corpus)
+	_compare_self_test(expected, actual)
+	_check_manifest_error_fixtures(corpus)
+	_check_authority_dir_fixture(manifest, ownership)
+	_check_inert_authority_fixture(manifest, ownership)
+	print("Self-test: %d fixture file(s), %d expected violation(s) reproduced." % [paths.size(), expected.size()])
+
+
+## Proves the authority-directory rule against a fixture folder, because scripts/transitions/ does
+## not exist yet — an unproven rule is a rule nobody has run.
+func _check_authority_dir_fixture(manifest: Dictionary, ownership: Ownership) -> void:
+	var produced := _capture_failures(func() -> void:
+		_check_authority_dir(manifest, ownership, FIXTURE_EXT))
+	_expect_single_error(produced, "E_UNREGISTERED_AUTHORITY_FILE", "authority-directory fixture")
+
+
+## The fixture authority DOES write, so the live check passes there. Re-running it against an empty
+## usage record is how the failing direction gets exercised without a second fixture tree.
+func _check_inert_authority_fixture(manifest: Dictionary, ownership: Ownership) -> void:
+	if not ownership.authority_used.has(_text(Dictionary(manifest["aggregates"][0]).get("authority_path", ""))):
+		_fail("SELF-TEST: the fixture authority wrote nothing, so the inert-authority check is being proven against the wrong baseline.")
+		return
+	var produced := _capture_failures(func() -> void:
+		var inert := Ownership.new()
+		inert.authority_paths = ownership.authority_paths
+		_report_inert_authorities(manifest, inert))
+	_expect_single_error(produced, "E_INERT_AUTHORITY", "inert-authority fixture")
+
+
+func _compare_self_test(expected: Dictionary, actual: Dictionary) -> void:
+	if expected.is_empty():
+		_fail("SELF-TEST: no `#@expect` markers parsed out of the fixtures. The self-test would then agree with any scanner, including one that detects nothing.")
+	for key in expected.keys():
+		if not actual.has(key):
+			_fail("SELF-TEST FALSE NEGATIVE: %s expects rule '%s' and the scanner found nothing. The header claims this write form is detected; either fix the detector or stop claiming it." % [
+				String(key).trim_prefix("res://"), String(expected[key])])
+		elif String(actual[key]) != String(expected[key]):
+			_fail("SELF-TEST WRONG RULE: %s expected '%s', got '%s'." % [
+				String(key).trim_prefix("res://"), String(expected[key]), String(actual[key])])
+	for key in actual.keys():
+		if not expected.has(key):
+			_fail("SELF-TEST FALSE POSITIVE: %s was flagged '%s' but the fixture declares it legal." % [
+				String(key).trim_prefix("res://"), String(actual[key])])
+
+
+## `#@expect <rule>` trailing a fixture line declares the violation that line must produce. Read
+## from the RAW text, because the scanner itself works on a comment-stripped copy.
+func _fixture_expectations(corpus: Corpus) -> Dictionary:
+	var regex := _regex("#@expect\\s+([a-z_]+)")
+	var expected: Dictionary = {}
+	for path_value in corpus.raw.keys():
+		var lines := String(corpus.raw[path_value]).split("\n")
+		for index in range(lines.size()):
+			var found := regex.search(String(lines[index]))
+			if found != null:
+				var start := _statement_start(lines, index)
+				expected["%s:%d" % [String(path_value), start + 1]] = found.get_string(1)
+	return expected
+
+
+## The first physical line of the statement containing `index`. An expectation belongs to its
+## statement, and a `\`-continued statement is reported at the line it starts on — so a marker
+## written on the continuation still names the right violation.
+func _statement_start(lines: PackedStringArray, index: int) -> int:
+	var start := index
+	while start > 0 and String(lines[start - 1]).strip_edges().ends_with("\\"):
+		start -= 1
+	return start
+
+
+## Broken-manifest fixtures: each declares the single error code it must provoke. They exercise the
+## manifest checks the source fixtures cannot reach — dead paths, dead fields, an unclassified field,
+## two aggregates claiming one field, and a missing authority.
+func _check_manifest_error_fixtures(corpus: Corpus) -> void:
+	var fixtures := _files_matching(FIXTURE_DIR, "bad_manifest_", ".json")
+	if fixtures.size() < 8:
+		_fail("SELF-TEST: found %d broken-manifest fixture(s), expected at least 8 — the manifest checks would go unproven." % fixtures.size())
+	for path in fixtures:
+		var manifest := _read_json(path)
+		var produced := _capture_failures(func() -> void:
+			_check_manifest(manifest, corpus, true)
+			_build_ownership(manifest, corpus))
+		_expect_single_error(
+			produced, _text(manifest.get("_expect_error", "")), path.trim_prefix("res://"))
+
+
+## Runs a check with the failure list quarantined, and returns what that check alone produced.
+func _capture_failures(body: Callable) -> Array[String]:
+	var quarantined: Array[String] = _failures
+	_failures = []
+	body.call()
+	var produced: Array[String] = _failures.duplicate()
+	_failures = quarantined
+	return produced
+
+
+func _expect_single_error(produced: Array[String], expected: String, label: String) -> void:
+	if expected.is_empty():
+		_fail("SELF-TEST: %s declares no _expect_error, so it proves nothing." % label)
+		return
+	for message in produced:
+		if message.begins_with(expected):
+			if produced.size() != 1:
+				_fail("SELF-TEST: %s expected exactly one error, produced %d: %s." % [
+					label, produced.size(), str(produced)])
+			return
+	_fail("SELF-TEST: %s expected error '%s'; the checks produced %s." % [
+		label, expected, str(produced)])
+
+
+# ── Small helpers ───────────────────────────────────────────────────────────────────────────────
+
+func _fixture_files() -> Array[String]:
+	return _files_matching(FIXTURE_DIR, "", FIXTURE_EXT)
+
+
+func _files_matching(dir_path: String, prefix: String, suffix: String) -> Array[String]:
+	var out: Array[String] = []
+	var dir := DirAccess.open(dir_path)
+	if dir == null:
+		return out
+	dir.list_dir_begin()
+	var entry := dir.get_next()
+	while entry != "":
+		if not dir.current_is_dir() and entry.begins_with(prefix) and entry.ends_with(suffix):
+			out.append("%s/%s" % [dir_path, entry])
+		entry = dir.get_next()
+	dir.list_dir_end()
+	out.sort()
+	return out
+
+
+func _gd_files(root: String) -> Array[String]:
+	return _files_with_extension(root, ".gd")
+
+
+func _files_with_extension(root: String, extension: String) -> Array[String]:
+	var out: Array[String] = []
+	var dir := DirAccess.open(root)
+	if dir == null:
+		return out
+	dir.list_dir_begin()
+	var entry := dir.get_next()
+	while entry != "":
+		if entry != "." and entry != "..":
+			var full := "%s/%s" % [root, entry]
+			if dir.current_is_dir():
+				out.append_array(_files_with_extension(full, extension))
+			elif entry.ends_with(extension):
+				out.append(full)
+		entry = dir.get_next()
+	dir.list_dir_end()
+	out.sort()
+	return out
+
+
+func _excluded(path: String, excludes: Array) -> bool:
+	for prefix in excludes:
+		if path.begins_with(String(prefix)):
+			return true
+	return false
+
+
+func _read_json(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {}
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	return parsed if parsed is Dictionary else {}
+
+
+## JSON null is a legitimate manifest value ("no authority file yet"), and `String(null)` is a hard
+## error in GDScript — so every manifest read goes through here.
+func _text(value: Variant) -> String:
+	return "" if value == null else str(value)
+
+
+func _class_name_of(body: String) -> String:
+	var regex := _regex("(?m)^class_name\\s+([A-Za-z_]\\w*)")
+	var found := regex.search(body)
+	return found.get_string(1) if found != null else ""
+
+
+## Comments and string literals are prose, not code — this header discusses `system.quantity = 0` at
+## length. Newlines survive so reported line numbers stay true.
+func _strip(body: String) -> String:
+	var without_strings := _regex("\"[^\"\\n]*\"|'[^'\\n]*'")
+	var stripped := without_strings.sub(body, "\"\"", true)
+	var without_comments := _regex("(?m)#.*$")
+	return without_comments.sub(stripped, "", true)
+
+
+func _fail(message: String) -> void:
+	_failures.append(message)
+
+
+func _finish() -> void:
+	if _failures.is_empty():
+		print("PASS: mutation authority — no unauthorised writes to any registered aggregate.")
+		quit(0)
+		return
+	for failure in _failures:
+		push_error(failure)
+	print("FAIL: mutation-authority validation found %d issue(s):" % _failures.size())
+	for failure in _failures:
+		print("  - %s" % failure)
+	quit(1)

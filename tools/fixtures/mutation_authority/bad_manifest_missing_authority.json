@@ -1,0 +1,62 @@
+{
+  "_doc": "An 'enforced' aggregate whose authority file does not exist enforces nothing.",
+  "_expect_error": "E_NO_AUTHORITY",
+  "schema_version": 1,
+  "scan_roots": [
+    "res://tools/fixtures/mutation_authority"
+  ],
+  "scan_excludes": [],
+  "authority_dir": "res://tools/fixtures/mutation_authority/transitions_dir",
+  "aggregates": [
+    {
+      "id": "fixture_aggregate",
+      "status": "enforced",
+      "planned_authority": null,
+      "authority_class": "FixtureTransitions",
+      "authority_path": "res://tools/fixtures/mutation_authority/never_written.gdfixture",
+      "owned_models": [
+        {
+          "class": "FixtureRow",
+          "path": "res://tools/fixtures/mutation_authority/model.gdfixture",
+          "fields": {
+            "row_id": "identity",
+            "quantity_units": "campaign",
+            "destroyed_units": "campaign",
+            "tags_by_turn": "transient",
+            "profile_by_key": "identity"
+          }
+        }
+      ],
+      "hosted_fields": [
+        {
+          "class": "FixtureHost",
+          "path": "res://tools/fixtures/mutation_authority/host.gdfixture",
+          "fields": {
+            "rows_by_index": "campaign",
+            "rows_built": "transient"
+          }
+        }
+      ],
+      "construction_writers": [
+        {
+          "path": "res://tools/fixtures/mutation_authority/construction.gdfixture",
+          "why": "Initialises fresh, unpublished rows.",
+          "fields": [
+            "FixtureRow.row_id",
+            "FixtureRow.quantity_units"
+          ]
+        }
+      ],
+      "legacy_writers": [
+        {
+          "path": "res://tools/fixtures/mutation_authority/legacy.gdfixture",
+          "why": "Still clears the per-turn tag list in place.",
+          "removal_plan": "never — fixture only.",
+          "fields": [
+            "FixtureRow.tags_by_turn"
+          ]
+        }
+      ]
+    }
+  ]
+}

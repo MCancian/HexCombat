@@ -1,0 +1,11 @@
+class_name FixtureLegacy
+extends RefCounted
+
+## A declared temporary legacy writer. Its manifest entry names the plan that deletes it, and until
+## then the scan must let exactly the listed fields through — and nothing else. Never compiled; see
+## README.md.
+
+static func reset_transients(host: FixtureHost) -> void:
+	for row_index in range(host.rows_by_index.size()):
+		var row: FixtureRow = host.rows_by_index[row_index]
+		row.tags_by_turn.clear()

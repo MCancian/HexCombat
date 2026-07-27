@@ -1,0 +1,15 @@
+class_name FixtureBuilder
+extends RefCounted
+
+## A construction writer: it initialises FRESH, unpublished rows and never accepts live aggregate
+## state. Its allowance covers exactly the identity/establishment fields listed in the manifest, so
+## the scan must report nothing here. Never compiled; see README.md.
+
+static func build(row_count: int) -> Array:
+	var rows: Array = []
+	for index in range(row_count):
+		var row: FixtureRow = FixtureRow.new()
+		row.row_id = index
+		row.quantity_units = 1
+		rows.append(row)
+	return rows

@@ -1,0 +1,50 @@
+class_name FixtureIntruder
+extends RefCounted
+
+## Every write form the validator's header claims to detect, one per line, each declaring the rule
+## it must produce. This file is the proof behind those claims: if the scanner stops catching one of
+## these, the gate fails as a false negative rather than going quietly green. Never compiled; see
+## README.md.
+
+static func trespass(host: FixtureHost, rows: Array, count: int) -> void:
+	var row: FixtureRow = host.rows_by_index[0]
+	row.quantity_units = 0                                  #@expect direct_assign
+	row.destroyed_units += count                            #@expect compound_assign
+	row.tags_by_turn[0] = count                             #@expect element_assign
+	row.tags_by_turn.append(count)                          #@expect container_mutate
+	row.set("quantity_units", 0)                            #@expect dynamic_set
+	row.apply_kill(count)                                   #@expect model_mutator
+	(rows[0] as FixtureRow).quantity_units = 0              #@expect cast_assign
+	host.rows_by_index = rows                               #@expect direct_assign
+	host.rows_built = true                                  #@expect direct_assign
+	host.rows_by_index.append(row)                          #@expect container_mutate
+	row.tags_by_turn[0].append(count)                       #@expect container_mutate
+	row.set(&"quantity_units", 0)                           #@expect dynamic_set
+	row.set(count, 0)                                       #@expect dynamic_set
+	row.add_tag(count)                                      #@expect model_mutator
+	row. \
+		quantity_units = 0                                  #@expect direct_assign
+	# Unprotected fields on a shared host stay unprotected: hosted_fields is a claim over named
+	# fields, not over the whole model.
+	host.unrelated_note = "untouched by this aggregate"
+
+
+## An alias the validator cannot type is the false-negative hole. It is closed by failing loudly on
+## the protected field NAME instead of pretending the write does not exist.
+static func trespass_through_untyped_alias(host: FixtureHost) -> void:
+	var anonymous_row = host.rows_by_index[0]
+	anonymous_row.quantity_units = 0                        #@expect unresolved_receiver
+
+
+## `Variant` (likewise `Object`/`Resource`) names no class, so it must be treated as UNRESOLVED, not
+## as "resolved to something unprotected". Getting this wrong was a silent bypass: one annotation and
+## the gate reported nothing at all.
+static func trespass_through_opaque_annotation(row: Variant) -> void:
+	row.quantity_units = 0                                  #@expect unresolved_receiver
+
+
+## The element type of a typed-array PARAMETER must survive, or every untyped loop over one degrades
+## to an unresolved-receiver false positive and the campaign drowns in annotation churn.
+static func trespass_through_typed_array_param(rows: Array[FixtureRow]) -> void:
+	for row in rows:
+		row.quantity_units = 0                              #@expect direct_assign

@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "_doc": "Ownership manifest for the mutation-authority campaign (plans 0042-0050). This is TOOLING/GOVERNANCE metadata, not sweepable game content, which is why it lives in tools/ and not data/. It is the SINGLE home for exact ownership facts: authority classes, protected fields, construction allowances, and temporary legacy writers. Code headers and systems docs point HERE; they must not copy these lists. Enforced by tools/validate_mutation_authority.gd, whose header documents the detected write forms and the known blind spots.",
+  "scan_roots": ["res://scripts", "res://tools"],
+  "scan_excludes": ["res://tools/fixtures"],
+  "authority_dir": "res://scripts/transitions",
+  "aggregates": [
+    {
+      "id": "antiship_establishment",
+      "summary": "The Green anti-ship establishment: surviving launchers, permanent losses (IJFS and launch attrition), and temporary suppression, held as AntishipSystem rows plus the container-level projection the IJFS targets.",
+      "status": "migration",
+      "planned_authority": "AntishipTransitions",
+      "planned_authority_plan": "plan 0043 (anti-ship mutation authority and permanent launch destruction)",
+      "authority_class": null,
+      "authority_path": null,
+      "owned_models": [
+        {
+          "class": "AntishipSystem",
+          "path": "res://scripts/model/AntishipSystem.gd",
+          "_doc": "Owned model: EVERY mutable field must be classified below or the gate fails. Lifetimes: identity = fixed at construction; establishment = original strength; campaign = persists across turns; transient = reset each turn/crossing.",
+          "fields": {
+            "to_number": "identity",
+            "type_id": "identity",
+            "type_name": "identity",
+            "detectability": "identity",
+            "special": "identity",
+            "ijfs_profile": "identity",
+            "original_quantity": "establishment",
+            "quantity": "campaign",
+            "destroyed": "campaign",
+            "destroyed_this_turn": "transient",
+            "fired": "transient",
+            "expended": "transient",
+            "suppressed": "transient",
+            "active": "transient"
+          }
+        }
+      ],
+      "hosted_fields": [
+        {
+          "class": "GameStateData",
+          "path": "res://scripts/model/GameStateData.gd",
+          "_doc": "Fields this aggregate owns on a model SHARED with other aggregates. Only the listed fields are protected; GameStateData's remaining fields are claimed by plans 0044-0049.",
+          "fields": {
+            "antiship_systems": "campaign",
+            "antiship_containers": "campaign",
+            "_antiship_built": "campaign"
+          }
+        }
+      ],
+      "construction_writers": [
+        {
+          "path": "res://scripts/AntishipLoaders.gd",
+          "why": "load_systems() initialises FRESH, unpublished AntishipSystem rows from the grouping spec before anything holds them. It never accepts live establishment state.",
+          "fields": [
+            "AntishipSystem.to_number",
+            "AntishipSystem.type_id",
+            "AntishipSystem.type_name",
+            "AntishipSystem.detectability",
+            "AntishipSystem.special",
+            "AntishipSystem.ijfs_profile",
+            "AntishipSystem.quantity",
+            "AntishipSystem.original_quantity"
+          ]
+        }
+      ],
+      "legacy_writers": [
+        {
+          "path": "res://scripts/AntishipCalculator.gd",
+          "why": "resolve_launch_attrition rolls the dice AND applies the result to the live row.",
+          "removal_plan": "plan 0043 step 3 — the calculator returns typed attrition outcomes; AntishipTransitions applies them.",
+          "fields": [
+            "AntishipSystem.active",
+            "AntishipSystem.quantity",
+            "AntishipSystem.fired",
+            "AntishipSystem.expended",
+            "AntishipSystem.destroyed_this_turn",
+            "AntishipSystem.destroyed"
+          ]
+        },
+        {
+          "path": "res://scripts/resolvers/AntishipResolver.gd",
+          "why": "_apply_writeback_to_systems reconstructs quantity from original_quantity minus cumulative IJFS kills, which is the resurrection bug plan 0043 fixes.",
+          "removal_plan": "plan 0043 step 4 — surviving quantity is derived from both cumulative loss categories inside AntishipTransitions.",
+          "fields": [
+            "AntishipSystem.quantity",
+            "AntishipSystem.destroyed"
+          ]
+        },
+        {
+          "path": "res://scripts/resolvers/CleanupResolver.gd",
+          "why": "End-of-turn reset of the transient crossing flags.",
+          "removal_plan": "plan 0043 step 5 — becomes AntishipTransitions.reset_transient_flags().",
+          "fields": [
+            "AntishipSystem.fired",
+            "AntishipSystem.expended",
+            "AntishipSystem.destroyed_this_turn",
+            "AntishipSystem.suppressed",
+            "AntishipSystem.active"
+          ]
+        },
+        {
+          "path": "res://scripts/resolvers/FiresPhases.gd",
+          "why": "ensure_antiship_systems performs the lazy first build and sets the build latch.",
+          "removal_plan": "plan 0043 step 3 — becomes AntishipTransitions.initialise_establishment(), called by the coordinator.",
+          "fields": [
+            "GameStateData.antiship_systems",
+            "GameStateData.antiship_containers",
+            "GameStateData._antiship_built"
+          ]
+        },
+        {
+          "path": "res://scripts/GameState.gd",
+          "why": "reset_to_scenario clears both arrays and the latch; the forwarding properties expose a public setter for each array.",
+          "removal_plan": "plan 0043 step 3 — reset routes through AntishipTransitions; the forwarding setters go read-only.",
+          "fields": [
+            "GameStateData.antiship_systems",
+            "GameStateData.antiship_containers",
+            "GameStateData._antiship_built"
+          ]
+        }
+      ]
+    }
+  ]
+}

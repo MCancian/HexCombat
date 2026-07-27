@@ -1,0 +1,9 @@
+class_name FixtureHost
+extends RefCounted
+
+## Fixture stand-in for a model SHARED between aggregates: only the two fields below are claimed,
+## and `unrelated_note` must stay unprotected so hosted_fields is proven non-exhaustive.
+
+var rows_by_index: Array = []
+var rows_built: bool = false
+var unrelated_note: String = ""

@@ -1,0 +1,61 @@
+{
+  "_doc": "A new mutable field on an OWNED model must be classified; omission is the silent hole this check closes.",
+  "_expect_error": "E_UNCLASSIFIED_FIELD",
+  "schema_version": 1,
+  "scan_roots": [
+    "res://tools/fixtures/mutation_authority"
+  ],
+  "scan_excludes": [],
+  "authority_dir": "res://tools/fixtures/mutation_authority/transitions_dir",
+  "aggregates": [
+    {
+      "id": "fixture_aggregate",
+      "status": "enforced",
+      "planned_authority": null,
+      "authority_class": "FixtureTransitions",
+      "authority_path": "res://tools/fixtures/mutation_authority/authority.gdfixture",
+      "owned_models": [
+        {
+          "class": "FixtureRow",
+          "path": "res://tools/fixtures/mutation_authority/model.gdfixture",
+          "fields": {
+            "row_id": "identity",
+            "quantity_units": "campaign",
+            "destroyed_units": "campaign",
+            "profile_by_key": "identity"
+          }
+        }
+      ],
+      "hosted_fields": [
+        {
+          "class": "FixtureHost",
+          "path": "res://tools/fixtures/mutation_authority/host.gdfixture",
+          "fields": {
+            "rows_by_index": "campaign",
+            "rows_built": "transient"
+          }
+        }
+      ],
+      "construction_writers": [
+        {
+          "path": "res://tools/fixtures/mutation_authority/construction.gdfixture",
+          "why": "Initialises fresh, unpublished rows.",
+          "fields": [
+            "FixtureRow.row_id",
+            "FixtureRow.quantity_units"
+          ]
+        }
+      ],
+      "legacy_writers": [
+        {
+          "path": "res://tools/fixtures/mutation_authority/legacy.gdfixture",
+          "why": "Still clears the per-turn tag list in place.",
+          "removal_plan": "never — fixture only.",
+          "fields": [
+            "FixtureRow.tags_by_turn"
+          ]
+        }
+      ]
+    }
+  ]
+}

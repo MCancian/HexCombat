@@ -1,0 +1,9 @@
+class_name FixtureStrayAuthority
+extends RefCounted
+
+## Lives in the fixture's authority directory but is named by no aggregate. Proves the gate rejects
+## an unregistered file there, so `scripts/transitions/` cannot become a second grab bag of writers.
+## Never compiled, and deliberately outside the fixture scan corpus; see ../README.md.
+
+static func meddle() -> void:
+	pass
