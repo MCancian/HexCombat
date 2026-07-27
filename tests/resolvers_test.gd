@@ -91,9 +91,8 @@ func test_frontline_resolver_moves_nothing_itself() -> void:
 func _antiship_system() -> AntishipSystem:
 	var sys := AntishipSystem.new()
 	sys.fired = 5
-	sys.expended = 10
 	sys.destroyed_this_turn = 2
-	sys.suppressed = true
+	sys.suppressed_now = 4
 	sys.active = true
 	return sys
 
@@ -116,9 +115,8 @@ func test_cleanup_resolver_resets_antiship_systems_and_latches_posture() -> void
 	var summary: CleanupSummary = outcome["summary"]
 	
 	assert_int(system.fired).is_equal(0)
-	assert_int(system.expended).is_equal(0)
 	assert_int(system.destroyed_this_turn).is_equal(0)
-	assert_bool(system.suppressed).is_false()
+	assert_int(system.suppressed_now).is_equal(0)
 	assert_bool(system.active).is_false()
 	
 	assert_bool(brigade.moved_last_turn).is_true()

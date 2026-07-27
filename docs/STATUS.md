@@ -104,6 +104,16 @@ it takes operator-drawn polyline coordinates and is called only through the `Gam
   (margin +9→+3, fleet drownings 26→54 over subs 0→64) but does NOT flip alone (offload *rate* is the
   binding constraint, reservoir is bottomless) and is antagonistic with the offload throttle (sinking
   ships thins the beach queue). Detail: `docs/plans/0028-sustained-followon-interdiction.md`.
+  **Launcher losses are permanent (plan 0043, 2026-07-27, USER call):** an `AntishipSystem` row keeps
+  two source-specific cumulative loss totals — IJFS kills (assigned from the cumulative writeback) and
+  launch-attrition kills (accumulated one crossing at a time) — and derives `destroyed` / `quantity`
+  from them, clamping their sum at the establishment. Launchers destroyed while firing used to come
+  back on the next crossing, because the firing plan rebuilt `quantity` from `original_quantity` minus
+  IJFS kills alone. Attempting to fire no longer consumes a launcher; only reported destruction does.
+  Measured over 12 common seeds (scenario_default, `selfplay_default`, 30-turn cap): Green systems
+  fired falls in every seed that moves (mean −5.4 per campaign, range −18..0, never rises), Red hull
+  losses mean −0.83 (−14..+4), BNs drowned mean 0.00 — no rebalance indicated, and no pin moved.
+  Report: `docs/reports/2026-07-27-antiship-permanent-launch-destruction.md`.
 - **D4 IJFS** (joint/air-missile fires) — detection → targeting → strike → suppression, with a
   multi-day pre-invasion warmup (exquisite intel) on the first turn. Per-(TO,type) writeback feeds D3.
   **IJFS now also attrits ground forces:** Green/ROC maneuver battalions are IJFS targets
@@ -414,9 +424,10 @@ paths, dead fields, an unclassified field on an owned model, two aggregates clai
 stale allowance, an unregistered file under `scripts/transitions/`, and a scan that saw nothing all
 fail. Illegal fixtures under `tools/fixtures/mutation_authority/` declare the rule each line must
 trigger and are compared exactly on every run, so a detector that stops working fails as a false
-negative instead of going quietly green. **One aggregate is registered — `antiship_establishment`, in
-migration mode with five named legacy writers; its authority `AntishipTransitions` lands in plan
-0043.** No production behavior changed.
+negative instead of going quietly green. **One aggregate is registered and now ENFORCED —
+`antiship_establishment`, whose sole writer is `scripts/transitions/AntishipTransitions.gd` (plan
+0043). All five legacy-writer exceptions are gone**, and each former writer was re-tested with a
+deliberate direct write to confirm the gate names the file, line and write form.
 
 ## What is NOT done (see `docs/plans/`)
 

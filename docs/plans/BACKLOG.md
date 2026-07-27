@@ -92,3 +92,16 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   and doing it wholesale would change output (27 of 38 validators still have their own helpers, and
   `ValidatorHarness`'s docstring records that several deviate deliberately), which is why that item
   correctly says slices-with-the-gate-green rather than a sweep.
+
+- **The "destroyed systems still fire" mechanic is inert in production — decide whether to revive it
+  (raised by a plan-0043 reviewer, deliberately deferred 2026-07-27).** TIV lets launchers destroyed
+  by the IJFS still get a salvo away before dying. HexCombat ports the arithmetic
+  (`AntishipCalculator.build_firing_plan` takes `ijfs_destroyed` and `destroyed_fire_percentages`) but
+  `AntishipResolver.resolve` passes `{}` for BOTH, so `destroyed_firing_plan` is all-zero on every
+  crossing and the mechanic never fires. It is not merely a wiring omission: `initial_system_count =
+  truly_available + destroyed_count` feeds `intended_to_fire`, so passing the real IJFS totals would
+  ALSO raise the shot count of surviving launchers whenever suppression holds `fire_pct` below 100%.
+  That makes it a Green-lethality balance change requiring a USER call and a re-measured crossing
+  calibration, which is why plan 0043 (which owed byte-stability across an extraction) left it alone.
+  Reviving it needs: the USER call, the two dicts threaded from the establishment, and a re-run of the
+  accepted 32.9% crossing-loss calibration.

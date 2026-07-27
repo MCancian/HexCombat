@@ -90,9 +90,8 @@ func _validate_cleanup_resets_antiship_flags() -> void:
 	for system_value in GameState.antiship_systems:
 		var system: AntishipSystem = system_value
 		_assert_true("fired reset to 0 for %s" % system.type_name, system.fired == 0)
-		_assert_true("expended reset to 0 for %s" % system.type_name, system.expended == 0)
 		_assert_true("destroyed_this_turn reset to 0 for %s" % system.type_name, system.destroyed_this_turn == 0)
-		_assert_true("suppressed reset to false for %s" % system.type_name, not system.suppressed)
+		_assert_true("suppressed_now reset to 0 for %s" % system.type_name, system.suppressed_now == 0)
 		_assert_true("active reset to false for %s" % system.type_name, not system.active)
 		# Cumulative fields must NOT be touched.
 		_assert_true("destroyed (cumulative) untouched for %s" % system.type_name, system.destroyed >= 0)
@@ -114,7 +113,7 @@ func _validate_cleanup_determinism() -> void:
 	var first_flags: Array[int] = []
 	for system_value in GameState.antiship_systems:
 		var system: AntishipSystem = system_value
-		first_flags.append(system.fired + system.expended + system.destroyed_this_turn)
+		first_flags.append(system.fired + system.destroyed_this_turn + system.suppressed_now)
 
 	GameState.reset_to_scenario()
 	GameState.turn_number = 1
@@ -125,7 +124,7 @@ func _validate_cleanup_determinism() -> void:
 	var second_flags: Array[int] = []
 	for system_value in GameState.antiship_systems:
 		var system: AntishipSystem = system_value
-		second_flags.append(system.fired + system.expended + system.destroyed_this_turn)
+		second_flags.append(system.fired + system.destroyed_this_turn + system.suppressed_now)
 
 	# Compare as JSON strings for deep equality.
 	_assert_true("deterministic cleanup: same flag state", JSON.stringify(first_flags) == JSON.stringify(second_flags))

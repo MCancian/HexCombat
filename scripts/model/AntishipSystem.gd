@@ -30,10 +30,14 @@ extends Resource
 @export var ijfs_destroyed_cumulative: int = 0
 @export var launch_destroyed_cumulative: int = 0
 @export var destroyed: int = 0
+## Per-crossing reporting counters, cleared by the end-of-turn reset. `fired` is launchers that got a
+## missile away; `destroyed_this_turn` is what the crossing killed; `suppressed_now` is how many
+## launchers the current IJFS cycle has pinned — a COUNT, because firing capacity falls in proportion
+## to it, and suppression never reduces the surviving establishment. How many attempted and how many
+## launched belong to the crossing's report (AntishipLaunchOutcome), not to the arsenal.
 @export var fired: int = 0
-@export var expended: int = 0
 @export var destroyed_this_turn: int = 0
-@export var suppressed: bool = false
+@export var suppressed_now: int = 0
 @export var active: bool = false
 @export var special: String = ""          # "C2" for command-and-control nodes (not a firing system)
 @export var ijfs_profile: Dictionary = {}

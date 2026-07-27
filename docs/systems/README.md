@@ -19,3 +19,15 @@ HTML mirrors live in `html/`. Audit status + open fidelity questions:
 | Turn engine & data | [turn-engine.md](turn-engine.md) | [html](html/turn-engine.html) |
 | LLM API & self-play | [llm-api-selfplay.md](llm-api-selfplay.md) | [html](html/llm-api-selfplay.html) |
 | View layer | [view-layer.md](view-layer.md) | [html](html/view-layer.html) |
+
+## The "State & authority" section
+
+A doc whose subsystem owns a registered mutation aggregate carries one short **State & authority**
+section (campaign 0042–0050). It names four things and no more: the aggregate, its authority class,
+the operation-specific outcome/receipt types, and a link to
+`tools/mutation_authority_manifest.json`. It then explains the RULES the authority enforces — what
+they mean for the model, not which field which file may assign.
+
+It must never restate the protected-field or writer lists. Those live in the manifest, are enforced
+by `tools/validate_mutation_authority.gd`, and a copy of them rots silently. This index does not keep
+an authority inventory either, for the same reason — the manifest is the inventory.

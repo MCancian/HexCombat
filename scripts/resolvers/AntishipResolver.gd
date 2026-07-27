@@ -42,7 +42,6 @@ static func resolve(
 	turn_number: int,
 	crossing_reserve: Array,
 	antiship_systems: Array,
-	writeback: IjfsWriteback,
 	sent_by_type: Dictionary,
 	ship_defs: Dictionary,
 	beach_to_to: Dictionary,
@@ -62,7 +61,7 @@ static func resolve(
 	var target_beaches: Array = target_areas["beaches"]
 	var target_tos: Array = target_areas["tos"]
 
-	var firing := _firing_inputs(antiship_systems, writeback)
+	var firing := _firing_inputs(antiship_systems)
 
 	var crossing_config := AntishipLoaders.load_crossing_config(CROSSING_PATH)
 	var combat_catalog := AntishipLoaders.load_combat_catalog(CATALOG_PATH)
@@ -176,11 +175,10 @@ static func _target_areas_for(beach_set: Dictionary, beach_to_to: Dictionary) ->
 
 
 ## Derive the firing-plan inputs from the establishment as it stands AFTER AntishipTransitions has
-## applied the IJFS effects: destroyed launchers are already gone from `quantity`, and suppressed
-## launchers sit out this crossing (reduced firing %). Reads only —
+## applied the IJFS effects: destroyed launchers are already gone from `quantity`, and the survivors
+## the IJFS has pinned are counted in `suppressed_now` and sit out this crossing. Reads only —
 ## returns {"firing_percentages": key -> pct, "target_locations": sorted TO numbers}.
-static func _firing_inputs(antiship_systems: Array, writeback: IjfsWriteback) -> Dictionary:
-	var ijfs_suppressed: Dictionary = writeback.antiship_suppressed_by_type if writeback != null else {}
+static func _firing_inputs(antiship_systems: Array) -> Dictionary:
 	# TOs whose C2 (type 99) the IJFS suppressed lose over-the-horizon targeting: every surviving
 	# anti-ship system in that TO fires at C2_SUPPRESSED_FIRE_MULTIPLIER of capacity. Computed up
 	# front because C2 itself is skipped (continue) in the firing loop below and never fires.
@@ -189,8 +187,7 @@ static func _firing_inputs(antiship_systems: Array, writeback: IjfsWriteback) ->
 		var c2_system: AntishipSystem = system_value
 		if c2_system.type_id != AntishipCalculator.SYSTEM_TYPE_C2:
 			continue
-		var c2_key := AntishipCalculator.encode_key(c2_system.to_number, c2_system.type_id)
-		if int(ijfs_suppressed.get(c2_key, 0)) > 0:
+		if c2_system.suppressed_now > 0:
 			c2_suppressed_tos[c2_system.to_number] = true
 
 	var firing_percentages: Dictionary = {}
@@ -204,7 +201,7 @@ static func _firing_inputs(antiship_systems: Array, writeback: IjfsWriteback) ->
 		var available := maxi(0, system.quantity)
 		if available <= 0:
 			continue
-		var suppressed := mini(available, int(ijfs_suppressed.get(key, 0)))
+		var suppressed := mini(available, system.suppressed_now)
 		var fire_pct := DEFAULT_FIRE_PCT * float(available - suppressed) / float(available)
 		# C2 suppression stacks on direct per-system suppression: the TO loses targeting entirely.
 		if c2_suppressed_tos.has(system.to_number):

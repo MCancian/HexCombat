@@ -23,7 +23,7 @@ func _ship_def(name: String, category: String, capacity := 0.0, is_decoy := fals
 
 func test_no_crossing_wave_returns_null_summary_and_preserves_accumulator() -> void:
 	var result := AntishipResolver.resolve(
-		3, [], [], null, {}, {}, {}, [], {}, 0.75, {}, SeededDice.new(1))
+		3, [], [], {}, {}, {}, [], {}, 0.75, {}, SeededDice.new(1))
 	assert_that(result["summary"]).is_null()
 	assert_array(result["lost_ids"]).is_empty()
 	assert_int(int(result["bn_equiv_lost"])).is_equal(0)
@@ -105,7 +105,7 @@ func test_full_resolve_seeded_smoke_produces_consistent_summary() -> void:
 	}
 
 	var result := AntishipResolver.resolve(
-		2, crossing_reserve, arsenal["systems"], null, sent_by_type, ship_defs,
+		2, crossing_reserve, arsenal["systems"], sent_by_type, ship_defs,
 		{1: 1}, [1], {1: [1]}, 0.0, {}, SeededDice.new(20260716))
 
 	var summary: AntishipSummary = result["summary"]
@@ -130,7 +130,7 @@ func test_full_resolve_seeded_smoke_produces_consistent_summary() -> void:
 	# Determinism: same seed, same fresh arsenal -> identical outcome.
 	var arsenal2 := AntishipSystemsBuilder.build()
 	var result2 := AntishipResolver.resolve(
-		2, crossing_reserve.duplicate(true), arsenal2["systems"], null, sent_by_type, ship_defs,
+		2, crossing_reserve.duplicate(true), arsenal2["systems"], sent_by_type, ship_defs,
 		{1: 1}, [1], {1: [1]}, 0.0, {}, SeededDice.new(20260716))
 	assert_int(int(result2["bn_equiv_lost"])).is_equal(bn_equiv_lost)
 	assert_that(result2["destroyed_by_type"]).is_equal(result["destroyed_by_type"])

@@ -1,6 +1,6 @@
 ---
 title: "0043: Anti-ship mutation authority and permanent launch destruction"
-status: "Sketch"
+status: "In progress"
 created: "2026-07-26"
 ---
 
@@ -214,6 +214,42 @@ Verification:
 The golden scenario may or may not cross often enough to move. A pin change is allowed only where the
 new permanent-destruction behavior actually reaches the fixture, and must follow deliberate
 re-baseline change control. Do not move unrelated pins.
+
+## Review findings folded in (2026-07-26/27)
+
+From the pre-implementation design review (`gem-explore`, `nemotron-3-ultra-free`; deepseek flaked
+twice with tool traces and no answer):
+
+- **Accepted — the sum of the two loss categories must be CLAMPED, never asserted.** The IJFS bombs
+  container bins while launch attrition kills deployed launchers; they are two projections of one
+  arsenal, so `ijfs_cum + launch_cum` can legitimately exceed the establishment in a sustained
+  campaign and a fail-loud assert there would crash normal play. Each source is individually bounded
+  and checked; only the sum is clamped.
+- **Accepted — the idempotency key belongs to the aggregate, not the row.** One crossing resolves per
+  turn, so `GameStateData._antiship_launch_turn` carries it; stamping ~100 rows was redundant and
+  inflated the serialised Resource.
+- **Accepted — a `suppressed` BOOL cannot carry the mechanic.** Firing capacity falls in PROPORTION to
+  the number of launchers suppressed, so the field is an int count (`suppressed_now`). Storing it also
+  let the resolver drop its `IjfsWriteback` parameter: it now reads the establishment after the
+  authority has written it, which is what the target architecture asks for.
+- **Accepted — delete `Theaters` rather than leave it dead.** After the `GameData.to_adjacency` swap it
+  had zero callers in `scripts/`, `tools/` and `tests/`. Leaving a dead file to buy ceiling headroom
+  would be the dodge; deleting it is the actual removal of coupling that earns the headroom.
+- **Accepted — `tests/antiship_firing_plan_test.gd` is not byte-stable across the extraction.** Its
+  row-mutation assertions became assertions on the returned outcome. "Byte-stable" in the commit
+  sequence means the golden fingerprints, not the unit tests that pin the seam being moved.
+
+## Explicitly out of scope (checked, don't re-raise)
+
+- **Passing `ijfs_destroyed` into `build_firing_plan` to revive the "destroyed systems still fire"
+  mechanic.** `nemotron` called this a blocker. It is real — the mechanic IS inert today, because the
+  resolver passes `{}` for both `ijfs_destroyed` and `destroyed_fire_percentages` — but enabling it is
+  a BEHAVIOUR change that would raise Green's shot count under suppression (`initial_system_count =
+  available + destroyed` feeds `intended_to_fire`). It is not a mutation-authority question and this
+  plan owes byte-stability across the extraction. Backlog it; do not fold it in here.
+- **Why no second wave sails in some harness configurations.** Under the `noop` matchup the campaign
+  contains exactly one crossing; under `selfplay_default` it contains 4–8. That difference is sealift's
+  business, not this aggregate's.
 
 ## Out of scope
 

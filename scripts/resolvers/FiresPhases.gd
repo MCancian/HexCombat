@@ -84,7 +84,7 @@ static func resolve_antiship_turn(state: GameStateData, dice: Dice) -> Dictionar
 	var wave_bns: int = SealiftResolver.sent_cohort_bn_ids(state.sealift_state).size()
 
 	var outcome := AntishipResolver.resolve(
-		state.turn_number, crossing_reserve, state.antiship_systems, state.last_ijfs_writeback,
+		state.turn_number, crossing_reserve, state.antiship_systems,
 		state.last_sealift_sent_by_type, GameData.ship_defs, GameData.beach_to_to, GameData.active_tos,
 		GameData.to_adjacency, state.lost_at_sea_accumulator, state.sealift_state.escort_sam, as_dice)
 	if outcome["summary"] == null:

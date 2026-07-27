@@ -35,8 +35,7 @@
             "destroyed": "campaign",
             "destroyed_this_turn": "transient",
             "fired": "transient",
-            "expended": "transient",
-            "suppressed": "transient",
+            "suppressed_now": "transient",
             "active": "transient"
           }
         }

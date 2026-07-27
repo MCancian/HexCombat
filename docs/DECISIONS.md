@@ -19,6 +19,25 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-27 — Launchers destroyed during launch attrition stay destroyed (USER call, plan 0043).**
+  They used to come back on the next crossing: the firing plan rebuilt `quantity` from
+  `original_quantity` minus cumulative IJFS kills alone, overwriting the launch losses. The
+  establishment now keeps the two loss sources as separate cumulative totals and derives `destroyed` /
+  `quantity` from both, clamping their sum (the IJFS bombs containers, launch attrition kills deployed
+  launchers — two projections of one arsenal, so the sum may double-count and must not be asserted).
+  Attempting to fire no longer consumes a launcher. Measured over 12 common seeds: Green shots fall
+  (mean −5.4/campaign, never rise), Red losses do not move materially, no pin moved — no rebalance.
+  Facts: `docs/STATUS.md` (D3), `docs/systems/antiship-mine.md` §10,
+  `docs/reports/2026-07-27-antiship-permanent-launch-destruction.md`.
+
+- **2026-07-27 — The anti-ship establishment is the first ENFORCED mutation aggregate (agent, plan
+  0043).** `scripts/transitions/AntishipTransitions.gd` is its only writer; the calculator went pure
+  and returns typed `AntishipLaunchOutcome` receipts. All five legacy-writer exceptions were removed
+  and each former writer re-tested with a deliberate direct write. `FiresPhases` held its dependency
+  ceiling by a one-for-one swap rather than a bump: `Theaters` was deleted (its last caller was
+  re-deriving a map `GameData` already held). Facts: `tools/mutation_authority_manifest.json`, header
+  of `scripts/transitions/AntishipTransitions.gd`, `docs/systems/antiship-mine.md` §10.
+
 - **2026-07-26 — Correction to the entry below (agent).** That entry says `GameData` reuses `entry`
   for four types; it is **two** — `Dictionary` (`GameData.load_scenario`) and `InfrastructureDef`
   (`GameData.load_infrastructure`). The conclusion is unchanged: a file-global type map called both
