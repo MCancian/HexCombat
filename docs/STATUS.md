@@ -433,9 +433,9 @@ trigger and are compared exactly on every run, so a detector that stops working 
 negative instead of going quietly green. **Two aggregates are registered and ENFORCED:**
 `antiship_establishment`, whose sole writer is `scripts/transitions/AntishipTransitions.gd` (plan
 0043; zero legacy writers), and the first force-authority slice, whose protected Brigade/Battalion
-runtime fields are written by `scripts/transitions/ForceTransitions.gd` (plan 0044; one validator-only
-legacy writer remains named in the manifest). Each former production writer was rerouted through the
-authority seam without moving golden pins.
+runtime fields are written by `scripts/transitions/ForceTransitions.gd` (plan 0044; zero legacy
+writers for this protected slice). Each former production writer was rerouted through the authority
+seam without moving golden pins.
 
 ## What is NOT done (see `docs/plans/`)
 

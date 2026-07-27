@@ -104,19 +104,22 @@ static func resolve_antiship_turn(state: GameStateData, dice: Dice) -> Dictionar
 		# Nothing crossed this turn: no fires, no state to apply (pending_lost_at_sea keeps its value).
 		return {}
 
+	var lost_ids: Array = outcome["lost_ids"]
+	# Drowned crossers are dead: delete them from their brigade rosters only after the force authority
+	# proves each id is present in both live views (reserve + sent cohort). If that preflight fails,
+	# stop before mutating reserve/cohorts/fleet; continuing would recreate the ghost-landing family in
+	# reverse, with transport state saying a BN died and the roster still claiming it survived.
+	var crossing_casualties := RosterMutations.apply_crossing_casualties(
+		state.ship_reserve, lost_ids, state.sealift_state)
+	if not crossing_casualties.success:
+		return {}
+
 	# Book what the crossing's launch attrition destroyed. The resolver only reported it.
 	AntishipTransitions.apply_launch_attrition(state, outcome["launch_outcomes"])
 	state.lost_at_sea_accumulator = float(outcome["accumulator"])
 	# Apply hull losses to the sealift cohorts (carriers) + the fleet, then drop drowned BNs from the
 	# reserve AND their cohorts, and flip the surviving crossers to offloading (plan 0004 D3).
 	apply_crossing_hull_losses(state, outcome["destroyed_by_type"])
-	var lost_ids: Array = outcome["lost_ids"]
-	# Drowned crossers are dead: delete them from their brigade rosters. Run BEFORE the reserve is
-	# rebuilt, because mapping each drowned id back to its brigade + battalion type needs the
-	# pre-removal entries. Without this the victory census (get_battalion_count - at_sea) ghost-lands
-	# a partially-landed brigade's drowned BNs, and combat over-counts its strength (mirrors the
-	# ground-combat apply_casualty, which is the only other roster-shrinking path).
-	RosterMutations.apply_crossing_casualties(state.ship_reserve, lost_ids, state.sealift_state)
 	state.ship_reserve = AntishipResolver.remaining_reserve_after_losses(state.ship_reserve, lost_ids)
 	SealiftResolver.drain_bn_ids(state.sealift_state, lost_ids, GameData.amphibious_return_time_turns)
 	SealiftResolver.flip_sent_to_offloading(state.sealift_state)

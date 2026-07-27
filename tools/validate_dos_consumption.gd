@@ -61,7 +61,7 @@ func _validate_activity_consumption() -> void:
 	for brigade_value in GameData.brigades.values():
 		var brigade: Brigade = brigade_value
 		if brigade.team == Brigade.Team.RED and not brigade.destroyed and not brigade.hex_id.is_empty():
-			brigade.moved_this_turn = true
+			GameData.mark_brigade_moved(brigade, false)
 
 	var summary: Dictionary = GameState.resolve_supply_turn()
 	_assert_true("activity consumption greater than idle", int(summary["red_dos_consumed_tons"]) > IDLE_CONSUMPTION_TONS)

@@ -9,7 +9,7 @@ extends Resource
 static func from_crossing(
 		p_lost_ids: Array, p_ship_reserve: Array, p_sealift_state: SealiftState) -> ForceCrossingCasualtyRequest:
 	var request := ForceCrossingCasualtyRequest.new()
-	request.lost_ids = p_lost_ids
-	request.ship_reserve = p_ship_reserve
+	request.lost_ids = p_lost_ids.duplicate(true)
+	request.ship_reserve = p_ship_reserve.duplicate(true)
 	request.sealift_state = p_sealift_state
 	return request

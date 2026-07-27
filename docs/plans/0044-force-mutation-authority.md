@@ -148,8 +148,8 @@ This must catch the historical ghost-landing shape immediately.
   remains dictionary-shaped and is not yet registered as protected storage. `GameData.brigades_by_hex`
   is mutated by the authority but not yet source-gated because the current scanner treats hosted
   owner paths too broadly for `GameData.gd`; closeout still requires that gap to be closed.
-- One legacy writer remains in `tools/mutation_authority_manifest.json`: a validator-only movement flag
-  fixture in `tools/validate_dos_consumption.gd`.
+- No legacy writers remain for the protected first slice; the DOS-consumption validator now marks
+  movement through the same authority façade as production movement.
 
 ## Commit sequence
 

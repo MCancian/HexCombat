@@ -117,16 +117,7 @@
           ]
         }
       ],
-      "legacy_writers": [
-        {
-          "path": "res://tools/validate_dos_consumption.gd",
-          "why": "Focused validator marks a fixture brigade as moved to exercise DOS consumption until the test fixture is routed through ForceTransitions.",
-          "removal_plan": "0044-force-mutation-authority",
-          "fields": [
-            "Brigade.moved_this_turn"
-          ]
-        }
-      ]
+      "legacy_writers": []
     }
   ]
 }

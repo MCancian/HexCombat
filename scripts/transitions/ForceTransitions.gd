@@ -80,23 +80,34 @@ static func apply_battalion_casualties(
 ## method is the one place that maps ids to roster deltas and catches one-sided omissions before the
 ## roster changes. JLSF pseudo-BNs are cargo and deliberately ignored here.
 static func apply_crossing_casualties(
-		data_store: GameDataStore, request: ForceCrossingCasualtyRequest) -> Array[ForceCasualtyReceipt]:
-	var receipts: Array[ForceCasualtyReceipt] = []
+		data_store: GameDataStore, request: ForceCrossingCasualtyRequest) -> ForceCrossingCasualtyResult:
+	var duplicate_lost_id := _duplicate_force_lost_id(request.lost_ids, request.ship_reserve)
+	if not duplicate_lost_id.is_empty():
+		return ForceCrossingCasualtyResult.refused(
+			"ForceTransitions: crossing casualty id %s appears twice in lost_ids" % duplicate_lost_id)
 	var lost := _force_lost_id_set(request.lost_ids, request.ship_reserve)
 	if lost.is_empty():
-		return receipts
+		return ForceCrossingCasualtyResult.ok([])
 	var reserve_rows := _reserve_rows_by_lost_id(request.ship_reserve, lost)
 	if reserve_rows.size() != lost.size():
-		return receipts
+		return ForceCrossingCasualtyResult.refused("ForceTransitions: crossing casualty reserve validation failed")
 	if not _sent_cohorts_contain_once(request.sealift_state, lost):
-		return receipts
+		return ForceCrossingCasualtyResult.refused("ForceTransitions: crossing casualty cohort validation failed")
+	if not _rosters_cover_rows(data_store, reserve_rows):
+		return ForceCrossingCasualtyResult.refused("ForceTransitions: crossing casualty roster validation failed")
+	var receipts: Array[ForceCasualtyReceipt] = []
 	for bn_id in lost.keys():
 		var row: Dictionary = reserve_rows[bn_id]
 		var casualty := ForceCasualtyRequest.one(
 			String(row["brigade_id"]), String(row["type"]),
 			ForceCasualtyCause.Kind.CROSSING, ForceLocation.Kind.AT_SEA)
-		receipts.append(apply_battalion_casualties(data_store, casualty))
-	return receipts
+		var receipt := apply_battalion_casualties(data_store, casualty)
+		if receipt.applied != receipt.requested:
+			return ForceCrossingCasualtyResult.refused(
+				"ForceTransitions: crossing casualty application failed for %s/%s" % [
+					receipt.brigade_id, receipt.battalion_type])
+		receipts.append(receipt)
+	return ForceCrossingCasualtyResult.ok(receipts)
 
 
 # ── Brigade activity / organization ────────────────────────────────────────────────────────────
@@ -154,6 +165,8 @@ static func _apply_hex(data_store: GameDataStore, brigade: Brigade, hex_id: Stri
 
 
 static func _check_index(data_store: GameDataStore, brigade_id: String) -> void:
+	if not OS.is_debug_build():
+		return
 	var violations := data_store.validate_runtime_indexes()
 	for violation in violations:
 		if String(violation).find(brigade_id) >= 0:
@@ -191,11 +204,21 @@ static func _force_lost_id_set(lost_ids: Array, ship_reserve: Array) -> Dictiona
 		var id := String(id_value)
 		if cargo_ids.has(id):
 			continue
-		if lost.has(id):
-			push_error("ForceTransitions: crossing casualty id %s appears twice in lost_ids" % id)
-			return {}
 		lost[id] = true
 	return lost
+
+
+static func _duplicate_force_lost_id(lost_ids: Array, ship_reserve: Array) -> String:
+	var cargo_ids := _cargo_bn_ids(ship_reserve)
+	var seen: Dictionary = {}
+	for id_value in lost_ids:
+		var id := String(id_value)
+		if cargo_ids.has(id):
+			continue
+		if seen.has(id):
+			return id
+		seen[id] = true
+	return ""
 
 
 static func _cargo_bn_ids(ship_reserve: Array) -> Dictionary:
@@ -229,6 +252,28 @@ static func _reserve_rows_by_lost_id(ship_reserve: Array, lost: Dictionary) -> D
 			push_error("ForceTransitions: crossing casualty id %s is missing from reserve" % String(bn_id))
 			return {}
 	return rows
+
+
+static func _rosters_cover_rows(data_store: GameDataStore, reserve_rows: Dictionary) -> bool:
+	var needed_by_brigade_type: Dictionary = {}
+	for row_value in reserve_rows.values():
+		var row: Dictionary = row_value
+		var key := "%s|%s" % [String(row["brigade_id"]), String(row["type"])]
+		needed_by_brigade_type[key] = int(needed_by_brigade_type.get(key, 0)) + 1
+	for key_value in needed_by_brigade_type.keys():
+		var key := String(key_value)
+		var brigade_id := key.get_slice("|", 0)
+		var battalion_type := key.get_slice("|", 1)
+		var brigade := _brigade_or_error(data_store, brigade_id, "crossing casualty")
+		if brigade == null:
+			return false
+		var available := _battalion_count(brigade, battalion_type)
+		var needed := int(needed_by_brigade_type[key])
+		if available < needed:
+			push_error("ForceTransitions: crossing casualties need %d %s from %s but roster has %d" % [
+				needed, battalion_type, brigade_id, available])
+			return false
+	return true
 
 
 static func _sent_cohorts_contain_once(sealift_state: SealiftState, lost: Dictionary) -> bool:

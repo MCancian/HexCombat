@@ -36,6 +36,16 @@ func _sent_state(ids: Array) -> SealiftState:
 	return state
 
 
+func _troop_reserve(bn_id: String) -> Array:
+	return [{
+		"brigade_id": BRIGADE_ID,
+		"locked_beach": 1,
+		"beach_hex": HEX_A,
+		"offset_bearing": 0.0,
+		"bns": [{"id": bn_id, "type": "infantry"}],
+	}]
+
+
 func test_place_brigade_updates_forward_and_reverse_indexes() -> void:
 	var store := _store()
 
@@ -73,6 +83,56 @@ func test_last_battalion_casualty_marks_destroyed_and_removes_from_map() -> void
 	store.free()
 
 
+func test_crossing_casualty_missing_reserve_row_refuses_roster_change() -> void:
+	var store := _store()
+	var request := ForceCrossingCasualtyRequest.from_crossing(
+		["bn-missing"], [], _sent_state(["bn-missing"]))
+	await assert_error(func() -> void:
+		ForceTransitions.apply_crossing_casualties(store, request)
+	).is_push_error("ForceTransitions: crossing casualty id bn-missing is missing from reserve")
+
+	var brigade: Brigade = store.get_brigade(BRIGADE_ID)
+	assert_int(brigade.get_battalion_count()).is_equal(3)
+	store.free()
+
+
+func test_crossing_casualty_duplicate_lost_id_refuses_roster_change() -> void:
+	var store := _store()
+	var reserve := _troop_reserve("bn-1")
+	var request := ForceCrossingCasualtyRequest.from_crossing(
+		["bn-1", "bn-1"], reserve, _sent_state(["bn-1"]))
+	await assert_error(func() -> void:
+		ForceTransitions.apply_crossing_casualties(store, request)
+	).is_push_error("ForceTransitions: crossing casualty id bn-1 appears twice in lost_ids")
+
+	var brigade: Brigade = store.get_brigade(BRIGADE_ID)
+	assert_int(brigade.get_battalion_count()).is_equal(3)
+	store.free()
+
+
+func test_crossing_casualty_ignores_jlsf_cargo_ids() -> void:
+	var store := _store()
+	var reserve := [{
+		"brigade_id": "JLSF:port-a",
+		"cargo": "jlsf",
+		"port_id": "port-a",
+		"locked_beach": 1,
+		"beach_hex": HEX_A,
+		"offset_bearing": 0.0,
+		"bns": [{"id": "JLSF:port-a:1", "type": JlsfCargo.BN_TYPE}],
+	}]
+	var request := ForceCrossingCasualtyRequest.from_crossing(
+		["JLSF:port-a:1"], reserve, _sent_state(["JLSF:port-a:1"]))
+
+	var result := ForceTransitions.apply_crossing_casualties(store, request)
+
+	var brigade: Brigade = store.get_brigade(BRIGADE_ID)
+	assert_bool(result.success).is_true()
+	assert_array(result.receipts).is_empty()
+	assert_int(brigade.get_battalion_count()).is_equal(3)
+	store.free()
+
+
 func test_crossing_casualty_missing_sent_cohort_refuses_roster_change() -> void:
 	var store := _store()
 	var reserve := [{
@@ -84,7 +144,6 @@ func test_crossing_casualty_missing_sent_cohort_refuses_roster_change() -> void:
 	}]
 	var request := ForceCrossingCasualtyRequest.from_crossing(
 		["bn-1"], reserve, _sent_state(["some-other-bn"]))
-
 	await assert_error(func() -> void:
 		ForceTransitions.apply_crossing_casualties(store, request)
 	).is_push_error("ForceTransitions: crossing casualty id bn-1 appears in sent cohorts 0 times")

@@ -34,8 +34,9 @@ static func apply_casualty(casualty: Dictionary) -> void:
 ## roster casualty per drowned BN through the shared apply_casualty (consumes no dice → golden RNG
 ## stream unaffected). See the call site in FiresPhases.resolve_antiship_turn for why the
 ## ghost-landing mattered.
-static func apply_crossing_casualties(ship_reserve: Array, lost_ids: Array, sealift_state: SealiftState) -> void:
-	ForceTransitions.apply_crossing_casualties(
+static func apply_crossing_casualties(
+		ship_reserve: Array, lost_ids: Array, sealift_state: SealiftState) -> ForceCrossingCasualtyResult:
+	return ForceTransitions.apply_crossing_casualties(
 		GameData, ForceCrossingCasualtyRequest.from_crossing(lost_ids, ship_reserve, sealift_state))
 
 
