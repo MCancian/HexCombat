@@ -100,3 +100,20 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   why feeding `ijfs_destroyed` naively would partly UNDO IJFS suppression: HexCombat's `fire_pct` is
   survivor-relative where TIV's is establishment-relative, so the port's
   `initial_system_count = survivors + destroyed` double-counts here. Read the plan, not this line.
+
+- **`IjfsResolver.apply_maneuver_casualties` bypasses the roster-shrinking seam — belongs to plan
+  0044, recorded 2026-07-27 so it does not have to be rediscovered.** `RosterMutations.apply_casualty`
+  is the sanctioned path and does three things; the IJFS path does only the first: it decrements
+  `battalion.qty`, but it never `composition.remove_at(index)` when a battalion hits zero, and never
+  calls `GameData.remove_brigade_from_map(brigade_id)` when a brigade is wiped out. So an IJFS-killed
+  brigade is flagged `destroyed` while remaining in the map index, and zero-qty battalions linger in
+  compositions — the roster/pool desync family the `RosterMutations` header warns about.
+  `docs/plans/0044-force-mutation-authority.md` already claims this by name ("Replace
+  `RosterMutations.apply_casualty` and IJFS's independent…"), so this line is evidence, not a new item.
+  **Two things 0044 must know.** (1) It is a BEHAVIOUR change — removing zero-qty entries and
+  de-indexing destroyed brigades moves combat contributor sets and the census, so golden pins will
+  move and it needs deliberate re-baseline change control; it cannot ride along in a refactor.
+  (2) The obvious fix of calling `RosterMutations.apply_casualty` from inside `IjfsResolver` would
+  break that resolver's purity — it is a pure resolver that receives `brigades` as a parameter and
+  never touches the `GameData` autoload, whereas `RosterMutations` is GameData-only. The seam that
+  already holds `GameData.brigades` is `FiresPhases.apply_ijfs_maneuver_casualties`.
