@@ -49,6 +49,9 @@ plan to act, the closeout wasn't done.
 
 ## Mutation-authority campaign — required sequence
 
+**Implementation readiness:** the architecture and sequencing review is complete and USER-ratified;
+the next implementation work starts at plan 0042 step 1. Later plans must not start early.
+
 **USER direction:** every gameplay-relevant mutable aggregate gets one controller/API; calculators
 return outcomes, only the authority applies them, and cross-aggregate transitions prove exact deltas.
 This is a uniform mutation discipline, **not** one universal state representation or God controller.
@@ -58,14 +61,19 @@ The campaign is intentionally serial. Each plan establishes APIs the next plan c
 step touches deterministic turn-path state. Only one migration family lands per commit, with the full
 gate green before the next begins.
 
-1. **0042 — foundation and enforceability gate.** Inventory write forms, prove the source gate can
-   detect direct and nested mutations, establish the ownership manifest, and register anti-ship in
-   migration mode. **Stop the campaign** if enforcement would be a regex that misses aliases while
-   claiming completeness; choose a proven narrower mechanism first.
-2. **0043 — anti-ship pilot and permanent destruction.** First complete vertical slice. Separate
-   launch calculation from state application; keep IJFS and launch destruction permanently, keep
-   suppression transient, remove contradictory writers, then measure the deliberate outcome change.
-   This plan is the pattern review point: later controllers copy only what survived it.
+1. **0042 — foundation and enforceability gate; no production moves.** Inventory write forms across
+   all script trees, prove the source gate can detect direct, nested, alias, setter/model-mutator, and
+   container mutations, establish `tools/mutation_authority_manifest.json`, and register anti-ship in
+   migration mode. Authority permission is exact-file, never directory-wide. **Stop the campaign** if
+   enforcement would be a regex that misses aliases while claiming completeness; choose a proven
+   narrower mechanism first. Keep suffix/exact-manifest orientation in the current layout through this
+   plan.
+2. **0043 — anti-ship pilot, permanent destruction, then role-layout checkpoint.** First complete
+   vertical slice. Separate launch calculation from state application; keep IJFS and launch
+   destruction permanently, keep suppression transient, remove contradictory writers, then measure
+   the deliberate outcome change. Review the shipped API/manifest/snapshot/receipt pattern before
+   copying it. Only after that review, make separate byte-stable mechanical commits for clear phase,
+   builder, and proven-pure anti-ship calculator moves; mixed files stay put until their owning plan.
 3. **0044 — force authority.** Brigades, battalion roster counts, manifests, map placement and exact
    casualty/transfer deltas. This supersedes 0039: a ledger derived from already-drifted inputs cannot
    detect the ghost-landing bug. Keep counts and serialized BN ids; instances remain deferred.
@@ -98,10 +106,34 @@ gate green before the next begins.
   campaign's mutation enforcement.
 - Plans 0030 and other observability-only work may proceed if they do not add protected state writers.
 
-**Change-control rule:** 0042 and authority-only migration commits are byte-stable refactors. Plan
-0043 contains one separately committed, USER-approved behavior change and may deliberately move only
-reachable anti-ship outcomes/fixtures. No later plan may rebaseline to make an architectural migration
-pass.
+### Serial-agent execution protocol
+
+The campaign is designed for a succession of cold-start agents. Each agent:
+
+1. reads `AGENTS.md`, `docs/STATUS.md`, this sequence, the active plan, and the canonical skills named
+   by AGENTS for that task;
+2. verifies every preceding campaign step is shipped/green before taking the next one—no parallel
+   aggregate migrations and no coding from a later plan against provisional APIs;
+3. implements one numbered migration family or one mechanical destination-directory move per commit;
+4. updates `tools/mutation_authority_manifest.json` in the same commit as the writer it adds/removes;
+5. before adding an authority dependency to a ceilinged file, records the dependency removed in the
+   same commit; if no one-for-one swap exists, lands a prior green application-coordinator extraction
+   instead—never raises the ceiling to fit;
+6. preserves RNG order, JSON records, class names during path-only moves, and each script's `.gd.uid`;
+7. re-imports after class/path changes, runs focused tests twice where required, then judges the full
+   gate by marker lines; and
+8. leaves the active plan checklist/progress and canonical closeout homes current before handoff.
+
+Stop and surface to the USER rather than improvising when alias detection is incomplete, a
+cross-authority operation can fail after its first write, a dependency ceiling would need to rise, a
+path-only commit moves a fixture/golden, or a new behavior/storage decision appears. Builders are
+exact construction exceptions for fresh unpublished objects, not alternate runtime authorities.
+
+**Change-control rule:** 0042, role-directory moves, and authority-only migration commits are
+byte-stable refactors. Plan 0043 contains one separately committed, USER-approved behavior change and
+may deliberately move only reachable anti-ship outcomes/fixtures. No later plan may rebaseline to make
+an architectural migration pass. Mutable `GameData` storage consolidation is not a campaign end-state;
+it requires a separate measured, USER-ratified plan if authority work proves it necessary.
 
 **Standing research caveats:** studies before the landed-only/census corrections over-state Red, and
 studies before 0043 will also reflect resurrecting launch-attrition losses. Records remain identified

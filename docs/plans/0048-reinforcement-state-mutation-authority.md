@@ -27,7 +27,8 @@ letting reinforcement resolvers and wrappers each edit part of the transition.
 
 ### MobilizationTransitions
 
-Only writer for `MobilizationState.pending`, `released`, and schedule advancement. It validates:
+`MobilizationTransitions` lives at `scripts/transitions/MobilizationTransitions.gd` and is the exact
+only writer for `MobilizationState.pending`, `released`, and schedule advancement. It validates:
 
 - every brigade id exists and appears in at most one pending/released bucket;
 - release is due and applied once;
@@ -36,7 +37,8 @@ Only writer for `MobilizationState.pending`, `released`, and schedule advancemen
 
 ### AirInsertionTransitions
 
-Only writer for:
+`AirInsertionTransitions` lives at `scripts/transitions/AirInsertionTransitions.gd` and is the exact
+only writer for:
 
 - air insertion pool membership as the transport queue view coordinated with force manifests;
 - current and initial lift caps;
@@ -78,12 +80,15 @@ pool entries.
    its receipt with roster casualties/landings.
 6. **Order-buffer seam.** Route air-insert order consumption/clear through the established order or
    lifecycle authority from plan 0049; until then retain one documented temporary writer.
-7. **Close the gate.** Remove reinforcement-state legacy writers and prove unauthorized pool, cap,
-   history, landed, pending, and released mutations fail.
+7. **Role placement.** Move mobilization and air-insertion calculations to `scripts/calc/` only
+   after they consume snapshots and return typed outcomes without draining live state. Split the
+   current mixed resolvers; preserve `.gd.uid` files and update manifest/path anchors mechanically.
+8. **Close the gate.** Remove reinforcement-state legacy writers and prove unauthorized pool, cap,
+   history, landed, pending, released, mutable-alias, and wrong-authority mutations fail.
 
 ## Tests and validation
 
-Required tests:
+Required authority tests under `tests/transitions/`:
 
 - mobilization release once, not before due turn, and no pending/released duplication;
 - blocked garrison fallback placement unchanged;
@@ -121,14 +126,19 @@ Verification:
 - **Summary drift:** typed receipts should feed existing summaries without changing public keys.
 - **Cross-controller partial write:** validate force ids, capacity, target hex, and packet size before
   either controller mutates.
+- **Dependency ceiling:** `ReinforcementPhases` has no headroom. Before it names either new authority,
+  identify the direct dependency removed in the same commit; if no swap exists, first land a separate
+  green application coordinator rather than raising the ceiling.
 - Stop if plan 0036 changes packet/cadence semantics first; rebase characterization on that approved
   behavior rather than mixing balance and authority migration.
 
 ## Closeout homes
 
-On shipment: `docs/STATUS.md`; `docs/systems/air-insertion.md`; mobilization and phase flow in
-`docs/systems/turn-engine.md`; force cross-seam pointers where needed; authority headers and
-architecture skill; `docs/DECISIONS.md`; plan archived.
+On shipment: `docs/STATUS.md`; `docs/systems/air-insertion.md`; `docs/systems/roc-mobilization.md`;
+mobilization and phase flow in `docs/systems/turn-engine.md`; force cross-seam pointers where needed;
+authority headers and architecture skill; `docs/DECISIONS.md`; plan archived. Owning docs update their
+short numbered **State & authority** section with aggregate, authority, operation-specific
+outcome/receipt types, and manifest link only.
 
 ## Dependencies
 

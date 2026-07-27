@@ -42,8 +42,9 @@ projection can leave an invalid fleet.
 
 ## Aggregate and target authority
 
-Add `SealiftTransitions` as the only writer of protected `SealiftState` and runtime `ShipState`
-fields. It owns:
+Add `SealiftTransitions` at `scripts/transitions/SealiftTransitions.gd` as the exact and only
+writer of protected `SealiftState` and runtime `ShipState` fields. Other transition files receive no
+permission through directory placement. It owns:
 
 - return/reload tick;
 - adoption of first-wave/orphan manifests into cohorts;
@@ -112,12 +113,15 @@ first migration, but controller input must validate their full required shape be
 9. **Delete misleading state.** Remove `sent_original` and its vacuous invariant unless preflight
    found a real consumer; if retained, initialize once from a true pre-loss wave and never overwrite it
    during projection.
-10. **Close the gate.** Remove all sealift/fleet legacy writers and prove unauthorized queue,
-    dictionary, and field writes fail.
+10. **Role placement.** Once mutation-free, move packing, crossing-loss, and lifecycle-plan
+    calculators to `scripts/calc/`; retire or split the old mixed `SealiftResolver` rather than moving
+    it by dominant role. Move `.gd.uid` files and update manifest/path anchors mechanically.
+11. **Close the gate.** Remove all sealift/fleet legacy writers and prove unauthorized queue,
+    dictionary, field, model-mutator, and wrong-authority writes fail.
 
 ## Tests and validation
 
-Required coverage:
+Required authority coverage under `tests/transitions/`:
 
 - ready → sent → offloading → returning → ready conservation;
 - carrier loss from a sent cohort and escort loss from the eligible screen;
@@ -165,6 +169,8 @@ Verification:
 On shipment: `docs/STATUS.md`; `docs/systems/amphibious-offload.md` for lifecycle/data flow;
 `docs/systems/antiship-mine.md` for crossing-loss application; `docs/systems/turn-engine.md` for
 coordination; authority code headers and architecture skill; `docs/DECISIONS.md`; plan archived.
+Owning docs update their short numbered **State & authority** section with aggregate, authority,
+operation-specific outcome/receipt types, and manifest link—never a duplicate writer/field list.
 
 ## Dependencies
 

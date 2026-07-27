@@ -75,13 +75,15 @@ draw order and returns typed or strongly validated outcome rows containing attem
 pre-launch destroyed, and post-launch destroyed counts by system identity.
 
 `AntishipResolver` remains responsible for computing target areas, firing percentages, crossing
-results, mine results, and summaries. It reads an immutable snapshot of current anti-ship
-availability supplied after IJFS effects are applied; it does not assign protected system fields.
+results, mine results, and summaries. It reads an immutable typed snapshot or owned copy of current
+anti-ship availability supplied after IJFS effects are applied; it does not receive a live mutable
+alias and does not assign protected system fields.
 
 ### Mutation authority
 
-Add `AntishipTransitions` under the pure logic/state layer. It is the only production writer for
-protected `AntishipSystem` campaign fields. Its API should be job-shaped:
+Add `AntishipTransitions` at `scripts/transitions/AntishipTransitions.gd`. It is the exact and only
+production writer for protected `AntishipSystem` campaign fields; neighboring files under
+`scripts/transitions/` receive no permission to write them. Its API should be job-shaped:
 
 - initialize establishment from loader-built rows;
 - apply cumulative IJFS destruction and current suppression;
@@ -120,8 +122,34 @@ and `last_antiship_summary` assignment remain outside the authority.
 7. **Measure behavior.** Re-run the accepted crossing calibration and at least one sustained
    follow-on scenario across multiple seeds. Report the direction and magnitude before considering
    any rebalance; do not automatically retune to the old result.
+8. **Pilot pattern review.** Before any repository-wide move, review the shipped authority API,
+   manifest entry, snapshots, receipts, diagnostics, and public-method count. Update the architecture
+   and code-quality skills from evidence. Any authority method-count guidance is a soft threshold on
+   public mutation operations, not a hard total-method cap that would force multiple writers.
+9. **Post-pilot role-directory checkpoint — mechanical commits only.** Once steps 1–8 are green:
+   - create/use `scripts/phases/` and move the clear coordinators (`TurnConductor`, `FiresPhases`,
+     `ReinforcementPhases`, `TurnClosure`, `FrontlinePhase`) with their `.gd.uid` files in one commit;
+   - create/use `scripts/builders/` and move the clear fresh-state builders with their `.gd.uid` files
+     in a second commit: `AirInsertionStateBuilder`, `AntishipSystemsBuilder`, `FleetBuilder`,
+     `GameStateBuilder`, `IjfsStateBuilder`, `InfrastructureStateBuilder`,
+     `MobilizationStateBuilder`, `SealiftStateBuilder`, `ShipReserveBuilder`, and
+     `SupplyStateBuilder`; construction allowances move with them;
+   - move only anti-ship files proven free of protected campaign writes (`AntishipResolver`,
+     `AntishipCalculator`, `AntishipCrossing`, `MineWarfareService`) into `scripts/calc/` in a third
+     commit. Re-scan `AntishipResolver` first: it qualifies only if it still returns hull-loss outcomes
+     without writing live `ShipState`/`SealiftState`; otherwise it stays mixed until plan 0045. Any
+     mixed file stays where it is until its owning campaign plan splits it.
+
+   Each commit updates manifest paths, `gd_metrics.py` ceiling keys, validator path constants, live
+   docs/skills, and concrete path citations; runs `godot --headless --path . --import`; and finishes
+   with the full byte-stable gate green. Keep class names unchanged during path-only moves. Phase
+   coordinators may remain exact temporary legacy writers for later aggregates, but their manifest
+   exceptions must name the plan that removes each write.
 
 ## Tests and validation
+
+Required dedicated tests live under `tests/transitions/`; static forbidden-write fixtures remain
+under `tools/fixtures/mutation_authority/` and are consumed only by the validator.
 
 Required dedicated tests:
 
@@ -164,8 +192,9 @@ re-baseline change control. Do not move unrelated pins.
   behavior commit.
 - **RNG drift:** if a refactor changes any ScriptedDice draw sequence, revert and redesign the
   calculation boundary.
-- **Dependency ceilings:** `FiresPhases` is ceilinged. Use classes it already names where possible,
-  or extract a prior application seam without raising a ceiling.
+- **Dependency ceilings:** `FiresPhases` is ceilinged. Before it names `AntishipTransitions`, record
+  the direct dependency that leaves in the same commit. If no one-for-one swap is available, first
+  land a separate green application coordinator that is not ceilinged; never raise the ceiling.
 - Stop if stable system identity cannot be established from `(to_number,type_id)` without changing
   serialized ids; resolve identity before applying cumulative transitions.
 
@@ -174,7 +203,10 @@ re-baseline change control. Do not move unrelated pins.
 On shipment: current behavior in `docs/STATUS.md`; data flow and TIV divergence in
 `docs/systems/antiship-mine.md`; orchestration changes in `docs/systems/turn-engine.md`; the authority
 boundary in code headers and the architecture skill; USER call and measured consequence in
-`docs/DECISIONS.md`; plan archived.
+`docs/DECISIONS.md`; plan archived. The two systems docs gain a short numbered **State & authority**
+section naming the aggregate, authority, operation-specific outcome/receipt types, and manifest link;
+they do not duplicate protected fields or writer lists. `docs/systems/README.md` explains this section
+convention once rather than repeating an authority inventory in its index table.
 
 ## Dependencies
 

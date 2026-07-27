@@ -29,7 +29,8 @@ phase order while ensuring these fields also have named mutation APIs.
 
 ### SupplyTransitions
 
-`SupplyResolver` calculates consumption and a typed balance transition without mutating
+`SupplyTransitions` lives at `scripts/transitions/SupplyTransitions.gd` as the exact sanctioned
+writer. `SupplyResolver` calculates consumption and a typed balance transition without mutating
 `SupplyState`. `SupplyTransitions` alone applies:
 
 - pool before/consumed/pool after;
@@ -42,20 +43,24 @@ Do not add a second independently maintained initial-minus-consumption total.
 
 ### OrderTransitions
 
-Build on `OrderValidator` rather than replacing it. One authority owns additions, rejection receipts,
-and clearing of:
+`OrderTransitions` lives at `scripts/transitions/OrderTransitions.gd` as the exact sanctioned writer.
+Split the current `OrderValidator`: pure legality/eligibility calculation may retain that name under
+`scripts/calc/`, while only `OrderTransitions` appends or clears buffers. The authority owns additions,
+rejection receipts, and clearing of:
 
 - move orders;
 - commitments;
-- air-insert orders;
-- JLSF orders.
+- air-insert orders, including consumption/removal after their resolution in the handoff from plan
+  0048;
+- JLSF orders, including consumption/removal after their resolution.
 
 Validation remains domain-specific and typed. Bulk/internal and LLM boundaries call the same
 sanctioned buffer operations without forcing their external vocabularies to merge.
 
 ### TurnLifecycleTransitions
 
-Only writer for:
+`TurnLifecycleTransitions` lives at `scripts/transitions/TurnLifecycleTransitions.gd` and is the exact
+only writer for:
 
 - phase and turn number;
 - per-turn buffer reset trigger;
@@ -99,12 +104,16 @@ If metrics show summary-slot application is too broad for one authority, split a
    results writer so phase calculators do not assign public state ad hoc.
 7. **Domain reset calls.** Replace cleanup/begin-next-turn direct field resets with calls to the
    relevant domain authorities established in 0043–0048.
-8. **Close the gate.** Remove accounting/lifecycle legacy writers and prove direct writes and illegal
-   phase transitions fail.
+8. **Role placement.** Move supply calculation and order legality/eligibility to `scripts/calc/`
+   only after protected writes are absent. Remove or make read-only the broad `GameState` forwarding
+   setters for protected fields; a façade must not bypass the authorities. Preserve `.gd.uid` files
+   and update manifest/path anchors mechanically.
+9. **Close the gate.** Remove accounting/lifecycle legacy writers and prove direct writes, façade
+   setters, model-mutator/dynamic bypasses, wrong-authority writes, and illegal phase transitions fail.
 
 ## Tests and validation
 
-Required tests:
+Required authority tests under `tests/transitions/`:
 
 - every legal and illegal phase transition;
 - begin-next-turn increments/clears once and preserves campaign-persistent state;
@@ -150,7 +159,8 @@ Verification:
 
 On shipment: `docs/STATUS.md`; `docs/systems/supply-dos.md`, `llm-api-selfplay.md`,
 `frontline-cleanup-victory.md`, and `turn-engine.md`; authority headers and architecture skill;
-`docs/DECISIONS.md`; plan archived.
+`docs/DECISIONS.md`; plan archived. Owning docs update their short numbered **State & authority**
+section with aggregate, authority, operation-specific outcome/receipt types, and manifest link only.
 
 ## Dependencies
 

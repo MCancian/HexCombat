@@ -27,7 +27,7 @@ territorial ownership, seizure persistence, repair timing, and all current comba
 
 ### MapTransitions
 
-Only writer for:
+`MapTransitions` lives at `scripts/transitions/MapTransitions.gd` and is the exact only writer for:
 
 - `HexState.owner`;
 - `HexState.feba_km`;
@@ -39,7 +39,8 @@ It does not move brigades; `ForceTransitions` supplies placement receipts or an 
 
 ### InfrastructureTransitions
 
-Only writer for:
+`InfrastructureTransitions` lives at `scripts/transitions/InfrastructureTransitions.gd` and is the
+exact only writer for:
 
 - node status;
 - repair timer;
@@ -94,12 +95,16 @@ No caller may receive a mutable node Dictionary and edit its keys. Introduce a t
    `ForceTransitions`; prove map recomputation never repairs a stale brigade index implicitly.
 7. **Infrastructure/map coordination.** Apply ownership before seizure/throughput at the existing turn
    seam and preserve current one-turn producer/consumer timing.
-8. **Close the gate.** Remove legacy writers and prove direct owner, FEBA, node-status, timer, and JLSF
-   marker assignments fail.
+8. **Role placement.** Move ownership/FEBA and infrastructure planning logic into `scripts/calc/`
+   only after it accepts snapshots and returns plans without live protected aliases. Split
+   `InfrastructureResolver`, `JlsfCargo`, and mutable `GameData` helpers by effect rather than moving
+   them by name. Preserve script UIDs and update manifest/path anchors mechanically.
+9. **Close the gate.** Remove legacy writers and prove direct owner, FEBA, node-status, timer, JLSF,
+   `GameData` façade/helper bypass, mutable-query-alias, and wrong-authority assignments fail.
 
 ## Tests and validation
 
-Required tests:
+Required authority tests under `tests/transitions/`:
 
 - RED/GREEN/CONTESTED recomputation and sticky empty ownership;
 - explicit owner override validation and unknown owner rejection;
@@ -136,7 +141,8 @@ Verification:
 - **Cross-controller cycles:** Map reads force occupancy; infrastructure reads map ownership. Neither
   controller may import/call the other. Coordinators pass snapshots/receipts explicitly.
 - **GameData role:** mutable hex state currently lives beside static data. Moving storage is optional
-  and out of scope; do not combine it with writer migration.
+  and out of scope; do not combine it with writer migration or describe consolidation as a settled
+  architecture end-state. Open a later Sketch only if authority measurements show a concrete problem.
 - Stop if plan 0031 begins first and changes node semantics; rebase this plan's transition matrix on
   the USER-approved mechanic before implementation.
 
@@ -145,7 +151,9 @@ Verification:
 On shipment: `docs/STATUS.md`; `docs/systems/hex-grid.md`, `terrain.md` only if their runtime-state
 claims change, `docs/systems/frontline-cleanup-victory.md`, `docs/systems/amphibious-offload.md`, and
 `docs/systems/turn-engine.md`; authority headers and architecture skill; `docs/DECISIONS.md`; plan
-archived.
+archived. Owning docs update their short numbered **State & authority** section with aggregate,
+authority, operation-specific outcome/receipt types, and manifest link only. Immutable/view-only docs
+state explicitly that they own no protected runtime aggregate instead of inventing an authority.
 
 ## Dependencies
 

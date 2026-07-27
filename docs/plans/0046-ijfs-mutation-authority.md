@@ -42,7 +42,8 @@ campaign transition. The target metadata dictionary also hides authoritative mut
 
 ## Aggregate boundary
 
-`IjfsTransitions` owns persistent IJFS campaign state:
+`IjfsTransitions` at `scripts/transitions/IjfsTransitions.gd` owns persistent IJFS campaign state
+as its exact sanctioned writer; no other file gains permission by sharing the directory:
 
 - `IjfsTarget` lifecycle and typed mutable stocks;
 - `IjfsMunition` remaining inventory;
@@ -106,12 +107,18 @@ Do not introduce one generic `set_target_field` method. A method name must revea
    remove direct brigade composition mutation and duplicate target-state guesses.
 7. **Writeback boundary.** Build cumulative anti-ship and force casualty receipts from authoritative
    target state; apply them only through plans 0043/0044 authorities.
-8. **Close the gate.** Remove all IJFS legacy writer exceptions and prove direct writes to target,
-   munition, squadron, and hidden stock state fail.
+8. **Role placement.** Move `IjfsDailyState` into `scripts/model/` (preserving `class_name`, UID,
+   serialization, and class-cache import) because it is persistent state, not a calculator. Move each
+   IJFS algorithm to `scripts/calc/` only after it returns outcomes or calls the authority at the exact
+   existing semantic point without retaining a protected write. Split mixed files rather than moving
+   them by dominant role.
+9. **Close the gate.** Remove all IJFS legacy writer exceptions and prove direct, nested metadata,
+   model-mutator, dynamic, and wrong-authority writes to target, munition, squadron, and stock state
+   fail.
 
 ## Tests and validation
 
-Required tests:
+Required authority tests under `tests/transitions/`:
 
 - successful and insufficient munition consumption across both decrement paths;
 - no negative inventory and exact rounds-expended reconciliation;
@@ -157,7 +164,9 @@ Verification:
 
 On shipment: `docs/STATUS.md`; `docs/systems/ijfs.md`; anti-ship/force cross-seam pointers in their
 systems docs if behavior descriptions changed; phase wiring in `docs/systems/turn-engine.md`;
-authority code headers and architecture skill; `docs/DECISIONS.md`; plan archived.
+authority code headers and architecture skill; `docs/DECISIONS.md`; plan archived. Owning docs update
+their short numbered **State & authority** section with aggregate, authority, operation-specific
+outcome/receipt types, and manifest link only.
 
 ## Dependencies
 

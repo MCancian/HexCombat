@@ -19,6 +19,13 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-26 — Mutation enforcement is proved before the role-directory split (USER).** Plan 0042
+  keeps production paths stable while an exact-file, alias-aware gate and
+  `tools/mutation_authority_manifest.json` are established; the anti-ship pilot in 0043 proves the
+  pattern before separate mechanical role moves. Directory placement never grants write authority,
+  and mutable `GameData` consolidation remains an optional later decision. Execution: plans 0042–0050
+  and `docs/plans/README.md` → “Mutation-authority campaign”.
+
 - **2026-07-26 — Every mutable gameplay aggregate will have one enforced mutation authority;
   anti-ship launch destruction will persist (USER).** Calculators/resolvers compute outcomes, domain
   `*Transitions` APIs alone apply protected state, and cross-aggregate operations prove exact deltas;

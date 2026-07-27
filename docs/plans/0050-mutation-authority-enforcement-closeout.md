@@ -19,9 +19,10 @@ migration gets a focused follow-up plan rather than being hurried into this one.
 
 For every mutable aggregate discovered in the plan-0042 inventory:
 
-1. one authority is named in the mutation-ownership manifest;
-2. protected state has no production writer outside that authority;
-3. builders initialize through the authority or an explicitly sanctioned construction API;
+1. one exact authority file/class is named in `tools/mutation_authority_manifest.json`;
+2. protected state has no production writer outside that exact authority;
+3. builders initialize only fresh unpublished state through the authority or an explicitly sanctioned
+   construction API;
 4. calculators/resolvers do not mutate protected campaign state;
 5. cross-aggregate coordinators use typed requests/receipts and prove matching deltas;
 6. local validation runs before the authority returns;
@@ -80,12 +81,16 @@ intended domain authority is invoked and no registered check is vacuous.
 2. Make any remaining warning/report mode a hard gate failure.
 3. Verify newly added mutable fields must be classified before the gate passes.
 4. Verify dead model/controller paths and zero-match scans fail.
-5. Add/retain deliberate negative fixtures for direct field and nested-container mutation.
-6. Ensure Linux and Windows gate runners invoke the same authority validator.
-7. Measure validator runtime and keep it suitable for the canonical gate.
+5. Add/retain deliberate non-`.gd` fixtures under `tools/fixtures/mutation_authority/` for direct,
+   compound, nested-container, typed-alias, setter/model-mutator, dynamic `set`, and wrong-authority
+   mutation.
+6. Fail on an unregistered file under `scripts/transitions/`, a stale construction/legacy allowance,
+   conflicting aggregate ownership, or a vacuous model/symbol/assignment scan.
+7. Ensure Linux and Windows gate runners invoke the same authority validator.
+8. Measure validator runtime and keep it suitable for the canonical gate.
 
-Do not add a blanket allowlist for a large phase module. Allowed writers are the narrow authority
-files and construction APIs only.
+Do not add a blanket allowlist for a directory or large phase module. Allowed writers are exact narrow
+authority files and exact construction APIs only.
 
 ## Architecture cleanup
 
@@ -95,13 +100,17 @@ Only after the audit is green:
   replacements have proven red/green coverage;
 - keep useful independent backstops such as runtime-index and structural pool enumeration checks;
 - remove dormant model classes only with call-site/import evidence;
-- normalize controller naming and headers without changing public API;
+- normalize authority naming and headers without changing public API;
+- ensure `scripts/calc/`, `scripts/transitions/`, `scripts/phases/`, and `scripts/builders/` contain
+  only files matching their effect-based role; remove `scripts/resolvers/` only when no mixed or
+  unclassified file remains;
 - update dependency ceilings downward when migration reduced dependencies; never raise a ceiling as
   closeout convenience.
 
-No state-storage relocation or generic framework extraction belongs here. If authorities reveal that
-mutable runtime state in `GameData` still creates a concrete correctness problem, open a separate
-plan with measured call sites and serialization impact.
+No state-storage relocation or generic framework extraction belongs here. Consolidating mutable
+`GameData` runtime state into `GameStateData` is not a ratified architecture end-state. If authorities
+reveal a concrete correctness problem, open a separate Sketch with measured call sites and
+serialization impact; do not move storage merely for conceptual purity.
 
 ## Independent review gate
 
@@ -136,7 +145,11 @@ Review findings are advisory until the primary agent verifies them. Review agent
 1. Complete source/runtime/contract audits and resolve every violation.
 2. Run independent read-only reviews; triage findings with source evidence.
 3. Run full validation and deterministic multi-game probes.
-4. Update each owning systems doc and `docs/STATUS.md` with present behavior.
+4. Update each owning systems doc and `docs/STATUS.md` with present behavior. Every systems doc has a
+   short numbered **State & authority** section: aggregate, authority, operation-specific
+   outcome/receipt types, and manifest link; immutable/view-only docs say they own no protected
+   runtime aggregate. No doc duplicates protected-field or writer lists. `docs/systems/README.md`
+   explains the convention once without becoming a second ownership table.
 5. Update `.claude/skills/hexcombat-architecture-contract` with the final proven authority rule and
    procedure; remove provisional wording from 0042.
 6. Append a concise `docs/DECISIONS.md` campaign closeout with pointers and measured behavior change.
@@ -150,7 +163,8 @@ Review findings are advisory until the primary agent verifies them. Review agent
 - Event sourcing, rollback, save-game migration, or a universal entity-component system.
 - One generic controller/base class for all domains.
 - Per-instance battalions or ships without a demonstrated research requirement.
-- Moving all mutable state out of `GameData` merely for conceptual purity.
+- Moving all mutable state out of `GameData` merely for conceptual purity or recording that move as a
+  settled deferred architecture destination without a separate USER-ratified plan.
 
 ## Risks and stop conditions
 

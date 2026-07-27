@@ -47,9 +47,10 @@ state.
 
 ## Target authority
 
-Add `ForceTransitions` as a pure `RefCounted` authority with explicit access to the runtime force
-state and required indexes. It is the only production writer for protected Brigade fields and troop
-manifest membership.
+Add `ForceTransitions` at `scripts/transitions/ForceTransitions.gd` as a pure `RefCounted`
+authority with explicit access to the runtime force state and required indexes. It is the exact and
+only production writer for protected Brigade fields and troop manifest membership; directory
+co-location grants no other authority permission.
 
 The API should be operation-shaped, not a generic patch function:
 
@@ -62,8 +63,9 @@ The API should be operation-shaped, not a generic patch function:
 
 Exact signatures must stay within the parameter budget by using typed request/context Resources. A
 request identifies brigade, battalion type or manifest ids, source, destination, cause, turn/phase,
-and expected counts. A typed receipt reports exactly what changed and is suitable for summaries and
-future narratives.
+and expected counts. Typed operation-specific receipts report exactly what changed and are suitable
+for summaries and future narratives; do not force unrelated operations into one optional-field-heavy
+`ForceTransitionReceipt` merely for naming uniformity.
 
 ### Location vocabulary
 
@@ -151,14 +153,20 @@ This must catch the historical ghost-landing shape immediately.
 9. **Readers and backstops.** Keep `Brigade.landed_qty` and pending-pool enumeration as projections
    until all transfers are authoritative. Demote/delete old tripwires only after equivalent
    authority checks have been seen red.
-10. **Close the gate.** Remove every force legacy-writer exception and prove direct writes fail.
+10. **Role placement.** Move force calculators/query helpers to `scripts/calc/` only after they no
+    longer mutate protected state. Replace `RosterMutations` with `ForceTransitions`; do not preserve
+    it as a second authority. Keep the pending-pool tripwire as an independent query/backstop, either
+    private to the authority or in a clearly read-only calculator. Move `.gd.uid` files with scripts
+    and update manifest/path anchors in the same mechanical commit.
+11. **Close the gate.** Remove every force legacy-writer exception and prove direct writes, model
+    mutator bypasses, `GameState` façade setters, and writes from a wrong transitions file fail.
 
 Each numbered migration is its own commit and must be golden/fixture byte-stable. Do not migrate two
 transition families in one commit.
 
 ## Tests and validation
 
-Dedicated tests must cover:
+Dedicated authority suites under `tests/transitions/` must cover:
 
 - all four casualty producers with typed causes;
 - both historical bugs reintroduced one side at a time and caught before the wrapper returns;
@@ -209,7 +217,9 @@ On shipment: current behavior in `docs/STATUS.md`; combat/landed facts in
 `docs/systems/ground-combat.md`; arrival flows in `docs/systems/amphibious-offload.md` and
 `docs/systems/air-insertion.md`; census in `docs/systems/frontline-cleanup-victory.md`; phase wiring
 in `docs/systems/turn-engine.md`; controller boundary in code headers and architecture skill;
-`docs/DECISIONS.md`; plan archived.
+`docs/DECISIONS.md`; plan archived. Each owning systems doc gains/updates the short numbered **State
+& authority** section (aggregate, authority, outcome/receipt types, manifest link only); exhaustive
+protected fields and writer lists remain solely in the manifest.
 
 ## Dependencies
 
