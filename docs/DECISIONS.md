@@ -19,6 +19,13 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-27 — Anti-ship crossing uses a typed context (agent, 0052 follow-up).**
+  `AntishipCrossing.resolve_crossing_damage` now takes `AntishipCrossingContext` plus explicit
+  `Dice`; its launch helper reads the same context instead of carrying a 9-parameter signature.
+  The two anti-ship crossing grandfather entries were removed from `PARAM_CEILINGS`; no gameplay or
+  RNG order changed. Facts: `scripts/model/AntishipCrossingContext.gd`,
+  `docs/systems/antiship-mine.md`, `docs/plans/BACKLOG.md`.
+
 - **2026-07-27 — Post-0052 quick hygiene follow-up (agent).** `gd_metrics.py` gained a fixture
   validator in the gate, and the remaining test/tool-only private `GameState` façades were retired in
   favor of direct calls to `FiresPhases`, `TurnClosure`, and `TurnConductor`. Follow-up planning was

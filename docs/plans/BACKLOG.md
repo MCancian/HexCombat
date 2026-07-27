@@ -9,12 +9,12 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
 *(Agents: append new technical debt and hygiene observations here)*
 
 - [ ] **Pay down remaining parameter-ceiling contexts after plan 0052.** `tools/gd_metrics.py` now
-  enforces real wrapped-signature counts, and the remaining high-value grandfathered production
-  functions are context-shaped rather than behavior-shaped: `AntishipCrossing.resolve_crossing_damage`
-  / `_resolve_launches` (9 params each) and `IjfsEngine._run_strike_phase` (11 params). Follow the
-  `AntishipResolutionContext` pattern: typed Resource in `scripts/model/`, keep `Dice` explicit, remove
-  each fixed function from `PARAM_CEILINGS`, and prove golden byte-stability. Watch plan conflicts:
-  0051 may touch anti-ship crossing/firing, and 0046 will touch IJFS internals.
+  enforces real wrapped-signature counts. Anti-ship crossing was paid down with
+  `AntishipCrossingContext`; the remaining high-value grandfathered production function is
+  `IjfsEngine._run_strike_phase` (11 params), which is context-shaped rather than behavior-shaped.
+  Follow the `AntishipResolutionContext` pattern: typed Resource in `scripts/model/`, keep `Dice`
+  explicit, remove each fixed function from `PARAM_CEILINGS`, and prove golden byte-stability. Watch
+  plan conflicts: 0046 will touch IJFS internals.
 
 - [ ] **Validator harness: `_fail` / `_finish` / asserts are copy-pasted across the validators
   (found 2026-07-25, refactor review).** Measured: `func _fail` in **30 of 36** `tools/validate_*.gd`,

@@ -99,8 +99,6 @@ PARAM_CEILINGS = {
     "scripts/calc/AntishipCrossing.gd::_apply_homing": 6,
     "scripts/calc/AntishipCrossing.gd::_apply_interception": 6,
     "scripts/calc/AntishipCrossing.gd::_resolve_damage": 6,
-    "scripts/calc/AntishipCrossing.gd::_resolve_launches": 9,
-    "scripts/calc/AntishipCrossing.gd::resolve_crossing_damage": 9,
     "scripts/calc/MineWarfareService.gd::_apply_beach_outcome": 7,
     "scripts/calc/MineWarfareService.gd::_beach_result": 8,
     "scripts/calc/MineWarfareService.gd::_count_dangerous_mines": 9,

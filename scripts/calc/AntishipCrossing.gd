@@ -36,29 +36,36 @@ const ESCORT_SHIP_TYPES := ["CG", "DDG", "FFG", "FFL"]
 const VALID_RANGE_TIERS := ["own_to", "neighboring", "whole_island"]
 
 
-## ship_snapshots: Array of ShipState OR Dictionary{ship_type, surviving_sent}.
-## systems_fired: Array of Dictionary rows {location|to, type, systems_fired}.
-## active_tos / to_adjacency: theater data for range-tier gating (only needed beyond own_to).
-static func resolve_crossing_damage(
-		systems_fired: Array,
-		ship_snapshots: Array,
-		combat_catalog: Dictionary,
-		crossing_config: Dictionary,
-		target_tos: Array,
-		dice: Dice,
-		active_tos: Array = [],
-		to_adjacency: Dictionary = {},
-		escort_sam: Dictionary = {}) -> Dictionary:
+## context.ship_snapshots: Array of ShipState OR Dictionary{ship_type, surviving_sent}.
+## context.systems_fired: Array of Dictionary rows {location|to, type, systems_fired}.
+## context.active_tos / context.to_adjacency: theater data for range-tier gating.
+static func resolve_crossing_damage(context: AntishipCrossingContext, dice: Dice) -> Dictionary:
 	# Fail loudly on broken config rather than silently producing zero damage.
-	validate_combat_catalog(combat_catalog)
-	validate_crossing_config(crossing_config)
+	validate_combat_catalog(context.combat_catalog)
+	validate_crossing_config(context.crossing_config)
 
 	var result := _new_result()
-	if systems_fired.is_empty():
+	if context.systems_fired.is_empty():
 		return _finalize(result)
 
-	var snaps := _normalize_snapshots(ship_snapshots)
+	var snaps := _normalize_snapshots(context.ship_snapshots)
+	var catalog_parts := _catalog_parts(context.combat_catalog)
+	var munitions: Dictionary = catalog_parts["munitions"]
 
+	var launched := _resolve_launches(context, catalog_parts, result)
+	var surviving := _apply_in_flight_failures(launched, munitions, dice, result)
+	var leakers := _apply_interception(
+		surviving, snaps, context.crossing_config, dice, result, context.escort_sam)
+	var homings := _apply_homing(leakers, snaps, context.crossing_config, munitions, dice, result)
+	var hits := _apply_terminal_defense(homings, context.crossing_config, munitions, dice, result)
+	_resolve_damage(hits, snaps, context.crossing_config, munitions, dice, result)
+
+	return _finalize(result)
+
+
+# --- stage 1: launches ---------------------------------------------------------------------------
+
+static func _catalog_parts(combat_catalog: Dictionary) -> Dictionary:
 	var munitions: Dictionary = combat_catalog.get("munitions", {})
 	var launcher_catalog: Dictionary = combat_catalog.get("launchers", {})
 	var store_groups: Dictionary = combat_catalog.get("store_groups", {})
@@ -66,43 +73,58 @@ static func resolve_crossing_damage(
 	# Each grouped munition draws from its shared store budget (individual quantity ignored).
 	var munition_to_group: Dictionary = {}
 	for name in munitions.keys():
-		var grp: Variant = munitions[name].get("store_group")
-		if grp != null:
-			munition_to_group[name] = grp
+		var store_group: Variant = munitions[name].get("store_group")
+		if store_group != null:
+			munition_to_group[name] = store_group
 	var munition_pool: Dictionary = {}
 	for name in munitions.keys():
 		if not munition_to_group.has(name):
 			munition_pool[name] = int(munitions[name].get("quantity", 0))
 	var group_pool: Dictionary = {}
-	for grp in store_groups.keys():
-		group_pool[grp] = int(store_groups[grp].get("quantity", 0))
+	for group_key in store_groups.keys():
+		group_pool[group_key] = int(store_groups[group_key].get("quantity", 0))
 
-	var launched := _resolve_launches(
-		systems_fired, launcher_catalog, munition_pool, group_pool,
-		munition_to_group, target_tos, active_tos, to_adjacency, result)
-	var surviving := _apply_in_flight_failures(launched, munitions, dice, result)
-	var leakers := _apply_interception(surviving, snaps, crossing_config, dice, result, escort_sam)
-	var homings := _apply_homing(leakers, snaps, crossing_config, munitions, dice, result)
-	var hits := _apply_terminal_defense(homings, crossing_config, munitions, dice, result)
-	_resolve_damage(hits, snaps, crossing_config, munitions, dice, result)
+	return {
+		"munitions": munitions,
+		"launcher_catalog": launcher_catalog,
+		"munition_pool": munition_pool,
+		"group_pool": group_pool,
+		"munition_to_group": munition_to_group,
+	}
 
-	return _finalize(result)
-
-
-# --- stage 1: launches ---------------------------------------------------------------------------
 
 static func _resolve_launches(
-		systems_fired: Array, launcher_catalog: Dictionary, munition_pool: Dictionary,
-		group_pool: Dictionary, munition_to_group: Dictionary, target_tos: Array,
-		active_tos: Array, to_adjacency: Dictionary, result: Dictionary) -> Dictionary:
-	var target_set: Dictionary = {}
-	for t in target_tos:
-		if str(t).strip_edges() != "":
-			target_set[int(t)] = true
-
-	var launched: Dictionary = {}
+		context: AntishipCrossingContext, catalog_parts: Dictionary, result: Dictionary) -> Dictionary:
+	var launch_state := _launch_stage_state(catalog_parts, context.target_tos)
 
 	# Sort rows so the global-pool drawdown order is independent of input order.
+	for row in _sorted_firing_rows(context.systems_fired):
+		_resolve_launch_row(row, context, launch_state, result)
+
+	result["launched_by_munition"] = launch_state["launched"]
+	return launch_state["launched"]
+
+
+static func _launch_stage_state(catalog_parts: Dictionary, target_tos: Array) -> Dictionary:
+	return {
+		"target_set": _target_set_for(target_tos),
+		"launched": {},
+		"launcher_catalog": catalog_parts["launcher_catalog"],
+		"munition_pool": catalog_parts["munition_pool"],
+		"group_pool": catalog_parts["group_pool"],
+		"munition_to_group": catalog_parts["munition_to_group"],
+	}
+
+
+static func _target_set_for(target_tos: Array) -> Dictionary:
+	var target_set: Dictionary = {}
+	for target_to in target_tos:
+		if str(target_to).strip_edges() != "":
+			target_set[int(target_to)] = true
+	return target_set
+
+
+static func _sorted_firing_rows(systems_fired: Array) -> Array:
 	var rows := systems_fired.duplicate()
 	rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		var la := str(a.get("location", a.get("to", "")))
@@ -110,52 +132,70 @@ static func _resolve_launches(
 		if la != lb:
 			return la < lb
 		return str(a.get("type", "")) < str(b.get("type", "")))
+	return rows
 
-	for row in rows:
-		var systems := int(row.get("systems_fired", 0))
-		if systems <= 0:
-			continue
-		var type_id := str(row.get("type", "")).replace("Type_", "").strip_edges()
-		if not launcher_catalog.has(type_id):
-			result["warnings"].append("No combat catalog entry for launcher type %s" % type_id)
-			continue
-		var spec: Dictionary = launcher_catalog[type_id]
 
-		var source_to: Variant = _parse_source_to(row.get("location", row.get("to")))
-		if source_to != null and not target_set.is_empty():
-			var reachable := _reachable_tos(
-				int(source_to), str(spec.get("range_tier", "own_to")), active_tos, to_adjacency)
-			var in_range := false
-			for t in target_set.keys():
-				if reachable.has(t):
-					in_range = true
-					break
-			if not in_range:
-				continue  # out of range of every targeted TO
+static func _resolve_launch_row(
+		row: Dictionary, context: AntishipCrossingContext,
+		launch_state: Dictionary, result: Dictionary) -> void:
+	var systems := int(row.get("systems_fired", 0))
+	if systems <= 0:
+		return
+	var type_id := str(row.get("type", "")).replace("Type_", "").strip_edges()
+	var launcher_catalog: Dictionary = launch_state["launcher_catalog"]
+	if not launcher_catalog.has(type_id):
+		result["warnings"].append("No combat catalog entry for launcher type %s" % type_id)
+		return
+	var spec: Dictionary = launcher_catalog[type_id]
+	if not _launcher_can_reach_targets(row, spec, context, launch_state):
+		return
 
-		var need := systems * int(spec.get("missiles_per_launcher", 0))
-		var loadout: Array = spec.get("missiles", [])
-		if need <= 0 or loadout.is_empty():
-			continue
+	var need := systems * int(spec.get("missiles_per_launcher", 0))
+	var loadout: Array = spec.get("missiles", [])
+	if need <= 0 or loadout.is_empty():
+		return
 
-		var remaining := need
-		for munition in loadout:
-			if remaining <= 0:
-				break
-			var take := _draw_from_pool(munition, remaining, munition_pool, group_pool, munition_to_group)
-			if take > 0:
-				_add(launched, munition, take)
-				remaining -= take
+	var remaining := _draw_loadout_from_pools(loadout, need, launch_state)
+	_add_partial_fire(loadout[0], remaining, launch_state["launched"])
 
-		# Half of the unfillable shortfall still launches (destroyed-missile partial fire),
-		# attributed to the primary munition; it does not draw the pool.
-		if remaining > 0:
-			var partial := int(remaining * 0.5)
-			if partial > 0:
-				_add(launched, loadout[0], partial)
 
-	result["launched_by_munition"] = launched
-	return launched
+static func _launcher_can_reach_targets(
+		row: Dictionary, spec: Dictionary, context: AntishipCrossingContext,
+		launch_state: Dictionary) -> bool:
+	var source_to: Variant = _parse_source_to(row.get("location", row.get("to")))
+	var target_set: Dictionary = launch_state["target_set"]
+	if source_to == null or target_set.is_empty():
+		return true
+	var reachable := _reachable_tos(
+		int(source_to), str(spec.get("range_tier", "own_to")), context.active_tos, context.to_adjacency)
+	for target_to in target_set.keys():
+		if reachable.has(target_to):
+			return true
+	return false
+
+
+static func _draw_loadout_from_pools(loadout: Array, need: int, launch_state: Dictionary) -> int:
+	var remaining := need
+	for munition in loadout:
+		if remaining <= 0:
+			break
+		var take := _draw_from_pool(
+			munition, remaining, launch_state["munition_pool"], launch_state["group_pool"],
+			launch_state["munition_to_group"])
+		if take > 0:
+			_add(launch_state["launched"], munition, take)
+			remaining -= take
+	return remaining
+
+
+static func _add_partial_fire(primary_munition: Variant, remaining: int, launched: Dictionary) -> void:
+	# Half of the unfillable shortfall still launches (destroyed-missile partial fire),
+	# attributed to the primary munition; it does not draw the pool.
+	if remaining <= 0:
+		return
+	var partial := int(remaining * 0.5)
+	if partial > 0:
+		_add(launched, primary_munition, partial)
 
 
 static func _draw_from_pool(

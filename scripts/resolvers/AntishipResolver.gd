@@ -71,9 +71,16 @@ static func resolve(turn_number: int, context: AntishipResolutionContext, dice: 
 	# Sent fleet (D3-D BN<->ship mapping): the sealift phase already committed which hulls sail this
 	# turn, so build the crossing snapshots straight from sent_by_type (deterministic ship_type order)
 	# instead of re-deriving a minimum-lift fleet here (plan 0004 D3).
-	var crossing := AntishipCrossing.resolve_crossing_damage(
-		systems_fired, _snapshots_from_sent(context.sent_by_type), combat_catalog, crossing_config,
-		target_tos, dice, context.active_tos, context.to_adjacency, context.escort_sam)
+	var crossing_context := AntishipCrossingContext.new()
+	crossing_context.systems_fired = systems_fired
+	crossing_context.ship_snapshots = _snapshots_from_sent(context.sent_by_type)
+	crossing_context.combat_catalog = combat_catalog
+	crossing_context.crossing_config = crossing_config
+	crossing_context.target_tos = target_tos
+	crossing_context.active_tos = context.active_tos
+	crossing_context.to_adjacency = context.to_adjacency
+	crossing_context.escort_sam = context.escort_sam
+	var crossing := AntishipCrossing.resolve_crossing_damage(crossing_context, dice)
 
 	var mine_transit := _resolve_mine_transit(
 		context.sent_by_type, crossing["destroyed_by_ship_type"], target_beaches, context.ship_defs, dice)

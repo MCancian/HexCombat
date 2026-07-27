@@ -17,6 +17,7 @@ Resolves **Green coastal anti-ship missile strikes** against the **Red amphibiou
 | `scripts/loaders/AntishipLoaders.gd` | Loads all `data/antiship/*.json` |
 | `scripts/calc/MineWarfareService.gd` | D3-C geometric mine danger model |
 | `scripts/ShipLoadingModel.gd` | `resolve_bn_losses` — ship hulls → BN losses |
+| `scripts/model/AntishipCrossingContext.gd` | Typed input bundle for crossing damage; `Dice` stays explicit |
 | `scripts/model/ShipDef.gd` | Ship template (capacity, category, is_decoy) |
 | `scripts/model/ShipState.gd` | Runtime fleet counts (ready/sent/surviving/etc) |
 | `scripts/model/IndividualShip.gd` | Per-hull state (unused by crossing; deferred) |
@@ -26,7 +27,9 @@ Resolves **Green coastal anti-ship missile strikes** against the **Red amphibiou
 
 ## 3. Crossing Damage Model (D3-B3)
 
-**Entrypoint**: `AntishipCrossing.resolve_crossing_damage`.
+**Entrypoint**: `AntishipCrossing.resolve_crossing_damage(context, dice)`, where the typed
+`AntishipCrossingContext` carries firing rows, fleet snapshots, catalogs, range-gating maps, and
+optional escort SAM state. `Dice` stays explicit so RNG ownership is visible.
 
 Six RNG-consuming stages, each consuming injected `Dice` in sorted order so results are seed-independent:
 
@@ -110,7 +113,7 @@ TIV's separate `mine_warfare_service.py` (great-circle `offset_coordinate_meters
 | `AntishipCalculator.build_firing_plan(systems, ijfs, targets, fire_pcts, destroyed_pcts, mag)` → `{allocation_plan, destroyed_firing_plan}` | Build row-level intended firing allocations capped by availability + magazine |
 | `AntishipCalculator.resolve_launch_attrition(allocation_plan, destroyed_firing_plan, config, dice)` → `{systems_fired, outcomes}` | Per-launcher detect/destroy/intercept draw; pure report rows for `AntishipTransitions` |
 | `AntishipCalculator.allocate_firing_to_rows(qty_list, total)` → `int[]` | Proportional largest-remainder allocation across availability rows |
-| `AntishipCrossing.resolve_crossing_damage(systems_fired, ship_snaps, catalog, config, targets, dice, [active_tos, to_adj])` → `Dict` | 6-stage crossing pipeline (launches → failures → intercept → home → terminal → damage) |
+| `AntishipCrossing.resolve_crossing_damage(context, dice)` → `Dict` | 6-stage crossing pipeline (launches → failures → intercept → home → terminal → damage) |
 | `AntishipMagazine.reserve_full_volley(type_id, count)` → `int` | Full-volley-or-nothing: reserve magazines; 0 on shortfall |
 | `AntishipMagazine.deduct_launcher_kills(type_id, destroyed)` → `void` | On-kill magazine deduction (aircraft exempt) |
 | `MineWarfareService.resolve_ship_losses(fields, beaches, assignments, fleet, dice, meta, config)` → `Array[Dict]` | Geometric mine danger: path RNG → dangerous count → clearing → transit |

@@ -391,8 +391,8 @@ it takes operator-drawn polyline coordinates and is called only through the `Gam
 
 **Verification.** The canonical gate — `bash tools/run_all_tests.sh` (Linux; resolves Godot via
 `$GODOT_BIN` else `godot` on PATH) or `pwsh tools/run_all_tests.ps1` (Windows) — runs: import → headless smoke →
-`tools/validate_*.gd` (golden turn, anti-ship, IJFS, victory e2e, data validators, no-global-RNG) →
-GdUnit4 suites under `tests/`. Must end **ALL PHASES GREEN**. A debug-only assert
+`tools/validate_*.gd` (golden turn, anti-ship, IJFS, metrics, victory e2e, data validators,
+no-global-RNG) → GdUnit4 suites under `tests`. Must end **ALL PHASES GREEN**. A debug-only assert
 (`OS.is_debug_build()`-gated) at the end of `resolve_turn` checks `GameData.validate_runtime_indexes()`,
 so any silent brigade↔hex index desync fails loud in every debug/test/headless turn (compiled out of
 release).

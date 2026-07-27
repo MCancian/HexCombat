@@ -58,11 +58,23 @@ func _rows(rows: Array) -> Array:
 	return rows
 
 
+func _context(
+		systems_fired: Array, ship_snapshots: Array, catalog: Dictionary, config: Dictionary,
+		target_tos: Array) -> AntishipCrossingContext:
+	var context := AntishipCrossingContext.new()
+	context.systems_fired = systems_fired
+	context.ship_snapshots = ship_snapshots
+	context.combat_catalog = catalog
+	context.crossing_config = config
+	context.target_tos = target_tos
+	return context
+
+
 # --- launch stage (deterministic) ----------------------------------------------------------------
 
 func test_empty_systems_fired_returns_empty_result() -> void:
 	var r := AntishipCrossing.resolve_crossing_damage(
-		[], [_snap("LST", 5)], _catalog(), _crossing_config(), [3], SeededDice.new(1))
+		_context([], [_snap("LST", 5)], _catalog(), _crossing_config(), [3]), SeededDice.new(1))
 	assert_int(int(r["missile_stage_totals"]["launched"])).is_equal(0)
 	assert_dict(r["destroyed_by_ship_type"]).is_empty()
 
@@ -70,7 +82,7 @@ func test_empty_systems_fired_returns_empty_result() -> void:
 func test_launch_math_draws_global_pool() -> void:
 	var sf := [{"location": 3, "type": 1, "systems_fired": 10}]
 	var r := AntishipCrossing.resolve_crossing_damage(
-		sf, [_snap("LST", 100)], _catalog(), _crossing_config(), [3], SeededDice.new(1))
+		_context(sf, [_snap("LST", 100)], _catalog(), _crossing_config(), [3]), SeededDice.new(1))
 	assert_dict(r["launched_by_munition"]).is_equal({"MissileA": 40})
 
 
@@ -79,7 +91,7 @@ func test_partial_fire_rule_on_pool_shortfall() -> void:
 	catalog["munitions"]["MissileA"]["quantity"] = 30  # want 40, pool 30 -> 30 + (10*0.5) = 35
 	var sf := [{"location": 3, "type": 1, "systems_fired": 10}]
 	var r := AntishipCrossing.resolve_crossing_damage(
-		sf, [_snap("LST", 100)], catalog, _crossing_config(), [3], SeededDice.new(1))
+		_context(sf, [_snap("LST", 100)], catalog, _crossing_config(), [3]), SeededDice.new(1))
 	assert_dict(r["launched_by_munition"]).is_equal({"MissileA": 35})
 
 
@@ -89,7 +101,7 @@ func test_munition_fallback_when_primary_pool_dry() -> void:
 		{"1": {"missiles": ["Primary", "Backup"], "missiles_per_launcher": 4, "range_tier": "own_to"}})
 	var sf := [{"location": 3, "type": 1, "systems_fired": 10}]
 	var r := AntishipCrossing.resolve_crossing_damage(
-		sf, [_snap("LST", 100)], catalog, _crossing_config(), [3], SeededDice.new(1))
+		_context(sf, [_snap("LST", 100)], catalog, _crossing_config(), [3]), SeededDice.new(1))
 	assert_dict(r["launched_by_munition"]).is_equal({"Primary": 10, "Backup": 30})
 
 
@@ -105,10 +117,10 @@ func test_shared_pool_exhaustion_across_launcher_types_is_order_independent() ->
 		{"location": 3, "type": 2, "systems_fired": 10},
 	]
 	var forward := AntishipCrossing.resolve_crossing_damage(
-		rows, [_snap("LST", 100)], catalog, _crossing_config(), [3], SeededDice.new(1))
+		_context(rows, [_snap("LST", 100)], catalog, _crossing_config(), [3]), SeededDice.new(1))
 	var reversed_rows := [rows[1], rows[0]]
 	var reverse := AntishipCrossing.resolve_crossing_damage(
-		reversed_rows, [_snap("LST", 100)], catalog, _crossing_config(), [3], SeededDice.new(1))
+		_context(reversed_rows, [_snap("LST", 100)], catalog, _crossing_config(), [3]), SeededDice.new(1))
 	# Type 1 drains pool (30 + 5 partial = 35); Type 2 gets only half-shortfall (20). Total 55.
 	assert_dict(forward["launched_by_munition"]).is_equal({"Shared": 55})
 	assert_dict(reverse["launched_by_munition"]).is_equal(forward["launched_by_munition"])
@@ -118,7 +130,7 @@ func test_range_tier_gates_out_of_range_launchers() -> void:
 	# own_to launcher physically at TO 5, target TO 3 -> contributes nothing.
 	var sf := [{"location": 5, "type": 1, "systems_fired": 10}]
 	var r := AntishipCrossing.resolve_crossing_damage(
-		sf, [_snap("LST", 100)], _catalog(), _crossing_config(), [3], SeededDice.new(1))
+		_context(sf, [_snap("LST", 100)], _catalog(), _crossing_config(), [3]), SeededDice.new(1))
 	assert_int(int(r["missile_stage_totals"]["launched"])).is_equal(0)
 
 
@@ -127,7 +139,7 @@ func test_in_flight_failure_removes_missiles() -> void:
 	catalog["munitions"]["MissileA"]["in_flight_failure_rate"] = 1.0  # everything fails
 	var sf := [{"location": 3, "type": 1, "systems_fired": 10}]
 	var r := AntishipCrossing.resolve_crossing_damage(
-		sf, [_snap("LST", 100)], catalog, _crossing_config(), [3], SeededDice.new(1))
+		_context(sf, [_snap("LST", 100)], catalog, _crossing_config(), [3]), SeededDice.new(1))
 	assert_dict(r["failed_in_flight_by_munition"]).is_equal({"MissileA": 40})
 	assert_int(int(r["missile_stage_totals"]["leakers"])).is_equal(0)
 
@@ -137,7 +149,7 @@ func test_in_flight_failure_removes_missiles() -> void:
 func test_no_escorts_means_no_interception() -> void:
 	var sf := [{"location": 3, "type": 1, "systems_fired": 10}]
 	var r := AntishipCrossing.resolve_crossing_damage(
-		sf, [_snap("LST", 100)], _catalog(), _crossing_config(), [3], SeededDice.new(1))
+		_context(sf, [_snap("LST", 100)], _catalog(), _crossing_config(), [3]), SeededDice.new(1))
 	assert_int(int(r["missile_stage_totals"]["intercepted"])).is_equal(0)
 	assert_int(int(r["missile_stage_totals"]["leakers"])).is_equal(40)
 
@@ -147,7 +159,8 @@ func test_escorts_intercept_missiles() -> void:
 	var cfg := _crossing_config()
 	cfg["escort_interception"] = {"DDG": {"attempts": 100, "success_prob": 1.0}}
 	var snaps := [_snap("LST", 100), _snap("DDG", 6)]
-	var r := AntishipCrossing.resolve_crossing_damage(sf, snaps, _catalog(), cfg, [3], SeededDice.new(1))
+	var r := AntishipCrossing.resolve_crossing_damage(
+		_context(sf, snaps, _catalog(), cfg, [3]), SeededDice.new(1))
 	assert_int(int(r["missile_stage_totals"]["intercepted"])).is_equal(40)
 	assert_int(int(r["missile_stage_totals"]["leakers"])).is_equal(0)
 
@@ -159,7 +172,7 @@ func test_damage_split_destroyed_vs_damaged_and_capped() -> void:
 	var cfg := _crossing_config()
 	cfg["ship_profiles"]["LST"]["vulnerability"] = "Medium"  # neutralization 0.5
 	var r := AntishipCrossing.resolve_crossing_damage(
-		sf, [_snap("LST", 100)], _catalog(), cfg, [3], SeededDice.new(7))
+		_context(sf, [_snap("LST", 100)], _catalog(), cfg, [3]), SeededDice.new(7))
 	var destroyed := int(r["destroyed_by_ship_type"].get("LST", 0))
 	var damaged := int(r["damaged_by_ship_type"].get("LST", 0))
 	var wasted := int(r["missile_stage_totals"]["wasted_hits"])
@@ -175,7 +188,7 @@ func test_damage_capped_at_surviving_sent() -> void:
 	var cfg := _crossing_config()
 	cfg["ship_profiles"]["LST"]["vulnerability"] = "High"  # neutralization 1.0
 	var r := AntishipCrossing.resolve_crossing_damage(
-		sf, [_snap("LST", 5)], _catalog(), cfg, [3], SeededDice.new(1))
+		_context(sf, [_snap("LST", 5)], _catalog(), cfg, [3]), SeededDice.new(1))
 	var destroyed := int(r["destroyed_by_ship_type"].get("LST", 0))
 	var damaged := int(r["damaged_by_ship_type"].get("LST", 0))
 	assert_bool(destroyed + damaged <= 5).is_true()
@@ -190,7 +203,7 @@ func test_damaged_hull_more_fragile_on_rehit() -> void:
 	cfg["neutralization_likelihoods"] = {"High": 1.0, "Medium": 0.001, "Low": 0.0}
 	cfg["ship_profiles"]["LST"]["vulnerability"] = "Medium"  # base 0.001
 	var r := AntishipCrossing.resolve_crossing_damage(
-		sf, [_snap("LST", 1)], _catalog(), cfg, [3], SeededDice.new(3))
+		_context(sf, [_snap("LST", 1)], _catalog(), cfg, [3]), SeededDice.new(3))
 	assert_int(int(r["destroyed_by_ship_type"].get("LST", 0))).is_equal(1)
 	assert_int(int(r["damaged_by_ship_type"].get("LST", 0))).is_equal(0)
 
@@ -203,7 +216,7 @@ func test_decoys_absorb_missiles_with_no_fleet_damage() -> void:
 		"target_value": 1, "terminal_defense_capability": "None", "vulnerability": "Low", "is_decoy": true}
 	var sf := [{"location": 3, "type": 1, "systems_fired": 10}]
 	var r := AntishipCrossing.resolve_crossing_damage(
-		sf, [_snap("Decoys", 100)], catalog, cfg, [3], SeededDice.new(1))
+		_context(sf, [_snap("Decoys", 100)], catalog, cfg, [3]), SeededDice.new(1))
 	assert_int(int(r["missile_stage_totals"]["decoy_hits"])).is_greater(0)
 	assert_dict(r["destroyed_by_ship_type"]).is_empty()
 	assert_dict(r["damaged_by_ship_type"]).is_empty()
@@ -214,8 +227,10 @@ func test_deterministic_with_fixed_seed() -> void:
 	var snaps := [_snap("LST", 50), _snap("DDG", 6)]
 	var cfg := _crossing_config()
 	cfg["escort_interception"] = {"DDG": {"attempts": 5, "success_prob": 0.5}}
-	var r1 := AntishipCrossing.resolve_crossing_damage(sf, snaps, _catalog(), cfg, [3], SeededDice.new(99))
-	var r2 := AntishipCrossing.resolve_crossing_damage(sf, snaps, _catalog(), cfg, [3], SeededDice.new(99))
+	var r1 := AntishipCrossing.resolve_crossing_damage(
+		_context(sf, snaps, _catalog(), cfg, [3]), SeededDice.new(99))
+	var r2 := AntishipCrossing.resolve_crossing_damage(
+		_context(sf, snaps, _catalog(), cfg, [3]), SeededDice.new(99))
 	assert_dict(r1["missile_stage_totals"]).is_equal(r2["missile_stage_totals"])
 	assert_dict(r1["casualty_totals"]).is_equal(r2["casualty_totals"])
 	assert_dict(r1["destroyed_by_ship_type"]).is_equal(r2["destroyed_by_ship_type"])
@@ -233,7 +248,8 @@ func test_screen_preference_biases_hits_toward_escorts() -> void:
 	cfg["neutralization_likelihoods"]["High"] = 1.0
 	var snaps := [_snap("FFG", 100), _snap("LPD", 100)]
 	var sf := [{"location": 3, "type": 1, "systems_fired": 100}]
-	var r := AntishipCrossing.resolve_crossing_damage(sf, snaps, catalog, cfg, [3], SeededDice.new(42))
+	var r := AntishipCrossing.resolve_crossing_damage(
+		_context(sf, snaps, catalog, cfg, [3]), SeededDice.new(42))
 	var ffg_destroyed := int(r["destroyed_by_ship_type"].get("FFG", 0))
 	var lpd_destroyed := int(r["destroyed_by_ship_type"].get("LPD", 0))
 	assert_int(ffg_destroyed).is_greater(lpd_destroyed)
@@ -249,8 +265,10 @@ func test_real_catalog_loads_and_runs() -> void:
 		{"location": 3, "type": 3, "systems_fired": 40},
 	]
 	var snaps := [_snap("LHA", 4), _snap("LST", 12), _snap("DDG", 6), _snap("Decoys", 15)]
-	var r := AntishipCrossing.resolve_crossing_damage(
-		sf, snaps, catalog, cfg, [3], SeededDice.new(2024), ACTIVE_TOS, TO_ADJACENCY)
+	var context := _context(sf, snaps, catalog, cfg, [3])
+	context.active_tos = ACTIVE_TOS
+	context.to_adjacency = TO_ADJACENCY
+	var r := AntishipCrossing.resolve_crossing_damage(context, SeededDice.new(2024))
 	var m: Dictionary = r["missile_stage_totals"]
 	var c: Dictionary = r["casualty_totals"]
 	# Pipeline reconciliation invariants.
