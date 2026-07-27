@@ -596,19 +596,6 @@ func set_hex_feba(hex_id: String, feba_km: float) -> void:
 		hex_states[hex_id].feba_km = feba_km
 
 
-## VIEW LAYER ONLY — counts WHOLE rosters, not landed battalions (plan 0037). Called solely by
-## `UnitManager.get_unit_count_in_hex`, which drives the on-map stack label; nothing in the sim or in
-## a seat's observation reads it, so the drift is cosmetic and deliberately left. If this ever feeds
-## a decision, route it through `Brigade.landed_battalion_count` with the pools passed in.
-func get_unit_count_in_hex(hex_id: String, team: Brigade.Team = Brigade.Team.RED) -> int:
-	var total := 0
-	for brigade_id in get_brigades_in_hex(hex_id):
-		var brigade: Brigade = get_brigade(brigade_id)
-		if brigade != null and brigade.team == team:
-			total += brigade.get_battalion_count()
-	return total
-
-
 func load_theaters() -> void:
 	active_tos.clear()
 	to_adjacency.clear()

@@ -17,7 +17,6 @@ routing but never game-logic state.
 | `CompositionPanel.gd` (:1) | `PanelContainer` listing eligible-commit brigades as buttons, emits `commit_requested`. |
 | `SymbolLibrary.gd` (:1) | `RefCounted` library: loads `nato_symbol_map.json`, caches `Texture2D` per `nato_type`. |
 | `SymbolPreview.gd` (:1) | `Control` debug scene: enumerates all OOB nato_types and renders each symbol + brigade count in a scrollable grid. |
-| `UnitManager.gd` (:1) | Thin compat wrapper forwarding to `GameData` — no logic. |
 | `MapProjection.gd`(:1) | `RefCounted` math: fits lat/lon bounds to viewport with uniform aspect-correct scale; `project(lat_lon)` / `project_vertices(...)`. |
 | `data/nato_symbol_map.json` | Maps `nato_type` string → SVG filename under `res://assets/symbols/`. |
 | `tools/validate_symbol_map.gd` (:1) | Headless validation: asserts every OOB nato_type has a map entry and every entry loads as `Texture2D`. |

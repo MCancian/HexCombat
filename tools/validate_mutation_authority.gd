@@ -27,8 +27,9 @@ extends SceneTree
 # `:= T.new()`, `:= call()` through the callee's DECLARED return type, an untyped `for x in arr`
 # where `arr`'s declaration is `Array[T]`, and a dotted chain chased through declared field types
 # with each `[…]` unwrapping one `Array[T]`.
-# Scopes are per-function over a file-level scope, because `GameData` reuses the name `entry` for
-# four different types in four loaders and a file-global map would call all four ambiguous.
+# Scopes are per-function over a file-level scope, because `GameData` binds the name `entry` to two
+# different types in two loaders (`Dictionary` and `InfrastructureDef`) and a file-global map called
+# both ambiguous, reporting a write it should have cleared.
 #
 # DETECTED WRITE FORMS (each proven by a fixture under tools/fixtures/mutation_authority/, compared
 # exactly on every run — a missed form fails this gate as a false negative):
@@ -494,10 +495,13 @@ func _scan_line(
 ## effect that follows the field.
 func _match_field_writes(
 		line: String, types: Dictionary, corpus: Corpus, ownership: Ownership) -> Array[Dictionary]:
-	var regex := _regex(
-		"(?<![\\w.])(%s)\\s*\\.\\s*([A-Za-z_]\\w*)\\s*" % CHAIN_EXPR + 
-		"(?:(\\[[^\\]\\n]*\\])\\s*(%s)|(?:\\[[^\\]\\n]*\\])?\\s*\\.\\s*(%s)\\s*\\(|(%s))"
-		% [ASSIGN_OPS, "|".join(MUTATOR_METHODS), ASSIGN_OPS])
+	# `<receiver> . <field>` followed by whichever effect identifies the rule. Built from named parts:
+	# one long format string mixing `%` and `+` hid a capture-group off-by-one for two revisions.
+	var target := "(?<![\\w.])(%s)\\s*\\.\\s*([A-Za-z_]\\w*)\\s*" % CHAIN_EXPR
+	var element_effect := "(\\[[^\\]\\n]*\\])\\s*(%s)" % ASSIGN_OPS
+	var container_effect := "(?:\\[[^\\]\\n]*\\])?\\s*\\.\\s*(%s)\\s*\\(" % "|".join(MUTATOR_METHODS)
+	var assign_effect := "(%s)" % ASSIGN_OPS
+	var regex := _regex("%s(?:%s|%s|%s)" % [target, element_effect, container_effect, assign_effect])
 	var out: Array[Dictionary] = []
 	for found in regex.search_all(line):
 		var receiver := found.get_string(1)

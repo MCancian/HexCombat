@@ -19,6 +19,12 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-26 — Correction to the entry below (agent).** That entry says `GameData` reuses `entry`
+  for four types; it is **two** — `Dictionary` (`GameData.load_scenario`) and `InfrastructureDef`
+  (`GameData.load_infrastructure`). The conclusion is unchanged: a file-global type map called both
+  ambiguous and reported a write it should have cleared, which is why resolution is per-function.
+  Corrected in the header of `tools/validate_mutation_authority.gd`.
+
 - **2026-07-26 — Mutation authority is enforced by receiver-TYPE resolution, not field names (agent
   judgment, plan 0042 step 2).** A name-only scan was not viable: `destroyed` belongs to
   `AntishipSystem`, `IjfsTarget`, `ShipState` and `Brigade`, so it flags four aggregates at once. The
