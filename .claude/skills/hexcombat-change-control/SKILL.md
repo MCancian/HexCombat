@@ -57,6 +57,12 @@ re-baseline history is in `docs/DECISIONS.md` (pre-2026-07-10: `docs/archive/PLA
 6. **Never commit `.mcp.json`** (machine-specific Godot path, intentionally locally modified).
 7. **Tie tuning hooks to a need.** Don't populate optional knobs speculatively — an unused field
    is byte-stable; a populated one silently re-baselines results.
+8. **A registered aggregate has one writer.** Anti-ship state was written by three paths that
+   disagreed — the launch-attrition writer and the IJFS writeback overwrote each other, so
+   destroyed launchers came back on the next crossing. Ownership lives in
+   `tools/mutation_authority_manifest.json`, gated by `tools/validate_mutation_authority.gd`. A new
+   write to a protected field is a manifest decision, never a local one; a temporary exception must
+   name the plan that removes it, or it is not temporary.
 
 ## Verification protocol (golden-touching work)
 

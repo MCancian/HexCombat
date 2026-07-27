@@ -28,7 +28,11 @@ description: Template for adding a NEW game phase or mechanic to the decomposed 
    signal with `to_dict()`, and slots into `resolve_turn`'s explicit sequence at a deliberate
    position (document why that position — what it must run after/before).
 6. **Cross-phase state** — any new field other phases read gets its producer→consumer edge
-   documented in the wiring commit and threaded explicitly.
+   documented in the wiring commit and threaded explicitly. If the field belongs to an aggregate
+   registered in `tools/mutation_authority_manifest.json`, the resolver **returns** the change and
+   the aggregate's authority applies it — a resolver never writes a protected field, and adding a
+   mutable field to a registered model without classifying it fails
+   `tools/validate_mutation_authority.gd`.
 7. **Validator** — `tools/validate_<phase>_data.gd` (data contract) and/or
    `tools/validate_headless_<phase>.gd` (behavior); auto-picked-up by the gate.
 8. **GdUnit tests** — resolver in isolation (ScriptedDice for roll control); mirror source-oracle

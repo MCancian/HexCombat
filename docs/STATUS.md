@@ -401,6 +401,23 @@ declared default silently — combat ran, the gate stayed green, and the knob di
 is derived from the source rather than hand-listed, and the validator fails if its own anchors stop
 resolving, so a refactor cannot turn it into a vacuous PASS.
 
+**Mutation authority (plan 0042 foundation).** `tools/validate_mutation_authority.gd` enforces that a
+registered aggregate has exactly one writer. It resolves each write's RECEIVER TYPE (annotations,
+`:= T.new()`, declared return types, `Array[T]` element types, dotted chains — scoped per function)
+before asking whether that `(class, field)` pair is protected, because `destroyed` alone belongs to
+four unrelated models. It detects direct/compound/element assignment, in-place container mutation,
+dynamic `set()`, calls to model mutator methods, cast writes, and — as the false-negative backstop —
+a write to a protected field name through a receiver it cannot type. Ownership lives in
+`tools/mutation_authority_manifest.json`: authority file, protected fields and lifetimes,
+construction allowances, and temporary legacy writers each naming the plan that removes it. Dead
+paths, dead fields, an unclassified field on an owned model, two aggregates claiming one field, a
+stale allowance, an unregistered file under `scripts/transitions/`, and a scan that saw nothing all
+fail. Illegal fixtures under `tools/fixtures/mutation_authority/` declare the rule each line must
+trigger and are compared exactly on every run, so a detector that stops working fails as a false
+negative instead of going quietly green. **One aggregate is registered — `antiship_establishment`, in
+migration mode with five named legacy writers; its authority `AntishipTransitions` lands in plan
+0043.** No production behavior changed.
+
 ## What is NOT done (see `docs/plans/`)
 
 - **Graphics** (Track 5): anti-ship/mine visualization, front-line draw UI (D5-D), unit/HUD polish.

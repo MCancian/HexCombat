@@ -1,10 +1,20 @@
 ---
 title: "0042: Mutation-authority foundation"
-status: "Sketch"
+status: "Complete"
 created: "2026-07-26"
 ---
 
 # Plan 0042: Mutation-authority foundation
+
+> **CLOSED 2026-07-26.** Shipped: `tools/validate_mutation_authority.gd` +
+> `tools/mutation_authority_manifest.json` + self-proving fixtures under
+> `tools/fixtures/mutation_authority/`; anti-ship registered in migration mode with five named legacy
+> writers. Facts landed in: the validator header (detected write forms, blind spots), the manifest
+> (ownership), `docs/STATUS.md` (current gate behavior), `hexcombat-architecture-contract` (the
+> convention), `hexcombat-change-control` non-negotiable 8, `hexcombat-validation-and-qa` (proving a
+> source-scanning validator still detects), `hexcombat-docs-and-writing` (one-home row),
+> `hexcombat-add-phase-resolver` step 6, `AGENTS.md`, and `docs/DECISIONS.md`.
+> No production script moved and no gameplay behavior changed.
 
 ## Goal
 

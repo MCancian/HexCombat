@@ -19,6 +19,15 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-26 — Mutation authority is enforced by receiver-TYPE resolution, not field names (agent
+  judgment, plan 0042 step 2).** A name-only scan was not viable: `destroyed` belongs to
+  `AntishipSystem`, `IjfsTarget`, `ShipState` and `Brigade`, so it flags four aggregates at once. The
+  gate resolves each write's receiver type first (spike: 591 receiver-chain assignments in `scripts/`,
+  19 unannotated), scoped per function because `GameData` reuses `entry` for four types. Untypable
+  receivers writing a protected field name fail loudly rather than passing unseen. Facts:
+  `tools/mutation_authority_manifest.json`, header of `tools/validate_mutation_authority.gd`, current
+  state in `docs/STATUS.md`, convention in `hexcombat-architecture-contract`.
+
 - **2026-07-26 — Mutation enforcement is proved before the role-directory split (USER).** Plan 0042
   keeps production paths stable while an exact-file, alias-aware gate and
   `tools/mutation_authority_manifest.json` are established; the anti-ship pilot in 0043 proves the

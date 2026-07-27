@@ -33,7 +33,7 @@ plan to act, the closeout wasn't done.
 | 0039 | [One truth about where a battalion is](0039-battalion-location-single-truth.md) | Superseded — a derived ledger cannot catch the historical one-sided transition bug | **Superseded by 0044** |
 | 0040 | [CombatRules — stop hand-threading 26 fields](../archive/0040-combatrules-threading.md) | Medium (risk buydown; a field added but not threaded is a silently-inert knob, no gate watches it. Recommended path was the completeness validator ALONE — not the restructure) | **Complete 2026-07-26** — option (c) shipped as `tools/validate_combat_rules_threading.gd`, no production code touched; (a) deferred indefinitely, (b) blocked by tool purity |
 | 0041 | [One pattern for reaching an autoload](0041-autoload-access-one-pattern.md) | Low (ergonomics; the failure is already CAUGHT by validate_tool_script_purity — this makes the correct pattern obvious rather than remembered) | Sketch |
-| 0042 | [Mutation-authority foundation](0042-mutation-authority-foundation.md) | **High — establishes the controller/API rule and staged enforcement gate** | Sketch |
+| 0042 | [Mutation-authority foundation](../archive/0042-mutation-authority-foundation.md) | **High — establishes the controller/API rule and staged enforcement gate** | **Complete 2026-07-26** — `tools/validate_mutation_authority.gd` + `tools/mutation_authority_manifest.json` + self-proving fixtures; anti-ship registered in migration mode (5 named legacy writers); no production script moved |
 | 0043 | [Anti-ship mutation authority](0043-antiship-mutation-authority.md) | **High — first vertical slice + USER-ruled permanent launch destruction** | Sketch |
 | 0044 | [Force mutation authority](0044-force-mutation-authority.md) | **High — brigades, battalions, manifests, placement; replaces 0039** | Sketch |
 | 0045 | [Sealift/fleet mutation authority](0045-sealift-fleet-mutation-authority.md) | High — hull/cohort/pipeline conservation and one writer | Sketch |
@@ -49,8 +49,10 @@ plan to act, the closeout wasn't done.
 
 ## Mutation-authority campaign — required sequence
 
-**Implementation readiness:** the architecture and sequencing review is complete and USER-ratified;
-the next implementation work starts at plan 0042 step 1. Later plans must not start early.
+**Implementation readiness:** the architecture and sequencing review is complete and USER-ratified.
+**0042 shipped 2026-07-26** — the enforceability question is answered (receiver-TYPE resolution, not
+field names; see the validator header) and the manifest format is fixed. The next implementation work
+starts at plan 0043. Later plans must not start early.
 
 **USER direction:** every gameplay-relevant mutable aggregate gets one controller/API; calculators
 return outcomes, only the authority applies them, and cross-aggregate transitions prove exact deltas.

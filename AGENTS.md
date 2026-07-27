@@ -58,6 +58,11 @@ When you finish: update the canonical homes you touched (STATUS bullet, systems 
 - **Runtime state — `GameState` autoload**: turn/phase/orders; owns `resolve_turn` (its inline
   comments carry the phase-order and RNG-substream rationale).
 - **View / control**: `HexMap.gd`, `GameController.gd`, `scenes/Main.tscn`. No sim logic here.
+- **Mutation authority** (campaign 0042–0050, in progress): a registered aggregate has ONE named
+  writer. Calculators return outcomes; only the authority applies them. Ownership facts live in
+  `tools/mutation_authority_manifest.json` and are gated by `tools/validate_mutation_authority.gd`
+  — do not copy its field/writer lists into a header or doc. Adding a field to a registered model,
+  or a new write to one, needs a manifest entry; the gate names the file, line, and write form.
 - Deeper rationale + invariants: `docs/ARCHITECTURE.md` and `hexcombat-architecture-contract`.
 
 ## Running & verifying

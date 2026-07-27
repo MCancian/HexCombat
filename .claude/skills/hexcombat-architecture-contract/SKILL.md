@@ -48,6 +48,37 @@ with an explicit signature like `resolve(<inputs>, dice) -> <TypedSummary>`:
 - `GameState` shrinks toward a thin orchestrator that sequences resolvers and owns cross-phase
   state. (Decomposition record: `docs/archive/refactor_audit.md` item 10.)
 
+## Mutation authority (campaign 0042–0050, foundation shipped)
+
+> Every mutable gameplay aggregate has one named authority. Calculators return outcomes; only the
+> authority applies them. Every cross-aggregate transition proves its preconditions and deltas
+> before returning.
+
+An **aggregate** is a set of mutable objects whose invariants must hold together (the anti-ship
+establishment; the force; sealift; map infrastructure) — boundaries follow invariants, not files.
+The **authority** is a pure `RefCounted` class, named `<Domain>Transitions`, in
+`scripts/transitions/`; it validates ids and pre-state, applies the whole change, checks the exact
+delta, and returns a typed receipt. It is **not** a base class, an autoload, or a generic
+`MutationRequest`/`EntityController` — those are explicitly rejected. A phase module may coordinate
+two authorities but never writes their fields itself.
+
+**Where the facts live:** `tools/mutation_authority_manifest.json` is the single home for exact
+ownership — authority file, protected fields and their lifetimes, construction allowances, and
+temporary legacy writers each naming the plan that deletes it. Headers and systems docs point at it
+and must not copy its lists. `tools/validate_mutation_authority.gd` enforces it (its header
+documents every write form it detects and every blind spot it does not).
+
+**What this means for your change:**
+
+- Adding a mutable field to a registered model without classifying it fails the gate.
+- Adding a write to a protected field outside its authority fails the gate, by file:line and form.
+- An allowance that stops matching a real write fails as stale — dead exceptions get deleted.
+- If the gate cannot resolve your receiver's type, annotate it. That is the intended fix, not an
+  allowance entry.
+- Aggregates migrate one at a time: one may be strict while the rest are unregistered.
+
+Registered so far: `antiship_establishment` (migration mode; authority lands in plan 0043).
+
 ## Turn engine facts
 
 - **WeGo:** both sides buffer orders in PLANNING; `resolve_turn(dice)` applies everything

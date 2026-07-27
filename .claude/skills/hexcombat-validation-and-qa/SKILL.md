@@ -56,6 +56,13 @@ change-control event (`hexcombat-change-control`).
 4. Two layers, by purpose: **validators** = data contracts, cross-system invariants, golden pins,
    port equivalence (dependency-light, agent-friendly); **GdUnit** = unit logic, scene loading,
    input simulation, UI behavior.
+5. **A validator that scans source must prove it still detects.** A regex silently stops matching
+   and the gate goes green forever. `tools/validate_mutation_authority.gd` is the pattern: illegal
+   fixtures under `tools/fixtures/mutation_authority/` (suffix `.gdfixture`, so Godot's import and
+   GdUnit's suite discovery never compile them) declare the rule each line must trigger, and the
+   validator compares found-vs-expected **exactly** on every run — a missed detection fails as a
+   false negative, an over-eager one as a false positive. Pair that with a vacuity guard: assert
+   the scan actually saw files, symbols, and hits.
 
 ## Adding a GdUnit test (`tests/<thing>_test.gd`)
 
