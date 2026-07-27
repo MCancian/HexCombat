@@ -13,6 +13,11 @@ extends RefCounted
 ## (ship_reserve, lost_at_sea_accumulator, pending_lost_at_sea, last_antiship_summary) and the
 ## EventBus emit stay in the FiresPhases coordinator. TO lookups arrive as plain maps so this file
 ## never reaches for the GameData autoload.
+##
+## It stays in scripts/resolvers/ rather than moving to scripts/calc/ with the anti-ship calculators
+## (plan 0043 step 9) for ONE reason: `remaining_reserve_after_losses` rewrites `entry["bns"]` on the
+## caller's live `ship_reserve` entries in place. That is a mixed file by the role-directory rule, and
+## it moves when the plan that owns the reserve splits that function out — not before.
 
 ## Data sources (single source of truth — used only by this resolver).
 const CATALOG_PATH := "res://data/antiship/antiship_combat_catalog.json"
