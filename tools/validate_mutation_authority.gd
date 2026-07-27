@@ -25,7 +25,8 @@ extends SceneTree
 #
 # A receiver resolves from, in order: an explicit annotation (member, local, parameter, `for x: T`),
 # `:= T.new()`, `:= call()` through the callee's DECLARED return type, an untyped `for x in arr`
-# where `arr`'s declaration is `Array[T]`, and a dotted chain chased through declared field types.
+# where `arr`'s declaration is `Array[T]`, and a dotted chain chased through declared field types
+# with each `[…]` unwrapping one `Array[T]`.
 # Scopes are per-function over a file-level scope, because `GameData` reuses the name `entry` for
 # four different types in four loaders and a file-global map would call all four ambiguous.
 #
@@ -67,11 +68,16 @@ extends SceneTree
 #   - Element type is read from DECLARATIONS only. `for row in some_dict.values()` and
 #     `var row = rows[i]` on an untyped Array stay unresolved.
 #   - A protected CONTAINER aliased into a local and mutated through that alias
-#     (`var rows = state.antiship_systems` … `rows.append(x)`) is invisible: the alias is untyped
-#     and `append` is not a protected field name, so neither the type check nor the name backstop
-#     fires. Closing it needs alias dataflow, not a scanner. Today every real mutation reaches these
-#     rows by being PASSED to a function that writes through a typed receiver, which is caught at the
-#     write site; plan 0043 should re-check that when it builds the authority.
+#     (`var rows = state.antiship_systems` … then ANY in-place mutator on `rows` — `append`, `clear`,
+#     `erase`, `resize`, `sort`, …) is invisible: the alias is untyped and the mutator's name is not a
+#     protected field name, so neither the type check nor the name backstop fires. Closing it needs
+#     alias dataflow, not a scanner. Today every real mutation reaches these rows by being PASSED to a
+#     function that writes through a typed receiver, which is caught at the write site; plan 0043
+#     should re-check that when it builds the authority.
+#   - Statements are read one line at a time; only `\` continuations are rejoined. GDScript's other
+#     multi-line form — a statement spread across an open bracket, e.g. `rows[\n  i\n].quantity = 0`
+#     — is not seen. (Breaking after a bare `.` is NOT a GDScript continuation at all; it is a parse
+#     error, so it needs no handling here — verified by running it.)
 #   - Scope is scan_roots in the manifest (scripts/ + tools/). tests/ is deliberately excluded:
 #     suites legitimately build and mutate their own fixture rows.
 #   - Reflection (`Object.call("set_" + name)`, `Callable`s built from strings) is not modelled. No
@@ -88,6 +94,10 @@ const FIXTURE_EXT := ".gdfixture"
 const ASSIGN_OPS := "=(?!=)|\\+=|-=|\\*=|/=|%=|\\|=|&=|\\^="
 # A type annotation, keeping any element type: `IjfsTarget`, `Array`, `Array[IjfsTarget]`.
 const TYPE_EXPR := "[A-Za-z_]\\w*(?:\\[[A-Za-z_]\\w*\\])?"
+# A receiver expression: `row`, `state.sealift_state`, `rows[i]`, `state.antiship_systems[0]`.
+# The index segments are load-bearing — without them `rows[i].quantity = 0` matched NOTHING at all,
+# neither as a protected write nor as an unresolved one.
+const CHAIN_EXPR := "[A-Za-z_]\\w*(?:\\[[^\\]\\n]*\\])*(?:\\s*\\.\\s*[A-Za-z_]\\w*(?:\\[[^\\]\\n]*\\])*)*"
 const MUTATOR_METHODS := [
 	"append", "append_array", "push_back", "push_front", "pop_back", "pop_front", "pop_at",
 	"erase", "clear", "insert", "remove_at", "resize", "sort", "sort_custom", "reverse",
@@ -410,7 +420,7 @@ func _infer_from_calls(types: Dictionary, body: String, corpus: Corpus, path: St
 ## `for target in state.targets:` over an `Array[IjfsTarget]` — the element type is right there in
 ## the container's declaration, so an untyped loop over a typed array is not a blind spot.
 func _infer_loop_elements(types: Dictionary, body: String, corpus: Corpus) -> void:
-	var regex := _regex("(?m)\\bfor\\s+([A-Za-z_]\\w*)\\s+in\\s+([A-Za-z_]\\w*(?:\\s*\\.\\s*[A-Za-z_]\\w*)*)\\s*:")
+	var regex := _regex("(?m)\\bfor\\s+([A-Za-z_]\\w*)\\s+in\\s+(%s)\\s*:" % CHAIN_EXPR)
 	for found in regex.search_all(body):
 		var container := _resolve(found.get_string(2), types, corpus)
 		if not container.begins_with("Array["):
@@ -440,19 +450,32 @@ func _parameter_types(body: String) -> Array:
 	return out
 
 
-## The class a dotted receiver expression evaluates to, or "" when it cannot be resolved. The head
-## comes from the file's annotations; each further component is chased through the declared field
-## types of the class reached so far.
+## The class a receiver expression evaluates to, or "" when it cannot be resolved. The head comes
+## from the file's annotations; each further component is chased through the declared field types of
+## the class reached so far, and each `[…]` unwraps one `Array[T]`. Indexing anything whose element
+## type is not declared (a bare `Array`, a `Dictionary`) resolves to "" — which the caller then
+## reports as an unresolved receiver rather than passing over in silence.
 func _resolve(expression: String, types: Dictionary, corpus: Corpus) -> String:
 	var parts := expression.replace(" ", "").replace("\t", "").split(".")
-	var current := String(types.get(String(parts[0]), ""))
-	if current.is_empty() or current == "?":
-		return ""
-	for index in range(1, parts.size()):
-		var fields: Dictionary = corpus.fields_of.get(current, {})
-		current = String(fields.get(String(parts[index]), ""))
-		if current.is_empty():
+	var current := ""
+	for index in range(parts.size()):
+		var part := String(parts[index])
+		var name := part
+		var indexings := 0
+		var bracket := part.find("[")
+		if bracket != -1:
+			name = part.substr(0, bracket)
+			indexings = part.substr(bracket).count("[")
+		if index == 0:
+			current = String(types.get(name, ""))
+		else:
+			current = String(Dictionary(corpus.fields_of.get(current, {})).get(name, ""))
+		if current.is_empty() or current == "?":
 			return ""
+		for _step in range(indexings):
+			if not current.begins_with("Array["):
+				return ""
+			current = current.trim_prefix("Array[").trim_suffix("]")
 	return current
 
 
@@ -472,8 +495,8 @@ func _scan_line(
 func _match_field_writes(
 		line: String, types: Dictionary, corpus: Corpus, ownership: Ownership) -> Array[Dictionary]:
 	var regex := _regex(
-		"(?<![\\w.])([A-Za-z_]\\w*(?:\\s*\\.\\s*[A-Za-z_]\\w*)*)\\s*\\.\\s*([A-Za-z_]\\w*)\\s*"
-		+ "(?:(\\[[^\\]\\n]*\\])\\s*(%s)|(?:\\[[^\\]\\n]*\\])?\\s*\\.\\s*(%s)\\s*\\(|(%s))"
+		"(?<![\\w.])(%s)\\s*\\.\\s*([A-Za-z_]\\w*)\\s*" % CHAIN_EXPR + 
+		"(?:(\\[[^\\]\\n]*\\])\\s*(%s)|(?:\\[[^\\]\\n]*\\])?\\s*\\.\\s*(%s)\\s*\\(|(%s))"
 		% [ASSIGN_OPS, "|".join(MUTATOR_METHODS), ASSIGN_OPS])
 	var out: Array[Dictionary] = []
 	for found in regex.search_all(line):
@@ -510,8 +533,8 @@ func _match_cast_writes(line: String, corpus: Corpus, ownership: Ownership) -> A
 func _match_dynamic_sets(
 		line: String, types: Dictionary, corpus: Corpus, ownership: Ownership) -> Array[Dictionary]:
 	var regex := _regex(
-		"(?<![\\w.])([A-Za-z_]\\w*(?:\\s*\\.\\s*[A-Za-z_]\\w*)*)\\s*\\.\\s*(%s)\\s*\\(\\s*(?:&?\"[^\"\\n]*\"|[A-Za-z_]\\w*)"
-		% "|".join(DYNAMIC_SETTERS))
+		"(?<![\\w.])(%s)\\s*\\.\\s*(%s)\\s*\\(\\s*(?:&?\"[^\"\\n]*\"|[A-Za-z_]\\w*)"
+		% [CHAIN_EXPR, "|".join(DYNAMIC_SETTERS)])
 	var out: Array[Dictionary] = []
 	for found in regex.search_all(line):
 		var class_id := _resolve(found.get_string(1), types, corpus)
@@ -533,7 +556,7 @@ func _match_dynamic_sets(
 ## through for the authority and for declared writers, exactly as a direct write would be.
 func _match_mutator_calls(
 		line: String, types: Dictionary, corpus: Corpus, ownership: Ownership) -> Array[Dictionary]:
-	var regex := _regex("(?<![\\w.])([A-Za-z_]\\w*(?:\\s*\\.\\s*[A-Za-z_]\\w*)*)\\s*\\.\\s*([A-Za-z_]\\w*)\\s*\\(")
+	var regex := _regex("(?<![\\w.])(%s)\\s*\\.\\s*([A-Za-z_]\\w*)\\s*\\(" % CHAIN_EXPR)
 	var out: Array[Dictionary] = []
 	for found in regex.search_all(line):
 		var class_id := _resolve(found.get_string(1), types, corpus)

@@ -29,6 +29,14 @@ static func trespass(host: FixtureHost, rows: Array, count: int) -> void:
 	host.unrelated_note = "untouched by this aggregate"
 
 
+## An INDEXED receiver. Without index segments in the chain pattern these matched nothing at all —
+## not even as unresolved — which was the one genuinely silent false negative the review found.
+static func trespass_through_index(rows: Array[FixtureRow], host: FixtureHost, i: int) -> void:
+	rows[i].quantity_units = 0                              #@expect direct_assign
+	rows[i].tags_by_turn.append(0)                          #@expect container_mutate
+	host.rows_by_index[0].quantity_units = 0                #@expect unresolved_receiver
+
+
 ## An alias the validator cannot type is the false-negative hole. It is closed by failing loudly on
 ## the protected field NAME instead of pretending the write does not exist.
 static func trespass_through_untyped_alias(host: FixtureHost) -> void:
