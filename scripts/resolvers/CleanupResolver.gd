@@ -1,13 +1,13 @@
 class_name CleanupResolver
 extends RefCounted
 
-## Pure resolver for the D5-C cleanup phase (refactor_audit item 10, Phase C): resets the
+## Pure resolver for the D5-C cleanup phase (refactor_audit item 10, Phase C): clears the
 ## anti-ship per-turn flags, runs the end-of-cleanup victory census + verdict, and latches each
 ## brigade's this-turn activity into the prior-turn flags that next turn's IJFS detection posture
-## reads. Consumes NO dice. Mutates passed-in Resources (antiship systems, brigades) — the
-## sanctioned pattern; no autoload/engine access. GameState's wrapper owns
-## GameData.recompute_hex_ownership(), the game_over/winner/_china_has_landed state writes, and
-## the EventBus.cleanup_resolved emit.
+## reads. Consumes NO dice; no autoload/engine access. The anti-ship reset is delegated to that
+## aggregate's mutation authority (plan 0043) — this file does not write those rows itself; brigade
+## flags it still mutates directly. GameState's wrapper owns GameData.recompute_hex_ownership(),
+## the game_over/winner/_china_has_landed state writes, and the EventBus.cleanup_resolved emit.
 
 
 ## Count PLA (RED) vs ROC (GREEN) battalions on the hexes that count as "on Taiwan".
@@ -60,18 +60,11 @@ static func resolve(
 	turn_number: int,
 	china_has_landed_before: bool,
 ) -> Dictionary:
-	var reset_count := 0
-	for system_value in antiship_systems:
-		var system: AntishipSystem = system_value
-		system.fired = 0
-		system.expended = 0
-		system.destroyed_this_turn = 0
-		system.suppressed = false
-		system.active = false
-		reset_count += 1
+	var reset_count := AntishipTransitions.reset_transient_flags(antiship_systems)
 	# NOTE: TIV's Quantity_Moved/Quantity_Unavailable->Quantity_Available restore has no HexCombat
-	# equivalent (AntishipSystem has no moved/unavailable split; quantity is recomputed each turn).
-	# Brigade per-turn flags are reset in begin_next_turn, so cleanup does not duplicate them.
+	# equivalent — attempting to fire never takes a HexCombat launcher off the board, so there is no
+	# unavailable pool to restore. Brigade per-turn flags are reset in begin_next_turn, so cleanup
+	# does not duplicate them.
 
 	var census_counts := census(brigades, pending_pools, victory_config)
 	var china_has_landed := china_has_landed_before or int(census_counts[Brigade.TEAM_KEY_RED]) > 0

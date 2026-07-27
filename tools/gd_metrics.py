@@ -64,6 +64,9 @@ DEP_CEILINGS = {
     "scripts/resolvers/ReinforcementPhases.gd": 22,
     # FiresPhases.gd (plan 0038 step 2): owns IJFS + the anti-ship/mine crossing defence. Same
     # reasoning as ReinforcementPhases — ceilinged from birth. Measured 14 at commit time.
+    # Plan 0043 held it at 14 by a one-for-one swap, not a bump: `Theaters` left (its only remaining
+    # caller re-derived a map GameData already holds, so the file was deleted) and the anti-ship
+    # mutation authority `AntishipTransitions` took its place.
     "scripts/resolvers/FiresPhases.gd": 14,
     # TurnClosure.gd (plan 0038 step 3): the end-of-turn accounting pair (supply bills who fought,
     # cleanup censuses who is left). Measured 7 at commit time.

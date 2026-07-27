@@ -75,7 +75,8 @@ static func allocate_firing_to_rows(qty_available_list: Array, total_firing: int
 
 ## Build row-level intended firing allocations plus destroyed-system firing totals.
 ## Returns {"allocation_plan": Array[Dictionary], "destroyed_firing_plan": Dictionary}.
-## Does NOT mutate `systems`; resolve_launch_attrition applies inventory effects by row_idx.
+## Reads `systems` and mutates nothing: an allocation entry names its row by (to, type), which is
+## the row identity AntishipLoaders aggregates on, and AntishipTransitions applies the result.
 static func build_firing_plan(
 		systems: Array,
 		ijfs_destroyed: Dictionary,
@@ -126,7 +127,6 @@ static func build_firing_plan(
 			if intended <= 0:
 				continue
 			allocation_plan.append({
-				"row_idx": idx,
 				"to": loc,
 				"type": type_key,
 				"type_key": type_key,
@@ -141,10 +141,11 @@ static func build_firing_plan(
 
 # --- resolve_launch_attrition (services/antiship_launch_attrition.py) ----------------------------
 
-## Resolve per-launcher pre/post launch kills and mutate the AntishipSystem rows (by row_idx).
-## Returns {"systems_fired": Array[Dictionary], "launch_attrition": Array[Dictionary]}.
+## Resolve per-launcher pre/post launch kills. PURE: it rolls the dice and reports, and writes
+## nothing — AntishipTransitions turns the reported destruction into losses (plan 0043).
+## Returns {"systems_fired": Array[Dictionary], "launch_attrition": Array[Dictionary],
+## "outcomes": Array[AntishipLaunchOutcome]}.
 static func resolve_launch_attrition(
-		systems: Array,
 		allocation_plan: Array,
 		destroyed_firing_plan: Dictionary,
 		config: Dictionary,
@@ -152,17 +153,16 @@ static func resolve_launch_attrition(
 	var grouped: Dictionary = {}
 	for entry in allocation_plan:
 		# Rolls happen per entry in allocation-plan order (the port's draw-order contract).
-		var attrition := _attrit_allocation_entry(systems, entry, config, dice)
+		var attrition := _attrit_allocation_entry(entry, config, dice)
 		_accumulate_attrition_group(grouped, attrition)
 
 	var meta := _report_key_meta(grouped, destroyed_firing_plan)
 	return _build_attrition_reports(_sorted_report_keys(meta), meta, grouped, destroyed_firing_plan)
 
 
-## One allocation-plan entry: per-shot detection/intercept rolls, then the sanctioned mutation of
-## the fired AntishipSystem row. Returns the tallies keyed for grouping.
-static func _attrit_allocation_entry(systems: Array, entry: Dictionary, config: Dictionary, dice: Dice) -> Dictionary:
-	var row_idx := int(entry["row_idx"])
+## One allocation-plan entry: the per-shot detection/intercept rolls. Returns the tallies keyed for
+## grouping.
+static func _attrit_allocation_entry(entry: Dictionary, config: Dictionary, dice: Dice) -> Dictionary:
 	var attempted := int(entry["attempted_firing"])
 
 	var type_key := int(entry["type_key"])
@@ -171,9 +171,6 @@ static func _attrit_allocation_entry(systems: Array, entry: Dictionary, config: 
 	var p_destroy_if_detected := float(type_cfg.get("p_destroy_if_detected", 0.0))
 	var p_destroy := clampf(p_detect * p_destroy_if_detected, 0.0, 1.0)
 	var p_intercept_before_launch := clampf(float(type_cfg.get("p_intercept_before_launch", 0.0)), 0.0, 1.0)
-
-	var system: AntishipSystem = systems[row_idx]
-	system.active = true
 
 	var launched := 0
 	var prelaunch_destroyed := 0
@@ -188,12 +185,6 @@ static func _attrit_allocation_entry(systems: Array, entry: Dictionary, config: 
 		else:
 			postlaunch_destroyed += 1
 			launched += 1
-
-	system.quantity = maxi(0, system.quantity - attempted)
-	system.fired += launched
-	system.expended += launched
-	system.destroyed_this_turn += prelaunch_destroyed + postlaunch_destroyed
-	system.destroyed += prelaunch_destroyed + postlaunch_destroyed
 
 	return {
 		"to": int(entry["to"]),
@@ -248,12 +239,15 @@ static func _sorted_report_keys(meta: Dictionary) -> Array:
 	return sorted_keys
 
 
-## Shape the two output lists: systems_fired (crossing input) and launch_attrition (the ledger).
+## Shape the three output lists: systems_fired (crossing input), launch_attrition (the human-readable
+## ledger) and outcomes (the typed receipts AntishipTransitions applies). All three are built in the
+## same sorted key order, so the ledger and the state change can always be read side by side.
 static func _build_attrition_reports(
 		sorted_keys: Array, meta: Dictionary, grouped: Dictionary,
 		destroyed_firing_plan: Dictionary) -> Dictionary:
 	var systems_fired: Array = []
 	var launch_attrition: Array = []
+	var outcomes: Array[AntishipLaunchOutcome] = []
 	for key in sorted_keys:
 		var key_meta: Array = meta[key]
 		var summary: Dictionary = grouped.get(key, {
@@ -286,11 +280,24 @@ static func _build_attrition_reports(
 				"postlaunch_destroyed": int(summary["postlaunch_destroyed"]),
 				"launched": int(summary["available_firing"]),
 			})
+			outcomes.append(_outcome_from(summary, int(key_meta[0]), int(key_meta[1])))
 
 	return {
 		"systems_fired": systems_fired,
 		"launch_attrition": launch_attrition,
+		"outcomes": outcomes,
 	}
+
+
+static func _outcome_from(summary: Dictionary, to_number: int, type_id: int) -> AntishipLaunchOutcome:
+	var outcome := AntishipLaunchOutcome.new()
+	outcome.to_number = to_number
+	outcome.type_id = type_id
+	outcome.attempted = int(summary["attempted_firing"])
+	outcome.launched = int(summary["available_firing"])
+	outcome.prelaunch_destroyed = int(summary["prelaunch_destroyed"])
+	outcome.postlaunch_destroyed = int(summary["postlaunch_destroyed"])
+	return outcome
 
 
 # --- helpers -------------------------------------------------------------------------------------

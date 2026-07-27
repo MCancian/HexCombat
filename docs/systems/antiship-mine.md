@@ -8,8 +8,9 @@ Resolves **Green coastal anti-ship missile strikes** against the **Red amphibiou
 
 | File | Role |
 |---|---|
-| `scripts/resolvers/AntishipResolver.gd` | Pure resolver (Phase C): `resolve()` — applies the IJFS writeback, builds the firing plan, resolves launch attrition/crossing/mines, converts ship losses to BNs lost at sea. Read its header for the purity boundary with `GameState`. |
+| `scripts/resolvers/AntishipResolver.gd` | Pure resolver (Phase C): `resolve()` — derives the firing percentages from the post-IJFS establishment, builds the firing plan, resolves launch attrition/crossing/mines, converts ship losses to BNs lost at sea. Writes no anti-ship state; read its header for the purity boundary. |
 | `scripts/resolvers/FiresPhases.gd` | Thin wrapper (plan 0038): `resolve_antiship_turn(dice)` derives the independent substream, materializes the TO-adjacency map, delegates to `AntishipResolver.resolve()`, then assigns `ship_reserve`/`fleet` fields, calls `register_ship_losses`, and owns the `EventBus.antiship_resolved` emit. `GameState` forwards to it under the same method name. |
+| `scripts/transitions/AntishipTransitions.gd` | The establishment's mutation authority (§10): the only writer of the `AntishipSystem` rows. |
 | `scripts/AntishipCalculator.gd` | D3-B2 firing-plan + launch attrition |
 | `scripts/AntishipCrossing.gd` | D3-B3 6-stage crossing-damage model |
 | `scripts/AntishipMagazine.gd` | Magazine/ammo reservation + deduction |
@@ -124,25 +125,32 @@ TIV's separate `mine_warfare_service.py` (great-circle `offset_coordinate_meters
 
 The pipeline runs inside the pure resolver `scripts/resolvers/AntishipResolver.gd` (Phase C of the
 GameState decomposition — read its header for the full purity boundary). `GameState.resolve_antiship_turn`
-is now a thin wrapper: derive the independent `"antiship:<turn>"` substream, materialize the
-TO-adjacency map (Theaters reads the GameData autoload internally, so this must happen in the
-wrapper), call `AntishipResolver.resolve()`, then assign the returned `ship_reserve`/`fleet`
-fields, call `register_ship_losses`, and emit `EventBus.antiship_resolved`.
+is now a thin wrapper over the `FiresPhases` coordinator: derive the independent `"antiship:<turn>"`
+substream, have `AntishipTransitions` apply the IJFS effects to the arsenal, pass `GameData`'s
+theater maps in as plain data (the resolver never reaches for an autoload), call
+`AntishipResolver.resolve()`, hand the launch outcomes it reports back to `AntishipTransitions`, then
+assign the returned `ship_reserve`/`fleet` fields, call `register_ship_losses`, and emit
+`EventBus.antiship_resolved`.
 
 ```
-IJFS writeback (destroyed/suppressed) ──┐
-                                          v
-  AntishipResolver.resolve(...)
+IJFS writeback (cumulative destroyed / this-cycle suppressed)
+    │
+    └─> AntishipTransitions.apply_ijfs_effects()   ← the ONLY writer of the establishment
+          │
+          v
+  AntishipResolver.resolve(...)   (reads the establishment; writes nothing)
     │
     ├─1. Gather BNs at sea → target beaches → target TOs
     │
-    ├─2. Build firing_percentages from IJFS writeback + C2 suppression
+    ├─2. Build firing_percentages from surviving quantity + suppressed_now + C2 suppression
     │
     ├─3. AntishipCalculator.build_firing_plan()  ← ── magazine=null (not wired)
     │      → allocation_plan
     │
-    ├─4. AntishipCalculator.resolve_launch_attrition()
-    │      → systems_fired, launch_attrition
+    ├─4. AntishipCalculator.resolve_launch_attrition()   (pure — rolls and reports)
+    │      → systems_fired, launch_attrition, outcomes
+    │        (outcomes go back to AntishipTransitions.apply_launch_attrition()
+    │         AFTER the resolver returns, booking the permanent launcher losses)
     │
     ├─5. build_sent_fleet() → sent snapshots (crossing wave)
     │
@@ -167,7 +175,41 @@ IJFS writeback (destroyed/suppressed) ──┐
 
 Feeds from: IJFS (Green system destroyed/suppressed writeback). Feeds into: offload (survivors land; `pending_lost_at_sea` threads BN losses to the D0-C seam).
 
-## 10. TIV-Port Fidelity Notes
+## 10. State & Authority
+
+The aggregate is the **Green anti-ship establishment**: the `AntishipSystem` rows (one per
+`(to_number, type_id)`) plus the container-level projection the IJFS targets, held on
+`GameStateData`.
+
+Its **authority** — the only production writer of those rows — is
+`scripts/transitions/AntishipTransitions.gd`. Calculators return outcomes; the authority applies
+them. Its operation-specific receipt type is `AntishipLaunchOutcome` (`scripts/model/`), what one
+crossing's launch attrition did to one row: attempted, launched, and the pre-/post-launch kills.
+
+The exact protected-field and writer lists live in `tools/mutation_authority_manifest.json` and are
+enforced by `tools/validate_mutation_authority.gd`. They are deliberately **not** repeated here.
+
+What the authority guarantees, and why it matters to the model rather than to the code:
+
+- Losses are kept per SOURCE. IJFS kills arrive as a total that is cumulative across IJFS days, so
+  they are assigned; launch-attrition kills arrive one crossing at a time, so they accumulate.
+  Overwriting one with the other is precisely the bug plan 0043 removed — launchers destroyed while
+  firing used to be alive again at the next crossing.
+- Surviving strength is a projection, never independent state:
+  `destroyed = min(ijfs_cumulative + launch_cumulative, original_quantity)` and
+  `quantity = original_quantity − destroyed`. The **sum is clamped, not asserted**: the IJFS bombs
+  container bins while launch attrition kills deployed launchers, so the two counts are different
+  projections of one arsenal and can legitimately double-count the same physical launcher in a long
+  campaign. Each source individually may not exceed the establishment, and neither may move
+  backwards; both fail loudly.
+- Attempting to fire consumes nothing. A launcher that shot and lived is on the line next crossing.
+- Suppression (`suppressed_now`) is a COUNT of launchers pinned by the current IJFS cycle, because
+  firing capacity falls in proportion to it. It limits firing and is cleared at cleanup; it never
+  reduces surviving strength.
+- One crossing resolves per turn, and the turn is the crossing's identity: applying the same turn's
+  launch outcomes twice is refused rather than absorbed.
+
+## 11. TIV-Port Fidelity Notes
 
 **Orchestrator-verified (2026-06-29):** the crossing pipeline mirrors TIV `antiship_crossing.py`
 stage-for-stage (`_resolve_launches`/`_apply_interception`/`_apply_homing`/`_resolve_damage`…), and the
@@ -182,7 +224,7 @@ Two sources feed D3: **TIV** (`antiship_crossing.py`, `antiship_firing_plan.py`,
 |---|---|
 | **`AntishipCalculator.build_firing_plan`** | **1:1 port** of `antiship_firing_plan.py` — allocation, destroyed-firing totals, type-key encoding adapted for GDScript dict limits (string `<to>:<type>` vs TIV's tuple keys). |
 | **`AntishipCalculator.allocate_firing_to_rows`** | **1:1 port** of `antiship_allocation.allocate_firing_to_rows` — proportional largest-remainder. |
-| **`AntishipCalculator.resolve_launch_attrition`** | **1:1 port** of `antiship_launch_attrition.py` — detect→destroy draw order, per-type config, `p_intercept_before_launch`. The `Final_Attrition_Pct` DB column not ported. |
+| **`AntishipCalculator.resolve_launch_attrition`** | **1:1 port** of `antiship_launch_attrition.py` — detect→destroy draw order, per-type config, `p_intercept_before_launch`. The `Final_Attrition_Pct` DB column not ported. HexCombat divergence (plan 0043): it is PURE — it reports `AntishipLaunchOutcome` rows instead of mutating the establishment, and TIV's `Quantity_Moved`/`Quantity_Unavailable` bookkeeping has no equivalent because attempting to fire never takes a HexCombat launcher off the board. |
 | **`AntishipCrossing`** | **Count-based port** — all 6 stages match `antiship_crossing.py` count-based equivalents. Per-hull variants (escort magazine tracking, `ship_readiness_policy`) are **deferred** (PLAN.md Decision 2026-06-27 D3-B3). RNG formula + draw order mirrored but NOT Python's bitstream. |
 | **`AntishipMagazine`** | **1:1 port** of calculator-pure parts of `antiship_magazine_service.py` (reserve, cap, deduct). DB seed/load/persist functions not ported. |
 | **`MineWarfareService`** | **Port of `TaiwanDefenseRefactor/mine_warfare.py`** (geometric: `create_minefield`/`calculate_ship_path`/`count_dangerous_mines`(danger_radius=50)/`process_mine_hits`), adapted to the count-based per-turn fleet. The decoy-sponge / ascending-value transit ordering is HexCombat's adaptation of the user-requested "push a lane" premise (documented in `MineWarfareService.gd`'s header). **TIV's own `mine_warfare_service.py` (sweep-based, great-circle) is a different model and intentionally NOT the source** — a deliberate cross-repo design choice, not a discrepancy. Per-ship-type neutralization uses a per-category table (high/medium/low) → REFINE item in `port_audit.md`. |

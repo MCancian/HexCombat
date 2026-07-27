@@ -18,9 +18,10 @@ description: Template for adding a NEW game phase or mechanic to the decomposed 
 3. **Pure resolver** — `scripts/resolvers/<Phase>Resolver.gd`, `RefCounted`, explicit
    `static func resolve(<inputs>, dice) -> <TypedSummary>`. No autoload access, no EventBus, no
    Node. If it needs randomness: a **derived substream** (`dice.derive("<phase>:<context>")`),
-   never the base stream. **Check the body of any helper you pull in for hidden autoload reads**
-   (e.g. `Theaters` reads `GameData` internally) — if found, materialize what it returns as plain
-   data in the wrapper and pass that in instead.
+   never the base stream. **Check the body of any helper you pull in for hidden autoload reads** —
+   if found, materialize what it returns as plain data in the wrapper and pass that in instead.
+   (The long-standing example, `Theaters`, was deleted in plan 0043: its last caller was
+   re-deriving a map `GameData` already held, which is the other way this trap ends.)
 4. **Content data** — `data/<phase>/*.json` (+ scenario keys per `hexcombat-config-and-knobs`).
    Loaders fail loud on unknown/missing keys.
 5. **GameState wiring** — a thin `resolve_<phase>_turn()` wrapper: gathers inputs from state,

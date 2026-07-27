@@ -5,8 +5,9 @@ extends RefCounted
 ## persistent IJFS daily state — static targets + per-(TO,type) anti-ship targets + per-battalion
 ## Green maneuver targets, munitions, pairings, scenario, air classes, squadron force, SAM
 ## enrichment. No autoload access — the caller passes the anti-ship containers (build order:
-## anti-ship systems FIRST) and the live Green brigade list in; the GameState wrapper keeps the
-## _ensure_antiship_systems() ordering and the _ijfs_day = 0 reset.
+## anti-ship systems FIRST) and the live Green brigade list in. FiresPhases.rebuild_ijfs_state owns
+## that ordering, by asking the anti-ship authority for the establishment before building here, and
+## owns the _ijfs_day = 0 reset.
 
 ## Data sources (single source of truth — used only by this builder).
 const TARGETS_PATH := "res://data/ijfs/targets_master.json"

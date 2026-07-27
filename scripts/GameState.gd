@@ -89,12 +89,12 @@ var last_ijfs_summary: Dictionary:
 var last_ijfs_writeback: IjfsWriteback:
 	get: return data.last_ijfs_writeback
 	set(value): data.last_ijfs_writeback = value
+# Read-only: the arsenal is built and replaced only by its mutation authority (plan 0043), reached
+# through FiresPhases.reset_antiship_establishment. A setter here would be a public door around it.
 var antiship_systems: Array:
 	get: return data.antiship_systems
-	set(value): data.antiship_systems = value
 var antiship_containers: Array:
 	get: return data.antiship_containers
-	set(value): data.antiship_containers = value
 var lost_at_sea_accumulator: float:
 	get: return data.lost_at_sea_accumulator
 	set(value): data.lost_at_sea_accumulator = value
@@ -182,9 +182,7 @@ func reset_to_scenario() -> void:
 	data.last_ijfs_writeback = null
 	# Anti-ship systems are lazily (re)built on first use (resolve_ijfs_turn / resolve_antiship_turn),
 	# matching the IJFS state's lazy-load pattern; clearing here forces a fresh build per scenario.
-	data.antiship_systems = []
-	data.antiship_containers = []
-	data._antiship_built = false
+	FiresPhases.reset_antiship_establishment(data)
 	data.lost_at_sea_accumulator = 0.0
 	data.last_antiship_summary = null
 	data.last_sealift_sent_by_type = {}

@@ -2,14 +2,17 @@ class_name AntishipResolver
 extends RefCounted
 
 ## Pure resolver for the D3 anti-ship + mine-warfare phase (refactor_audit item 10, Phase C):
-## applies the IJFS writeback to the Green firing systems, builds the firing plan, resolves
+## derives the firing percentages from the post-IJFS establishment, builds the firing plan, resolves
 ## launch attrition, the crossing, and the geometric mine transit, then converts ship losses to
 ## BNs lost at sea. Receives the ALREADY-DERIVED "antiship:<turn>" substream — it never touches
-## the base combat stream. Mutations inside are the sanctioned Resource kind (AntishipSystem
-## quantity/destroyed, fleet ShipStates, ship_reserve entry "bns"); field reassignment
+## the base combat stream.
+##
+## It writes NO anti-ship state (plan 0043): the IJFS effects have already been applied by
+## AntishipTransitions before it is called, and the launch destruction it reports is returned as
+## typed AntishipLaunchOutcome rows for the same authority to apply afterwards. Field reassignment
 ## (ship_reserve, lost_at_sea_accumulator, pending_lost_at_sea, last_antiship_summary) and the
-## EventBus emit stay in GameState's wrapper. TO lookups arrive as plain maps because Theaters
-## reads the GameData autoload internally.
+## EventBus emit stay in the FiresPhases coordinator. TO lookups arrive as plain maps so this file
+## never reaches for the GameData autoload.
 
 ## Data sources (single source of truth — used only by this resolver).
 const CATALOG_PATH := "res://data/antiship/antiship_combat_catalog.json"
@@ -59,7 +62,7 @@ static func resolve(
 	var target_beaches: Array = target_areas["beaches"]
 	var target_tos: Array = target_areas["tos"]
 
-	var firing := _apply_writeback_to_systems(antiship_systems, writeback)
+	var firing := _firing_inputs(antiship_systems, writeback)
 
 	var crossing_config := AntishipLoaders.load_crossing_config(CROSSING_PATH)
 	var combat_catalog := AntishipLoaders.load_combat_catalog(CATALOG_PATH)
@@ -68,7 +71,7 @@ static func resolve(
 	var plan := AntishipCalculator.build_firing_plan(
 		antiship_systems, {}, firing["target_locations"], firing["firing_percentages"], {}, null)
 	var attrition := AntishipCalculator.resolve_launch_attrition(
-		antiship_systems, plan["allocation_plan"], plan["destroyed_firing_plan"],
+		plan["allocation_plan"], plan["destroyed_firing_plan"],
 		crossing_config["launch_attrition"], dice)
 	var systems_fired: Array = attrition["systems_fired"]
 	_append_off_island_strikes(systems_fired, crossing_config)
@@ -105,6 +108,7 @@ static func resolve(
 		"lost_ids": losses["lost_ids"],
 		"destroyed_by_type": destroyed_by_type,
 		"escort_sam_consumed": crossing.get("escort_sam_consumed", {}),
+		"launch_outcomes": attrition["outcomes"],
 		"bn_equiv_lost": int(losses["bn_equiv_lost"]),
 		"accumulator": float(losses["accumulator"]),
 	}
@@ -123,7 +127,7 @@ static func _collect_crossing_wave(crossing_reserve: Array) -> Dictionary:
 
 ## Append OFF-ISLAND firing rows to the on-island firing plan. These model ROC submarines /
 ## allied air / external ASM: they fire on the crossing wave EVERY turn independent of the
-## on-island IJFS writeback (no per-TO suppression, no launch attrition from _apply_writeback),
+## on-island establishment (no per-TO suppression, no launch attrition),
 ## and carry no `location`, so AntishipCrossing skips the range gate (whole-strait reach). This is
 ## the sustained toll the depleting on-island salvo lacks (plan 0028). Default systems_per_turn 0
 ## => no rows appended => byte-stable. The rows still run the full escort/terminal-defense gauntlet.
@@ -141,13 +145,14 @@ static func _no_wave_result(lost_at_sea_accumulator: float) -> Dictionary:
 		"lost_ids": [],
 		"destroyed_by_type": {},
 		"escort_sam_consumed": {},
+		"launch_outcomes": [],
 		"bn_equiv_lost": 0,
 		"accumulator": lost_at_sea_accumulator,
 	}
 
 
-## Sorted target beach ids and their TOs. Fail-loud beach->TO lookup (mirrors
-## Theaters.to_for_beach against the passed map).
+## Sorted target beach ids and their TOs. Fail-loud beach->TO lookup against the passed map: an
+## unknown beach means the scenario's theater data and its landing sites disagree.
 static func _target_areas_for(beach_set: Dictionary, beach_to_to: Dictionary) -> Dictionary:
 	var target_beaches: Array = []
 	var target_tos: Array = []
@@ -170,12 +175,11 @@ static func _target_areas_for(beach_set: Dictionary, beach_to_to: Dictionary) ->
 	return {"beaches": target_beaches, "tos": target_tos}
 
 
-## Apply the IJFS writeback to the Green firing systems: destroyed launchers are permanently
-## removed from quantity; suppressed launchers sit out this turn (reduced firing %). Mutates the
-## passed AntishipSystem Resources (the sanctioned kind). Returns the derived firing plan inputs
-## {"firing_percentages": key -> pct, "target_locations": sorted TO numbers}.
-static func _apply_writeback_to_systems(antiship_systems: Array, writeback: IjfsWriteback) -> Dictionary:
-	var ijfs_destroyed: Dictionary = writeback.antiship_destroyed_by_type if writeback != null else {}
+## Derive the firing-plan inputs from the establishment as it stands AFTER AntishipTransitions has
+## applied the IJFS effects: destroyed launchers are already gone from `quantity`, and suppressed
+## launchers sit out this crossing (reduced firing %). Reads only —
+## returns {"firing_percentages": key -> pct, "target_locations": sorted TO numbers}.
+static func _firing_inputs(antiship_systems: Array, writeback: IjfsWriteback) -> Dictionary:
 	var ijfs_suppressed: Dictionary = writeback.antiship_suppressed_by_type if writeback != null else {}
 	# TOs whose C2 (type 99) the IJFS suppressed lose over-the-horizon targeting: every surviving
 	# anti-ship system in that TO fires at C2_SUPPRESSED_FIRE_MULTIPLIER of capacity. Computed up
@@ -195,11 +199,6 @@ static func _apply_writeback_to_systems(antiship_systems: Array, writeback: Ijfs
 	for system_value in antiship_systems:
 		var system: AntishipSystem = system_value
 		var key := AntishipCalculator.encode_key(system.to_number, system.type_id)
-		# `killed` is the CUMULATIVE total destroyed across all IJFS days (see IjfsResolver
-		# writeback invariant), so set quantity from original_quantity - idempotent across turns.
-		var killed := int(ijfs_destroyed.get(key, 0))
-		system.quantity = maxi(0, system.original_quantity - killed)
-		system.destroyed = killed
 		if system.type_id == AntishipCalculator.SYSTEM_TYPE_C2:
 			continue
 		var available := maxi(0, system.quantity)

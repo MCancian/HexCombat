@@ -26,7 +26,7 @@ gameplay-relevant cycle:
 | `scripts/Dice.gd` | 37 | Abstract base: `roll_d100()`, `choose_indices()`, `randf()`, `weighted_choice()`, `weighted_choices()`, `shuffle_indices()`, `derive()` |
 | `scripts/SeededDice.gd` | 96 | Concrete: wraps Godot `RandomNumberGenerator` with a fixed seed. `derive(label)` creates an independent sub-stream via `hash(str(seed) + ":" + label)` |
 | `scripts/EventBus.gd` | 21 | Signals: `phase_changed`, `turn_resolved`, `combat_resolved`, `offload_resolved`, `supply_updated`, `ijfs_resolved`, `antiship_resolved`, `frontline_resolved`, `cleanup_resolved` |
-| `scripts/Theaters.gd` | 42 | Static TO helpers: `to_for_beach()`, `adjacent_tos()`, `all_tos()`, `are_adjacent()` — proxied via `GameData.beach_to_to` and `GameData.to_adjacency` |
+| `scripts/transitions/AntishipTransitions.gd` | 133 | The Green anti-ship establishment's mutation authority (plan 0043): the only writer of the `AntishipSystem` rows — builds/resets the arsenal, applies IJFS effects and one crossing's launch destruction, clears the per-turn flags |
 | `scripts/TurnEventLog.gd` | 70 | Pure function `build(state)` → `Array[TurnEvent]` — non-invasive log derived from GameState buffers post-resolve |
 | `scripts/model/TurnResult.gd` | 33 | Typed result resource: `turn_number`, `contested_hexes`, `combat_summaries`, `ijfs_summary`, `antiship_summary`, `events`, `game_over`, `winner` |
 | `scripts/model/TurnEvent.gd` | 11 | Single event resource: `seq`, `kind`, `hex_id`, `team`, `data` |

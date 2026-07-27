@@ -27,20 +27,16 @@ static func resolve_ijfs_turn(state: GameStateData, dice: Dice) -> Dictionary:
 	return ledgers
 
 
-## Lazily build the persistent anti-ship Green firing systems (aggregated by (to_number, type_id)).
-## Shared by resolve_ijfs_turn (IJFS targeting) and resolve_antiship_turn (firing).
-static func ensure_antiship_systems(state: GameStateData) -> void:
-	if state._antiship_built:
-		return
-	var built := GameStateBuilder.build_antiship_systems()
-	state.antiship_systems = built["systems"]
-	state.antiship_containers = built["containers"]
-	state._antiship_built = true
+## Scenario reset of the Green anti-ship arsenal, for GameState's reset_to_scenario. Thin pass-through
+## to the establishment's authority, in the same style as rebuild_ijfs_state below — GameState reaches
+## the fires phases' state through this module, never around it.
+static func reset_antiship_establishment(state: GameStateData) -> void:
+	AntishipTransitions.reset_establishment(state)
 
 
 static func rebuild_ijfs_state(state: GameStateData) -> void:
 	# Anti-ship systems must exist first (their containers seed the per-(TO,type) IJFS targets).
-	ensure_antiship_systems(state)
+	AntishipTransitions.ensure_establishment(state)
 	state.ijfs_state = GameStateBuilder.build_ijfs_state(
 		state.antiship_containers, GameData.brigades, GameData.mobilization_holdback)
 	state._ijfs_day = 0
@@ -65,8 +61,12 @@ static func apply_ijfs_maneuver_casualties(state: GameStateData) -> void:
 ## (Green systems suppressed/destroyed first) and before offload (only survivors land). Draws from an
 ## INDEPENDENT substream so the ground-combat golden invariant stays byte-stable.
 static func resolve_antiship_turn(state: GameStateData, dice: Dice) -> Dictionary:
-	ensure_antiship_systems(state)
+	AntishipTransitions.ensure_establishment(state)
 	state.last_antiship_summary = null
+	# The IJFS has already fired this turn; book its cumulative kills and this cycle's suppression
+	# onto the establishment BEFORE the firing plan reads it. Only the authority writes those rows —
+	# the resolver below reads the result and reports what its own attrition destroyed (plan 0043).
+	AntishipTransitions.apply_ijfs_effects(state.antiship_systems, state.last_ijfs_writeback)
 
 	# Independent substream (same isolation pattern as resolve_ijfs_turn). SeededDice.derive is a
 	# pure hash of (seed, label) — it consumes no parent-stream state, so deriving before the
@@ -77,12 +77,6 @@ static func resolve_antiship_turn(state: GameStateData, dice: Dice) -> Dictionar
 	else:
 		as_dice = SeededDice.new(hash("antiship:%d" % state.turn_number))
 
-	# Theaters reads the GameData autoload internally, so the TO maps are materialized here and
-	# passed into the pure resolver as plain data.
-	var to_adjacency: Dictionary = {}
-	for to_num in GameData.active_tos:
-		to_adjacency[to_num] = Theaters.adjacent_tos(to_num)
-
 	# Only the BNs sailing this turn (the sealift "sent" cohorts) cross and take attrition; offloading
 	# BNs are safe ashore. Slice that crossing wave out of the full reserve (plan 0004 D3).
 	var crossing_reserve := crossing_reserve_from_sent_cohorts(state)
@@ -91,12 +85,14 @@ static func resolve_antiship_turn(state: GameStateData, dice: Dice) -> Dictionar
 
 	var outcome := AntishipResolver.resolve(
 		state.turn_number, crossing_reserve, state.antiship_systems, state.last_ijfs_writeback,
-		state.last_sealift_sent_by_type, GameData.ship_defs, GameData.beach_to_to, GameData.active_tos, to_adjacency,
-		state.lost_at_sea_accumulator, state.sealift_state.escort_sam, as_dice)
+		state.last_sealift_sent_by_type, GameData.ship_defs, GameData.beach_to_to, GameData.active_tos,
+		GameData.to_adjacency, state.lost_at_sea_accumulator, state.sealift_state.escort_sam, as_dice)
 	if outcome["summary"] == null:
 		# Nothing crossed this turn: no fires, no state to apply (pending_lost_at_sea keeps its value).
 		return {}
 
+	# Book what the crossing's launch attrition destroyed. The resolver only reported it.
+	AntishipTransitions.apply_launch_attrition(state, outcome["launch_outcomes"])
 	state.lost_at_sea_accumulator = float(outcome["accumulator"])
 	# Apply hull losses to the sealift cohorts (carriers) + the fleet, then drop drowned BNs from the
 	# reserve AND their cohorts, and flip the surviving crossers to offloading (plan 0004 D3).

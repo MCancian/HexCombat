@@ -50,6 +50,11 @@ func _validate_systems() -> void:
 		total += system.quantity
 		# Aggregation invariant: at most one row per (TO, type_id).
 		_assert_true("original_quantity seeded for %d/%d" % [system.to_number, system.type_id], system.original_quantity == system.quantity)
+		# Establishment equation (plan 0043): a freshly built row has taken no losses of either kind,
+		# and its two projections agree with AntishipSystem's own definition of them.
+		_assert_equal_int("fresh row %d/%d ijfs_destroyed_cumulative" % [system.to_number, system.type_id], system.ijfs_destroyed_cumulative, 0)
+		_assert_equal_int("fresh row %d/%d launch_destroyed_cumulative" % [system.to_number, system.type_id], system.launch_destroyed_cumulative, 0)
+		_assert_equal_string("establishment equation holds for %d/%d" % [system.to_number, system.type_id], system.establishment_error(), "")
 
 	for type_id in EXPECTED_TYPE_TOTALS.keys():
 		_assert_equal_int("type %d total platforms" % type_id, int(by_type.get(type_id, -1)), int(EXPECTED_TYPE_TOTALS[type_id]))
@@ -104,6 +109,11 @@ func _assert_true(label: String, value: bool) -> void:
 func _assert_equal_int(label: String, actual: int, expected: int) -> void:
 	if actual != expected:
 		_fail("%s: expected %d, got %d" % [label, expected, actual])
+
+
+func _assert_equal_string(label: String, actual: String, expected: String) -> void:
+	if actual != expected:
+		_fail("%s: expected \"%s\", got \"%s\"" % [label, expected, actual])
 
 
 func _fail(message: String) -> void:

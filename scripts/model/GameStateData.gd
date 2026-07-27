@@ -63,6 +63,10 @@ var antiship_systems: Array = []
 # Container-level view of the same arsenal (one entry per platform-group bin) — IJFS target source.
 var antiship_containers: Array = []
 var _antiship_built: bool = false
+# The turn whose launch attrition has already been booked onto the arsenal (-1 = none yet). At most
+# one crossing resolves per turn, so this is the crossing's identity: it is what lets the anti-ship
+# mutation authority refuse to apply the same result twice and double-kill launchers (plan 0043).
+var _antiship_launch_turn: int = -1
 # Fractional BN-equiv owed from ship losses, carried across turns (ShipLoadingModel.resolve_bn_losses).
 var lost_at_sea_accumulator: float = 0.0
 var last_antiship_summary: AntishipSummary = null

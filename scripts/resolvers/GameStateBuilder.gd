@@ -6,7 +6,8 @@ extends RefCounted
 ## the built typed object; GameState.gd's `_rebuild_*` wrappers assign the result onto `data`. This
 ## is the seam that keeps GameState.gd's dependency count down: the per-type builders
 ## (ShipReserveBuilder, SealiftStateBuilder, FleetBuilder, SupplyStateBuilder,
-## InfrastructureStateBuilder, AntishipSystemsBuilder, IjfsStateBuilder) are consumed here instead.
+## InfrastructureStateBuilder, IjfsStateBuilder) are consumed here instead. The anti-ship arsenal is
+## the exception: it is built by its mutation authority (AntishipTransitions), not from here.
 
 
 static func build_ship_reserve(red_ship_reserve: Array, brigades: Dictionary) -> Array:
@@ -36,12 +37,6 @@ static func build_supply_state(red_dos_start: float) -> SupplyState:
 
 static func build_infrastructure_state(infrastructure: Dictionary) -> InfrastructureState:
 	return InfrastructureStateBuilder.build(infrastructure)
-
-
-## Returns {"systems": Array, "containers": Array} — the persistent Green anti-ship arsenal, keyed
-## the same way AntishipSystemsBuilder.build() already returns it.
-static func build_antiship_systems() -> Dictionary:
-	return AntishipSystemsBuilder.build()
 
 
 ## brigades: the full GameData.brigades map; filtered here to Green, non-destroyed (IJFS targets

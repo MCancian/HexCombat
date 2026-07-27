@@ -2,8 +2,10 @@ extends GdUnitTestSuite
 
 # D3-B2 — anti-ship firing plan. Mirrors TIV tests/python/unit/test_antiship_firing_plan.py
 # (the two magazine-gating cases), plus direct coverage of allocate_firing_to_rows (proportional
-# largest-remainder) and resolve_launch_attrition (scripted-dice draw order + inventory mutation),
-# which the pytest exercises only through the calculator/integration path.
+# largest-remainder) and resolve_launch_attrition (scripted-dice draw order + the typed outcome
+# rows it reports), which the pytest exercises only through the calculator/integration path.
+# What those outcomes DO to the establishment belongs to AntishipTransitions and is covered in
+# tests/transitions/antiship_establishment_test.gd.
 
 const MAG_PATH := "res://data/antiship/antiship_magazine_defaults.json"
 
@@ -84,7 +86,7 @@ func test_destroyed_systems_fire_via_destroyed_fire_percentage() -> void:
 
 	var dice := ScriptedDice.new([])
 	var result := AntishipCalculator.resolve_launch_attrition(
-		systems, plan["allocation_plan"], plan["destroyed_firing_plan"], {}, dice)
+		plan["allocation_plan"], plan["destroyed_firing_plan"], {}, dice)
 	var fired: Array = result["systems_fired"]
 	assert_int(fired.size()).is_equal(1)
 	assert_int(int(fired[0]["available_firing"])).is_equal(0)
@@ -126,7 +128,7 @@ func test_resolve_launch_attrition_draw_order_and_inventory() -> void:
 	# Shot 4: 0.5 >= 0.35 -> launched.
 	var dice := ScriptedDice.new([], [], [0.9, 0.1, 0.1, 0.1, 0.9, 0.5])
 	var result := AntishipCalculator.resolve_launch_attrition(
-		systems, plan["allocation_plan"], plan["destroyed_firing_plan"], config, dice)
+		plan["allocation_plan"], plan["destroyed_firing_plan"], config, dice)
 
 	var fired: Array = result["systems_fired"]
 	assert_int(fired.size()).is_equal(1)
@@ -142,11 +144,20 @@ func test_resolve_launch_attrition_draw_order_and_inventory() -> void:
 	assert_int(int(attr[0]["prelaunch_destroyed"])).is_equal(1)
 	assert_int(int(attr[0]["postlaunch_destroyed"])).is_equal(1)
 
-	# Inventory mutation on the AntishipSystem row.
+	# The typed receipt AntishipTransitions applies. The calculator itself writes NOTHING: the row it
+	# was built from is still untouched (plan 0043).
+	var outcomes: Array = result["outcomes"]
+	assert_int(outcomes.size()).is_equal(1)
+	var outcome: AntishipLaunchOutcome = outcomes[0]
+	assert_int(outcome.to_number).is_equal(3)
+	assert_int(outcome.type_id).is_equal(23)
+	assert_int(outcome.attempted).is_equal(4)
+	assert_int(outcome.launched).is_equal(3)
+	assert_int(outcome.prelaunch_destroyed).is_equal(1)
+	assert_int(outcome.postlaunch_destroyed).is_equal(1)
+	assert_int(outcome.destroyed_total()).is_equal(2)
+
 	var sys: AntishipSystem = systems[0]
-	assert_bool(sys.active).is_true()
-	assert_int(sys.quantity).is_equal(6)               # 10 - 4 attempted
-	assert_int(sys.fired).is_equal(3)
-	assert_int(sys.expended).is_equal(3)
-	assert_int(sys.destroyed_this_turn).is_equal(2)    # pre + post
-	assert_int(sys.destroyed).is_equal(2)
+	assert_bool(sys.active).is_false()
+	assert_int(sys.quantity).is_equal(10)
+	assert_int(sys.destroyed).is_equal(0)
