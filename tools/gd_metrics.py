@@ -56,21 +56,21 @@ DEP_CEILINGS = {
     # 22 -> 20 (plan 0038 step 3): supply + cleanup moved to TurnClosure, taking CleanupResolver,
     # SupplyResolver and Battalion. What is left is the turn ORDER plus movement/combat/FEBA/frontline.
     # 20 -> 18 (plan 0041): FrontlinePhase extracted from TurnConductor.
-    "scripts/resolvers/TurnConductor.gd": 18,
+    "scripts/phases/TurnConductor.gd": 18,
     # ReinforcementPhases.gd (plan 0038): owns the four "force arrives" phases and their resolvers.
     # Ceilinged from birth because a phase-owning module is exactly where a god-object would be
     # laundered back in — a NEW arrival phase belongs here (and may justify a small bump), an
     # unrelated responsibility does not. Measured 22 at commit time.
-    "scripts/resolvers/ReinforcementPhases.gd": 22,
+    "scripts/phases/ReinforcementPhases.gd": 22,
     # FiresPhases.gd (plan 0038 step 2): owns IJFS + the anti-ship/mine crossing defence. Same
     # reasoning as ReinforcementPhases — ceilinged from birth. Measured 14 at commit time.
     # Plan 0043 held it at 14 by a one-for-one swap, not a bump: `Theaters` left (its only remaining
     # caller re-derived a map GameData already holds, so the file was deleted) and the anti-ship
     # mutation authority `AntishipTransitions` took its place.
-    "scripts/resolvers/FiresPhases.gd": 14,
+    "scripts/phases/FiresPhases.gd": 14,
     # TurnClosure.gd (plan 0038 step 3): the end-of-turn accounting pair (supply bills who fought,
     # cleanup censuses who is left). Measured 7 at commit time.
-    "scripts/resolvers/TurnClosure.gd": 7,
+    "scripts/phases/TurnClosure.gd": 7,
 }
 
 FUNC_RE = re.compile(r"^(\s*)(static\s+)?func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*)$")

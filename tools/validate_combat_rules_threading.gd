@@ -44,7 +44,7 @@ extends SceneTree
 
 const RULES_SOURCE := "res://scripts/model/CombatRules.gd"
 const RULES_CLASS := "CombatRules"
-const POPULATOR_SOURCE := "res://scripts/resolvers/TurnConductor.gd"
+const POPULATOR_SOURCE := "res://scripts/phases/TurnConductor.gd"
 const POPULATOR_FUNC := "resolve_combat_at"
 const AUTOLOAD_SOURCE := "res://scripts/GameData.gd"
 const AUTOLOAD_ID := "GameData"

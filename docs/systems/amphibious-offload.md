@@ -21,7 +21,7 @@ anti-ship crossing model and converts ship losses into BN casualties.
 | `data/infrastructure.json` | 5 ports + 8 main-island airbridges (explicit `hex_id` + `to_number`) |
 | `data/offload_weights.json` | Per-BN-type transport weights + bn_class map + multiplier matrix |
 | `scripts/ShipLoadingModel.gd` | BN-to-ship fleet derivation (forward) and ship-loss-to-BN-casualty (backward) |
-| `scripts/resolvers/ReinforcementPhases.gd` | `resolve_offload_turn()` / `resolve_sealift_turn()` orchestrators (plan 0038); `GameState` forwards to them and owns `ship_reserve` state + `_rebuild_ship_reserve()` expansion |
+| `scripts/phases/ReinforcementPhases.gd` | `resolve_offload_turn()` / `resolve_sealift_turn()` orchestrators (plan 0038); `GameState` forwards to them and owns `ship_reserve` state + `_rebuild_ship_reserve()` expansion |
 | `scripts/model/BeachDef.gd` | Beach `Resource` — offload_rate, floating_piers, jackup_barge, lat/lng, advance_direction |
 | `data/beaches.json` | 9 beach sites with offload_rate in short tons/day and infrastructure counts |
 | `data/offload_rates.json` | Base rates: beach_base=4400, jackup_barge=4400, floating_pier=2200, port/airbridge variants |
@@ -72,11 +72,11 @@ static func build_sent_snapshots(bn_count, carriers, screen) -> Dictionary   # l
 static func resolve_bn_losses(destroyed_by_ship_type, capacity_by_type,
   bns_at_sea, accumulator, dice) -> Dictionary                               # line 119
 
-# ReinforcementPhases (scripts/resolvers/ReinforcementPhases.gd) — the offload/sealift phases
+# ReinforcementPhases (scripts/phases/ReinforcementPhases.gd) — the offload/sealift phases
 static func ship_reserve_priority_order(state: GameStateData) -> Array[String]
 static func resolve_offload_turn(state: GameStateData, dice: Dice) -> Dictionary
 
-# FiresPhases (scripts/resolvers/FiresPhases.gd) — the crossing that feeds the offload seam
+# FiresPhases (scripts/phases/FiresPhases.gd) — the crossing that feeds the offload seam
 static func register_ship_losses(state: GameStateData, bn_equiv_lost: int) -> void
 
 # GameState (scripts/GameState.gd) — the autoload façade external callers use

@@ -56,7 +56,7 @@ cannot fly while the rest of the formation sails.
 | `scripts/model/AirInsertionSummary.gd` | Per-turn result: `drops`, `rejected`, battalion/cap totals, `attrition_by_class`. `to_dict()` projects drops onto `DROP_REPORT_KEYS` — the per-battalion manifests are application detail, not contract. |
 | `scripts/resolvers/AirInsertionStateBuilder.gd` | Pure builder: pool from the OOB, caps and `attrition_config` from the scenario block. Unknown config keys fail loud. |
 | `scripts/resolvers/AirInsertionResolver.gd` | Pure resolver: `resolve()` flies the packets, `attrition_rate()` is the loss model, `threat_from_ijfs_summary()` is the one place that knows which IJFS fields the air path reads, `isolated_brigades()` is the supply-corridor flood. |
-| `scripts/resolvers/ReinforcementPhases.gd` | `resolve_air_insertion_turn()` (the wrapper: casualties, landings, ownership, EventBus), `hex_can_receive_insertion()`, `isolated_air_landed_brigades()`, `red_lodgement_hexes()`. |
+| `scripts/phases/ReinforcementPhases.gd` | `resolve_air_insertion_turn()` (the wrapper: casualties, landings, ownership, EventBus), `hex_can_receive_insertion()`, `isolated_air_landed_brigades()`, `red_lodgement_hexes()`. |
 | `scripts/resolvers/OrderValidator.gd` | `add_air_insert_order()` + `eligible_air_insert_brigades()`. |
 | `scripts/resolvers/CleanupResolver.gd` | `census()` subtracts battalions not yet ashore — from the ship reserve **and** the air pool. |
 | `scripts/resolvers/SealiftStateBuilder.gd` | Excludes air-lifted brigades from the follow-on auto-seed (the corps never queues for a hull). |
