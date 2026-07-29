@@ -17,7 +17,7 @@ fires) and ground-casualty accumulation (open half).
 | `scripts/ijfs/IjfsDetection.gd` | Satellite (phase1) + aircraft (phase2) ISR detection | `detection.py`, `isr_sources.py`, `antiship_exposure.py`, `math_utils.py` |
 | `scripts/ijfs/IjfsTargeting.gd` | Target filtering, pairing matching, doctrine priority, munition filter, exquisite intel | `targeting.py` |
 | `scripts/ijfs/IjfsEngagement.gd` | SEAD engagement + return-fire (contest) + post-phase-2 free shot | `engagement.py` |
-| `scripts/ijfs/IjfsStrike.gd` | Strike probability (modifier system + legacy mobile-cap fallback) and hit resolution | `strike_probability.py`, `strike_resolution.py` |
+| `scripts/ijfs/IjfsStrike.gd` | Strike probability (modifier system) and hit resolution | `strike_probability.py`, `strike_resolution.py` |
 | `scripts/ijfs/IjfsFiringCapacity.gd` | `FiringCapacityBudget` (inorganic daily sortie cap) + `OrganicStrikeBudget` (strike-aircraft scaled) | `firing_capacity.py` |
 | `scripts/ijfs/IjfsAdHealth.gd` | Taiwan AD health: per-category alive+unsuppressed fraction, SAM×radar effective health | `ad_health.py` |
 | `scripts/ijfs/IjfsWarmup.gd` | Prelanding attrition-profile multiplier + capacity scaling | `warmup_profiles.py` |
@@ -50,8 +50,9 @@ in `IjfsEngine.run_daily`'s header comment — read it for the authoritative dra
 9. **Post-AD strike phase**: repeat targeting with organic (strike-aircraft) budget added
 10. **Append final skips**: targets not attacked get a skip-log entry
 11. **AD health snapshot 4** (`taiwan_ad_health_after`)
-12. **Free shot**: remaining SAM health inflicts post-phase-2 attrition
-13. **Summarize + build ledgers**
+12. **MANPADS squadron contest**
+13. **Free shot**: remaining SAM health inflicts post-phase-2 attrition
+14. **Summarize + build ledgers**
 
 ## 4. Detection / Targeting / Engagement / Strike — Key Formulas
 
@@ -187,7 +188,7 @@ these to reduce `system.quantity` and `fire_pct`.
 |---|---|---|
 | `antiship_destroyed_by_type` | Cumulative `target.destroyed` on Anti-Ship Systems targets | D3 `AntishipResolver.resolve`: reduces system quantity |
 | `antiship_suppressed_by_type` | Cumulative `target.suppressed` on Anti-Ship Systems targets | D3 `AntishipResolver.resolve`: reduces fire percentage proportional to suppressed/available |
-| `maneuver_casualties` | Strike log entries for "Maneuver Units" with `destroyed = true` (carry `brigade_id`/`battalion_id`/`unit_type` from target metadata) | **CLOSED (D4-H)** — `IjfsResolver.apply_maneuver_casualties` (called by `FiresPhases.apply_ijfs_maneuver_casualties`) decrements the struck battalions' `qty` in the OOB before ground combat |
+| `maneuver_casualties` | Strike log entries for "Maneuver Units" with `destroyed = true` (carry `brigade_id`/`battalion_id`/`unit_type` from target metadata) | **CLOSED (D4-H)** — `ForceTransitions.apply_battalion_casualties` (called by `FiresPhases.apply_ijfs_maneuver_casualties`) decrements the struck battalions' `qty` in the OOB before ground combat |
 | `sam_destroyed` / `sam_suppressed` | Engagement log SEAD outcomes | Summary only |
 
 Anti-ship writeback keys use `AntishipCalculator.encode_key(to_number, type_id)` —

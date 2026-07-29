@@ -16,8 +16,8 @@ gameplay-relevant cycle:
 
 | File | Lines | Role |
 |---|---|---|
-| `scripts/GameState.gd` | 452 | Autoload shell: `Phase` enum (PLANNING/RESOLUTION/END) re-export, typed forwarding properties onto `data: GameStateData`, delegating wrappers (`resolve_turn()`, `resolve_offload_turn()`, …), lifecycle `reset_to_scenario()` / `begin_next_turn()` / `play_turn()` |
-| `scripts/phases/TurnConductor.gd` | 347 | Turn orchestration proper: `resolve_turn()` holds the ordered phase list (§4), plus the phases whose application interleaves with it — movement, ground combat, FEBA retreats — and the façade-only front-line phase |
+| `scripts/GameState.gd` | 394 | Autoload shell: `Phase` enum (PLANNING/RESOLUTION/END) re-export, typed forwarding properties onto `data: GameStateData`, delegating wrappers (`resolve_turn()`, `resolve_offload_turn()`, …), lifecycle `reset_to_scenario()` / `begin_next_turn()` / `play_turn()` |
+| `scripts/phases/TurnConductor.gd` | 321 | Turn orchestration proper: `resolve_turn()` holds the ordered phase list (§4), plus the phases whose application interleaves with it — movement, ground combat, FEBA retreats — and the façade-only front-line phase |
 | `scripts/phases/FiresPhases.gd` | 191 | The fires phases (plan 0038): IJFS joint/air-missile fires and the Green anti-ship + mine defence of the crossing, which share the anti-ship firing systems |
 | `scripts/phases/ReinforcementPhases.gd` | 345 | The four "force arrives" phases (plan 0038): sealift, amphibious offload, ROC mobilization, air insertion, and their arrival-site rules |
 | `scripts/phases/TurnClosure.gd` | 81 | The end-of-turn accounting pair (plan 0038): supply bills who fought, cleanup censuses who is left and decides victory |
@@ -26,7 +26,7 @@ gameplay-relevant cycle:
 | `scripts/Dice.gd` | 37 | Abstract base: `roll_d100()`, `choose_indices()`, `randf()`, `weighted_choice()`, `weighted_choices()`, `shuffle_indices()`, `derive()` |
 | `scripts/SeededDice.gd` | 96 | Concrete: wraps Godot `RandomNumberGenerator` with a fixed seed. `derive(label)` creates an independent sub-stream via `hash(str(seed) + ":" + label)` |
 | `scripts/EventBus.gd` | 21 | Signals: `phase_changed`, `turn_resolved`, `combat_resolved`, `offload_resolved`, `supply_updated`, `ijfs_resolved`, `antiship_resolved`, `frontline_resolved`, `cleanup_resolved` |
-| `scripts/transitions/AntishipTransitions.gd` | 133 | The Green anti-ship establishment's mutation authority (plan 0043): the only writer of the `AntishipSystem` rows — builds/resets the arsenal, applies IJFS effects and one crossing's launch destruction, clears the per-turn flags |
+| `scripts/transitions/AntishipTransitions.gd` | 188 | The Green anti-ship establishment's mutation authority (plan 0043): the only writer of the `AntishipSystem` rows — builds/resets the arsenal, applies IJFS effects and one crossing's launch destruction, clears the per-turn flags |
 | `scripts/TurnEventLog.gd` | 70 | Pure function `build(state)` → `Array[TurnEvent]` — non-invasive log derived from GameState buffers post-resolve |
 | `scripts/model/TurnResult.gd` | 33 | Typed result resource: `turn_number`, `contested_hexes`, `combat_summaries`, `ijfs_summary`, `antiship_summary`, `events`, `game_over`, `winner` |
 | `scripts/model/TurnEvent.gd` | 11 | Single event resource: `seq`, `kind`, `hex_id`, `team`, `data` |
@@ -42,16 +42,16 @@ PLANNING  ── resolve_turn() ──►  RESOLUTION  ── begin_next_turn() 
 ```
 
 **Planning phase** (`Phase.PLANNING`, GameState.gd):
-- `add_move_order()` (line 119) — validates brigade exists, team matches, hex exists, within movement allowance, no double-order; returns a typed `OrderResult` (`ok`/`code`/`message`, plan 0017) — rejections are values, not `push_error`
-- `add_commit_order()` (line 203) — validates adjacency, not destroyed/admin-moved, no double-order; also returns `OrderResult`
-- `eligible_commit_brigades()` (line 248) — returns brigades adjacent to a hex that can commit
+- `GameState.add_move_order()` — validates brigade exists, team matches, hex exists, within movement allowance, no double-order; returns a typed `OrderResult` (`ok`/`code`/`message`, plan 0017) — rejections are values, not `push_error`
+- `GameState.add_commit_order()` — validates adjacency, not destroyed/admin-moved, no double-order; also returns `OrderResult`
+- `GameState.eligible_commit_brigades()` — returns brigades adjacent to a hex that can commit
 - Orders are stored in `orders[team]` / `commitments[team]` as `Array[MoveOrder]` / `Array[CommitOrder]`
 
-**Resolution phase** (`Phase.RESOLUTION`, triggered by `resolve_turn(dice)`, line 162):
+**Resolution phase** (`Phase.RESOLUTION`, triggered by `GameState.resolve_turn(dice)`):
 - Runs the full ordered pipeline (see §4)
-- Sets phase to `Phase.END` (line 197), emits `phase_changed`, `combat_resolved`, `turn_resolved`
+- Sets phase to `Phase.END`, emits `phase_changed`, `combat_resolved`, `turn_resolved`
 
-**End → next turn** (`begin_next_turn()`, line 268):
+**End → next turn** (`GameState.begin_next_turn()`):
 - Resets per-turn brigade flags (`moved_this_turn`, `moved_admin_this_turn`, `fought_this_turn`)
 - Clears both order and commitment buffers for both teams
 - Increments `turn_number`, sets phase to `PLANNING`, emits `phase_changed`
@@ -83,7 +83,7 @@ and is called only through the `GameState` façade.
 
 ## 5. `play_turn` / TurnResult / Event Log
 
-**AI-readiness entrypoint** — `play_turn(red_orders, green_orders, dice)` at line 1217:
+**AI-readiness entrypoint** — `GameState.play_turn(red_orders, green_orders, dice)`:
 
 ```gdscript
 func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> TurnResult

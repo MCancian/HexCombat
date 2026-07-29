@@ -8,34 +8,33 @@ Red DOS (Days Of Supply) models consumable supply for PLA brigades that have **l
 
 | File | Role |
 |---|---|
-| `scripts/calc/DosConsumption.gd` | `DosConsumption` (RefCounted). Constants, mechanized classification, per-unit tonnage, full-turn consumption summary. Pure logic; no Node/scene dependency. |
-| `scripts/model/SupplyState.gd` | `SupplyState` (Resource). Holds `current_dos_tons: float` and `day_history: Array[Dictionary]`. Lightweight model object. |
-| `scripts/GameState.gd` | Autoload runtime state. Holds `supply_state: SupplyState` (line 48). `resolve_supply_turn()` (line 384) drives consumption each combat turn. `_rebuild_supply_state()` (line 992) initialises the pool. |
-| `scripts/GameData.gd` | Autoload. `red_dos_start: int` (line 18) loaded from scenario JSON (line 176). |
+| `scripts/resolvers/SupplyResolver.gd` | Pure resolver that computes and deducts supply tons, delegated from `TurnClosure`. |
+| `scripts/GameState.gd` | Autoload runtime state. Holds `supply_state: SupplyState`. `_rebuild_supply_state()` initialises the pool. |
+| `scripts/GameData.gd` | Autoload. `red_dos_start: int` loaded from scenario JSON. |
 | `scripts/calc/CombatCalculator.gd` | Reads `supply_effectiveness` from unit dict — this is where a depleted pool would penalise combat. |
-| `scripts/model/Brigade.gd` | Model class. Initialises each BN's `supply_effectiveness: 1.0` (line 42). |
-| `scripts/EventBus.gd` | Fires `supply_updated(summary: Dictionary)` (line 17) so views/logs can react. |
-| `scripts/LLMGameAPI.gd` | Exposes `supply_state` in `get_observation()` (line 32) via `_supply_state_observation()` (line 229). |
+| `scripts/model/Brigade.gd` | Model class. Initialises each BN's `supply_effectiveness: 1.0`. |
+| `scripts/EventBus.gd` | Fires `supply_updated(summary: Dictionary)` so views/logs can react. |
+| `scripts/LLMGameAPI.gd` | Exposes `supply_state` in `get_observation()` via `_supply_state_observation()`. |
 
 ## 3. Constants (`scripts/calc/DosConsumption.gd`)
 
 ```gdscript
-const BASE_MECHANIZED_TONS: int = 300        # line 4
-const BASE_NON_MECHANIZED_TONS: int = 150     # line 5
-const TONS_PER_DOS: int = 150                 # line 6
+const BASE_MECHANIZED_TONS: int = 300
+const BASE_NON_MECHANIZED_TONS: int = 150
+const TONS_PER_DOS: int = 150
 ```
 
-`MECHANIZED_TYPE_HINTS` (line 27): `["mechanized", "tank", "armor", "combined arms", "amphibious"]`
+`MECHANIZED_TYPE_HINTS`: `["mechanized", "tank", "armor", "combined arms", "amphibious"]`
 
-`KNOWN_MECHANIZED_BATTALION_TYPES` (line 8): explicit whitelist — Combined Arms, Mechanized Infantry, Mechanized Artillery, Tank, Amphibious Infantry.
+`KNOWN_MECHANIZED_BATTALION_TYPES`: explicit whitelist — Combined Arms, Mechanized Infantry, Mechanized Artillery, Tank, Amphibious Infantry.
 
-`KNOWN_NON_MECHANIZED_BATTALION_TYPES` (line 15): explicit blacklist — Air Assault, Special Forces, Field/Rocket Artillery, Air Defense, Reconnaissance, Service/Support, Attack/Utility Helicopter.
+`KNOWN_NON_MECHANIZED_BATTALION_TYPES`: explicit blacklist — Air Assault, Special Forces, Field/Rocket Artillery, Air Defense, Reconnaissance, Service/Support, Attack/Utility Helicopter.
 
-`BRIGADE_TYPE_HINTS` (line 28): `["mech", "armor", "amphibious"]` — fallback brigade-level check.
+`BRIGADE_TYPE_HINTS`: `["mech", "armor", "amphibious"]` — fallback brigade-level check.
 
 ## 4. Activity formula
 
-### Classification — `is_mechanized_bn(unit_type, brigade_type)` (line 31)
+### Classification — `is_mechanized_bn(unit_type, brigade_type)`
 
 1. Whitelist check — if `unit_type` is in `KNOWN_MECHANIZED_BATTALION_TYPES` → mechanized.
 2. Blacklist check — if in `KNOWN_NON_MECHANIZED_BATTALION_TYPES` → non-mechanized.
@@ -43,7 +42,7 @@ const TONS_PER_DOS: int = 150                 # line 6
 4. Brigade fallback — if `brigade_type` matches any `BRIGADE_TYPE_HINTS` → mechanized.
 5. Otherwise → non-mechanized.
 
-### Tons — `compute_unit_tons(mechanized, moved, in_combat)` (line 54)
+### Tons — `compute_unit_tons(mechanized, moved, in_combat)`
 
 ```
 base = mechanized ? 300 : 150
@@ -64,11 +63,11 @@ A unit that **both moved and fought** burns the full base (300 or 150). Each omi
 | false | true | 100 | 200 |
 | false | false | 200 | 100 |
 
-## 5. Consumption summary — `calculate_consumption(units, moved_brigade_ids, engaged_brigade_ids, day)` (line 68)
+## 5. Consumption summary — `calculate_consumption(units, moved_brigade_ids, engaged_brigade_ids, day)`
 
 Iterates all landed Red battalions (`TurnClosure.active_red_battalion_units()`), classifies each, sums per-unit tons, and builds a by-brigade breakdown. Only battalions ASHORE are billed (plan 0037): the function subtracts the off-map pools, so a brigade's ration bill and its fighting strength always name the same battalions.
 
-Returns a Dictionary with fields (see lines 127–142):
+Returns a Dictionary with fields:
 
 | Key | Type | Meaning |
 |---|---|---|
@@ -84,9 +83,9 @@ Returns a Dictionary with fields (see lines 127–142):
 | `mechanized_unit_count` / `non_mechanized_unit_count` | int | classification breakdown |
 | `moved_unit_count` / `combat_unit_count` | int | activity breakdown |
 
-## 6. Wiring — `GameState.resolve_supply_turn()` (line 384)
+## 6. Wiring — `SupplyResolver` via `TurnClosure`
 
-Called at the end of each combat turn (line 194, after `_apply_feba_retreats()` and `recompute_hex_ownership()`).
+Called at the end of each combat turn, coordinated by `TurnConductor` delegating to `TurnClosure` which delegates to `SupplyResolver`.
 
 ```
 1. Collect landed Red battalions via TurnClosure.active_red_battalion_units().
@@ -98,22 +97,23 @@ Called at the end of each combat turn (line 194, after `_apply_feba_retreats()` 
 7. Emit EventBus.supply_updated.
 ```
 
-**Initial pool:** `_rebuild_supply_state()` (line 992) sets `current_dos_tons = GameData.red_dos_start * TONS_PER_DOS` (100 × 150 = 15 000 tons in `scenario_default.json` line 5).
+**Initial pool:** `_rebuild_supply_state()` sets `current_dos_tons = GameData.red_dos_start * TONS_PER_DOS` (100 × 150 = 15 000 tons in `scenario_default.json`).
 
 **Supply effectiveness — LIVE, not deferred.** `CombatCalculator._unit_supply_effectiveness()` reads `supply_effectiveness` from the unit Dictionary (defaults to 1.0), and `CombatResolver.inject_supply_effectiveness` (called from `TurnConductor.resolve_combat_at`) sets it: Red maneuver and support units fight at 1.0 while `red_supply_pool > 0.0`, and at `GameData.red_out_of_supply_effectiveness` (**0.5** by default, scenario-overridable) once the pool is exhausted. Green has no DOS model, so its effectiveness is always 1.0.
 
 A second driver was added by plan 0032: `CombatRules.isolated_red_brigade_ids` forces the out-of-supply value for any air-landed brigade with no Red corridor back to a lodgement, regardless of how full the theatre pool is — the tonnage exists, it just cannot reach a battalion behind enemy lines.
 
-**Flow summary (GameState.gd):**
+**Flow summary:**
 
 ```
-resolve_combat_turn()
+TurnConductor.resolve_combat_turn()
   → (resolve combats, FEBA, ownership)
-  → resolve_supply_turn()          [line 194]
-    → TurnClosure.active_red_battalion_units()
-    → DosConsumption.calculate_consumption() [line 398]
-    → supply_state.current_dos_tons -= consumed [line 401]
-    → EventBus.supply_updated.emit() [line 407]
+  → TurnClosure.resolve_closure_phases()
+    → SupplyResolver.resolve_supply_turn()
+      → TurnClosure.active_red_battalion_units()
+      → DosConsumption.calculate_consumption()
+      → supply_state.current_dos_tons -= consumed
+      → EventBus.supply_updated.emit()
 ```
 
 ## 7. TIV-port fidelity notes
@@ -147,4 +147,4 @@ golden invariant is unchanged. v1 is binary-at-exhaustion; a graded ramp is a fu
 **Cosmetic:** `GameState.gd` aliases the preload as `SupplyStateResource` while the class is
 `SupplyState`; the typed `supply_state: SupplyState` is correct — alias inconsistency only.
 
-**Name mismatch:** `GameState.gd` uses `const SupplyStateResource = preload(...)` but the class is named `SupplyState` (line 2 of its file). The declared type `supply_state: SupplyState` (line 48) is correct; the preload alias is a cosmetic inconsistency only.
+**Name mismatch:** `GameState.gd` uses `const SupplyStateResource = preload(...)` but the class is named `SupplyState`. The declared type `supply_state: SupplyState` is correct; the preload alias is a cosmetic inconsistency only.

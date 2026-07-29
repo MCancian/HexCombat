@@ -83,7 +83,7 @@ turn is the honest outcome, not teleporting the formation across the island.
 
 ## 5. Turn position
 
-`resolve_turn` order: IJFS → sealift → anti-ship crossing → amphibious offload → **mobilization** →
+`resolve_turn` order: IJFS → sealift → anti-ship crossing → amphibious offload → **mobilization** → air insertion →
 movement & commit → ground combat → front-line → cleanup.
 
 Green's reinforcement step deliberately sits at the same seam as Red's (offload): both sides' new

@@ -53,7 +53,10 @@ All 29 keys the live `observation()` returns, in source order:
 | `last_combat` | `_last_combat_summaries()` | `LLMGameAPI.gd` |
 | `ship_reserve` | `_ship_reserve_observations()` | `LLMGameAPI.gd` |
 | `mainland_pool` | `_mainland_pool_observations()` | `LLMGameAPI.gd` (follow-on BNs still awaiting a hull) |
+| `mobilization` | `_mobilization_observation()` | `LLMGameAPI.gd` |
+| `air_insertion` | `_air_insertion_observation()` | `LLMGameAPI.gd` |
 | `supply_state` | `_supply_state_observation()` | `LLMGameAPI.gd` |
+| `infrastructure` | `_infrastructure_observations()` | `LLMGameAPI.gd` |
 | `ijfs` | `_ijfs_observation()` | `LLMGameAPI.gd` (includes `maneuver_casualties` inside writeback) |
 | `antiship` | `_antiship_observation()` | `LLMGameAPI.gd` |
 
@@ -67,6 +70,8 @@ Routes an action response object. Returns an action-result Dictionary (`ok`, `er
 |---|---|---|---|
 | `move` | `team`, `brigade_id`, `target_hex`, `mode` | `GameState.add_move_order` | `LLMGameAPI.gd` |
 | `commit` | `team`, `brigade_id`, `target_hex` | `GameState.add_commit_order` | `LLMGameAPI.gd` |
+| `deploy_jlsf` | `team`, `port_id` | `_apply_deploy_jlsf_action` | `LLMGameAPI.gd` |
+| `air_insert` | `team`, `brigade_id`, `target_hex` | `GameState.add_air_insert_order` | `LLMGameAPI.gd` |
 | `end_turn` | **`seed`** (required) | `GameState.play_turn([], [], SeededDice.new(seed))` then `begin_next_turn()` | `LLMGameAPI.gd` |
 
 - Missing `end_turn.seed` is rejected at `LLMGameAPI.gd` — the gate (`validate_llm_api.gd`) asserts this.

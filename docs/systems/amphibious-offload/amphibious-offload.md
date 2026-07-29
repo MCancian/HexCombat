@@ -57,20 +57,20 @@ All BNs counted as "sent" (`bns_sent = sum of all bn entries`).
 
 ```gdscript
 # OffloadCalculator (scripts/OffloadCalculator.gd)
-static func is_maneuver_bn(bn_type: String) -> bool          # line 24
+static func is_maneuver_bn(bn_type: String) -> bool
 static func beach_capacity_bns(active_beach_ids, beach_lookup,
-  floating_pier_rate, jackup_barge_rate) -> Dictionary       # line 32
+  floating_pier_rate, jackup_barge_rate) -> Dictionary
 static func resolve_offload_day(current_day, beach_capacity,
-  brigades_at_sea, priority_order) -> Dictionary             # line 76
-static func _resolve_day1(...) -> void                       # line 126
-static func _resolve_day_n(...) -> void                      # line 199
+  brigades_at_sea, priority_order) -> Dictionary
+static func _resolve_day1(...) -> void
+static func _resolve_day_n(...) -> void
 
-# OffloadRates (scripts/OffloadRates.gd) — pure constants     # line 9-24
+# OffloadRates (scripts/OffloadRates.gd) — pure constants
 
 # ShipLoadingModel (scripts/ShipLoadingModel.gd)
-static func build_sent_snapshots(bn_count, carriers, screen) -> Dictionary   # line 46
+static func build_sent_snapshots(bn_count, carriers, screen) -> Dictionary
 static func resolve_bn_losses(destroyed_by_ship_type, capacity_by_type,
-  bns_at_sea, accumulator, dice) -> Dictionary                               # line 119
+  bns_at_sea, accumulator, dice) -> Dictionary
 
 # ReinforcementPhases (scripts/phases/ReinforcementPhases.gd) — the offload/sealift phases
 static func ship_reserve_priority_order(state: GameStateData) -> Array[String]
@@ -92,21 +92,21 @@ func _rebuild_fleet() -> void
 2. `data/offload_rates.json` → `OffloadRates` constants (verified by `validate_offload_data.gd`).
 3. `data/scenarios/scenario_default.json["red_ship_reserve"]` → `GameData.red_ship_reserve` (bare entries:
    `{brigade_id, locked_beach, beach_hex, offset_bearing}`).
-4. `GameState._rebuild_ship_reserve()` (line 961) expands each brigade's OOB `composition` into
+4. `GameState._rebuild_ship_reserve()` expands each brigade's OOB `composition` into
    per-BN entries: `{brigade_id, locked_beach, beach_hex, offset_bearing, bns: [{id, type}]}`.
-5. `GameState.resolve_offload_turn(dice)` (line 303):
+5. `GameState.resolve_offload_turn(dice)`:
    - Collects `active_beach_ids` from `ship_reserve` locked_beach values.
    - Calls `OffloadCalculator.beach_capacity_bns()` → tonnage-derived BN slots.
    - Calls `OffloadCalculator.resolve_offload_day(turn_number, ...)` → manifest dict.
    - For each landed BN in `manifest["manifest_landed"]`: removes the BN from its ship_reserve entry.
    - When a brigade's first BN lands: calls `GameData.set_brigade_hex(brigade_id, beach_hex)` and
-     sets `brigade.entry_bearing` from `offset_bearing` (line 355).
-    - Brigade leaves `ship_reserve` only when all its BNs have landed (`bns` array empty, line 358).
-    - `ShipLoadingModel.build_sent_snapshots()` (called from `_build_sent_fleet`, line 676)
+     sets `brigade.entry_bearing` from `offset_bearing`.
+    - Brigade leaves `ship_reserve` only when all its BNs have landed (`bns` array empty).
+    - `ShipLoadingModel.build_sent_snapshots()` (called from `SealiftResolver._plan_orphan_adoption`)
       derives the crossing fleet from remaining at-sea BNs for D3 anti-ship resolution.
     - `ShipLoadingModel.resolve_bn_losses()` converts D3 crossing ship losses into BN
       casualties via `pending_lost_at_sea` → `FiresPhases.register_ship_losses()`.
-    - Emits `EventBus.offload_resolved` (line 368).
+    - Emits `EventBus.offload_resolved`.
 
 ## 7. TIV-port fidelity notes
 

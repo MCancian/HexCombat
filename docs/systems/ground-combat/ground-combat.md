@@ -85,12 +85,14 @@ This exposes all support units (Field Artillery, Mechanized Artillery, Rocket Ar
 |---|---|---|
 | Air Assault Infantry Battalion | 1.4 | infantry, air_assault |
 | Air Defense Battalion | 0.9 | air_defense |
+| Airborne Combined Arms Battalion | 1.3 | infantry, airborne |
 | Amphibious Infantry Battalion | 1.2 | infantry, amphibious |
 | Armor Battalion | 2.0 | armor |
 | Attack Helicopter Battalion | 0.5 | aviation, rotary_wing, attack |
 | Combined Arms Battalion | 1.5 | maneuver, mechanized |
 | Field Artillery Battalion | 0.8 | artillery |
 | Infantry Battalion (Reserve) | 0.5 | infantry, reserve |
+| Mechanized Airborne Combined Arms Battalion | 1.4 | infantry, airborne, mechanized |
 | Mechanized Artillery Battalion | 1.3 | artillery, mechanized |
 | Mechanized Infantry Battalion | 1.5 | infantry, mechanized |
 | Reconnaissance Battalion | 0.7 | recon |
@@ -156,11 +158,11 @@ Combat sits at step 7, after all movement and before FEBA retreats/ownership cha
 
 **Oracle:** `TaiwanInvasionViewer/src/services/boots_calculator.py`, method `resolve_map_attack`.
 
-**Core formula match:** Near line-for-line identical — same loss-rate formulas, same clamps (0.05–0.45 / 0.05–0.50), same support multipliers, same FEBA math, same min-one-loss rule, same non-artillery casualty filter, same strength floor at 0.1.
+**Core formula match:** Near line-for-line identical — same loss-rate formulas, same clamps (0.05–0.45 / 0.05–0.50), same support multipliers, same FEBA math, same min-one-loss rule, same strength floor at 0.1. (Unlike TIV, HexCombat removes the non-artillery casualty filter and pools all maneuver and support units together).
 
 **DIVERGENCE 1 — RNG algorithm.** TIV uses `numpy.random.default_rng(seed)` with `rng.integers(1,101)` and `rng.choice(a, size=k, replace=False)`. HexCombat uses `SeededDice` (`scripts/SeededDice.gd`), which wraps Godot's `RandomNumberGenerator` (`randi_range(1,100)` and Fisher-Yates partial shuffle for `choose_indices`). The roll *sequence* (attacker-loss → defender-loss → feba → casualty indices) matches TIV's same-sequence, but the RNG *algorithm* differs — HexCombat is **not value-identical** to TIV for a given seed. It is self-consistent only.
 
-**DIVERGENCE 2 — combat_detail shape.** TIV includes `"support_power_breakdown"` *and* `"support_unit_count"` per side. HexCombat (`scripts/calc/CombatCalculator.gd`) uses key `"support_breakdown"` and omits `"support_unit_count"`. Minor shape divergence.
+**DIVERGENCE 2 — combat_detail shape.** TIV includes `"support_power_breakdown"` *and* `"support_unit_count"` per side. HexCombat (`scripts/calc/CombatCalculator.gd`) uses key `"support_breakdown"` and includes `"support_unit_count"`. Minor shape divergence.
 
 **DIVERGENCE 3 — unit strength values (✅ RESOLVED 2026-06-29 — keep HexCombat's table; see `docs/archive/PORT_FIDELITY_DECISIONS.md`).**
 Ratified as the intended design. Note re helicopters: `rotary_wing` (and `artillery`) battalions are

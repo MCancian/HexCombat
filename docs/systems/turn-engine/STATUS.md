@@ -16,7 +16,7 @@ scrambles another's dice (`ScriptedDice.derive` returns self, so scripted fixtur
 - **resolvers (`scripts/resolvers/`)**: pure per-phase logic (`SupplyResolver`, `FrontlineResolver`, `CleanupResolver`, `OffloadResolver`, `AntishipResolver`, `IjfsResolver`, `CombatResolver`).
 - **Mutation Authorities (`scripts/transitions/`)**: `ForceTransitions` (sole writer for `force` aggregate), `AntishipTransitions` (sole writer for `antiship_establishment` aggregate).
 
-**Turn resolution order**:
+**Turn resolution order** (12-step high-level summary of `TurnConductor.gd`'s actual 16 granular execution steps):
 1. IJFS air/missile fires (`FiresPhases.resolve_ijfs_turn`)
 2. IJFS maneuver casualties (`FiresPhases.apply_ijfs_maneuver_casualties`)
 3. Sealift tick & embarkation (`ReinforcementPhases.resolve_sealift_turn`)

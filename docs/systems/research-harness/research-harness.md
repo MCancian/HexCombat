@@ -23,7 +23,7 @@ tools that consume game records.
 | `tools/mc_chart.py` | Summary JSON → deck SVG chart |
 | `tools/research_knobs.py` | Knob-space ledger and sensitivity analysis |
 | `scripts/KnobRegistry.gd` | Knob registry loader + record dump |
-| `data/knobs/registry.json` | Curated registry of 23 outcome-relevant knobs |
+| `data/knobs/registry.json` | Curated registry of 55 outcome-relevant knobs |
 
 ## 3. Data flow
 

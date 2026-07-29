@@ -16,7 +16,7 @@ explicit Red/Green policy identities to `reports/batches/<study>/games/`; verdic
 artifact-based; re-running resumes only valid records; `manifest.json` stamps matchups,
 commit, and per-game re-run command lines. The runner writes `report.md` automatically
 (`--no-report` suppresses it). The runner warns when a live-model matchup uses more than one
-worker; use `--parallel 1`.
+worker; use `--parallel 1`. Pass `--run-past-game-over` to ignore win conditions and force games to their turn limit.
 
 **Outcome reports (research harness B3)** — `tools/make_batch_report.gd -- --batch=<study>`
 aggregates a batch's records into `report.md`: per-condition (scenario × Red policy × Green
@@ -48,7 +48,7 @@ reserve. The plan-0001 dial (ic=36, bonus=0.20) reads **32.9%** mean crossing lo
 semantics — USER accepted (supersedes the ~25%-of-36-BN target; table:
 `reports/sweeps/antiship_crossing/report.md`).
 
-**Research knob tracking (plan 0018)** — a curated registry `data/knobs/registry.json` (23
+**Research knob tracking (plan 0018)** — a curated registry `data/knobs/registry.json` (55
 outcome-relevant knobs, IJFS warmup → beach capacity) drives a full resolved-knob dump into every
 game record (`record["knobs"]`, via pure `scripts/KnobRegistry.gd`), so records from any sweep
 share one knob-space and are directly comparable. LLM games also record `llm_model` +

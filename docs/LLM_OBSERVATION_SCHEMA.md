@@ -49,6 +49,14 @@ Top-level object returned by `LLMGameAPI.observation(perspective_team)`.
 | `map_summary` | object | stable | Counts and enum values useful for validation. |
 | `brigades` | array | stable | Placed brigade summaries. |
 | `occupied_hexes` | array | stable | Hexes that currently contain brigades. |
+| `ship_reserve` | array | stable | Current PLA ship reserve status. |
+| `mainland_pool` | array | stable | PLA follow-on battalions awaiting transport. |
+| `mobilization` | object | stable | Status of ROC mobilization. |
+| `air_insertion` | object | stable | PLA airborne/air-assault eligibility and attrition. |
+| `supply_state` | object | stable | Current supply points/flow. |
+| `infrastructure` | array | stable | Port and infrastructure statuses. |
+| `ijfs` | object | stable | Joint fires degradation. |
+| `antiship` | object | stable | ROC anti-ship capabilities. |
 | `legal_moves` | object | stable | Legal destination lists by brigade and movement mode. |
 | `legal_commits` | object | stable | Legal commit/support options by target hex and team. |
 | `pending_orders` | object | stable | Buffered move orders by team. |
@@ -56,6 +64,8 @@ Top-level object returned by `LLMGameAPI.observation(perspective_team)`.
 | `last_contested_hexes` | array | stable | Hex IDs contested during the most recent resolution. |
 | `last_combat` | array | stable | Combat summary dictionaries from the most recent resolution; empty before combat. |
 | `objectives` | array | provisional | Empty until scenario objectives/scoring are implemented. |
+| `game_over` | boolean | stable | True if a victory condition is met. |
+| `winner` | string | stable | Winner team ID if game_over is true. |
 
 ## `map_summary`
 
@@ -158,6 +168,22 @@ Top-level object passed to `LLMGameAPI.apply_agent_response(response)`:
 ```
 
 - `brigade_id` must be listed under `legal_commits[target_hex][team]`.
+
+### `deploy_jlsf` action
+
+```json
+{"type": "deploy_jlsf", "team": "Red", "port_id": "port_taipei"}
+```
+
+- `port_id` must refer to an infrastructure item.
+
+### `air_insert` action
+
+```json
+{"type": "air_insert", "team": "Red", "brigade_id": "PLA-15-Airborne", "target_hex": "hex_44_16"}
+```
+
+- `brigade_id` must be listed under `air_insertion.eligible`.
 
 ### `end_turn` action
 

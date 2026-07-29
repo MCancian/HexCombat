@@ -44,7 +44,7 @@ follow `.claude/skills/hexcombat-add-phase-resolver`. Order validation (`add_mov
 `push_error`, so callers — the LLM API included — can branch on the rejection and surface its
 reason (plan 0017).
 
-**Turn resolution order** (`resolve_turn`): IJFS air/missile fires → IJFS maneuver casualties →
+**Turn resolution order** (12-step high-level summary of `TurnConductor.gd`'s actual 16 granular execution steps): IJFS air/missile fires → IJFS maneuver casualties →
 **sealift (tick ship returns + embark the crossing wave)** → anti-ship crossing → amphibious offload
 → ROC mobilization → air insertion → movement & commit → ground combat → FEBA retreats → hex
 ownership → supply → cleanup (+ victory census). The front-line phase is **not** in this pipeline —

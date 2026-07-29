@@ -13,7 +13,7 @@ Contract mirrors tools/llm_sidecar_stub.py so both are interchangeable behind sc
                non-zero ONLY on hard failure (model unreachable / HTTP error).
 
 Provider config from the environment (inherited from the Godot process):
-  HEXCOMBAT_LLM_BASE_URL  default http://localhost:8088/v1
+  HEXCOMBAT_LLM_BASE_URL  default http://127.0.0.1:8088/v1
   HEXCOMBAT_LLM_MODEL     required (the vLLM served model id)
   HEXCOMBAT_LLM_API_KEY   default "EMPTY"  (sent as Authorization: Bearer <key>)
 """
