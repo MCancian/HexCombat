@@ -50,9 +50,9 @@ var orders: Dictionary:
 var commitments: Dictionary:
 	get: return data.commitments
 	set(value): data.commitments = value
+# Read-only façade: force transport storage is initialized and mutated only by ForceTransitions.
 var ship_reserve: Array:
 	get: return data.ship_reserve
-	set(value): data.ship_reserve = value
 var fleet: Dictionary:
 	get: return data.fleet
 	set(value): data.fleet = value
@@ -251,7 +251,8 @@ func ship_reserve_priority_order() -> Array[String]:
 
 
 func resolve_offload_turn(dice: Dice) -> Dictionary:
-	return ReinforcementPhases.resolve_offload_turn(data, dice)
+	return ReinforcementPhases.resolve_unopposed_offload_turn(
+		data, dice, GameStateBuilder.build_unopposed_offload_state(data.ship_reserve))
 
 
 func _rebuild_infrastructure_state() -> void:
@@ -312,7 +313,8 @@ func resolve_air_insertion_turn(dice: Dice) -> AirInsertionSummary:
 
 
 func _rebuild_ship_reserve() -> void:
-	data.ship_reserve = GameStateBuilder.build_ship_reserve(GameData.red_ship_reserve, GameData.brigades)
+	ReinforcementPhases.initialize_ship_reserve(
+		data, GameStateBuilder.build_ship_reserve(GameData.red_ship_reserve, GameData.brigades))
 
 
 func _rebuild_sealift_state() -> void:

@@ -50,6 +50,13 @@ func test_adoption_creates_sent_cohort_from_reserve_orphans() -> void:
 
 	var result := SealiftResolver.resolve(state, reserve, ready, defs)
 
+	# Adopt plan from resolver — apply via ForceTransitions
+	var adopt_plan: Dictionary = result.get("adopt_plan", {})
+	assert_bool(adopt_plan.is_empty()).is_false()
+	var adopt_receipt := ForceTransitions.apply_sent_cohort(
+		state, adopt_plan["bn_ids"], adopt_plan["hulls_by_type"], reserve)
+	assert_bool(adopt_receipt.success).is_true()
+
 	# Exactly one sent cohort wrapping both BNs
 	assert_int(state.cohorts.size()).is_equal(1)
 	var cohort := state.cohorts[0] as Dictionary
@@ -79,7 +86,14 @@ func test_embark_cap_leaves_leftover_bns_in_mainland_pool() -> void:
 	state.mainland_pool = [_reserve_entry("BdeA", [_bn("a"), _bn("b"), _bn("c"), _bn("d"), _bn("e")])]
 	var ready := {"LHA": 3}  # 3 hulls * 1.0 capacity = 3 BNs max
 
-	var result := SealiftResolver.resolve(state, [], ready, defs)
+	var reserve: Array = []
+	var result := SealiftResolver.resolve(state, reserve, ready, defs)
+
+	# Apply embark via ForceTransitions
+	var embark_request = result["embark_request"]
+	assert_object(embark_request).is_not_null()
+	var embark_receipts := ForceTransitions.apply_embark(state, embark_request, reserve)
+	assert_bool(embark_receipts[0].success).is_true()
 
 	# Cohort holds exactly 3 BNs (all capacity consumed)
 	assert_int(state.cohorts.size()).is_equal(1)
@@ -110,6 +124,19 @@ func test_priority_departed_brigade_embarks_first() -> void:
 
 	var result := SealiftResolver.resolve(state, reserve, ready, defs)
 
+	# Apply adopt plan (orphan a1)
+	var adopt_plan: Dictionary = result.get("adopt_plan", {})
+	assert_bool(adopt_plan.is_empty()).is_false()
+	var adopt_receipt := ForceTransitions.apply_sent_cohort(
+		state, adopt_plan["bn_ids"], adopt_plan["hulls_by_type"], reserve)
+	assert_bool(adopt_receipt.success).is_true()
+
+	# Apply embark (a2 — departed priority)
+	var embark_request = result["embark_request"]
+	assert_object(embark_request).is_not_null()
+	var embark_receipts := ForceTransitions.apply_embark(state, embark_request, reserve)
+	assert_bool(embark_receipts[0].success).is_true()
+
 	# 2 cohorts: a1 (adopted orphan), a2 (embarked — A had priority over B)
 	assert_int(state.cohorts.size()).is_equal(2)
 	var all_ids: Array = []
@@ -123,17 +150,17 @@ func test_priority_departed_brigade_embarks_first() -> void:
 	assert_int(state.mainland_pool.size()).is_equal(2)
 
 
-# --- test 4: drain_bn_ids full ------------------------------------------------------------------
+# --- test 4: free_emptied_cohorts full (migrated from drain_bn_ids) ------------------------------
 
 func test_drain_bn_ids_full_removes_cohort_and_populates_pipeline() -> void:
 	var state := SealiftState.new()
 	state.cohorts = [{
 		"hulls_by_type": {"LHA": 2},
-		"bn_ids": ["a", "b"],
+		"bn_ids": [],
 		"state": SealiftState.STATE_SENT,
 	}]
 
-	SealiftResolver.drain_bn_ids(state, ["a", "b"], 3)
+	ForceTransitions.free_emptied_cohorts(state, 3)
 
 	assert_bool(state.cohorts.is_empty()).is_true()
 	assert_bool(state.return_pipeline.has("LHA")).is_true()
@@ -148,28 +175,28 @@ func test_drain_bn_ids_full_zero_return_time_skips_pipeline() -> void:
 	var state := SealiftState.new()
 	state.cohorts = [{
 		"hulls_by_type": {"LHA": 2},
-		"bn_ids": ["a", "b"],
+		"bn_ids": [],
 		"state": SealiftState.STATE_SENT,
 	}]
 
-	SealiftResolver.drain_bn_ids(state, ["a", "b"], 0)
+	ForceTransitions.free_emptied_cohorts(state, 0)
 
 	# Cohort gone; pipeline untouched (hulls implicitly ready)
 	assert_bool(state.cohorts.is_empty()).is_true()
 	assert_bool(state.return_pipeline.is_empty()).is_true()
 
 
-# --- test 5: drain_bn_ids partial --------------------------------------------------------------
+# --- test 5: free_emptied_cohorts partial (migrated from drain_bn_ids) --------------------------
 
 func test_drain_bn_ids_partial_keeps_cohort() -> void:
 	var state := SealiftState.new()
 	state.cohorts = [{
 		"hulls_by_type": {"LHA": 2},
-		"bn_ids": ["a", "b", "c"],
+		"bn_ids": ["b", "c"],
 		"state": SealiftState.STATE_SENT,
 	}]
 
-	SealiftResolver.drain_bn_ids(state, ["a"], 3)
+	ForceTransitions.free_emptied_cohorts(state, 3)
 
 	# Cohort stays with remaining BNs
 	assert_int(state.cohorts.size()).is_equal(1)

@@ -128,7 +128,14 @@ func test_end_to_end_sealift_ride() -> void:
 	var defs := {"LPD": _ship_def("LPD", "Military_Amphibious", 1.0)}
 	var ready := {"LPD": 4}
 
-	var result := SealiftResolver.resolve(state, [], ready, defs)
+	var reserve: Array = []
+	var result := SealiftResolver.resolve(state, reserve, ready, defs)
+
+	# Apply embark via ForceTransitions
+	var embark_request = result["embark_request"]
+	assert_object(embark_request).is_not_null()
+	var embark_receipts := ForceTransitions.apply_embark(state, embark_request, reserve)
+	assert_bool(embark_receipts[0].success).is_true()
 
 	# Cohort holds all 4 JLSF BN ids
 	assert_int(state.cohorts.size()).is_equal(1)

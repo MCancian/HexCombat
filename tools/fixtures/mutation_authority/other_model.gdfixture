@@ -1,0 +1,6 @@
+class_name FixtureOtherModel
+extends RefCounted
+
+## Fixture stand-in for a model owned by a second aggregate. Never compiled; see README.md.
+
+var other_status: int = 0

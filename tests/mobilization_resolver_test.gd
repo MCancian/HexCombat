@@ -1,6 +1,7 @@
 ## Verifies MobilizationResolver (plan 0029 Tier A2): brigades leave mobilization on their release
 ## turn, fall back to a nearby hex when their garrison is overrun, and stay pending when nowhere is
-## available. Pure — own fixtures, no autoload, no dice.
+## available. Pure — own fixtures, no autoload, no dice. Returns MobilizationSummary directly
+## (plan 0044: compute-only resolver, mutations in ForceTransitions).
 extends GdUnitTestSuite
 
 
@@ -29,7 +30,6 @@ func _brigades() -> Dictionary:
 	return {"BDE-911": _brigade("BDE-911", 3), "BDE-912": _brigade("BDE-912", 4)}
 
 
-## Arrival resolver that always accepts the garrison hex.
 func _garrison_available() -> Callable:
 	return func(garrison_hex: String) -> String: return garrison_hex
 
@@ -41,6 +41,7 @@ func test_nothing_releases_before_the_release_turn() -> void:
 	assert_int(summary.battalions_arrived).is_equal(0)
 	assert_int(summary.pending_brigades).is_equal(2)
 	assert_int(summary.pending_battalions).is_equal(7)
+	# Resolver is compute-only: state unchanged.
 	assert_int(state.pending.size()).is_equal(2)
 
 
@@ -54,11 +55,10 @@ func test_release_turn_puts_the_brigade_on_its_garrison_hex() -> void:
 	assert_int(int(arrival["battalions"])).is_equal(3)
 	assert_bool(bool(arrival["displaced"])).is_false()
 	assert_int(summary.battalions_arrived).is_equal(3)
-	# The second brigade is still forming; the first is drained out of pending and logged.
 	assert_int(summary.pending_brigades).is_equal(1)
 	assert_int(summary.pending_battalions).is_equal(4)
-	assert_int(state.released.size()).is_equal(1)
-	assert_int(int(state.released[0]["turn"])).is_equal(4)
+	# State unchanged (compute-only).
+	assert_int(state.released.size()).is_equal(0)
 
 
 func test_a_late_turn_releases_every_overdue_brigade() -> void:
@@ -66,7 +66,8 @@ func test_a_late_turn_releases_every_overdue_brigade() -> void:
 	var summary := MobilizationResolver.resolve(state, 9, _brigades(), _garrison_available())
 	assert_int(summary.arrivals.size()).is_equal(2)
 	assert_int(summary.battalions_arrived).is_equal(7)
-	assert_array(state.pending).is_empty()
+	# State unchanged (compute-only).
+	assert_int(state.pending.size()).is_equal(2)
 
 
 func test_overrun_garrison_displaces_the_arrival() -> void:
@@ -76,7 +77,8 @@ func test_overrun_garrison_displaces_the_arrival() -> void:
 	var arrival: Dictionary = summary.arrivals[0]
 	assert_str(String(arrival["hex_id"])).is_equal("hex_5_5")
 	assert_bool(bool(arrival["displaced"])).is_true()
-	assert_bool(bool(state.released[0]["displaced"])).is_true()
+	# State unchanged (compute-only).
+	assert_int(state.released.size()).is_equal(0)
 
 
 func test_no_arrival_hex_defers_instead_of_losing_the_brigade() -> void:
@@ -85,7 +87,7 @@ func test_no_arrival_hex_defers_instead_of_losing_the_brigade() -> void:
 	var summary := MobilizationResolver.resolve(state, 4, _brigades(), nowhere)
 	assert_array(summary.arrivals).is_empty()
 	assert_array(summary.deferred).contains(["BDE-911"])
-	# Still pending, still counted — the brigade retries next turn rather than evaporating.
+	# State unchanged (compute-only).
 	assert_int(state.pending.size()).is_equal(2)
 	assert_int(summary.pending_battalions).is_equal(7)
 
@@ -98,7 +100,6 @@ func test_null_state_is_an_inert_phase() -> void:
 
 # --- arrival-hex search -------------------------------------------------------------------------
 
-## A 1-D chain of hexes: a—b—c—d, so ring distance from "a" is unambiguous.
 func _chain_neighbors() -> Callable:
 	var chain := {"a": ["b"], "b": ["a", "c"], "c": ["b", "d"], "d": ["c"]}
 	return func(hex_id: String) -> Array: return chain.get(hex_id, [])
@@ -124,6 +125,5 @@ func test_arrival_returns_empty_when_nothing_is_available() -> void:
 
 func test_arrival_search_is_bounded_by_max_rings() -> void:
 	var available := func(hex_id: String) -> bool: return hex_id == "d"
-	# "d" is 3 rings out; a 2-ring search must not reach it.
 	assert_str(MobilizationResolver.find_arrival_hex("a", _chain_neighbors(), available, 2)).is_equal("")
 	assert_str(MobilizationResolver.find_arrival_hex("a", _chain_neighbors(), available, 3)).is_equal("d")

@@ -152,3 +152,13 @@ HexCombat's turn engine is an **adaptation**, not a port. TIV (`TaiwanInvasionVi
 - **`play_turn()` / LLM API** — the bulk-order → `TurnResult` entrypoint is built for headless AI play; TIV has no equivalent.
 - **FEBA retreats, victory census, frontline phase** — HexCombat adds these as post-combat cleanup stages absent from TIV's view model.
 - **Signal/event bus** — `EventBus` signals replace TIV's Tornado/HTTP event model.
+
+## 9. State & authority
+
+This subsystem mutates the **`force`** aggregate through phase transitions. Its designated authority is `ForceTransitions`.
+- **Outcome/receipt types:** `ForceActivityRequest`, `ForcePlacementReceipt`.
+- **Manifest:** [tools/mutation_authority_manifest.json](../../tools/mutation_authority_manifest.json).
+
+**Rules:**
+- Every brigade placement, activity write, and protected roster shrink uses the `ForceTransitions` API.
+- Ownership facts live only in the manifest.

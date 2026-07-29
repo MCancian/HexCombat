@@ -114,3 +114,13 @@ Cleanup runs last in resolve_turn (GameState.gd). Victory census is the tail of 
 **What I cannot verify:** Whether the 2.0 km `sample_interval` produces identical hex sequences to TIV (the TIV oracle uses 2.0 km but sampling is sensitive to the exact hex grid data). Brigade-level distribution skips TIV's per-hex polygon clipping (`_get_polyline_coords_in_hex`) — the hex sequence approach snaps to hex centers, which may assign a brigade to a hex the polyline barely grazes.
 
 **Deferred:** D5-D front-line DRAW UI is not implemented (Track 5 / graphics). The `resolve_frontline_phase` function exists for headless/LLM callers but has no in-game drawing tool.
+
+## 8. State & authority
+
+This subsystem verifies the **`force`** aggregate via the victory census. Its designated authority is `ForceTransitions`.
+- **Outcome/receipt types:** `ForcePlacementReceipt`, `ForceValidationResult`.
+- **Manifest:** [tools/mutation_authority_manifest.json](../../tools/mutation_authority_manifest.json).
+
+**Rules:**
+- The census strictly counts present (landed) battalions.
+- All off-map pools are systematically excluded from on-island strength computations.

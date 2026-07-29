@@ -19,6 +19,9 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-29 — Force mutation authority campaign completed (plan 0044).**
+  The `force` aggregate migration is complete. `ForceTransitions` is the sole sanctioned mutation authority for brigade placement, battalion roster counts, casualties, transfers, and transport manifests. The facade `RosterMutations` has been eliminated and `GameData` indexes are consistently protected. Facts: `docs/STATUS.md`, `docs/systems/*.md` state & authority sections, `tools/mutation_authority_manifest.json`.
+
 - **2026-07-27 — Force mutations get their first enforced authority slice (agent, plan 0044).**
   `ForceTransitions` now applies protected Brigade runtime-field writes and `Battalion.qty` roster
   decrements through typed requests/receipts; production placement, activity, ground/IJFS/crossing/air

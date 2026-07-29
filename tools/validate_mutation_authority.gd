@@ -242,7 +242,9 @@ func _claim_model_fields(
 	for entry_value in aggregate.get(section, []):
 		var entry: Dictionary = entry_value
 		var class_id := _text(entry.get("class", ""))
-		ownership.owner_paths[_text(entry.get("path", ""))] = true
+		var path := _text(entry.get("path", ""))
+		if section == "owned_models" and not path.is_empty():
+			ownership.owner_paths[path] = aggregate_id
 		for field_value in Dictionary(entry.get("fields", {})).keys():
 			var key := "%s.%s" % [class_id, String(field_value)]
 			if ownership.protected.has(key):
@@ -345,8 +347,9 @@ func _scan(corpus: Corpus, ownership: Ownership) -> Array[Finding]:
 		var lines := String(corpus.stripped[path]).split("\n")
 		var types := _receiver_types(lines, corpus, path)
 		var logical := _join_continuations(lines)
+		var self_class := String(corpus.class_of.get(path, ""))
 		for index in range(lines.size()):
-			for finding in _scan_line(String(logical[index]), types.at(index), corpus, ownership):
+			for finding in _scan_line(String(logical[index]), types.at(index), corpus, ownership, self_class):
 				finding.path = path
 				finding.line = index + 1
 				findings.append(finding)
@@ -393,6 +396,9 @@ func _receiver_types(lines: PackedStringArray, corpus: Corpus, path: String) -> 
 	# A class_name is itself a resolvable receiver, for `SomeClass.static_field = x`.
 	for class_id in corpus.path_of.keys():
 		_record_type(file_scope, String(class_id), String(class_id))
+	var self_class := String(corpus.class_of.get(path, ""))
+	if not self_class.is_empty():
+		_record_type(file_scope, "self", self_class)
 	map.scopes.append(file_scope)
 
 	var boundary := _regex("^\\s*(?:static\\s+)?func\\s+[A-Za-z_]\\w*\\s*\\(")
@@ -515,13 +521,48 @@ func _resolve(expression: String, types: Dictionary, corpus: Corpus) -> String:
 
 
 func _scan_line(
-		line: String, types: Dictionary, corpus: Corpus, ownership: Ownership) -> Array[Finding]:
+		line: String, types: Dictionary, corpus: Corpus, ownership: Ownership, self_class: String = "") -> Array[Finding]:
 	var out: Array[Finding] = []
 	out.append_array(_match_field_writes(line, types, corpus, ownership))
+	out.append_array(_match_bare_member_writes(line, corpus, ownership, self_class))
 	out.append_array(_match_cast_writes(line, corpus, ownership))
 	out.append_array(_match_dynamic_sets(line, types, corpus, ownership))
 	out.append_array(_match_mutator_calls(line, types, corpus, ownership))
 	return out
+
+
+func _match_bare_member_writes(
+		line: String, corpus: Corpus, ownership: Ownership, self_class: String) -> Array[Finding]:
+	if self_class.is_empty():
+		return []
+	var trimmed := line.strip_edges()
+	if trimmed.begins_with("var ") or trimmed.begins_with("const ") or trimmed.begins_with("func "):
+		return []
+	var element_effect := "(\\[[^\\]\\n]*\\])\\s*(%s)" % ASSIGN_OPS
+	var container_effect := "(?:\\[[^\\]\\n]*\\])?\\s*\\.\\s*(%s)\\s*\\(" % "|".join(MUTATOR_METHODS)
+	var assign_effect := "(%s)" % ASSIGN_OPS
+	var regex := _regex("(?<![\\w.])([A-Za-z_]\\w*)\\s*(?:%s|%s|%s)" % [element_effect, container_effect, assign_effect])
+	var out: Array[Finding] = []
+	for found in regex.search_all(line):
+		var match_start := found.get_start()
+		if match_start > 0 and line[match_start - 1] == ".":
+			continue
+		var field := found.get_string(1)
+		var key := "%s.%s" % [self_class, field]
+		if not ownership.protected.has(key):
+			continue
+		var rule := "direct_assign"
+		if not found.get_string(2).is_empty():
+			rule = "element_assign"
+		elif not found.get_string(4).is_empty():
+			rule = "container_mutate"
+		elif not found.get_string(5).begins_with("="):
+			rule = "compound_assign"
+		var finding := _finding(key, rule, ownership, line)
+		if finding != null:
+			out.append(finding)
+	return out
+
 
 
 ## direct_assign / compound_assign / element_assign / container_mutate — all four share one shape,
@@ -632,6 +673,8 @@ func _finding(
 	var aggregate := ""
 	if ownership.protected.has(symbol):
 		aggregate = String(ownership.protected[symbol]["aggregate"])
+	elif ownership.mutators.has(symbol):
+		aggregate = String(ownership.mutators[symbol])
 	var shown := display if not display.is_empty() else symbol
 	return Finding.new(shown, rule, aggregate, line.strip_edges())
 
@@ -646,10 +689,10 @@ func _finding(
 func _apply_allowances(findings: Array[Finding], ownership: Ownership) -> Verdict:
 	var verdict := Verdict.new()
 	for finding in findings:
-		if ownership.authority_paths.has(finding.path):
+		if not finding.aggregate.is_empty() and ownership.authority_paths.get(finding.path, "") == finding.aggregate:
 			verdict.authority_used[finding.path] = true
 			continue
-		if ownership.owner_paths.has(finding.path):
+		if not finding.aggregate.is_empty() and ownership.owner_paths.get(finding.path, "") == finding.aggregate:
 			continue
 		if ownership.allowances.has(finding.allowance_key()):
 			verdict.allowance_used[finding.allowance_key()] = true
@@ -907,11 +950,15 @@ func _check_authority_dir_fixture(manifest: Dictionary, ownership: Ownership) ->
 ## tree — and it is only expressible because the usage record is a separate Verdict rather than a side
 ## effect written back into Ownership.
 func _check_inert_authority_fixture(manifest: Dictionary, verdict: Verdict) -> void:
-	if not verdict.authority_used.has(_text(Dictionary(manifest["aggregates"][0]).get("authority_path", ""))):
+	var first_auth := _text(Dictionary(manifest["aggregates"][0]).get("authority_path", ""))
+	if not verdict.authority_used.has(first_auth):
 		_fail("SELF-TEST: the fixture authority wrote nothing, so the inert-authority check is being proven against the wrong baseline.")
 		return
+	var test_verdict := Verdict.new()
+	test_verdict.authority_used = verdict.authority_used.duplicate()
+	test_verdict.authority_used.erase(first_auth)
 	var produced := _capture_failures(func() -> void:
-		_report_inert_authorities(manifest, Verdict.new()))
+		_report_inert_authorities(manifest, test_verdict))
 	_expect_single_error(produced, "E_INERT_AUTHORITY", "inert-authority fixture")
 
 
@@ -999,7 +1046,7 @@ func _expect_single_error(produced: Array[String], expected: String, label: Stri
 # ── Small helpers ───────────────────────────────────────────────────────────────────────────────
 
 func _fixture_files() -> Array[String]:
-	return _files_matching(FIXTURE_DIR, "", FIXTURE_EXT)
+	return _files_with_extension(FIXTURE_DIR, FIXTURE_EXT)
 
 
 func _files_matching(dir_path: String, prefix: String, suffix: String) -> Array[String]:

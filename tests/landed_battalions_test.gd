@@ -183,7 +183,7 @@ func test_pending_pool_roster_violations_catches_a_desync() -> void:
 		"brigade_id": "TEST-RED-DESYNC",
 		"bns": [{"id": "d1", "type": "Amphibious Infantry Battalion"}],
 	}]
-	assert_array(RosterMutations.pending_pool_roster_violations(GameState.data)).is_empty()
+	assert_array(ForceTransitions.pending_pool_roster_violations(GameData, GameState.data)).is_empty()
 
 	# Now claim more Field Artillery at sea than the brigade owns: the mirror-image of the
 	# ghost-landing bug, where something killed a battalion that was never ashore.
@@ -195,7 +195,7 @@ func test_pending_pool_roster_violations_catches_a_desync() -> void:
 			{"id": "d3", "type": "Field Artillery Battalion"},
 		],
 	}]
-	var violations := RosterMutations.pending_pool_roster_violations(GameState.data)
+	var violations := ForceTransitions.pending_pool_roster_violations(GameData, GameState.data)
 	assert_int(violations.size()).is_equal(1)
 	assert_str(violations[0]).contains("TEST-RED-DESYNC")
 	_reset_fixture()

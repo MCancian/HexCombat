@@ -9,11 +9,12 @@ extends RefCounted
 
 const BRIGADE_ID_PREFIX := "JLSF:"
 const BN_TYPE := "JLSF Detachment"
+const CARGO_KIND := "jlsf"
 
 
 ## True when the reserve/pool entry is a JLSF pseudo-entry, not a troop brigade.
 static func is_jlsf_entry(entry: Dictionary) -> bool:
-	return String(entry.get("cargo", "")) == "jlsf"
+	return String(entry.get("cargo", "")) == CARGO_KIND
 
 
 ## brigade id for a port: "JLSF:<port_id>"

@@ -7,3 +7,8 @@ extends RefCounted
 var rows_by_index: Array = []
 var rows_built: bool = false
 var unrelated_note: String = ""
+
+
+func direct_write_bypass() -> void:
+	rows_built = true                                       #@expect direct_assign
+

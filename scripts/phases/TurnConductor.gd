@@ -11,8 +11,8 @@ extends RefCounted
 ##
 ## Plan 0038: the phases themselves live in sibling modules — arrivals (sealift, offload, ROC
 ## mobilization, air insertion) in `ReinforcementPhases`, fires (IJFS, anti-ship) in `FiresPhases`,
-## end-of-turn accounting (supply, cleanup) in `TurnClosure`, and the roster-shrinking seam they all
-## share in `RosterMutations`. What is left here is the turn's ORDER plus the phases whose
+## end-of-turn accounting (supply, cleanup) in `TurnClosure`; force mutations shared across phases
+## go through `ForceTransitions`. What is left here is the turn's ORDER plus the phases whose
 ## application interleaves with it: movement, ground combat, FEBA retreats, and the façade-only
 ## front-line phase. `resolve_turn` below still holds the full ordered call list — the modules own
 ## the HOW of a phase, never the WHEN.
@@ -101,7 +101,7 @@ static func resolve_turn(state: GameStateData, dice: Dice = null) -> void:
 	if OS.is_debug_build():
 		var index_violations := GameData.validate_runtime_indexes()
 		assert(index_violations.is_empty(), "runtime index desync at end of resolve_turn: %s" % "; ".join(index_violations))
-		var roster_violations := RosterMutations.pending_pool_roster_violations(state)
+		var roster_violations := ForceTransitions.pending_pool_roster_violations(GameData, state)
 		assert(roster_violations.is_empty(), "roster/pool desync at end of resolve_turn: %s" % "; ".join(roster_violations))
 
 	state.phase = GameStateData.Phase.END
@@ -214,9 +214,11 @@ static func resolve_combat_at(state: GameStateData, hex_id: String, dice: Dice) 
 
 	var result: CombatResult = outcome["result"]
 	for casualty in result.attacker_casualties:
-		RosterMutations.apply_casualty(casualty)
+		ForceTransitions.apply_battalion_casualties(
+			GameData, ForceTransitions.ground_combat_casualty_request(casualty))
 	for casualty in result.defender_casualties:
-		RosterMutations.apply_casualty(casualty)
+		ForceTransitions.apply_battalion_casualties(
+			GameData, ForceTransitions.ground_combat_casualty_request(casualty))
 
 	GameData.hex_states[hex_id].feba_km = GameData.hex_states[hex_id].feba_km + result.feba_movement_km
 	for brigade_value in attacker_brigades + defender_brigades:

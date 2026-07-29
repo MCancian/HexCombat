@@ -172,3 +172,14 @@ resolved turn's picture, `pending_*`, `landed`, `history`.
 - **No landing-zone attrition term.** The plan's original design call (Green-held/contested hexes
   inflict high attrition) was superseded by the USER's air-defence-keyed model; the cost of an
   opposed drop is now the ground combat itself.
+
+## 10. State & authority
+
+This subsystem mutates the **`force`** aggregate. Its designated authority is `ForceTransitions`.
+- **Outcome/receipt types:** `ForceAirInsertionReceipt`.
+- **Manifest:** [tools/mutation_authority_manifest.json](../../tools/mutation_authority_manifest.json).
+
+**Rules:**
+- Inserted battalions are removed from the air pool.
+- Survivors are placed ashore; losses shrink the roster.
+- First placement on the map occurs only if at least one battalion lands.

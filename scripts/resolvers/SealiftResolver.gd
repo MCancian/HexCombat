@@ -16,9 +16,9 @@ extends RefCounted
 ## the ready pool (same-turn round trip). Only carrier hulls (capacity > 0) enter cohorts and go busy.
 ## Amphibious-lift eligibility is classified by ShipDef.is_amphibious_lift() / is_carrier() / sails().
 ##
-## Mutates the passed SealiftState in place (sanctioned Resource mutation, like IjfsResolver);
-## ship_reserve merging + ShipState bin projection stay in GameState's wrapper. Returns the deltas
-## the wrapper needs.
+## Mutates only companion sealift fields (return/reload pipeline and escort magazines). It returns
+## typed force plans for cohort binding and mainland/reserve membership; ForceTransitions applies
+## those plans, and ReinforcementPhases projects ShipState bins.
 
 
 ## state: SealiftState (mutated in place). ship_reserve: current active reserve (at-sea BNs).
@@ -52,55 +52,54 @@ static func resolve(
 	var carriers_sent_by_type: Dictionary = {}
 
 	# --- step 2: adopt orphan at-sea BNs into a "sent" cohort -----------------------------------
+	var adopt_plan := _plan_orphan_adoption(
+		state, ship_reserve, ready, ship_defs, carriers_sent_by_type)
+
+	# --- step 3: embark follow-on BNs onto remaining ready AMPHIBIOUS capacity -------------------
+	var embark_result := _embark_followon(state, ship_reserve, ready, ship_defs, carriers_sent_by_type)
+
+	# --- assemble the sailing fleet for the crossing --------------------------------------------
+	var sent_by_type: Dictionary = carriers_sent_by_type.duplicate(true)
+	var screen: Array = _gather_carriers_and_screen(ready, ship_defs, false)["screen"]
+	for s in screen:
+		var st := String(s["ship_type"])
+		sent_by_type[st] = int(sent_by_type.get(st, 0)) + int(s["ready"])
+
+	var embark_request: ForceEmbarkRequest = null
+	if not (embark_result["brigade_specs"] as Array).is_empty():
+		embark_request = ForceEmbarkRequest.batch(
+			embark_result["brigade_specs"], embark_result["batch_bn_ids"],
+			embark_result["batch_hulls"])
+	return {
+		"sent_by_type": sent_by_type,
+		"carriers_sent_by_type": carriers_sent_by_type,
+		"returned_by_type": returned_by_type,
+		"embarked_reserve_entries": embark_result["embarked_reserve_entries"],
+		"embark_request": embark_request,
+		"adopt_plan": adopt_plan,
+	}
+
+
+static func _plan_orphan_adoption(
+		state: SealiftState, ship_reserve: Array, ready: Dictionary,
+		ship_defs: Dictionary, carriers_sent_by_type: Dictionary) -> Dictionary:
 	var bound_ids := _bound_bn_ids(state)
 	var orphan_bns: Array = []
 	for entry in ship_reserve:
 		for bn in entry.get("bns", []):
 			if not bound_ids.has(String(bn.get("id", ""))):
 				orphan_bns.append(bn)
-	if not orphan_bns.is_empty():
-		# Full carrier set + escort screen, matching the pre-0004 build_sent_fleet, so the default
-		# scenario's minimum-lift derivation is identical.
-		var full := _gather_carriers_and_screen(ready, ship_defs, false)
-		# Passing screen=[] means build_sent_snapshots' sent_by_type is carriers only, so it is the
-		# adopted cohort's hull set directly (no escort filtering needed).
-		var snap := ShipLoadingModel.build_sent_snapshots(orphan_bns.size(), full["carriers"], [])
-		var adopted_hulls: Dictionary = snap["sent_by_type"]
-		# Stamp each adopted BN with the category of the carrier type that lifts it (plan 0006: the
-		# offload cost matrix needs the ship category a BN crossed on). build_sent_snapshots fills
-		# carrier types in deterministic order and bn_equiv_assigned preserves that insertion order,
-		# so walking its cumulative BN-equiv against the orphan pool reproduces the assignment.
-		_stamp_ship_categories(orphan_bns, snap["bn_equiv_assigned"], ship_defs)
-		if not adopted_hulls.is_empty():
-			state.cohorts.append({
-				"hulls_by_type": adopted_hulls,
-				"bn_ids": _bn_ids(orphan_bns),
-				"state": SealiftState.STATE_SENT,
-			})
-			_consume(ready, adopted_hulls)
-			_accumulate(carriers_sent_by_type, adopted_hulls)
-
-	# --- step 3: embark follow-on BNs onto remaining ready AMPHIBIOUS capacity -------------------
-	var embarked_reserve_entries := _embark_followon(state, ship_reserve, ready, ship_defs, carriers_sent_by_type)
-
-	# --- assemble the sailing fleet for the crossing --------------------------------------------
-	var sent_by_type: Dictionary = carriers_sent_by_type.duplicate(true)
-	# Escort + decoy screen: every ready escort sails (capacity 0) and stays ready; SAM-magazine
-	# depletion + reload is applied separately via apply_escort_consumption. Mirror the screen selection.
-	var screen: Array = _gather_carriers_and_screen(ready, ship_defs, false)["screen"]
-	for s in screen:
-		var st := String(s["ship_type"])
-		sent_by_type[st] = int(sent_by_type.get(st, 0)) + int(s["ready"])
-
-	# Freed-hull return timing is applied in the offload drain (drain_bn_ids / _free_cohort_hulls),
-	# where the scenario's amphibious_return_time is threaded in directly; nothing to do here.
-
-	return {
-		"sent_by_type": sent_by_type,
-		"carriers_sent_by_type": carriers_sent_by_type,
-		"returned_by_type": returned_by_type,
-		"embarked_reserve_entries": embarked_reserve_entries,
-	}
+	if orphan_bns.is_empty():
+		return {}
+	var carriers: Array = _gather_carriers_and_screen(ready, ship_defs, false)["carriers"]
+	var snapshot := ShipLoadingModel.build_sent_snapshots(orphan_bns.size(), carriers, [])
+	var adopted_hulls: Dictionary = snapshot["sent_by_type"]
+	_stamp_ship_categories(orphan_bns, snapshot["bn_equiv_assigned"], ship_defs)
+	if adopted_hulls.is_empty():
+		return {}
+	_consume(ready, adopted_hulls)
+	_accumulate(carriers_sent_by_type, adopted_hulls)
+	return {"bn_ids": _bn_ids(orphan_bns), "hulls_by_type": adopted_hulls}
 
 
 ## Decrement every pipeline slot; slots at 0 release their hulls to ready. Returns {ship_type -> int}
@@ -126,90 +125,87 @@ static func _tick_return_pipeline(state: SealiftState) -> Dictionary:
 
 
 ## Build the ordered follow-on BN pool (departed brigades first, then new brigades in pool order),
-## pack it onto ready AMPHIBIOUS carriers, and record the loaded BNs in a new "sent" cohort. Drains
-## loaded BNs from state.mainland_pool; returns the ship_reserve entries to merge. Mutates state +
-## ready + carriers_sent_by_type in place.
+## pack it onto ready AMPHIBIOUS carriers, and plan the loaded BNs for a new "sent" cohort. Does
+## NOT mutate state.mainland_pool or state.cohorts — the caller owns applying force mutations
+## through ForceTransitions.
+## Returns {embarked_reserve_entries: Array, brigade_specs: Array, batch_bn_ids: Array, batch_hulls: Dictionary}.
+## Mutates ready + carriers_sent_by_type in place (companion hull tracking).
 static func _embark_followon(
 	state: SealiftState, ship_reserve: Array, ready: Dictionary, ship_defs: Dictionary,
 	carriers_sent_by_type: Dictionary,
-) -> Array:
+) -> Dictionary:
+	var empty := {"embarked_reserve_entries": [], "brigade_specs": [], "batch_bn_ids": [], "batch_hulls": {}}
 	if state.mainland_pool.is_empty():
-		return []
+		return empty
 
-	var departed := {}
-	for entry in ship_reserve:
-		departed[String(entry.get("brigade_id", ""))] = true
-
-	# Priority: pool entries whose brigade already has an active reserve entry come first (finish
-	# departed brigades), then the rest in scenario order. Stable within each group.
-	var ordered_entries: Array = []
-	for entry in state.mainland_pool:
-		if departed.has(String(entry.get("brigade_id", ""))):
-			ordered_entries.append(entry)
-	for entry in state.mainland_pool:
-		if not departed.has(String(entry.get("brigade_id", ""))):
-			ordered_entries.append(entry)
-
-	# Flatten to an ordered BN pool, remembering each BN's home entry so loaded ones can be drained.
+	var ordered_entries := _ordered_mainland_entries(state.mainland_pool, ship_reserve)
 	var pool_bns: Array = []
-	var entry_by_bn_id: Dictionary = {}
 	for entry in ordered_entries:
-		for bn in entry.get("bns", []):
-			pool_bns.append(bn)
-			entry_by_bn_id[String(bn.get("id", ""))] = entry
-
-	var amph_carriers: Array = _gather_carriers_and_screen(ready, ship_defs, true)["carriers"]
-	var packed := ShipLoadingModel.pack_bns_into_hulls(pool_bns, amph_carriers)
+		pool_bns.append_array(entry.get("bns", []))
+	var carriers: Array = _gather_carriers_and_screen(ready, ship_defs, true)["carriers"]
+	var packed := ShipLoadingModel.pack_bns_into_hulls(pool_bns, carriers)
 	var loaded_bns: Array = packed["loaded_bns"]
 	if loaded_bns.is_empty():
-		return []
-
+		return empty
 	var hulls_used: Dictionary = packed["hulls_used_by_type"]
-	state.cohorts.append({
-		"hulls_by_type": hulls_used.duplicate(true),
-		"bn_ids": _bn_ids(loaded_bns),
-		"state": SealiftState.STATE_SENT,
-	})
 	_consume(ready, hulls_used)
 	_accumulate(carriers_sent_by_type, hulls_used)
+	return _build_embark_plan(ordered_entries, loaded_bns, hulls_used)
 
-	# Drain loaded BNs from their mainland_pool entries; build the reserve entries to merge.
-	var loaded_ids: Dictionary = {}
+
+static func _ordered_mainland_entries(mainland_pool: Array, ship_reserve: Array) -> Array:
+	var departed: Dictionary = {}
+	for entry in ship_reserve:
+		departed[String(entry.get("brigade_id", ""))] = true
+	var ordered: Array = []
+	for entry in mainland_pool:
+		if departed.has(String(entry.get("brigade_id", ""))):
+			ordered.append(entry)
+	for entry in mainland_pool:
+		if not departed.has(String(entry.get("brigade_id", ""))):
+			ordered.append(entry)
+	return ordered
+
+
+static func _build_embark_plan(
+		ordered_entries: Array, loaded_bns: Array, hulls_used: Dictionary) -> Dictionary:
+	var loaded: Dictionary = {}
 	for bn in loaded_bns:
-		loaded_ids[String(bn.get("id", ""))] = true
-	var embarked_by_brigade: Dictionary = {}
-	for entry in state.mainland_pool:
-		var kept: Array = []
+		loaded[String(bn.get("id", ""))] = true
+	var specs: Array = []
+	var reserve_entries: Array = []
+	var batch_ids: Array = []
+	for entry in ordered_entries:
 		var moved: Array = []
 		for bn in entry.get("bns", []):
-			if loaded_ids.has(String(bn.get("id", ""))):
+			if loaded.has(String(bn.get("id", ""))):
 				moved.append(bn)
-			else:
-				kept.append(bn)
-		entry["bns"] = kept
-		if not moved.is_empty():
-			var embarked: Dictionary = {
-				"brigade_id": String(entry["brigade_id"]),
-				"locked_beach": int(entry["locked_beach"]),
-				"beach_hex": String(entry["beach_hex"]),
-				"offset_bearing": float(entry["offset_bearing"]),
-				"bns": moved,
-			}
-			# JLSF pseudo-entries (plan 0006) carry cargo markers the offload phase dispatches on;
-			# preserve them through embark. Plain troop entries keep their exact pre-0006 shape.
-			if entry.has("cargo"):
-				embarked["cargo"] = entry["cargo"]
-			if entry.has("port_id"):
-				embarked["port_id"] = entry["port_id"]
-			embarked_by_brigade[String(entry["brigade_id"])] = embarked
-	# Fully-drained pool entries drop out.
-	var remaining_pool: Array = []
-	for entry in state.mainland_pool:
-		if not (entry.get("bns", []) as Array).is_empty():
-			remaining_pool.append(entry)
-	state.mainland_pool = remaining_pool
-
-	return embarked_by_brigade.values()
+		if moved.is_empty():
+			continue
+		var moved_ids := _bn_ids(moved)
+		var spec: Dictionary = {
+			"brigade_id": String(entry["brigade_id"]),
+			"bn_ids": moved_ids,
+			"locked_beach": int(entry["locked_beach"]),
+			"beach_hex": String(entry["beach_hex"]),
+			"offset_bearing": float(entry["offset_bearing"]),
+		}
+		if entry.has("cargo"):
+			spec["cargo"] = entry["cargo"]
+		if entry.has("port_id"):
+			spec["port_id"] = entry["port_id"]
+		var reserve_entry := spec.duplicate(true)
+		reserve_entry.erase("bn_ids")
+		reserve_entry["bns"] = moved
+		specs.append(spec)
+		reserve_entries.append(reserve_entry)
+		batch_ids.append_array(moved_ids)
+	return {
+		"embarked_reserve_entries": reserve_entries,
+		"brigade_specs": specs,
+		"batch_bn_ids": batch_ids,
+		"batch_hulls": hulls_used,
+	}
 
 
 ## Carrier / screen split from the ready pool. amphibious_only gates carriers to amphibious lift (the
@@ -308,46 +304,6 @@ static func flip_sent_to_offloading(state: SealiftState) -> void:
 	for cohort in state.cohorts:
 		if String(cohort.get("state", "")) == SealiftState.STATE_SENT:
 			cohort["state"] = SealiftState.STATE_OFFLOADING
-
-
-## Drop the given BN ids (landed or drowned) from every cohort; a cohort whose BNs all drain frees
-## its surviving hulls into the return pipeline (or straight to ready when return_time <= 0). Mutates
-## state.cohorts + state.return_pipeline in place.
-static func drain_bn_ids(state: SealiftState, bn_ids: Array, amphibious_return_time: int) -> void:
-	if bn_ids.is_empty():
-		return
-	var drop: Dictionary = {}
-	for id in bn_ids:
-		drop[String(id)] = true
-	var kept_cohorts: Array = []
-	for cohort in state.cohorts:
-		var remaining_ids: Array = []
-		for id in cohort.get("bn_ids", []):
-			if not drop.has(String(id)):
-				remaining_ids.append(String(id))
-		cohort["bn_ids"] = remaining_ids
-		if remaining_ids.is_empty():
-			_free_cohort_hulls(state, cohort["hulls_by_type"], amphibious_return_time)
-		else:
-			kept_cohorts.append(cohort)
-	state.cohorts = kept_cohorts
-
-
-## Freed hulls with a positive return time enter the pipeline; with return_time <= 0 they simply
-## leave the cohort and become ready again via the ShipState projection (same-turn round trip).
-static func _free_cohort_hulls(state: SealiftState, hulls_by_type: Dictionary, amphibious_return_time: int) -> void:
-	if amphibious_return_time <= 0:
-		return
-	for ship_type in hulls_by_type.keys():
-		var count := int(hulls_by_type[ship_type])
-		if count <= 0:
-			continue
-		if not state.return_pipeline.has(String(ship_type)):
-			state.return_pipeline[String(ship_type)] = []
-		(state.return_pipeline[String(ship_type)] as Array).append({
-			"count": count,
-			"turns_remaining": amphibious_return_time,
-		})
 
 
 ## Stamp bns (in pool order) with the carrier category lifting them: walk bn_equiv_assigned

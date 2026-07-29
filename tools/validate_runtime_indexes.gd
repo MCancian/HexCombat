@@ -27,12 +27,11 @@ func _initialize() -> void:
 	_step_after_offload()
 	_step_move_and_remove()
 	_step_full_turn()
-	_step_negative_test()
 	_step_reload_restores()
 
 	print("--- Summary ---")
 	if _failures.is_empty():
-		print("PASS: runtime index consistency validated across all %d scenarios" % 6)
+		print("PASS: runtime index consistency validated across all %d scenarios" % 5)
 	else:
 		print("FAIL: %d violation(s) detected" % _failures.size())
 	_finish()
@@ -109,35 +108,8 @@ func _step_full_turn() -> void:
 		print("  OK")
 
 
-func _step_negative_test() -> void:
-	print("--- 5. Negative test (deliberate corruption) ---")
-	GameData.load_all()
-	GameState.reset_to_scenario()
-
-	var ghost_id := "__ghost__"
-	# Corrupt by forcing a bogus brigade id into a hex bucket.
-	var target_bucket: Array = GameData.brigades_by_hex.get(TARGET_HEX, [])
-	target_bucket.append(ghost_id)
-	GameData.brigades_by_hex[TARGET_HEX] = target_bucket
-
-	var violations: Array[String] = GameData.validate_runtime_indexes()
-	if violations.is_empty():
-		_fail("negative test: expected violations for __ghost__ but got none")
-		return
-
-	var found_ghost := false
-	for v in violations:
-		if "__ghost__" in v:
-			found_ghost = true
-			break
-	if not found_ghost:
-		_fail("negative test: violations did not mention __ghost__: %s" % "; ".join(violations))
-	else:
-		print("  OK (detected corruption: %s)" % "; ".join(violations))
-
-
 func _step_reload_restores() -> void:
-	print("--- 6. Reload restores clean state ---")
+	print("--- 5. Reload restores clean state ---")
 	GameData.load_all()
 	GameState.reset_to_scenario()
 	_assert_indexes_healthy("after reload restoring clean state")

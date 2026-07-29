@@ -73,12 +73,56 @@
     },
     {
       "id": "force",
-      "summary": "The force aggregate migration: brigade roster, runtime placement/activity, and placement-index writes are routed through ForceTransitions. The source gate currently protects Brigade runtime fields; GameData.brigades_by_hex joins once the scanner can distinguish hosted owner writes from construction.",
+      "summary": "The force aggregate migration: brigade roster, runtime placement/activity, placement-index writes, air-insertion pool/landed, and mobilization pending/released are routed through ForceTransitions. Caps/history on AirInsertionState are companion updates by ReinforcementPhases and are NOT registered here.",
       "status": "enforced",
       "authority_class": "ForceTransitions",
       "authority_path": "res://scripts/transitions/ForceTransitions.gd",
-      "owned_models": [],
+      "owned_models": [
+        {
+          "class": "MobilizationState",
+          "path": "res://scripts/model/MobilizationState.gd",
+          "_doc": "Plan 0044 slice: pending and released are force aggregate fields (drained/appended by ForceTransitions).",
+          "fields": {
+            "pending": "campaign",
+            "released": "campaign"
+          }
+        }
+      ],
       "hosted_fields": [
+        {
+          "class": "AirInsertionState",
+          "path": "res://scripts/model/AirInsertionState.gd",
+          "_doc": "Plan 0044 slice: pool and landed are force aggregate fields (drained/updated by ForceTransitions). caps, history, initial_caps, first_turn are companion/identity fields excluded from this aggregate.",
+          "fields": {
+            "pool": "campaign",
+            "landed": "campaign"
+          }
+        },
+        {
+          "class": "GameStateData",
+          "path": "res://scripts/model/GameStateData.gd",
+          "_doc": "Plan 0044 SEA-TRANSPORT remainder: ship_reserve troop membership (BN ids in entries) is protected. JLSF cargo pseudo-entries (cargo='jlsf') are companion and exempt from force validation.",
+          "fields": {
+            "ship_reserve": "campaign"
+          }
+        },
+        {
+          "class": "SealiftState",
+          "path": "res://scripts/model/SealiftState.gd",
+          "_doc": "Plan 0044 SEA-TRANSPORT remainder: mainland_pool and cohorts are force aggregate fields (drained/appended by ForceTransitions). return_pipeline, escort_sam, escort_sam_max, escort_sam_threshold, escort_reload are companion aggregate fields.",
+          "fields": {
+            "mainland_pool": "campaign",
+            "cohorts": "campaign"
+          }
+        },
+        {
+          "class": "GameDataStore",
+          "path": "res://scripts/GameData.gd",
+          "_doc": "Runtime placement index projection; construction and reset also route through ForceTransitions so the host file has no writer exemption.",
+          "fields": {
+            "brigades_by_hex": "placement"
+          }
+        },
         {
           "class": "Brigade",
           "path": "res://scripts/model/Brigade.gd",
@@ -114,6 +158,29 @@
             "Brigade.hex_id",
             "Brigade.entry_bearing",
             "Battalion.qty"
+          ]
+        },
+        {
+          "path": "res://scripts/builders/AirInsertionStateBuilder.gd",
+          "why": "build() constructs a FRESH AirInsertionState from scenario data before any runtime play mutates it.",
+          "fields": [
+            "AirInsertionState.pool"
+          ]
+        },
+        {
+          "path": "res://scripts/builders/MobilizationStateBuilder.gd",
+          "why": "build() constructs a FRESH MobilizationState from scenario data before any runtime play mutates it.",
+          "fields": [
+            "MobilizationState.pending"
+          ]
+        },
+
+        {
+          "path": "res://scripts/builders/SealiftStateBuilder.gd",
+          "why": "build() constructs a FRESH SealiftState from scenario data before any runtime play mutates it.",
+          "fields": [
+            "SealiftState.mainland_pool",
+            "SealiftState.cohorts"
           ]
         }
       ],

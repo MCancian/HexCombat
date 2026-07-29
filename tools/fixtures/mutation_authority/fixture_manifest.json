@@ -55,6 +55,27 @@
           ]
         }
       ]
+    },
+    {
+      "id": "second_fixture_aggregate",
+      "summary": "Second fixture aggregate to prove authority boundary separation across aggregates.",
+      "status": "enforced",
+      "planned_authority": null,
+      "authority_class": "FixtureOtherTransitions",
+      "authority_path": "res://tools/fixtures/mutation_authority/transitions_dir/other_authority.gdfixture",
+      "owned_models": [
+        {
+          "class": "FixtureOtherModel",
+          "path": "res://tools/fixtures/mutation_authority/other_model.gdfixture",
+          "fields": {
+            "other_status": "campaign"
+          }
+        }
+      ],
+      "hosted_fields": [],
+      "construction_writers": [],
+      "legacy_writers": []
     }
   ]
 }
+

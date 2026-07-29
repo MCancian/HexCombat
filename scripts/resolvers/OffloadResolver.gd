@@ -1,12 +1,10 @@
 class_name OffloadResolver
 extends RefCounted
 
-## Pure resolver for the D1 amphibious offload phase (refactor_audit item 10, Phase C): runs the
-## OffloadCalculator day, removes landed BNs from their reserve entries (in place), and reports
-## which brigades make their first landing. Consumes NO dice (deterministic capacity ordering).
-## No autoload/engine access — GameState's wrapper applies the landings via
-## GameData.set_brigade_hex, reassigns ship_reserve, recomputes ownership, threads
-## pending_lost_at_sea, and owns the EventBus.offload_resolved emit.
+## Pure resolver for the D1 amphibious offload phase: runs the OffloadCalculator day and reports
+## exact troop/cargo landing plans without changing reserve or cohort membership. Consumes NO dice.
+## ReinforcementPhases passes the typed request to ForceTransitions, then owns infrastructure,
+## ownership, pending_lost_at_sea, fleet projection, and the EventBus emit.
 
 
 static func empty_manifest() -> Dictionary:
@@ -43,11 +41,8 @@ static func priority_order(ship_reserve: Array) -> Array[String]:
 ## landing path: one waits offshore until its target node's hex (its beach_hex) is Red-held,
 ## then delivers whole — reported in "jlsf_arrivals" [{port_id, bn_ids}] and dropped from the
 ## remaining reserve.
-## Returns {"manifest": Dictionary (incl. landed_brigade_ids), "remaining_ship_reserve": Array,
-## "landings": [{brigade_id, beach_hex, offset_bearing}, …], "jlsf_arrivals": Array}. A brigade
-## whose FIRST landed BN came ashore through an infra node lands at the node's hex instead of
-## the entry's beach_hex. Mutates each reserve entry's "bns" in place (landed BNs removed),
-## matching the pre-extraction behavior.
+## Returns the legacy manifest/projections plus a typed force_request. A brigade whose FIRST landed
+## BN came ashore through an infra node lands at the node's hex instead of the entry's beach_hex.
 static func resolve(
 	turn_number: int,
 	ship_reserve: Array,
@@ -74,12 +69,10 @@ static func resolve(
 		turn_number, beach_capacity, troop_reserve, priority_order(troop_reserve),
 		infra_nodes, cost_config, valve["occupancy"], valve["depth"], beach_to_to)
 
-	var applied := _apply_manifest_to_reserve(manifest, troop_reserve, brigades, infra_nodes)
-	var remaining_ship_reserve: Array = applied["remaining_ship_reserve"]
+	var plan := _plan_landings(manifest, troop_reserve, brigades, infra_nodes)
 
-	# JLSF delivery: a pseudo-entry lands whole (no throughput cost) the moment its target node's
-	# hex is Red-held; otherwise it stays offshore in the reserve, hulls committed.
 	var jlsf_arrivals: Array = []
+	var pass_through_reserve: Array = []
 	for jlsf_entry_value in jlsf_entries:
 		var jlsf_entry: Dictionary = jlsf_entry_value
 		if String(owner_by_hex.get(String(jlsf_entry.get("beach_hex", "")), "")) == HexOwner.RED:
@@ -88,14 +81,19 @@ static func resolve(
 				bn_ids.append(String((bn_value as Dictionary).get("id", "")))
 			jlsf_arrivals.append({"port_id": String(jlsf_entry.get("port_id", "")), "bn_ids": bn_ids})
 		else:
-			remaining_ship_reserve.append(jlsf_entry)
+			pass_through_reserve.append(jlsf_entry)
 
-	manifest["landed_brigade_ids"] = applied["landed_brigade_ids"]
+	manifest["landed_brigade_ids"] = plan["landed_brigade_ids"]
+	var all_remaining: Array = plan["remaining_entries"].duplicate()
+	all_remaining.append_array(pass_through_reserve)
 	return {
 		"manifest": manifest,
-		"remaining_ship_reserve": remaining_ship_reserve,
-		"landings": applied["landings"],
+		"remaining_ship_reserve": all_remaining,
+		"landings": plan["landings"],
 		"jlsf_arrivals": jlsf_arrivals,
+		"landed_bn_ids_by_brigade": plan["landed_bn_ids_by_brigade"],
+		"troop_landing_plan": plan["landing_plan"],
+		"force_request": ForceOffloadRequest.from_resolution(plan["landing_plan"], jlsf_arrivals),
 	}
 
 
@@ -132,63 +130,85 @@ static func _occupancy_valve_inputs(active_beach_ids: Array[int], beaches: Dicti
 	return {"occupancy": beach_occupancy, "depth": beach_depth}
 
 
-## Remove landed BNs from their reserve entries (in place), report first landings, and keep the
-## still-populated entries. A brigade whose FIRST landed BN came ashore through an infra node
-## lands at the node's hex instead of the entry's beach_hex.
+## Compute the landing plan (which BN ids land per brigade) without mutating reserve entries.
 ## Returns {"landed_brigade_ids": Array[String], "landings": placement dicts,
-## "remaining_ship_reserve": entries that still hold BNs}.
-static func _apply_manifest_to_reserve(manifest: Dictionary, troop_reserve: Array, brigades: Dictionary, infra_nodes: Array) -> Dictionary:
-	var node_hex_by_id: Dictionary = {}
+## "remaining_entries": entries still holding BNs, "landed_bn_ids_by_brigade": {brigade_id: {bn_id: true}},
+## "landing_plan": [{brigade_id, bn_ids, hex_id, offset_bearing}]}.
+static func _plan_landings(
+		manifest: Dictionary, troop_reserve: Array,
+		brigades: Dictionary, infra_nodes: Array) -> Dictionary:
+	var maps := _landing_maps(manifest, infra_nodes)
+	var brigade_ids: Array[String] = []
+	var landings: Array = []
+	var remaining: Array = []
+	var plans: Array = []
+	for entry_value in troop_reserve:
+		var entry: Dictionary = entry_value
+		var brigade_id := String(entry["brigade_id"])
+		if not maps["ids"].has(brigade_id):
+			remaining.append(entry.duplicate(true))
+			continue
+		var result := _plan_reserve_entry(
+			entry, maps["ids"][brigade_id], String(maps["hexes"].get(brigade_id, "")), brigades)
+		plans.append(result["plan"])
+		if result["first_landing"]:
+			brigade_ids.append(brigade_id)
+			landings.append(result["landing"])
+		if result["remaining"] != null:
+			remaining.append(result["remaining"])
+	return {
+		"landed_brigade_ids": brigade_ids,
+		"landings": landings,
+		"remaining_entries": remaining,
+		"landed_bn_ids_by_brigade": maps["ids"],
+		"landing_plan": plans,
+	}
+
+
+static func _landing_maps(manifest: Dictionary, infra_nodes: Array) -> Dictionary:
+	var node_hexes: Dictionary = {}
 	for node_value in infra_nodes:
 		var node: Dictionary = node_value
-		node_hex_by_id[String(node.get("id", ""))] = String(node.get("hex_id", ""))
-
-	var landed_bn_ids_by_brigade: Dictionary = {}
-	var first_landing_hex_by_brigade: Dictionary = {}  # brigade_id -> node hex ("" = beach entry hex)
+		node_hexes[String(node.get("id", ""))] = String(node.get("hex_id", ""))
+	var ids: Dictionary = {}
+	var hexes: Dictionary = {}
 	for landed_value in manifest["manifest_landed"]:
 		var landed: Dictionary = landed_value
 		var brigade_id := String(landed["brigade_id"])
-		var bn_id := String(landed["bn_id"])
-		if brigade_id not in landed_bn_ids_by_brigade:
-			landed_bn_ids_by_brigade[brigade_id] = {}
-			# First landed BN this turn decides where a first-landing brigade comes ashore: the
-			# infra node's hex when it landed through a port/airbridge, else the entry's beach_hex.
-			first_landing_hex_by_brigade[brigade_id] = String(node_hex_by_id.get(String(landed.get("node_id", "")), ""))
-		landed_bn_ids_by_brigade[brigade_id][bn_id] = true
+		if not ids.has(brigade_id):
+			ids[brigade_id] = {}
+			hexes[brigade_id] = String(node_hexes.get(String(landed.get("node_id", "")), ""))
+		ids[brigade_id][String(landed["bn_id"])] = true
+	return {"ids": ids, "hexes": hexes}
 
-	var landed_brigade_ids: Array[String] = []
-	var landings: Array = []
-	var remaining_ship_reserve: Array = []
-	for reserve_entry_value in troop_reserve:
-		var reserve_entry: Dictionary = reserve_entry_value
-		var brigade_id := String(reserve_entry["brigade_id"])
-		if brigade_id in landed_bn_ids_by_brigade:
-			var landed_bn_ids: Dictionary = landed_bn_ids_by_brigade[brigade_id]
-			var remaining_bns: Array = []
-			for bn_value in reserve_entry["bns"]:
-				var bn: Dictionary = bn_value
-				if String(bn["id"]) not in landed_bn_ids:
-					remaining_bns.append(bn)
-			reserve_entry["bns"] = remaining_bns
 
-			var brigade: Brigade = brigades.get(brigade_id)
-			if brigade == null:
-				push_error("Offload manifest references unknown brigade_id: %s" % brigade_id)
-			elif brigade.hex_id.is_empty():
-				var node_hex := String(first_landing_hex_by_brigade.get(brigade_id, ""))
-				landings.append({
-					"brigade_id": brigade_id,
-					"beach_hex": node_hex if not node_hex.is_empty() else String(reserve_entry["beach_hex"]),
-					"offset_bearing": float(reserve_entry["offset_bearing"]),
-				})
-				landed_brigade_ids.append(brigade_id)
-
-		if (reserve_entry["bns"] as Array).is_empty():
-			continue
-		remaining_ship_reserve.append(reserve_entry)
-
+static func _plan_reserve_entry(
+		entry_value: Dictionary, landed_ids: Dictionary,
+		preferred_hex: String, brigades: Dictionary) -> Dictionary:
+	var entry := entry_value.duplicate(true)
+	var landed: Array = []
+	var kept: Array = []
+	for bn_value in entry["bns"]:
+		var bn: Dictionary = bn_value
+		if landed_ids.has(String(bn["id"])):
+			landed.append(String(bn["id"]))
+		else:
+			kept.append(bn)
+	var brigade_id := String(entry["brigade_id"])
+	var brigade: Brigade = brigades.get(brigade_id)
+	var first := brigade != null and brigade.hex_id.is_empty()
+	var hex_id := preferred_hex if not preferred_hex.is_empty() else String(entry["beach_hex"])
+	var offset := float(entry["offset_bearing"])
+	var remaining = null
+	if not kept.is_empty():
+		entry["bns"] = kept
+		remaining = entry
 	return {
-		"landed_brigade_ids": landed_brigade_ids,
-		"landings": landings,
-		"remaining_ship_reserve": remaining_ship_reserve,
+		"first_landing": first,
+		"landing": {"brigade_id": brigade_id, "beach_hex": hex_id, "offset_bearing": offset},
+		"remaining": remaining,
+		"plan": {
+			"brigade_id": brigade_id, "bn_ids": landed,
+			"hex_id": hex_id if first else "", "offset_bearing": offset,
+		},
 	}

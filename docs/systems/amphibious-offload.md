@@ -310,3 +310,14 @@ port (JLSF repair seized→operational in 3–5 turns) lifts the landing rate to
 ends the game 2–5 turns earlier. Ports are also the only way ashore for BNs whose beach cost
 exceeds every beach's daily rate in one lump (heavy equipment on civilian hulls offloads at 1.0×
 alongside a pier instead of 2.0× over the beach).
+
+## 10. State & authority
+
+This subsystem mutates the **`force`** aggregate. Its designated authority is `ForceTransitions`, which handles all embark and offload transfers.
+- **Outcome/receipt types:** `ForceEmbarkReceipt`, `ForceOffloadReceipt`, `ForceCrossingCasualtyResult`.
+- **Manifest:** [tools/mutation_authority_manifest.json](../../tools/mutation_authority_manifest.json).
+
+**Rules:**
+- Transfers move exact BN ids between mainland, sea reserves, and ashore with no roster change.
+- The authority guarantees conservation of BNs and id-set equality during transfers.
+- Drowned BNs are deleted from rosters at the crossing-loss application.

@@ -40,6 +40,24 @@ static func build(red_followon_reserve: Array, red_ship_reserve: Array, brigades
 	return state
 
 
+## Build a fresh, hull-less cohort projection for the test/operator façade that resolves an
+## unopposed offload outside TurnConductor. It exists only for that call and is discarded afterward;
+## the next real turn still adopts the remaining reserve into its normal crossing cohort.
+static func build_unopposed_offload_state(ship_reserve: Array) -> SealiftState:
+	var state := SealiftState.new()
+	var ids: Array[String] = []
+	for entry_value in ship_reserve:
+		for bn_value in (entry_value as Dictionary).get("bns", []):
+			ids.append(String((bn_value as Dictionary).get("id", "")))
+	if not ids.is_empty():
+		state.cohorts.append({
+			"hulls_by_type": {},
+			"bn_ids": ids,
+			"state": SealiftState.STATE_OFFLOADING,
+		})
+	return state
+
+
 ## Resolve the follow-on echelon entries fed into the mainland pool. An explicit scenario
 ## red_followon_reserve wins verbatim (curated echelon, e.g. roc_full_defense). Otherwise, ONLY when
 ## auto_seed is true, the pool is AUTO-SEEDED as the deep mainland force: every RED brigade not in the

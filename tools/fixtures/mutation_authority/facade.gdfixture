@@ -1,0 +1,7 @@
+class_name FixtureGameStateFacade
+extends RefCounted
+
+## Stand-in for a GameState / façade setter bypass. Never compiled; see README.md.
+
+static func set_hosted_rows_bypass(host: FixtureHost, rows: Array) -> void:
+	host.rows_by_index = rows                               #@expect direct_assign

@@ -1,6 +1,8 @@
 class_name ForceCrossingCasualtyRequest
 extends Resource
 
+@export var source: ForceLocation.Kind = ForceLocation.Kind.AT_SEA
+@export var destination: ForceLocation.Kind = ForceLocation.Kind.DEAD
 @export var lost_ids: Array = []
 @export var ship_reserve: Array = []
 @export var sealift_state: SealiftState = null

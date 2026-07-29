@@ -1,0 +1,8 @@
+class_name FixtureOtherTransitions
+extends RefCounted
+
+## Authority for second_fixture_aggregate. Never compiled; see README.md.
+
+static func apply_other_change(other: FixtureOtherModel, host: FixtureHost) -> void:
+	other.other_status = 1
+	host.rows_built = true                                  #@expect direct_assign

@@ -1,8 +1,12 @@
 ---
 title: "0044: Force mutation authority"
-status: "In progress"
+status: "✅ Shipped 2026-07-29"
 created: "2026-07-26"
 ---
+
+> **✅ SHIPPED 2026-07-29**
+> The force mutation authority migration is complete. `ForceTransitions` is the sole writer for the `force` aggregate.
+> For current behavior, see `docs/STATUS.md` and systems documentation.
 
 # Plan 0044: Force mutation authority for brigades and battalions
 

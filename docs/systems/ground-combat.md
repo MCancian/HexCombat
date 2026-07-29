@@ -223,3 +223,13 @@ the same-named `GameData` property. Adding a knob is therefore three edits in th
   `feba_base_km` and `red_out_of_supply_effectiveness`. They are the neutral values the unit tests
   construct against, so changing one is a golden-drift event; the validator does not check parity for
   exactly this reason.
+
+## 10. State & authority
+
+This subsystem mutates the **`force`** aggregate. Its designated authority is `ForceTransitions`, which applies all casualty and FEBA movement writes.
+- **Outcome/receipt types:** `ForceCasualtyReceipt`, `ForcePlacementReceipt`.
+- **Manifest:** [tools/mutation_authority_manifest.json](../../tools/mutation_authority_manifest.json).
+
+**Rules:**
+- Casualties shrink the roster exactly by the requested counts.
+- Movement updates `Brigade.hex_id` and the map index in one transaction.

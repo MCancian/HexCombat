@@ -6,11 +6,9 @@ extends RefCounted
 ## a per-lift-class budget, rolls each battalion against the air-defence environment, and reports
 ## which ones came down alive and where.
 ##
-## Purity boundary: this drains the pool, erodes the caps and reports what should arrive where; the
-## CALLER (ReinforcementPhases.resolve_air_insertion_turn) owns the GameData mutation — set_brigade_hex
-## for the landings, apply_casualty for the losses — and the IJFS target bookkeeping, exactly as
-## OffloadResolver and MobilizationResolver leave application to their wrappers. Live map knowledge
-## enters through the `hex_can_receive` Callable so no autoload is touched here.
+## Purity boundary: this computes the outcome (summary + landings) but does NOT mutate
+## AirInsertionState or GameData force fields. The CALLER (ReinforcementPhases) applies the
+## mutations via ForceTransitions, then performs companion updates (caps erosion, history).
 ##
 ## Dice: ONE derived substream per turn (`air_insertion:<turn>`), consumed only when a packet
 ## actually flies. No orders => no derive, no draws => the golden stream is untouched.
@@ -23,11 +21,9 @@ const REASON_UNKNOWN_HEX := "unknown_or_impassable_hex"
 ##   airborne     = max_attrition_at_full_ad x effective_ad_health
 ##   air_assault  = the same, PLUS manpads_max_attrition x MANPADS threat fraction
 ##
-## Linear in AD health by USER call (2026-07-24): an intact system destroys 75%, and the ~0.24
-## effective_ad_health that survives the 3-day pre-invasion warmup therefore costs a typical drop
-## ~18%. Rotary-wing lift carries the second term because the MANPADS layer is deliberately outside
-## the AD-health metric yet is exactly what engages helicopters — reusing IjfsManpads.threat_fraction
-## keeps the saturation curve in one place.
+## Linear in AD health by USER call (2026-07-24). Rotary-wing lift carries the second term because
+## the MANPADS layer is deliberately outside the AD-health metric yet engages helicopters; reusing
+## IjfsManpads.threat_fraction keeps the saturation curve in one place.
 static func attrition_rate(
 	lift_class: String, ad_health: float, manpads_ready_systems: int, config: Dictionary
 ) -> float:
@@ -42,12 +38,8 @@ static func attrition_rate(
 ##
 ## Connected means a chain of Red-held hexes runs from the brigade back to a lodgement — a held
 ## landing beach or a Red-usable port/airbridge. A brigade counts as connected when its own hex is
-## on that chain OR merely touches it, so a formation fighting at the tip of a corridor is supplied
-## while one dropped in the deep rear is not; the corridor has to actually reach it.
-##
-## Pure: the map arrives as Callables, so nothing here touches an autoload.
-##   is_red_hex:   Callable(hex_id) -> bool
-##   neighbors_of: Callable(hex_id) -> Array
+## on that chain OR merely touches it, so a formation fighting at the tip of a corridor is supplied.
+## Pure: map access arrives as Callables; no autoload is touched.
 static func isolated_brigades(
 	landed_brigade_ids: Array,
 	brigade_hexes: Dictionary,
@@ -58,8 +50,6 @@ static func isolated_brigades(
 	var isolated: Dictionary = {}
 	if landed_brigade_ids.is_empty():
 		return isolated
-
-	# Flood the Red-held corridor outward from every lodgement.
 	var connected: Dictionary = {}
 	var frontier: Array[String] = []
 	for source_value in source_hexes:
@@ -76,12 +66,11 @@ static func isolated_brigades(
 				continue
 			connected[neighbor] = true
 			frontier.append(neighbor)
-
 	for brigade_id_value in landed_brigade_ids:
 		var brigade_id := String(brigade_id_value)
 		var hex_id := String(brigade_hexes.get(brigade_id, ""))
 		if hex_id.is_empty():
-			continue  # not on the map (destroyed, or nothing landed yet) — nothing to supply
+			continue
 		if connected.has(hex_id):
 			continue
 		var touching := false
@@ -94,9 +83,8 @@ static func isolated_brigades(
 	return isolated
 
 
-## Extract the air-defence picture `resolve` wants from an IJFS phase summary. The sole home for
-## which IJFS fields the air path reads, so the turn conductor and the LLM observation cannot drift
-## apart on it — and pure, so callers that must not touch autoloads can use it too.
+## Extract the air-defence picture `resolve` wants from an IJFS phase summary. This is the sole home
+## for which IJFS fields the air path reads, so turn resolution and observation cannot drift.
 static func threat_from_ijfs_summary(ijfs_summary: Dictionary) -> Dictionary:
 	var ad_health: Dictionary = ijfs_summary.get("taiwan_ad_health_after", {})
 	var manpads: Dictionary = ijfs_summary.get("manpads", {})
@@ -107,22 +95,10 @@ static func threat_from_ijfs_summary(ijfs_summary: Dictionary) -> Dictionary:
 	}
 
 
-## Resolve this turn's air insertions.
-##
-## orders:  [{brigade_id: String, target_hex: String}] in issue order — the player's priority, and
-##          the order the shared per-class budget is spent in.
-## threat:  {"ad_health": float, "manpads_ready_systems": int} — this turn's POST-strike air-defence
-##          picture, so suppressing Taiwan's SAMs before dropping visibly pays off.
-## config:  AirInsertionStateBuilder.attrition_config output.
-## hex_can_receive: Callable(hex_id: String) -> bool — placed and passable. Enemy-held and contested
-##          hexes ARE legal drop zones (USER design call: land on any hex); the cost of dropping
-##          onto the enemy is the ground combat that follows in the same turn, not a special rule.
-##
-## Mutates `state` (pool drained, caps eroded, history/landed appended) and returns
-##   {"summary": AirInsertionSummary, "landings": Array}
-## — the same split OffloadResolver uses. `summary` is the report (and the JSON contract); each
-## landing is {brigade_id, hex_id, first_landing, landed_bns, lost_bns}, the manifests the caller
-## applies: `landed_bns` to place, `lost_bns` to kill.
+## Resolve this turn's air insertions. Orders spend the shared per-class budget in issue order;
+## threat is this turn's post-IJFS air-defence picture; hex_can_receive admits placed/passable drop
+## zones, including enemy-held ground. Returns the report plus exact landed/lost manifests and a
+## typed force request. Does NOT mutate `state`.
 static func resolve(
 	state: AirInsertionState,
 	orders: Array,
@@ -140,7 +116,7 @@ static func resolve(
 	summary.caps_before = state.caps.duplicate()
 	summary.caps_after = state.caps.duplicate()
 	if orders.is_empty():
-		_finish(summary, state)
+		_projected_finish(summary, state, {})
 		return {"summary": summary, "landings": landings}
 
 	if turn_number < state.first_turn:
@@ -149,103 +125,120 @@ static func resolve(
 				"brigade_id": String((order_value as Dictionary)["brigade_id"]),
 				"reason": AirInsertionSummary.REASON_BEFORE_FIRST_TURN,
 			})
-		_finish(summary, state)
+		_projected_finish(summary, state, {})
 		return {"summary": summary, "landings": landings}
 
-	# Budget is per turn and shared across every order of a class; caps themselves are eroded
-	# permanently by losses further down.
-	var budget: Dictionary = state.caps.duplicate()
-	var substream: Dice = null
-
-	for order_value in orders:
-		var order: Dictionary = order_value
-		var brigade_id := String(order["brigade_id"])
-		var target_hex := String(order["target_hex"])
-
-		var entry := state.entry_for(brigade_id)
-		if entry.is_empty():
-			summary.rejected.append({"brigade_id": brigade_id, "reason": AirInsertionSummary.REASON_POOL_EMPTY})
-			continue
-		if not bool(hex_can_receive.call(target_hex)):
-			summary.rejected.append({"brigade_id": brigade_id, "reason": REASON_UNKNOWN_HEX})
-			continue
-
-		var lift_class := String(entry["lift_class"])
-		var remaining := int(budget.get(lift_class, 0))
-		if remaining <= 0:
-			summary.rejected.append({"brigade_id": brigade_id, "reason": AirInsertionSummary.REASON_CAP_EXHAUSTED})
-			continue
-
-		var manifest: Array = entry["bns"]
-		var sent := mini(remaining, manifest.size())
-		var rate := attrition_rate(
-			lift_class, float(threat.get("ad_health", 0.0)),
-			int(threat.get("manpads_ready_systems", 0)), config)
-		if substream == null:
-			substream = dice.derive("air_insertion:%d" % turn_number)
-
-		var landed_bns: Array = []
-		var lost_bns: Array = []
-		for _packet_index in range(sent):
-			var battalion: Dictionary = manifest.pop_front()
-			if substream.randf() < rate:
-				lost_bns.append(battalion)
-			else:
-				landed_bns.append(battalion)
-
-		budget[lift_class] = remaining - sent
-		# Every loss is an airframe as well as a battalion: the cap it flew under drops by one and
-		# never recovers (USER call 2026-07-24).
-		state.caps[lift_class] = maxi(0, int(state.caps[lift_class]) - lost_bns.size())
-
-		var first_landing := not landed_bns.is_empty() and not state.landed.has(brigade_id)
-		if first_landing:
-			state.landed.append(brigade_id)
-
-		summary.drops.append({
-			"brigade_id": brigade_id,
-			"lift_class": lift_class,
-			"hex_id": target_hex,
-			"sent": sent,
-			"landed": landed_bns.size(),
-			"lost": lost_bns.size(),
-			"attrition_rate": rate,
-			"first_landing": first_landing,
-		})
-		landings.append({
-			"brigade_id": brigade_id,
-			"hex_id": target_hex,
-			"first_landing": first_landing,
-			"landed_bns": landed_bns,
-			"lost_bns": lost_bns,
-		})
-		summary.battalions_landed += landed_bns.size()
-		summary.battalions_lost += lost_bns.size()
-		summary.attrition_by_class[lift_class] = rate
-		state.history.append({
-			"turn": turn_number,
-			"brigade_id": brigade_id,
-			"lift_class": lift_class,
-			"hex_id": target_hex,
-			"landed": landed_bns.size(),
-			"lost": lost_bns.size(),
-		})
-
-	_drop_empty_entries(state)
-	summary.caps_after = state.caps.duplicate()
-	_finish(summary, state)
-	return {"summary": summary, "landings": landings}
+	var plan := AirInsertionResolutionPlan.new()
+	plan.state = state
+	plan.orders = orders
+	plan.turn_number = turn_number
+	plan.threat = threat
+	plan.config = config
+	plan.hex_can_receive = hex_can_receive
+	plan.dice = dice
+	plan.summary = summary
+	plan.landings = landings
+	plan.budget = state.caps.duplicate()
+	plan.caps_after = state.caps.duplicate()
+	_resolve_orders(plan)
+	summary.caps_after = plan.caps_after.duplicate()
+	_projected_finish(summary, state, plan.pool_sent)
+	return {
+		"summary": summary,
+		"landings": landings,
+		"force_request": ForceAirInsertionRequest.from_landings(turn_number, landings),
+	}
 
 
-static func _drop_empty_entries(state: AirInsertionState) -> void:
-	var remaining: Array = []
+static func _resolve_orders(plan: AirInsertionResolutionPlan) -> void:
+	for order_value in plan.orders:
+		_resolve_order(plan, order_value as Dictionary)
+
+
+static func _resolve_order(plan: AirInsertionResolutionPlan, order: Dictionary) -> void:
+	var brigade_id := String(order["brigade_id"])
+	var target_hex := String(order["target_hex"])
+	var entry := plan.state.entry_for(brigade_id)
+	if entry.is_empty():
+		_reject(plan.summary, brigade_id, AirInsertionSummary.REASON_POOL_EMPTY)
+		return
+	if not bool(plan.hex_can_receive.call(target_hex)):
+		_reject(plan.summary, brigade_id, REASON_UNKNOWN_HEX)
+		return
+	var lift_class := String(entry["lift_class"])
+	var remaining := int(plan.budget.get(lift_class, 0))
+	if remaining <= 0:
+		_reject(plan.summary, brigade_id, AirInsertionSummary.REASON_CAP_EXHAUSTED)
+		return
+	var manifest: Array = entry["bns"]
+	var sent := mini(remaining, manifest.size())
+	var rate := attrition_rate(
+		lift_class, float(plan.threat.get("ad_health", 0.0)),
+		int(plan.threat.get("manpads_ready_systems", 0)), plan.config)
+	if plan.substream == null:
+		plan.substream = plan.dice.derive("air_insertion:%d" % plan.turn_number)
+	var packet := _roll_packet(manifest, sent, rate, plan.substream)
+	var lost: Array = packet["lost"]
+	packet["brigade_id"] = brigade_id
+	packet["target_hex"] = target_hex
+	packet["lift_class"] = lift_class
+	packet["rate"] = rate
+	plan.budget[lift_class] = remaining - sent
+	plan.caps_after[lift_class] = maxi(0, int(plan.caps_after[lift_class]) - lost.size())
+	plan.pool_sent[brigade_id] = sent
+	_append_drop(plan, packet)
+
+
+static func _roll_packet(manifest: Array, sent: int, rate: float, dice: Dice) -> Dictionary:
+	var landed: Array = []
+	var lost: Array = []
+	for index in range(sent):
+		var battalion: Dictionary = manifest[index]
+		if dice.randf() < rate:
+			lost.append(battalion.duplicate())
+		else:
+			landed.append(battalion.duplicate())
+	return {"landed": landed, "lost": lost}
+
+
+static func _append_drop(plan: AirInsertionResolutionPlan, packet: Dictionary) -> void:
+	var brigade_id := String(packet["brigade_id"])
+	var target_hex := String(packet["target_hex"])
+	var lift_class := String(packet["lift_class"])
+	var rate := float(packet["rate"])
+	var landed: Array = packet["landed"]
+	var lost: Array = packet["lost"]
+	var first := not landed.is_empty() and not plan.state.landed.has(brigade_id)
+	plan.summary.drops.append({
+		"brigade_id": brigade_id, "lift_class": lift_class, "hex_id": target_hex,
+		"sent": landed.size() + lost.size(), "landed": landed.size(), "lost": lost.size(),
+		"attrition_rate": rate, "first_landing": first,
+	})
+	plan.landings.append({
+		"brigade_id": brigade_id, "hex_id": target_hex, "first_landing": first,
+		"landed_bns": landed, "lost_bns": lost,
+	})
+	plan.summary.battalions_landed += landed.size()
+	plan.summary.battalions_lost += lost.size()
+	plan.summary.attrition_by_class[lift_class] = rate
+
+
+static func _reject(summary: AirInsertionSummary, brigade_id: String, reason: String) -> void:
+	summary.rejected.append({"brigade_id": brigade_id, "reason": reason})
+
+
+## Compute projected pending counts without mutating state.
+static func _projected_finish(summary: AirInsertionSummary, state: AirInsertionState, pool_sent: Dictionary) -> void:
+	var projected_pool_size := 0
+	var non_empty_count := 0
 	for entry_value in state.pool:
 		var entry: Dictionary = entry_value
-		if not (entry["bns"] as Array).is_empty():
-			remaining.append(entry)
-	state.pool = remaining
-
-
-static func _finish(summary: AirInsertionSummary, state: AirInsertionState) -> void:
-	summary.pending_brigades = state.pending_brigades()
-	summary.pending_battalions = state.pending_battalions()
+		var entry_size := (entry["bns"] as Array).size()
+		var brigade_id := String(entry["brigade_id"])
+		var sent := int(pool_sent.get(brigade_id, 0))
+		var remaining := entry_size - sent
+		if remaining > 0:
+			non_empty_count += 1
+		projected_pool_size += remaining
+	summary.pending_brigades = non_empty_count
+	summary.pending_battalions = projected_pool_size

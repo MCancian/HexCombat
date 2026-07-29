@@ -201,7 +201,7 @@ func build_neighbor_lookup() -> void:
 
 func load_brigades() -> void:
 	brigades.clear()
-	brigades_by_hex.clear()
+	ForceTransitions.reset_placement_index(self)
 
 	for path in OOB_PATHS:
 		_load_oob_file(path)
@@ -797,10 +797,8 @@ func get_ship_def(ship_id: int) -> ShipDef:
 
 
 func _add_brigade_to_hex(brigade_id: String, hex_id: String) -> void:
-	if hex_id not in brigades_by_hex:
-		brigades_by_hex[hex_id] = []
-	if brigade_id not in brigades_by_hex[hex_id]:
-		brigades_by_hex[hex_id].append(brigade_id)
+	ForceTransitions.place_brigade(
+		self, ForcePlacementRequest.ashore(brigade_id, hex_id, "OOB construction"))
 
 
 ## Read-only consistency check: verifies cross-references between the `brigades`

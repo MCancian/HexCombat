@@ -27,6 +27,10 @@ static func build_sealift_state(
 		auto_seed_followon_pool, escort_interception, escort_reload_turns > 0)
 
 
+static func build_unopposed_offload_state(ship_reserve: Array) -> SealiftState:
+	return SealiftStateBuilder.build_unopposed_offload_state(ship_reserve)
+
+
 static func build_fleet(ship_defs: Dictionary) -> Dictionary:
 	return FleetBuilder.build(ship_defs)
 

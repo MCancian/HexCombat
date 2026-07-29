@@ -5,19 +5,21 @@ extends RefCounted
 ## brigades whose mobilization is complete onto the map. Consumes NO dice — release is a schedule,
 ## not a roll — so a scenario that holds nobody back is byte-identical to the pre-0029 engine.
 ##
-## Purity boundary: this drains MobilizationState and reports what should arrive where; the caller
-## (ReinforcementPhases.resolve_mobilization_turn) owns the GameData mutation (set_brigade_hex) and the
-## IJFS target append, exactly as OffloadResolver leaves landing application to its wrapper. Live map
-## knowledge enters through the `arrival_hex_for` Callable so no autoload is touched here.
+## Purity boundary: this computes the outcome (MobilizationSummary) but does NOT mutate
+## MobilizationState or GameData force fields. The CALLER (ReinforcementPhases) applies the
+## mutations via ForceTransitions.
+##
+## Live map knowledge enters through the `arrival_hex_for` Callable so no autoload is touched here.
 
 ## How far from its garrison a displaced brigade will look for somewhere to form up. Six rings is
-## generous next to a beachhead's radius: beyond that the sector is gone and waiting a turn (the
-## deferred path) is the honest outcome, not teleporting the formation across the island.
+## generous next to a beachhead's radius; beyond that, waiting a turn is more honest than teleporting
+## the formation across the island.
 const MAX_ARRIVAL_SEARCH_RINGS := 6
 
 
 ## arrival_hex_for: Callable(garrison_hex: String) -> String — the hex the brigade actually forms up
-## on, or "" when nowhere suitable is in range (the brigade stays pending and retries next turn).
+## on, or "" when nowhere suitable is in range.
+## Returns MobilizationSummary.
 static func resolve(
 	state: MobilizationState, turn_number: int, brigades: Dictionary, arrival_hex_for: Callable
 ) -> MobilizationSummary:
@@ -25,11 +27,11 @@ static func resolve(
 	if state == null:
 		return summary
 
-	var still_pending: Array = []
+	var arrivals: Array = []
+	var deferred: Array[String] = []
 	for entry_value in state.pending:
 		var entry: Dictionary = entry_value
 		if int(entry["release_turn"]) > turn_number:
-			still_pending.append(entry)
 			continue
 
 		var brigade_id := String(entry["brigade_id"])
@@ -41,30 +43,52 @@ static func resolve(
 		var garrison_hex := String(entry["garrison_hex"])
 		var arrival_hex := String(arrival_hex_for.call(garrison_hex))
 		if arrival_hex.is_empty():
-			summary.deferred.append(brigade_id)
-			still_pending.append(entry)
+			deferred.append(brigade_id)
 			continue
 
 		var battalions := brigade.get_battalion_count()
 		var displaced := arrival_hex != garrison_hex
-		summary.arrivals.append({
+		arrivals.append({
 			"brigade_id": brigade_id,
 			"hex_id": arrival_hex,
 			"battalions": battalions,
 			"displaced": displaced,
 		})
 		summary.battalions_arrived += battalions
-		state.released.append({
-			"brigade_id": brigade_id,
-			"hex_id": arrival_hex,
-			"turn": turn_number,
-			"displaced": displaced,
-		})
 
-	state.pending = still_pending
-	summary.pending_brigades = still_pending.size()
-	summary.pending_battalions = state.pending_battalions(brigades)
+	summary.arrivals = arrivals
+	summary.deferred = deferred
+	summary.pending_brigades = _projected_pending_count(state, arrivals)
+	summary.pending_battalions = _projected_pending_battalions(state, brigades, arrivals)
 	return summary
+
+
+## Count pending entries excluding those arriving.
+static func _projected_pending_count(state: MobilizationState, arrivals: Array) -> int:
+	var leaving: Dictionary = {}
+	for a_value in arrivals:
+		leaving[String((a_value as Dictionary)["brigade_id"])] = true
+	var count := 0
+	for entry_value in state.pending:
+		if not leaving.has(String((entry_value as Dictionary)["brigade_id"])):
+			count += 1
+	return count
+
+
+## Sum battalion counts for pending entries not arriving this turn.
+static func _projected_pending_battalions(state: MobilizationState, brigades: Dictionary, arrivals: Array) -> int:
+	var arriving_ids: Dictionary = {}
+	for a_value in arrivals:
+		arriving_ids[String((a_value as Dictionary)["brigade_id"])] = true
+	var total := 0
+	for entry_value in state.pending:
+		var brigade_id := String((entry_value as Dictionary)["brigade_id"])
+		if arriving_ids.has(brigade_id):
+			continue
+		var brigade: Brigade = brigades.get(brigade_id, null)
+		if brigade != null:
+			total += brigade.get_battalion_count()
+	return total
 
 
 ## Nearest hex a mobilizing brigade can form up on: its own garrison hex when that is still

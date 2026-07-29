@@ -21,6 +21,10 @@ class_name MobilizationSummary
 @export var pending_battalions: int = 0
 
 
+func force_request(turn_number: int) -> ForceMobilizationRequest:
+	return ForceMobilizationRequest.from_resolver(turn_number, arrivals, deferred)
+
+
 func to_dict() -> Dictionary:
 	return {
 		"arrivals": arrivals.duplicate(true),

@@ -10,7 +10,7 @@ extends RefCounted
 ## `TurnConductor` keeps the ORDERING (the when); this module only owns the how. Same contract as
 ## every other resolver: static, first argument `state: GameStateData` mutated in place, reads the
 ## GameData content autoload but never the GameState autoload singleton. The crossing's roster
-## casualties go through `RosterMutations`, and the fleet reprojection through
+## casualties go through `ForceTransitions`, and the fleet reprojection through
 ## `ReinforcementPhases.project_sealift_onto_fleet` — the sealift state is that module's to own.
 
 
@@ -54,11 +54,8 @@ static func apply_ijfs_maneuver_casualties(state: GameStateData) -> void:
 	var casualties: Array = state.last_ijfs_writeback.maneuver_casualties if state.last_ijfs_writeback != null else []
 	for casualty_value in casualties:
 		var casualty: Dictionary = casualty_value
-		RosterMutations.apply_casualty({
-			"brigade_id": String(casualty["brigade_id"]),
-			"type": String(casualty["unit_type"]),
-			"cause": "ijfs_maneuver",
-		})
+		ForceTransitions.apply_battalion_casualties(
+			GameData, ForceTransitions.ijfs_casualty_request(casualty))
 
 
 ## D3-D: Green coastal anti-ship fires + mine warfare against the Red amphibious crossing. Threads the
@@ -105,24 +102,24 @@ static func resolve_antiship_turn(state: GameStateData, dice: Dice) -> Dictionar
 		return {}
 
 	var lost_ids: Array = outcome["lost_ids"]
-	# Drowned crossers are dead: delete them from their brigade rosters only after the force authority
-	# proves each id is present in both live views (reserve + sent cohort). If that preflight fails,
-	# stop before mutating reserve/cohorts/fleet; continuing would recreate the ghost-landing family in
-	# reverse, with transport state saying a BN died and the roster still claiming it survived.
-	var crossing_casualties := RosterMutations.apply_crossing_casualties(
-		state.ship_reserve, lost_ids, state.sealift_state)
+	# Drowned crossers are dead: the force authority removes them from reserve + cohorts AND their
+	# brigade rosters in one preflighted all-or-nothing transaction. If the preflight fails, nothing
+	# changes — no ghost-landing mirror bug.
+	var crossing_casualties := ForceTransitions.apply_crossing_loss(
+		GameData, state.sealift_state, state.ship_reserve,
+		ForceTransitions.crossing_casualty_request(
+			lost_ids, state.ship_reserve, state.sealift_state))
 	if not crossing_casualties.success:
 		return {}
 
 	# Book what the crossing's launch attrition destroyed. The resolver only reported it.
 	AntishipTransitions.apply_launch_attrition(state, outcome["launch_outcomes"])
 	state.lost_at_sea_accumulator = float(outcome["accumulator"])
-	# Apply hull losses to the sealift cohorts (carriers) + the fleet, then drop drowned BNs from the
-	# reserve AND their cohorts, and flip the surviving crossers to offloading (plan 0004 D3).
+	# Apply hull losses to the sealift cohorts (carriers) + the fleet; free hulls from cohorts whose
+	# BNs all drowned; flip survivors to offloading.
 	apply_crossing_hull_losses(state, outcome["destroyed_by_type"])
-	state.ship_reserve = AntishipResolver.remaining_reserve_after_losses(state.ship_reserve, lost_ids)
-	SealiftResolver.drain_bn_ids(state.sealift_state, lost_ids, GameData.amphibious_return_time_turns)
-	SealiftResolver.flip_sent_to_offloading(state.sealift_state)
+	ForceTransitions.free_emptied_cohorts(state.sealift_state, GameData.amphibious_return_time_turns)
+	ForceTransitions.apply_sent_to_offloading(state.sealift_state)
 	# Deplete the escort SAM magazines by what fired, and divert any type that dropped to/below its
 	# reload threshold (plan 0004 D5). No-op when the magazine is unmodelled (escort_sam empty).
 	SealiftResolver.apply_escort_consumption(

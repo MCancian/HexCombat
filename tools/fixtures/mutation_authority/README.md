@@ -26,7 +26,10 @@ text, which is all a source gate ever needed.
 | `fixture_manifest.json` | The healthy manifest the source fixtures are scanned against |
 | `model.gdfixture` | `FixtureRow` — the owned protected model, including a sanctioned mutator |
 | `host.gdfixture` | `FixtureHost` — a shared model carrying two hosted protected fields |
-| `authority.gdfixture` | `FixtureTransitions` — the authority; every write here is legal |
+| `facade.gdfixture` | `FixtureGameStateFacade` — stand-in for a GameState façade setter bypass |
+| `other_model.gdfixture` | `FixtureOtherModel` — an owned model for a second aggregate |
+| `authority.gdfixture` | `FixtureTransitions` — the authority for the first aggregate |
+| `transitions_dir/other_authority.gdfixture` | `FixtureOtherTransitions` — authority for second aggregate; proves wrong-authority detection |
 | `construction.gdfixture` | A construction writer initialising fresh, unpublished rows |
 | `legacy.gdfixture` | A declared temporary legacy writer |
 | `violations.gdfixture` | One line per detected write form, each marked `#@expect` |

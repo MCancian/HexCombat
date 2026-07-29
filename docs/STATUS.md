@@ -432,10 +432,7 @@ fail. Illegal fixtures under `tools/fixtures/mutation_authority/` declare the ru
 trigger and are compared exactly on every run, so a detector that stops working fails as a false
 negative instead of going quietly green. **Two aggregates are registered and ENFORCED:**
 `antiship_establishment`, whose sole writer is `scripts/transitions/AntishipTransitions.gd` (plan
-0043; zero legacy writers), and the first force-authority slice, whose protected Brigade/Battalion
-runtime fields are written by `scripts/transitions/ForceTransitions.gd` (plan 0044; zero legacy
-writers for this protected slice). Each former production writer was rerouted through the authority
-seam without moving golden pins.
+0043; zero legacy writers), and the **`force`** aggregate (plan 0044), whose protected Brigade/Battalion runtime fields, placement, and manifest memberships are written solely by `scripts/transitions/ForceTransitions.gd`. All legacy writers and façades have been removed, routing every production write through the authority seam without moving golden pins.
 
 ## What is NOT done (see `docs/plans/`)
 

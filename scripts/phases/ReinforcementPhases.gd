@@ -8,35 +8,58 @@ extends RefCounted
 ##
 ## `TurnConductor` keeps the ORDERING (the when); this module only owns the how. Same contract as
 ## every other resolver: static, first argument `state: GameStateData` mutated in place, reads the
-## GameData content autoload but never the GameState autoload singleton. Roster-shrinking goes
-## through `RosterMutations` (shared with combat and the crossing) so the two modules stay a DAG.
+## GameData content autoload but never the GameState autoload singleton. Every force write is applied
+## by `ForceTransitions`; the resolvers below only calculate transition plans.
 
 
 # --- Sealift phase (plan 0004) -----------------------------------------------------------------
 
+static func initialize_ship_reserve(state: GameStateData, reserve: Array) -> void:
+	ForceTransitions.initialize_ship_reserve(state, reserve)
+
+
 ## Advance the ship return pipeline and embark this turn's crossing wave. Dice-free and pure
-## (SealiftResolver); this wrapper merges the newly-embarked BNs into the reserve, records the
-## sailing fleet for the crossing, and reprojects the fleet ShipState bins from the advanced
-## sealift state.
+## (SealiftResolver); this wrapper routes force mutations through ForceTransitions and performs
+## companion updates (JLSF markers, fleet projection).
 static func resolve_sealift_turn(state: GameStateData) -> void:
 	if state.sealift_state == null:
 		return
 	var ready_by_type: Dictionary = {}
 	for ship_type in state.fleet.keys():
-		ready_by_type[String(ship_type)] = int((state.fleet[ship_type] as ShipState).ready)
+		ready_by_type[String(ship_type)] = (state.fleet[ship_type] as ShipState).ready
 
 	consume_jlsf_orders(state)
 	var outcome := SealiftResolver.resolve(
 		state.sealift_state, state.ship_reserve, ready_by_type, GameData.ship_defs)
 
+	# Apply adopt plan (orphan BNs already in reserve → sent cohort).
+	var adopt_plan: Dictionary = outcome.get("adopt_plan", {})
+	if not adopt_plan.is_empty():
+		var adopt_bn_ids: Array = adopt_plan.get("bn_ids", [])
+		var adopt_hulls: Dictionary = adopt_plan.get("hulls_by_type", {})
+		var adopt_receipt := ForceTransitions.apply_sent_cohort(
+			state.sealift_state, adopt_bn_ids, adopt_hulls, state.ship_reserve)
+		if not adopt_receipt.success:
+			push_error("ForceTransitions adopt cohort refused: %s" % adopt_receipt.error)
+
+	# Apply the whole mainland → reserve + sent-cohort force transaction in one authority call.
+	var embark_request = outcome.get("embark_request")
+	if embark_request != null:
+		var embark_receipts := ForceTransitions.apply_embark(
+			state.sealift_state, embark_request, state.ship_reserve)
+		for receipt in embark_receipts:
+			if not receipt.success:
+				push_error("ForceTransitions embark refused: %s" % receipt.error)
+
+	# JLSF is companion cargo sharing the same physical batch; only its infrastructure marker lives
+	# outside the force aggregate.
 	for entry_value in outcome["embarked_reserve_entries"]:
 		var entry: Dictionary = entry_value
-		# A JLSF deployment that got hulls this turn is now enroute (plan 0006).
 		if JlsfCargo.is_jlsf_entry(entry) and state.infrastructure_state != null:
 			var port_id := String(entry.get("port_id", ""))
 			if state.infrastructure_state.nodes.has(port_id):
 				state.infrastructure_state.nodes[port_id]["jlsf"] = InfrastructureState.JLSF_ENROUTE
-		merge_reserve_entry(state, entry)
+
 	state.last_sealift_sent_by_type = outcome["sent_by_type"]
 	project_sealift_onto_fleet(state)
 
@@ -52,21 +75,7 @@ static func consume_jlsf_orders(state: GameStateData) -> void:
 		state.jlsf_orders, state.infrastructure_state, GameData.infrastructure, GameData.beaches,
 		GameData.beach_to_to, GameData.auto_jlsf, GameData.jlsf_lift_bn_equiv)
 	state.jlsf_orders.clear()
-	for entry in entries:
-		state.sealift_state.mainland_pool.push_front(entry)
-
-
-## Merge a newly-embarked reserve entry into ship_reserve: append its BNs to the brigade's existing
-## entry (a follow-on brigade already partway across) or add a new entry.
-static func merge_reserve_entry(state: GameStateData, entry_value) -> void:
-	var entry: Dictionary = entry_value
-	var brigade_id := String(entry["brigade_id"])
-	for existing_value in state.ship_reserve:
-		var existing: Dictionary = existing_value
-		if String(existing["brigade_id"]) == brigade_id:
-			(existing["bns"] as Array).append_array(entry["bns"])
-			return
-	state.ship_reserve.append(entry)
+	ForceTransitions.apply_queue_jlsf(state.sealift_state, entries)
 
 
 ## Reproject the fleet ShipState bins from the sealift state (the single source of truth for where
@@ -108,6 +117,18 @@ static func project_sealift_onto_fleet(state: GameStateData) -> void:
 
 # --- Amphibious offload phase ------------------------------------------------------------------
 
+## Test/operator façade for resolving an unopposed offload outside the full turn conductor. Build
+## the same cohort bindings the normal sealift phase would, then advance them past the intentionally
+## skipped crossing so ForceTransitions still receives a valid OFFLOADING source location.
+static func resolve_unopposed_offload_turn(
+		state: GameStateData, dice: Dice, temporary_sealift: SealiftState) -> Dictionary:
+	var campaign_sealift := state.sealift_state
+	state.sealift_state = temporary_sealift
+	var manifest := resolve_offload_turn(state, dice)
+	state.sealift_state = campaign_sealift
+	return manifest
+
+
 static func resolve_offload_turn(state: GameStateData, dice: Dice) -> Dictionary:
 	assert(dice != null, "resolve_offload_turn requires a Dice instance")
 	# Infrastructure lifecycle ticks every offload phase (plan 0006), even with an empty reserve:
@@ -131,36 +152,28 @@ static func resolve_offload_turn(state: GameStateData, dice: Dice) -> Dictionary
 	var outcome := OffloadResolver.resolve(
 		state.turn_number, state.ship_reserve, GameData.beaches, GameData.brigades,
 		infra_nodes, cost_config, GameData.beach_to_to, owner_by_hex())
-	for landing_value in outcome["landings"]:
-		var landing: Dictionary = landing_value
-		var brigade_id := String(landing["brigade_id"])
-		GameData.place_brigade_with_bearing(
-			brigade_id, String(landing["beach_hex"]), float(landing["offset_bearing"]), "offload")
-	state.ship_reserve = outcome["remaining_ship_reserve"]
+
+	# Apply troop landings and JLSF cargo delivery as one physical reserve/cohort transaction.
+	var offload_receipt := ForceTransitions.apply_offload(
+		GameData, state.ship_reserve, state.sealift_state, outcome["force_request"])
+	if not offload_receipt.success:
+		push_error("ForceTransitions offload refused: %s" % offload_receipt.error)
+		return outcome["manifest"]
+
 	GameData.recompute_hex_ownership()
 
 	var manifest: Dictionary = outcome["manifest"]
-	# Drain the landed BNs from their offloading cohorts; a fully-offloaded cohort frees its hulls
-	# into the return/reload pipeline (or straight back to ready when return time is 0) — plan 0004 D4.
-	var landed_ids: Array = []
-	for landed_value in manifest["manifest_landed"]:
-		landed_ids.append(String((landed_value as Dictionary)["bn_id"]))
-	# JLSF deliveries (plan 0006): the detachment is ashore at its node — start the repair clock
-	# and free its hulls like any landed cargo.
 	for arrival_value in outcome.get("jlsf_arrivals", []):
 		var arrival: Dictionary = arrival_value
 		var port_id := String(arrival["port_id"])
 		if state.infrastructure_state != null and state.infrastructure_state.nodes.has(port_id):
 			state.infrastructure_state.nodes[port_id]["jlsf"] = InfrastructureState.JLSF_ARRIVED
-		for bn_id_value in arrival["bn_ids"]:
-			landed_ids.append(String(bn_id_value))
 	if state.sealift_state != null:
-		SealiftResolver.drain_bn_ids(state.sealift_state, landed_ids, GameData.amphibious_return_time_turns)
+		ForceTransitions.free_emptied_cohorts(state.sealift_state, GameData.amphibious_return_time_turns)
 		project_sealift_onto_fleet(state)
 	reconcile_lost_jlsf(state)
 
 	manifest["lost_at_sea"] = state.pending_lost_at_sea
-	# D3-F applies lost_at_sea to the reserve; D0-C only threads the value.
 	state.pending_lost_at_sea = 0
 	EventBus.offload_resolved.emit(manifest)
 	return manifest
@@ -224,15 +237,19 @@ static func resolve_mobilization_turn(state: GameStateData) -> MobilizationSumma
 		EventBus.mobilization_resolved.emit(summary.to_dict())
 		return summary
 
+	var receipt := ForceTransitions.release_mobilized_brigades(
+		GameData, state.mobilization_state, summary.force_request(state.turn_number))
+	if not receipt.success:
+		push_error("ForceTransitions mobilization release refused: %s" % receipt.error)
+		EventBus.mobilization_resolved.emit(summary.to_dict())
+		return summary
+
 	var arrived: Array = []
-	for arrival_value in summary.arrivals:
-		var arrival: Dictionary = arrival_value
-		var brigade_id := String(arrival["brigade_id"])
-		GameData.set_brigade_hex(brigade_id, String(arrival["hex_id"]))
-		arrived.append(GameData.get_brigade(brigade_id))
-	# A formation only becomes an IJFS maneuver target once it is on the island; append its
-	# per-battalion targets now (append-only, so every existing target keeps its position in the
-	# list and its detection continuity).
+	for receipt_brigade_value in receipt.placed_brigades:
+		var placed_id := String(receipt_brigade_value)
+		var brigade: Brigade = GameData.get_brigade(placed_id)
+		if brigade != null:
+			arrived.append(brigade)
 	if state.ijfs_state != null:
 		IjfsResolver.add_maneuver_targets(state.ijfs_state, arrived, state._ijfs_day)
 	GameData.recompute_hex_ownership()
@@ -256,9 +273,9 @@ static func hex_can_receive_mobilized(hex_id: String) -> bool:
 # --- Air insertion (plan 0032) — Red's non-amphibious reinforcement phase ----------------------
 
 ## Fly this turn's ordered battalions onto the island. The resolver decides who flies, who dies and
-## what the lift loses; this wrapper owns the GameData mutation (set_brigade_hex for the survivors,
-## RosterMutations.apply_casualty for the losses), the ownership recompute and the EventBus emit —
-## the same split OffloadResolver and MobilizationResolver use.
+## what the lift loses; this wrapper owns building the typed request, calling ForceTransitions to
+## apply force mutations, then performing companion updates (caps erosion, history append, ownership
+## recompute) and the EventBus emit.
 ##
 ## The air-defence picture comes from THIS turn's IJFS summary (post-strike), so suppressing SAMs
 ## before dropping visibly pays off; the MANPADS layer is read separately because it is deliberately
@@ -271,35 +288,31 @@ static func resolve_air_insertion_turn(state: GameStateData, dice: Dice) -> AirI
 		func(hex_id: String) -> bool: return hex_can_receive_insertion(hex_id),
 		dice)
 	var summary: AirInsertionSummary = outcome["summary"]
-	# One-shot orders, consumed on resolution like jlsf_orders — an unflown drop is not re-attempted
-	# next turn behind the player's back.
 	state.air_insert_orders = []
 	var landings: Array = outcome["landings"]
 	if landings.is_empty():
 		EventBus.air_insertion_resolved.emit(summary.to_dict())
 		return summary
 
-	for landing_value in landings:
-		var landing: Dictionary = landing_value
-		var brigade_id := String(landing["brigade_id"])
-		# Losses first: a battalion shot down on the way in never reaches the hex, and killing it
-		# before the landing keeps a brigade that lost its whole packet off the map entirely.
-		for lost_value in landing["lost_bns"]:
-			RosterMutations.apply_casualty({
-				"brigade_id": brigade_id,
-				"type": String((lost_value as Dictionary)["type"]),
-				"cause": "air_insertion",
-			})
-		if landing["first_landing"]:
-			GameData.set_brigade_hex(brigade_id, String(landing["hex_id"]))
-			continue
-		# Follow-up packets reinforce the brigade where it already stands — a formation occupies one
-		# hex, so a second drop cannot put half of it somewhere else. OrderValidator enforces that
-		# the target matches; a mismatch here is an order that slipped through, not a game state.
-		var landed_brigade: Brigade = GameData.get_brigade(brigade_id)
-		if landed_brigade != null and landed_brigade.hex_id != String(landing["hex_id"]):
-			push_error("Air insertion follow-up for %s targeted %s but the brigade is at %s" % [
-				brigade_id, landing["hex_id"], landed_brigade.hex_id])
+	var receipt := ForceTransitions.apply_air_insertion_outcome(
+		GameData, state.air_insertion_state, outcome["force_request"])
+	if not receipt.success:
+		push_error("ForceTransitions air insertion refused: %s" % receipt.error)
+		EventBus.air_insertion_resolved.emit(summary.to_dict())
+		return summary
+
+	# Companion updates: caps erosion and history (NOT part of the force aggregate).
+	state.air_insertion_state.caps = summary.caps_after.duplicate()
+	for drop_value in summary.drops:
+		var drop: Dictionary = drop_value
+		state.air_insertion_state.history.append({
+			"turn": state.turn_number,
+			"brigade_id": String(drop["brigade_id"]),
+			"lift_class": String(drop["lift_class"]),
+			"hex_id": String(drop["hex_id"]),
+			"landed": int(drop["landed"]),
+			"lost": int(drop["lost"]),
+		})
 	GameData.recompute_hex_ownership()
 	EventBus.air_insertion_resolved.emit(summary.to_dict())
 	return summary

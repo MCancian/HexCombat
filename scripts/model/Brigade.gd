@@ -83,7 +83,3 @@ func landed_battalion_count(brigade_not_ashore: Dictionary) -> int:
 	for battalion in composition:
 		total += landed_qty(battalion, brigade_not_ashore)
 	return total
-
-
-func adjust_organization(delta: float) -> void:
-	organization = clampf(organization + delta, 0.0, MAX_ORGANIZATION)
