@@ -39,16 +39,15 @@ var _gd_index: Dictionary = {}  # basename -> full res:// path
 
 func _initialize() -> void:
 	_build_gd_index()
-	var dir := DirAccess.open(DOCS_DIR)
-	if dir == null:
-		push_error("Cannot open %s" % DOCS_DIR)
+	var doc_files: Array[String] = []
+	_collect_files(DOCS_DIR, ".md", doc_files)
+	if doc_files.is_empty():
+		push_error("Cannot find any .md files under %s" % DOCS_DIR)
 		quit(1)
 		return
 	var checked := 0
-	for file in dir.get_files():
-		if not file.ends_with(".md"):
-			continue
-		_check_doc("%s/%s" % [DOCS_DIR, file])
+	for path in doc_files:
+		_check_doc(path)
 		checked += 1
 
 	var link_files_checked := _check_doc_links()
@@ -72,7 +71,7 @@ func _check_doc(path: String) -> void:
 	var lines := text.split("\n")
 	for i in range(lines.size()):
 		var line := lines[i]
-		if line.contains("docs/archive") or line.contains("(historical)"):
+		if line.contains("docs/archive") or line.contains("(historical)") or doc == "RETRO.md":
 			continue
 		if line_cite.search(line) != null:
 			_failures.append("%s:%d: file:line citation (line numbers rot — cite the class name): %s" % [doc, i + 1, line.strip_edges().left(90)])

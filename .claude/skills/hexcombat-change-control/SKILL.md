@@ -81,8 +81,8 @@ re-baseline history is in `docs/DECISIONS.md` (pre-2026-07-10: `docs/archive/PLA
   `Co-Authored-By` / session trailer the harness specifies.
 - Record per `hexcombat-docs-and-writing`: canonical homes updated (STATUS, systems doc), 3–5-line
   `docs/DECISIONS.md` entry with pointers, plan closeout (checklist + archive move) if a
-  `docs/plans/NNNN-*` plan drove the work; **status** → `docs/STATUS.md`
-  (present tense, no dates); **lessons** → `docs/RETROSPECTIVES.md`; delete the completed backlog item.
+  `docs/plans/NNNN-*` plan drove the work; **status** → `docs/systems/<module>/STATUS.md`
+  (present tense, no dates); **lessons** → `docs/systems/<module>/RETRO.md`; delete the completed backlog item.
   Details: `hexcombat-docs-and-writing`.
 - **Pause and surface to the user** on: a genuine design decision the docs don't answer, a gate
   you can't get green after a couple of focused attempts, anything destructive/irreversible.

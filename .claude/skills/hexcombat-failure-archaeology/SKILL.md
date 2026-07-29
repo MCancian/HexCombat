@@ -57,7 +57,7 @@ Settled battles. Primary sources: `docs/DECISIONS.md` (+ pre-2026-07-10 history 
 - **Status:** fixed (plan 0034). `GameStateData.pending_battalion_pools()` is now the sole
   enumeration of off-map pools and `census` takes that list, so the next pool joins by being added
   there. Golden untouched (`scenario_golden` has no follow-on pool). Detail: `docs/DECISIONS.md`
-  2026-07-25, `docs/systems/frontline-cleanup-victory.md` → "Not-ashore pools".
+  2026-07-25, `docs/systems/frontline-cleanup-victory/frontline-cleanup-victory.md` → "Not-ashore pools".
 - **Live consequence:** every study measured on the `scenario_default` census before 2026-07-25
   over-states Red.
 
@@ -81,7 +81,7 @@ Settled battles. Primary sources: `docs/DECISIONS.md` (+ pre-2026-07-10 history 
   deleted from their rosters, consumes no dice. Golden headless turn byte-stable (scripted fight is
   pre-placed, no crossing); deliberate re-baselines `validate_golden_victory` 25→12 and
   `validate_cleanup` `casualties=6/feba=0.34`→`7/2.24`. Detail: `docs/DECISIONS.md` 2026-07-24,
-  `docs/systems/amphibious-offload.md` §7.
+  `docs/systems/amphibious-offload/amphibious-offload.md` §7.
 
 ### Hex adjacency: offset coords treated as axial (2026-06-29)
 - **Symptom:** none visible — combat/support aggregation quietly used wrong neighbors for weeks.
@@ -92,7 +92,7 @@ Settled battles. Primary sources: `docs/DECISIONS.md` (+ pre-2026-07-10 history 
   the rest of the audit ran on correct adjacency, accepting a golden re-baseline).
 - **Status:** fixed (parity-aware odd-r + offset→cube distance); golden re-baselined
   casualties 2→3; a scenario defender hex moved to a true neighbor. Lesson: never hand-roll hex
-  math; all geometry via `HexMath`. Detail: `docs/systems/hex-grid.md`.
+  math; all geometry via `HexMath`. Detail: `docs/systems/hex-grid/hex-grid.md`.
 
 ### Exquisite intel dead for the whole project (2026-06-28)
 - **Symptom:** crossing losses measured ~67% with a key detection mechanism silently OFF; no
@@ -155,7 +155,7 @@ Settled battles. Primary sources: `docs/DECISIONS.md` (+ pre-2026-07-10 history 
 - **Fenced off:** "fixing" the engagement-log counting or the digest sum — they are correct.
 - **Status:** RESOLVED 2026-07-10 — USER chose to exclude MANPADS from SEAD and give them a real
   role: per-TO container bins, low-altitude strike interception + squadron contest, deterioration
-  via usage/bombardment/ground losses (`IjfsManpads.gd`; docs/systems/ijfs.md → "MANPADS layer";
+  via usage/bombardment/ground losses (`IjfsManpads.gd`; `docs/systems/ijfs/ijfs.md` → "MANPADS layer";
   Decisions log 2026-07-10). Golden pins re-baselined accordingly.
 
 ### Mine/crossing calibration: the lever that couldn't reach 25% (2026-06-28→29)

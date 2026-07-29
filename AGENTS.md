@@ -21,10 +21,12 @@ Every fact has exactly one home. Don't hunt for it elsewhere:
 
 | You need… | Go to |
 |---|---|
-| What works today | `docs/STATUS.md` |
-| What's next / work in flight | `docs/plans/README.md` (plan index) |
+| What works today (cross-cutting) | `docs/STATUS.md` (hub — engine, turn model, gate, mutation authority) |
+| What works today (per module) | `docs/systems/<module>/STATUS.md` |
+| What's next / work in flight | `docs/plans/README.md` (active plan index) |
 | Tech debt / hygiene queue | `docs/plans/BACKLOG.md` |
-| How a module works | its `docs/systems/<module>.md` (data flow, files, TIV divergences) |
+| Past work / archived plans | `docs/plans/ARCHIVE.md` |
+| How a module works | `docs/systems/<module>/` (system doc + STATUS + RETRO) |
 | Module internals / boundaries | the code header: `scripts/resolvers/*.gd`, `GameState.gd` |
 | A procedure (build, debug, author, verify…) | `.claude/skills/README.md` task→skill map |
 | Exact expected numbers (goldens) | the validator (`tools/validate_*.gd`) — its PASS line is truth |
@@ -33,17 +35,17 @@ Every fact has exactly one home. Don't hunt for it elsewhere:
 
 **Task-shaped minimum reads** (skills via `.claude/skills/`):
 
-- **Bug fix / small change:** `docs/STATUS.md` → `hexcombat-change-control` →
-  `hexcombat-debugging-playbook` (if a gate is red) → the module's systems doc or resolver header.
+- **Bug fix / small change:** `docs/systems/<module>/STATUS.md` → `hexcombat-change-control` →
+  `hexcombat-debugging-playbook` (if a gate is red) → the module's system doc or resolver header.
 - **New mechanic / phase:** the above + `hexcombat-architecture-contract` →
   `hexcombat-add-phase-resolver` → `hexcombat-validation-and-qa`.
 - **Research question (outcomes, sweeps, AI-vs-AI):** `hexcombat-research-runs` →
   `hexcombat-run-and-operate`.
 - **Scenario/balance content:** `hexcombat-scenario-authoring` → `hexcombat-config-and-knobs`.
 
-When you finish: update the canonical homes you touched (STATUS bullet, systems doc, 3–5-line
-`docs/DECISIONS.md` entry), close out any plan per `docs/plans/README.md`, then commit. Rules:
-`hexcombat-docs-and-writing`.
+When you finish: update the canonical homes you touched (`docs/systems/<module>/STATUS.md`,
+the module's system doc, 3–5-line `docs/DECISIONS.md` entry), close out any plan per
+`docs/plans/README.md`, then commit. Rules: `hexcombat-docs-and-writing`.
 
 ## Architecture (keep new code inside these layers)
 
@@ -112,7 +114,7 @@ After adding a `class_name` script, run `godot --headless --path . --import` or 
 `docs/LLM_OBSERVATION_SCHEMA.md` + `schemas/*.schema.json`; gate = `tools/validate_llm_api.gd`.
 New phases must extend the observation with their state — never break the contract. Running
 games, self-play, LLM seats, exporters, HTML reports: `hexcombat-run-and-operate` and
-`docs/systems/llm-api-selfplay.md`.
+`docs/systems/llm-api-selfplay/llm-api-selfplay.md`.
 
 ## Guardrails
 

@@ -22,7 +22,6 @@ gameplay-relevant cycle:
 | `scripts/phases/ReinforcementPhases.gd` | 345 | The four "force arrives" phases (plan 0038): sealift, amphibious offload, ROC mobilization, air insertion, and their arrival-site rules |
 | `scripts/phases/TurnClosure.gd` | 81 | The end-of-turn accounting pair (plan 0038): supply bills who fought, cleanup censuses who is left and decides victory |
 | `scripts/transitions/ForceTransitions.gd` | current | Force mutation authority (plan 0044): applies Brigade/Battalion roster, placement, destruction, activity, and organization writes through typed requests/receipts; ownership facts live only in `tools/mutation_authority_manifest.json` |
-| `scripts/resolvers/RosterMutations.gd` | current | Compatibility casualty façade plus the `pending_pool_roster_violations` tripwire; roster writes delegate to `ForceTransitions` |
 | `scripts/GameData.gd` | current | Data loading: `load_hex_grid()`, `load_brigades()`, `load_scenario()`, `load_theaters()`, `load_beaches()`, `load_ships()`. Indexes: `brigades`, `brigades_by_hex`, `hex_lookup`, `neighbor_lookup`, `hex_states`, `ship_defs`, `beaches`, `active_tos`, `to_adjacency`, `beach_to_to` |
 | `scripts/Dice.gd` | 37 | Abstract base: `roll_d100()`, `choose_indices()`, `randf()`, `weighted_choice()`, `weighted_choices()`, `shuffle_indices()`, `derive()` |
 | `scripts/SeededDice.gd` | 96 | Concrete: wraps Godot `RandomNumberGenerator` with a fixed seed. `derive(label)` creates an independent sub-stream via `hash(str(seed) + ":" + label)` |

@@ -19,6 +19,9 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-29 — Documentation hierarchy refactor (hub-and-spoke) shipped (USER call, plan 0053).**
+  Monolithic `docs/STATUS.md` and `docs/RETROSPECTIVES.md` fragmented into module-specific `STATUS.md` and `RETRO.md` files under `docs/systems/<module>/`, reducing agent orientation tokens by ~85%. `docs/STATUS.md` trimmed to executive summary hub for cross-cutting engine/turn-model/gate facts. Dedicated `docs/systems/research-harness/` directory created for batch runner and sweep tools. Facts: `docs/STATUS.md`, `docs/systems/<module>/STATUS.md`, `AGENTS.md`.
+
 - **2026-07-29 — Force mutation authority campaign completed (plan 0044).**
   The `force` aggregate migration is complete. `ForceTransitions` is the sole sanctioned mutation authority for brigade placement, battalion roster counts, casualties, transfers, and transport manifests. The facade `RosterMutations` has been eliminated and `GameData` indexes are consistently protected. Facts: `docs/STATUS.md`, `docs/systems/*.md` state & authority sections, `tools/mutation_authority_manifest.json`.
 

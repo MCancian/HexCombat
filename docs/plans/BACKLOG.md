@@ -116,7 +116,7 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   calls `GameData.remove_brigade_from_map(brigade_id)` when a brigade is wiped out. So an IJFS-killed
   brigade is flagged `destroyed` while remaining in the map index, and zero-qty battalions linger in
   compositions — the roster/pool desync family the `RosterMutations` header warns about.
-  `docs/plans/0044-force-mutation-authority.md` already claims this by name ("Replace
+  `docs/archive/0044-force-mutation-authority.md` already claims this by name ("Replace
   `RosterMutations.apply_casualty` and IJFS's independent…"), so this line is evidence, not a new item.
   **Two things 0044 must know.** (1) It is a BEHAVIOUR change — removing zero-qty entries and
   de-indexing destroyed brigades moves combat contributor sets and the census, so golden pins will
