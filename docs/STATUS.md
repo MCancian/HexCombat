@@ -1,12 +1,13 @@
 # HexCombat — Current State
 
-**What works today, present tense, no dates.** This is the only home for current behavior: if
-another doc disagrees, this file wins (fix the other doc). The full one-home-per-fact map and
-task-shaped reading lists live in `AGENTS.md` → Orientation; recording rules in
-`hexcombat-docs-and-writing`. Forward work: `docs/plans/`. Why/history: `docs/DECISIONS.md` →
-`docs/archive/`. Lessons: `docs/RETROSPECTIVES.md`.
+**What works today, present tense, no dates.** Per-module detail lives in
+`docs/systems/<module>/STATUS.md`. This file covers only cross-cutting concerns
+that no single module owns. The full one-home-per-fact map and task-shaped reading lists
+live in `AGENTS.md` → Orientation; recording rules in `hexcombat-docs-and-writing`.
+Forward work: `docs/plans/`. Why/history: `docs/DECISIONS.md` → `docs/archive/`.
+Lessons: per-module `docs/systems/<module>/RETRO.md`.
 
-## What works today
+## Cross-cutting
 
 **Engine.** Godot 4 / GDScript. WeGo turn model in `GameState` (autoload): plan orders →
 `resolve_turn(dice)` → `begin_next_turn`. Deterministic via an injectable `Dice` (seeded; no global
@@ -49,347 +50,46 @@ reason (plan 0017).
 ownership → supply → cleanup (+ victory census). The front-line phase is **not** in this pipeline —
 it takes operator-drawn polyline coordinates and is called only through the `GameState` façade.
 
-**Phases / subsystems implemented:**
-- **Ground combat** (BOOTS slice M0–M7): movement, commit, combat resolution, FEBA, casualties,
-  retreat, hex ownership. Defender terrain modifier is active: `CombatResolver.resolve_at`
-  receives the defended hex's `defender_modifier` via `TurnConductor.defender_combat_modifier`.
-  **Support units** are mortal and included in casualty selection (weighted 1:4 vs maneuver units). If a side has only support units, they are "unscreened", contributing 0.5 strength each and taking losses. Golden invariant: the scripted beach-1 fight is byte-stable per gate; the pinned values live in
-  `tools/validate_headless_turn.gd` (re-baseline history: `docs/DECISIONS.md` →
-  `docs/archive/PLAN.md`).
-  **Only battalions ASHORE fight (plan 0037, USER call 2026-07-25)** — a brigade's `hex_id` is set by
-  its FIRST landed battalion, so `CombatForces` subtracts the off-map pools per battalion type
-  (`Brigade.landed_qty` is the single home of the rule; `TurnConductor` computes the map ONCE per turn
-  into `CombatRules.not_ashore_by_type` so two hexes cannot disagree). A brigade with nothing ashore
-  is excluded from `combat_contributors_for` entirely — otherwise `CombatCalculator`'s
-  `combat_min_effective_strength` floor would let it fight with phantom strength. Red supply applies
-  the same subtraction, so fighting strength and the ration bill always name the same battalions.
-  Green is unaffected (no pools). Deliberate re-baseline: `validate_dos_consumption`,
-  `validate_cleanup`. Coverage: `tests/landed_battalions_test.gd`.
-- **D1 Amphibious offload** — ship reserve → beach landing; lands brigades onto beach hexes.
-  Every scenario's `red_ship_reserve.beach_hex` must be coastal (< 6 land neighbors) —
-  `validate_scenario_data.gd` rejects fully-inland landing hexes.
-- **Sealift lifecycle** (plan 0004, 2026-07-12) — ships cycle ready→sent→offloading→returning→ready
-  (`SealiftState` + `SealiftResolver`); follow-on echelons embark onto ready amphibious lift so
-  crossing sustains across turns instead of draining by ~turn 3. A BN crosses **once** (attrited on
-  its crossing turn, then safe offloading). Escorts carry a cross-turn SAM magazine and cycle to
-  reload when low. Follow-on is either an explicit `red_followon_reserve` (curated echelon — no
-  shipped scenario uses this today) or an opt-in deep pool auto-seeded from the OOB
-  (`auto_seed_followon_pool`, on for both `scenario_default` and `roc_full_defense`); amphibious lift is classified
-  by `ShipDef.is_amphibious_lift()` and `pack_bns_into_hulls` aggregates fractional hull capacity.
-  Facts: `docs/systems/amphibious-offload.md` → "Sealift lifecycle".
-- **Research default vs golden fixture** (2026-07-12) — `scenario_default.json` is the realistic
-  deep-pool sustained invasion (research/self-play); the pinned gate runs the frozen
-  `scenario_golden.json` (one-shot assault) via `HEXCOMBAT_SCENARIO`, keeping golden pins byte-stable
-  as the default evolves. Deep-pool coverage: `tools/validate_deep_pool_smoke.gd`.
-- **Offload capacity gate** (plan 0006) — Red buildup is gated by held/operational offload
-  infrastructure, not just ship lift: ports/airbridges (`data/infrastructure.json`,
-  `InfrastructureResolver`) contribute throughput once seized and JLSF-repaired (`deploy_jlsf`
-  order / `auto_jlsf` policy); day-N offload costs vary by BN type × ship category
-  (`use_offload_weight_matrix` → `OffloadCostModel`, with cross-turn carry-over for heavy
-  loads); a per-beach occupancy valve (`BeachDef.depth`) closes a beach until landed brigades
-  move inland. All default-off; `scenario_default` enables the matrix + auto-JLSF. Empty-orders
-  self-play hard-plateaus instead of overrunning; seizing a port visibly raises the landing
-  rate. Facts: `docs/systems/amphibious-offload.md` §9.
-- **D2 Red DOS supply** — supply pool / effectiveness tracking. An exhausted Red pool now degrades Red
-  ground-combat strength (`red_out_of_supply_effectiveness`, default 0.5) via
-  `CombatResolver.inject_supply_effectiveness`, threaded by `TurnConductor`.
-- **D3 Anti-ship & mine warfare** — IJFS-fed firing plan → crossing damage (count-based) → **geometric
-  mine model** (randomized approach path, dangerous-mine count within `danger_radius`, decoy-sponge
-  transit; knobs in `data/antiship/minefields.json`). Ship losses → BNs lost at sea. Crossing
-  lethality is calibrated to the USER-accepted 32.9% mean loss on the 81-BN sent-cohort wave
-  (2026-07-18; superseded plan 0001's ~25%-of-36-BN target) via `data/ijfs/ijfs_scenario.json`'s
-  `intel_locked_antiship_strike_bonus` (0.20) and `prelanding.intel.exquisite_intel.antiship.initial_count`
-  (36) — see `docs/archive/0001-crossing-lethality-calibration.md`.
-  **Off-island fleet strikes (plan 0028, 2026-07-23):** `off_island_strike.shooters[]` in
-  `antiship_crossing_config.json` (`type` = combat-catalog launcher — `6` submarine `Harpoon_Sub_II`,
-  `3` air `Harpoon_Air_II`/`SLAM-ER`; `systems_per_turn`) appends **location-less** firing rows every
-  turn (`AntishipResolver._append_off_island_strikes`) so the follow-on faces sustained interdiction
-  independent of on-island IJFS suppression/depletion — the toll the front-loaded on-island salvo
-  lacks (turn-1 carries ~96% of baseline at-sea losses, follow-on crosses at ~3%). Registry knobs
-  `off_island_{submarine,air}_strikes`; default 0 ⇒ golden byte-stable. It's a real sustained lever
-  (margin +9→+3, fleet drownings 26→54 over subs 0→64) but does NOT flip alone (offload *rate* is the
-  binding constraint, reservoir is bottomless) and is antagonistic with the offload throttle (sinking
-  ships thins the beach queue). Detail: `docs/plans/0028-sustained-followon-interdiction.md`.
-  **Launcher losses are permanent (plan 0043, 2026-07-27, USER call):** an `AntishipSystem` row keeps
-  two source-specific cumulative loss totals — IJFS kills (assigned from the cumulative writeback) and
-  launch-attrition kills (accumulated one crossing at a time) — and derives `destroyed` / `quantity`
-  from them, clamping their sum at the establishment. Launchers destroyed while firing used to come
-  back on the next crossing, because the firing plan rebuilt `quantity` from `original_quantity` minus
-  IJFS kills alone. Attempting to fire no longer consumes a launcher; only reported destruction does.
-  Measured over 12 common seeds (scenario_default, `selfplay_default`, 30-turn cap): Green systems
-  fired falls in every seed that moves (mean −5.4 per campaign, range −18..0, never rises), Red hull
-  losses mean −0.83 (−14..+4), BNs drowned mean 0.00 — no rebalance indicated, and no pin moved.
-  Report: `docs/reports/2026-07-27-antiship-permanent-launch-destruction.md`.
-- **D4 IJFS** (joint/air-missile fires) — detection → targeting → strike → suppression, with a
-  multi-day pre-invasion warmup (exquisite intel) on the first turn. Per-(TO,type) writeback feeds D3.
-  **IJFS now also attrits ground forces:** Green/ROC maneuver battalions are IJFS targets
-  (`build_maneuver_targets`); destroyed ones are removed from the OOB before ground combat
-  (`FiresPhases.apply_ijfs_maneuver_casualties`) — the D4-H ground-casualty linkage. Detectability is biased by
-  unit type (mobility/hardness via the `MANEUVER_TYPE_MAP` profile) and by recent activity: a brigade
-  that moved or fought last turn presents an `"active"` posture (`FiresPhases.update_maneuver_posture`), making its
-  maneuver units easier to detect. Each turn `FiresPhases.sync_maneuver_targets_to_oob` retires maneuver targets
-  whose battalions have died (IJFS or ground combat), so the air/missile campaign stops targeting units
-  that no longer exist — without disturbing detection continuity for survivors.
-  **CRBM heavy-volley maneuver attrition (plan 0009, 2026-07-17 USER call):** two coupled scenario
-  knobs in `ijfs_scenario.json` let Red spend its excess CRBM inventory on maneuver battalions —
-  `crbm_maneuver_rounds_override` (480) forces the volley size on every CRBM×Maneuver pairing
-  (depletion only), and `crbm_maneuver_strike_bonus` (0.15, USER-dialed 2026-07-17 via
-  `python3 tools/run_sweep.py --spec tools/sweeps/crbm_maneuver.json` — ~38% ROC maneuver-pool attrition over 40 turns) is the paired
-  lethality lever, synthesized into a strike modifier. Both synthesized by `IjfsLoaders`
-  (`apply_crbm_maneuver_*`), wired in `IjfsStateBuilder.build`. Detail: `docs/systems/ijfs.md`
-  §4 Strike.
-  **MANPADS layer (2026-07-10, USER design call — TIV-oracle divergence):** the ~2,500 Stingers are
-  per-TO container bins (category `MANPADS`, excluded from SEAD/AD-health) that intercept
-  low-altitude strikes (UAV/OWA/strike-aircraft munitions; ballistic/cruise immune) and contest
-  SEAD/strike squadrons island-wide, deteriorating via usage, bombardment, and TO ground losses
-  (`IjfsManpads.gd`; spec in `docs/systems/ijfs.md` → "MANPADS layer"; surfaced as
-  `ijfs_summary.manpads`).
-- **ROC mobilization phase-in (plan 0029 Tier A2, USER call 2026-07-24)** — a scenario may hold a
-  slice of the **existing** ROC force off-map "in mobilization" and phase it in over the opening
-  turns, instead of standing the whole OOB (including its 12 reserve infantry brigades, 36 of 124
-  BNs) on its garrison hexes at H-hour. Scenario block `green_mobilization`
-  (`held_back_brigades` — **0 by default, so nothing changes and golden stays byte-stable** —
-  `brigade_types`, `first_release_turn`, `release_interval_turns`, `brigades_per_release`; all four
-  are `scenario:`-prefixed registry knobs). Held brigades are `hex_id == ""`, the same not-present
-  state Red's at-sea brigades use, so the census, legal moves and IJFS targeting exclude them; on
-  release they arrive at their real garrison hex (or the nearest non-enemy passable hex, else defer)
-  and their maneuver targets are appended to the live IJFS state. The phase runs between amphibious
-  offload and movement — the same seam as Red's reinforcement — and consumes no dice. Total force is
-  unchanged; the lever is exposure timing (off-map battalions sit out the front-loaded fires
-  campaign). Coverage: `tools/validate_mobilization.gd` + `tests/mobilization_*_test.gd`.
-  Detail: `docs/systems/roc-mobilization.md`. **Measured (2026-07-24, 30 seeds/cell,
-  `selfplay_default` vs `roc_defense`, `scenario_default`, 30 turns):** holding 0/4/8/12 reserve
-  brigades back takes the Red win rate 100% → 93.3% → 90.0% → **83.3%** and pushes mean decision
-  from turn 20.0 to 22.4 — the first defender-side lever to move the win rate off 100%, with no
-  extra force. Green's census curve stops being monotone (rises t5→t8, plateaus to t14 where the
-  baseline fell 89→53); 17% of seeds survive the horizon with the ROC ahead. It does **not** flip
-  the median game: a finite 36-BN reserve cannot beat the bottomless follow-on pool. Release timing
-  is nearly flat and its weak "later is better" gradient is a model artifact (off-map is a sanctuary
-  with no modelled cost). Report: `docs/reports/2026-07-24-roc-mobilization-sweep.md`.
-- **PLAAF air insertion (plan 0032, USER call 2026-07-24)** — a non-amphibious path onto Taiwan:
-  Red flies battalions from an off-map pool onto **any passable hex** (enemy-held included), capped
-  per turn per lift class. The plan assumed the OOB already had airborne units; it did not (945 PLA
-  BNs, zero airborne), so the same work **adds the PLAAF Airborne Corps** — 6 brigades / 50 BNs
-  appended to `pla_ground_forces.json` (3 light airborne, 2 mechanized airborne, 1 air assault; USER
-  split), plus two `UnitStats` types. `LiftClass` maps OOB `nato_type` → lift class and keeps the
-  corps out of the sealift follow-on pool. Attrition is keyed on Taiwan's air defences —
-  `0.75 × effective_ad_health`, **plus** `0.25 × MANPADS threat fraction` for rotary-wing lift
-  (the MANPADS layer is excluded from AD health yet is what engages helicopters) — rolled per
-  battalion on the `air_insertion:<turn>` substream. Every loss also destroys one battalion of lift
-  **permanently**. Landed brigades fight **out of supply** until a Red-held corridor links them to a
-  beach or port. New `air_insert` order (Red-only) in the LLM/observation contract; new
-  `air_assault` policy (selfplay_default + seize-the-nearest-port doctrine). Scenario block
-  `red_air_insertion` — **absent by default, so the phase is inert and golden stays byte-stable**;
-  only `data/scenarios/red_airborne.json` opts in (`scenario_default` deliberately untouched).
-  Phase runs after IJFS (attrition reads that turn's air-defence picture) and before movement (an
-  opposed drop is fought the same turn). Coverage: `tools/validate_air_insertion.gd` +
-  `tests/air_insertion_{resolver,builder,order}_test.gd`. Detail: `docs/systems/air-insertion.md`.
-  **Measured (2026-07-24, 30 seeds/cell, `red_airborne`, 30 turns):** against the plan-0029
-  mobilizing defender (12 brigades held back — the strongest defence measured to date, which held
-  Red to 83%), the air path takes Red to **97%** and halves median decision from turn 21 to 11.
-  Lift *quantity* is not the constraint: 3 BN/turn is as decisive as 14 (step, not slope). It is
-  this strong because the IJFS warmup has already cleared the sky — a typical drop costs ~9%, so
-  the permanent-airframe brake barely engages. Report:
-  `docs/reports/2026-07-24-airborne-insertion-sweep.md`.
-- **D5 Front-line / cleanup** — `FrontLineService` (polyline → hex redistribution), cleanup phase.
-- **Victory conditions** — end-of-cleanup census of PLA vs ROC battalions *present* on Taiwan (landed
-  only); `game_over` / `winner` on `GameState`/`TurnResult`/LLM observation. Config: scenario `victory`
-  block. A brigade counts from the moment its first battalion lands, so the census subtracts every
-  battalion of it still off-map. **`GameStateData.pending_battalion_pools()` is the single
-  enumeration of those pools** — `ship_reserve` (at sea), `SealiftState.mainland_pool` (awaiting a
-  hull), `AirInsertionState.pool` (awaiting lift) — and `CleanupResolver.census` takes that list
-  rather than named parameters, so a new off-map pool joins the census by being added there
-  (plan 0034; counting in `PendingBattalions`). `mainland_pool` was missing until 2026-07-25 and
-  `SealiftResolver._embark_followon` drains entries partially, so Red's `scenario_default` census ran
-  up to 8 battalions high (turn 20: 57 vs the true 49) — see `docs/DECISIONS.md` 2026-07-25, and note
-  that studies measured before that date carry the inflated count. `victory.taiwan_hexes` as an array restricts the census to those hexes (used by
-  `roc_full_defense` to exclude the offshore Green/Orchid Island hexes; the 451-hex main-island
-  list is generated by `tools/gen_main_island_hexes.py` and guarded by
-  `tools/validate_victory_hexes.gd`); `null` counts every placed hex (the golden default).
-- **AI-readiness (Track E)** — `GameState.play_turn(red, green, dice) -> TurnResult`, per-turn event
-  log, `LLMGameAPI` observation/action contract (JSON-schema-gated), headless self-play harness.
-  Deterministic scripted policies: `inland_clear`, `garrison_draw`, `noop`, `selfplay_default`,
-  `roc_defense` (plan 0029 Tier A — concentrating defender: every Green brigade steps toward the
-  nearest red/contested threat, holds pre-landing; shared id-geometry in `scripts/PolicyGeometry.gd`).
-- **Scenario selection (research harness B1)** — any headless process picks its scenario via the
-  `--scenario=<id-or-path>` user arg or `HEXCOMBAT_SCENARIO` env var (`ScenarioCatalog`; arg wins,
-  no selection = `data/scenarios/scenario_default.json` so all pins hold). Variant files live in
-  `data/scenarios/` (id = filename stem, enumerated by `ScenarioCatalog.list_scenario_paths()`);
-  the selection survives `GameState.reset_to_scenario()`; `validate_scenario_data.gd` checks every
-  scenario generically + the default's pinned shape.
-- **Batch runner (research harness B2/B7)** — `python3 tools/run_batch.py --name <study>
-  --scenarios default,<variant> --matchups red:green,... --n 30` plays a scenario × matchup ×
-  common-seed matrix, one headless Godot process per game, up to `--parallel` at a time. A bare
-  matchup policy means the same policy in both seats. Each game (`tools/run_selfplay_game.gd`)
-  writes a timestamp-free, byte-reproducible (for deterministic seats) v2 JSON record with
-  explicit Red/Green policy identities to `reports/batches/<study>/games/`; verdicts are
-  artifact-based; re-running resumes only valid records; `manifest.json` stamps matchups,
-  commit, and per-game re-run command lines. The runner writes `report.md` automatically
-  (`--no-report` suppresses it). The runner warns when a live-model matchup uses more than one
-  worker; use `--parallel 1`.
-- **Outcome reports (research harness B3)** — `tools/make_batch_report.gd -- --batch=<study>`
-  aggregates a batch's records into `report.md`: per-condition (scenario × Red policy × Green
-  policy) win rates, turn/census/margin distributions, per-game loss means, a methods line
-  (commit, mixed-commit and dirty-tree warnings), and standing caveats (including LLM
-  non-determinism). Aggregation/rendering is pure `BatchReport` statics (GdUnit-tested).
-- **Narrative renderer (research harness B4)** — `tools/make_game_narrative.gd`
-  (`--record=<file>` or `--batch=<study> --pick=median|longest|shortest`) renders a game
-  record's event log into a turn-by-turn Markdown account (IJFS strikes + air-defense
-  degradation, the crossing, maneuver/commitments, per-hex ground combat with FEBA movement,
-  end-of-turn census, outcome). Pure `GameNarrative` statics (GdUnit-tested).
-- **Knob sweeps (research harness B5)** — `python3 tools/run_sweep.py --spec tools/sweeps/<spec>.json` or `python3 tools/run_sweep.py --name <study> --knob <file:dot.path> --values a,b,c` generates cell variants
-  (via `DataOverrides` map), batches them over a common seed set, and reports per-value
-  outcome rows. One backend since plan 0012: every cell is a parallel `run_batch.py` job set of
-  standard `run_selfplay_game.gd` games; `sweep_metrics.py` extracts raw numbers from the game
-  records (turn digests + terminal census) and `make_sweep_report.py` owns all display
-  formatting. The canned calibration specs run `matchup: noop` (pure engine dynamics — the
-  measurement semantics their dialed reference tables were accepted under; per-seed parity with
-  the retired in-process cell runner verified 2026-07-18), and the antiship mines-only floor is
-  the `disable_antiship_systems` grouping-spec override. Any JSON knob in `data/` can be swept.
-  A spec's `scenario` id must resolve to a file before any game runs; typo'd override paths fail
-  loud via `DataOverrides.unapplied()` in the selfplay entrypoint; reports match cells by
-  override content, not filename. **The
-  antiship crossing instrument changed 2026-07-18:** the harness now runs sealift between IJFS
-  and the crossing (mandatory since plan 0004 — without it no cohort is "sent" and losses read
-  zero), and the wave is the sent cohort (~81 BNs incl. follow-on echelons), not the 36-BN ship
-  reserve. The plan-0001 dial (ic=36, bonus=0.20) reads **32.9%** mean crossing loss on the new wave
-  semantics — USER accepted 2026-07-18 (supersedes the ~25%-of-36-BN target; table:
-  `reports/sweeps/antiship_crossing/report.md`).
-- **LLM players (research harness B6)** — policy id `llm_local` (`LLMPolicy`) marshals a seat's
-  perspective observation to an out-of-process Python sidecar (`tools/llm_sidecar.py`) that calls a
-  local OpenAI-compatible model (`HEXCOMBAT_LLM_BASE_URL`/`_MODEL`/`_API_KEY`, default vLLM at
-  `localhost:8088/v1`), validates the returned actions against the legal sets, and appends every
-  observation/action pair to a JSONL replay log. `SelfPlayRunner.play_game_seats` runs two
-  independent seats to a simultaneous WeGo resolve; `godot --headless --path . -s
-  res://tools/run_selfplay_game.gd -- --seed=S --red-policy=llm_local --green-policy=llm_local
-  [--scenario=X] [--turns=N] [--model=M] [--out=f.json] [--log=f.jsonl]` plays one full
-  LLM-vs-LLM game and writes a record + replay log.
-  `HEXCOMBAT_LLM_SIDECAR` overrides the sidecar (e.g. `tools/llm_sidecar_stub.py`, the network-free
-  stub used by the gate). LLM decisions are NOT seed-reproducible; the JSONL log is the replay
-  artifact — each entry carries the full observation, the raw model reply, the validated actions,
-  and any sidecar `warnings` (stderr is dropped by the engine's `OS.execute`, so the log is where
-  diagnostics surface). Hardening from the 2026-07-10 live runs: duplicate orders for one brigade
-  are deduped in the sidecar (engine rule mirrored, first order wins); an unparseable reply gets
-  ONE strict "JSON only" retry before forfeiting the turn (rescues reasoning-model token-budget
-  overruns); `HEXCOMBAT_LLM_MAX_TOKENS` default raised 8192→32768 (observed CoT overruns at 8192;
-  worst prompt ≈21K tokens vs DeepSeek-V4-Flash's 131072 context, so headroom is cheap — the
-  budget's real cost is wall-clock on rambling turns). Use IPv4 (`127.0.0.1`, default) not
-  `localhost`. Live-verified against local vLLM (model `jarvis`): seeds 20260710/20260711, both
-  30/30 turns GAME OK; the second (post-fix) run had zero forfeited turns. `llm_local` now also
-  runs in either B7 batch seat (mixed or LLM-vs-LLM); mixed game logs include both seat
-  observations/actions so they remain bundle-ready.
-- **Research knob tracking (plan 0018)** — a curated registry `data/knobs/registry.json` (23
-  outcome-relevant knobs, IJFS warmup → beach capacity) drives a full resolved-knob dump into every
-  game record (`record["knobs"]`, via pure `scripts/KnobRegistry.gd`), so records from any sweep
-  share one knob-space and are directly comparable. LLM games also record `llm_model` +
-  `llm_prompt_hash` (the sidecar hashes its system prompt) so a prompt/model change is never
-  invisible. `python3 tools/research_knobs.py ledger --records reports/` renders the explored-space
-  table (one row per distinct knob-vector, held-constant knobs listed once);
-  `... sensitivity --records reports/ --metric red_win_rate|census_margin` ranks which varying knobs
-  move outcomes most (confounding caveat when >1 co-varies). Registry integrity + path resolution
-  gated by `tools/validate_knob_registry.gd`; the analysis tools by `tools/validate_research_knobs.py`.
-  `DataOverrides` addresses arrays (`name[*]`/`name[]` = all elements, `name[N]` = one), so array
-  knobs are first-class sweepable too — e.g. `--knob "data/beaches.json:beaches[*].capacity_battalions"`
-  scales every beach at once; `KnobRegistry._extract` shares the grammar for the record dump.
-- **Monte Carlo outcome distribution (deck slide 6)** — `tools/mc_summarize.py` aggregates a
-  `run_batch.py` batch into a committable, timestamp-free summary JSON (outcome counts, win rates,
-  and the victory-margin / battalions-ashore / turns-to-decision distributions with histogram bins);
-  `tools/mc_chart.py` renders that summary into a deck-themed self-contained inline `<svg>` (no
-  fabricated numbers — the chart is a pure function of the batch). Both are stdlib-only standalone
-  tools, not wired into the gate. Headline result (200 seeds, `selfplay_default` both seats,
-  `scenario_default`, commit 7339378): **PLA wins 200/200 but by a stochastic margin** (min +1,
-  median +6, mean +8, max +28); single-knob sweeps of beach capacity (1→4) and anti-ship lethality
-  (0→0.8) leave the win rate flat at 100% — the laydown is structurally Red-favored, the RNG sets the
-  margin not the winner. Report + committed data: `docs/reports/2026-07-23-monte-carlo-outcome-distribution.md`
-  (+ `docs/reports/assets/mc_outcome_distribution.{summary.json,svg}`). The slide's `#mc-distribution`
-  container holds the generated SVG (`data-status="ready"`). **Follow-up (structural cause + the flip
-  lever):** the 100% win rate is structural — the PLA follow-on auto-seeds from the entire mainland OOB
-  (`auto_seed_followon_pool`, a bottomless reservoir) and no campaign clock caps the buildup, so a
-  logistics-throttled trickle still out-accumulates the defender. The plausible flip lever is **beach
-  offload throughput**: sweeping `data/beaches.json:beaches[*].offload_rate` gives a clean monotone
-  crossing — the invasion culminates below ~1,330 t/day (deck **slide 7** "Where the Invasion
-  Culminates" + `tools/mc_chart.py --crossing`; spec `tools/sweeps/mc_offload_throughput.json`). Fixed
-  a registry bug in the process: `offload_beach_base_rate` pointed at the phantom `offload_rates.json`
-  (never loaded at runtime — throughput is `OffloadRates` constants; the JSON is only a validation
-  mirror), so its sweep silently no-op'd; repointed to the real `beaches[*].offload_rate`, and marked
-  `offload_operational_port_rate` `sweepable:false` (dump-only code constant). Still open:
-  `combat_{defender,attacker}_advantage_ratio` are registry knobs recorded but inert (don't reach
-  `CombatResolver`).
-- **`roc_full_defense` scenario** — variant placing all 32 ROC brigades (124 battalions) at their
-  real garrison hexes vs the default's 4 PLA amphibious brigades; select with
-  `--scenario=roc_full_defense`. Gives AI-vs-AI games a multi-turn fight instead of the default
-  4-defender beachhead's turn-1 census decision. Its victory census is restricted to the 451-hex
-  main island (see Victory conditions above).
-- **Terrain model (Track F)** — every hex in the 466-hex grid (`data/taiwan_hex_grid.json`,
-  reconciled against the real GSHHG coastline) carries one of 5 terrain classes
-  (`data/terrain/terrain_types.json` + `data/terrain/hex_terrain.json`, loaded by
-  `GameData.load_terrain()`): plains, hills, urban, mountain, metropolis (≥50% built-up cover, 9
-  metro-core hexes). Movement consumes per-class entry cost via weighted Dijkstra
-  (`GameData._terrain_entry_cost`, `HexMath.find_path`/`find_reachable`: hills/metropolis cost 2,
-  plains/urban/mountain cost 1) with a min-one-step guarantee (a unit that hasn't moved may always
-  take one step into an adjacent passable hex); mountains are impassable
-  (`GameData._with_impassable`). Ground combat's defender gets a per-class strength modifier
-  (`TurnConductor.defender_combat_modifier` → `CombatResolver.resolve_at`): plains ×1.0, hills ×1.5,
-  urban ×2.0, mountain ×2.0, metropolis ×3.0 — golden outcome is pinned in
-  `tools/validate_headless_turn.gd` (re-baselined 2026-07-09 for the full-defense laydown). Terrain is
-  surfaced per-hex in the LLM `occupied_hexes` observation and IS the map fill: every classified
-  hex renders pure `TerrainType.color` (USER call — match `terrain_preview.png`); RED/CONTESTED
-  ownership renders as a 3px perimeter border around each connected pocket, no interior lines
-  (`HexMap._build_ownership_borders`), with numbered beach glyphs. Full detail:
-  `docs/systems/terrain.md`.
-- **Default scenario = full ROC defense (2026-07-09 USER call)** — `data/scenarios/scenario_default.json`
-  places all 32 ROC brigades (laydown shared with `roc_full_defense`; beaches 1/3/6/9 garrisoned
-  on-hex, every landing beach covered on-hex or adjacent — pinned by `validate_scenario_data.gd`).
-  Under empty-orders self-play the default now runs to the 40-turn stalemate census pinned
-  in `validate_golden_victory.gd` (the 4-brigade landing wave cannot out-census the full ROC defense;
-  victory FIRING stays covered by `tests/victory_conditions_test.gd`).
-- **Brigade marker rendering (`HexMap`)** — brigades are grouped per hex: same-hex stacks render
-  as a 0.62× ring with a ×N count badge at 3+; a lone brigade shrinks to 0.75× and pins to the
-  hex center when any neighbor hex is occupied (full-size markers are wider than the hex spacing
-  and would overlap); an isolated brigade renders full-size with its entry-bearing offset.
-  Visual-only — headless gates don't cover it; verify by screenshot.
-- **Post-game briefing viewer** — `tools/make_game_bundle.py` (stdlib-only) merges an
-  AI-vs-AI game record (`reports/llm/<name>.json`) with its JSONL replay log into one
-  `<name>.viewer.json` bundle (meta / per-turn digest+actions+observation / per-side 3-line LLM
-  SITREPs / embedded map data); `--html` bakes it into a single shareable `<name>.game.html`,
-  and `--from-bundle` re-bakes that HTML from an existing bundle without re-running sitrep LLM
-  calls. The bundle also carries a canonical **`ship_stats`** block at its root (plan 0023 P2a):
-  `per_turn[]` (1:1 with `turns[]`, each row — `sent_by_type` / `target_beaches` / `target_tos` /
-  `wave_bns` / `crossing_casualties` / `destroyed_by_ship_type` / `bns_lost_at_sea` / `mine_status`
-  — copied verbatim from that turn's `digest.antiship_summary`) plus a stored `cumulative` (running
-  `series` + rollups). This is the single home for per-turn+cumulative ship activity/loss data that
-  the map annotation and a future click-through stats view both read; it's gate-guarded against
-  per-turn drift from its source digests by `tools/validate_make_game_bundle.py` (wired into
-  `run_all_tests.py` — the bundler was previously exercised by nothing). The map draws a per-turn
-  crossing annotation (hulls sailed + losses) reading from `ship_stats`. `tools/viewer/game_viewer.html` is a single self-contained briefing page (open
-  directly, no server): opens at turn 1 and advances one turn at a time (mouse wheel with a
-  momentum guard, ◀ ▶ / ⏮ ⏭-Final buttons, arrow keys, Home/End) — each advance re-renders the
-  SVG hex map (terrain fill + red/contested perimeter borders + beach glyphs + brigade markers,
-  ported from `HexMap.gd`'s projection/border logic) and extends the chart reveal.
-  The map box holds **two viewports over one shared render** (content lives once
-  in a `<defs>` group; both `<svg>` `<use>` it, differing only in `viewBox`): a full-island
-  **theater** view and a **front** view whose `viewBox` crops to the **largest connected cluster**
-  of contested/Red hexes (+ that cluster's neighbors). Clustering (`connectedComponents` /
-  `largestCluster`, the pure `<clustering-pure>` block) runs over the same neighbor adjacency the
-  border layer uses, tie-broken by contested-hex count; a disjoint front no longer yields one bbox
-  spanning the water between two beachheads (the secondary beachhead stays in the theater view; a
-  per-beachhead pager is deferred to plan 0027). No landing yet → falls back to the full island.
-  The clustering has a durable unit test — `node tools/viewer/test_clustering.mjs` loads the real
-  functions out of the HTML and checks a known two-cluster fixture (not part of the Godot gate).
-  For projection legibility (plan 0023 P3) the map box bakes in a large high-contrast turn/phase
-  header (amber "X wins" on the game-over turn) and a compact ownership/glyph legend (Red-held /
-  Contested / PLA-brigade / ROC-brigade / landing-beach / crossing-this-turn). Advancing also swaps
-  the
-  turn's narrative (SITREPs, collapsible transcripts, adjudication prose, phase-detail tables)
-  in place; the wheel scrolls an overflowing narrative instead of stepping. Charts render
-  ghost-future (full game faint, turns ≤ current in color): census, cumulative ship losses,
-  and per-turn battalion losses per side (China stacked ground / drowned-at-sea) derived
-  client-side from the digests. Tolerates older JSONL logs that lack `observation` (map falls
-  back to the nearest earlier observed turn / "no map data this turn"). Visual-only tool, not
-  part of the canonical gate — verify with a headless-Chromium (Playwright) pass over a rebuilt
-  `game.html` plus screenshots.
+**Research default vs golden fixture** — `scenario_default.json` is the realistic
+deep-pool sustained invasion (research/self-play); the pinned gate runs the frozen
+`scenario_golden.json` (one-shot assault) via `HEXCOMBAT_SCENARIO`, keeping golden pins byte-stable
+as the default evolves. Deep-pool coverage: `tools/validate_deep_pool_smoke.gd`.
 
-**Verification.** The canonical gate — `bash tools/run_all_tests.sh` (Linux; resolves Godot via
+**`roc_full_defense` scenario** — variant placing all 32 ROC brigades (124 battalions) at their
+real garrison hexes vs the default's 4 PLA amphibious brigades; select with
+`--scenario=roc_full_defense`. Gives AI-vs-AI games a multi-turn fight instead of the default
+4-defender beachhead's turn-1 census decision. Its victory census is restricted to the 451-hex
+main island (see `docs/systems/frontline-cleanup-victory/STATUS.md`).
+
+**Default scenario = full ROC defense (USER call)** — `data/scenarios/scenario_default.json`
+places all 32 ROC brigades (laydown shared with `roc_full_defense`; beaches 1/3/6/9 garrisoned
+on-hex, every landing beach covered on-hex or adjacent — pinned by `validate_scenario_data.gd`).
+Under empty-orders self-play the default now runs to the 40-turn stalemate census pinned
+in `validate_golden_victory.gd` (the 4-brigade landing wave cannot out-census the full ROC defense;
+victory FIRING stays covered by `tests/victory_conditions_test.gd`).
+
+## Module status (detail in each module's STATUS.md)
+
+| Module | Status file | What |
+|---|---|---|
+| Ground combat | `docs/systems/ground-combat/STATUS.md` | BOOTS M0–M7, movement, FEBA, casualties |
+| Amphibious offload | `docs/systems/amphibious-offload/STATUS.md` | D1 landing, sealift lifecycle, offload capacity |
+| Supply / DOS | `docs/systems/supply-dos/STATUS.md` | D2 Red supply pool, effectiveness |
+| Anti-ship & mines | `docs/systems/antiship-mine/STATUS.md` | D3 crossing damage, mine model, off-island strikes |
+| IJFS | `docs/systems/ijfs/STATUS.md` | D4 air/missile fires, MANPADS, maneuver attrition |
+| ROC mobilization | `docs/systems/roc-mobilization/STATUS.md` | Reserve phase-in |
+| Air insertion | `docs/systems/air-insertion/STATUS.md` | PLAAF airborne path onto Taiwan |
+| Front-line / cleanup / victory | `docs/systems/frontline-cleanup-victory/STATUS.md` | D5 polyline, cleanup, census |
+| Terrain | `docs/systems/terrain/STATUS.md` | 5-class terrain, movement cost, combat modifiers |
+| LLM API & self-play | `docs/systems/llm-api-selfplay/STATUS.md` | Observation/action contract, LLM players |
+| Research harness | `docs/systems/research-harness/STATUS.md` | Batch runner, sweeps, reports, Monte Carlo |
+| View layer | `docs/systems/view-layer/STATUS.md` | Brigade markers, briefing viewer |
+| Turn engine | `docs/systems/turn-engine/turn-engine.md` | Phase orchestration (see system doc) |
+| Hex grid | `docs/systems/hex-grid/hex-grid.md` | Grid topology (see system doc) |
+
+## Verification
+
+The canonical gate — `bash tools/run_all_tests.sh` (Linux; resolves Godot via
 `$GODOT_BIN` else `godot` on PATH) or `pwsh tools/run_all_tests.ps1` (Windows) — runs: import → headless smoke →
 `tools/validate_*.gd` (golden turn, anti-ship, IJFS, metrics, victory e2e, data validators,
 no-global-RNG) → GdUnit4 suites under `tests`. Must end **ALL PHASES GREEN**. A debug-only assert
@@ -397,7 +97,7 @@ no-global-RNG) → GdUnit4 suites under `tests`. Must end **ALL PHASES GREEN**. 
 so any silent brigade↔hex index desync fails loud in every debug/test/headless turn (compiled out of
 release).
 
-**Gate anti-silence properties (2026-07-25).** Three ways the gate could previously lie, now closed:
+**Gate anti-silence properties.** Three ways the gate could previously lie, now closed:
 a validator that exits 0 while printing **no `PASS:` marker** is a failure rather than an OK (a
 validator that silently does nothing used to look identical to one that verified everything); every
 validator is invoked with `--quit-after`, so a dependency class that fails to compile produces a named
@@ -438,11 +138,11 @@ negative instead of going quietly green. **Two aggregates are registered and ENF
 
 - **Graphics** (Track 5): anti-ship/mine visualization, front-line draw UI (D5-D), unit/HUD polish.
   Needs visual verification (not headless-gateable).
-- **Beach first-landing ×2 defender penalty** — deferred design call (2026-07-09); the seam is
+- **Beach first-landing ×2 defender penalty** — deferred design call; the seam is
   `TurnConductor.defender_combat_modifier`'s `* 1.0` situational-modifier slot. See
   `docs/plans/BACKLOG.md`.
 - **Deferred ports** — anti-ship missile pipeline depth (strike-coverage lever), ground-casualty
-  IJFS↔OOB linkage; **per-hull** escort magazines (aggregate per-type magazines shipped 2026-07-12,
+  IJFS↔OOB linkage; **per-hull** escort magazines (aggregate per-type magazines shipped,
   plan 0004; per-hull granularity + damage-driven repair delay still deferred). See `docs/plans/README.md` (plan index) and
   `docs/archive/port_audit.md`.
 - **Refactors** — see `docs/archive/refactor_audit.md` (e.g. victory census should count *present*, not

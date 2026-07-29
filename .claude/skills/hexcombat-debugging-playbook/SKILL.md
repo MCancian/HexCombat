@@ -50,5 +50,5 @@ and diff (the pools argument is required).
 ## When genuinely stuck
 
 Two focused attempts at a red gate, then stop and surface to the user with the evidence
-(per `hexcombat-change-control`). Record dead ends in `docs/RETROSPECTIVES.md` so the next agent
+(per `hexcombat-change-control`). Record dead ends in `docs/systems/<module>/RETRO.md` so the next agent
 doesn't re-fight the battle.

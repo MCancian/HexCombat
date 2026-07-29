@@ -38,7 +38,7 @@ description: Running HexCombat as a research instrument — Monte Carlo batches 
 > sealift (mandatory post-plan-0004; wave = sent cohort, ~81 BNs). **LLM-player adapter (B6)
 > shipped and live-verified 2026-07-08** — policy id `llm_local` (`LLMPolicy`), sidecar
 > `tools/llm_sidecar.py`, two-seat entrypoint `tools/run_selfplay_game.gd` with
-> `--red-policy=llm_local --green-policy=llm_local` (`docs/STATUS.md` → "LLM players" has the
+> `--red-policy=llm_local --green-policy=llm_local` (`docs/systems/llm-api-selfplay/STATUS.md` → "LLM players" has the
 > full contract).
 > Single-file HTML game reports: `python3 tools/make_game_bundle.py --record <record.json>
 > --html` writes `<record>.game.html`, a shareable report with the viewer bundle baked in — works

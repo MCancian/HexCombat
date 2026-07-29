@@ -260,7 +260,7 @@ changed meaning in transit.
 - **`IjfsResolver.apply_maneuver_casualties` bypassing the roster seam.** Real divergence, and
   reviewer-flagged: it decrements `battalion.qty` but never removes a zero-qty battalion from
   `composition`, and never calls `GameData.remove_brigade_from_map` when a brigade is wiped out.
-  It is **not this plan's**, for two reasons. (1) `docs/plans/0044-force-mutation-authority.md`
+  It is **not this plan's**, for two reasons. (1) `docs/archive/0044-force-mutation-authority.md`
   already owns it by name — *"Replace `RosterMutations.apply_casualty` and IJFS's independent…"*.
   (2) Fixing it is a **behaviour change**: removing zero-qty entries and de-indexing destroyed
   brigades moves combat contributor sets and the census, so pins move. Doing that under a
