@@ -8,7 +8,7 @@ and optionally `RETRO.md` (implementer lessons). Audit status + open fidelity qu
 
 | System | Doc | Status | HTML |
 |---|---|---|---|
-| Hex grid & geometry | [hex-grid.md](hex-grid/hex-grid.md) | — | [html](html/hex-grid.html) |
+| Hex grid & geometry | [hex-grid.md](hex-grid/hex-grid.md) | [STATUS](hex-grid/STATUS.md) | [html](html/hex-grid.html) |
 | Ground combat (BOOTS) | [ground-combat.md](ground-combat/ground-combat.md) | [STATUS](ground-combat/STATUS.md) | [html](html/ground-combat.html) |
 | Amphibious offload (D1) | [amphibious-offload.md](amphibious-offload/amphibious-offload.md) | [STATUS](amphibious-offload/STATUS.md) | [html](html/amphibious-offload.html) |
 | Supply (D2 DOS) | [supply-dos.md](supply-dos/supply-dos.md) | [STATUS](supply-dos/STATUS.md) | [html](html/supply-dos.html) |
@@ -17,7 +17,7 @@ and optionally `RETRO.md` (implementer lessons). Audit status + open fidelity qu
 | Front-line / cleanup / victory (D5) | [frontline-cleanup-victory.md](frontline-cleanup-victory/frontline-cleanup-victory.md) | [STATUS](frontline-cleanup-victory/STATUS.md) | [html](html/frontline-cleanup-victory.html) |
 | ROC mobilization phase-in | [roc-mobilization.md](roc-mobilization/roc-mobilization.md) | [STATUS](roc-mobilization/STATUS.md) | — |
 | PLAAF air insertion | [air-insertion.md](air-insertion/air-insertion.md) | [STATUS](air-insertion/STATUS.md) | — |
-| Turn engine & data | [turn-engine.md](turn-engine/turn-engine.md) | — | [html](html/turn-engine.html) |
+| Turn engine & data | [turn-engine.md](turn-engine/turn-engine.md) | [STATUS](turn-engine/STATUS.md) | [html](html/turn-engine.html) |
 | Terrain | [terrain.md](terrain/terrain.md) | [STATUS](terrain/STATUS.md) | — |
 | LLM API & self-play | [llm-api-selfplay.md](llm-api-selfplay/llm-api-selfplay.md) | [STATUS](llm-api-selfplay/STATUS.md) | [html](html/llm-api-selfplay.html) |
 | Research harness | [research-harness.md](research-harness/research-harness.md) | [STATUS](research-harness/STATUS.md) | — |

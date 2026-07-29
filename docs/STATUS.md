@@ -84,8 +84,8 @@ victory FIRING stays covered by `tests/victory_conditions_test.gd`).
 | LLM API & self-play | `docs/systems/llm-api-selfplay/STATUS.md` | Observation/action contract, LLM players |
 | Research harness | `docs/systems/research-harness/STATUS.md` | Batch runner, sweeps, reports, Monte Carlo |
 | View layer | `docs/systems/view-layer/STATUS.md` | Brigade markers, briefing viewer |
-| Turn engine | `docs/systems/turn-engine/turn-engine.md` | Phase orchestration (see system doc) |
-| Hex grid | `docs/systems/hex-grid/hex-grid.md` | Grid topology (see system doc) |
+| Turn engine | `docs/systems/turn-engine/STATUS.md` | State machine, WeGo model, phase coordinators |
+| Hex grid | `docs/systems/hex-grid/STATUS.md` | Grid topology, axial coords, HexMath geometry |
 
 ## Verification
 
