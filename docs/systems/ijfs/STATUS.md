@@ -24,3 +24,11 @@ low-altitude strikes (UAV/OWA/strike-aircraft munitions; ballistic/cruise immune
 SEAD/strike squadrons island-wide, deteriorating via usage, bombardment, and TO ground losses
 (`IjfsManpads.gd`; spec in `docs/systems/ijfs/ijfs.md` → "MANPADS layer"; surfaced as
 `ijfs_summary.manpads`).
+**Mutation authority (plan 0046):** persistent IJFS state has one sanctioned writer,
+`IjfsTransitions` — targets, munition magazines, squadron strength, the three `IjfsDailyState`
+containers that persist across days, and the `ijfs_state`/`_ijfs_day` handles. Zero legacy writers;
+no behaviour, RNG or golden change. MANPADS stock now lives on the typed
+`IjfsTarget.manpads_remaining` (the `metadata` key is a serialization mirror). Unlike the other
+aggregates the authority is called from INSIDE the pipeline stages, because IJFS draws dice
+conditionally on state an earlier stage just wrote — rationale and rules in
+`docs/systems/ijfs/ijfs.md` §9.

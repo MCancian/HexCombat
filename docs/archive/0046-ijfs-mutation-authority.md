@@ -1,6 +1,6 @@
 ---
 title: "0046: IJFS mutation authority"
-status: "Ready"
+status: "Shipped"
 created: "2026-07-26"
 updated: "2026-07-30"
 ---
@@ -394,6 +394,24 @@ Every finding was verified against the tree before being applied — none were t
 | Sol 5 | The aliasing claim over-reached: `manpads_intercept_log` carries no `metadata` alias | **Accepted.** Claim narrowed to the four real alias sites. |
 | agy 1d | The plan misses `IjfsResolver.gd:140`'s MANPADS write | **Already covered** — it is in the mutation table and commit 6. Made explicit rather than left implied. |
 | agy 2 | Registering `metadata` risks aliased-container blindness and name-backstop pollution | **Half accepted.** Blindness is real and is the stated reason for the typed field. Pollution is **not** supported: measured, `metadata` is declared on one class and all eight write sites type-resolve. Decision recorded with the measurement and a documented fallback. |
+
+## Diff review round (2026-07-30)
+
+Artifact: `HEAD` at `5f913b4`, tree clean (no freeze needed). Roles: Sol = behaviour equivalence,
+agy = RNG safety + whether the enforcement claim is real, DeepSeek = bounded enumeration.
+
+| Reviewer | Bytes | Verdict | Outcome |
+|---|---|---|---|
+| Sol | 2.4 KB | REVIEW | **No findings**, with the evidence listed. Closed the question I most wanted closed: whether the NEW guards can fire in production. They cannot — `IjfsLoaders.gd:550` rejects `rounds_expended_per_engagement <= 0` at load, squadron losses are Bernoulli trials over current `alive`, and MANPADS drains use `mini(stock, remaining)`. So no silent write became a no-op. |
+| agy | 4.7 KB | script said FLAKE; **counted by hand** | Six numbered, quoted checks answering both assigned jobs. The script's rule is "no numbered findings ⇒ not a review", which mislabels a real review that found nothing. Its line numbers are unreliable (a known weakness of this route) but every QUOTE was accurate, and I re-verified its load-bearing claim independently: `metadata` is aliased in exactly two places, both read-only (`IjfsResolver.gd:214`, `tools/validate_headless_antiship.gd:147`). |
+| DeepSeek | 18.5 KB | SUSPECT (tool traces around a real return) | Its first usable review of this campaign. Complete enumeration corroborating zero writers outside the authority and the loaders, zero authority methods without callers, and `IjfsMunition.name` ABSENT from production code. |
+
+Only finding of substance: three references to the pre-move paths survive in `docs/archive/PLAN.md`
+and `docs/archive/ORCHESTRATOR_HANDOFF.md`. **Deliberately left.** Those are dated historical records
+of what was true when written, not live pointers; every LIVE home (systems doc, manifest,
+`docs/STATUS.md`) points at the new paths, which the enumeration confirmed. Rewriting an archive to
+look like the present is how a retrospective's past-tense triage line gets read as a claim about
+current code.
 
 ## Dependencies
 

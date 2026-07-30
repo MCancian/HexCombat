@@ -4,29 +4,31 @@ Work orders for multi-session efforts. Each plan is a focused doc; **this index 
 of truth** for status. Status vocabulary: `Sketch` → `Exploring` → `In progress` → `✅ Shipped`
 → `Superseded`.
 
-## ▶ Next up: plan 0046 — IJFS mutation authority
+## ▶ Next up: plan 0047 — map/infrastructure mutation authority
+
+Fourth of the mutation-authority campaign shipped (0046, 2026-07-30); 0047 is next by number, and
+0042-0046 are all satisfied as dependencies.
 
 Read in this order and stop when you can act; everything below is a pointer, not a duplicate.
 
-1. `docs/plans/0046-ijfs-mutation-authority.md` — the plan. Two things were prepared for you on
-   2026-07-29: **commit 2** folds in the `IjfsEngine._run_strike_phase` parameter-ceiling paydown
-   (the BACKLOG entry that collides with this plan), and **Model hardening** opens with why the typed
-   conversions must come FIRST rather than last.
+1. `docs/plans/0047-map-infrastructure-mutation-authority.md` — the plan. It is a `Sketch`, which
+   means it was written before anyone measured the tree. **Preflight it first**: the work loop asks
+   for a file:line inventory of every writer the plan claims exists, and rewriting the Sketch against
+   that inventory is what makes the implementation safe. In 0046 that step alone contradicted three
+   of the Sketch's premises, one of which would have added a game mechanic under cover of a refactor.
 2. `tools/mutation_authority_manifest.json` → `_schema_rules` — the six registration rules. Read those
    six lines instead of `tools/validate_mutation_authority.gd`; that is how they were learned the
    first time, at a cost of ~300 lines.
-3. `docs/systems/amphibious-offload/amphibious-offload.md` §10 — the reference example for the shape
-   0046 needs: ONE object shared by two authorities, split by field, neither reaching across. IJFS is
-   where that gets tested hardest, because its writeback crosses into two already-enforced aggregates
-   (`AntishipTransitions` consumes `antiship_destroyed_by_type`; `ForceTransitions` consumes
-   `maneuver_casualties`).
-4. The plan's own **Plan review round** section — the preflight and the review both happened on
-   2026-07-30. Read the disposition table before trusting any premise: three of the Sketch's claims
-   were contradicted by the tree, and one of my own replacements (`will_fly` as an RNG gate) was
-   contradicted by the review.
-
-Status: `Ready` — preflighted against the tree and reviewed (Sol 5 findings, agy 2, DeepSeek flaked).
-Dependencies (0042, 0043, 0044, and running after 0045) are all satisfied.
+3. `docs/archive/0046-ijfs-mutation-authority.md` — the most recent worked example, and the one with
+   the two traps that are not obvious from the manifest:
+   - **A protected field NAME is claimed repo-wide.** Registering `IjfsMunition.name` turned 22
+     innocent view-layer lines into gate failures; it had to be renamed. Check every field name you
+     are about to register against the rest of the tree BEFORE registering it — `name`, `id`,
+     `state`, `type`, `active` are all live mines.
+   - **`status: "migration"` and an existing authority file are mutually exclusive**, so an aggregate
+     goes straight to `enforced` and `legacy_writers` carries the migration, draining per commit.
+4. `docs/systems/amphibious-offload/amphibious-offload.md` §10 — the reference example for ONE object
+   shared by two authorities, split by field, neither reaching across.
 
 **Plans are ephemeral by contract.** A plan holds the design, the checklist, and progress notes
 *while the work is in flight*. It is not a reference: no durable fact may live only in a plan.
@@ -61,7 +63,7 @@ agent would need to read the plan to act, the closeout wasn't done.
 | 0042 | [Mutation-authority foundation](../archive/0042-mutation-authority-foundation.md)            | **High — establishes the controller/API rule and staged enforcement gate**                                                                                                                                                                      | **Complete 2026-07-26** — enforcement gate + manifest; anti-ship in migration mode; no production code moved |
 | 0044 | [Force mutation authority](../archive/0044-force-mutation-authority.md)                                 | **High — brigades, battalions, manifests, placement; replaces 0039**                                                                                                                                                                            | **✅ Shipped 2026-07-29** — `ForceTransitions` sole writer                                                                                    |
 | 0045 | [Sealift/fleet mutation authority](../archive/0045-sealift-fleet-mutation-authority.md)       | High — hull/cohort/pipeline conservation and one writer                                                                                                                                                                                               | **✅ Shipped 2026-07-29** — `SealiftTransitions` sole writer; typed `SealiftCohort`; zero legacy writers; no behavior/RNG/golden change |
-| 0046 | [IJFS mutation authority](0046-ijfs-mutation-authority.md)                                   | High — targets, munitions, squadrons, typed stocks and writeback                                                                                                                                                                                      | **Ready** — preflighted + reviewed 2026-07-30                                                                                                                                                                                               |
+| 0046 | [IJFS mutation authority](../archive/0046-ijfs-mutation-authority.md)                       | High — targets, munitions, squadrons, typed stocks and writeback                                                                                                                                                                                      | **✅ Shipped 2026-07-30** — `IjfsTransitions` sole writer; typed MANPADS stock; zero legacy writers; no behavior/RNG/golden change |
 | 0047 | [Map/infrastructure mutation authority](0047-map-infrastructure-mutation-authority.md)       | High — ownership, FEBA, seizure, repair and JLSF lifecycle                                                                                                                                                                                            | Sketch                                                                                                                                                                                                                                      |
 | 0048 | [Reinforcement-state mutation authority](0048-reinforcement-state-mutation-authority.md)     | High — mobilization and air-insertion capacity/history                                                                                                                                                                                                | Sketch                                                                                                                                                                                                                                      |
 | 0049 | [Accounting/turn mutation authority](0049-accounting-turn-mutation-authority.md)             | High — supply, orders, latches, phase and result application                                                                                                                                                                                          | Sketch                                                                                                                                                                                                                                      |
