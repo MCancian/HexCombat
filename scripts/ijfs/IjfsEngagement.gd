@@ -144,8 +144,7 @@ static func _sead_return_fire(
 		var sq_loss_rate := clampf(loss_rate * rcs_survival, 0.0, 1.0)
 		var losses := _bernoulli_count(sq.alive, sq_loss_rate, dice)
 		if losses > 0:
-			sq.alive -= losses
-			sq.losses_today += losses
+			IjfsTransitions.apply_squadron_losses(sq, losses)
 			contest_log.append({
 				"squadron_id": sq.squadron_id,
 				"aircraft_class": sq.aircraft_class,
@@ -179,8 +178,7 @@ static func apply_post_phase_2_free_shot(
 		var p_loss := clampf(loss_rate * rcs_mod, 0.0, 1.0)
 		var losses := _bernoulli_count(sq.alive, p_loss, dice)
 		if losses > 0:
-			sq.alive -= losses
-			sq.losses_today += losses
+			IjfsTransitions.apply_squadron_losses(sq, losses)
 			log.append({
 				"squadron_id": sq.squadron_id,
 				"aircraft_class": sq.aircraft_class,

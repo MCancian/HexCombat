@@ -467,7 +467,7 @@
         },
         {
           "path": "res://scripts/ijfs/IjfsEngagement.gd",
-          "why": "SEAD outcomes and the return-fire/free-shot squadron losses still apply directly; plan 0046 commits 5-6.",
+          "why": "SEAD outcomes still apply directly to the target; plan 0046 commit 6.",
           "removal_plan": "docs/plans/0046-ijfs-mutation-authority.md",
           "fields": [
             "IjfsTarget.destroyed",
@@ -475,20 +475,16 @@
             "IjfsTarget.suppressed_this_turn",
             "IjfsTarget.detected_this_turn",
             "IjfsTarget.known_to_red",
-            "IjfsTarget.sead_result",
-            "IjfsSquadron.alive",
-            "IjfsSquadron.losses_today"
+            "IjfsTarget.sead_result"
           ]
         },
         {
           "path": "res://scripts/ijfs/IjfsManpads.gd",
-          "why": "set_remaining holds the stock and its mirror, and the island-wide contest applies squadron losses; plan 0046 commits 5-6 move both bodies into the authority.",
+          "why": "set_remaining still holds the stock and its serialization mirror; plan 0046 commit 6 moves that body into the authority.",
           "removal_plan": "docs/plans/0046-ijfs-mutation-authority.md",
           "fields": [
             "IjfsTarget.manpads_remaining",
-            "IjfsTarget.metadata",
-            "IjfsSquadron.alive",
-            "IjfsSquadron.losses_today"
+            "IjfsTarget.metadata"
           ]
         },
         {

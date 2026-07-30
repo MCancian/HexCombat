@@ -160,8 +160,7 @@ static func contest_squadrons(
 				losses += 1
 		_expend_island_wide(targets, engaged * EXPEND_PER_CONTEST_AIRCRAFT)
 		if losses > 0:
-			sq.alive -= losses
-			sq.losses_today += losses
+			IjfsTransitions.apply_squadron_losses(sq, losses)
 		log.append({
 			"squadron_id": sq.squadron_id,
 			"aircraft_class": sq.aircraft_class,

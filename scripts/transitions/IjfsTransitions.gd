@@ -50,6 +50,30 @@ static func consume_munition(munition: IjfsMunition, rounds: int) -> bool:
 	return true
 
 
+# ── Squadron strength ───────────────────────────────────────────────────────────────────────────
+
+## Book aircraft losses on one squadron. All three attrition sources — SEAD return fire, the
+## post-phase-2 free shot, and the island-wide MANPADS contest — land here.
+##
+## `losses_today` is CAMPAIGN-cumulative despite its name: nothing in the pipeline resets it, and it
+## is serialized into the air_oob_after ledger, so giving it per-day semantics would move golden pins
+## and is out of this plan's scope. `rtb_today` deliberately gets no mutator at all — the pipeline has
+## never written it, and inventing one here would be a mechanic smuggled in under a refactor. Both
+## are pinned by tests/ijfs/ijfs_authority_characterization_test.gd.
+static func apply_squadron_losses(squadron: IjfsSquadron, losses: int) -> void:
+	if squadron == null:
+		push_error("IjfsTransitions: apply_squadron_losses called with no squadron")
+		return
+	if losses <= 0:
+		return
+	if losses > squadron.alive:
+		push_error("IjfsTransitions: %s lost %d of only %d alive airframes" % [
+			squadron.squadron_id, losses, squadron.alive])
+		return
+	squadron.alive -= losses
+	squadron.losses_today += losses
+
+
 # ── Daily-state lifecycle ───────────────────────────────────────────────────────────────────────
 
 ## Publish a freshly built IjfsDailyState and start its day count. `_ijfs_day` 0 means "the warmup
