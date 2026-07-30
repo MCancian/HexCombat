@@ -13,9 +13,5 @@ static func build(infra_defs: Dictionary) -> InfrastructureState:
 	var ids: Array = infra_defs.keys()
 	ids.sort()
 	for id in ids:
-		state.nodes[id] = {
-			"status": InfrastructureState.STATUS_TAIWANESE,
-			"repair_turns_remaining": 0,
-			"jlsf": InfrastructureState.JLSF_NONE,
-		}
+		state.nodes[id] = InfrastructureNodeState.new()
 	return state

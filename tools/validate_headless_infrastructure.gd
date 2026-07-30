@@ -43,9 +43,9 @@ func _validate_initial_state() -> void:
 		return
 	_assert_equal_int("infrastructure node count", state.nodes.size(), GameData.infrastructure.size())
 	for id in state.nodes.keys():
-		var node: Dictionary = state.nodes[id]
-		if String(node["status"]) != InfrastructureState.STATUS_TAIWANESE:
-			_fail("node %s starts %s, expected taiwanese" % [id, node["status"]])
+		var node: InfrastructureNodeState = state.nodes[id]
+		if node.node_status != InfrastructureState.STATUS_TAIWANESE:
+			_fail("node %s starts %s, expected taiwanese" % [id, node.node_status])
 	_assert_true("initial red_offload_nodes empty",
 		InfrastructureResolver.red_offload_nodes(state, GameData.infrastructure, _owners()).is_empty())
 
@@ -54,8 +54,8 @@ func _validate_seizure_via_offload_turn() -> void:
 	GameData.set_hex_owner(PORT_HEX, "red")
 	GameState.resolve_offload_turn(SeededDice.new(DICE_SEED))
 	var state: InfrastructureState = GameState.infrastructure_state
-	var node: Dictionary = state.nodes[PORT_ID]
-	_assert_equal_string("%s status after Red seizure turn" % PORT_ID, String(node["status"]), InfrastructureState.STATUS_SEIZED)
+	var node: InfrastructureNodeState = state.nodes[PORT_ID]
+	_assert_equal_string("%s status after Red seizure turn" % PORT_ID, node.node_status, InfrastructureState.STATUS_SEIZED)
 	# Seized contributes nothing.
 	for entry in InfrastructureResolver.red_offload_nodes(state, GameData.infrastructure, _owners()):
 		if String(entry["id"]) == PORT_ID:
@@ -64,10 +64,10 @@ func _validate_seizure_via_offload_turn() -> void:
 
 func _validate_rates_by_status() -> void:
 	var state: InfrastructureState = GameState.infrastructure_state
-	var node: Dictionary = state.nodes[PORT_ID]
-	node["status"] = InfrastructureState.STATUS_DEGRADED
+	var node: InfrastructureNodeState = state.nodes[PORT_ID]
+	node.node_status = InfrastructureState.STATUS_DEGRADED
 	_assert_equal_float("degraded port rate", _rate_of(PORT_ID), OffloadRates.DEGRADED_PORT)
-	node["status"] = InfrastructureState.STATUS_OPERATIONAL
+	node.node_status = InfrastructureState.STATUS_OPERATIONAL
 	_assert_equal_float("operational port rate", _rate_of(PORT_ID), OffloadRates.OPERATIONAL_PORT)
 
 
@@ -76,13 +76,13 @@ func _validate_jlsf_repair_progression() -> void:
 	var state: InfrastructureState = GameState.infrastructure_state
 	# Seize on the first offload tick, then simulate an arrived JLSF: +1 turn degraded, +2 operational.
 	GameState.resolve_offload_turn(SeededDice.new(DICE_SEED))
-	var node: Dictionary = state.nodes[JLSF_PORT_ID]
-	_assert_equal_string("%s seized" % JLSF_PORT_ID, String(node["status"]), InfrastructureState.STATUS_SEIZED)
-	node["jlsf"] = InfrastructureState.JLSF_ARRIVED
+	var node: InfrastructureNodeState = state.nodes[JLSF_PORT_ID]
+	_assert_equal_string("%s seized" % JLSF_PORT_ID, node.node_status, InfrastructureState.STATUS_SEIZED)
+	node.jlsf = InfrastructureState.JLSF_ARRIVED
 	GameState.resolve_offload_turn(SeededDice.new(DICE_SEED))
-	_assert_equal_string("%s degraded after 1 repair turn" % JLSF_PORT_ID, String(node["status"]), InfrastructureState.STATUS_DEGRADED)
+	_assert_equal_string("%s degraded after 1 repair turn" % JLSF_PORT_ID, node.node_status, InfrastructureState.STATUS_DEGRADED)
 	GameState.resolve_offload_turn(SeededDice.new(DICE_SEED))
-	_assert_equal_string("%s operational after 2 repair turns" % JLSF_PORT_ID, String(node["status"]), InfrastructureState.STATUS_OPERATIONAL)
+	_assert_equal_string("%s operational after 2 repair turns" % JLSF_PORT_ID, node.node_status, InfrastructureState.STATUS_OPERATIONAL)
 	_assert_equal_float("repaired port rate", _rate_of(JLSF_PORT_ID), OffloadRates.OPERATIONAL_PORT)
 
 
@@ -97,7 +97,7 @@ func _rate_of(infra_id: String) -> float:
 func _owners() -> Dictionary:
 	var owners: Dictionary = {}
 	for hex_id in GameData.hex_states.keys():
-		owners[String(hex_id)] = String(GameData.hex_states[hex_id].owner)
+		owners[String(hex_id)] = String(GameData.hex_states[hex_id].hex_owner)
 	return owners
 
 

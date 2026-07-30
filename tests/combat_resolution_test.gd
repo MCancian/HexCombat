@@ -67,7 +67,7 @@ func test_ownership_by_occupancy_after_combat_and_contested_presence() -> void:
 
 	assert_bool(green.destroyed).is_true()
 	assert_array(GameData.get_brigades_in_hex(EMPTY_HEX)).not_contains([green.id])
-	assert_str(GameData.hex_states[EMPTY_HEX].owner).is_equal("red")
+	assert_str(GameData.hex_states[EMPTY_HEX].hex_owner).is_equal("red")
 
 	var contested_hex := "hex_41_16"
 	var red_contested := _make_brigade("TEST-RED-CONTESTED", Brigade.Team.RED, [{"type": "Tank Battalion", "qty": 1}])
@@ -76,7 +76,7 @@ func test_ownership_by_occupancy_after_combat_and_contested_presence() -> void:
 	_register_brigade(green_contested, contested_hex)
 	GameData.recompute_hex_ownership()
 
-	assert_str(GameData.hex_states[contested_hex].owner).is_equal("contested")
+	assert_str(GameData.hex_states[contested_hex].hex_owner).is_equal("contested")
 
 
 func test_admin_moved_brigade_is_excluded_and_no_combat_occurs() -> void:

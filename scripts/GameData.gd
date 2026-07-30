@@ -597,16 +597,16 @@ func recompute_hex_ownership() -> void:
 				Brigade.Team.GREEN:
 					has_green = true
 		if has_red and has_green:
-			hex_states[hex_id].owner = HexOwner.CONTESTED
+			hex_states[hex_id].hex_owner = HexOwner.CONTESTED
 		elif has_red:
-			hex_states[hex_id].owner = HexOwner.RED
+			hex_states[hex_id].hex_owner = HexOwner.RED
 		elif has_green:
-			hex_states[hex_id].owner = HexOwner.GREEN
+			hex_states[hex_id].hex_owner = HexOwner.GREEN
 
 
 func set_hex_owner(hex_id: String, owner: String) -> void:
 	if hex_id in hex_states:
-		hex_states[hex_id].owner = owner
+		hex_states[hex_id].hex_owner = owner
 
 
 func set_hex_feba(hex_id: String, feba_km: float) -> void:

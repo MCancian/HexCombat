@@ -70,7 +70,7 @@ static func resolve_sealift_turn(state: GameStateData) -> void:
 		if JlsfCargo.is_jlsf_entry(entry) and state.infrastructure_state != null:
 			var port_id := String(entry.get("port_id", ""))
 			if state.infrastructure_state.nodes.has(port_id):
-				state.infrastructure_state.nodes[port_id]["jlsf"] = InfrastructureState.JLSF_ENROUTE
+				set_jlsf_marker(state, port_id, InfrastructureState.JLSF_ENROUTE)
 
 	state.last_sealift_sent_by_type = outcome["sent_by_type"]
 	SealiftTransitions.project_fleet(state)
@@ -142,7 +142,7 @@ static func resolve_offload_turn(state: GameStateData, dice: Dice) -> Dictionary
 		var arrival: Dictionary = arrival_value
 		var port_id := String(arrival["port_id"])
 		if state.infrastructure_state != null and state.infrastructure_state.nodes.has(port_id):
-			state.infrastructure_state.nodes[port_id]["jlsf"] = InfrastructureState.JLSF_ARRIVED
+			set_jlsf_marker(state, port_id, InfrastructureState.JLSF_ARRIVED)
 	if state.sealift_state != null:
 		SealiftTransitions.release_hulls(
 			state.sealift_state, ForceTransitions.free_emptied_cohorts(state.sealift_state),
@@ -165,7 +165,7 @@ static func ship_reserve_priority_order(state: GameStateData) -> Array[String]:
 static func owner_by_hex() -> Dictionary:
 	var owners: Dictionary = {}
 	for hex_id in GameData.hex_states.keys():
-		owners[String(hex_id)] = String((GameData.hex_states[hex_id] as HexState).owner)
+		owners[String(hex_id)] = String((GameData.hex_states[hex_id] as HexState).hex_owner)
 	return owners
 
 
@@ -175,13 +175,32 @@ static func reconcile_lost_jlsf(state: GameStateData) -> void:
 	if state.infrastructure_state == null:
 		return
 	for id_value in state.infrastructure_state.nodes.keys():
-		var node: Dictionary = state.infrastructure_state.nodes[id_value]
-		var marker := String(node["jlsf"])
+		var marker := jlsf_marker(state, String(id_value))
 		if marker != InfrastructureState.JLSF_QUEUED and marker != InfrastructureState.JLSF_ENROUTE:
 			continue
 		var brigade_id := JlsfCargo.brigade_id_for(String(id_value))
 		if not reserve_or_pool_has(state, brigade_id):
-			node["jlsf"] = InfrastructureState.JLSF_NONE
+			set_jlsf_marker(state, String(id_value), InfrastructureState.JLSF_NONE)
+
+
+## Read/write one node's JLSF marker without naming InfrastructureNodeState in this file.
+##
+## TRANSITIONAL (plan 0047 step 3 of 8). These two helpers exist because typing the node would
+## otherwise add InfrastructureNodeState to this module's dependency count, and this module is
+## already exactly at its measured ceiling of 22 — a ceiling is paid for, not raised.
+##
+## Step 5 must DELETE both of these, not reimplement their bodies: the ceiling is only paid back when
+## the `InfrastructureState` constants at the CALL SITES go too, which happens when those sites become
+## `InfrastructureTransitions.mark_jlsf_enroute` / `mark_jlsf_arrived` / `clear_jlsf` plus the
+## in-transit-id query. Swapping the bodies alone leaves the constants and still breaches the ceiling
+## — and would leave behind a generic arbitrary-marker setter where operation-specific authority
+## methods belong.
+static func jlsf_marker(state: GameStateData, port_id: String) -> String:
+	return String(state.infrastructure_state.nodes[port_id].jlsf)
+
+
+static func set_jlsf_marker(state: GameStateData, port_id: String, marker: String) -> void:
+	state.infrastructure_state.nodes[port_id].jlsf = marker
 
 
 static func reserve_or_pool_has(state: GameStateData, brigade_id: String) -> bool:
@@ -241,7 +260,7 @@ static func hex_can_receive_mobilized(hex_id: String) -> bool:
 	var hex_state: HexState = GameData.hex_states.get(hex_id, null)
 	if hex_state == null:
 		return false
-	if hex_state.owner == HexOwner.RED or hex_state.owner == HexOwner.CONTESTED:
+	if hex_state.hex_owner == HexOwner.RED or hex_state.hex_owner == HexOwner.CONTESTED:
 		return false
 	var terrain: TerrainType = GameData.get_terrain(hex_id)
 	return terrain != null and not terrain.impassable
@@ -310,7 +329,7 @@ static func isolated_air_landed_brigades(state: GameStateData) -> Dictionary:
 		state.air_insertion_state.landed, brigade_hexes, red_lodgement_hexes(state),
 		func(hex_id: String) -> bool:
 			var hex_state: HexState = GameData.hex_states.get(hex_id, null)
-			return hex_state != null and hex_state.owner == HexOwner.RED,
+			return hex_state != null and hex_state.hex_owner == HexOwner.RED,
 		func(hex_id: String) -> Array: return GameData.get_neighbors(hex_id))
 
 

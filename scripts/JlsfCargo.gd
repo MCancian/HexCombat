@@ -89,15 +89,15 @@ static func queue_deployments(
 		ids.sort()
 		for id_value in ids:
 			var id := String(id_value)
-			var node: Dictionary = infra_state.nodes[id]
-			if String(node["status"]) == InfrastructureState.STATUS_SEIZED and id not in to_queue:
+			var node: InfrastructureNodeState = infra_state.nodes[id]
+			if node.node_status == InfrastructureState.STATUS_SEIZED and id not in to_queue:
 				to_queue.append(id)
 
 	var entries: Array = []
 	for port_id in to_queue:
-		var node: Dictionary = infra_state.nodes[port_id]
-		if String(node["jlsf"]) != InfrastructureState.JLSF_NONE:
+		var node: InfrastructureNodeState = infra_state.nodes[port_id]
+		if node.jlsf != InfrastructureState.JLSF_NONE:
 			continue
-		node["jlsf"] = InfrastructureState.JLSF_QUEUED
+		node.jlsf = InfrastructureState.JLSF_QUEUED
 		entries.append(build_pool_entry(infra_defs.get(port_id), beaches, beach_to_to, bn_count))
 	return entries

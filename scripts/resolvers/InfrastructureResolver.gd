@@ -21,30 +21,31 @@ static func tick(state: InfrastructureState, infra_defs: Dictionary, owner_by_he
 			push_error("InfrastructureResolver.tick: no def for node %s" % id)
 			continue
 		var def_data: InfrastructureDef = def_val
-		var node_val: Variant = state.nodes[id]
-		var node: Dictionary = node_val
+		var node: InfrastructureNodeState = state.nodes[id]
 		var is_red := String(owner_by_hex.get(def_data.hex_id, "")) == HexOwner.RED
 
 		# Seizure
-		if node["status"] == InfrastructureState.STATUS_TAIWANESE and is_red:
-			node["status"] = InfrastructureState.STATUS_SEIZED
-			node["repair_turns_remaining"] = 0
+		if node.node_status == InfrastructureState.STATUS_TAIWANESE and is_red:
+			node.node_status = InfrastructureState.STATUS_SEIZED
+			node.repair_turns_remaining = 0
 			events.append({"id": id, "event": "seized"})
 
-		# Repair
-		if node["jlsf"] == InfrastructureState.JLSF_ARRIVED and is_red:
-			var status: String = node["status"]
+		# Repair. Reads the status SEIZURE JUST WROTE, deliberately: a node whose JLSF already
+		# arrived is seized and repaired in this same tick (an explicit deploy_jlsf order does not
+		# require a seized node, so a JLSF can arrive before Red takes the hex). Pinned by
+		# tests/transitions/infrastructure_authority_characterization_test.gd.
+		if node.jlsf == InfrastructureState.JLSF_ARRIVED and is_red:
+			var status := node.node_status
 			if status == InfrastructureState.STATUS_SEIZED or status == InfrastructureState.STATUS_DEGRADED:
-				var repair: int = node["repair_turns_remaining"]
-				if repair == 0:
-					node["repair_turns_remaining"] = repair_turns_per_stage
-				node["repair_turns_remaining"] -= 1
-				if node["repair_turns_remaining"] == 0:
-					if node["status"] == InfrastructureState.STATUS_SEIZED:
-						node["status"] = InfrastructureState.STATUS_DEGRADED
+				if node.repair_turns_remaining == 0:
+					node.repair_turns_remaining = repair_turns_per_stage
+				node.repair_turns_remaining -= 1
+				if node.repair_turns_remaining == 0:
+					if node.node_status == InfrastructureState.STATUS_SEIZED:
+						node.node_status = InfrastructureState.STATUS_DEGRADED
 						events.append({"id": id, "event": "degraded"})
-					elif node["status"] == InfrastructureState.STATUS_DEGRADED:
-						node["status"] = InfrastructureState.STATUS_OPERATIONAL
+					elif node.node_status == InfrastructureState.STATUS_DEGRADED:
+						node.node_status = InfrastructureState.STATUS_OPERATIONAL
 						events.append({"id": id, "event": "operational"})
 
 	return {"events": events}
@@ -64,9 +65,8 @@ static func red_offload_nodes(state: InfrastructureState, infra_defs: Dictionary
 		if def_val == null:
 			continue
 		var def_data: InfrastructureDef = def_val
-		var node_val: Variant = state.nodes[id]
-		var node: Dictionary = node_val
-		var status: String = String(node.get("status", ""))
+		var node: InfrastructureNodeState = state.nodes[id]
+		var status := node.node_status
 		if status != InfrastructureState.STATUS_DEGRADED and status != InfrastructureState.STATUS_OPERATIONAL:
 			continue
 		var owner: String = String(owner_by_hex.get(def_data.hex_id, ""))

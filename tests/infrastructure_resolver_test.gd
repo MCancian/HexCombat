@@ -35,11 +35,10 @@ func test_builder_creates_all_taiwanese() -> void:
 	var state := InfrastructureStateBuilder.build(_defs)
 	assert_int(state.nodes.size()).is_equal(3)
 	for id in state.nodes.keys():
-		var node_val: Variant = state.nodes[id]
-		var node: Dictionary = node_val
-		assert_str(String(node.get("status", ""))).is_equal(InfrastructureState.STATUS_TAIWANESE)
-		assert_str(String(node.get("jlsf", ""))).is_equal(InfrastructureState.JLSF_NONE)
-		assert_int(int(node.get("repair_turns_remaining", -1))).is_equal(0)
+		var node: InfrastructureNodeState = state.nodes[id]
+		assert_str(node.node_status).is_equal(InfrastructureState.STATUS_TAIWANESE)
+		assert_str(node.jlsf).is_equal(InfrastructureState.JLSF_NONE)
+		assert_int(node.repair_turns_remaining).is_equal(0)
 
 # ---------------------------------------------------------------------------
 # 2. tick: taiwanese + red hex → seized + event; taiwanese + green or missing → unchanged
@@ -49,9 +48,8 @@ func test_tick_taiwanese_red_seizes() -> void:
 	var state := InfrastructureStateBuilder.build(_defs)
 	var owner_by_hex := {"hex_001": "red"}
 	var result: Dictionary = InfrastructureResolver.tick(state, _defs, owner_by_hex)
-	var node_val: Variant = state.nodes["port_a"]
-	var node: Dictionary = node_val
-	assert_str(String(node.get("status", ""))).is_equal(InfrastructureState.STATUS_SEIZED)
+	var node: InfrastructureNodeState = state.nodes["port_a"]
+	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_SEIZED)
 	assert_int(result.events.size()).is_equal(1)
 	assert_str(String(result.events[0]["id"])).is_equal("port_a")
 	assert_str(String(result.events[0]["event"])).is_equal("seized")
@@ -61,9 +59,8 @@ func test_tick_taiwanese_green_unchanged() -> void:
 	var state := InfrastructureStateBuilder.build(_defs)
 	var owner_by_hex := {"hex_001": "green"}
 	var result: Dictionary = InfrastructureResolver.tick(state, _defs, owner_by_hex)
-	var node_val: Variant = state.nodes["port_a"]
-	var node: Dictionary = node_val
-	assert_str(String(node.get("status", ""))).is_equal(InfrastructureState.STATUS_TAIWANESE)
+	var node: InfrastructureNodeState = state.nodes["port_a"]
+	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_TAIWANESE)
 	assert_int(result.events.size()).is_equal(0)
 
 
@@ -71,9 +68,8 @@ func test_tick_taiwanese_no_owner_unchanged() -> void:
 	var state := InfrastructureStateBuilder.build(_defs)
 	var owner_by_hex: Dictionary = {}
 	var result: Dictionary = InfrastructureResolver.tick(state, _defs, owner_by_hex)
-	var node_val: Variant = state.nodes["port_a"]
-	var node: Dictionary = node_val
-	assert_str(String(node.get("status", ""))).is_equal(InfrastructureState.STATUS_TAIWANESE)
+	var node: InfrastructureNodeState = state.nodes["port_a"]
+	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_TAIWANESE)
 	assert_int(result.events.size()).is_equal(0)
 
 # ---------------------------------------------------------------------------
@@ -82,14 +78,13 @@ func test_tick_taiwanese_no_owner_unchanged() -> void:
 
 func test_tick_seized_no_jlsf_stays_seized() -> void:
 	var state := InfrastructureStateBuilder.build(_defs)
-	state.nodes["port_a"]["status"] = InfrastructureState.STATUS_SEIZED
+	(state.nodes["port_a"] as InfrastructureNodeState).node_status = InfrastructureState.STATUS_SEIZED
 	var owner_by_hex := {"hex_001": "red"}
 	var result: Dictionary = InfrastructureResolver.tick(state, _defs, owner_by_hex)
 	result = InfrastructureResolver.tick(state, _defs, owner_by_hex)
 	result = InfrastructureResolver.tick(state, _defs, owner_by_hex)
-	var node_val: Variant = state.nodes["port_a"]
-	var node: Dictionary = node_val
-	assert_str(String(node.get("status", ""))).is_equal(InfrastructureState.STATUS_SEIZED)
+	var node: InfrastructureNodeState = state.nodes["port_a"]
+	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_SEIZED)
 	assert_int(result.events.size()).is_equal(0)
 
 # ---------------------------------------------------------------------------
@@ -98,24 +93,23 @@ func test_tick_seized_no_jlsf_stays_seized() -> void:
 
 func test_tick_repair_cycle_default_stages() -> void:
 	var state := InfrastructureStateBuilder.build(_defs)
-	state.nodes["port_a"]["status"] = InfrastructureState.STATUS_SEIZED
-	state.nodes["port_a"]["jlsf"] = InfrastructureState.JLSF_ARRIVED
+	(state.nodes["port_a"] as InfrastructureNodeState).node_status = InfrastructureState.STATUS_SEIZED
+	(state.nodes["port_a"] as InfrastructureNodeState).jlsf = InfrastructureState.JLSF_ARRIVED
 	var owner_by_hex := {"hex_001": "red"}
 
 	var r1: Dictionary = InfrastructureResolver.tick(state, _defs, owner_by_hex)
-	var node_val: Variant = state.nodes["port_a"]
-	var node: Dictionary = node_val
-	assert_str(String(node.get("status", ""))).is_equal(InfrastructureState.STATUS_DEGRADED)
+	var node: InfrastructureNodeState = state.nodes["port_a"]
+	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_DEGRADED)
 	assert_int(r1.events.size()).is_equal(1)
 	assert_str(String(r1.events[0]["event"])).is_equal("degraded")
 
 	var r2: Dictionary = InfrastructureResolver.tick(state, _defs, owner_by_hex)
-	assert_str(String(node.get("status", ""))).is_equal(InfrastructureState.STATUS_OPERATIONAL)
+	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_OPERATIONAL)
 	assert_int(r2.events.size()).is_equal(1)
 	assert_str(String(r2.events[0]["event"])).is_equal("operational")
 
 	var r3: Dictionary = InfrastructureResolver.tick(state, _defs, owner_by_hex)
-	assert_str(String(node.get("status", ""))).is_equal(InfrastructureState.STATUS_OPERATIONAL)
+	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_OPERATIONAL)
 	assert_int(r3.events.size()).is_equal(0)
 
 # ---------------------------------------------------------------------------
@@ -124,20 +118,19 @@ func test_tick_repair_cycle_default_stages() -> void:
 
 func test_tick_repair_pauses_on_green_hex() -> void:
 	var state := InfrastructureStateBuilder.build(_defs)
-	state.nodes["port_a"]["status"] = InfrastructureState.STATUS_SEIZED
-	state.nodes["port_a"]["jlsf"] = InfrastructureState.JLSF_ARRIVED
-	var node_val: Variant = state.nodes["port_a"]
-	var node: Dictionary = node_val
+	(state.nodes["port_a"] as InfrastructureNodeState).node_status = InfrastructureState.STATUS_SEIZED
+	(state.nodes["port_a"] as InfrastructureNodeState).jlsf = InfrastructureState.JLSF_ARRIVED
+	var node: InfrastructureNodeState = state.nodes["port_a"]
 
 	# Green owner — no progression
 	var owner_by_hex := {"hex_001": "green"}
 	InfrastructureResolver.tick(state, _defs, owner_by_hex)
-	assert_str(String(node.get("status", ""))).is_equal(InfrastructureState.STATUS_SEIZED)
+	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_SEIZED)
 
 	# Flips back red — progression resumes
 	owner_by_hex = {"hex_001": "red"}
 	InfrastructureResolver.tick(state, _defs, owner_by_hex)
-	assert_str(String(node.get("status", ""))).is_equal(InfrastructureState.STATUS_DEGRADED)
+	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_DEGRADED)
 
 # ---------------------------------------------------------------------------
 # 6. repair_turns_per_stage = 2: arrival → degraded on tick2, operational on tick4
@@ -145,27 +138,26 @@ func test_tick_repair_pauses_on_green_hex() -> void:
 
 func test_tick_repair_slower_stages() -> void:
 	var state := InfrastructureStateBuilder.build(_defs)
-	state.nodes["port_a"]["status"] = InfrastructureState.STATUS_SEIZED
-	state.nodes["port_a"]["jlsf"] = InfrastructureState.JLSF_ARRIVED
+	(state.nodes["port_a"] as InfrastructureNodeState).node_status = InfrastructureState.STATUS_SEIZED
+	(state.nodes["port_a"] as InfrastructureNodeState).jlsf = InfrastructureState.JLSF_ARRIVED
 	var owner_by_hex := {"hex_001": "red"}
-	var node_val: Variant = state.nodes["port_a"]
-	var node: Dictionary = node_val
+	var node: InfrastructureNodeState = state.nodes["port_a"]
 
 	# Tick 1: countdown starts at 2 → decrement to 1, no transition
 	InfrastructureResolver.tick(state, _defs, owner_by_hex, 2)
-	assert_str(String(node.get("status", ""))).is_equal(InfrastructureState.STATUS_SEIZED)
+	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_SEIZED)
 
 	# Tick 2: countdown reaches 0 → degraded
 	InfrastructureResolver.tick(state, _defs, owner_by_hex, 2)
-	assert_str(String(node.get("status", ""))).is_equal(InfrastructureState.STATUS_DEGRADED)
+	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_DEGRADED)
 
 	# Tick 3: new stage countdown 2 → 1, no transition
 	InfrastructureResolver.tick(state, _defs, owner_by_hex, 2)
-	assert_str(String(node.get("status", ""))).is_equal(InfrastructureState.STATUS_DEGRADED)
+	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_DEGRADED)
 
 	# Tick 4: countdown reaches 0 → operational
 	InfrastructureResolver.tick(state, _defs, owner_by_hex, 2)
-	assert_str(String(node.get("status", ""))).is_equal(InfrastructureState.STATUS_OPERATIONAL)
+	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_OPERATIONAL)
 
 # ---------------------------------------------------------------------------
 # 7. red_offload_nodes: correct rates by (kind, status); taiwanese/seized excluded
@@ -173,9 +165,9 @@ func test_tick_repair_slower_stages() -> void:
 
 func test_red_offload_rates() -> void:
 	var state := InfrastructureStateBuilder.build(_defs)
-	state.nodes["port_a"]["status"] = InfrastructureState.STATUS_DEGRADED
-	state.nodes["port_b"]["status"] = InfrastructureState.STATUS_OPERATIONAL
-	state.nodes["airbridge_a"]["status"] = InfrastructureState.STATUS_DEGRADED
+	(state.nodes["port_a"] as InfrastructureNodeState).node_status = InfrastructureState.STATUS_DEGRADED
+	(state.nodes["port_b"] as InfrastructureNodeState).node_status = InfrastructureState.STATUS_OPERATIONAL
+	(state.nodes["airbridge_a"] as InfrastructureNodeState).node_status = InfrastructureState.STATUS_DEGRADED
 	var owner_by_hex := {"hex_001": "red", "hex_002": "red", "hex_003": "red"}
 
 	var nodes_result: Array = InfrastructureResolver.red_offload_nodes(state, _defs, owner_by_hex)
@@ -200,7 +192,7 @@ func test_red_offload_excludes_seized_and_taiwanese() -> void:
 	assert_int(nodes_result.size()).is_equal(0)
 
 	# Set port_a to seized — still excluded
-	state.nodes["port_a"]["status"] = InfrastructureState.STATUS_SEIZED
+	(state.nodes["port_a"] as InfrastructureNodeState).node_status = InfrastructureState.STATUS_SEIZED
 	nodes_result = InfrastructureResolver.red_offload_nodes(state, _defs, owner_by_hex)
 	assert_int(nodes_result.size()).is_equal(0)
 
@@ -210,15 +202,14 @@ func test_red_offload_excludes_seized_and_taiwanese() -> void:
 
 func test_red_offload_green_hex_excluded() -> void:
 	var state := InfrastructureStateBuilder.build(_defs)
-	state.nodes["port_a"]["status"] = InfrastructureState.STATUS_DEGRADED
+	(state.nodes["port_a"] as InfrastructureNodeState).node_status = InfrastructureState.STATUS_DEGRADED
 	var owner_by_hex := {"hex_001": "green"}
 
 	var nodes_result: Array = InfrastructureResolver.red_offload_nodes(state, _defs, owner_by_hex)
 	assert_int(nodes_result.size()).is_equal(0)
 	# Status stays degraded
-	var node_val: Variant = state.nodes["port_a"]
-	var node: Dictionary = node_val
-	assert_str(String(node.get("status", ""))).is_equal(InfrastructureState.STATUS_DEGRADED)
+	var node: InfrastructureNodeState = state.nodes["port_a"]
+	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_DEGRADED)
 
 # ---------------------------------------------------------------------------
 # 9. Output ordering: events and red_offload_nodes sorted by node id
@@ -227,12 +218,12 @@ func test_red_offload_green_hex_excluded() -> void:
 func test_output_ordering_sorted() -> void:
 	var state := InfrastructureStateBuilder.build(_defs)
 	# Set all three to degraded + red-held so they appear in red_offload_nodes
-	state.nodes["port_a"]["status"] = InfrastructureState.STATUS_DEGRADED
-	state.nodes["port_b"]["status"] = InfrastructureState.STATUS_DEGRADED
-	state.nodes["airbridge_a"]["status"] = InfrastructureState.STATUS_DEGRADED
-	state.nodes["port_a"]["jlsf"] = InfrastructureState.JLSF_ARRIVED
-	state.nodes["port_b"]["jlsf"] = InfrastructureState.JLSF_ARRIVED
-	state.nodes["airbridge_a"]["jlsf"] = InfrastructureState.JLSF_ARRIVED
+	(state.nodes["port_a"] as InfrastructureNodeState).node_status = InfrastructureState.STATUS_DEGRADED
+	(state.nodes["port_b"] as InfrastructureNodeState).node_status = InfrastructureState.STATUS_DEGRADED
+	(state.nodes["airbridge_a"] as InfrastructureNodeState).node_status = InfrastructureState.STATUS_DEGRADED
+	(state.nodes["port_a"] as InfrastructureNodeState).jlsf = InfrastructureState.JLSF_ARRIVED
+	(state.nodes["port_b"] as InfrastructureNodeState).jlsf = InfrastructureState.JLSF_ARRIVED
+	(state.nodes["airbridge_a"] as InfrastructureNodeState).jlsf = InfrastructureState.JLSF_ARRIVED
 	var owner_by_hex := {"hex_001": "red", "hex_002": "red", "hex_003": "red"}
 
 	# Events from tick — sorted by id
@@ -263,15 +254,25 @@ func test_validate_legal_state() -> void:
 
 func test_validate_illegal_status() -> void:
 	var state := InfrastructureStateBuilder.build(_defs)
-	var node_val: Variant = state.nodes["port_a"]
-	var node: Dictionary = node_val
-	node["status"] = "bogus"
+	var node: InfrastructureNodeState = state.nodes["port_a"]
+	node.node_status = "bogus"
 	assert_bool(state.validate()).is_false()
 
 
 func test_validate_negative_repair_turns() -> void:
 	var state := InfrastructureStateBuilder.build(_defs)
-	var node_val: Variant = state.nodes["port_a"]
-	var node: Dictionary = node_val
-	node["repair_turns_remaining"] = -1
+	var node: InfrastructureNodeState = state.nodes["port_a"]
+	node.repair_turns_remaining = -1
+	assert_bool(state.validate()).is_false()
+
+
+# ---------------------------------------------------------------------------
+# 11. validate(): a stray non-node value in `nodes` is reported, not fatal
+# ---------------------------------------------------------------------------
+# `nodes` is an untyped Dictionary, so a caller can put anything in it. validate()'s contract is to
+# return false + push_error; a bare cast would crash before delivering that. (Plan 0047 diff review.)
+
+func test_validate_rejects_a_non_node_value() -> void:
+	var state := InfrastructureStateBuilder.build(_defs)
+	state.nodes["bogus_node"] = {}
 	assert_bool(state.validate()).is_false()

@@ -45,7 +45,7 @@ func _render() -> void:
 	lines.append("ID: %s" % selected_hex_id)
 
 	var state: HexState = GameData.hex_states.get(selected_hex_id, null)
-	lines.append("Owner: %s" % (state.owner if state != null else "unknown"))
+	lines.append("Owner: %s" % (state.hex_owner if state != null else "unknown"))
 	lines.append("FEBA: %.1f km" % (state.feba_km if state != null else 0.0))
 	lines.append("")
 	lines.append("[b]Brigades in hex[/b]")

@@ -89,7 +89,7 @@ static func resolve_turn(state: GameStateData, dice: Dice = null) -> void:
 		apply_feba_retreats(state)
 	GameData.recompute_hex_ownership()
 	for summary in combat_summaries:
-		summary.owner_after = String(GameData.hex_states[summary.hex_id].owner)
+		summary.owner_after = String(GameData.hex_states[summary.hex_id].hex_owner)
 	state.last_combat_summaries = combat_summaries.duplicate()
 	TurnClosure.resolve_supply_turn(state)
 	TurnClosure.resolve_cleanup_phase(state)
@@ -226,7 +226,7 @@ static func resolve_combat_at(state: GameStateData, hex_id: String, dice: Dice) 
 		GameData.mark_brigade_fought(fought_brigade)
 
 	var summary: CombatSummary = outcome["summary"]
-	summary.owner_after = String(GameData.hex_states[hex_id].owner)
+	summary.owner_after = String(GameData.hex_states[hex_id].hex_owner)
 	return summary
 
 
@@ -314,7 +314,7 @@ static func find_retreat_hex(from_hex: String, team: Brigade.Team) -> String:
 		if has_enemy:
 			continue
 
-		var owner := String(GameData.hex_states[neighbor_id].owner)
+		var owner := String(GameData.hex_states[neighbor_id].hex_owner)
 		if owner == friendly_owner or owner == HexOwner.NONE:
 			return neighbor_id
 	return ""

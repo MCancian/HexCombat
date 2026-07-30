@@ -226,15 +226,15 @@ static func _infrastructure_observations() -> Array:
 	for id_value in ids:
 		var id := String(id_value)
 		var def_data: InfrastructureDef = _game_data().infrastructure[id]
-		var node: Dictionary = state.nodes.get(id, {}) if state != null else {}
+		var node: InfrastructureNodeState = state.nodes.get(id, null) if state != null else null
 		result.append({
 			"id": id,
 			"kind": def_data.kind,
 			"name": def_data.name,
 			"hex": def_data.hex_id,
 			"to_number": def_data.to_number,
-			"status": String(node.get("status", InfrastructureState.STATUS_TAIWANESE)),
-			"jlsf": String(node.get("jlsf", InfrastructureState.JLSF_NONE)),
+			"status": node.node_status if node != null else InfrastructureState.STATUS_TAIWANESE,
+			"jlsf": node.jlsf if node != null else InfrastructureState.JLSF_NONE,
 		})
 	return result
 
@@ -294,7 +294,7 @@ static func _occupied_hex_observations() -> Array:
 		var terrain: TerrainType = _game_data().get_terrain(hex_id)
 		result.append({
 			"hex_id": hex_id,
-			"owner": state.owner if state != null else HexOwner.NONE,
+			"owner": state.hex_owner if state != null else HexOwner.NONE,
 			"feba_km": state.feba_km if state != null else 0.0,
 			"brigades": brigade_ids.duplicate(),
 			"neighbors": _game_data().get_neighbors(hex_id),

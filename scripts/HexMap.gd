@@ -385,7 +385,7 @@ func _ownership_color(hex_id: String) -> Color:
 		return COLOR_UNOWNED
 
 	var state: HexState = GameData.hex_states[hex_id]
-	var owner := state.owner
+	var owner := state.hex_owner
 	var feba_km := state.feba_km
 
 	if owner == HexOwner.RED:
@@ -432,7 +432,7 @@ func _build_ownership_borders() -> void:
 		var typed_hex_id := String(hex_id)
 		if typed_hex_id not in GameData.hex_states:
 			continue
-		var owner: String = GameData.hex_states[typed_hex_id].owner
+		var owner: String = GameData.hex_states[typed_hex_id].hex_owner
 		if owner != HexOwner.RED and owner != HexOwner.CONTESTED:
 			continue
 
@@ -462,7 +462,7 @@ func _edges_to_draw(hex_id: String, vertices: PackedVector2Array) -> Array:
 
 		var neighbor_owner := HexOwner.NONE
 		if neighbor_id in GameData.hex_states:
-			neighbor_owner = GameData.hex_states[neighbor_id].owner
+			neighbor_owner = GameData.hex_states[neighbor_id].hex_owner
 		if neighbor_owner != HexOwner.RED and neighbor_owner != HexOwner.CONTESTED:
 			continue  # neighbor isn't part of the same region -> edge stays drawn
 
