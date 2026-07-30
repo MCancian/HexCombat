@@ -197,7 +197,7 @@ static func load_munitions(path: String) -> Dictionary:
 			var row: Dictionary = row_value
 			var munition: IjfsMunition = IjfsMunitionResource.new()
 			munition.munition_id = String(row["munition_id"])
-			munition.name = String(row.get("name", ""))
+			munition.munition_name = String(row.get("name", ""))
 			munition.category = String(row.get("category", ""))
 			munition.inventory_remaining = int(row.get("inventory_remaining_default", row.get("inventory_default", 0)))
 			munition.rounds_per_engagement_default = int(row.get("rounds_per_engagement_default", 0))
@@ -213,7 +213,7 @@ static func load_munitions(path: String) -> Dictionary:
 				var m: IjfsMunition = IjfsMunitionResource.new()
 				m.munition_id = String(mid)
 				if value is Dictionary:
-					m.name = String(value.get("name", ""))
+					m.munition_name = String(value.get("name", ""))
 					m.category = String(value.get("category", ""))
 					m.inventory_remaining = int(value.get("inventory_remaining", value.get("remaining", 0)))
 					m.rounds_per_engagement_default = int(value.get("rounds_per_engagement_default", 0))
@@ -481,7 +481,7 @@ static func _target_from_dict(data: Dictionary) -> IjfsTarget:
 static func _munition_from_dict(data: Dictionary) -> IjfsMunition:
 	var munition: IjfsMunition = IjfsMunitionResource.new()
 	munition.munition_id = String(data["munition_id"])
-	munition.name = String(data.get("name", ""))
+	munition.munition_name = String(data.get("name", ""))
 	munition.category = String(data.get("category", ""))
 	munition.inventory_remaining = int(data.get("inventory_remaining", data.get("remaining", 0)))
 	munition.rounds_per_engagement_default = int(data.get("rounds_per_engagement_default", 0))

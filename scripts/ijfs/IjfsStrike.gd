@@ -108,7 +108,9 @@ static func resolve_strike(
 	var munition: IjfsMunition = inventory[pairing.munition_id]
 	var rounds := int(pairing.rounds_expended_per_engagement)
 	var organic := munition.category == "Organic"
-	if not organic and munition.inventory_remaining < rounds:
+	# Organic munitions have no magazine (strike aircraft draw from a sortie budget), so only the
+	# inorganic path spends rounds. The authority both checks and deducts in one step.
+	if not organic and not IjfsTransitions.consume_munition(munition, rounds):
 		return {
 			"current_day": current_day,
 			"target_id": target.target_id,
@@ -120,8 +122,6 @@ static func resolve_strike(
 			"doctrine_rule_name": doctrine_rule_name,
 			"doctrine_selection": doctrine_selection,
 		}
-	if not organic:
-		munition.inventory_remaining -= rounds
 
 	var probability := evaluate_strike_probability(target, pairing, munition, scenario, phase)
 	var p_destroy := float(probability["final"])

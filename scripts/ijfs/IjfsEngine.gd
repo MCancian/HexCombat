@@ -207,7 +207,7 @@ static func _run_strike_phase(
 					if intercept["intercepted"]:
 						# Round spent, nothing delivered — mirror resolve_strike's inventory decrement.
 						if not is_organic:
-							(mun as IjfsMunition).inventory_remaining -= rounds
+							IjfsTransitions.consume_munition(mun as IjfsMunition, rounds)
 						state.strike_log.append(IjfsManpads.intercepted_strike_log(
 							target, pairing, ctx.current_day, phase, doctrine_name, doctrine_selection))
 						ctx.attacked[target.target_id] = true
@@ -336,7 +336,7 @@ static func _build_ledgers(state: IjfsDailyState, current_day: int, summary: Dic
 		var mun: IjfsMunition = state.munitions[mid]
 		inventory[mid] = {
 			"munition_id": mun.munition_id,
-			"name": mun.name,
+			"name": mun.munition_name,
 			"category": mun.category,
 			"inventory_remaining": mun.inventory_remaining,
 			"rounds_per_engagement_default": mun.rounds_per_engagement_default,

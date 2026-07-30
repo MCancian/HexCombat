@@ -269,12 +269,18 @@ step 9 is byte-stable: **no golden or fixture pin may move.**
    **REMOVE** those three `PARAM_CEILINGS` entries rather than editing their numbers.
 3. **Typed MANPADS stock.** `IjfsTarget.manpads_remaining` + mirror, per Model hardening. Uniqueness
    and bounds validation. `to_dict` byte-stable.
-4. **Authority skeleton + inventory.** Create `scripts/transitions/IjfsTransitions.gd`, register the
-   `ijfs` aggregate in `tools/mutation_authority_manifest.json` with `status: "migration"` and a
-   `planned_authority`, listing every remaining direct writer as a `legacy_writer` with
-   `removal_plan: "0046"`. Route both munition decrements through `consume_munition`. **This is the
-   commit that tests the `metadata` registration decision** — if the name-backstop misfires, take the
-   documented fallback rather than un-registering the field silently.
+4. **Authority skeleton + inventory.** Create `scripts/transitions/IjfsTransitions.gd` and register
+   the `ijfs` aggregate in `tools/mutation_authority_manifest.json`, listing every remaining direct
+   writer as a `legacy_writer` with `removal_plan: "0046"`. Route both munition decrements through
+   `consume_munition`. **This is the commit that tests the `metadata` registration decision** — if the
+   name-backstop misfires, take the documented fallback rather than un-registering the field silently.
+
+   **Correction to the sketch of this step, measured against the validator:** the aggregate registers
+   as `"enforced"` immediately, *not* as `"migration"`. `_check_authority_dir`
+   (`tools/validate_mutation_authority.gd:843-851`) rejects any file in `scripts/transitions/` that no
+   aggregate names as its `authority_path`, and `_check_authority:791-794` forbids an `authority_path`
+   on a `migration` aggregate. So the two states are mutually exclusive the moment the authority file
+   exists. `legacy_writers` is what carries the migration, and it drains commit by commit.
 4b. **Lifecycle and containers.** Add `install_daily_state` / `reset_daily_state` / `advance_day`;
    delete `GameState.gd:83,86`'s callerless setters; route `GameState.gd:177-178` through a
    `FiresPhases.reset_ijfs_state` pass-through and `FiresPhases.gd:22,40,42` through the authority;

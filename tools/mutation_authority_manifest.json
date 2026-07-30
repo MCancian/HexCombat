@@ -296,6 +296,240 @@
         }
       ],
       "legacy_writers": []
+    },
+    {
+      "id": "ijfs",
+      "summary": "Persistent IJFS campaign state: the target list and every target's lifecycle (detection, posture, intel lock, suppression, destruction, MANPADS stock), Red munition magazines, Red squadron strength, and the day-to-day continuity of all three.",
+      "status": "enforced",
+      "authority_class": "IjfsTransitions",
+      "authority_path": "res://scripts/transitions/IjfsTransitions.gd",
+      "owned_models": [
+        {
+          "class": "IjfsTarget",
+          "path": "res://scripts/model/ijfs/IjfsTarget.gd",
+          "_doc": "Owned model: EVERY mutable field must be classified below or the gate fails. manpads_remaining is the typed MANPADS stock plan 0046 lifted out of `metadata`; the metadata key of the same name is a serialization mirror the authority keeps in step, because metadata is aliased live into the ledger rows.",
+          "fields": {
+            "target_id": "identity",
+            "source_target_id": "identity",
+            "instance_index": "identity",
+            "category": "identity",
+            "subcategory": "identity",
+            "quantity": "identity",
+            "mobility": "identity",
+            "hardness": "identity",
+            "detectability_active": "identity",
+            "detectability_hiding": "identity",
+            "sam_score": "establishment",
+            "destroyed": "campaign",
+            "known_to_red": "campaign",
+            "last_detected_day": "campaign",
+            "intel_locked": "campaign",
+            "manpads_remaining": "campaign",
+            "metadata": "campaign",
+            "posture": "transient",
+            "detected_this_turn": "transient",
+            "suppressed": "transient",
+            "suppressed_this_turn": "transient",
+            "sead_result": "transient"
+          }
+        },
+        {
+          "class": "IjfsMunition",
+          "path": "res://scripts/model/ijfs/IjfsMunition.gd",
+          "_doc": "Owned model. Only inventory_remaining moves at runtime; the rest is content.",
+          "fields": {
+            "munition_id": "identity",
+            "munition_name": "identity",
+            "category": "identity",
+            "rounds_per_engagement_default": "identity",
+            "display_label": "identity",
+            "manpads_vulnerability": "identity",
+            "inventory_remaining": "campaign"
+          }
+        },
+        {
+          "class": "IjfsSquadron",
+          "path": "res://scripts/model/ijfs/IjfsSquadron.gd",
+          "_doc": "Owned model. losses_today is CAMPAIGN-cumulative despite its name — nothing resets it, and it is serialized into the air_oob_after ledger. rtb_today has no runtime writer at all and must not gain one; both are pinned by tests/ijfs/ijfs_authority_characterization_test.gd.",
+          "fields": {
+            "squadron_id": "identity",
+            "aircraft_class": "identity",
+            "role": "identity",
+            "initial": "establishment",
+            "alive": "campaign",
+            "losses_today": "campaign",
+            "rtb_today": "campaign"
+          }
+        }
+      ],
+      "hosted_fields": [
+        {
+          "class": "IjfsDailyState",
+          "path": "res://scripts/ijfs/IjfsDailyState.gd",
+          "_doc": "The three containers that persist across days (IjfsDailyState.gd's own header says so). The per-run ledgers and AD-health snapshots on the same object are rewritten wholesale by every run_daily and are outputs, not campaign state, so they are deliberately unregistered.",
+          "fields": {
+            "targets": "campaign",
+            "munitions": "campaign",
+            "squadron_force": "campaign"
+          }
+        },
+        {
+          "class": "GameStateData",
+          "path": "res://scripts/model/GameStateData.gd",
+          "_doc": "The IJFS handles GameStateData hosts. last_ijfs_summary / last_ijfs_writeback are phase OUTPUTS and stay unregistered, like every other phase summary.",
+          "fields": {
+            "ijfs_state": "campaign",
+            "_ijfs_day": "campaign"
+          }
+        }
+      ],
+      "construction_writers": [
+        {
+          "path": "res://scripts/ijfs/IjfsLoaders.gd",
+          "why": "Builds FRESH target/munition/squadron rows from the content files before anything holds them, and enriches SAM scores on rows still inside IjfsStateBuilder.build. It never accepts live campaign state.",
+          "fields": [
+            "IjfsTarget.target_id",
+            "IjfsTarget.source_target_id",
+            "IjfsTarget.instance_index",
+            "IjfsTarget.category",
+            "IjfsTarget.subcategory",
+            "IjfsTarget.quantity",
+            "IjfsTarget.mobility",
+            "IjfsTarget.hardness",
+            "IjfsTarget.detectability_active",
+            "IjfsTarget.detectability_hiding",
+            "IjfsTarget.sam_score",
+            "IjfsTarget.destroyed",
+            "IjfsTarget.known_to_red",
+            "IjfsTarget.last_detected_day",
+            "IjfsTarget.intel_locked",
+            "IjfsTarget.metadata",
+            "IjfsTarget.posture",
+            "IjfsTarget.detected_this_turn",
+            "IjfsTarget.suppressed",
+            "IjfsTarget.suppressed_this_turn",
+            "IjfsMunition.munition_id",
+            "IjfsMunition.munition_name",
+            "IjfsMunition.category",
+            "IjfsMunition.rounds_per_engagement_default",
+            "IjfsMunition.display_label",
+            "IjfsMunition.manpads_vulnerability",
+            "IjfsMunition.inventory_remaining",
+            "IjfsSquadron.squadron_id",
+            "IjfsSquadron.aircraft_class",
+            "IjfsSquadron.role",
+            "IjfsSquadron.initial",
+            "IjfsSquadron.alive",
+            "IjfsSquadron.losses_today",
+            "IjfsSquadron.rtb_today"
+          ]
+        },
+        {
+          "path": "res://scripts/builders/IjfsStateBuilder.gd",
+          "why": "Assembles the IjfsDailyState containers inside build(); nothing holds the state until it returns.",
+          "fields": [
+            "IjfsDailyState.targets",
+            "IjfsDailyState.munitions",
+            "IjfsDailyState.squadron_force"
+          ]
+        }
+      ],
+      "legacy_writers": [
+        {
+          "path": "res://scripts/ijfs/IjfsDetection.gd",
+          "why": "apply_detection_ids still stamps the detection result directly; plan 0046 commit 6 routes it.",
+          "removal_plan": "docs/plans/0046-ijfs-mutation-authority.md",
+          "fields": [
+            "IjfsTarget.detected_this_turn",
+            "IjfsTarget.known_to_red",
+            "IjfsTarget.last_detected_day"
+          ]
+        },
+        {
+          "path": "res://scripts/ijfs/IjfsTargeting.gd",
+          "why": "Warmup posture override and exquisite-intel lock still assign directly; plan 0046 commit 6.",
+          "removal_plan": "docs/plans/0046-ijfs-mutation-authority.md",
+          "fields": [
+            "IjfsTarget.posture",
+            "IjfsTarget.intel_locked"
+          ]
+        },
+        {
+          "path": "res://scripts/ijfs/IjfsStrike.gd",
+          "why": "resolve_strike still applies its own destroy/suppress outcome; plan 0046 commit 6.",
+          "removal_plan": "docs/plans/0046-ijfs-mutation-authority.md",
+          "fields": [
+            "IjfsTarget.destroyed",
+            "IjfsTarget.known_to_red",
+            "IjfsTarget.suppressed",
+            "IjfsTarget.suppressed_this_turn"
+          ]
+        },
+        {
+          "path": "res://scripts/ijfs/IjfsEngagement.gd",
+          "why": "SEAD outcomes and the return-fire/free-shot squadron losses still apply directly; plan 0046 commits 5-6.",
+          "removal_plan": "docs/plans/0046-ijfs-mutation-authority.md",
+          "fields": [
+            "IjfsTarget.destroyed",
+            "IjfsTarget.suppressed",
+            "IjfsTarget.suppressed_this_turn",
+            "IjfsTarget.detected_this_turn",
+            "IjfsTarget.known_to_red",
+            "IjfsTarget.sead_result",
+            "IjfsSquadron.alive",
+            "IjfsSquadron.losses_today"
+          ]
+        },
+        {
+          "path": "res://scripts/ijfs/IjfsManpads.gd",
+          "why": "set_remaining holds the stock and its mirror, and the island-wide contest applies squadron losses; plan 0046 commits 5-6 move both bodies into the authority.",
+          "removal_plan": "docs/plans/0046-ijfs-mutation-authority.md",
+          "fields": [
+            "IjfsTarget.manpads_remaining",
+            "IjfsTarget.metadata",
+            "IjfsSquadron.alive",
+            "IjfsSquadron.losses_today"
+          ]
+        },
+        {
+          "path": "res://scripts/ijfs/IjfsEngine.gd",
+          "why": "carry_to_next_day still clears the per-day target flags directly; plan 0046 commit 6.",
+          "removal_plan": "docs/plans/0046-ijfs-mutation-authority.md",
+          "fields": [
+            "IjfsTarget.suppressed",
+            "IjfsTarget.suppressed_this_turn",
+            "IjfsTarget.sead_result"
+          ]
+        },
+        {
+          "path": "res://scripts/resolvers/IjfsResolver.gd",
+          "why": "Activity posture, maneuver-target retirement and the append of newly mobilized targets still write directly; plan 0046 commit 6.",
+          "removal_plan": "docs/plans/0046-ijfs-mutation-authority.md",
+          "fields": [
+            "IjfsTarget.posture",
+            "IjfsTarget.destroyed",
+            "IjfsDailyState.targets"
+          ]
+        },
+        {
+          "path": "res://scripts/phases/FiresPhases.gd",
+          "why": "rebuild_ijfs_state and the per-turn day stamp still assign the handles; plan 0046 commit 4b.",
+          "removal_plan": "docs/plans/0046-ijfs-mutation-authority.md",
+          "fields": [
+            "GameStateData.ijfs_state",
+            "GameStateData._ijfs_day"
+          ]
+        },
+        {
+          "path": "res://scripts/GameState.gd",
+          "why": "The scenario reset nulls the handle, and two forwarding setters expose it; plan 0046 commit 4b deletes the setters and routes the reset through FiresPhases.",
+          "removal_plan": "docs/plans/0046-ijfs-mutation-authority.md",
+          "fields": [
+            "GameStateData.ijfs_state",
+            "GameStateData._ijfs_day"
+          ]
+        }
+      ]
     }
   ]
 }
