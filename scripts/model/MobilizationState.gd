@@ -14,7 +14,10 @@ class_name MobilizationState
 ##
 ## Built by MobilizationStateBuilder at scenario load, advanced by MobilizationResolver once per turn
 ## (between amphibious offload and movement). Carries no RNG — release is a pure schedule.
-## to_dict() is the JSON-serialization boundary; its key order and value types are the contract.
+## to_dict() is the debug/inspection view of this state.
+##   consumer: none (checked 2026-07-29 — zero callers of `mobilization_state.to_dict` in scripts/, tools/ or
+##             tests/). It is NOT a serialization contract, whatever the previous wording claimed; the
+##             dictionary that DOES reach the LLM payload is the matching *Summary* type's.
 
 ## Brigades still mobilizing, in release order. Each entry:
 ##   {brigade_id: String, garrison_hex: String, release_turn: int}

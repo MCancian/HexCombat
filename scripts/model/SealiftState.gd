@@ -2,8 +2,8 @@ extends Resource
 class_name SealiftState
 
 ## Cross-turn sealift state for the sustained amphibious lift model (plan 0004). Owned by GameState,
-## built by SealiftStateBuilder at scenario load, ticked + advanced by SealiftResolver each turn
-## before the crossing. Holds the four persistent pieces the old one-shot ship_reserve lacked:
+## built by SealiftStateBuilder at scenario load, advanced by SealiftTransitions each turn before the
+## crossing (plan 0045 — the planner decides, the authority writes). Holds the four persistent pieces the old one-shot ship_reserve lacked:
 ##
 ##   1. mainland_pool   — follow-on troops still ashore on the mainland, waiting to embark.
 ##   2. cohorts         — in-transit ship groups, each binding the specific hulls loaded in one
@@ -11,10 +11,12 @@ class_name SealiftState
 ##   3. return_pipeline — hulls cycling back to reload/repair before they are ready to sail again.
 ##   4. escort_sam      — per-escort-type SAM inventory, so escorts run low and divert to reload.
 ##
-## to_dict() is the debug/inspection view of the whole lift in one dictionary. It has no production
-## consumer today — no golden fixture, no observation payload and no loader reads it back — so it is
-## NOT a byte contract, despite what this header claimed before plan 0045 checked. Its shape is pinned
-## by a test so that stays true on purpose rather than by accident.
+## to_dict() is the debug/inspection view of the whole lift in one dictionary.
+##   consumer: none (checked 2026-07-29 — no production call, no golden fixture, no observation payload,
+##             no loader reads it back), so it is NOT a byte contract, despite what this header claimed
+##             before plan 0045 went looking.
+##   pinned by: tests/transitions/sealift_transitions_test.gd (shape AND key order), so the absence of a
+##             consumer stays a deliberate fact rather than an accident waiting to drift.
 ##
 ## Determinism: this Resource carries no RNG; it is advanced with deterministic ordering only.
 ## Ownership: `mainland_pool` and `cohorts` membership belong to the force aggregate (ForceTransitions);
@@ -34,7 +36,7 @@ class_name SealiftState
 
 ## Per-ship-type return/reload pipeline: ship_type (String) -> Array of
 ## {count: int, turns_remaining: int}. Freed amphibious hulls and reloading escorts land here; each
-## turn SealiftResolver decrements turns_remaining and moves count back to ShipState.ready at 0.
+## turn SealiftTransitions.tick_returns decrements turns_remaining and releases count back to ready at 0.
 @export var return_pipeline: Dictionary = {}
 
 ## Per-escort-type SAM magazine, CURRENT rounds: ship_type (String) -> count (int). Depleted by
@@ -50,7 +52,7 @@ class_name SealiftState
 @export var escort_sam_threshold: Dictionary = {}
 ## Escort types currently reloading (ship_type -> turns_remaining). While present, the type does not
 ## screen the crossing; when its timer hits 0, escort_sam is refilled to escort_sam_max and it
-## returns to the screen. Advanced by SealiftResolver each turn.
+## returns to the screen. Advanced by SealiftTransitions.tick_escort_reload each turn.
 @export var escort_reload: Dictionary = {}
 
 const STATE_SENT := "sent"

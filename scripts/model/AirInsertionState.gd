@@ -21,7 +21,10 @@ class_name AirInsertionState
 ##
 ## An empty `pool` (the default — no scenario opted in) makes the whole phase a no-op that consumes
 ## no dice, which is what keeps the golden byte-stable.
-## to_dict() is the JSON-serialization boundary; its key order and value types are the contract.
+## to_dict() is the debug/inspection view of this state.
+##   consumer: none (checked 2026-07-29 — zero callers of `air_insertion_state.to_dict` in scripts/, tools/ or
+##             tests/). It is NOT a serialization contract, whatever the previous wording claimed; the
+##             dictionary that DOES reach the LLM payload is the matching *Summary* type's.
 
 ## Battalions waiting to fly, one entry per brigade, in insertion-priority order. Each entry:
 ##   {brigade_id: String, lift_class: String, bns: Array[{id: String, type: String}]}

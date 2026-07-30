@@ -111,3 +111,27 @@ questions (pointer to plan if one exists).
 - Skills hold *procedures*; docs hold *facts*. Point, don't duplicate.
 - HTML mirrors (`docs/systems/html/`) are for the human; regenerate when the `.md` changes
   materially, or note that they lag.
+
+### Name a witness for any claim about consumers, boundaries or cost
+
+A MISSING fact costs one lookup. A FALSE one costs a verification round trip plus whatever gets built
+on it before someone checks. The false ones found so far were all unfalsifiable as written — no reader
+could tell staleness from truth without redoing the search:
+
+- `SealiftState.to_dict()`'s header called itself "the JSON-serialization boundary (golden /
+  observation fixtures)". It has no consumer anywhere — not production, not a fixture, not a test. A
+  plan built its risk assessment on that claim (plan 0045 D1) before the check was run.
+- A plan deferred a file move as "touches every call site". A GDScript `class_name` is
+  path-independent, so it touched none. The deferral was priced on a false cost.
+
+So when a doc or header asserts that something IS or IS NOT consumed, serialized, pinned, or expensive,
+write the witness inline in the same breath:
+
+    consumer: OffloadCostModel (offload cost matrix)
+    consumer: none (checked 2026-07-29 — no production call, no fixture, no test)
+    pinned by: tests/transitions/sealift_transitions_test.gd
+    cost: 3 files + 1 doc reference (measured, not estimated)
+
+Two rules make this worth the words: the witness must be greppable in one command, and "none" must
+carry the date it was checked. A bare "unused" ages into a lie; "none (checked <date>)" ages into a
+question, which is the correct thing for a reader to feel.

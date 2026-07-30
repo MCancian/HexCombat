@@ -29,14 +29,7 @@ force-authority seam every brigade placement/activity write and protected roster
 **`ForceTransitions`** (with `RosterMutations` kept as a compatibility wrapper for casualty call sites
 plus the pool/roster tripwire) — `TurnConductor.resolve_turn` still holds the whole ordered call list,
 so the modules own how a phase resolves and never when it runs (plans 0038/0044). **Directories name the role
-(plan 0043/0052):** `scripts/phases/` the coordinators, `scripts/resolvers/` the per-phase resolvers,
-`scripts/builders/` the fresh-state builders, `scripts/calc/` the write-free calculators,
-`scripts/loaders/` the content-to-object loaders, and `scripts/transitions/` the mutation
-authorities. `AntishipResolver` stays under `resolvers/` on purpose — it still rewrites the caller's
-`ship_reserve` entries in place, and a mixed file does not get to sit in a directory whose claim is
-that it holds none. `SealiftResolver` moved the other way in plan 0045 (to `scripts/calc/`) once it
-stopped writing anything at all — including the `ship_category` stamp it used to put straight into
-force-owned reserve rows, which is the write that had kept it mixed. Runtime state itself is the plain **`GameStateData`** value object
+(plan 0043/0052)** — see the table below. Runtime state itself is the plain **`GameStateData`** value object
 (`scripts/model/`); **`GameState` (autoload) is a thin state-holder** — it owns one
 `GameStateData` and exposes delegating wrappers to `TurnConductor` (turns), `OrderValidator`
 (order validation), and `GameStateBuilder` (scenario construction), plus typed forwarding
@@ -45,6 +38,30 @@ follow `.claude/skills/hexcombat-add-phase-resolver`. Order validation (`add_mov
 `add_commit_order`) returns a typed **`OrderResult`** (`ok`/`code`/`message`) rather than
 `push_error`, so callers — the LLM API included — can branch on the rejection and surface its
 reason (plan 0017).
+
+### Where a file goes
+
+The directory a file lives in is a CLAIM about the file, and each claim has a test you can apply
+without reading the file's history. Getting this wrong is how a writer ends up in a directory whose
+whole point is that it holds none.
+
+| Directory | The claim | The test |
+|---|---|---|
+| `scripts/phases/` | Coordinates one group of phases: computes nothing itself, applies nothing itself | Does it only ORDER calls and thread results? |
+| `scripts/resolvers/` | The per-phase resolver — decides what happens in that phase | Is it the phase's own logic, and does it still write campaign state? |
+| `scripts/calc/` | Write-free calculation: returns outcomes, never applies them | Does it write NO campaign state at all — including through arrays/dicts it was handed? |
+| `scripts/builders/` | Builds fresh, unpublished state from content/scenario data | Does anything hold the object before `build()` returns? (must be "no") |
+| `scripts/loaders/` | Content files → typed objects | Is its input a data file rather than live state? |
+| `scripts/transitions/` | A mutation authority — THE writer for one aggregate | Is it named as an `authority_path` in the manifest? (the directory grants nothing on its own) |
+| `scripts/model/` | Data + its own structural self-checks | Does it hold state and validate only itself? |
+
+Two worked examples, because the boundary that matters is `resolvers/` vs `calc/`:
+`AntishipResolver` stays under `resolvers/` on purpose — it still rewrites the caller's `ship_reserve`
+entries in place, so it fails the `calc/` test. `SealiftResolver` moved TO `calc/` in plan 0045, but only
+once it stopped writing anything at all — the last write was a `ship_category` stamp it put straight into
+force-owned reserve rows through an untyped alias, invisible to the gate. Moving it before that fix would
+have put a writer in `calc/`. Note also that a GDScript `class_name` is path-independent, so relocating a
+file changes no call site — the cost of such a move is the path, its `.uid` and doc references, nothing more.
 
 **Turn resolution order** (12-step high-level summary of `TurnConductor.gd`'s actual 16 granular execution steps): IJFS air/missile fires → IJFS maneuver casualties →
 **sealift (tick ship returns + embark the crossing wave)** → anti-ship crossing → amphibious offload

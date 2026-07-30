@@ -1,6 +1,14 @@
 {
   "schema_version": 1,
   "_doc": "Ownership manifest for the mutation-authority campaign (plans 0042-0050). This is TOOLING/GOVERNANCE metadata, not sweepable game content, which is why it lives in tools/ and not data/. It is the SINGLE home for exact ownership facts: authority classes, protected fields, construction allowances, and temporary legacy writers. Code headers and systems docs point HERE; they must not copy these lists. Enforced by tools/validate_mutation_authority.gd, whose header documents the detected write forms and the known blind spots.",
+  "_schema_rules": [
+    "ONE FIELD, ONE AGGREGATE. 'Class.field' may be claimed once across the whole manifest; a second claim fails E_DUPLICATE_CLAIM. The check spans sections, so owned_models and hosted_fields cannot split the same field between two aggregates.",
+    "owned_models = this aggregate owns the WHOLE model, and every mutable field it declares must appear in 'fields' or the gate fails E_UNCLASSIFIED_FIELD. Adding a field to such a model is therefore a manifest change too.",
+    "hosted_fields = fields this aggregate owns on a model SHARED with another aggregate; no exhaustiveness requirement. Registering ONE class under hosted_fields in TWO aggregates with DISJOINT field sets is legal and supported — it is how SealiftCohort splits troops (force: bn_ids) from hulls (sealift_fleet: hulls_by_type, cohort_state), and how GameStateData is shared.",
+    "The gate resolves the RECEIVER'S TYPE before judging a write, so protection only reaches fields on a TYPED object. Values inside an untyped Dictionary/Array are invisible (the validator header's aliased-container blind spot) — that is why a shared aggregate object is made a typed Resource before its fields are registered.",
+    "Field NAMES are what get protected, and an unresolvable receiver writing a protected NAME is reported as a backstop. Prefer distinctive names: 'cohort_state' rather than 'state', which is used all over this codebase for unrelated things.",
+    "construction_writers / legacy_writers list 'path' plus exact 'Class.field' symbols. An allowance that no longer writes anything fails E_STALE_ALLOWANCE, so removing the last write means removing the entry; legacy_writers additionally require a removal_plan."
+  ],
   "scan_roots": [
     "res://scripts",
     "res://tools"

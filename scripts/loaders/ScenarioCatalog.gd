@@ -19,8 +19,28 @@ const SCENARIO_ENV_VAR := "HEXCOMBAT_SCENARIO"
 ## The scenario path this process should load (reads OS args/env once at boot via
 ## GameData.load_all). Missing selected files are push_error'd here for an actionable message;
 ## the load itself then fails loud too — a typo'd selection must never silently run the default.
+##
+## It also PRINTS which scenario it picked and why, because "which laydown am I running?" is the
+## question behind the most expensive recurring mistake in this repo: a validator run bare resolves the
+## research default, while every pin inside it was taken under the gate's `scenario_golden`, so the
+## mismatch reads as a code regression. It has been chased as a phantom twice (plans 0043 and 0045).
+## One line at the point of selection reaches every validator, test and bare launch at once — putting
+## the warning in each validator's header instead would be 11 copies that nobody reads while debugging.
 static func selected_path() -> String:
-	return select_path(OS.get_cmdline_user_args(), OS.get_environment(SCENARIO_ENV_VAR))
+	var path := select_path(OS.get_cmdline_user_args(), OS.get_environment(SCENARIO_ENV_VAR))
+	print(selection_banner(path, OS.get_environment(SCENARIO_ENV_VAR)))
+	return path
+
+
+## The one-line provenance report for a chosen scenario. Deliberately never starts a line with PASS or
+## FAIL: `run_all_tests.py` decides a validator's verdict by line-anchored matches on those two words,
+## so a banner that used them would be read as a result.
+static func selection_banner(path: String, env_value: String) -> String:
+	if path == DEFAULT_SCENARIO_PATH and env_value.strip_edges().is_empty():
+		return ("Scenario: %s (no selection — the RESEARCH default). The gate exports "
+			+ "HEXCOMBAT_SCENARIO=scenario_golden and validator pins are taken under it, so a pin "
+			+ "mismatch here means the scenario, not the code. Run via tools/run_all_tests.sh.") % scenario_id(path)
+	return "Scenario: %s (selected)." % scenario_id(path)
 
 
 ## Pure core of selected_path (testable without OS state).

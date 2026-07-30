@@ -8,6 +8,34 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
 
 *(Agents: append new technical debt and hygiene observations here)*
 
+- [ ] **Seven summary headers promise byte-stability the gate does not check (found 2026-07-29,
+  witness sweep).** `CleanupSummary`, `CombatSummary`, `FrontlineSummary`, `AntishipSummary`,
+  `MobilizationSummary`, `AirInsertionSummary` and `IjfsWriteback` each say `to_dict()` is "the
+  JSON-serialization boundary … so golden/observation fixtures stay byte-stable". The boundary half is
+  TRUE — all seven land in `turn_result` in `docs/examples/llm_result_after_turn.json` (verified: that
+  fixture's `turn_result` holds `air_insertion_summary`, `antiship_summary`, `cleanup_summary`,
+  `combat_summaries`, `frontline_summary`, `ijfs_summary`, `ijfs_writeback`, `mobilization_summary`,
+  `offload_summary`). The byte-stability half is NOT: `tools/validate_llm_api.gd:271-277` only checks the
+  fixture HAS the required top-level keys — no value or key-order comparison. Fix: name the witness in
+  each header per `hexcombat-docs-and-writing` ("pinned by: …, which checks key presence only").
+
+- [ ] **The LLM result fixture is key-presence-checked, not drift-checked (found 2026-07-29).**
+  `tools/LLMFixtures.gd:7` records "the rot that left `llm_result_after_turn.json` stale" as the reason
+  that generator exists — but the current check (`validate_llm_api.gd:271-277`) cannot catch that rot
+  returning: a fixture with all the right keys and stale VALUES passes. Adding a real drift comparison
+  is a gate change with a re-baseline decision attached (the fixture would then move whenever any
+  summary's payload legitimately changes), so it needs a USER call on whether that trade is wanted.
+
+- [ ] **Gate the `consumer:` / `pinned by:` witness convention once there is a corpus (opened
+  2026-07-29).** `hexcombat-docs-and-writing` now requires a greppable witness for any claim that
+  something is or is not consumed, serialized, pinned, or expensive, and the convention is seeded in
+  `scripts/model/SealiftState.gd` and `SealiftHullLossReceipt.gd`. Extending
+  `tools/validate_doc_anchors.gd` to resolve those witnesses (a named symbol must exist; a "none
+  (checked <date>)" must not sit next to a live reference) was deliberately NOT done yet: with two
+  usages the check would match almost nothing, and this repo's standard is that a detector is proven by
+  fixtures or it is a false negative waiting to happen (see `validate_mutation_authority.gd`'s
+  E_VACUOUS family). Do it when ~10 usages exist, and add fixtures that prove each direction fails.
+
 - [ ] **Pay down remaining parameter-ceiling contexts after plan 0052.** `tools/gd_metrics.py` now
   enforces real wrapped-signature counts. Anti-ship crossing was paid down with
   `AntishipCrossingContext`; the remaining high-value grandfathered production function is

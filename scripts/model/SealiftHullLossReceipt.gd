@@ -10,8 +10,12 @@ extends Resource
 ## Why they can differ, and why that is not an error: a crossing can legitimately report more kills of
 ## a carrier type than the sent cohorts hold (the firing model works from the sailing snapshot, and
 ## mines/attrition are resolved independently), so the application is CAPPED at what is present. The
-## cap is recorded rather than silently absorbed — `capped_types` names every type where it bit, which
-## is what a phase summary or a reconciliation check reads.
+## cap is recorded rather than silently absorbed — `capped_types` names every type where it bit.
+##
+##   consumer: none yet (checked 2026-07-29). `FiresPhases` calls the authority and ignores the receipt on
+##             purpose: the anti-ship summary's ship-loss numbers are a fixture contract and still come
+##             from the resolver's report. This is the surface a future summary/reconciliation reads.
+##   pinned by: tests/transitions/sealift_transitions_test.gd (requested vs applied, source bucket, cap).
 
 ## The bucket a type's losses came out of. Carriers are busy inside "sent" cohorts; escorts screen the
 ## wave out of the ready pool and are never bound to a cohort.
