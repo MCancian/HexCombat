@@ -104,11 +104,20 @@ route is exactly why the quorum is 2-of-3 rather than 3-of-3.
 | **GPT-5.6 Sol** | **1 — peer** | yes | untested by me; the USER has run it | Both rounds, every time. The one reviewer expected to reason about the change rather than pattern-match it. |
 | **agy-explore** | 2 — mid | yes | **4/4 substantive** (plans 0043/0051); real reviews land 2.7–4.5 KB | Both rounds; oracle checks against TIV; large-file sweeps |
 | **agy-verify** | 2 — mid | no (extra) | the only method check there is | "Reproduce my measurement; is the conclusion supported?" — **sees COMMITTED state only** |
-| **DeepSeek V4 Flash** | 2 — mid | yes | **0/3 as a reviewer, 1/1 as a bounded enumerator**; returned zero bytes twice on 2026-07-29 | Quorum slot; strongest at bounded mechanical enumeration ("every read/write of these 8 fields, with file:line") |
+| **DeepSeek V4 Flash** | 2 — mid | yes | **0/3 as a reviewer, 3/3 as a bounded enumerator**; returned zero bytes twice on 2026-07-29, then two substantive enumerations on 2026-07-30 (plan 0047, both rounds) | Quorum slot; strongest at bounded mechanical enumeration ("every read/write of these 8 fields, with file:line") |
 | **MiniMax M3** | 3 — sometimes helpful, occasionally dangerous | **no** | unmeasured — record the first result here | Bonus roles only: breadth sweeps, "what did I miss" |
 | **Nemotron Ultra** | 3 — sometimes helpful, occasionally dangerous | **no** | 1/3, then 1/1 (0045); counts and line numbers frequently wrong | Bonus roles only |
 
-**A known property of this roster, not a bug:** DeepSeek's route record is 0/3 as a reviewer, so in
+**Give DeepSeek an enumeration role, and expect its return to blow the byte band.** Measured across
+both plan-0047 rounds: given "produce four exhaustive verbatim lists", it returned usable work twice
+(23.6 KB and 14.7 KB), and one of those findings — an unregistered container writer — was found by
+nothing else. Both were labelled `SUSPECT` purely on size, because its stdout is prompt echo + tool
+traces + the real report, and an exhaustive inventory is legitimately long anyway. **For an
+enumeration role, judge the return by whether the lists are verbatim and scoped, not by its size.**
+The mechanical fix, not yet made, is `--format json` on the opencode route plus a launcher change to
+extract the final assistant message; that also needs the gated invocation row updated in step.
+
+**A known property of this roster, not a bug:** DeepSeek's route record is 0/3 as a *reviewer*, so in
 practice the quorum is usually carried by Sol and agy, and the third slot is redundancy that frequently
 does not arrive. It earns its place as the bounded *enumerator* — in the 0054 round it produced an
 accurate four-list inventory that surfaced two scan-scope facts nothing else found. If you want genuine
@@ -202,6 +211,14 @@ Beyond the per-round brief format in the two review skills:
 5. **Scope consistency** — if the brief forbids touching a set of files, its verification command must
    be scoped to the same set. A brief of mine forbade editing historical records and then asked for a
    repo-wide grep to return nothing, which only its own forbidden edits could achieve.
+6. **What you have ALREADY VERIFIED, so the round does not re-buy it.** State the facts you measured
+   and how, and say "re-check only if you think it is wrong — do not spend a finding confirming it."
+   Measured on plan 0047's first round: roughly 40% of the tier-1 reviewer's findings duplicated
+   things already measured before launch. That is reviewer attention spent on agreement instead of on
+   what you missed — and "what did I miss" is the section that reliably returns the best finding.
+   This is NOT the same as hiding your reasoning: give them the claims and the evidence, and invite
+   them to falsify. Several of the most valuable returns have been a reviewer disproving a number the
+   brief asserted.
 
 ## Flake detection — before reading a single finding
 

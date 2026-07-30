@@ -471,5 +471,11 @@ seizure→repair test pins a genuinely production-reachable path (agy #2).
 
 ## Dependencies
 
+**Required reading before implementing:** `docs/systems/mutation-authority/mutation-authority.md`
+(the campaign procedure — registration ordering, field naming, the authority shape),
+`hexcombat-architecture-contract` (module boundaries and "the ceiling is paid for, not raised"),
+`hexcombat-change-control` (this is Architectural + golden-touching), `hexcombat-code-quality`
+(check dependency headroom while designing the call shape).
+
 Requires 0042 and 0044's force placement API. Follows 0046 in the campaign's one-aggregate-at-a-time
 order. Plan 0031 should wait for this authority unless the USER explicitly prioritizes its mechanic.

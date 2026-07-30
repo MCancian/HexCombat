@@ -75,6 +75,19 @@ facts landed) and moves to `docs/archive/`. Update the index table in `docs/plan
 an index row (status `Sketch`). Blocked design questions for the user = a `Sketch` plan stating
 the question. Never into STATUS.md.
 
+**Every plan names its required skills.** A `## Dependencies` section that lists only prior plans
+sends the next agent in cold: they frame the job as "implement plan NNNN", which fires no skill
+trigger, and re-derive rules that were already written down. Name them — e.g. "Required reading:
+`hexcombat-architecture-contract`, `hexcombat-change-control`". Measured cost of omitting it on plan
+0047: the architecture contract already stated the exact ceiling rule the implementation then
+rediscovered by measurement, and a reviewer had to quote the line back.
+
+**A partially-shipped plan carries a `## Progress` section**, and it is the FIRST thing the next
+agent reads — before STATUS.md, before the backlog. It states which steps shipped (with commits),
+which remain, and **any deliberately transitional code left behind, naming the step that removes
+it**. A half-migrated tree that looks finished is how transitional scaffolding becomes permanent.
+The plan keeps status `Ready`/`In progress` until closeout; do not archive it.
+
 **Never** date implemented-state text (dates live in DECISIONS/RETROSPECTIVES/plans).
 **Never** rewrite or delete DECISIONS/RETROSPECTIVES entries — append corrections.
 

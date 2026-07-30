@@ -12,6 +12,15 @@ numbers: `docs/reports/2026-07-16-code-quality-baseline.md`. Re-measure anytime:
 per-function parameter grandfather list in `tools/gd_metrics.py`; lower entries after refactors,
 never raise them to hide a breach.
 
+**Check headroom while you are DESIGNING the call shape, not after the gate goes red.** Several
+coordinators sit at *exactly* their ceiling, so naming one new class in them is an instant breach —
+read `ndeps` for the files you will touch out of `/tmp/m.json` before you decide who calls whom.
+(Measured cost of skipping this, plan 0047: a mid-plan red gate, and a step that could not be
+committed on its own because the dependency that pays for the new one cannot leave until a later
+step.) The two shapes that work are in `hexcombat-architecture-contract` — "the ceiling is paid for,
+not raised". `PARAM_CEILINGS` is keyed by `path::function`, so **moving or renaming a file makes its
+entry stale and fails the gate**; re-key it in the same commit as the move.
+
 ## Budgets (touched code)
 
 | Axis | Target | Hard cap | On breach |

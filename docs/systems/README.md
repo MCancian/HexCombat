@@ -22,6 +22,7 @@ and optionally `RETRO.md` (implementer lessons). Audit status + open fidelity qu
 | LLM API & self-play | [llm-api-selfplay.md](llm-api-selfplay/llm-api-selfplay.md) | [STATUS](llm-api-selfplay/STATUS.md) | [html](html/llm-api-selfplay.html) |
 | Research harness | [research-harness.md](research-harness/research-harness.md) | [STATUS](research-harness/STATUS.md) | — |
 | View layer | [view-layer.md](view-layer/view-layer.md) | [STATUS](view-layer/STATUS.md) | [html](html/view-layer.html) |
+| Mutation authority (governance) | [mutation-authority.md](mutation-authority/mutation-authority.md) | — | — |
 
 ## The "State & authority" section
 

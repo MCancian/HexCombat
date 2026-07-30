@@ -158,21 +158,27 @@ paths, dead fields, an unclassified field on an owned model, two aggregates clai
 stale allowance, an unregistered file under `scripts/transitions/`, and a scan that saw nothing all
 fail. Illegal fixtures under `tools/fixtures/mutation_authority/` declare the rule each line must
 trigger and are compared exactly on every run, so a detector that stops working fails as a false
-negative instead of going quietly green. **Four aggregates are registered and ENFORCED:**
-`antiship_establishment`, whose sole writer is `scripts/transitions/AntishipTransitions.gd` (plan
-0043; zero legacy writers); the **`force`** aggregate (plan 0044), whose protected Brigade/Battalion runtime fields, placement, and manifest memberships are written solely by `scripts/transitions/ForceTransitions.gd`; and the **`sealift_fleet`** aggregate (plan 0045), whose `ShipState` fleet projection, cohort hulls and legs, return/reload pipeline and escort SAM magazines are written solely by `scripts/transitions/SealiftTransitions.gd`. All legacy writers and façades have been removed, routing every production write through the authority seam without moving golden pins.
+negative instead of going quietly green.
 
-A **fourth** aggregate, **`ijfs`** (plan 0046), whose sole writer is
-`scripts/transitions/IjfsTransitions.gd`: the `IjfsTarget` / `IjfsMunition` / `IjfsSquadron` models, the
-three `IjfsDailyState` containers that persist across days, and the `ijfs_state` / `_ijfs_day` handles
-on `GameStateData`. Zero legacy writers; no behaviour, RNG or golden change. Two of its lessons
-generalize. First, **a protected field NAME is claimed repo-wide**, so registering a generic one
-poisons unrelated code — `IjfsMunition.name` turned 22 innocent view-layer lines into unresolved-write
-failures and had to become `munition_name` (the manifest's `_schema_rules` already ask for distinctive
-names; this is what ignoring that costs). Second, **`status: "migration"` and an existing authority file
-are mutually exclusive** — a file in `scripts/transitions/` must be some aggregate's `authority_path`,
-and a migration aggregate may not declare one — so an aggregate goes straight to `enforced` and
-`legacy_writers` carries the migration instead.
+**Registered aggregates.** All are `enforced` with zero legacy writers and zero golden movement; the
+manifest is the authoritative record, this table is the index. Procedure for adding one:
+`docs/systems/mutation-authority/mutation-authority.md`.
+
+| Aggregate | Authority (`scripts/transitions/`) | Plan | Covers |
+|---|---|---|---|
+| `antiship_establishment` | `AntishipTransitions.gd` | 0043 | Surviving launchers, permanent losses, temporary suppression, and the container projection IJFS targets |
+| `force` | `ForceTransitions.gd` | 0044 | Brigade/Battalion runtime fields, placement, roster memberships, and who is ABOARD a cohort (`bn_ids`) |
+| `sealift_fleet` | `SealiftTransitions.gd` | 0045 | `ShipState` fleet projection, cohort hulls and legs, return/reload pipeline, escort SAM magazines |
+| `ijfs` | `IjfsTransitions.gd` | 0046 | `IjfsTarget`/`IjfsMunition`/`IjfsSquadron`, the three cross-day `IjfsDailyState` containers, the `ijfs_state`/`_ijfs_day` handles |
+| `map`, `infrastructure` | — *not yet created* | 0047 | **In progress:** steps 1–3 of 8 shipped (characterization, `HexState.hex_owner` rename, typed `InfrastructureNodeState`). Neither authority exists yet. |
+
+Two lessons from 0046 generalize and are now in the procedure doc. First, **a protected field NAME is
+claimed repo-wide**, so registering a generic one poisons unrelated code — `IjfsMunition.name` turned
+22 innocent view-layer lines into unresolved-write failures and had to become `munition_name` (the
+manifest's `_schema_rules` already ask for distinctive names; this is what ignoring that costs).
+Second, **`status: "migration"` and an existing authority file are mutually exclusive** — a file in
+`scripts/transitions/` must be some aggregate's `authority_path`, and a migration aggregate may not
+declare one — so an aggregate goes straight to `enforced` and `legacy_writers` carries the migration.
 
 Plan 0045 also settled how ONE object can belong to two aggregates: a sealift cohort binds troops to
 hulls, so it became a typed `SealiftCohort` whose `bn_ids` is registered to `force` and whose
