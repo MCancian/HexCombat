@@ -35,10 +35,6 @@ static func build_supply_state(red_dos_start: float) -> SupplyState:
 	return SupplyStateBuilder.build(red_dos_start)
 
 
-static func build_infrastructure_state(infrastructure: Dictionary) -> InfrastructureState:
-	return InfrastructureStateBuilder.build(infrastructure)
-
-
 ## brigades: the full GameData.brigades map; filtered here to Green, non-destroyed (IJFS targets
 ## only living Green units), minus the brigades still in mobilization — those become targets when
 ## TurnConductor releases them onto the map (plan 0029 Tier A2).

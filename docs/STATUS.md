@@ -170,7 +170,8 @@ manifest is the authoritative record, this table is the index. Procedure for add
 | `force` | `ForceTransitions.gd` | 0044 | Brigade/Battalion runtime fields, placement, roster memberships, and who is ABOARD a cohort (`bn_ids`) |
 | `sealift_fleet` | `SealiftTransitions.gd` | 0045 | `ShipState` fleet projection, cohort hulls and legs, return/reload pipeline, escort SAM magazines |
 | `ijfs` | `IjfsTransitions.gd` | 0046 | `IjfsTarget`/`IjfsMunition`/`IjfsSquadron`, the three cross-day `IjfsDailyState` containers, the `ijfs_state`/`_ijfs_day` handles |
-| `map`, `infrastructure` | — *not yet created* | 0047 | **In progress:** steps 1–3 of 8 shipped (characterization, `HexState.hex_owner` rename, typed `InfrastructureNodeState`). Neither authority exists yet. |
+| `map` | `MapTransitions.gd` | 0047 | `HexState.hex_owner`/`feba_km` and the `GameDataStore.hex_states` container. **Zero allowances** — construction routes through the authority too |
+| `infrastructure` | `InfrastructureTransitions.gd` | 0047 | `InfrastructureNodeState` lifecycle (status, repair clock, JLSF marker), the `nodes` container, the `infrastructure_state` handle |
 
 Two lessons from 0046 generalize and are now in the procedure doc. First, **a protected field NAME is
 claimed repo-wide**, so registering a generic one poisons unrelated code — `IjfsMunition.name` turned
@@ -179,6 +180,15 @@ manifest's `_schema_rules` already ask for distinctive names; this is what ignor
 Second, **`status: "migration"` and an existing authority file are mutually exclusive** — a file in
 `scripts/transitions/` must be some aggregate's `authority_path`, and a migration aggregate may not
 declare one — so an aggregate goes straight to `enforced` and `legacy_writers` carries the migration.
+
+Plan 0047 added the technique that makes an invariant unbreakable rather than merely documented:
+**enforce it by ABSENCE.** `MapTransitions` has no `set_owner` at all — ownership is derived from
+occupancy and applied by iterating only the OCCUPIED hexes, so the sticky rule (an emptied hex keeps
+its last owner, which is what keeps a seized port seized after Red moves inland) cannot be written
+away by a later "tidy-up" that defaults every hex. Pre-0047 that rule was a missing `else` branch.
+The same plan deleted two generic setters at review rather than migrating them: a `set_x(target,
+value)` whose only caller was a scripted validator lets any caller express nearly every forbidden
+assignment through the permitted file.
 
 Plan 0045 also settled how ONE object can belong to two aggregates: a sealift cohort binds troops to
 hulls, so it became a typed `SealiftCohort` whose `bn_ids` is registered to `force` and whose

@@ -66,9 +66,14 @@ static func build_pool_entry(node_def: InfrastructureDef, beaches: Dictionary, b
 ## Queueing policy (extracted from GameState): turn explicit deploy_jlsf orders + the auto_jlsf
 ## policy into pool entries. A node accepts one deployment while its jlsf marker is "none".
 ## Deterministic: explicit orders in submission order, then auto policy in sorted node order.
-## Mutates infra_state markers (none -> queued) in place, like InfrastructureResolver.tick;
 ## push_errors on unknown explicit ids. Returns the new pool entries in queue order — the caller
 ## push_fronts them in this order (logistics open the port gate before more troops help).
+##
+## The marker flip goes through `InfrastructureTransitions.queue_jlsf` AT THE POINT the loop used to
+## assign it, and the loop stays sequential rather than becoming a snapshot planner. That is not
+## laziness: whether an entry is emitted is decided by state the PREVIOUS iteration wrote, so two
+## explicit orders for the same port produce exactly one entry because the second iteration observes
+## the `queued` the first one set. A planner working from a pre-loop snapshot would emit two.
 static func queue_deployments(
 	explicit_orders: Array,
 	infra_state: InfrastructureState,
@@ -95,9 +100,7 @@ static func queue_deployments(
 
 	var entries: Array = []
 	for port_id in to_queue:
-		var node: InfrastructureNodeState = infra_state.nodes[port_id]
-		if node.jlsf != InfrastructureState.JLSF_NONE:
+		if not InfrastructureTransitions.queue_jlsf(infra_state, port_id):
 			continue
-		node.jlsf = InfrastructureState.JLSF_QUEUED
 		entries.append(build_pool_entry(infra_defs.get(port_id), beaches, beach_to_to, bn_count))
 	return entries

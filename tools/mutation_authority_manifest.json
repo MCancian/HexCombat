@@ -435,6 +435,83 @@
         }
       ],
       "legacy_writers": []
+    },
+    {
+      "id": "infrastructure",
+      "summary": "The port/airbridge lifecycle (plan 0047): each node's seizure/repair status, its repair clock, and its JLSF deployment marker, plus the node container and the InfrastructureState handle GameStateData holds. Ownership of the HEX a node sits on belongs to the 'map' aggregate; this one never writes a hex, and the map authority never writes a node.",
+      "status": "enforced",
+      "authority_class": "InfrastructureTransitions",
+      "authority_path": "res://scripts/transitions/InfrastructureTransitions.gd",
+      "owned_models": [
+        {
+          "class": "InfrastructureNodeState",
+          "path": "res://scripts/model/InfrastructureNodeState.gd",
+          "_doc": "Owned model: EVERY mutable field must be classified below or the gate fails. The field is node_status rather than status because a protected field NAME is claimed repo-wide and 'status' is used all over this codebase for unrelated things; the SERIALIZED key stays \"status\". Lifetimes: campaign = persists across turns.",
+          "fields": {
+            "node_status": "campaign",
+            "repair_turns_remaining": "campaign",
+            "jlsf": "campaign"
+          }
+        },
+        {
+          "class": "InfrastructureState",
+          "path": "res://scripts/model/InfrastructureState.gd",
+          "_doc": "Owned model, and it owns exactly one mutable field: the infra_id -> InfrastructureNodeState mapping. The per-node fields are the owned model above; typing them is what made either protectable at all, since values inside an untyped Dictionary are invisible to the gate.",
+          "fields": {
+            "nodes": "campaign"
+          }
+        }
+      ],
+      "hosted_fields": [
+        {
+          "class": "GameStateData",
+          "path": "res://scripts/model/GameStateData.gd",
+          "_doc": "The InfrastructureState handle itself. Replacing it is a scenario reset, which routes through InfrastructureTransitions.rebuild_infrastructure so the host file earns no writer exemption. jlsf_orders on the same model is an ORDER BUFFER, not node state, and stays unregistered like every other order array.",
+          "fields": {
+            "infrastructure_state": "campaign"
+          }
+        }
+      ],
+      "construction_writers": [
+        {
+          "path": "res://scripts/builders/InfrastructureStateBuilder.gd",
+          "why": "build() fills a FRESH InfrastructureState with one node per definition before anything holds it. It never accepts live node state; replacing a LIVE map goes through InfrastructureTransitions.rebuild_infrastructure.",
+          "fields": [
+            "InfrastructureState.nodes"
+          ]
+        }
+      ],
+      "legacy_writers": []
+    },
+    {
+      "id": "map",
+      "summary": "Per-hex runtime state (plan 0047): who holds each hex and where the front line sits inside it, plus the hex_states container itself. Hex definitions, geometry and terrain are immutable content and are NOT part of this aggregate. Ownership is DERIVED from brigade occupancy by HexOwnershipCalculator and applied here; the authority offers no way to assert an owner, which is what makes the sticky-ownership invariant unbreakable rather than merely documented.",
+      "status": "enforced",
+      "authority_class": "MapTransitions",
+      "authority_path": "res://scripts/transitions/MapTransitions.gd",
+      "owned_models": [
+        {
+          "class": "HexState",
+          "path": "res://scripts/model/HexState.gd",
+          "_doc": "Owned model: EVERY mutable field must be classified below or the gate fails. The field is hex_owner rather than owner because a protected field NAME is claimed repo-wide and `owner` is a built-in Node property, so a future scene-building line would fail this gate falsely; the SERIALIZED key stays \"owner\" and is live in every game record's final_snapshot. Lifetimes: campaign = persists across turns.",
+          "fields": {
+            "hex_owner": "campaign",
+            "feba_km": "campaign"
+          }
+        }
+      ],
+      "hosted_fields": [
+        {
+          "class": "GameDataStore",
+          "path": "res://scripts/GameData.gd",
+          "_doc": "The hex_id -> HexState container. brigades_by_hex on the same model is the force aggregate's placement index and is claimed there; the two are disjoint by field. Construction and reset route through MapTransitions as well, so the host file has no writer exemption and this aggregate needs no construction allowance at all.",
+          "fields": {
+            "hex_states": "campaign"
+          }
+        }
+      ],
+      "construction_writers": [],
+      "legacy_writers": []
     }
   ]
 }

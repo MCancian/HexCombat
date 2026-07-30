@@ -148,7 +148,9 @@ func load_hex_grid() -> void:
 	hexes.clear()
 	hex_lookup.clear()
 	coord_lookup.clear()
-	hex_states.clear()
+	# Cleared BEFORE the JSON read, and re-initialised only after a successful parse (below): the
+	# early return on a parse failure must leave the map empty rather than retaining the previous one.
+	MapTransitions.clear_hex_states(self)
 
 	var json = _read_json("res://data/taiwan_hex_grid.json")
 	if json == null:
@@ -183,8 +185,8 @@ func load_hex_grid() -> void:
 		hexes.append(hex)
 		hex_lookup[hex.id] = hex
 		coord_lookup[hex.coord] = hex.id
-		hex_states[hex.id] = HexState.new()
 
+	MapTransitions.initialize_hex_states(self, hex_lookup.keys())
 	print_debug("Loaded %d hexes" % hexes.size())
 
 
@@ -209,13 +211,8 @@ func load_brigades() -> void:
 	print_debug("Loaded %d brigades" % brigades.size())
 
 
-# Restore every hex to the HexState defaults (GREEN owner, feba 0) without re-parsing the grid
-# JSON. Combat/frontline mutate HexState in place across a play-through, so a reset that skips
-# this leaks run 1's ownership/FEBA map into run 2 (surfaced 2026-07-09: in-process replay of
-# the 40-turn golden diverged 24/88 -> 25/90 on the second run).
 func reset_hex_states() -> void:
-	for hex_id in hex_states:
-		hex_states[hex_id] = HexState.new()
+	MapTransitions.reset_hex_states(self)
 
 
 func _load_oob_file(path: String) -> void:
@@ -579,39 +576,20 @@ func reset_brigade_turn_flags(brigade: Brigade) -> void:
 		brigade, ForceActivityRequest.make(ForceActivityRequest.Operation.RESET_TURN_FLAGS))
 
 
-# INVARIANT: no else-branch — a hex emptied of brigades KEEPS its last owner. Load-bearing for
-# plan 0006: infrastructure seizure persists after Red moves inland (docs/systems/
-# amphibious-offload.md §9). Adding a neutral/reset branch would silently un-seize ports.
+# The map aggregate's façades. Every runtime HexState write goes through MapTransitions (plan 0047),
+# the same shape as set_brigade_hex -> ForceTransitions: coordinators keep calling GameData and so
+# never spend a dependency on the authority. The sticky-ownership invariant and the reasons behind it
+# live on the authority's methods, not copied here.
 func recompute_hex_ownership() -> void:
-	for hex_id_value in hex_lookup.keys():
-		var hex_id := String(hex_id_value)
-		var has_red := false
-		var has_green := false
-		for brigade_id_value in get_brigades_in_hex(hex_id):
-			var brigade: Brigade = get_brigade(String(brigade_id_value))
-			if brigade == null or brigade.destroyed:
-				continue
-			match brigade.team:
-				Brigade.Team.RED:
-					has_red = true
-				Brigade.Team.GREEN:
-					has_green = true
-		if has_red and has_green:
-			hex_states[hex_id].hex_owner = HexOwner.CONTESTED
-		elif has_red:
-			hex_states[hex_id].hex_owner = HexOwner.RED
-		elif has_green:
-			hex_states[hex_id].hex_owner = HexOwner.GREEN
+	MapTransitions.recompute_ownership(self)
 
 
-func set_hex_owner(hex_id: String, owner: String) -> void:
-	if hex_id in hex_states:
-		hex_states[hex_id].hex_owner = owner
+func apply_feba_delta(hex_id: String, delta_km: float) -> void:
+	MapTransitions.apply_feba_delta(self, hex_id, delta_km)
 
 
-func set_hex_feba(hex_id: String, feba_km: float) -> void:
-	if hex_id in hex_states:
-		hex_states[hex_id].feba_km = feba_km
+func clear_feba(hex_id: String) -> void:
+	MapTransitions.clear_feba(self, hex_id)
 
 
 func load_theaters() -> void:

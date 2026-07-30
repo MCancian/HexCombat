@@ -60,9 +60,11 @@ var fleet: Dictionary:
 var sealift_state: SealiftState:
 	get: return data.sealift_state
 	set(value): data.sealift_state = value
+# Read-only façade: the infrastructure map is built by InfrastructureStateBuilder and thereafter
+# written only by InfrastructureTransitions (plan 0047). Scenario reset goes through
+# _rebuild_infrastructure_state, not an assignment here.
 var infrastructure_state: InfrastructureState:
 	get: return data.infrastructure_state
-	set(value): data.infrastructure_state = value
 var jlsf_orders: Array[String]:
 	get: return data.jlsf_orders
 	set(value): data.jlsf_orders = value
@@ -257,7 +259,7 @@ func resolve_offload_turn(dice: Dice) -> Dictionary:
 
 
 func _rebuild_infrastructure_state() -> void:
-	data.infrastructure_state = GameStateBuilder.build_infrastructure_state(GameData.infrastructure)
+	ReinforcementPhases.rebuild_infrastructure(data, GameData.infrastructure)
 	data.jlsf_orders.clear()
 
 

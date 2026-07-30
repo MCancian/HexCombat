@@ -204,7 +204,15 @@ lives in `docs/systems/view-layer.md` §3.
 Full canonical gate: `bash tools/run_all_tests.sh` (Linux) / `pwsh tools/run_all_tests.ps1`
 (Windows) — must end **ALL PHASES GREEN**.
 
-## 9. Open questions / deferred
+## 9. State & authority
+
+**This subsystem owns no protected runtime aggregate.** Terrain is immutable content: `TerrainType`
+definitions and the per-hex assignment are loaded from `data/terrain/**` and never mutated at runtime,
+so there is nothing for a mutation authority to guard. The mutable per-hex state that sits alongside
+terrain — `HexState.hex_owner` and `feba_km` — belongs to the **`map`** aggregate, whose authority is
+`MapTransitions`; its rules live in `docs/systems/hex-grid/hex-grid.md` §8 and are not restated here.
+
+## 10. Open questions / deferred
 
 - **Beach first-landing ×2 defender penalty** — deferred design call (2026-07-09); implementation
   seam is `TurnConductor.defender_combat_modifier`'s `* 1.0` (§5). See `docs/plans/BACKLOG.md`.

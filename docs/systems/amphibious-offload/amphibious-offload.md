@@ -16,8 +16,10 @@ anti-ship crossing model and converts ship losses into BN casualties.
 | `scripts/OffloadRates.gd` | Throughput constants (tons/day per infrastructure type); TONS_PER_BN |
 | `scripts/calc/OffloadCostModel.gd` | Per-BN day-N offload cost: transport weight × bn_class/ship_category multiplier (plan 0006) |
 | `scripts/model/InfrastructureDef.gd` / `InfrastructureState.gd` | Port/airbridge node defs + per-node lifecycle state |
-| `scripts/resolvers/InfrastructureResolver.gd` | Pure seizure + JLSF repair clock; `red_offload_nodes` throughput feed |
-| `scripts/JlsfCargo.gd` | JLSF pseudo pool-entry builder (rides the 0004 sealift pipeline) |
+| `scripts/resolvers/InfrastructureResolver.gd` | Pure seizure + JLSF repair CALCULATOR (`plan_tick`, writes nothing); `red_offload_nodes` throughput feed |
+| `scripts/model/InfrastructureNodeState.gd` / `InfrastructureTickPlan.gd` | One node's typed lifecycle; what one tick decided (staged end states + an ORDERED event list) |
+| `scripts/transitions/InfrastructureTransitions.gd` | The `infrastructure` aggregate's mutation authority — the only writer of node status, repair clock and JLSF marker |
+| `scripts/calc/JlsfCargo.gd` | JLSF pseudo pool-entry builder (rides the 0004 sealift pipeline) |
 | `data/infrastructure.json` | 5 ports + 8 main-island airbridges (explicit `hex_id` + `to_number`) |
 | `data/offload_weights.json` | Per-BN-type transport weights + bn_class map + multiplier matrix |
 | `scripts/ShipLoadingModel.gd` | BN-to-ship fleet derivation (forward) and ship-loss-to-BN-casualty (backward) |
@@ -256,9 +258,20 @@ long after the last landing).** A `taiwanese` node on a Red-owned hex becomes `s
 on recapture; instead `red_offload_nodes` gates *contribution* on ownership at read time —
 a Green-retaken port contributes nothing but keeps its repair state if Red retakes it.
 **Ownership-semantics dependency:** seizure persistence relies on
-`GameData.recompute_hex_ownership` having no else-branch — a vacated hex keeps its last owner,
-so a Red column can take a port hex and move on without the node reverting. Ownership fed to the tick is
-last turn's post-combat state (producer→consumer edge: combat ownership → next offload).
+the `map` aggregate's sticky-ownership rule — a vacated hex keeps its last owner, so a Red column can
+take a port hex and move on without the node reverting. Since plan 0047 that rule is enforced by
+`MapTransitions` having no owner setter and applying only the hexes `HexOwnershipCalculator` reported
+as occupied (`docs/systems/hex-grid/hex-grid.md` §8), rather than by a missing `else` branch.
+Ownership fed to the tick is last turn's post-combat state (producer→consumer edge: combat ownership
+→ next offload).
+
+**The tick calculates, the authority applies.** `InfrastructureResolver.plan_tick` writes nothing;
+`ReinforcementPhases` hands its `InfrastructureTickPlan` to `InfrastructureTransitions.apply_node_plan`
+at the same seam the old in-place tick occupied, before `red_offload_nodes` reads throughput. The
+planner stages each node's transitions in LOCALS so the repair branch still sees the seizure it just
+decided: a TAIWANESE node whose JLSF has already arrived goes SEIZED **and** DEGRADED in one tick and
+emits two events, which is why the plan carries an ordered event list rather than one label per node.
+An explicit `deploy_jlsf` order does not require a seized node, so that path is reachable in play.
 
 **Throughput.** `red_offload_nodes` returns Red-held degraded/operational nodes with rates from
 `OffloadRates` (port 11,000/2,200 t/d operational/degraded ≈ 5.0/1.0 BN-equiv; airbridge
@@ -327,6 +340,23 @@ across.
 - Transfers move exact BN ids between mainland, sea reserves, and ashore with no roster change.
 - The authority guarantees conservation of BNs and id-set equality during transfers.
 - Drowned BNs are deleted from rosters at the crossing-loss application.
+
+**`infrastructure`** — the port/airbridge lifecycle (plan 0047). Authority `InfrastructureTransitions`;
+it owns node status, the repair clock, the JLSF marker, the `nodes` container, and the
+`infrastructure_state` handle. `GameState.infrastructure_state` is a read-only façade and its scenario
+rebuild routes `GameState → ReinforcementPhases.rebuild_infrastructure → the authority`.
+- **Outcome type:** `InfrastructureTickPlan` (staged end states + an ordered event list).
+- **Manifest:** [tools/mutation_authority_manifest.json](../../../tools/mutation_authority_manifest.json).
+
+**Rules:**
+- Node status never regresses on recapture; CONTRIBUTION is gated by current hex ownership at read
+  time in `red_offload_nodes`, not by rewriting status.
+- The JLSF marker moves only by job-shaped operations (`queue_jlsf`, `mark_jlsf_enroute`,
+  `mark_jlsf_arrived`, `clear_jlsf`) — there is no generic setter and no `force_status`.
+- `queue_jlsf` REPORTS whether it accepted, because `JlsfCargo.queue_deployments` decides whether to
+  emit a lift entry from exactly that fact; its loop stays sequential so a duplicate order sees the
+  marker the previous iteration wrote.
+- The hex a node sits on belongs to the `map` aggregate. Neither authority writes the other's fields.
 
 **`sealift_fleet`** — what floats (plan 0045). Authority `SealiftTransitions`; it owns every hull
 transition: the `ShipState` bins, cohort hull counts and legs, the return/reload pipeline, and escort SAM

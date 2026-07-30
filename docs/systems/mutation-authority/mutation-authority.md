@@ -54,7 +54,8 @@ generic name poisons unrelated code.
 - Plan 0046 registered `IjfsMunition.name` and turned **22 innocent view-layer lines** into
   unresolved-write failures. `name` is a built-in `Node` property.
 - Plan 0047 renamed `HexState.owner` → `hex_owner` pre-emptively for the same reason (`Node.owner`),
-  and named a new field `node_status` rather than `status`.
+  and named a new field `node_status` rather than `status`. Both cost nothing, because no offending
+  write existed yet — which is exactly when a rename is cheap. Neither serialized key moved.
 
 So: prefer a distinctive name, check `grep -rn "\.<name>\s*=" scripts/ tools/` before registering it,
 and **keep the serialized key unchanged** — rename the field, not the `to_dict()` key, or every
@@ -78,6 +79,14 @@ fixture and game record moves.
 - **Allowances must stay live.** `construction_writers` are for fresh, unpublished objects only;
   an allowance that no longer writes anything fails `E_STALE_ALLOWANCE`, so removing the last write
   means removing the entry.
+- **Transitional scaffolding must name the step that deletes it, and that step is the one that pays
+  the ceiling.** Plan 0047 could not type its node and register its authority in the same commit (an
+  authority file cannot precede its manifest entry, above), so the typing step left two helpers that
+  read and wrote the field without naming the new type. Their comment originally said the next step
+  would "replace both bodies", which was wrong: the ceiling is only repaid when the OLD class's
+  constants leave the CALL SITES too, which happens when those sites become authority calls. Swapping
+  the bodies alone leaves the constants, still breaches the ceiling, and leaves a generic setter
+  where operation-specific methods belong. Write the deletion instruction, not a rewrite instruction.
 
 ## 6. What an authority looks like
 
@@ -94,6 +103,19 @@ house shape:
   that can be argued with.
 - Guards `push_error` and change nothing rather than `assert(false)`: a research batch must not die on
   one bad row, and a `push_error` guard is testable with `assert_error(...).is_push_error(...)`.
+- **Enforce by ABSENCE where the invariant is "do not touch what you were not told about".**
+  `IjfsTransitions` guarantees monotonic destruction by having no method that clears `destroyed`.
+  `MapTransitions` (plan 0047) goes further: it has no owner setter at all, because hex ownership is
+  DERIVED. The calculator omits unoccupied hexes and the authority iterates only what it returned, so
+  the sticky-ownership rule survives — whereas a `set_owner` plus a `.get(hex_id, default)` loop would
+  silently un-seize every captured port. When an authority's only expressible operations are the legal
+  ones, the invariant needs no guard that a later reader can argue with.
+- **A calculator that stages a chain must stage it in LOCALS, and carry an ORDERED event list.**
+  Plan 0047's infrastructure tick has a branch that reads what the branch above it just decided, in
+  the same iteration, so one node can legitimately emit two events in one tick. A plan object holding
+  one label per entity cannot express that, and a planner reading the pre-tick snapshot in both
+  branches silently adds a turn. Splitting calculate-from-apply does not mean evaluating everything
+  against the starting state.
 - **Apply where the old assignment was, when a later decision reads it.** Deferring application to
   end-of-phase is only safe when nothing downstream in the same pass reads the written state. Two
   measured counter-examples: IJFS stages consume dice conditionally on state an earlier stage wrote
@@ -117,8 +139,8 @@ holds those). This doc was written from one plan's experience and is deliberatel
 carries is stale *prose* over valid anchors, which `tools/validate_doc_anchors.gd` cannot catch.
 
 Open extraction task: plans 0042–0046 are archived with their own review rounds and retrospectives,
-and their generalizable lessons were never consolidated here. §5 currently reflects 0046 and 0047
-only.
+and their generalizable lessons were never consolidated here. §5 and §6 currently reflect 0046 and
+0047 only.
 
 ## 8. State & authority
 

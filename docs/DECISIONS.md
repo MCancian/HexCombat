@@ -19,6 +19,23 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-30 — Map and infrastructure mutation authorities shipped; an invariant enforced by
+  ABSENCE (agent, plan 0047).** `MapTransitions` is the sole writer of `HexState.hex_owner`/`feba_km`
+  and the `hex_states` container; `InfrastructureTransitions` is the sole writer of the port/airbridge
+  lifecycle, the `nodes` container and the `infrastructure_state` handle. The map aggregate ships with
+  **zero allowances** and deliberately has **no owner setter**: ownership is derived by
+  `HexOwnershipCalculator` and applied by iterating only the occupied hexes, so the sticky rule that
+  keeps a seized port seized after Red moves inland can no longer be defaulted away — it was a missing
+  `else` branch before. `GameData.set_hex_owner`/`set_hex_feba` and both `HexMap` stubs were deleted
+  rather than migrated; the one caller that wanted them (`tools/validate_headless_infrastructure.gd`)
+  now places a real brigade and recomputes. `InfrastructureResolver.tick` became the pure `plan_tick`,
+  whose plan carries an ORDERED event list because one node can legitimately emit `seized` and
+  `degraded` in the same tick. No behaviour, RNG or golden change; three full dependency ceilings held
+  by façades and a one-for-one swap. Facts: `docs/systems/hex-grid/hex-grid.md` §8,
+  `docs/systems/amphibious-offload/amphibious-offload.md` §9–10,
+  `docs/systems/mutation-authority/mutation-authority.md` §5–6, `tools/mutation_authority_manifest.json`,
+  the two authority headers.
+
 - **2026-07-30 — IJFS mutation authority shipped; an authority that applies INSIDE its stages
   (agent, plan 0046).** `IjfsTransitions` is the sole writer of `IjfsTarget` / `IjfsMunition` /
   `IjfsSquadron`, the three `IjfsDailyState` containers that persist across days, and the

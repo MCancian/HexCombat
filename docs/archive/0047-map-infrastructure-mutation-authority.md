@@ -1,8 +1,19 @@
 ---
 title: "0047: Map and infrastructure mutation authority"
-status: "Ready"
+status: "✅ Shipped"
 created: "2026-07-26"
+shipped: "2026-07-30"
 ---
+
+> **✅ SHIPPED 2026-07-30.** All 8 steps done; gate ALL PHASES GREEN at each step, golden byte-stable,
+> no pin or fixture movement, three full dependency ceilings held.
+> Facts landed in: `docs/systems/hex-grid/hex-grid.md` §8 (the `map` aggregate and the sticky rule),
+> `docs/systems/amphibious-offload/amphibious-offload.md` §9–10 (the `infrastructure` aggregate and the
+> calculate/apply split), `docs/systems/mutation-authority/mutation-authority.md` §4–6 (the two new
+> ordering traps and the enforce-by-absence shape), `docs/systems/turn-engine/turn-engine.md`,
+> `docs/systems/terrain/terrain.md` §9, `docs/systems/frontline-cleanup-victory/frontline-cleanup-victory.md`,
+> `docs/STATUS.md`, `docs/DECISIONS.md`, `tools/mutation_authority_manifest.json`, and the
+> `MapTransitions` / `InfrastructureTransitions` headers.
 
 # Plan 0047: Map and infrastructure mutation authority
 
@@ -463,13 +474,46 @@ clean afterwards.
 and the `set_hex_owner` / `recompute_hex_ownership` identifiers (agy #1); the same-tick
 seizure→repair test pins a genuinely production-reachable path (agy #2).
 
+## Diff review round — steps 4-7 (2026-07-30)
+
+Fan-out on the frozen 27-file diff with the gate already green. Returns: **agy 3.4 KB / 5 findings**
+(fact-check role — all five premises VERIFIED, including that no writer was missed and that neither
+serialized key moved); **deepseek 34.2 KB** (enumeration role — four verbatim, scoped lists; labelled
+`FLAKE` by the launcher because an enumeration produces lists rather than numbered findings, counted
+after reading per the roster's enumerator rule); **sol 342 B** (consequences role — "no actionable
+findings", plus three specific ABSENT determinations). Tree verified clean afterwards; no strays.
+
+**Acted on:** sol's one substantive observation, reached independently while implementing — a
+nonpositive `repair_turns_per_stage` is NOT equivalent, because the old code wrote a negative timer
+and `apply_node_plan` now refuses it. Both sol and I confirmed the path is unreachable (the sole
+production caller passes no argument, and it is not a scenario knob). The divergence is now named
+explicitly in `InfrastructureResolver.plan_tick`'s header rather than left to be re-derived.
+
+**Verified independently, not taken on trust:** deepseek's load-bearing LIST 4 claim that the five
+production ownership seams are unchanged — confirmed by diffing `git grep` at HEAD against the working
+tree (5 before, 5 after, same files and functions). Its summary text said "4 production calls" while
+listing 5, and several of its enclosing-function labels were wrong; the *line numbers* were right.
+That is the roster's documented tier-2 counting hazard, and the reason its citations get checked.
+
+**Illegal fixtures — the plan's requirement, met by measurement rather than by a second manifest.**
+The plan asked for fixtures covering six illegal forms. Every one is already proven by the existing
+abstract fixture world (`violations.gdfixture` + `transitions_dir/other_authority.gdfixture`), and
+adding real class names would require copying the real manifest into `fixture_manifest.json` — which
+§1 of the campaign doc forbids. Instead each form was proven against the REAL aggregates by injecting
+and reverting it: direct `hex_owner` and `feba_km` writes and a `node_status`/`jlsf`/
+`repair_turns_remaining` write (`E_UNAUTHORIZED_WRITE`), a `hex_states` and a `nodes` container write,
+a nested `hex_states[id].hex_owner` and `nodes[id].jlsf` write (`E_UNRESOLVED_WRITE` backstop), a
+`GameStateData.infrastructure_state` assignment, and a `HexState` write from `SealiftTransitions`
+(wrong authority). All twelve were reported; the tree was restored and re-verified `PASS`.
+
 ## Progress
 
 - **Steps 1-3 SHIPPED 2026-07-30**, gate green, golden byte-stable, no fixture movement.
-- **Steps 4-8 remain**: the validator rewrite onto domain operations, the two authorities with their
-  manifest entries and illegal fixtures, the file move, and closeout. Step 5 must begin by deleting
-  `ReinforcementPhases.jlsf_marker` / `set_jlsf_marker` — they are the one piece of deliberately
-  transitional code this work leaves behind, and the dependency ceiling depends on their removal.
+- **Steps 4-8 SHIPPED 2026-07-30.** Each step was gated on its own before the next began. Step 5
+  deleted `ReinforcementPhases.jlsf_marker` / `set_jlsf_marker` as required and paid the ceiling with
+  the one-for-one swap (`InfrastructureState` out, `InfrastructureTransitions` in, 22/22).
+  Measured after step 7: `ReinforcementPhases` 22/22, `TurnConductor` 18/18, `TurnClosure` 7/7,
+  `GameState` 29/29 — `--check-ceiling` PASS, nothing raised.
 
 ## Dependencies
 

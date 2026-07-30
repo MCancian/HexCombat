@@ -27,6 +27,18 @@ func before() -> void:
 	_defs = {"port_a": d1, "port_b": d2, "airbridge_a": d3}
 
 
+## One infrastructure turn: calculate, then apply through the aggregate's authority (plan 0047).
+## Every test below is about the RESOLVER's semantics, so the two halves are bundled here rather than
+## repeated fifteen times. The split itself — that plan_tick writes nothing, and that a whole
+## seizure→repair chain survives being staged before it is applied — is pinned separately in
+## tests/transitions/infrastructure_authority_characterization_test.gd.
+func _tick(state: InfrastructureState, defs: Dictionary, owner_by_hex: Dictionary,
+		repair_turns_per_stage: int = 1) -> InfrastructureTickPlan:
+	var plan := InfrastructureResolver.plan_tick(state, defs, owner_by_hex, repair_turns_per_stage)
+	InfrastructureTransitions.apply_node_plan(state, plan)
+	return plan
+
+
 # ---------------------------------------------------------------------------
 # 1. Builder: every def becomes taiwanese/none/0
 # ---------------------------------------------------------------------------
@@ -47,7 +59,7 @@ func test_builder_creates_all_taiwanese() -> void:
 func test_tick_taiwanese_red_seizes() -> void:
 	var state := InfrastructureStateBuilder.build(_defs)
 	var owner_by_hex := {"hex_001": "red"}
-	var result: Dictionary = InfrastructureResolver.tick(state, _defs, owner_by_hex)
+	var result := _tick(state, _defs, owner_by_hex)
 	var node: InfrastructureNodeState = state.nodes["port_a"]
 	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_SEIZED)
 	assert_int(result.events.size()).is_equal(1)
@@ -58,7 +70,7 @@ func test_tick_taiwanese_red_seizes() -> void:
 func test_tick_taiwanese_green_unchanged() -> void:
 	var state := InfrastructureStateBuilder.build(_defs)
 	var owner_by_hex := {"hex_001": "green"}
-	var result: Dictionary = InfrastructureResolver.tick(state, _defs, owner_by_hex)
+	var result := _tick(state, _defs, owner_by_hex)
 	var node: InfrastructureNodeState = state.nodes["port_a"]
 	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_TAIWANESE)
 	assert_int(result.events.size()).is_equal(0)
@@ -67,7 +79,7 @@ func test_tick_taiwanese_green_unchanged() -> void:
 func test_tick_taiwanese_no_owner_unchanged() -> void:
 	var state := InfrastructureStateBuilder.build(_defs)
 	var owner_by_hex: Dictionary = {}
-	var result: Dictionary = InfrastructureResolver.tick(state, _defs, owner_by_hex)
+	var result := _tick(state, _defs, owner_by_hex)
 	var node: InfrastructureNodeState = state.nodes["port_a"]
 	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_TAIWANESE)
 	assert_int(result.events.size()).is_equal(0)
@@ -80,9 +92,9 @@ func test_tick_seized_no_jlsf_stays_seized() -> void:
 	var state := InfrastructureStateBuilder.build(_defs)
 	(state.nodes["port_a"] as InfrastructureNodeState).node_status = InfrastructureState.STATUS_SEIZED
 	var owner_by_hex := {"hex_001": "red"}
-	var result: Dictionary = InfrastructureResolver.tick(state, _defs, owner_by_hex)
-	result = InfrastructureResolver.tick(state, _defs, owner_by_hex)
-	result = InfrastructureResolver.tick(state, _defs, owner_by_hex)
+	var result := _tick(state, _defs, owner_by_hex)
+	result = _tick(state, _defs, owner_by_hex)
+	result = _tick(state, _defs, owner_by_hex)
 	var node: InfrastructureNodeState = state.nodes["port_a"]
 	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_SEIZED)
 	assert_int(result.events.size()).is_equal(0)
@@ -97,18 +109,18 @@ func test_tick_repair_cycle_default_stages() -> void:
 	(state.nodes["port_a"] as InfrastructureNodeState).jlsf = InfrastructureState.JLSF_ARRIVED
 	var owner_by_hex := {"hex_001": "red"}
 
-	var r1: Dictionary = InfrastructureResolver.tick(state, _defs, owner_by_hex)
+	var r1 := _tick(state, _defs, owner_by_hex)
 	var node: InfrastructureNodeState = state.nodes["port_a"]
 	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_DEGRADED)
 	assert_int(r1.events.size()).is_equal(1)
 	assert_str(String(r1.events[0]["event"])).is_equal("degraded")
 
-	var r2: Dictionary = InfrastructureResolver.tick(state, _defs, owner_by_hex)
+	var r2 := _tick(state, _defs, owner_by_hex)
 	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_OPERATIONAL)
 	assert_int(r2.events.size()).is_equal(1)
 	assert_str(String(r2.events[0]["event"])).is_equal("operational")
 
-	var r3: Dictionary = InfrastructureResolver.tick(state, _defs, owner_by_hex)
+	var r3 := _tick(state, _defs, owner_by_hex)
 	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_OPERATIONAL)
 	assert_int(r3.events.size()).is_equal(0)
 
@@ -124,12 +136,12 @@ func test_tick_repair_pauses_on_green_hex() -> void:
 
 	# Green owner — no progression
 	var owner_by_hex := {"hex_001": "green"}
-	InfrastructureResolver.tick(state, _defs, owner_by_hex)
+	_tick(state, _defs, owner_by_hex)
 	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_SEIZED)
 
 	# Flips back red — progression resumes
 	owner_by_hex = {"hex_001": "red"}
-	InfrastructureResolver.tick(state, _defs, owner_by_hex)
+	_tick(state, _defs, owner_by_hex)
 	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_DEGRADED)
 
 # ---------------------------------------------------------------------------
@@ -144,19 +156,19 @@ func test_tick_repair_slower_stages() -> void:
 	var node: InfrastructureNodeState = state.nodes["port_a"]
 
 	# Tick 1: countdown starts at 2 → decrement to 1, no transition
-	InfrastructureResolver.tick(state, _defs, owner_by_hex, 2)
+	_tick(state, _defs, owner_by_hex, 2)
 	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_SEIZED)
 
 	# Tick 2: countdown reaches 0 → degraded
-	InfrastructureResolver.tick(state, _defs, owner_by_hex, 2)
+	_tick(state, _defs, owner_by_hex, 2)
 	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_DEGRADED)
 
 	# Tick 3: new stage countdown 2 → 1, no transition
-	InfrastructureResolver.tick(state, _defs, owner_by_hex, 2)
+	_tick(state, _defs, owner_by_hex, 2)
 	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_DEGRADED)
 
 	# Tick 4: countdown reaches 0 → operational
-	InfrastructureResolver.tick(state, _defs, owner_by_hex, 2)
+	_tick(state, _defs, owner_by_hex, 2)
 	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_OPERATIONAL)
 
 # ---------------------------------------------------------------------------
@@ -227,7 +239,7 @@ func test_output_ordering_sorted() -> void:
 	var owner_by_hex := {"hex_001": "red", "hex_002": "red", "hex_003": "red"}
 
 	# Events from tick — sorted by id
-	var tick_result: Dictionary = InfrastructureResolver.tick(state, _defs, owner_by_hex)
+	var tick_result := _tick(state, _defs, owner_by_hex)
 	assert_int(tick_result.events.size()).is_equal(3)
 	assert_str(String(tick_result.events[0]["id"])).is_equal("airbridge_a")
 	assert_str(String(tick_result.events[1]["id"])).is_equal("port_a")

@@ -74,7 +74,7 @@ phase resolves, never when it runs. The resolution runs exactly this pipeline:
 10. **Combat-loop snapshots** — `ReinforcementPhases.isolated_air_landed_brigades()` and `GameStateData.refresh_not_ashore_by_type()` are computed ONCE here so no two hexes disagree about supply corridors or who is ashore (plans 0032, 0037).
 11. **Ground combat** — for each contested hex, `resolve_combat_at(hex_id, dice.derive("combat:<turn>:<hex>"))` runs `CombatResolver.resolve_at()`, applies casualties through `RosterMutations.apply_casualty` → `ForceTransitions`, accumulates FEBA movement.
 12. **FEBA retreats** — `apply_feba_retreats()` pushes retreating brigades out of hexes where `|feba_km| ≥ 10km`; placement updates go through `ForceTransitions`.
-13. **Hex ownership** — `GameData.recompute_hex_ownership()`: RED-only → RED, GREEN-only → GREEN, both → CONTESTED; each combat summary is then annotated with `owner_after`.
+13. **Hex ownership** — `GameData.recompute_hex_ownership()` → `MapTransitions`: RED-only → RED, GREEN-only → GREEN, both → CONTESTED, and a hex with no live brigade is left ALONE (it keeps its last owner). Each combat summary is then annotated with `owner_after`.
 14. **Supply** — `TurnClosure.resolve_supply_turn()`: `SupplyResolver.resolve` bills every LANDED Red battalion, decrements `supply_state.current_dos_tons`. Runs after combat so the bill covers who actually fought.
 15. **Cleanup** — `TurnClosure.resolve_cleanup_phase()`: recomputes hex ownership a second time (retreats in step 12 can have moved brigades since step 13), resets `antiship_system` per-turn flags, runs the Taiwan battalion census, evaluates victory for game-over.
 16. **End-of-turn tripwires** (debug builds only) — `GameData.validate_runtime_indexes()` and `RosterMutations.pending_pool_roster_violations()` assert at the settled boundary.
@@ -125,7 +125,7 @@ GameData autoloads in `_ready()` → `load_all()` (line 40–52):
 
 | Source | Method | Key lookups |
 |---|---|---|
-| `data/taiwan_hex_grid.json` | `load_hex_grid()` | `hex_lookup` (id→Hex), `coord_lookup` (Vector2i→id), `hex_states` (id→{owner,feba_km}) |
+| `data/taiwan_hex_grid.json` | `load_hex_grid()` | `hex_lookup` (id→Hex), `coord_lookup` (Vector2i→id), `hex_states` (id→`HexState`, filled by `MapTransitions` after a successful parse) |
 | \(neighbors via HexMath\) | `build_neighbor_lookup()` | `neighbor_lookup` (id→Array[String]) |
 | `data/pla_ground_forces.json` + `roc_ground_forces.json` | `load_brigades()` | `brigades` (id→Brigade), `brigades_by_hex` (hex→Array[id]) |
 | `data/scenarios/scenario_default.json` | `load_scenario()` | `turn_length_days`, `red_dos_start`, `stacking_soft_cap`, `victory_config`, `red_ship_reserve`, placements → `set_brigade_hex` |
@@ -133,7 +133,7 @@ GameData autoloads in `_ready()` → `load_all()` (line 40–52):
 | `data/beaches.json` | `load_beaches()` | `beaches` (id→BeachDef: capacity, offload_rate, category, etc.) |
 | `data/ships.json` | `load_ships()` | `ship_defs` (id→ShipDef: capacity, category, decoy flag, etc.) |
 
-Key helpers: `set_brigade_hex()` delegates position + `brigades_by_hex` index updates to `ForceTransitions`; `recompute_hex_ownership()` resets every hex's owner from brigade presence; `snapshot_state(pending_pools)` returns a deterministic key-sorted dict for golden testing; the pools
+Key helpers: `set_brigade_hex()` delegates position + `brigades_by_hex` index updates to `ForceTransitions`; `recompute_hex_ownership()` / `apply_feba_delta()` / `clear_feba()` delegate per-hex runtime state to `MapTransitions` — ownership is derived from brigade presence for OCCUPIED hexes only, never reset across the whole map; `snapshot_state(pending_pools)` returns a deterministic key-sorted dict for golden testing; the pools
 argument is required and makes it report battalions ashore rather than whole rosters (plan 0037).
 
 ## 8. TIV Relationship
@@ -159,8 +159,11 @@ This subsystem mutates the **`force`** aggregate through phase transitions. Its 
 - **Outcome/receipt types:** `ForceActivityRequest`, `ForcePlacementReceipt`.
 - **Manifest:** [tools/mutation_authority_manifest.json](../../../tools/mutation_authority_manifest.json).
 
-The transport phases also drive the **`sealift_fleet`** aggregate (`SealiftTransitions`, plan 0045) and
-the anti-ship establishment (`AntishipTransitions`, plan 0043). The rule the turn loop enforces is
+The transport phases also drive the **`sealift_fleet`** aggregate (`SealiftTransitions`, plan 0045),
+the anti-ship establishment (`AntishipTransitions`, plan 0043), and — since plan 0047 — the **`map`**
+aggregate (`MapTransitions`, reached through the `GameData` façades at five ownership seams plus the
+two FEBA sites in `TurnConductor`) and the **`infrastructure`** aggregate (`InfrastructureTransitions`,
+applied inside the offload phase). The rule the turn loop enforces is
 ordering, not ownership: a phase that moves troops AND hulls calls each authority in turn and asserts
 both receipts, and the phase closes with `SealiftTransitions.project_fleet` so no later phase reads a
 fleet whose bins are stale. Rules per aggregate live in the owning system docs.

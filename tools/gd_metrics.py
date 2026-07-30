@@ -90,7 +90,7 @@ PARAM_CEILINGS = {
     "scripts/calc/CombatCalculator.gd::_loss_counts": 6,
     "scripts/calc/CombatCalculator.gd::_select_casualties": 6,
     "scripts/calc/CombatCalculator.gd::resolve_map_attack": 8,
-    "scripts/JlsfCargo.gd::queue_deployments": 7,
+    "scripts/calc/JlsfCargo.gd::queue_deployments": 7,
     "scripts/LLMGameAPI.gd::_action_result": 6,
     "scripts/OffloadCalculator.gd::_resolve_day_n": 10,
     "scripts/OffloadCalculator.gd::resolve_offload_day": 9,

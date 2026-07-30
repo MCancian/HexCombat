@@ -12,7 +12,10 @@ Defines the hex-grid coordinate system, geometric computations (distance, neighb
 | `scripts/MapProjection.gd` | Lat/lon → pixel projection with aspect-correct uniform fit |
 | `scripts/model/Hex.gd` | `Hex` Resource — id, axial coord, center lat/lon, vertex array |
 | `scripts/HexOwner.gd` | Ownership string constants: `RED`, `GREEN`, `CONTESTED`, `NONE` |
-| `scripts/GameData.gd` | Loads JSON into `Hex` objects, builds neighbor index, exposes `get_distance`/`find_path`/`find_reachable` wrappers |
+| `scripts/GameData.gd` | Loads JSON into `Hex` objects, builds neighbor index, exposes `get_distance`/`find_path`/`find_reachable` wrappers, and the `map` authority façades (`recompute_hex_ownership`, `apply_feba_delta`, `clear_feba`) |
+| `scripts/model/HexState.gd` | `HexState` Resource — per-hex RUNTIME state (`hex_owner`, `feba_km`), the only mutable thing this subsystem has |
+| `scripts/transitions/MapTransitions.gd` | The `map` aggregate's mutation authority — the only writer of `HexState` and of the `hex_states` container |
+| `scripts/calc/HexOwnershipCalculator.gd` | Pure occupancy → owner derivation; omits unoccupied hexes, and that omission IS the sticky rule |
 | `data/taiwan_hex_grid.json` | Pre-generated grid snapshot (466 hexes, GSHHG-coastline-reconciled 2026-07-09) |
 
 ## 3. Data Model
@@ -76,3 +79,28 @@ Defines the hex-grid coordinate system, geometric computations (distance, neighb
   `HexMath.distance` converts odd-r→cube (`x = col - (row - (row&1))/2`, `z = row`, `y = -x-z`) before
   taking cube distance — matching the TIV oracle. The golden combat invariant was re-baselined as a
   result (`casualties=2, feba=0.76` → `casualties=3, feba=-0.55`).
+
+## 8. State & authority
+
+The grid itself — `Hex` definitions, geometry, terrain — is **immutable content** and owns no
+protected aggregate. The one mutable thing here is per-hex RUNTIME state, and it is the **`map`**
+aggregate. Authority: `MapTransitions` (plan 0047).
+
+- **Outcome type:** none. Ownership is not requested, it is DERIVED: `HexOwnershipCalculator` turns
+  the placement index into `{hex_id: owner}` and the authority applies it. FEBA moves by explicit
+  job-shaped operations (`apply_feba_delta`, `clear_feba`).
+- **Manifest:** [tools/mutation_authority_manifest.json](../../../tools/mutation_authority_manifest.json).
+
+**Rules:**
+- **A hex emptied of brigades KEEPS its last owner.** The calculator omits unoccupied hexes and the
+  authority iterates only what it returned; there is no default-fill pass. Plan 0006's infrastructure
+  seizure persistence depends on this, and no golden fixture would catch its loss.
+- **There is no owner setter.** Asserting an owner is not expressible, which is what makes the rule
+  above unbreakable rather than merely commented. The two generic setters that used to exist,
+  `GameData.set_hex_owner` and `set_hex_feba`, were deleted rather than migrated (historical).
+- Coordinators reach the authority through the `GameData` façades, never by naming it — the same
+  shape `set_brigade_hex` uses for the force aggregate, and what keeps three full dependency
+  ceilings intact.
+- The aggregate has **zero construction allowances**: `load_hex_grid` and `reset_hex_states` route
+  through the authority too, because `hex_states` lives inside a globally reachable autoload rather
+  than in a local object a builder still holds.

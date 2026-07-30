@@ -220,7 +220,7 @@ static func resolve_combat_at(state: GameStateData, hex_id: String, dice: Dice) 
 		ForceTransitions.apply_battalion_casualties(
 			GameData, ForceTransitions.ground_combat_casualty_request(casualty))
 
-	GameData.hex_states[hex_id].feba_km = GameData.hex_states[hex_id].feba_km + result.feba_movement_km
+	GameData.apply_feba_delta(hex_id, result.feba_movement_km)
 	for brigade_value in attacker_brigades + defender_brigades:
 		var fought_brigade: Brigade = brigade_value
 		GameData.mark_brigade_fought(fought_brigade)
@@ -289,7 +289,7 @@ static func apply_feba_retreats(state: GameStateData) -> void:
 
 		for brigade in retreaters:
 			GameData.set_brigade_hex(brigade.id, target)
-		GameData.hex_states[hex_id].feba_km = 0.0
+		GameData.clear_feba(hex_id)
 
 
 static func find_retreat_hex(from_hex: String, team: Brigade.Team) -> String:

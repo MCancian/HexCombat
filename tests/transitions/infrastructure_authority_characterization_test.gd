@@ -32,7 +32,12 @@ func test_taiwanese_with_arrived_jlsf_is_seized_and_degraded_in_one_tick() -> vo
 	var node: InfrastructureNodeState = state.nodes["port_a"]
 	node.jlsf = InfrastructureState.JLSF_ARRIVED
 
-	var result: Dictionary = InfrastructureResolver.tick(state, _defs, {"hex_001": HexOwner.RED})
+	var result := InfrastructureResolver.plan_tick(state, _defs, {"hex_001": HexOwner.RED})
+	# The planner is pure: nothing has moved yet, however long the staged chain is.
+	assert_str(node.node_status).override_failure_message(
+		"plan_tick must not write — it stages the chain in locals"
+	).is_equal(InfrastructureState.STATUS_TAIWANESE)
+	InfrastructureTransitions.apply_node_plan(state, result)
 
 	assert_str(node.node_status).override_failure_message(
 		"seizure and repair chain within one tick — the repair branch reads the status seizure just wrote"
@@ -55,13 +60,15 @@ func test_same_tick_chain_at_two_turns_per_stage() -> void:
 	node.jlsf = InfrastructureState.JLSF_ARRIVED
 	var owner_by_hex := {"hex_001": HexOwner.RED}
 
-	var r1: Dictionary = InfrastructureResolver.tick(state, _defs, owner_by_hex, 2)
+	var r1 := InfrastructureResolver.plan_tick(state, _defs, owner_by_hex, 2)
+	InfrastructureTransitions.apply_node_plan(state, r1)
 	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_SEIZED)
 	assert_int(node.repair_turns_remaining).is_equal(1)
 	assert_int(r1.events.size()).is_equal(1)
 	assert_str(String(r1.events[0]["event"])).is_equal("seized")
 
-	var r2: Dictionary = InfrastructureResolver.tick(state, _defs, owner_by_hex, 2)
+	var r2 := InfrastructureResolver.plan_tick(state, _defs, owner_by_hex, 2)
+	InfrastructureTransitions.apply_node_plan(state, r2)
 	assert_str(node.node_status).is_equal(InfrastructureState.STATUS_DEGRADED)
 	assert_int(r2.events.size()).is_equal(1)
 	assert_str(String(r2.events[0]["event"])).is_equal("degraded")

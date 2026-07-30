@@ -556,16 +556,6 @@ func refresh_all_hex_colors() -> void:
 	_build_ownership_borders()
 
 
-func set_hex_owner(hex_id: String, owner: String) -> void:
-	GameData.set_hex_owner(hex_id, owner)
-	refresh_hex(hex_id)
-
-
-func set_hex_feba(hex_id: String, feba_km: float) -> void:
-	GameData.set_hex_feba(hex_id, feba_km)
-	refresh_hex(hex_id)
-
-
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_RIGHT:

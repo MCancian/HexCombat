@@ -5,50 +5,72 @@ extends RefCounted
 ## infrastructure_manager.py (refresh_status_from_hex = seizure; progress_status = JLSF repair
 ## clock). Differences: in-memory state, repair requires hex still Red-held (pauses otherwise),
 ## status never regresses on recapture (contribution gated by ownership at read time in
-## red_offload_nodes). No dice, no autoload access.
+## red_offload_nodes). No dice, no autoload access, and since plan 0047 no writes either: the tick is
+## CALCULATED here and applied by InfrastructureTransitions, the aggregate's mutation authority.
 
-## Advance seizure + repair one turn. owner_by_hex: hex_id -> owner string (HexOwner.* values,
-## e.g. "red"). repair_turns_per_stage: ticks per repair stage (seized->degraded, degraded->
-## operational); default 1 mirrors TIV (+1 turn per stage). Mutates state in place (contract);
-## returns {"events": Array of {id, event}} with event in {"seized", "degraded", "operational"}.
-static func tick(state: InfrastructureState, infra_defs: Dictionary, owner_by_hex: Dictionary, repair_turns_per_stage: int = 1) -> Dictionary:
-	var events: Array = []
+## Decide what one turn of seizure + repair should do, writing nothing. owner_by_hex: hex_id -> owner
+## string (HexOwner.* values, e.g. "red"). repair_turns_per_stage: ticks per repair stage
+## (seized->degraded, degraded->operational); default 1 mirrors TIV (+1 turn per stage).
+##
+## THE SEQUENTIAL-STAGING RULE. Each node's transitions are staged in LOCALS and the repair branch
+## reads what the seizure branch just staged — exactly as the pre-0047 mutating `tick` read the status
+## it had just written. That chain is production-reachable (see InfrastructureTickPlan's header), and
+## a planner that evaluated both branches against the pre-tick snapshot would silently add a turn to
+## it. Deferring application is safe DESPITE that only because nodes never read each other and no dice
+## are involved — unlike the IJFS stages of plan 0046, where deferral would have changed which draws
+## were consumed.
+##
+## ONE DELIBERATE NON-EQUIVALENCE, on an unreachable path. `repair_turns_per_stage <= 0` used to arm a
+## stage at 0 and decrement it to -1, writing a negative timer that `InfrastructureState.validate()`
+## itself calls illegal. It is still STAGED that way here, but `InfrastructureTransitions.apply_node_plan`
+## refuses the entry and leaves the node alone, so invalid state is no longer written. This is not a
+## behaviour change in practice: the only production caller is `ReinforcementPhases.resolve_offload_turn`,
+## which passes no argument at all and so takes the default of 1, and the value is not a scenario knob.
+## Named here because the diff review round asked the question, and the answer should not have to be
+## re-derived. (Verified independently by the tier-1 reviewer: a caller passing <= 0 is ABSENT.)
+static func plan_tick(
+		state: InfrastructureState, infra_defs: Dictionary, owner_by_hex: Dictionary,
+		repair_turns_per_stage: int = 1) -> InfrastructureTickPlan:
+	var plan := InfrastructureTickPlan.new()
 	var ids: Array = state.nodes.keys()
 	ids.sort()
 	for id in ids:
 		var def_val: Variant = infra_defs.get(id)
 		if def_val == null:
-			push_error("InfrastructureResolver.tick: no def for node %s" % id)
+			push_error("InfrastructureResolver.plan_tick: no def for node %s" % id)
 			continue
 		var def_data: InfrastructureDef = def_val
 		var node: InfrastructureNodeState = state.nodes[id]
 		var is_red := String(owner_by_hex.get(def_data.hex_id, "")) == HexOwner.RED
 
+		var staged_status := node.node_status
+		var staged_repair_turns := node.repair_turns_remaining
+
 		# Seizure
-		if node.node_status == InfrastructureState.STATUS_TAIWANESE and is_red:
-			node.node_status = InfrastructureState.STATUS_SEIZED
-			node.repair_turns_remaining = 0
-			events.append({"id": id, "event": "seized"})
+		if staged_status == InfrastructureState.STATUS_TAIWANESE and is_red:
+			staged_status = InfrastructureState.STATUS_SEIZED
+			staged_repair_turns = 0
+			plan.record_event(id, InfrastructureTickPlan.EVENT_SEIZED)
 
-		# Repair. Reads the status SEIZURE JUST WROTE, deliberately: a node whose JLSF already
-		# arrived is seized and repaired in this same tick (an explicit deploy_jlsf order does not
-		# require a seized node, so a JLSF can arrive before Red takes the hex). Pinned by
-		# tests/transitions/infrastructure_authority_characterization_test.gd.
+		# Repair — reads the status seizure just staged, deliberately.
 		if node.jlsf == InfrastructureState.JLSF_ARRIVED and is_red:
-			var status := node.node_status
-			if status == InfrastructureState.STATUS_SEIZED or status == InfrastructureState.STATUS_DEGRADED:
-				if node.repair_turns_remaining == 0:
-					node.repair_turns_remaining = repair_turns_per_stage
-				node.repair_turns_remaining -= 1
-				if node.repair_turns_remaining == 0:
-					if node.node_status == InfrastructureState.STATUS_SEIZED:
-						node.node_status = InfrastructureState.STATUS_DEGRADED
-						events.append({"id": id, "event": "degraded"})
-					elif node.node_status == InfrastructureState.STATUS_DEGRADED:
-						node.node_status = InfrastructureState.STATUS_OPERATIONAL
-						events.append({"id": id, "event": "operational"})
+			if staged_status == InfrastructureState.STATUS_SEIZED \
+					or staged_status == InfrastructureState.STATUS_DEGRADED:
+				if staged_repair_turns == 0:
+					staged_repair_turns = repair_turns_per_stage
+				staged_repair_turns -= 1
+				if staged_repair_turns == 0:
+					if staged_status == InfrastructureState.STATUS_SEIZED:
+						staged_status = InfrastructureState.STATUS_DEGRADED
+						plan.record_event(id, InfrastructureTickPlan.EVENT_DEGRADED)
+					elif staged_status == InfrastructureState.STATUS_DEGRADED:
+						staged_status = InfrastructureState.STATUS_OPERATIONAL
+						plan.record_event(id, InfrastructureTickPlan.EVENT_OPERATIONAL)
 
-	return {"events": events}
+		if staged_status != node.node_status or staged_repair_turns != node.repair_turns_remaining:
+			plan.stage(id, staged_status, staged_repair_turns)
+
+	return plan
 
 
 ## Red-usable offload nodes this turn: Red-held (owner "red") AND status degraded/operational.

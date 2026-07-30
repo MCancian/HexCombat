@@ -18,6 +18,18 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   including `edit`, and these models have been measured announcing a fallback from the read-only agent to
   the writing `build` agent. Verify any change by having the `plan` agent attempt an edit and watching it
   be denied. Global `~/.config/opencode/opencode.json` currently has no `permission` block at all.
+- [ ] **A reviewer brief should demand NUMBERED findings from every role, including nil returns
+  (found 2026-07-30, plan 0047 steps 4-7 round).** `tools/review_fanout.sh --report` scores a return
+  `FLAKE` on "no numbered findings", which is right as a default — a died-early route is
+  indistinguishable from approval. But that round produced two genuine returns it could not count: the
+  tier-1 reviewer's 342-byte "no actionable findings" (a real read: it named a non-equivalence and two
+  ABSENT determinations) and the enumerator's 34 KB of correct verbatim lists (an enumeration role
+  produces lists, not findings). Auto-count said 1 of 2 and "hold uncommitted"; the quorum was in fact
+  met, on content. **The cheap fix is in the BRIEF, not the launcher:** require every role to answer as
+  a numbered list, with "1. No defect found — here is what I checked and what I concluded" as a legal
+  entry, and require an enumeration role to number its lists. Then the mechanical count matches reality
+  and no agent has to reason its way past a `QUORUM NOT MET` line. Pairs with the `--format json` item
+  below; do them together if either is touched.
 - [ ] **DeepSeek's return is unparseable by the byte band because its stdout is prompt echo + tool
   traces + report (found 2026-07-30, plan 0047; USER raised it).** Both plan-0047 rounds were
   substantive enumerations (23.6 KB and 14.7 KB) and both were labelled `SUSPECT` on size alone, so a

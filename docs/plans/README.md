@@ -4,30 +4,29 @@ Work orders for multi-session efforts. Each plan is a focused doc; **this index 
 of truth** for status. Status vocabulary: `Sketch` → `Exploring` → `In progress` → `✅ Shipped`
 → `Superseded`.
 
-## ▶ Next up: plan 0047 — map/infrastructure mutation authority
+## ▶ Next up: plan 0048 — reinforcement-state authorities
 
-Fourth of the mutation-authority campaign shipped (0046, 2026-07-30); 0047 is next by number, and
-0042-0046 are all satisfied as dependencies.
+Fifth and sixth of the mutation-authority campaign shipped together (0047, 2026-07-30); 0048 is next
+by number, and 0042-0047 are all satisfied as dependencies.
 
 Read in this order and stop when you can act; everything below is a pointer, not a duplicate.
 
-1. `docs/plans/0047-map-infrastructure-mutation-authority.md` — the plan. It is a `Sketch`, which
-   means it was written before anyone measured the tree. **Preflight it first**: the work loop asks
-   for a file:line inventory of every writer the plan claims exists, and rewriting the Sketch against
-   that inventory is what makes the implementation safe. In 0046 that step alone contradicted three
-   of the Sketch's premises, one of which would have added a game mechanic under cover of a refactor.
-2. `tools/mutation_authority_manifest.json` → `_schema_rules` — the six registration rules. Read those
+1. `docs/plans/0048-reinforcement-state-mutation-authority.md` — the plan. If it is still a `Sketch`, **preflight it first**: the work loop
+   asks for a `file:line` inventory of every writer the plan claims exists, and rewriting the Sketch
+   against that inventory is what makes the implementation safe. In 0046 that step alone contradicted
+   three of the Sketch's premises, one of which would have added a game mechanic under cover of a
+   refactor; in 0047 it shrank the claimed mutation surface to 7 writes in 2 files for the map.
+2. `docs/systems/mutation-authority/mutation-authority.md` — the campaign PROCEDURE: the registration
+   ordering, the field-naming rule, the four ordering traps, and what an authority looks like. Read it
+   before the manifest; it exists so each plan stops re-deriving the same half-dozen rules.
+3. `tools/mutation_authority_manifest.json` → `_schema_rules` — the six registration rules. Read those
    six lines instead of `tools/validate_mutation_authority.gd`; that is how they were learned the
    first time, at a cost of ~300 lines.
-3. `docs/archive/0046-ijfs-mutation-authority.md` — the most recent worked example, and the one with
-   the two traps that are not obvious from the manifest:
-   - **A protected field NAME is claimed repo-wide.** Registering `IjfsMunition.name` turned 22
-     innocent view-layer lines into gate failures; it had to be renamed. Check every field name you
-     are about to register against the rest of the tree BEFORE registering it — `name`, `id`,
-     `state`, `type`, `active` are all live mines.
-   - **`status: "migration"` and an existing authority file are mutually exclusive**, so an aggregate
-     goes straight to `enforced` and `legacy_writers` carries the migration, draining per commit.
-4. `docs/systems/amphibious-offload/amphibious-offload.md` §10 — the reference example for ONE object
+4. `docs/archive/0047-map-infrastructure-mutation-authority.md` — the most recent worked example, and
+   the one that shows how to hold a FULL dependency ceiling (a façade, or a genuine one-for-one swap),
+   how to split a calculator from an authority when a later branch reads what an earlier one decided,
+   and why a generic `set_x` setter gets deleted rather than migrated.
+5. `docs/systems/amphibious-offload/amphibious-offload.md` §10 — the reference example for ONE object
    shared by two authorities, split by field, neither reaching across.
 
 **Plans are ephemeral by contract.** A plan holds the design, the checklist, and progress notes
@@ -64,7 +63,7 @@ agent would need to read the plan to act, the closeout wasn't done.
 | 0044 | [Force mutation authority](../archive/0044-force-mutation-authority.md)                                 | **High — brigades, battalions, manifests, placement; replaces 0039**                                                                                                                                                                            | **✅ Shipped 2026-07-29** — `ForceTransitions` sole writer                                                                                    |
 | 0045 | [Sealift/fleet mutation authority](../archive/0045-sealift-fleet-mutation-authority.md)       | High — hull/cohort/pipeline conservation and one writer                                                                                                                                                                                               | **✅ Shipped 2026-07-29** — `SealiftTransitions` sole writer; typed `SealiftCohort`; zero legacy writers; no behavior/RNG/golden change |
 | 0046 | [IJFS mutation authority](../archive/0046-ijfs-mutation-authority.md)                       | High — targets, munitions, squadrons, typed stocks and writeback                                                                                                                                                                                      | **✅ Shipped 2026-07-30** — `IjfsTransitions` sole writer; typed MANPADS stock; zero legacy writers; no behavior/RNG/golden change |
-| 0047 | [Map/infrastructure mutation authority](0047-map-infrastructure-mutation-authority.md)       | High — ownership, FEBA, seizure, repair and JLSF lifecycle                                                                                                                                                                                            | Sketch                                                                                                                                                                                                                                      |
+| 0047 | [Map/infrastructure mutation authority](../archive/0047-map-infrastructure-mutation-authority.md) | High — ownership, FEBA, seizure, repair and JLSF lifecycle | **✅ Shipped 2026-07-30** — `MapTransitions` + `InfrastructureTransitions` sole writers; sticky ownership enforced by having no owner setter; zero legacy writers; no behavior/RNG/golden change |
 | 0048 | [Reinforcement-state mutation authority](0048-reinforcement-state-mutation-authority.md)     | High — mobilization and air-insertion capacity/history                                                                                                                                                                                                | Sketch                                                                                                                                                                                                                                      |
 | 0049 | [Accounting/turn mutation authority](0049-accounting-turn-mutation-authority.md)             | High — supply, orders, latches, phase and result application                                                                                                                                                                                          | Sketch                                                                                                                                                                                                                                      |
 | 0050 | [Mutation-authority campaign closeout](0050-mutation-authority-enforcement-closeout.md)      | High — independent audit, hard enforcement, deterministic closeout                                                                                                                                                                                    | Sketch                                                                                                                                                                                                                                      |
@@ -114,8 +113,9 @@ gate green before the next begins.
    loss booking and projection.
 5. **0046 — IJFS authority.** Persistent targets, munition inventory, squadrons, typed MANPADS stock,
    carry-over and cumulative writeback. Preserve every conditional RNG draw.
-6. **0047 — map/infrastructure authorities.** FEBA, sticky ownership, seizure, repair and JLSF node
-   lifecycle. Preserve current zero-ashore territorial-control behavior and phase timing.
+6. **0047 — map/infrastructure authorities.** ✅ Shipped 2026-07-30. FEBA, sticky ownership, seizure,
+   repair and JLSF node lifecycle, all preserved exactly; zero-ashore territorial control and phase
+   timing unchanged.
 7. **0048 — reinforcement-state authorities.** Mobilization pending/released state and air-insertion
    capacity/history, coordinated with force and IJFS authorities.
 8. **0049 — accounting and turn lifecycle.** Supply balance/history, order buffers, legal phase/turn
@@ -130,8 +130,9 @@ gate green before the next begins.
 - **0039 is superseded by 0044.** Do not implement its derived-ledger step.
 - **0033 brigade organization** should wait for 0044 or add no new Brigade writer.
 - **0002 per-hull escort magazines** is UNBLOCKED: 0043 and 0045 both shipped, so the aggregate per-type magazine now has one named writer (`SealiftTransitions`) to grow per-hull granularity behind.
-- **0031 graduated port suppression** should wait for 0047 unless the USER explicitly prioritizes
-  the mechanic first; otherwise both plans would redesign the same node transitions.
+- **0031 graduated port suppression** is UNBLOCKED: 0047 shipped 2026-07-30, so node transitions now
+  have one named writer (`InfrastructureTransitions`) and a typed `InfrastructureNodeState` to grow a
+  graduated status behind. Its mechanic is still a USER design call.
 - **0036 airborne balance** may proceed as data/balance work, but any new air-state mutation waits for
   0048.
 - **0041 autoload access** remains independent low-priority filler; it does not substitute for this

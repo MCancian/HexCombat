@@ -26,6 +26,13 @@ static func rebuild_fleet(state: GameStateData, ship_defs: Dictionary) -> void:
 	SealiftTransitions.rebuild_fleet(state, ship_defs)
 
 
+## Scenario reset of the infrastructure map, for GameState's reset_to_scenario. Same pass-through
+## shape and same reason as rebuild_fleet above: GameState reaches this phase's aggregate through the
+## module that owns the phase, never around it, and so keeps its own dependency ceiling.
+static func rebuild_infrastructure(state: GameStateData, infra_defs: Dictionary) -> void:
+	InfrastructureTransitions.rebuild_infrastructure(state, infra_defs)
+
+
 ## Advance the ship return pipeline and embark this turn's crossing wave. Dice-free and pure
 ## (SealiftResolver); this wrapper routes force mutations through ForceTransitions, hull/fleet
 ## mutations through SealiftTransitions, and performs companion updates (JLSF markers).
@@ -70,7 +77,7 @@ static func resolve_sealift_turn(state: GameStateData) -> void:
 		if JlsfCargo.is_jlsf_entry(entry) and state.infrastructure_state != null:
 			var port_id := String(entry.get("port_id", ""))
 			if state.infrastructure_state.nodes.has(port_id):
-				set_jlsf_marker(state, port_id, InfrastructureState.JLSF_ENROUTE)
+				InfrastructureTransitions.mark_jlsf_enroute(state.infrastructure_state, port_id)
 
 	state.last_sealift_sent_by_type = outcome["sent_by_type"]
 	SealiftTransitions.project_fleet(state)
@@ -112,7 +119,12 @@ static func resolve_offload_turn(state: GameStateData, dice: Dice) -> Dictionary
 	var infra_nodes: Array = []
 	if state.infrastructure_state != null:
 		var owner_by_hex_map := owner_by_hex()
-		InfrastructureResolver.tick(state.infrastructure_state, GameData.infrastructure, owner_by_hex_map)
+		# Calculate, then apply through the aggregate's authority, then read. The apply stays HERE,
+		# before red_offload_nodes, so this turn's seizures and repairs are visible to this turn's
+		# throughput exactly as they were pre-0047.
+		var tick_plan := InfrastructureResolver.plan_tick(
+			state.infrastructure_state, GameData.infrastructure, owner_by_hex_map)
+		InfrastructureTransitions.apply_node_plan(state.infrastructure_state, tick_plan)
 		infra_nodes = InfrastructureResolver.red_offload_nodes(state.infrastructure_state, GameData.infrastructure, owner_by_hex_map)
 
 	if state.ship_reserve.is_empty():
@@ -142,7 +154,7 @@ static func resolve_offload_turn(state: GameStateData, dice: Dice) -> Dictionary
 		var arrival: Dictionary = arrival_value
 		var port_id := String(arrival["port_id"])
 		if state.infrastructure_state != null and state.infrastructure_state.nodes.has(port_id):
-			set_jlsf_marker(state, port_id, InfrastructureState.JLSF_ARRIVED)
+			InfrastructureTransitions.mark_jlsf_arrived(state.infrastructure_state, port_id)
 	if state.sealift_state != null:
 		SealiftTransitions.release_hulls(
 			state.sealift_state, ForceTransitions.free_emptied_cohorts(state.sealift_state),
@@ -174,33 +186,9 @@ static func owner_by_hex() -> Dictionary:
 static func reconcile_lost_jlsf(state: GameStateData) -> void:
 	if state.infrastructure_state == null:
 		return
-	for id_value in state.infrastructure_state.nodes.keys():
-		var marker := jlsf_marker(state, String(id_value))
-		if marker != InfrastructureState.JLSF_QUEUED and marker != InfrastructureState.JLSF_ENROUTE:
-			continue
-		var brigade_id := JlsfCargo.brigade_id_for(String(id_value))
-		if not reserve_or_pool_has(state, brigade_id):
-			set_jlsf_marker(state, String(id_value), InfrastructureState.JLSF_NONE)
-
-
-## Read/write one node's JLSF marker without naming InfrastructureNodeState in this file.
-##
-## TRANSITIONAL (plan 0047 step 3 of 8). These two helpers exist because typing the node would
-## otherwise add InfrastructureNodeState to this module's dependency count, and this module is
-## already exactly at its measured ceiling of 22 — a ceiling is paid for, not raised.
-##
-## Step 5 must DELETE both of these, not reimplement their bodies: the ceiling is only paid back when
-## the `InfrastructureState` constants at the CALL SITES go too, which happens when those sites become
-## `InfrastructureTransitions.mark_jlsf_enroute` / `mark_jlsf_arrived` / `clear_jlsf` plus the
-## in-transit-id query. Swapping the bodies alone leaves the constants and still breaches the ceiling
-## — and would leave behind a generic arbitrary-marker setter where operation-specific authority
-## methods belong.
-static func jlsf_marker(state: GameStateData, port_id: String) -> String:
-	return String(state.infrastructure_state.nodes[port_id].jlsf)
-
-
-static func set_jlsf_marker(state: GameStateData, port_id: String, marker: String) -> void:
-	state.infrastructure_state.nodes[port_id].jlsf = marker
+	for port_id in InfrastructureTransitions.jlsf_in_transit_ids(state.infrastructure_state):
+		if not reserve_or_pool_has(state, JlsfCargo.brigade_id_for(port_id)):
+			InfrastructureTransitions.clear_jlsf(state.infrastructure_state, port_id)
 
 
 static func reserve_or_pool_has(state: GameStateData, brigade_id: String) -> bool:
