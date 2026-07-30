@@ -29,6 +29,19 @@ static func trespass(host: FixtureHost, rows: Array, count: int) -> void:
 	host.unrelated_note = "untouched by this aggregate"
 
 
+## A protected DICTIONARY field written by key, and mutated in place. This is the shape plan 0046
+## depends on: IjfsTarget.metadata carries the MANPADS serialization mirror, and the authority is the
+## only file allowed to touch it. The array forms above did not prove the dictionary forms — only the
+## legal writes in authority.gdfixture exercised a Dictionary field, so a scanner that handled
+## `field[i] =` on an Array but not on a Dictionary would have passed the self-test while leaving the
+## mirror unguarded.
+static func trespass_into_a_protected_dictionary(row: FixtureRow, key: String, count: int) -> void:
+	row.profile_by_key[key] = count                         #@expect element_assign
+	row.profile_by_key["nested"] = {"stock": count}         #@expect element_assign
+	row.profile_by_key.erase(key)                           #@expect container_mutate
+	row.profile_by_key.merge({"stock": count}, true)        #@expect container_mutate
+
+
 ## An INDEXED receiver. Without index segments in the chain pattern these matched nothing at all —
 ## not even as unresolved — which was the one genuinely silent false negative the review found.
 static func trespass_through_index(rows: Array[FixtureRow], host: FixtureHost, i: int) -> void:

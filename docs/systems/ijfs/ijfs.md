@@ -208,7 +208,40 @@ whole count from the firing plan.
 | `data/ijfs/sam_capabilities.json` | `model_version, fallback_by_category, sam_score_by_subcategory` | 17 | `IjfsLoaders.load_sam_capabilities` |
 | `data/ijfs/grouped_targets.json` | `metadata, groups[]` — mobile SAM relocation grouping | 104 | Used by validation scripts |
 
-## 9. TIV-Port Fidelity Notes
+## 9. State & authority
+
+This subsystem owns the **`ijfs`** aggregate. Its designated authority is `IjfsTransitions`
+(`scripts/transitions/IjfsTransitions.gd`, plan 0046) — the only production writer of `IjfsTarget`,
+`IjfsMunition` and `IjfsSquadron`, of the three `IjfsDailyState` containers that persist across days,
+and of the `ijfs_state` / `_ijfs_day` handles on `GameStateData`.
+
+- **Outcome/receipt types:** none. Unlike the other aggregates the stages call the authority directly
+  at their existing draw point rather than returning an outcome for a coordinator to apply — see
+  below for why that is forced rather than chosen.
+- **Manifest:** [tools/mutation_authority_manifest.json](../../../tools/mutation_authority_manifest.json).
+
+**Rules:**
+- Destruction is monotonic. No method in the authority clears `destroyed`, so a target cannot
+  resurrect; suppression resets and detection passes leave it alone.
+- Suppression is per-day and clears at the carry-over; destruction, detection continuity, munition
+  inventory and squadron attrition carry forward.
+- An exhausted magazine is a normal skipped attack, reported as `false`, never an error.
+- Squadron strength stays within `0 <= alive <= initial`; `losses_today` is campaign-cumulative
+  despite its name, and `rtb_today` has no runtime writer at all.
+- MANPADS stock lives on the typed `IjfsTarget.manpads_remaining`;
+  `metadata["systems_remaining"]` is a serialization mirror the authority keeps in step, because
+  `metadata` is aliased live into the ledger rows.
+
+**Why this authority is called from inside the stages.** Every other aggregate applies once, at the
+end, from a coordinator. IJFS cannot: its stages consume dice CONDITIONALLY on state an earlier stage
+just wrote, and later stages choose which targets to iterate by reading it
+(`IjfsTargeting.targets_to_attack` filters on `destroyed` / `detected_this_turn`; the MANPADS bins sort
+on ready stock). Deferring application to end-of-day would change which targets are iterated and
+therefore how many draws are consumed, which the golden pins forbid. The boundary this buys is a named,
+checked, single-file writer — not a deferred one. That is also why the stage files stay in
+`scripts/ijfs/` rather than moving to `scripts/calc/`; see the directory table in `docs/STATUS.md`.
+
+## 10. TIV-Port Fidelity Notes
 
 | Stage | HexCombat file | TIV file | Fidelity |
 |---|---|---|---|

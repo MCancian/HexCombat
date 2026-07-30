@@ -19,6 +19,21 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-30 — IJFS mutation authority shipped; an authority that applies INSIDE its stages
+  (agent, plan 0046).** `IjfsTransitions` is the sole writer of `IjfsTarget` / `IjfsMunition` /
+  `IjfsSquadron`, the three `IjfsDailyState` containers that persist across days, and the
+  `ijfs_state` / `_ijfs_day` handles. Unlike the first three aggregates it is called from within the
+  pipeline stages rather than once from a coordinator, because IJFS consumes dice conditionally on
+  state an earlier stage just wrote and later stages select targets by reading it — deferring
+  application would change the draw count. That forced a new directory claim for `scripts/ijfs/`
+  rather than widening `scripts/calc/`'s "writes nothing" claim to accommodate one subsystem.
+  MANPADS stock moved from a free-form `metadata` key to a typed field first, with the key kept as a
+  serialization mirror because `metadata` is aliased live into the ledger rows. Also folded in the
+  `IjfsEngine._run_strike_phase` parameter-ceiling paydown (11 params, plus two more functions), which
+  the BACKLOG flagged as colliding with this plan. Facts: `docs/systems/ijfs/ijfs.md` §9,
+  `docs/STATUS.md` (aggregate list + directory table), `tools/mutation_authority_manifest.json`,
+  `scripts/transitions/IjfsTransitions.gd` header.
+
 - **2026-07-30 — Reviewer tiers, one canonical home, and a fan-out launcher (USER call + agent, plan 0054).**
   The USER set a reviewer hierarchy — tier 1 GPT-5.6 Sol (peer), tier 2 the agy wrappers and DeepSeek V4
   Flash, tier 3 MiniMax M3 and Nemotron Ultra (bonus roles only, never quorum) — and made a round a fixed

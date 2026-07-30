@@ -158,9 +158,21 @@ paths, dead fields, an unclassified field on an owned model, two aggregates clai
 stale allowance, an unregistered file under `scripts/transitions/`, and a scan that saw nothing all
 fail. Illegal fixtures under `tools/fixtures/mutation_authority/` declare the rule each line must
 trigger and are compared exactly on every run, so a detector that stops working fails as a false
-negative instead of going quietly green. **Three aggregates are registered and ENFORCED:**
+negative instead of going quietly green. **Four aggregates are registered and ENFORCED:**
 `antiship_establishment`, whose sole writer is `scripts/transitions/AntishipTransitions.gd` (plan
 0043; zero legacy writers); the **`force`** aggregate (plan 0044), whose protected Brigade/Battalion runtime fields, placement, and manifest memberships are written solely by `scripts/transitions/ForceTransitions.gd`; and the **`sealift_fleet`** aggregate (plan 0045), whose `ShipState` fleet projection, cohort hulls and legs, return/reload pipeline and escort SAM magazines are written solely by `scripts/transitions/SealiftTransitions.gd`. All legacy writers and façades have been removed, routing every production write through the authority seam without moving golden pins.
+
+A **fourth** aggregate, **`ijfs`** (plan 0046), whose sole writer is
+`scripts/transitions/IjfsTransitions.gd`: the `IjfsTarget` / `IjfsMunition` / `IjfsSquadron` models, the
+three `IjfsDailyState` containers that persist across days, and the `ijfs_state` / `_ijfs_day` handles
+on `GameStateData`. Zero legacy writers; no behaviour, RNG or golden change. Two of its lessons
+generalize. First, **a protected field NAME is claimed repo-wide**, so registering a generic one
+poisons unrelated code — `IjfsMunition.name` turned 22 innocent view-layer lines into unresolved-write
+failures and had to become `munition_name` (the manifest's `_schema_rules` already ask for distinctive
+names; this is what ignoring that costs). Second, **`status: "migration"` and an existing authority file
+are mutually exclusive** — a file in `scripts/transitions/` must be some aggregate's `authority_path`,
+and a migration aggregate may not declare one — so an aggregate goes straight to `enforced` and
+`legacy_writers` carries the migration instead.
 
 Plan 0045 also settled how ONE object can belong to two aggregates: a sealift cohort binds troops to
 hulls, so it became a typed `SealiftCohort` whose `bn_ids` is registered to `force` and whose

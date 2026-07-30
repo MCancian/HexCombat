@@ -56,13 +56,23 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   fixtures or it is a false negative waiting to happen (see `validate_mutation_authority.gd`'s
   E_VACUOUS family). Do it when ~10 usages exist, and add fixtures that prove each direction fails.
 
-- [ ] **Pay down remaining parameter-ceiling contexts after plan 0052.** `tools/gd_metrics.py` now
-  enforces real wrapped-signature counts. Anti-ship crossing was paid down with
-  `AntishipCrossingContext`; the remaining high-value grandfathered production function is
-  `IjfsEngine._run_strike_phase` (11 params), which is context-shaped rather than behavior-shaped.
-  Follow the `AntishipResolutionContext` pattern: typed Resource in `scripts/model/`, keep `Dice`
-  explicit, remove each fixed function from `PARAM_CEILINGS`, and prove golden byte-stability. Watch
-  plan conflicts: 0046 will touch IJFS internals.
+- [x] **Pay down remaining parameter-ceiling contexts after plan 0052.** *(done 2026-07-30 inside plan
+  0046, which is where the collision warning pointed.)* `IjfsStrikePhaseContext` took
+  `IjfsEngine._run_strike_phase` from 11 params to 4, and `_append_final_skips` (6→2) and `_skip_log`
+  (6→3) came with it since they consume the same bundle — one byte-stability proof for three
+  functions. All three `PARAM_CEILINGS` entries removed rather than renumbered. Remaining
+  grandfathered production functions are listed in `tools/gd_metrics.py`; none is currently
+  context-shaped enough to be worth the same treatment.
+
+- [ ] **`IjfsSquadron.losses_today` is campaign-cumulative, not per-day (found 2026-07-30, plan 0046
+  preflight).** Nothing resets it — `carry_to_next_day` touches targets only — so a name that promises
+  "today" reports the whole campaign, and it is serialized into the `air_oob_after` ledger and the
+  daily summary's `red_air_losses`. Deliberately preserved by 0046, which was an authority migration
+  with byte-stability as its acceptance test; changing it is a behaviour change needing a golden
+  re-baseline and a USER call on which number the ledger should carry. `rtb_today` is the related
+  oddity: no runtime writer at all, reported as a constant 0. Both are pinned as-is by
+  `tests/ijfs/ijfs_authority_characterization_test.gd`, so a fix has to go through those tests
+  deliberately rather than by accident.
 
 - [ ] **Validator harness: `_fail` / `_finish` / asserts are copy-pasted across the validators
   (found 2026-07-25, refactor review).** Measured: `func _fail` in **30 of 36** `tools/validate_*.gd`,
