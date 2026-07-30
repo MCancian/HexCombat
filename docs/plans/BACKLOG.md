@@ -18,6 +18,19 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   including `edit`, and these models have been measured announcing a fallback from the read-only agent to
   the writing `build` agent. Verify any change by having the `plan` agent attempt an edit and watching it
   be denied. Global `~/.config/opencode/opencode.json` currently has no `permission` block at all.
+- [ ] **DeepSeek's return is unparseable by the byte band because its stdout is prompt echo + tool
+  traces + report (found 2026-07-30, plan 0047; USER raised it).** Both plan-0047 rounds were
+  substantive enumerations (23.6 KB and 14.7 KB) and both were labelled `SUSPECT` on size alone, so a
+  future agent may discard a good return — one of them held the only catch of its round. **The fix is
+  `--format json`** on the opencode route (it emits raw JSON events), plus a `tools/review_fanout.sh`
+  change to extract the final assistant message, plus the gated invocation row in `.claude/REVIEWERS.md`
+  updated in the same commit or `tools/validate_reviewer_facts.gd` goes red. **Do NOT instead ask the
+  reviewer to write its report to a file:** it contradicts the `REVIEW ONLY` line the launcher prepends,
+  `--agent plan` has been measured not honoured by some opencode models, and the only writable location
+  is inside the worktree — which is the measured cross-contamination incident in `~/.claude/AGY.md`
+  (one reviewer's artifact read off disk and returned verbatim by another as fake corroboration).
+  Note an enumeration return is legitimately long even once the noise is stripped, so the 1–10 KB band
+  needs a role-aware exception either way.
 - [ ] **`tools/review_fanout.sh` residual hardening, all deliberately declined during plan 0054's review
   rounds — re-raise only with a failure to point at.** (a) A snapshot made with `git diff --binary` is
   rejected by the structural check; a stateful binary-patch parser was declined, and `--freeze` never

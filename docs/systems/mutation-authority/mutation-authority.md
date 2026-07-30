@@ -100,7 +100,27 @@ house shape:
   (plan 0046), and `InfrastructureResolver.tick`'s repair branch reads the status its seizure branch
   just wrote in the same iteration (plan 0047).
 
-## 7. State & authority
+## 7. Maintaining this doc
+
+**Every remaining campaign plan (0048, 0049, 0050) updates this file at closeout** — it is in the
+ownership table in `hexcombat-docs-and-writing`, so the check is mechanical, not a thing to remember.
+Add only what generalizes:
+
+- a **new ordering trap** in §5 — something that made the gate red in a way the existing rules did not
+  predict;
+- a **new authority shape** in §6 — a situation the two worked examples do not cover;
+- a **field-naming casualty** in §4, with the measured cost.
+
+Do **not** add per-aggregate ownership facts (the manifest holds those), per-plan narrative (the
+archived plan holds that), or a restatement of the scanner's detection rules (the validator header
+holds those). This doc was written from one plan's experience and is deliberately thin; the risk it
+carries is stale *prose* over valid anchors, which `tools/validate_doc_anchors.gd` cannot catch.
+
+Open extraction task: plans 0042–0046 are archived with their own review rounds and retrospectives,
+and their generalizable lessons were never consolidated here. §5 currently reflects 0046 and 0047
+only.
+
+## 8. State & authority
 
 This subsystem owns no runtime aggregate of its own — it is the governance layer for everyone
 else's. Current aggregates, authorities and status: `tools/mutation_authority_manifest.json`, and the

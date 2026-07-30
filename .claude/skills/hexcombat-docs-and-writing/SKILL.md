@@ -50,6 +50,7 @@ code headers were correct.
    | `LLMGameAPI`, `LLMPolicy`, `llm_sidecar*`, `SelfPlayRunner`, batch/report/bundle tools | `llm-api-selfplay.md` |
    | `HexMap`, `GameController`, scenes | `view-layer.md` |
    | `GameState.resolve_turn` wiring, `EventBus`, cross-phase fields | `turn-engine.md` |
+   | `scripts/transitions/**`, `tools/mutation_authority_manifest.json`, `tools/validate_mutation_authority.gd` | `mutation-authority.md` |
 
    **Mechanical backstop:** `tools/validate_doc_anchors.gd` (in the gate) fails RED when a
    systems doc cites a dead path/script/member or uses a `file.gd:123` line citation — so a

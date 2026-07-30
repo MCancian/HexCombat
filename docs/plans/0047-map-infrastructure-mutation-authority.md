@@ -409,7 +409,9 @@ at any step.
 
 ## Closeout homes
 
-On shipment: `docs/STATUS.md`; `docs/systems/hex-grid/hex-grid.md`,
+On shipment: `docs/STATUS.md` (the aggregate table); **`docs/systems/mutation-authority/mutation-authority.md`
+— add any ordering trap or authority shape this plan found that generalizes, per its §7**;
+`docs/systems/hex-grid/hex-grid.md`,
 `docs/systems/terrain/terrain.md` only if their runtime-state claims change,
 `docs/systems/frontline-cleanup-victory/frontline-cleanup-victory.md`,
 `docs/systems/amphibious-offload/amphibious-offload.md`, `docs/systems/turn-engine/turn-engine.md`;
