@@ -89,6 +89,6 @@ re-baseline history is in `docs/DECISIONS.md` (pre-2026-07-10: `docs/archive/PLA
 
 ## Who implements
 
-The frontier agent implements directly (user call 2026-07-02). `opencode run` (small free model)
-is reserved for cheap mechanical or read-only exploratory chores — never for golden-touching or
-architectural work, and its output is always independently verified.
+The frontier agent implements directly (user call 2026-07-02). The small free models (roster and
+invocations: `.claude/REVIEWERS.md`) are reserved for cheap mechanical or read-only exploratory chores —
+never for golden-touching or architectural work, and their output is always independently verified.

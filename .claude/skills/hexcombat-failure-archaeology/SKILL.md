@@ -9,6 +9,28 @@ Settled battles. Primary sources: `docs/DECISIONS.md` (+ pre-2026-07-10 history 
 `docs/archive/PLAN.md` → Decisions) and `docs/RETROSPECTIVES.md`
 (lessons, dated entries). Newest lessons get APPENDED here when they close an investigation.
 
+### The "frozen artifact" that was a token-compacted summary (2026-07-30)
+- **Symptom:** a review round of three reviewers came back with two clean-ish verdicts (all "ABSENT",
+  one nit) and one 823-byte blocker. The two clean returns were the reassuring ones and were wrong to
+  trust; the tiny one was right.
+- **Root cause:** the snapshot handed to reviewers was made with `git diff > file`, but the `rtk` shell
+  hook **rewrites `git` in the agent's session**, so the file was rtk's compacted SUMMARY — it ended in
+  `... (more changes truncated)` / `[full diff: rtk git diff --no-compact]` and contained **zero
+  `diff --git` headers**. It looked exactly like a review artifact.
+- **Why the clean verdicts were worthless:** with an unreadable artifact, two reviewers silently fell
+  back to reading the live working tree and reported on that instead, without saying so. Only the
+  tier-1 reviewer refused the round and named the truncation.
+- **Status:** fixed structurally, not by remembering. `tools/review_fanout.sh --freeze` produces the
+  snapshot itself (inside a script, `git` is real git) and verifies its own output is a diff: it must
+  carry `diff --git` headers and **every line must be diff output** — a word-search for "truncated" was
+  tried first and false-positived on source code discussing truncation. Handing the script a snapshot
+  you built yourself was possible for four review rounds and is now **impossible**: `--sha` and
+  `--snapshot` were deleted (plan 0054, USER call), because every check a caller-built artifact needed
+  arrived as its own defect.
+- **Two transferable lessons.** Use `rtk proxy git …` when you need ground truth from git (this trap
+  had already been recorded once, for `git status`). And **a small return is not a flake**: byte size
+  says what to read, never what to believe.
+
 ### The gate "hang" that was two separate illusions (2026-07-25)
 - **Symptom:** the full gate appeared to hang. Its redirected output file sat at **0 bytes** for
   many minutes, and `ps -eo pid,args | grep godot` returned **nothing**, so the run looked both
@@ -193,8 +215,9 @@ Settled battles. Primary sources: `docs/DECISIONS.md` (+ pre-2026-07-10 history 
 - **Symptom:** the prior implementer CLI `pi` died instantly on this box.
 - **Root cause:** it spawns `opencode` via `spawn('opencode')` without `shell:true`; Windows
   can't resolve the `.cmd` shim.
-- **Status:** abandoned — call `opencode run` directly. (Since 2026-07-02 the frontier agent
-  implements directly anyway; opencode = mechanical chores only.)
+- **Status:** **fixed — this entry is (historical).** `pi` was abandoned for a month, then verified
+  working on the Linux box 2026-07-29 (v0.82.1 via linuxbrew) and is now the multi-model front end for
+  the reviewer roster. Do not re-derive its status from this entry; `.claude/REVIEWERS.md` is current.
 
 ### Map projection stretch (2026-06-24)
 - **Symptom:** flat/wide hexes, ~2.75× horizontal stretch, markers off-screen north.

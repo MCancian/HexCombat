@@ -33,82 +33,53 @@ not guess game design.
    per commit.
 5. Verify yourself: `pwsh -File tools/run_all_tests.ps1` → **ALL PHASES GREEN** (verdict rules in
    `hexcombat-validation-and-qa`; flake handling in `hexcombat-debugging-playbook`).
-6. **Consult before committing** (USER standing instruction 2026-07-25). Nothing is committed until
-   **two substantive independent reads** have landed — **review-only, they never implement.** This
-   applies to plans *and* to the finished diff; a plan gets reviewed before code is written, the diff
-   before it is committed. A reviewer that returned no findings because it FLAKED does not count as
-   one of the two. See "Consultation" below.
+6. **Consult before committing** (USER standing instruction 2026-07-25; quorum set 2026-07-30).
+   Implementing a numbered plan? The diff is not committed until **two of the three quorum reviewers
+   return substantive findings** — **review-only, they never implement.** A reviewer that returned no
+   findings because it FLAKED is not one of the two. See "Consultation" below.
 7. Record per `hexcombat-docs-and-writing` (STATUS / Decisions / RETROSPECTIVES / backlog
    check-off), then commit. **Push at milestones**, not every micro-commit.
 8. Pause and surface to the user on: a genuine design decision, a gate you can't get green after
    a couple of focused attempts, or anything destructive/irreversible.
 
-## Consultation (review-only, twice per unit of work)
+## Consultation (review-only; reviewers never implement)
 
 The USER is non-coding and cannot review the technical soundness of a plan or a diff themselves, so
-independent model reads substitute for that. They are cheap; a wrong plan or a silent regression is
-not. **Two rounds are required:**
+independent model reads substitute for that. Two rounds happen per unit of work:
 
-- **Before implementation** — the plan → `.claude/skills/hexcombat-plan-review`
-- **Before committing** — the finished diff, gate already green → `.claude/skills/hexcombat-diff-review`
+- **Before implementation** — the plan → `.claude/skills/hexcombat-plan-review`. At least one
+  substantive read.
+- **Before committing** — the finished diff, gate already green → `.claude/skills/hexcombat-diff-review`.
+  For a numbered plan's implementation this is **quorum-bound: 2 of 3**.
 
-Those skills own the brief format, the measured model-reliability table, flake detection, the
-reviewer-safety rules, and how to evaluate findings rather than obey them. **Read the relevant one
-before each round** rather than improvising a prompt — an unguided reviewer reads the wrong five
-files and returns a summary of your own work.
+**Everything about WHO and HOW lives in `.claude/REVIEWERS.md`** — the round, the tiers, the exact
+invocations, read-only flags, measured route reliability, brief invariants, flake triage, safety, roles.
+It is the single home for those facts. `tools/validate_reviewer_facts.gd` gates the mechanical half —
+a copied **invocation or model id** fails the gate anywhere but the roster; duplicated *prose* is
+convention, not enforced. Run a round with **`tools/review_fanout.sh`** rather than
+hand-assembling commands.
 
-**Who to invoke, and how, lives in `.claude/REVIEWERS.md`** — the roster, the exact commands, the
-read-only flags, and the measured reliability per model. It is the single home for those facts; do not
-copy them into a plan or a brief.
+Three things change what you *do*, so they are here and not only there:
 
-Five things are worth knowing before you get there, because they change what you run:
-
-- **Probe reviewer availability BEFORE you implement, not when you are ready to commit.** On
-  2026-07-29 `agy` was quota-blocked for an entire session and its reset counter moved the wrong way,
-  so an estimate made at the start was worthless by the end. A 30-second probe changes the order you
-  do the work in. If every reviewer is down: keep implementing, and **hold the finished work
-  UNCOMMITTED as the waiting state** — that is the sanctioned holding pattern. "Reviewers were
-  unavailable" must never become "committed unreviewed"; surface the situation to the USER instead,
-  who can spin up reviewers you cannot reach.
-- **Hand reviewers a FROZEN artifact — a commit SHA or a `git diff > file` snapshot — never the
-  working tree.** Measured 2026-07-29: two of three reviewers read the tree while it was being edited;
-  one returned an eight-item failure report describing a state that never shipped, and disproving it
-  cost a full round. This is the read-only twin of the rule that `agy-verify` sees committed state
-  only, and it is worse, because a mid-edit finding looks exactly like a real one.
-- **`agy-explore` is the reviewer of record.** Measured 4/4 substantive over the 0043/0051 session
-  against 1/3 and 0/3 for the two free opencode models. The others are useful for bounded mechanical
-  enumeration ("list every read/write of these fields") — see the roster for which.
-- **A flake is not a pass.** Both failure shapes return *something* — under 1 KB (died early) or
-  over 10 KB (dumped tool output). No numbered findings means nobody reviewed it. Re-run.
-- **Spend the spare agy budget on different ROLES, not repeats:** fact-check the premises /
-  consequences / "what will a weaker implementer get wrong" / oracle check against TIV
-  (`agy-explore -d ~/Projects/TaiwanInvasionViewer`) / method check (`agy-verify`). Repeats of one
-  brief are correlated noise. The oracle and weaker-implementer roles each produced a blocker that
-  nothing else caught.
-
-The two rules worth knowing before you get there: **every prompt must say REVIEW ONLY** (`--agent
-explore` is not honoured by every opencode model — they fall back to the *writing* `build` agent), and
-**run `git status --short` after every round**, because a stray file written by one reviewer
-contaminates the others and produces fake corroboration.
+- **Probe reviewer availability BEFORE you implement, not at commit time.** A quota-block discovered at
+  the end strands finished work; discovered at the start it reshapes the order you work in.
+- **Never hand over a live working tree** — use `tools/review_fanout.sh --freeze`, which snapshots the
+  tree itself and refuses to launch otherwise. Do not hand-build the snapshot: `git diff > file` in this
+  session is rewritten by a shell hook into a compacted summary, which voided a round on 2026-07-30.
+- **If quorum cannot be reached, hold the work UNCOMMITTED** and surface it to the USER, who can spin up
+  reviewers you cannot reach. "Reviewers were unavailable" must never become "committed unreviewed".
 
 Commit messages end with the `Co-Authored-By` trailer + session link the harness specifies for
 the acting model. Never commit `.mcp.json`.
 
 ## Auxiliary tools
 
-- **agy** (Antigravity CLI) — the primary delegation path, and the USER has spare capacity on it, so
-  prefer it over doing token-heavy reading yourself. Two wrappers (full contract in `~/.claude/AGY.md`):
-  - `agy-explore "task"` — READ-ONLY. Exploration sweeps, large-file summaries, plan/diff review.
-    `-d <dir>` adds a workspace dir, which is how the TIV oracle gets read. `AGY_TIMEOUT=15m` for
-    reviews (default 5m). *(Renamed from `gem-explore` 2026-07-27; `gem` was the old CLI name.)*
-  - `agy-verify "task"` — MAY RUN COMMANDS, sandboxed to a throwaway git worktree of HEAD that is
-    deleted on exit. For "reproduce my measurement; is the method sound?" — the only pass that
-    catches methodology errors, which reading cannot. **Sees committed state only.**
-  - Raw `agy -p` / `agy -i` / `-c` still available, but bare `agy -p` has timed out on multi-file
-    reviews; prefer the wrappers.
-- **Weaker models (`pi`, `opencode`)** — roster and invocations in `.claude/REVIEWERS.md`. What to
-  give them is decided by the SHAPE of the task, not its subject. Measured over three delegations on
-  2026-07-29:
+- **agy** (Antigravity CLI) — the primary delegation path for token-heavy reading, and the USER has
+  spare capacity on it, so prefer it over reading everything yourself. One wrapper reads, one may run
+  commands in a throwaway worktree; which is which, what each can see, and how to invoke them are in
+  `~/.claude/AGY.md` (CLI contract) and `.claude/REVIEWERS.md` (review use).
+- **Weaker models** — tiers, routes and invocations in `.claude/REVIEWERS.md`. What to give them is
+  decided by the SHAPE of the task, not its subject. Measured over three delegations on 2026-07-29:
   - **Reliable — mechanical transformation with a mechanical check.** A 16-reference path sweep came
     back 16/16 correct, every diff path-only, and it escalated its one ambiguous case instead of
     guessing. Give these work freely.
@@ -127,8 +98,8 @@ the acting model. Never commit `.mcp.json`.
   (`hexcombat-run-and-operate` has the screenshot path).
 - **`pi` CLI works** (v0.82.1 via linuxbrew, verified 2026-07-29 — an earlier note here claimed it was
   dead on this box from an ENOENT spawning the opencode shim; that is no longer true). It is the
-  multi-model front end for the reviewer roster: `pi -p --no-session --model <id> "PROMPT"`, plus
-  `--tools read,grep,find,ls` to make a review read-only. Commands per model in `.claude/REVIEWERS.md`.
+  multi-model front end for the reviewer roster; the per-model commands and read-only flags are in
+  `.claude/REVIEWERS.md`.
 
 ## Known harness facts
 

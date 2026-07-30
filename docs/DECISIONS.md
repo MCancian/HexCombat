@@ -19,6 +19,18 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-30 — Reviewer tiers, one canonical home, and a fan-out launcher (USER call + agent, plan 0054).**
+  The USER set a reviewer hierarchy — tier 1 GPT-5.6 Sol (peer), tier 2 the agy wrappers and DeepSeek V4
+  Flash, tier 3 MiniMax M3 and Nemotron Ultra (bonus roles only, never quorum) — and made a round a fixed
+  fan-out of three with a **2-of-3 quorum binding the IMPLEMENTATION of a numbered plan**, not plan
+  documents or smaller work; two rounds per unit of work, with review-tooling findings going to BACKLOG
+  rather than re-opening a round. Reviewer facts had spread over eight homes and diverged badly enough
+  that both review skills listed a two-model roster with no tier-1 reviewer in it. `.claude/REVIEWERS.md`
+  is now canonical, `tools/review_fanout.sh` is its executable copy, and `tools/validate_reviewer_facts.gd`
+  fails the gate on any invocation or model id outside the roster and on any drift between the roster's
+  round and the launcher's manifest. Facts: `.claude/REVIEWERS.md`, `hexcombat-failure-archaeology`
+  ("frozen artifact that was a token-compacted summary"), the two tools' headers.
+
 - **2026-07-29 — Sealift/fleet mutation authority shipped, and one object now belongs to two aggregates
   (agent, plan 0045).** `SealiftTransitions` is the sole writer of the `ShipState` fleet projection, the
   cohort hull counts and legs, the return/reload pipeline, and the escort SAM magazines; hull losses and

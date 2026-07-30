@@ -23,3 +23,7 @@ tools/terrain/out/
 # Throwaway worktrees created by agy-verify (removed on exit; ignored so a crashed run
 # cannot dirty the tree or trip the gate fixture-drift check).
 .agy-verify-*/
+
+# Frozen review artifacts (tools/review_fanout.sh) — must live in-repo so workspace-scoped
+# reviewer CLIs can read them, but are never committed.
+.review-fanout/

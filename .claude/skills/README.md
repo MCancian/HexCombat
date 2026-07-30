@@ -25,6 +25,7 @@ Frontmatter descriptions are the triggers — read the skill before doing its ki
 | Finish/plan/record anything (docs of record) | `hexcombat-docs-and-writing` |
 | Have a plan drafted, before writing any code | `hexcombat-plan-review` |
 | Have a green gate and be about to commit | `hexcombat-diff-review` |
+| Pick a reviewer, invoke one, or judge whether a review counts | `.claude/REVIEWERS.md` (not a skill — the single home for the round, tiers, routes and safety; run it with `tools/review_fanout.sh`) |
 
 Diagnostics/measurement guidance is folded into `validation-and-qa` (evidence),
 `debugging-playbook` (triage), and `run-and-operate` (tools) — there is no separate
@@ -44,6 +45,7 @@ commit as the change that staled them.
 - One skill = one job; link between skills instead of duplicating.
 - Pinned numbers (golden values, counts) drift — validators are the truth; skills should say
   "verify in the validator" wherever they quote a pin.
-- New hard-won lesson → append to `hexcombat-failure-archaeology` (and
-  `docs/RETROSPECTIVES.md` per the tracking rules).
+- New hard-won lesson → append to `hexcombat-failure-archaeology` (and the module's
+  `docs/systems/<module>/RETRO.md` per the tracking rules; the monolithic `docs/RETROSPECTIVES.md`
+  was fragmented by plan 0053).
 - Superseded draft that seeded this library: `.claude/draft_skills.md`.

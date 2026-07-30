@@ -8,6 +8,24 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
 
 *(Agents: append new technical debt and hygiene observations here)*
 
+- [ ] **Reviewer read-only is still a prompt, not a sandbox — opencode can enforce it (found 2026-07-30,
+  plan 0054; USER raised the config route).** `opencode` supports per-agent permissions
+  (`opencode.json` → `agent.plan.permission`), so `"edit": "deny"` would make read-only ENFORCED for the
+  DeepSeek route instead of merely requested in prose — the hole `.claude/REVIEWERS.md` § Safety
+  currently just warns about. Measured context: `external_directory` defaults to `ask`, and an "ask" in
+  a non-interactive opencode invocation is auto-rejected, which is why that reviewer read no artifact for
+  four rounds. **Do NOT use opencode's `--auto` flag** as the fix: it approves everything not explicitly denied,
+  including `edit`, and these models have been measured announcing a fallback from the read-only agent to
+  the writing `build` agent. Verify any change by having the `plan` agent attempt an edit and watching it
+  be denied. Global `~/.config/opencode/opencode.json` currently has no `permission` block at all.
+- [ ] **`tools/review_fanout.sh` residual hardening, all deliberately declined during plan 0054's review
+  rounds — re-raise only with a failure to point at.** (a) A snapshot made with `git diff --binary` is
+  rejected by the structural check; a stateful binary-patch parser was declined, and `--freeze` never
+  passes `--binary`. (b) `--report`'s auto-count is a labelled lower bound rather than an explicit
+  per-reviewer acceptance protocol; exit 3 covers the failure mode instead. (c) `_dirty_paths` does not
+  handle paths containing a literal newline. (d) The gate cannot watch `~/.claude/*`, so the global agy
+  contract and slash command are kept roster-free by convention only.
+
 - [ ] **Seven summary headers promise byte-stability the gate does not check (found 2026-07-29,
   witness sweep).** `CleanupSummary`, `CombatSummary`, `FrontlineSummary`, `AntishipSummary`,
   `MobilizationSummary`, `AirInsertionSummary` and `IjfsWriteback` each say `to_dict()` is "the

@@ -35,16 +35,18 @@
   Reproduce-then-fix-then-re-reproduce was what made it certain.
 - **Run the two opencode reviewers SERIALLY, not in parallel.** Two simultaneous `opencode run`
   invocations make the second die with `database is locked` — the session DB does not tolerate it. That
-  cost this session two review slots before it was diagnosed. `agy-explore` runs fine alongside one of
-  them. Worth folding into `hexcombat-plan-review`'s launch snippet, which currently backgrounds all
-  three at once.
+  cost this session two review slots before it was diagnosed. The agy explore wrapper runs fine
+  alongside one of them. **Closed 2026-07-30 (plan 0054):** the rule now lives in `.claude/REVIEWERS.md`
+  and the launcher `tools/review_fanout.sh` starts exactly one opencode process; the skill's hand-rolled
+  launch snippet this line referred to no longer exists (historical).
 
 **Orchestrator triage:**
 - Permissive declaration regex + check 0 → **acted now** (both are in the shipped validator; the
   reasoning is in its header and in the plan's "Parsing rules the review round pinned down").
 - The serial-opencode requirement → **act now** for the record here, **act later** for the skill: the
-  launch snippet in `hexcombat-plan-review` backgrounds all three models simultaneously, which
-  reproduces the failure. Logged to BACKLOG.
+  hand-rolled launch snippet then in `hexcombat-plan-review` backgrounded all three models
+  simultaneously, which reproduced the failure. Logged to BACKLOG; **done 2026-07-30 in plan 0054** —
+  snippet deleted, one opencode process per round, rule recorded in the roster (historical).
 - Diff round delivered two `agy-explore` passes and no opencode write-up (both free models failed
   infrastructurally, twice each) → **recorded** in the plan's "Coverage of the two review rounds" with
   what substituted for the missing reads. Not hidden: a future reader must know how thin the independent

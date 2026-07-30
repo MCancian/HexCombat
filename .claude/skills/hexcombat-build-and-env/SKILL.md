@@ -77,8 +77,10 @@ are OK).
   classifies these: clean output + crash exit = warning, not failure. Never "fix" this by
   swallowing real nonzero exits; judge by output markers.
 - **`.mcp.json` is locally modified on purpose** (machine-specific Godot path) — never commit it.
-- **`pi` CLI is broken on this box** (spawns `opencode` via `spawn('opencode')`, can't resolve the
-  `.cmd` shim → ENOENT). Call `opencode` directly.
+- **`pi` CLI works** (v0.82.1 via linuxbrew, verified on the Linux box 2026-07-29). An earlier version
+  of this line said it was broken from an ENOENT spawning the opencode shim; that was a Windows-only
+  failure and is no longer the status. It is the multi-model front end for the reviewer roster —
+  commands in `.claude/REVIEWERS.md`.
 - **Windows line endings:** some files trigger LF→CRLF warnings; harmless, don't churn files to
   "fix" it. The fixture byte-compare gate normalizes line endings already.
 
@@ -88,12 +90,13 @@ are OK).
 screenshots). Available as `mcp__godot__*` tools when enabled. Headless gates never need it;
 visual verification does.
 
-## opencode (auxiliary implementer)
+## Auxiliary models (opencode, pi)
 
-```bash
-opencode run -m opencode/deepseek-v4-flash-free "task"            # read/write build agent
-opencode run -m opencode/deepseek-v4-flash-free --agent explore "task"  # read-only (may fall back)
-opencode run -m opencode/deepseek-v4-flash-free -s <session> "step"     # continue a session
-```
+Both CLIs are installed and working on this box. **Their invocations, model ids, read-only flags and
+measured route reliability live in `.claude/REVIEWERS.md`** — the single home for those facts, gated by
+`tools/validate_reviewer_facts.gd`. Environment-level notes only here:
 
-Small free model: use only for mechanical/exploratory chores; verify everything it reports.
+- Both buffer output until exit, so a run in progress looks identical to a hung one. Budget minutes.
+- Concurrency limits (only one `opencode` at a time) are a reviewer-operations fact and live with the
+  roster, not here.
+- Small free models are for mechanical or exploratory chores; verify everything they report.
