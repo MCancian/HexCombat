@@ -188,16 +188,6 @@ static func sync_maneuver_targets_to_oob(ijfs_state: IjfsDailyState, brigades: D
 				IjfsTransitions.retire_target(live_targets[i] as IjfsTarget)
 
 
-## Consume IJFS maneuver casualties: remove each struck Green/ROC battalion from the OOB before
-## ground combat. Each casualty (battalion_id/brigade_id/unit_type) decrements one qty of the
-## matching battalion type in that brigade's composition (capped at 0). A brigade whose
-## composition is fully depleted is marked destroyed so it no longer fights or holds a hex.
-## NOTE: ijfs_state (and its maneuver targets) is built once per scenario, so across many turns a
-## removed battalion can still appear as a target; the qty cap keeps this safe (never negative).
-static func apply_maneuver_casualties(casualties: Array, brigades: Dictionary) -> void:
-	push_error("IjfsResolver.apply_maneuver_casualties moved to ForceTransitions; call FiresPhases.apply_ijfs_maneuver_casualties")
-
-
 ## Aggregates the IJFS ledgers into the writeback seam D3 (anti-ship) and the ground-casualty
 ## linkage consume. Anti-ship attrition is read from the CUMULATIVE target state
 ## (target.destroyed persists across days; target.suppressed reflects the latest day) so the
