@@ -34,7 +34,9 @@ so the modules own how a phase resolves and never when it runs (plans 0038/0044)
 `scripts/loaders/` the content-to-object loaders, and `scripts/transitions/` the mutation
 authorities. `AntishipResolver` stays under `resolvers/` on purpose — it still rewrites the caller's
 `ship_reserve` entries in place, and a mixed file does not get to sit in a directory whose claim is
-that it holds none. Runtime state itself is the plain **`GameStateData`** value object
+that it holds none. `SealiftResolver` moved the other way in plan 0045 (to `scripts/calc/`) once it
+stopped writing anything at all — including the `ship_category` stamp it used to put straight into
+force-owned reserve rows, which is the write that had kept it mixed. Runtime state itself is the plain **`GameStateData`** value object
 (`scripts/model/`); **`GameState` (autoload) is a thin state-holder** — it owns one
 `GameStateData` and exposes delegating wrappers to `TurnConductor` (turns), `OrderValidator`
 (order validation), and `GameStateBuilder` (scenario construction), plus typed forwarding

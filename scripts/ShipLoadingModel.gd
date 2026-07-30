@@ -108,9 +108,11 @@ static func build_sent_snapshots(bn_count: int, carriers: Array, screen: Array) 
 ##             category:String (optional)}; capacity > 0.
 ##
 ## Returns Dictionary:
-##   "loaded_bns":       Array -- the BN dicts that fit (a prefix of `bns`). Each loaded BN dict is
-##                       stamped in place with "ship_category" = its carrier's category (plan 0006:
-##                       the offload cost matrix needs the ship category the BN crossed on).
+##   "loaded_bns":       Array -- the BN dicts that fit (a prefix of `bns`), unmodified.
+##   "loaded_categories": Dictionary {bn_id -> carrier category} -- which class of hull lifts each loaded
+##                       BN (plan 0006: the offload cost matrix needs the ship category the BN crossed
+##                       on). REPORTED, not stamped: the BN dicts handed in are live rows inside
+##                       force-owned storage, and only the force authority may write them (plan 0045).
 ##   "hulls_used_by_type": Dictionary {ship_type -> int} -- amphibious hulls consumed.
 ##   "remaining_bns":    Array -- the BN dicts that did not fit (stay on the mainland).
 static func pack_bns_into_hulls(bns: Array, carriers: Array) -> Dictionary:
@@ -128,6 +130,7 @@ static func pack_bns_into_hulls(bns: Array, carriers: Array) -> Dictionary:
 
 	var hulls_used_by_type: Dictionary = {}
 	var loaded_bns: Array = []
+	var loaded_categories: Dictionary = {}
 	var remaining_bns: Array = bns.duplicate()
 
 	# Walk the carriers highest-capacity first, filling from the front of the pool. Every BN is 1.0
@@ -150,12 +153,13 @@ static func pack_bns_into_hulls(bns: Array, carriers: Array) -> Dictionary:
 		var category := String(c.get("category", ""))
 		for _i in range(take):
 			var bn: Dictionary = remaining_bns.pop_front()
-			bn["ship_category"] = category
+			loaded_categories[String(bn.get("id", ""))] = category
 			loaded_bns.append(bn)
 		hulls_used_by_type[ship_type] = mini(ready, int(ceil(float(take) / cap - 1e-9)))
 
 	return {
 		"loaded_bns": loaded_bns,
+		"loaded_categories": loaded_categories,
 		"hulls_used_by_type": hulls_used_by_type,
 		"remaining_bns": remaining_bns,
 	}

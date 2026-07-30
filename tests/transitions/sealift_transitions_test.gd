@@ -302,21 +302,27 @@ func test_apply_sent_to_offloading_without_a_sealift_state_is_a_no_op() -> void:
 ## `SealiftState.to_dict()` has no production consumer — it is a debug view. It is pinned anyway so the
 ## typed cohorts introduced by plan 0045 keep serializing as plain data: a Resource left in there would
 ## render as an object reference the moment anyone did print it or feed it to JSON.
-func test_sealift_state_serializes_cohorts_as_plain_data() -> void:
+##
+## Key ORDER is asserted, not just the key set. Nothing reads this dictionary today, so no golden fixture
+## would notice a reordering — and a serialized shape whose order drifts before it acquires its first
+## reader is a shape nobody can later depend on.
+func test_sealift_state_serializes_cohorts_as_plain_data_in_a_fixed_order() -> void:
 	var state := _state(4, 0)
 	state.sealift_state.cohorts = [_cohort({LHA: 2}, ["a", "b"], SealiftState.STATE_SENT)]
 	state.sealift_state.return_pipeline = {LHA: [{"count": 1, "turns_remaining": 2}]}
 
 	var serialized := state.sealift_state.to_dict()
 
-	assert_array(serialized.keys()).contains(
-		["mainland_pool", "cohorts", "return_pipeline", "escort_sam"])
+	assert_array(serialized.keys()).is_equal([
+		"mainland_pool", "cohorts", "return_pipeline", "escort_sam", "escort_sam_max",
+		"escort_sam_threshold", "escort_reload",
+	])
 	var cohorts: Array = serialized["cohorts"]
 	assert_int(cohorts.size()).is_equal(1)
 	var cohort: Dictionary = cohorts[0]
-	assert_array(cohort.keys()).contains(["hulls_by_type", "bn_ids", "cohort_state"])
+	assert_array(cohort.keys()).is_equal(["hulls_by_type", "bn_ids", "cohort_state"])
 	assert_int(int((cohort["hulls_by_type"] as Dictionary)[LHA])).is_equal(2)
-	assert_array(cohort["bn_ids"]).contains(["a", "b"])
+	assert_array(cohort["bn_ids"]).is_equal(["a", "b"])
 	assert_str(String(cohort["cohort_state"])).is_equal(SealiftState.STATE_SENT)
 
 

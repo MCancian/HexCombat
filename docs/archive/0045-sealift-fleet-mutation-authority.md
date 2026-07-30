@@ -1,6 +1,6 @@
 ---
 title: "0045: Sealift and fleet mutation authority"
-status: "Active"
+status: "Shipped"
 created: "2026-07-26"
 updated: "2026-07-29"
 ---
@@ -207,6 +207,61 @@ Checked after every authority call:
    the checks that DO run are staleness-invariant (unknown hull type, magazine bounds and key sets, one
    cohort per BN).
 
+## The "not really green" report, and why it was wrong (do not re-raise)
+
+A reviewer reported that the gate was NOT green — eight issues from `validate_headless_antiship.gd`, one
+from `validate_headless_cleanup.gd`, two from deep-pool coverage — and called the green claim wrong. It was
+the reviewer's METHOD that was wrong, in the exact way this repo has been bitten before (plan 0043: "a
+validator run without the gate's `HEXCOMBAT_SCENARIO`, so its pin never matched, chased through three
+experiments as a phantom code regression"). Measured on the shipped tree:
+
+- **`tools/run_all_tests.py:22` exports `HEXCOMBAT_SCENARIO=scenario_golden` for the whole run.** A
+  validator run BARE therefore resolves a different scenario than the one its pin was taken under.
+  `validate_cleanup.gd` bare: `FAIL … expected "casualties=3, feba=-2.66", got "casualties=6, feba=0.43"`.
+  The same validator with the gate's env: `PASS: headless cleanup validation succeeded (seed=20260624)`.
+  That is the reported "1 issue", reproduced and explained — it is a harness invocation, not a defect.
+- **The two quoted anti-ship bullets are not anti-ship messages at all.** "sustained crossing past first
+  wave (red grows turn 2 -> N)" and "sealift still landing after turn N (no offload/cohort deadlock; N
+  BNs)" are `tools/validate_deep_pool_smoke.gd:49` and `:51`. They were attributed to the wrong validator.
+- **On the shipped tree all three pass both ways.** `validate_headless_antiship.gd` and
+  `validate_deep_pool_smoke.gd` each print PASS bare AND under `HEXCOMBAT_SCENARIO=scenario_golden`;
+  `validate_cleanup.gd` passes under the gate env. The full gate ends ALL PHASES GREEN, and the
+  pre-0045 baseline run of the same three validators printed the identical PASS lines — so there is no
+  before/after difference to explain.
+- **A "0 BNs landing, Red not growing" signature is what a broken sealift chain looks like**, which is
+  what the tree transiently was mid-edit while `ForceEmbarkRequest.batch` and `apply_sent_cohort` had new
+  arities and not every call site had been updated (that intermediate state failed the gate loudly, with
+  parse errors). Reviewing a working tree while it is being edited reads a state that never shipped.
+
+**Rule for the next reviewer: run `bash tools/run_all_tests.sh`, not individual validators.** If you must
+run one alone, export `HEXCOMBAT_SCENARIO=scenario_golden` first, and check the message against the
+validator that actually owns the string.
+
+## Refactor suggestions checked and REJECTED (do not re-raise)
+
+A third reviewer proposed seven cleanups. One was real (the `scripts/calc/` move, above); two described
+work already in the diff; three were rejected on the code, and the reasons are the load-bearing part:
+
+- **"Inline `_busy_hulls` into `project_fleet`; it has one caller."** The `busy` dictionary is used
+  TWICE — once to fill the bins and once as the argument to `_check_fleet`, whose unknown-hull-type audit
+  is precisely a question about those three buckets. Inlining would fuse two concerns into one ~40-line
+  function and bury the escort-reload whole-type rule that the named helper exists to explain.
+- **"Privatise `SealiftState.validate()`; only `_check_queues` calls it."** It has a second caller:
+  `SealiftStateBuilder.build()` asserts it on the fresh state. GDScript also has no package-private, and
+  structural self-checks living on the model is the house pattern (`ShipState.validate`,
+  `AntishipSystem.establishment_error`) — the authority adds the CROSS-cutting checks a model cannot make
+  about itself, which is a different job.
+- **"Construct `SealiftHullReleasePlan` directly instead of via `of()`."** `of()` deep-duplicates each
+  batch, which is what stops the plan aliasing the `hulls_by_type` dictionary of a cohort that is about to
+  be dropped. Constructing "directly" means a file outside the model appending into its array — the exact
+  pattern this campaign removes.
+
+Two more were already done in the diff under review and need no further action: the dead
+`ForceTransitions.apply_sent_to_offloading` (deleted with the typed-cohort commit) and the
+`GameState.fleet` façade (already a one-line getter). The `SealiftState.to_dict()` audit was also already
+performed: no consumer exists anywhere, the method is kept as the debug view, and its shape is pinned by
+a test so typed cohorts cannot start emitting object references.
+
 ## Commit sequence
 
 Each commit ends with `bash tools/run_all_tests.sh` → ALL PHASES GREEN, no golden or fixture drift.
@@ -237,10 +292,15 @@ Each commit ends with `bash tools/run_all_tests.sh` → ALL PHASES GREEN, no gol
    commit above moves its writers rather than registering them. Prove unauthorized writes fail
    (red-test each write form against the new fields). Closeout per the homes below.
 
-Deferred deliberately, and reported as deferred: the sketch's step 10 (relocating `SealiftResolver`
-into `scripts/calc/`). Post-migration it is a pure planner and belongs there, but the rename touches
-every call site, three suites and the doc anchors for zero behavioral gain; it is a mechanical commit
-worth doing only once the ownership work is green, and only if the gate stays green afterwards.
+Step 10 (relocating `SealiftResolver` into `scripts/calc/`) was deferred while the ownership work was in
+flight and then DONE, after review, once the last write was gone. The deferral note claimed it "touches
+every call site", which was wrong: a GDScript `class_name` is path-independent, so moving the file changed
+no call site at all — only the path, its `.uid`, one live doc reference and two file headers. The move is
+correct by the project's own stated criterion (`docs/STATUS.md`: `scripts/calc/` holds the WRITE-FREE
+calculators, and `AntishipResolver` stays under `resolvers/` precisely because it still rewrites the
+caller's reserve entries). Note the ordering that matters: the file only qualified once the
+`ship_category` stamp moved to the force authority — before that fix it was still a mixed file, and
+moving it would have put a writer in the directory whose whole claim is that it holds none.
 
 ### What actually shipped (2026-07-29)
 
@@ -267,12 +327,40 @@ ceiling of 22 (it lost `ShipState`, gained `SealiftTransitions`); `GameState` un
 rebuild reaches its authority through a `ReinforcementPhases` pass-through, mirroring
 `FiresPhases.reset_antiship_establishment`, precisely because a direct call would have breached it.
 
-**The enforcement was red-tested, not assumed.** A temporary probe writing all nine forms
-(`cohort.hulls_by_type[k] =`, `cohort.cohort_state =`, `cohort.bn_ids.append`, `ship_state.destroyed +=`,
-`ship_state.ready =`, `return_pipeline[k] =`, `escort_sam[k] =`, `escort_reload.erase`, `state.fleet =`)
-from a non-authority file produced exactly nine `E_UNAUTHORIZED_WRITE` failures naming file, line and
-write form, then was reverted. That is the evidence that the typed-cohort step bought real enforcement
-rather than a convention.
+**Reviewer 1 (round 2, the finished diff) found the planner was still a writer, and it was fixed.**
+`SealiftResolver` stamped `ship_category` directly into the `ship_reserve` / `mainland_pool` battalion
+rows it planned over (via `_stamp_ship_categories`, and via `ShipLoadingModel.pack_bns_into_hulls`, which
+mutated its input dicts). Those rows are force-owned; the write was invisible to the gate because it went
+through an untyped dictionary alias, and it survived a REFUSED embark — a category from a lift that never
+happened. Fixed properly rather than documented: the packer and the planner now REPORT
+`{bn_id -> category}`, the map travels in `ForceEmbarkRequest.ship_categories` / the adopt plan, and
+`ForceTransitions` stamps the row when it moves the battalion, after its preflight. Equivalence holds on
+every success path (the map is computed from the same fill order); the only behavioral difference is that
+a refused transaction now leaves no stamp, which is the point. Pinned by three tests, including one that
+asserts `resolve()` leaves reserve, pool, pipeline and magazines byte-identical.
+
+**The enforcement was red-tested, not assumed — here is the output.** A temporary probe in a
+non-authority file (`ReinforcementPhases`) wrote all nine forms across the new fields. It was reverted
+after capture; the run immediately after the revert prints `PASS: mutation authority — no unauthorised
+writes to any registered aggregate.`
+
+```
+FAIL: mutation-authority validation found 9 issue(s):
+  - E_UNAUTHORIZED_WRITE: scripts/phases/ReinforcementPhases.gd:345 mutates protected SealiftCohort.hulls_by_type (element_assign) outside its authority: `cohort.hulls_by_type[""] = 0`.
+  - E_UNAUTHORIZED_WRITE: scripts/phases/ReinforcementPhases.gd:346 mutates protected SealiftCohort.cohort_state (direct_assign) outside its authority: `cohort.cohort_state = SealiftState.STATE_SENT`.
+  - E_UNAUTHORIZED_WRITE: scripts/phases/ReinforcementPhases.gd:347 mutates protected SealiftCohort.bn_ids (container_mutate) outside its authority: `cohort.bn_ids.append("")`.
+  - E_UNAUTHORIZED_WRITE: scripts/phases/ReinforcementPhases.gd:349 mutates protected ShipState.destroyed (compound_assign) outside its authority: `ship_state.destroyed += 1`.
+  - E_UNAUTHORIZED_WRITE: scripts/phases/ReinforcementPhases.gd:350 mutates protected ShipState.ready (direct_assign) outside its authority: `ship_state.ready = 0`.
+  - E_UNAUTHORIZED_WRITE: scripts/phases/ReinforcementPhases.gd:351 mutates protected SealiftState.return_pipeline (element_assign) outside its authority: `state.sealift_state.return_pipeline[""] = []`.
+  - E_UNAUTHORIZED_WRITE: scripts/phases/ReinforcementPhases.gd:352 mutates protected SealiftState.escort_sam (element_assign) outside its authority: `state.sealift_state.escort_sam[""] = 0`.
+  - E_UNAUTHORIZED_WRITE: scripts/phases/ReinforcementPhases.gd:353 mutates protected SealiftState.escort_reload (container_mutate) outside its authority: `state.sealift_state.escort_reload.erase("")`.
+  - E_UNAUTHORIZED_WRITE: scripts/phases/ReinforcementPhases.gd:354 mutates protected GameStateData.fleet (direct_assign) outside its authority: `state.fleet = {}`.
+```
+
+Read the middle column: `element_assign` and `container_mutate` land on `SealiftCohort.hulls_by_type` and
+`SealiftCohort.bn_ids`. Those are the two forms the pre-0045 dictionary shape made INVISIBLE — the scanner
+resolves a receiver's TYPE, and `cohort["hulls_by_type"][t] = n` names none. That is the whole argument
+for typing the cohort, in one paste.
 
 ## Tests and validation
 

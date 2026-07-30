@@ -14,6 +14,14 @@ shipped scenario uses this today) or an opt-in deep pool auto-seeded from the OO
 by `ShipDef.is_amphibious_lift()` and `pack_bns_into_hulls` aggregates fractional hull capacity.
 Facts: `docs/systems/amphibious-offload/amphibious-offload.md` → "Sealift lifecycle".
 
+**Two mutation authorities, one cohort** (plan 0045) — hull state is written only by
+`SealiftTransitions` (the `ShipState` bins, cohort hull counts and legs, the return/reload pipeline,
+escort magazines) and troop state only by `ForceTransitions`. A cohort is a typed `SealiftCohort`
+registered field-by-field to the two aggregates, so the boundary is enforced by the source gate rather
+than by convention. Hull losses and the reprojection that keeps the conservation equation true are one
+call. `SealiftResolver` plans and writes nothing, which is why it lives in `scripts/calc/`.
+Facts: `docs/systems/amphibious-offload/amphibious-offload.md` §10, `tools/mutation_authority_manifest.json`.
+
 **Offload capacity gate** (plan 0006) — Red buildup is gated by held/operational offload
 infrastructure, not just ship lift: ports/airbridges (`data/infrastructure.json`,
 `InfrastructureResolver`) contribute throughput once seized and JLSF-repaired (`deploy_jlsf`

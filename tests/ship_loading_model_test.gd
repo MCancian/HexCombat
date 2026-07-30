@@ -108,7 +108,9 @@ func test_no_ship_losses_draws_no_bns() -> void:
 
 # --- plan 0006: pack_bns_into_hulls stamps ship_category -------------------------------------------
 
-func test_pack_stamps_loaded_bns_with_carrier_category() -> void:
+## Plan 0045: the packer REPORTS which category lifts each BN instead of stamping the caller's rows —
+## those rows live in force-owned transport storage, so only the force authority writes them.
+func test_pack_reports_the_carrier_category_of_each_loaded_bn() -> void:
 	var bns := [{"id": "a", "type": "X"}, {"id": "b", "type": "X"}, {"id": "c", "type": "X"}]
 	var carriers := [
 		{"ship_type": "LPD", "capacity": 2.0, "ready": 1, "category": "Military_Amphibious"},
@@ -116,8 +118,12 @@ func test_pack_stamps_loaded_bns_with_carrier_category() -> void:
 	]
 	var packed := ShipLoadingModel.pack_bns_into_hulls(bns, carriers)
 	var loaded: Array = packed["loaded_bns"]
+	var categories: Dictionary = packed["loaded_categories"]
 	assert_int(loaded.size()).is_equal(3)
 	# LPD (capacity 2.0) fills first: a, b; Ferry takes c.
-	assert_str(String((loaded[0] as Dictionary).get("ship_category", ""))).is_equal("Military_Amphibious")
-	assert_str(String((loaded[1] as Dictionary).get("ship_category", ""))).is_equal("Military_Amphibious")
-	assert_str(String((loaded[2] as Dictionary).get("ship_category", ""))).is_equal("Civilian_Amphibious")
+	assert_str(String(categories["a"])).is_equal("Military_Amphibious")
+	assert_str(String(categories["b"])).is_equal("Military_Amphibious")
+	assert_str(String(categories["c"])).is_equal("Civilian_Amphibious")
+	# The BN rows handed in were not touched.
+	for bn_value in bns:
+		assert_bool((bn_value as Dictionary).has("ship_category")).is_false()

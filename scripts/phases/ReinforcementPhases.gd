@@ -49,7 +49,8 @@ static func resolve_sealift_turn(state: GameStateData) -> void:
 		var adopt_bn_ids: Array = adopt_plan.get("bn_ids", [])
 		var adopt_hulls: Dictionary = adopt_plan.get("hulls_by_type", {})
 		var adopt_receipt := ForceTransitions.apply_sent_cohort(
-			state.sealift_state, adopt_bn_ids, adopt_hulls, state.ship_reserve)
+			state.sealift_state, adopt_bn_ids, adopt_hulls, state.ship_reserve,
+			adopt_plan.get("ship_categories", {}))
 		if not adopt_receipt.success:
 			push_error("ForceTransitions adopt cohort refused: %s" % adopt_receipt.error)
 

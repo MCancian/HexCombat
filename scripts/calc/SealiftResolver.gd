@@ -19,8 +19,17 @@ extends RefCounted
 ## the ready pool (same-turn round trip). Only carrier hulls (capacity > 0) enter cohorts and go busy.
 ## Amphibious-lift eligibility is classified by ShipDef.is_amphibious_lift() / is_carrier() / sails().
 ##
-## Writes NO campaign state: it returns typed force plans for cohort binding and mainland/reserve
-## membership, which ForceTransitions applies, and hull totals, which SealiftTransitions applies.
+## It lives in `scripts/calc/` rather than `scripts/resolvers/` for one reason and one reason only: that
+## directory's claim is that it holds no file which writes campaign state, and this one qualifies as of
+## plan 0045. `AntishipResolver` still sits under `resolvers/` because it still rewrites the caller's
+## reserve entries in place — same rule, opposite answer.
+##
+## Writes NO campaign state — not the sealift queues, not the cohorts, and not the battalion rows it
+## plans over. Everything it decides comes back as a plan: cohort binding and mainland/reserve membership
+## for ForceTransitions to apply, hull totals for SealiftTransitions, and the per-battalion carrier
+## CATEGORY (plan 0006) as a {bn_id -> category} map rather than a stamp written into the reserve row.
+## That last one used to be written here in place, which quietly made this planner a second writer of
+## force-owned storage and could leave a category behind from an embark the authority then refused.
 
 
 ## state: SealiftState (READ for cohort/pool membership; never written here). ship_reserve: current
@@ -70,7 +79,7 @@ static func resolve(
 	if not (embark_result["brigade_specs"] as Array).is_empty():
 		embark_request = ForceEmbarkRequest.batch(
 			embark_result["brigade_specs"], embark_result["batch_bn_ids"],
-			embark_result["batch_hulls"])
+			embark_result["batch_hulls"], embark_result["ship_categories"])
 	return {
 		"sent_by_type": sent_by_type,
 		"carriers_sent_by_type": carriers_sent_by_type,
@@ -95,25 +104,33 @@ static func _plan_orphan_adoption(
 	var carriers: Array = _gather_carriers_and_screen(ready, ship_defs, false)["carriers"]
 	var snapshot := ShipLoadingModel.build_sent_snapshots(orphan_bns.size(), carriers, [])
 	var adopted_hulls: Dictionary = snapshot["sent_by_type"]
-	_stamp_ship_categories(orphan_bns, snapshot["bn_equiv_assigned"], ship_defs)
 	if adopted_hulls.is_empty():
 		return {}
 	_consume(ready, adopted_hulls)
 	_accumulate(carriers_sent_by_type, adopted_hulls)
-	return {"bn_ids": _bn_ids(orphan_bns), "hulls_by_type": adopted_hulls}
+	return {
+		"bn_ids": _bn_ids(orphan_bns),
+		"hulls_by_type": adopted_hulls,
+		"ship_categories": _ship_category_stamps(
+			orphan_bns, snapshot["bn_equiv_assigned"], ship_defs),
+	}
 
 
 ## Build the ordered follow-on BN pool (departed brigades first, then new brigades in pool order),
 ## pack it onto ready AMPHIBIOUS carriers, and plan the loaded BNs for a new "sent" cohort. Does
 ## NOT mutate state.mainland_pool or state.cohorts — the caller owns applying force mutations
 ## through ForceTransitions.
-## Returns {embarked_reserve_entries: Array, brigade_specs: Array, batch_bn_ids: Array, batch_hulls: Dictionary}.
+## Returns {embarked_reserve_entries: Array, brigade_specs: Array, batch_bn_ids: Array,
+## batch_hulls: Dictionary, ship_categories: Dictionary}.
 ## Mutates ready + carriers_sent_by_type in place (companion hull tracking).
 static func _embark_followon(
 	state: SealiftState, ship_reserve: Array, ready: Dictionary, ship_defs: Dictionary,
 	carriers_sent_by_type: Dictionary,
 ) -> Dictionary:
-	var empty := {"embarked_reserve_entries": [], "brigade_specs": [], "batch_bn_ids": [], "batch_hulls": {}}
+	var empty := {
+		"embarked_reserve_entries": [], "brigade_specs": [], "batch_bn_ids": [], "batch_hulls": {},
+		"ship_categories": {},
+	}
 	if state.mainland_pool.is_empty():
 		return empty
 
@@ -129,7 +146,9 @@ static func _embark_followon(
 	var hulls_used: Dictionary = packed["hulls_used_by_type"]
 	_consume(ready, hulls_used)
 	_accumulate(carriers_sent_by_type, hulls_used)
-	return _build_embark_plan(ordered_entries, loaded_bns, hulls_used)
+	var plan := _build_embark_plan(ordered_entries, loaded_bns, hulls_used)
+	plan["ship_categories"] = packed["loaded_categories"]
+	return plan
 
 
 static func _ordered_mainland_entries(mainland_pool: Array, ship_reserve: Array) -> Array:
@@ -210,16 +229,18 @@ static func _gather_carriers_and_screen(ready: Dictionary, ship_defs: Dictionary
 	return {"carriers": carriers, "screen": screen}
 
 
-## Stamp bns (in pool order) with the carrier category lifting them: walk bn_equiv_assigned
-## ({ship_type -> BN-equiv carried}, insertion order = build_sent_snapshots' deterministic fill
-## order) and assign each type's cumulative floor of BNs from the front of the pool. BNs beyond
-## the lifted total (unliftable) keep any existing stamp.
-static func _stamp_ship_categories(bns: Array, bn_equiv_assigned: Dictionary, ship_defs: Dictionary) -> void:
+## Which carrier category lifts each bn, in pool order: walk bn_equiv_assigned ({ship_type -> BN-equiv
+## carried}, insertion order = build_sent_snapshots' deterministic fill order) and assign each type's
+## cumulative floor of BNs from the front of the pool. BNs beyond the lifted total (unliftable) get no
+## entry at all, so applying the map leaves whatever category they already carried untouched.
+static func _ship_category_stamps(
+		bns: Array, bn_equiv_assigned: Dictionary, ship_defs: Dictionary) -> Dictionary:
 	# ship_defs is keyed by numeric id (GameData.ship_defs); index by type name for the lookup.
 	var category_by_type: Dictionary = {}
 	for ship_def_value in ship_defs.values():
 		var ship_def: ShipDef = ship_def_value
 		category_by_type[ship_def.name] = ship_def.category
+	var stamps: Dictionary = {}
 	var idx := 0
 	var cumulative := 0.0
 	for ship_type in bn_equiv_assigned.keys():
@@ -227,8 +248,9 @@ static func _stamp_ship_categories(bns: Array, bn_equiv_assigned: Dictionary, sh
 		var upto := mini(int(floor(cumulative + 1e-9)), bns.size())
 		var category := String(category_by_type.get(String(ship_type), ""))
 		while idx < upto:
-			(bns[idx] as Dictionary)["ship_category"] = category
+			stamps[String((bns[idx] as Dictionary).get("id", ""))] = category
 			idx += 1
+	return stamps
 
 
 static func _bound_bn_ids(state: SealiftState) -> Dictionary:

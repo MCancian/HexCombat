@@ -178,7 +178,7 @@ at load, only ever shrunk) + same-turn ship round-trip. **Source oracle:** TIV
 - `escort_sam` / `escort_sam_max` / `escort_sam_threshold` / `escort_reload` — the escort SAM
   magazine (§ below).
 
-**Turn flow — `SealiftResolver` (`scripts/resolvers/SealiftResolver.gd`), pure + dice-free, runs in
+**Turn flow — `SealiftResolver` (`scripts/calc/SealiftResolver.gd`), pure + dice-free, runs in
 `GameState.resolve_sealift_turn()` BEFORE the crossing:**
 1. Tick the return/reload pipelines; hulls whose timer hits 0 rejoin `ready`.
 2. **Adopt** any at-sea BN not yet in a cohort (the programmed first echelon on turn 1) into a

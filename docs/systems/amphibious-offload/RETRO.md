@@ -1,5 +1,25 @@
 # Amphibious Offload — Retrospectives
 
+## 2026-07-29 — plan 0045: sealift/fleet authority   (implementer: direct, 3 review rounds)
+
+**What would you do differently (implementer):**
+- The planner's `ship_category` stamp into force-owned reserve rows survived my own inventory of
+  writers, because I searched for writes to the protected FIELDS and this one went through an untyped
+  BN dictionary alias — the validator's documented blind spot. A reviewer found it. When claiming a file
+  "writes no campaign state", grep the aliases it was HANDED, not just the fields it names.
+- I deferred the `scripts/calc/` move on the belief that it "touches every call site". A GDScript
+  `class_name` is path-independent: the move changed no call site at all. Check the cost before pricing
+  a deferral on it. The move also could not have happened earlier — the file only qualified once the
+  stamp was gone, which is the useful ordering lesson.
+
+**Orchestrator triage:**
+- Two reviewers independently reported gate failures that were harness-invocation artifacts: a validator
+  run bare, without the gate's `HEXCOMBAT_SCENARIO=scenario_golden`, and a review of the working tree
+  taken mid-edit while call-site arities were being updated. Same class as the plan 0043 phantom
+  regression → **act now** (done: the rule and both reproductions are recorded in the archived plan).
+- Reviewer suggestions to inline a helper, privatise a model check, and drop a defensive `duplicate()`
+  were each rejected on the code and recorded with evidence → **record only**, so they are not re-raised.
+
 ## 2026-07-15 — plan 0006 C8: research verification + closeout   (implementer: direct)
 
 **What would you do differently (implementer):**

@@ -10,6 +10,13 @@ extends RefCounted
 ## Reserve and mainland-pool entries are still dictionary-shaped; callers pass typed requests so the
 ## operation vocabulary is closed before the physical storage moves.
 ##
+## One consequence of the split is worth stating so nobody re-derives it: this file CREATES cohorts, which
+## means a cohort's hull fields get their first value on a path that runs through here. It does that
+## through `SealiftCohort.sent(...)`, passing the hull plan as an argument — the fields themselves are
+## written inside `SealiftCohort`, which the manifest registers as the construction writer for them. A
+## fresh cohort is unpublished until it is appended; from that moment on its hulls are the fleet
+## authority's alone.
+##
 ## This file validates the pre-state, applies the requested delta, checks the placement index, and
 ## returns typed receipts for operations that summaries/narratives may later consume. It does not
 ## roll dice, choose targets, or read autoload singletons; coordinators pass the GameDataStore whose
@@ -269,6 +276,7 @@ static func _commit_embark(
 			for bn_value in pool_entry.get("bns", []):
 				var bn: Dictionary = bn_value
 				if spec_ids_set.has(String(bn.get("id", ""))):
+					_stamp_ship_category(bn, request.ship_categories)
 					moved.append(bn)
 				else:
 					kept.append(bn)
@@ -358,9 +366,11 @@ static func _apply_crossing_roster_losses(
 
 ## Create a sent cohort binding BN ids to hulls, with no mainland_pool or reserve change.
 ## Used for the "adopt" step where BNs already in reserve get bound to a crossing cohort.
+## `ship_categories` ({bn_id -> carrier category}, from the planner) is applied to the reserve rows only
+## after the preflight passes, so a refused adoption leaves the reserve exactly as it was.
 static func apply_sent_cohort(
-		sealift_state: SealiftState, bn_ids: Array,
-		hulls_by_type: Dictionary, ship_reserve: Array) -> ForceEmbarkReceipt:
+		sealift_state: SealiftState, bn_ids: Array, hulls_by_type: Dictionary,
+		ship_reserve: Array, ship_categories: Dictionary) -> ForceEmbarkReceipt:
 	if sealift_state == null:
 		return ForceEmbarkReceipt.refused("ForceTransitions: apply_sent_cohort has null sealift_state")
 	if bn_ids.is_empty():
@@ -382,6 +392,9 @@ static func apply_sent_cohort(
 			return ForceEmbarkReceipt.refused(
 				"ForceTransitions: adopt BN id %s already in a cohort" % bn_id)
 	sealift_state.cohorts.append(SealiftCohort.sent(hulls_by_type, bn_ids))
+	for entry_value in ship_reserve:
+		for bn_value in (entry_value as Dictionary).get("bns", []):
+			_stamp_ship_category(bn_value, ship_categories)
 	return ForceEmbarkReceipt.ok("", bn_ids)
 
 
@@ -773,6 +786,16 @@ static func _remove_from_reserve_ids(ship_reserve: Array, lost: Dictionary) -> v
 	ship_reserve.clear()
 	for entry_value in kept:
 		ship_reserve.append(entry_value)
+
+
+## Record which class of hull is lifting this battalion (plan 0006). The planner works it out and the
+## authority writes it, because the row lives in force-owned transport storage — a battalion with no entry
+## in the map is left exactly as it was, which is how an unliftable BN keeps the category of whatever
+## lifted it last.
+static func _stamp_ship_category(bn: Dictionary, ship_categories: Dictionary) -> void:
+	var bn_id := String(bn.get("id", ""))
+	if ship_categories.has(bn_id):
+		bn["ship_category"] = String(ship_categories[bn_id])
 
 
 static func _remove_from_cohort_ids(sealift_state: SealiftState, drop_ids: Array) -> void:

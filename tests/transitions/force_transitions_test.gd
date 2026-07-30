@@ -488,7 +488,7 @@ func test_apply_sent_cohort_creates_cohort_and_returns_receipt() -> void:
 	var reserve := [{"brigade_id": "BDE-SEA", "bns": [
 		{"id": "bn-1", "type": "infantry"}, {"id": "bn-2", "type": "infantry"}]}]
 
-	var receipt := ForceTransitions.apply_sent_cohort(state, bn_ids, hulls, reserve)
+	var receipt := ForceTransitions.apply_sent_cohort(state, bn_ids, hulls, reserve, {})
 
 	assert_bool(receipt.success).is_true()
 	assert_int(state.cohorts.size()).is_equal(1)
@@ -501,13 +501,13 @@ func test_apply_sent_cohort_creates_cohort_and_returns_receipt() -> void:
 
 
 func test_apply_sent_cohort_null_state_refuses() -> void:
-	var receipt := ForceTransitions.apply_sent_cohort(null, ["bn-1"], {"LST": 1}, [])
+	var receipt := ForceTransitions.apply_sent_cohort(null, ["bn-1"], {"LST": 1}, [], {})
 	assert_bool(receipt.success).is_false()
 
 
 func test_apply_sent_cohort_empty_ids_refuses() -> void:
 	var state := SealiftState.new()
-	var receipt := ForceTransitions.apply_sent_cohort(state, [], {"LST": 1}, [])
+	var receipt := ForceTransitions.apply_sent_cohort(state, [], {"LST": 1}, [], {})
 	assert_bool(receipt.success).is_false()
 
 
@@ -517,7 +517,7 @@ func test_apply_sent_cohort_duplicate_id_across_cohorts_refuses() -> void:
 	var reserve := [{"brigade_id": "BDE-SEA", "bns": [
 		{"id": "bn-1", "type": "infantry"}, {"id": "bn-2", "type": "infantry"}]}]
 	var receipt := ForceTransitions.apply_sent_cohort(
-		state, ["bn-1", "bn-2"], {"LST": 1}, reserve)
+		state, ["bn-1", "bn-2"], {"LST": 1}, reserve, {})
 	assert_bool(receipt.success).is_false()
 	assert_int(state.cohorts.size()).is_equal(1)
 
@@ -562,7 +562,7 @@ func test_apply_embark_drains_pool_and_creates_cohort() -> void:
 	var state := SealiftState.new()
 	state.mainland_pool = _sea_pool()
 	var specs := [{"brigade_id": "BDE-SEA", "bn_ids": ["bn-1", "bn-2"]}]
-	var request := ForceEmbarkRequest.batch(specs, ["bn-1", "bn-2"], {"LST": 1})
+	var request := ForceEmbarkRequest.batch(specs, ["bn-1", "bn-2"], {"LST": 1}, {})
 	var reserve: Array = []
 
 	var receipts := ForceTransitions.apply_embark(state, request, reserve)
@@ -590,7 +590,7 @@ func test_apply_embark_without_hulls_refuses_atomically() -> void:
 	var state := SealiftState.new()
 	state.mainland_pool = _sea_pool()
 	var specs := [{"brigade_id": "BDE-SEA", "bn_ids": ["bn-1"]}]
-	var request := ForceEmbarkRequest.batch(specs, ["bn-1"], {})
+	var request := ForceEmbarkRequest.batch(specs, ["bn-1"], {}, {})
 
 	var reserve: Array = []
 	await assert_error(func() -> void:
@@ -604,7 +604,7 @@ func test_apply_embark_without_hulls_refuses_atomically() -> void:
 
 func test_apply_embark_null_state_returns_refused() -> void:
 	var receipts := ForceTransitions.apply_embark(
-		null, ForceEmbarkRequest.batch([], [], {}), [])
+		null, ForceEmbarkRequest.batch([], [], {}, {}), [])
 	assert_int(receipts.size()).is_equal(1)
 	assert_bool(receipts[0].success).is_false()
 
@@ -613,7 +613,7 @@ func test_apply_embark_duplicate_bn_id_refuses() -> void:
 	var state := SealiftState.new()
 	state.mainland_pool = _sea_pool()
 	var specs := [{"brigade_id": "BDE-SEA", "bn_ids": ["bn-1", "bn-1"]}]
-	var request := ForceEmbarkRequest.batch(specs, ["bn-1", "bn-1"], {"LST": 1})
+	var request := ForceEmbarkRequest.batch(specs, ["bn-1", "bn-1"], {"LST": 1}, {})
 
 	var receipts := ForceTransitions.apply_embark(state, request, [])
 
@@ -627,7 +627,7 @@ func test_apply_embark_missing_pool_bn_refuses() -> void:
 	var state := SealiftState.new()
 	state.mainland_pool = _sea_pool()
 	var specs := [{"brigade_id": "BDE-SEA", "bn_ids": ["bn-missing"]}]
-	var request := ForceEmbarkRequest.batch(specs, ["bn-missing"], {"LST": 1})
+	var request := ForceEmbarkRequest.batch(specs, ["bn-missing"], {"LST": 1}, {})
 
 	var receipts := ForceTransitions.apply_embark(state, request, [])
 
@@ -877,7 +877,7 @@ func test_embark_does_not_change_roster() -> void:
 	var roster_before := brigade.get_battalion_count()
 
 	var specs := [{"brigade_id": "BDE-SEA", "bn_ids": ["bn-1", "bn-2"]}]
-	var request := ForceEmbarkRequest.batch(specs, ["bn-1", "bn-2"], {"LST": 1})
+	var request := ForceEmbarkRequest.batch(specs, ["bn-1", "bn-2"], {"LST": 1}, {})
 	var reserve: Array = []
 	ForceTransitions.apply_embark(state, request, reserve)
 

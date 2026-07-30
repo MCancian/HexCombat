@@ -24,11 +24,11 @@ extends RefCounted
 ## and only this file turns it into state. Nothing here rolls dice, reads an autoload, or decides
 ## policy — ship classification, packing order and kill counts all arrive as arguments.
 ##
-## Every public method leaves the fleet in a state that satisfies its own invariants: the projection is
-## recomputed and checked before the method returns, so there is no window in which `ShipState`'s
-## conservation equation is knowingly false. That window is exactly what this plan removed — hull losses
-## used to be booked in one module and repaired in another, and any new step inserted between them
-## would have shipped an invalid fleet.
+## No public method here leaves the fleet INVALID — but they do not all reproject it, and the difference
+## is worth being exact about (see the two kinds of operation below). What plan 0045 removed is the window
+## in which `ShipState`'s conservation equation was knowingly FALSE: hull losses used to be booked in one
+## module and repaired by a reprojection in another, so any step inserted between them would have read an
+## invalid fleet.
 ##
 ## `_check_queues` / `_check_fleet` report with `push_error` and change nothing (a research batch must
 ## not die on one bad row, and a push_error guard is exercisable by a test via
@@ -43,10 +43,11 @@ extends RefCounted
 ##     `ShipState`'s conservation equation false, and anything inserted after it would read an invalid
 ##     fleet.
 ##   * Operations that only change WHERE surviving hulls are (`tick_returns`, `tick_escort_reload`,
-##     `apply_escort_consumption`, `release_hulls`) move them between sealift queues. `ShipState`'s
-##     equation stays TRUE across those — its bins go STALE, not invalid — so they check the queues they
-##     touched and leave the bins to the phase's closing `project_fleet`. Reprojecting inside each would
-##     be four projections a turn to reach the same fleet.
+##     `apply_escort_consumption`, `release_hulls`, `apply_sent_to_offloading`) move them between sealift
+##     queues and run the queue-level `_check_queues` ONLY — they hold no fleet. `ShipState`'s equation
+##     stays TRUE across them because nothing on `ShipState` changed: its bins go STALE, not invalid, and
+##     the closing `project_fleet` of the phase that used them recomputes the lot. Reprojecting inside
+##     each would be four projections a turn to reach the same fleet.
 
 
 # ── Fleet lifecycle ─────────────────────────────────────────────────────────────────────────────
@@ -264,8 +265,15 @@ static func project_fleet(state: GameStateData) -> void:
 ## cross, offloading once ashore-bound); the return pipeline holds hulls cycling back to reload.
 ##
 ## Escort types RELOADING their SAM magazine are a whole-type exception (plan 0004 D5): the type has
-## left the screen, so every surviving hull of it is busy, not just a counted few. Those hulls are
-## never in a cohort or the pipeline, so this cannot double-count them.
+## left the screen, so every surviving hull of it is busy, not just a counted few. The arithmetic that
+## makes that work is in the caller: `returning` is set to the type's whole `fleet_surviving_total`, and
+## `ready = fleet_surviving_total - sent - offloading - returning` then falls out at zero.
+##
+## It cannot double-count, and the reason is a rule from elsewhere: escorts carry no troops, so they never
+## enter a cohort or the return pipeline, and the only bucket claiming them is this one. If a future change
+## ever put an escort type into a cohort, this line would over-count it into `returning` while the cohort
+## also counted it into `sent`, and `ready` would go negative — which `project_fleet`'s assert catches
+## rather than quietly shipping.
 static func _busy_hulls(state: GameStateData) -> Dictionary:
 	var sent: Dictionary = {}
 	var offloading: Dictionary = {}
@@ -302,6 +310,12 @@ static func _check_fleet(state: GameStateData, busy: Dictionary) -> void:
 ## The checks that need only the sealift queues, so every queue-moving operation can run them without a
 ## fleet in hand. Returns false when the structural check already failed, so a caller does not pile
 ## consequential errors on top of a state that is known malformed.
+##
+## The reporting styles are deliberately different, not inconsistent. `SealiftState.validate()` is the
+## MODEL's own fail-fast structural check: it stops at the first violation, because a malformed queue makes
+## every later reading of it meaningless. The two checks below are the AUTHORITY's audits of separate,
+## independent facts (magazines; cohort/BN binding), so each reports on its own and both run — one broken
+## magazine should not hide a battalion bound to two cohorts.
 static func _check_queues(state: SealiftState) -> bool:
 	if not state.validate():
 		return false
@@ -345,6 +359,10 @@ static func _check_escort_magazines(state: SealiftState) -> void:
 ## A battalion is aboard exactly one cohort. The force authority enforces this when it binds ids, but a
 ## hull operation that split or merged a cohort could break it, and the same id in two cohorts means
 ## hulls are freed twice — once per cohort that thinks it carried the last battalion.
+##
+## It reports the FIRST duplicate in scan order and stops, which is not necessarily the first offending
+## cohort: with cohorts [a,b], [b,c], [a] the duplicate reported is `a`, from the third cohort. That is
+## deliberate — the guard exists to fail loudly once, not to enumerate a broken state.
 static func _check_one_cohort_per_bn(state: SealiftState) -> void:
 	var seen: Dictionary = {}
 	for cohort in state.cohorts:
