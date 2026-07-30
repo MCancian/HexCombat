@@ -1,12 +1,9 @@
 class_name InfrastructureTransitions
 extends RefCounted
 
-## THE mutation authority for the `infrastructure` aggregate (plan 0047) — the exact and only
-## production writer of a port/airbridge node's lifecycle (`node_status`, `repair_turns_remaining`,
-## `jlsf`), of the `InfrastructureState.nodes` container, and of the `GameStateData.infrastructure_state`
-## handle. Living in scripts/transitions/ grants nothing by itself: authority is granted to this exact
-## file by name in tools/mutation_authority_manifest.json, which is also the only home for the field and
-## writer lists. Do not copy them here.
+## THE mutation authority for the `infrastructure` aggregate (plan 0047). Living in
+## scripts/transitions/ grants nothing by itself: authority is granted to this exact file by name in
+## tools/mutation_authority_manifest.json, the only home for the protected-field and writer lists.
 ##
 ## The shape is the house shape: a CALCULATOR (`InfrastructureResolver.plan_tick`) returns an outcome,
 ## the coordinator (`ReinforcementPhases`) hands that outcome to one job-shaped method here, and only

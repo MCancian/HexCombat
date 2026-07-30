@@ -66,7 +66,9 @@ two authorities but never writes their fields itself.
 ownership — authority file, protected fields and their lifetimes, construction allowances, and
 temporary legacy writers each naming the plan that deletes it. Headers and systems docs point at it
 and must not copy its lists. `tools/validate_mutation_authority.gd` enforces it (its header
-documents every write form it detects and every blind spot it does not).
+documents every write form it detects and every blind spot it does not). Its abstract fixtures prove
+write forms; generated probes bind every real claim to the real type corpus; a committed claim pin is
+an expected-output oracle only and is never read as ownership.
 
 **What this means for your change:**
 

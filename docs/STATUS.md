@@ -156,9 +156,13 @@ a write to a protected field name through a receiver it cannot type. Ownership l
 construction allowances, and temporary legacy writers each naming the plan that removes it. Dead
 paths, dead fields, an unclassified field on an owned model, two aggregates claiming one field, a
 stale allowance, an unregistered file under `scripts/transitions/`, and a scan that saw nothing all
-fail. Illegal fixtures under `tools/fixtures/mutation_authority/` declare the rule each line must
-trigger and are compared exactly on every run, so a detector that stops working fails as a false
-negative instead of going quietly green.
+fail. Abstract illegal fixtures declare the rule each write FORM must trigger and are compared exactly
+on every run. A separate in-memory contract pass generates one typed illegal write per REAL manifest
+claim plus every ordered pair of one REAL authority writing another aggregate and scans them against
+the REAL type corpus. Its
+committed non-authoritative claim pin is compared exactly by aggregate, owned/hosted section and
+`Class.field`, so deleting, reassigning or demoting a claim fails instead of also deleting its generated
+expectation.
 
 **Registered aggregates.** All are `enforced` with zero legacy writers and zero golden movement; the
 manifest is the authoritative record, this table is the index. Procedure for adding one:

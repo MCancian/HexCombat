@@ -19,6 +19,13 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-30 — Mutation-authority evidence is repeating, not a reverted experiment (USER).**
+  Abstract fixtures remain the write-form oracle; the validator now generates typed probes for every
+  real manifest claim and real authority boundary, while a committed non-authoritative claim pin
+  prevents manifest deletion, reassignment or owned/hosted demotion from erasing its own expectation.
+  Procedure and rationale: `docs/systems/mutation-authority/mutation-authority.md`; current state:
+  `docs/STATUS.md`; historical correction: `docs/archive/0047-map-infrastructure-mutation-authority.md`.
+
 - **2026-07-30 — Map and infrastructure mutation authorities shipped; an invariant enforced by
   ABSENCE (agent, plan 0047).** `MapTransitions` is the sole writer of `HexState.hex_owner`/`feba_km`
   and the `hex_states` container; `InfrastructureTransitions` is the sole writer of the port/airbridge

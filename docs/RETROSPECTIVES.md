@@ -59,6 +59,10 @@ entry to `docs/archive/RETROSPECTIVES_history.md`**.
 - The transitional-scaffolding lesson (name the step that DELETES it, and that step is the one that
   pays the ceiling) → act now — added to `mutation-authority.md` §5 as a fourth ordering trap.
 - Enforce-by-absence and the ordered-event-list rule → act now — added to `mutation-authority.md` §6.
+- **Correction to the fixture lesson (USER, 2026-07-30):** the abstract-fixture mechanism objection
+  was right, but the reverted injections did not give “the same guarantee.” → act now — the validator
+  now generates real-manifest probes every run and compares an independent claim pin; the procedure
+  distinguishes repeating evidence from a one-time diagnostic.
 - Reviewer briefs should demand numbered findings from every role, including nil returns → act later
   (→ `docs/plans/BACKLOG.md`, alongside the existing `--format json` launcher item; both are review
   TOOLING findings, which per `.claude/REVIEWERS.md` go to the backlog rather than re-opening a round).

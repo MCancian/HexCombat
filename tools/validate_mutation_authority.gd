@@ -31,8 +31,9 @@ extends SceneTree
 # different types in two loaders (`Dictionary` and `InfrastructureDef`) and a file-global map called
 # both ambiguous, reporting a write it should have cleared.
 #
-# DETECTED WRITE FORMS (each proven by a fixture under tools/fixtures/mutation_authority/, compared
-# exactly on every run — a missed form fails this gate as a false negative):
+# DETECTED WRITE FORMS (each proven abstractly by a fixture under
+# tools/fixtures/mutation_authority/, compared exactly on every run — a missed form fails this gate
+# as a false negative):
 #   direct_assign       recv.field = x
 #   compound_assign     recv.field += x                    (also -= *= /= %= |= &= ^=)
 #   element_assign      recv.field[k] = x
@@ -84,6 +85,12 @@ extends SceneTree
 #   - Reflection (`Object.call("set_" + name)`, `Callable`s built from strings) is not modelled. No
 #     such call exists in the tree; if one is added, it is invisible here.
 #
+# The abstract fixtures prove scanner FORMS, not production ownership. A second, generated contract
+# pass scans one typed illegal assignment per REAL manifest claim plus every ordered wrong-authority
+# pair against the REAL corpus and ownership. Its expectations come from the real manifest;
+# a committed claim pin is the independent oracle that makes deleting or demoting a claim fail rather
+# than also deleting its generated probe. The pin is regression evidence, never an ownership input.
+#
 # The manifest is checked as hard as the source: dead paths, dead fields, an unclassified field
 # added to an owned model, two aggregates claiming one field, a stale allowance that no longer
 # writes anything, and a scan that saw nothing all fail. Prints PASS:/FAIL: for the gate's verdict.
@@ -91,6 +98,8 @@ extends SceneTree
 const MANIFEST_PATH := "res://tools/mutation_authority_manifest.json"
 const FIXTURE_DIR := "res://tools/fixtures/mutation_authority"
 const FIXTURE_EXT := ".gdfixture"
+const REAL_CLAIMS_PIN_PATH := "res://tools/fixtures/mutation_authority/real_claims_pin.json"
+const GENERATED_REAL_PROBE_PATH := "res://tools/fixtures/mutation_authority/generated_real_contract.gdprobe"
 
 const ASSIGN_OPS := "=(?!=)|\\+=|-=|\\*=|/=|%=|\\|=|&=|\\^="
 # A type annotation, keeping any element type: `IjfsTarget`, `Array`, `Array[IjfsTarget]`.
@@ -108,6 +117,7 @@ const DYNAMIC_SETTERS := ["set", "set_indexed", "set_deferred"]
 
 var _failures: Array[String] = []
 var _regex_cache: Dictionary = {}
+var _real_contract_ran: bool = false
 
 
 ## Compiled once per pattern and reused — the scan matchers run per line, over ~180 files.
@@ -853,11 +863,294 @@ func _check_authority_dir(manifest: Dictionary, ownership: Ownership, extension:
 
 # ── Runs ────────────────────────────────────────────────────────────────────────────────────────
 
+## Sorted, reviewable claim identity. Including aggregate and section makes a silent deletion,
+## reassignment, or owned -> hosted demotion differ from the committed regression pin.
+func _manifest_claim_keys(manifest: Dictionary) -> Array[String]:
+	var keys: Array[String] = []
+	for aggregate_value in manifest.get("aggregates", []):
+		var aggregate: Dictionary = aggregate_value
+		var aggregate_id := _text(aggregate.get("id", ""))
+		for section in ["owned_models", "hosted_fields"]:
+			for entry_value in aggregate.get(section, []):
+				var entry: Dictionary = entry_value
+				var class_id := _text(entry.get("class", ""))
+				for field_value in Dictionary(entry.get("fields", {})).keys():
+					keys.append("%s|%s|%s.%s" % [
+						aggregate_id, section, class_id, String(field_value)])
+	keys.sort()
+	return keys
+
+
+func _pinned_claim_set(pin: Dictionary) -> Dictionary:
+	if pin.is_empty() or not (pin.get("claims", null) is Array):
+		_fail("E_REAL_CLAIM_PIN: %s is missing, unparseable, or has no claims array." %
+			REAL_CLAIMS_PIN_PATH.trim_prefix("res://"))
+		return {}
+	var pinned: Dictionary = {}
+	var ordered: Array[String] = []
+	for claim_value in pin.get("claims", []):
+		var claim := String(claim_value)
+		if pinned.has(claim):
+			_fail("E_REAL_CLAIM_PIN: duplicate pinned claim '%s'." % claim)
+		pinned[claim] = true
+		ordered.append(claim)
+	if ordered.is_empty():
+		_fail("E_REAL_CLAIM_PIN: claims array is empty, so it protects nothing.")
+		return {}
+	var sorted: Array[String] = ordered.duplicate()
+	sorted.sort()
+	if ordered != sorted:
+		_fail("E_REAL_CLAIM_PIN: claims must stay sorted so ownership changes remain reviewable.")
+	return pinned
+
+
+## The pin is deliberately NOT read by _build_ownership: it is an independent expected-output
+## artifact. A manifest edit must update it visibly, just as a serialized fixture update does.
+func _check_real_claim_pin(manifest: Dictionary, pin: Dictionary) -> void:
+	var pinned := _pinned_claim_set(pin)
+	if pinned.is_empty():
+		return
+	var actual: Dictionary = {}
+	for claim in _manifest_claim_keys(manifest):
+		actual[claim] = true
+	for claim in pinned.keys():
+		if not actual.has(claim):
+			_fail("E_REAL_CLAIM_PIN: pinned claim '%s' is absent from the real manifest." % claim)
+	for claim in actual.keys():
+		if not pinned.has(claim):
+			_fail("E_REAL_CLAIM_PIN: real manifest claim '%s' has no reviewed pin." % claim)
+
+
+## Proves both comparison directions without maintaining broken copies of the production manifest.
+func _check_real_claim_pin_self_test(manifest: Dictionary) -> void:
+	var claims := _manifest_claim_keys(manifest)
+	if claims.is_empty():
+		_fail("SELF-TEST: the real claim-pin check has no claims to perturb.")
+		return
+	var missing_pin: Array[String] = claims.duplicate()
+	missing_pin.remove_at(0)
+	var missing_errors := _capture_failures(func() -> void:
+		_check_real_claim_pin(manifest, {"claims": missing_pin}))
+	_expect_single_error(missing_errors, "E_REAL_CLAIM_PIN", "real claim pin missing-entry direction")
+	var extra_pin: Array[String] = claims.duplicate()
+	extra_pin.append("fixture_ghost|owned_models|FixtureGhost.missing_field")
+	extra_pin.sort()
+	var extra_errors := _capture_failures(func() -> void:
+		_check_real_claim_pin(manifest, {"claims": extra_pin}))
+	_expect_single_error(extra_errors, "E_REAL_CLAIM_PIN", "real claim pin extra-entry direction")
+	var duplicate_pin: Array[String] = claims.duplicate()
+	duplicate_pin.insert(1, duplicate_pin[0])
+	var duplicate_errors := _capture_failures(func() -> void:
+		_check_real_claim_pin(manifest, {"claims": duplicate_pin}))
+	_expect_single_error(duplicate_errors, "E_REAL_CLAIM_PIN", "real claim pin duplicate direction")
+	if claims.size() > 1:
+		var unsorted_pin: Array[String] = claims.duplicate()
+		var first := unsorted_pin[0]
+		unsorted_pin[0] = unsorted_pin[1]
+		unsorted_pin[1] = first
+		var sort_errors := _capture_failures(func() -> void:
+			_check_real_claim_pin(manifest, {"claims": unsorted_pin}))
+		_expect_single_error(sort_errors, "E_REAL_CLAIM_PIN", "real claim pin sorted-order direction")
+
+
+func _probe_expectation(claim: String, rule: String = "direct_assign") -> Dictionary:
+	var parts := claim.split("|")
+	return {
+		"aggregate": String(parts[0]),
+		"rule": rule,
+		"symbol": String(parts[2]),
+	}
+
+
+## One valid, type-directed assignment per real claim. The probe is generated from the manifest so
+## it scales automatically; the independent pin above is what prevents oracle circularity.
+func _direct_real_probe_source(claims: Array[String], expected: Dictionary) -> String:
+	var lines: Array[String] = ["extends RefCounted", ""]
+	for index in range(claims.size()):
+		var claim := claims[index]
+		var symbol := claim.get_slice("|", 2)
+		var class_id := symbol.get_slice(".", 0)
+		var field := symbol.get_slice(".", 1)
+		lines.append("static func probe_%03d(target: %s) -> void:" % [index, class_id])
+		lines.append("\ttarget.%s = target.%s" % [field, field])
+		expected["%s:%d" % [GENERATED_REAL_PROBE_PATH, lines.size()]] = _probe_expectation(claim)
+		lines.append("")
+	return "\n".join(lines) + "\n"
+
+
+## Every real authority path writes one representative field from EVERY OTHER aggregate. This full
+## ordered matrix catches accidental pair-specific grants without editing a production file.
+func _wrong_authority_probe_sources(
+		manifest: Dictionary, claims: Array[String], expected: Dictionary) -> Dictionary:
+	var authority_by_aggregate: Dictionary = {}
+	var first_claim_by_aggregate: Dictionary = {}
+	for aggregate_value in manifest.get("aggregates", []):
+		var aggregate: Dictionary = aggregate_value
+		var aggregate_id := _text(aggregate.get("id", ""))
+		authority_by_aggregate[aggregate_id] = _text(aggregate.get("authority_path", ""))
+	for claim in claims:
+		var aggregate_id := claim.get_slice("|", 0)
+		if not first_claim_by_aggregate.has(aggregate_id):
+			first_claim_by_aggregate[aggregate_id] = claim
+	var aggregate_ids: Array = authority_by_aggregate.keys()
+	aggregate_ids.sort()
+	var sources: Dictionary = {}
+	if aggregate_ids.size() < 2:
+		_fail("E_VACUOUS: real wrong-authority probes need at least two aggregates.")
+		return sources
+	for wrong_id_value in aggregate_ids:
+		var wrong_id := String(wrong_id_value)
+		var path := String(authority_by_aggregate[wrong_id])
+		var lines: Array[String] = ["extends RefCounted", ""]
+		for target_id_value in aggregate_ids:
+			var target_id := String(target_id_value)
+			if target_id == wrong_id:
+				continue
+			var claim := String(first_claim_by_aggregate.get(target_id, ""))
+			var symbol := claim.get_slice("|", 2)
+			var class_id := symbol.get_slice(".", 0)
+			var field := symbol.get_slice(".", 1)
+			lines.append("static func probe_%s(target: %s) -> void:" % [target_id, class_id])
+			lines.append("\ttarget.%s = target.%s" % [field, field])
+			expected["%s:%d" % [path, lines.size()]] = _probe_expectation(claim)
+			lines.append("")
+		sources[path] = "\n".join(lines) + "\n"
+	return sources
+
+
+## A tiny source-only corpus that borrows the real corpus's class/type tables. Probe text is never
+## written into production files and never compiled, matching the existing .gdfixture contract.
+func _expected_wrong_authority_pairs(manifest: Dictionary) -> Dictionary:
+	var aggregate_ids: Array[String] = []
+	for aggregate_value in manifest.get("aggregates", []):
+		aggregate_ids.append(_text(Dictionary(aggregate_value).get("id", "")))
+	var expected: Dictionary = {}
+	for writer_id in aggregate_ids:
+		for target_id in aggregate_ids:
+			if writer_id != target_id:
+				expected["%s|%s" % [writer_id, target_id]] = true
+	return expected
+
+
+## Pair identity is derived independently from probe generation. Cardinality alone would let a
+## broken generator repeat one foreign target while silently omitting another.
+func _check_wrong_authority_pairs(
+		manifest: Dictionary, ownership: Ownership, violations: Array[Finding]) -> void:
+	var actual: Dictionary = {}
+	for violation in violations:
+		var writer_id := String(ownership.authority_paths.get(violation.path, ""))
+		if writer_id.is_empty():
+			continue
+		var pair := "%s|%s" % [writer_id, violation.aggregate]
+		if actual.has(pair):
+			_fail("REAL-CONTRACT DUPLICATE BOUNDARY: wrong-authority pair '%s' was probed twice." % pair)
+		actual[pair] = true
+	var expected := _expected_wrong_authority_pairs(manifest)
+	for pair in expected.keys():
+		if not actual.has(pair):
+			_fail("REAL-CONTRACT MISSING BOUNDARY: wrong-authority pair '%s' was not probed." % pair)
+	for pair in actual.keys():
+		if not expected.has(pair):
+			_fail("REAL-CONTRACT EXTRA BOUNDARY: unexpected wrong-authority pair '%s'." % pair)
+
+
+func _build_probe_corpus(reference: Corpus, sources: Dictionary) -> Corpus:
+	var corpus := Corpus.new()
+	corpus.path_of = reference.path_of.duplicate()
+	corpus.fields_of = reference.fields_of.duplicate(true)
+	corpus.order_of = reference.order_of.duplicate(true)
+	for path_value in sources.keys():
+		var path := String(path_value)
+		var text := String(sources[path_value])
+		corpus.raw[path] = text
+		corpus.stripped[path] = _strip(text)
+		corpus.returns_of[path] = _declared_returns(String(corpus.stripped[path]))
+		var class_id := _class_name_of(String(corpus.stripped[path]))
+		if class_id.is_empty():
+			continue
+		corpus.class_of[path] = class_id
+		corpus.path_of[class_id] = path
+		var declared := _declared_fields(String(corpus.stripped[path]))
+		corpus.fields_of[class_id] = declared["types"]
+		corpus.order_of[class_id] = declared["order"]
+	return corpus
+
+
+func _record_real_contract_finding(actual: Dictionary, violation: Finding) -> void:
+	var location := "%s:%d" % [violation.path, violation.line]
+	if actual.has(location):
+		_fail("REAL-CONTRACT DUPLICATE FINDING: %s produced more than one finding." %
+			location.trim_prefix("res://"))
+		return
+	actual[location] = {
+		"aggregate": violation.aggregate,
+		"rule": violation.rule,
+		"symbol": violation.symbol,
+	}
+
+
+func _check_real_contract_duplicate_self_test() -> void:
+	var finding := Finding.new("FixtureRow.quantity_units", "direct_assign", "fixture_aggregate", "")
+	finding.path = GENERATED_REAL_PROBE_PATH
+	finding.line = 1
+	var actual: Dictionary = {}
+	_record_real_contract_finding(actual, finding)
+	var duplicate_errors := _capture_failures(func() -> void:
+		_record_real_contract_finding(actual, finding))
+	_expect_single_error(
+		duplicate_errors, "REAL-CONTRACT DUPLICATE FINDING", "real-contract duplicate finding")
+
+
+func _compare_real_contract_probes(expected: Dictionary, actual: Dictionary) -> void:
+	if expected.is_empty():
+		_fail("REAL-CONTRACT FALSE NEGATIVE: no generated expectations; the pass proves nothing.")
+	for location in expected.keys():
+		if not actual.has(location):
+			_fail("REAL-CONTRACT FALSE NEGATIVE: %s expected %s and the scanner found nothing." % [
+				String(location).trim_prefix("res://"), str(expected[location])])
+		elif actual[location] != expected[location]:
+			_fail("REAL-CONTRACT WRONG FINDING: %s expected %s, got %s." % [
+				String(location).trim_prefix("res://"), str(expected[location]), str(actual[location])])
+	for location in actual.keys():
+		if not expected.has(location):
+			_fail("REAL-CONTRACT FALSE POSITIVE: %s produced unexpected %s." % [
+				String(location).trim_prefix("res://"), str(actual[location])])
+
+
+func _run_real_contract_probes(
+		manifest: Dictionary, real_corpus: Corpus, ownership: Ownership) -> void:
+	var claims := _manifest_claim_keys(manifest)
+	var expected: Dictionary = {}
+	var sources: Dictionary = {
+		GENERATED_REAL_PROBE_PATH: _direct_real_probe_source(claims, expected),
+	}
+	var wrong_authority_sources := _wrong_authority_probe_sources(manifest, claims, expected)
+	for path in wrong_authority_sources.keys():
+		sources[path] = wrong_authority_sources[path]
+	var aggregate_count := Array(manifest.get("aggregates", [])).size()
+	var boundary_count := aggregate_count * (aggregate_count - 1)
+	if wrong_authority_sources.size() != aggregate_count or expected.size() != claims.size() + boundary_count:
+		_fail("E_VACUOUS: real-contract probes generated %d source(s) / %d expectation(s); expected %d authority source(s) / %d total expectation(s)." % [
+			wrong_authority_sources.size(), expected.size(), aggregate_count, claims.size() + boundary_count])
+		return
+	var probe_corpus := _build_probe_corpus(real_corpus, sources)
+	var verdict := _apply_allowances(_scan(probe_corpus, ownership), ownership)
+	_check_wrong_authority_pairs(manifest, ownership, verdict.violations)
+	var actual: Dictionary = {}
+	for violation in verdict.violations:
+		_record_real_contract_finding(actual, violation)
+	_compare_real_contract_probes(expected, actual)
+	_real_contract_ran = true
+	print("Real-contract probes: %d manifest claim(s) and %d wrong-authority boundary(s) reproduced." % [
+		claims.size(), boundary_count])
+
+
 func _run_real_scan() -> void:
 	var manifest := _read_json(MANIFEST_PATH)
 	if manifest.is_empty():
 		_fail("E_MANIFEST_SCHEMA: %s is missing or unparseable." % MANIFEST_PATH)
 		return
+	var claim_pin := _read_json(REAL_CLAIMS_PIN_PATH)
 	var paths: Array[String] = []
 	var excludes: Array = manifest.get("scan_excludes", [])
 	for root_value in manifest.get("scan_roots", []):
@@ -867,6 +1160,8 @@ func _run_real_scan() -> void:
 	var corpus := _build_corpus(paths)
 	if not _check_manifest(manifest, corpus, true):
 		return
+	_check_real_claim_pin(manifest, claim_pin)
+	_check_real_claim_pin_self_test(manifest)
 	var ownership := _build_ownership(manifest, corpus)
 	_check_authority_dir(manifest, ownership, ".gd")
 	var findings := _scan(corpus, ownership)
@@ -875,6 +1170,7 @@ func _run_real_scan() -> void:
 	_report_violations(verdict.violations, ownership, MANIFEST_PATH)
 	_report_stale_allowances(ownership, verdict)
 	_report_inert_authorities(manifest, verdict)
+	_run_real_contract_probes(manifest, corpus, ownership)
 	_print_campaign_progress(manifest, paths.size(), ownership)
 
 
@@ -934,6 +1230,7 @@ func _run_self_test() -> void:
 	_check_manifest_error_fixtures(corpus)
 	_check_authority_dir_fixture(manifest, ownership)
 	_check_inert_authority_fixture(manifest, verdict)
+	_check_real_contract_duplicate_self_test()
 	print("Self-test: %d fixture file(s), %d expected violation(s) reproduced." % [paths.size(), expected.size()])
 
 
@@ -1129,6 +1426,8 @@ func _fail(message: String) -> void:
 
 
 func _finish() -> void:
+	if not _real_contract_ran:
+		_fail("E_VACUOUS: generated real-contract pass did not complete.")
 	if _failures.is_empty():
 		print("PASS: mutation authority — no unauthorised writes to any registered aggregate.")
 		quit(0)

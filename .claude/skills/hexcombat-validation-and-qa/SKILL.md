@@ -73,12 +73,15 @@ change-control event (`hexcombat-change-control`).
    port equivalence (dependency-light, agent-friendly); **GdUnit** = unit logic, scene loading,
    input simulation, UI behavior.
 5. **A validator that scans source must prove it still detects.** A regex silently stops matching
-   and the gate goes green forever. `tools/validate_mutation_authority.gd` is the pattern: illegal
-   fixtures under `tools/fixtures/mutation_authority/` (suffix `.gdfixture`, so Godot's import and
-   GdUnit's suite discovery never compile them) declare the rule each line must trigger, and the
-   validator compares found-vs-expected **exactly** on every run — a missed detection fails as a
-   false negative, an over-eager one as a false positive. Pair that with a vacuity guard: assert
-   the scan actually saw files, symbols, and hits.
+   and the gate goes green forever. `tools/validate_mutation_authority.gd` is the pattern: abstract
+   illegal fixtures under `tools/fixtures/mutation_authority/` (suffix `.gdfixture`, so Godot's import
+   and GdUnit's suite discovery never compile them) declare the rule each line must trigger, and the
+   validator compares found-vs-expected **exactly** on every run. It separately generates in-memory
+   probes for every REAL manifest claim and authority boundary, scans them against the REAL type
+   corpus, and compares the manifest's claim identities with a committed non-authoritative pin. The
+   separation is load-bearing: abstract fixtures prove write FORMS; real probes prove integration;
+   the independent pin makes claim deletion/demotion fail instead of disappearing from generated
+   expectations. Pair all source scanners with vacuity guards over files, symbols, and hits.
 
 ## Adding a GdUnit test (`tests/<thing>_test.gd`)
 

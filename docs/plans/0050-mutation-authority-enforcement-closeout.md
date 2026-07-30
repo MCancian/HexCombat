@@ -81,9 +81,11 @@ intended domain authority is invoked and no registered check is vacuous.
 2. Make any remaining warning/report mode a hard gate failure.
 3. Verify newly added mutable fields must be classified before the gate passes.
 4. Verify dead model/controller paths and zero-match scans fail.
-5. Add/retain deliberate non-`.gd` fixtures under `tools/fixtures/mutation_authority/` for direct,
-   compound, nested-container, typed-alias, setter/model-mutator, dynamic `set`, and wrong-authority
-   mutation.
+5. Retain the abstract non-`.gd` fixtures for direct, compound, nested-container, typed-alias,
+   setter/model-mutator, dynamic `set`, and wrong-authority FORMS. For every aggregate added by this
+   plan, update the real-claim pin atomically; the validator's generated real-contract pass must prove
+   every real claim and every real authority boundary on each gate run. Never substitute a one-time
+   production-file injection for either repeating proof.
 6. Fail on an unregistered file under `scripts/transitions/`, a stale construction/legacy allowance,
    conflicting aggregate ownership, or a vacuous model/symbol/assignment scan.
 7. Ensure Linux and Windows gate runners invoke the same authority validator.
@@ -136,7 +138,9 @@ Review findings are advisory until the primary agent verifies them. Review agent
 - Same-seed full games are byte-identical across separate processes.
 - `scenario_golden`, `scenario_default`, `roc_full_defense`, and `red_airborne` cover the major state
   shapes; add a focused scenario only if no existing one reaches an authority.
-- Mutation gate has been seen red for every protected aggregate and write-form class.
+- Mutation gate reproduces every abstract write form, every generated real-manifest claim and every
+  wrong-authority boundary on each run; claim-pin self-tests have been seen red in both comparison
+  directions.
 - Research calibration affected by plan 0043 is explicitly identified; no old result is silently
   relabeled as post-change evidence.
 

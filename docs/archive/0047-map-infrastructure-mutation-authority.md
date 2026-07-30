@@ -506,6 +506,13 @@ a nested `hex_states[id].hex_owner` and `nodes[id].jlsf` write (`E_UNRESOLVED_WR
 `GameStateData.infrastructure_state` assignment, and a `HexState` write from `SealiftTransitions`
 (wrong authority). All twelve were reported; the tree was restored and re-verified `PASS`.
 
+> **Closeout correction (USER, 2026-07-30):** the mechanism objection above was valid, but “the same
+> guarantee” was not. A reverted injection is a one-time measurement, not a repeating artifact. The
+> validator now keeps the abstract fixture world for write forms, generates real-manifest probes in
+> memory every run, and compares a committed non-authoritative claim pin so manifest deletion or
+> owned/hosted demotion cannot silently remove the generated expectation. Current procedure:
+> `docs/systems/mutation-authority/mutation-authority.md`.
+
 ## Progress
 
 - **Steps 1-3 SHIPPED 2026-07-30**, gate green, golden byte-stable, no fixture movement.

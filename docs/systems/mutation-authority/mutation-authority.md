@@ -25,7 +25,8 @@ several archived plans. Read this first, then the manifest.
 |---|---|
 | `tools/mutation_authority_manifest.json` | THE ownership record: aggregates, protected fields, allowances. `_schema_rules` is normative. |
 | `tools/validate_mutation_authority.gd` | The gate. Resolves each write's receiver TYPE, then asks whether that (class, field) pair is protected. |
-| `tools/fixtures/mutation_authority/` | Illegal-write fixtures, compared exactly every run, so a detector that stops working fails as a false negative. |
+| `tools/fixtures/mutation_authority/*.gdfixture` | Abstract illegal-write forms, compared exactly every run against the abstract fixture manifest. |
+| `tools/fixtures/mutation_authority/real_claims_pin.json` | Non-authoritative regression oracle for real claim identities; never an ownership input. |
 | `scripts/transitions/` | The authority directory. Membership grants nothing; the manifest names each file. |
 
 ## 3. Adding an aggregate — the order that works
@@ -42,8 +43,32 @@ The steps are ordered because several of them cannot be reordered without a red 
    `node["status"] = x`. Typing is a precondition for enforcement, not cleanup.
 4. **Characterize current behaviour in `tests/transitions/`** before anything moves.
 5. **Ship the authority atomically** — the class file, its manifest entry, every writer migration,
-   and the illegal fixtures, in one commit. See §5.
-6. **Close the gate:** prove each illegal fixture fails.
+   and the updated real-claim pin, in one commit. Extend the abstract illegal fixtures only when the
+   aggregate introduces a write FORM or structural shape they do not already exercise. See §5.
+6. **Close the gate:** the abstract fixture comparison, generated real-contract probes, claim-pin
+   comparison and production scan must all pass. If a new detector form landed, deliberately break
+   its expectation once and observe the self-test fail before restoring it.
+
+### What those four proofs establish
+
+- **Abstract `.gdfixture` cases prove scanner forms.** They use invented classes and their own
+  manifest so direct/compound/container/dynamic/cast/unresolved/wrong-authority detection stays small
+  and exact. Do not copy real ownership into `fixture_manifest.json`.
+- **Generated real-contract probes prove integration.** On every run the validator creates, in
+  memory, one typed illegal assignment per claim in the REAL manifest and every ordered pair of a
+  REAL authority path writing another aggregate, then scans them using the REAL class/type corpus. No production file is
+  edited and no generated probe survives the run.
+- **`real_claims_pin.json` prevents oracle circularity.** A probe generated solely from the manifest
+  would disappear when its claim was deleted. The committed pin is compared exactly by aggregate,
+  owned/hosted section and `Class.field`, so deletion, reassignment or demotion fails. It is an
+  expected-output artifact, never a second ownership input. Like any golden, an intentional change can
+  update manifest and pin together; the control makes that ownership change explicit in review, not
+  impossible.
+- **The production scan proves the live tree is clean.** Dead paths/fields, owned-model omissions,
+  stale allowances, inert authorities and unauthorized writes fail independently.
+
+A temporary write injection remains useful while debugging, but it is a one-time measurement, not a
+closeout artifact and never a substitute for these repeating checks.
 
 ## 4. Choosing protected field names
 

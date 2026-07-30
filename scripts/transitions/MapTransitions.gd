@@ -1,11 +1,9 @@
 class_name MapTransitions
 extends RefCounted
 
-## THE mutation authority for the `map` aggregate (plan 0047) — the exact and only production writer
-## of `HexState.hex_owner`, `HexState.feba_km`, and the `GameDataStore.hex_states` container. Living
-## in scripts/transitions/ grants nothing by itself: authority is granted to this exact file by name
-## in tools/mutation_authority_manifest.json, which is also the only home for the field and writer
-## lists. Do not copy them here.
+## THE mutation authority for the `map` aggregate (plan 0047). Living in scripts/transitions/ grants
+## nothing by itself: authority is granted to this exact file by name in
+## tools/mutation_authority_manifest.json, the only home for the protected-field and writer lists.
 ##
 ## Hex DEFINITIONS, geometry and terrain are immutable content owned by `GameData`; only `HexState` is
 ## runtime state, and only it is claimed here. This authority does not move brigades — it READS the

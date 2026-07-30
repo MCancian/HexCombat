@@ -4,6 +4,12 @@ Deliberately illegal source, kept here so `tools/validate_mutation_authority.gd`
 every gate run — that it detects each write form its header claims. A claim no fixture exercises is
 a claim nobody has checked.
 
+This fixture world is **abstract by design**. `FixtureRow` and friends test scanner grammar against
+`fixture_manifest.json`; they are not copies of production ownership. A separate generated
+real-contract pass uses the real source corpus and `tools/mutation_authority_manifest.json` to prove
+every production claim plus every authority boundary. `real_claims_pin.json` is its independent
+expected-output oracle: the scanner never treats the pin as ownership.
+
 **Why `.gdfixture` and not `.gd`:** these files must never be compiled. Godot's importer and
 GdUnit4's suite discovery both walk the project for `.gd`, and a fixture whose whole purpose is to
 break a rule would either fail to compile or be run as a test suite. The validator reads them as
@@ -23,7 +29,9 @@ text, which is all a source gate ever needed.
 
 | File | Role |
 |---|---|
-| `fixture_manifest.json` | The healthy manifest the source fixtures are scanned against |
+| `fixture_manifest.json` | The healthy abstract manifest the source fixtures are scanned against |
+| `real_claims_pin.json` | Non-authoritative exact pin of real claim identities; catches deletion, reassignment, and owned/hosted demotion |
+| generated in memory | One typed direct assignment per real claim plus every ordered wrong-authority pair, scanned against the real corpus and manifest |
 | `model.gdfixture` | `FixtureRow` — the owned protected model, including a sanctioned mutator |
 | `host.gdfixture` | `FixtureHost` — a shared model carrying two hosted protected fields |
 | `facade.gdfixture` | `FixtureGameStateFacade` — stand-in for a GameState façade setter bypass |
