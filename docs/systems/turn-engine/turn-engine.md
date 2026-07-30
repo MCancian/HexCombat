@@ -27,6 +27,7 @@ gameplay-relevant cycle:
 | `scripts/SeededDice.gd` | 96 | Concrete: wraps Godot `RandomNumberGenerator` with a fixed seed. `derive(label)` creates an independent sub-stream via `hash(str(seed) + ":" + label)` |
 | `scripts/EventBus.gd` | 21 | Signals: `phase_changed`, `turn_resolved`, `combat_resolved`, `offload_resolved`, `supply_updated`, `ijfs_resolved`, `antiship_resolved`, `frontline_resolved`, `cleanup_resolved` |
 | `scripts/transitions/AntishipTransitions.gd` | 188 | The Green anti-ship establishment's mutation authority (plan 0043): the only writer of the `AntishipSystem` rows — builds/resets the arsenal, applies IJFS effects and one crossing's launch destruction, clears the per-turn flags |
+| `scripts/transitions/SealiftTransitions.gd` | current | The sealift/fleet mutation authority (plan 0045): the only writer of the `ShipState` fleet projection and of `SealiftState`'s hull queues — pipeline/reload ticks, cohort hull losses and legs, escort magazines, and the fleet projection every phase closes with |
 | `scripts/TurnEventLog.gd` | 70 | Pure function `build(state)` → `Array[TurnEvent]` — non-invasive log derived from GameState buffers post-resolve |
 | `scripts/model/TurnResult.gd` | 33 | Typed result resource: `turn_number`, `contested_hexes`, `combat_summaries`, `ijfs_summary`, `antiship_summary`, `events`, `game_over`, `winner` |
 | `scripts/model/TurnEvent.gd` | 11 | Single event resource: `seq`, `kind`, `hex_id`, `team`, `data` |
@@ -63,7 +64,7 @@ phase resolves, never when it runs. The resolution runs exactly this pipeline:
 
 1. **IJFS** — `FiresPhases.resolve_ijfs_turn(dice)` — Red joint/air-missile fires: multi-day pre-invasion warmup on first call, single-day cycles thereafter. Builds/strikes anti-ship targets, SAMs, and maneuver units. Sub-stream: `dice.derive("ijfs:<turn>:<day>")`.
 2. **IJFS maneuver casualties** — `FiresPhases.apply_ijfs_maneuver_casualties()` — the warmup's writeback reduces the ground OOB before combat. Deterministic, no dice.
-3. **Sealift** — `ReinforcementPhases.resolve_sealift_turn()` — ticks the ship return/reload pipeline and embarks this turn's wave BEFORE the crossing, so anti-ship attrits exactly the hulls that sail. Dice-free.
+3. **Sealift** — `ReinforcementPhases.resolve_sealift_turn()` — `SealiftTransitions` ticks the ship return/reload pipeline, then `SealiftResolver` plans this turn's wave and the two authorities apply it (troops via `ForceTransitions`, hulls via `SealiftTransitions`), all BEFORE the crossing, so anti-ship attrits exactly the hulls that sail. Dice-free.
 4. **Anti-ship** — `FiresPhases.resolve_antiship_turn(dice)` — Green coastal anti-ship fires + mine warfare against the Red crossing. Applies IJFS writeback (destroyed/suppressed launchers), resolves firing plan, crossing damage, mine losses; drowned BNs leave their rosters via `RosterMutations.apply_crossing_casualties`. Sub-stream: `dice.derive("antiship:<turn>")`.
 5. **Offload** — `ReinforcementPhases.resolve_offload_turn(dice)` — surviving BNs land at beaches/ports; infrastructure lifecycle ticks every turn. Applies `pending_lost_at_sea` from the crossing.
 6. **ROC mobilization** — `ReinforcementPhases.resolve_mobilization_turn()` — Green's reinforcement step at the same seam as Red's. Dice-free.
@@ -156,7 +157,13 @@ HexCombat's turn engine is an **adaptation**, not a port. TIV (`TaiwanInvasionVi
 
 This subsystem mutates the **`force`** aggregate through phase transitions. Its designated authority is `ForceTransitions`.
 - **Outcome/receipt types:** `ForceActivityRequest`, `ForcePlacementReceipt`.
-- **Manifest:** [tools/mutation_authority_manifest.json](../../tools/mutation_authority_manifest.json).
+- **Manifest:** [tools/mutation_authority_manifest.json](../../../tools/mutation_authority_manifest.json).
+
+The transport phases also drive the **`sealift_fleet`** aggregate (`SealiftTransitions`, plan 0045) and
+the anti-ship establishment (`AntishipTransitions`, plan 0043). The rule the turn loop enforces is
+ordering, not ownership: a phase that moves troops AND hulls calls each authority in turn and asserts
+both receipts, and the phase closes with `SealiftTransitions.project_fleet` so no later phase reads a
+fleet whose bins are stale. Rules per aggregate live in the owning system docs.
 
 **Rules:**
 - Every brigade placement, activity write, and protected roster shrink uses the `ForceTransitions` API.

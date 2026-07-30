@@ -31,10 +31,6 @@ static func build_unopposed_offload_state(ship_reserve: Array) -> SealiftState:
 	return SealiftStateBuilder.build_unopposed_offload_state(ship_reserve)
 
 
-static func build_fleet(ship_defs: Dictionary) -> Dictionary:
-	return FleetBuilder.build(ship_defs)
-
-
 static func build_supply_state(red_dos_start: float) -> SupplyState:
 	return SupplyStateBuilder.build(red_dos_start)
 

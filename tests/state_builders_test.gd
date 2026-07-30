@@ -93,7 +93,6 @@ func test_fleet_builder_creates_ready_untouched_ship_states() -> void:
 	assert_int(lha.fleet_total).is_equal(7)
 	assert_int(lha.fleet_surviving_total).is_equal(7)
 	assert_int(lha.ready).is_equal(7)
-	assert_int(lha.sent_original).is_equal(0)
 	assert_int(lha.surviving_sent).is_equal(0)
 	assert_int(lha.offloading).is_equal(0)
 	assert_int(lha.returning).is_equal(0)

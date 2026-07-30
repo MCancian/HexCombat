@@ -19,6 +19,17 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-29 — Sealift/fleet mutation authority shipped, and one object now belongs to two aggregates
+  (agent, plan 0045).** `SealiftTransitions` is the sole writer of the `ShipState` fleet projection, the
+  cohort hull counts and legs, the return/reload pipeline, and the escort SAM magazines; hull losses and
+  the reprojection that keeps the conservation equation true happen in ONE checked call instead of being
+  booked in `FiresPhases` and repaired in `ReinforcementPhases`. A sealift cohort binds troops to hulls,
+  so it became a typed `SealiftCohort` split by field between `force` (`bn_ids`) and `sealift_fleet`
+  (`hulls_by_type`, `cohort_state`) — as a dictionary neither half was enforceable. `ShipState.sent_original`
+  was deleted (assigned `= surviving_sent` every turn, invariant vacuous, no consumer). No behavior, RNG
+  or golden change. Facts: `docs/STATUS.md`, `docs/systems/amphibious-offload/amphibious-offload.md` §10,
+  `docs/systems/antiship-mine/antiship-mine.md` §10, `tools/mutation_authority_manifest.json`.
+
 - **2026-07-29 — Documentation hierarchy refactor (hub-and-spoke) shipped (USER call, plan 0053).**
   Monolithic `docs/STATUS.md` and `docs/RETROSPECTIVES.md` fragmented into module-specific `STATUS.md` and `RETRO.md` files under `docs/systems/<module>/`, reducing agent orientation tokens by ~85%. `docs/STATUS.md` trimmed to executive summary hub for cross-cutting engine/turn-model/gate facts. Dedicated `docs/systems/research-harness/` directory created for batch runner and sweep tools. Facts: `docs/STATUS.md`, `docs/systems/<module>/STATUS.md`, `AGENTS.md`.
 

@@ -25,7 +25,9 @@ static func build(red_followon_reserve: Array, red_ship_reserve: Array, brigades
 	var followon := resolve_followon_reserve(red_followon_reserve, red_ship_reserve, brigades, auto_seed)
 	state.mainland_pool = ShipReserveBuilder.build(followon, brigades)
 	state.cohorts = []
-	state.return_pipeline = {}
+	# The return pipeline starts empty and is NOT reassigned here: a fresh SealiftState already has an
+	# empty one, and the pipeline belongs to the sealift authority (plan 0045) — a redundant write is
+	# still a second writer.
 	if reload_enabled:
 		for ship_type_value in escort_interception.keys():
 			var ship_type := String(ship_type_value)
@@ -50,11 +52,7 @@ static func build_unopposed_offload_state(ship_reserve: Array) -> SealiftState:
 		for bn_value in (entry_value as Dictionary).get("bns", []):
 			ids.append(String((bn_value as Dictionary).get("id", "")))
 	if not ids.is_empty():
-		state.cohorts.append({
-			"hulls_by_type": {},
-			"bn_ids": ids,
-			"state": SealiftState.STATE_OFFLOADING,
-		})
+		state.cohorts.append(SealiftCohort.offloading({}, ids))
 	return state
 
 

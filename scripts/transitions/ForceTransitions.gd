@@ -2,8 +2,12 @@ class_name ForceTransitions
 extends RefCounted
 
 ## THE mutation authority for the force aggregate (plan 0044). It is the only production writer for
-## Brigade runtime fields and the GameData.brigades_by_hex placement projection. Legacy transport
-## storage is still dictionary-shaped during this migration; callers pass typed requests so the
+## Brigade runtime fields, the GameData.brigades_by_hex placement projection, and who is ABOARD a
+## sealift cohort (`SealiftCohort.bn_ids`). The hulls in that same cohort, and which leg it is on,
+## belong to `SealiftTransitions` (plan 0045) — the two authorities share the object and never reach
+## across, so an operation that moves troops AND hulls is two calls in one coordinator.
+##
+## Reserve and mainland-pool entries are still dictionary-shaped; callers pass typed requests so the
 ## operation vocabulary is closed before the physical storage moves.
 ##
 ## This file validates the pre-state, applies the requested delta, checks the placement index, and
@@ -283,11 +287,8 @@ static func _commit_embark(
 			remaining_pool.append(pe)
 	sealift_state.mainland_pool = remaining_pool
 
-	sealift_state.cohorts.append({
-		"hulls_by_type": request.batch_hulls_by_type.duplicate(true),
-		"bn_ids": request.batch_bn_ids.duplicate(),
-		"state": SealiftState.STATE_SENT,
-	})
+	sealift_state.cohorts.append(
+		SealiftCohort.sent(request.batch_hulls_by_type, request.batch_bn_ids))
 	if receipts.is_empty():
 		receipts.append(ForceEmbarkReceipt.refused("ForceTransitions: no BNs embarked"))
 	return receipts
@@ -370,10 +371,8 @@ static func apply_sent_cohort(
 		if _reserve_id_count(ship_reserve, bn_id) != 1:
 			return ForceEmbarkReceipt.refused(
 				"ForceTransitions: adopt BN id %s is not unique in ship_reserve" % bn_id)
-	for cohort_value in sealift_state.cohorts:
-		var cohort: Dictionary = cohort_value
-		for id_value in cohort.get("bn_ids", []):
-			var bid := String(id_value)
+	for cohort in sealift_state.cohorts:
+		for bid in cohort.bn_ids:
 			if existing_ids.has(bid):
 				return ForceEmbarkReceipt.refused(
 					"ForceTransitions: duplicate BN id %s across cohorts" % bid)
@@ -382,23 +381,8 @@ static func apply_sent_cohort(
 		if existing_ids.has(bn_id):
 			return ForceEmbarkReceipt.refused(
 				"ForceTransitions: adopt BN id %s already in a cohort" % bn_id)
-	sealift_state.cohorts.append({
-		"hulls_by_type": hulls_by_type.duplicate(true),
-		"bn_ids": bn_ids.duplicate(),
-		"state": SealiftState.STATE_SENT,
-	})
+	sealift_state.cohorts.append(SealiftCohort.sent(hulls_by_type, bn_ids))
 	return ForceEmbarkReceipt.ok("", bn_ids)
-
-
-# ── Sea transport: sent → offloading (plan 0044) ──────────────────────────────────
-
-static func apply_sent_to_offloading(sealift_state: SealiftState) -> void:
-	if sealift_state == null:
-		return
-	for cohort_value in sealift_state.cohorts:
-		var cohort: Dictionary = cohort_value
-		if String(cohort.get("state", "")) == SealiftState.STATE_SENT:
-			cohort["state"] = SealiftState.STATE_OFFLOADING
 
 
 # ── Sea transport: offload (plan 0044) ───────────────────────────────────────────────────────────
@@ -470,36 +454,24 @@ static func apply_queue_jlsf(sealift_state: SealiftState, entries: Array) -> voi
 
 # ── Cohort lifecycle (plan 0044) ──────────────────────────────────────────────────────────────────
 
-## Free hulls from cohorts whose bn_ids have been drained (by apply_offload or apply_crossing_loss)
-## and remove the empty cohort entries. Returns freed_by_type for companion hull accounting.
-## amphibious_return_time: scenario config (companion data from GameData).
-static func free_emptied_cohorts(sealift_state: SealiftState, amphibious_return_time: int) -> Dictionary:
-	var freed_by_type: Dictionary = {}
+## Drop the cohorts whose bn_ids have been drained (by apply_offload or apply_crossing_loss) — nobody
+## is aboard, so the binding this authority owns has served its purpose. The hulls that were carrying
+## them are reported, one batch per freed cohort, and go no further here: where a freed hull goes next
+## (straight back to ready, or through the return pipeline) is the sealift authority's call, so the
+## caller hands this plan to `SealiftTransitions.release_hulls`. That split is why this function no
+## longer takes the scenario's return time — the force aggregate has no business knowing it.
+static func free_emptied_cohorts(sealift_state: SealiftState) -> SealiftHullReleasePlan:
 	if sealift_state == null:
-		return freed_by_type
-	var kept: Array = []
-	for cohort_value in sealift_state.cohorts:
-		var cohort: Dictionary = cohort_value
-		if (cohort.get("bn_ids", []) as Array).is_empty():
-			for ship_type in (cohort.get("hulls_by_type", {}) as Dictionary).keys():
-				var count := int(cohort["hulls_by_type"][ship_type])
-				if count > 0:
-					freed_by_type[String(ship_type)] = int(freed_by_type.get(String(ship_type), 0)) + count
-			if amphibious_return_time > 0:
-				for ship_type in (cohort.get("hulls_by_type", {}) as Dictionary).keys():
-					var count := int(cohort["hulls_by_type"][ship_type])
-					if count <= 0:
-						continue
-					if not sealift_state.return_pipeline.has(String(ship_type)):
-						sealift_state.return_pipeline[String(ship_type)] = []
-					(sealift_state.return_pipeline[String(ship_type)] as Array).append({
-						"count": count,
-						"turns_remaining": amphibious_return_time,
-					})
+		return SealiftHullReleasePlan.new()
+	var batches: Array = []
+	var kept: Array[SealiftCohort] = []
+	for cohort in sealift_state.cohorts:
+		if cohort.is_empty():
+			batches.append(cohort.hulls_by_type)
 		else:
 			kept.append(cohort)
 	sealift_state.cohorts = kept
-	return freed_by_type
+	return SealiftHullReleasePlan.of(batches)
 
 
 # ── Construction and read-only backstops ────────────────────────────────────────────────────────
@@ -809,13 +781,12 @@ static func _remove_from_cohort_ids(sealift_state: SealiftState, drop_ids: Array
 	var drop: Dictionary = {}
 	for id in drop_ids:
 		drop[String(id)] = true
-	for cohort_value in sealift_state.cohorts:
-		var cohort: Dictionary = cohort_value
-		var remaining: Array = []
-		for id_value in cohort.get("bn_ids", []):
+	for cohort in sealift_state.cohorts:
+		var remaining: Array[String] = []
+		for id_value in cohort.bn_ids:
 			if not drop.has(String(id_value)):
 				remaining.append(String(id_value))
-		cohort["bn_ids"] = remaining
+		cohort.bn_ids = remaining
 
 
 static func _drop_empty_air_pool_entries(air_state: AirInsertionState) -> void:
@@ -878,11 +849,10 @@ static func _sent_cohorts_contain_once(sealift_state: SealiftState, lost: Dictio
 		push_error("ForceTransitions: crossing casualty validation requires sealift_state")
 		return false
 	var counts: Dictionary = {}
-	for cohort_value in sealift_state.cohorts:
-		var cohort: Dictionary = cohort_value
-		if String(cohort["state"]) != SealiftState.STATE_SENT:
+	for cohort in sealift_state.cohorts:
+		if not cohort.is_sent():
 			continue
-		for id_value in cohort["bn_ids"]:
+		for id_value in cohort.bn_ids:
 			var id := String(id_value)
 			if lost.has(id):
 				counts[id] = int(counts.get(id, 0)) + 1

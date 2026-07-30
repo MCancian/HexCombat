@@ -53,9 +53,10 @@ var commitments: Dictionary:
 # Read-only façade: force transport storage is initialized and mutated only by ForceTransitions.
 var ship_reserve: Array:
 	get: return data.ship_reserve
+# Read-only façade: the fleet is built by FleetBuilder and thereafter written only by
+# SealiftTransitions (plan 0045). Scenario reset goes through _rebuild_fleet, not an assignment here.
 var fleet: Dictionary:
 	get: return data.fleet
-	set(value): data.fleet = value
 var sealift_state: SealiftState:
 	get: return data.sealift_state
 	set(value): data.sealift_state = value
@@ -336,7 +337,7 @@ func _rebuild_supply_state() -> void:
 
 
 func _rebuild_fleet() -> void:
-	data.fleet = GameStateBuilder.build_fleet(GameData.ship_defs)
+	ReinforcementPhases.rebuild_fleet(data, GameData.ship_defs)
 
 
 ## Play a full turn from a bulk-order spec: buffers every order, resolves, and

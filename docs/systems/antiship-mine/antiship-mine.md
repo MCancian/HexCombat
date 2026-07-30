@@ -9,7 +9,8 @@ Resolves **Green coastal anti-ship missile strikes** against the **Red amphibiou
 | File | Role |
 |---|---|
 | `scripts/resolvers/AntishipResolver.gd` | Pure resolver (Phase C): `resolve()` — derives the firing percentages from the post-IJFS establishment, builds the firing plan, resolves launch attrition/crossing/mines, converts ship losses to BNs lost at sea. Writes no anti-ship state; read its header for the purity boundary. |
-| `scripts/phases/FiresPhases.gd` | Thin wrapper (plan 0038): `resolve_antiship_turn(dice)` derives the independent substream, materializes the TO-adjacency map, delegates to `AntishipResolver.resolve()`, then assigns `ship_reserve`/`fleet` fields, calls `register_ship_losses`, and owns the `EventBus.antiship_resolved` emit. `GameState` forwards to it under the same method name. |
+| `scripts/phases/FiresPhases.gd` | Thin coordinator (plan 0038): `resolve_antiship_turn(dice)` derives the independent substream, materializes the TO-adjacency map, delegates to `AntishipResolver.resolve()`, then hands the outcome to the three authorities in order — roster casualties to `ForceTransitions`, launch attrition to `AntishipTransitions`, hull losses/cohort legs/escort magazines to `SealiftTransitions` — calls `register_ship_losses`, and owns the `EventBus.antiship_resolved` emit. It writes no aggregate itself (plan 0045). `GameState` forwards to it under the same method name. |
+| `scripts/transitions/SealiftTransitions.gd` | The sealift/fleet mutation authority (plan 0045): the only writer of the `ShipState` bins and of the cohort hulls a crossing sinks. See amphibious-offload.md §10. |
 | `scripts/transitions/AntishipTransitions.gd` | The establishment's mutation authority (§10): the only writer of the `AntishipSystem` rows. |
 | `scripts/calc/AntishipCalculator.gd` | D3-B2 firing-plan + launch attrition |
 | `scripts/calc/AntishipCrossing.gd` | D3-B3 6-stage crossing-damage model |
@@ -19,7 +20,7 @@ Resolves **Green coastal anti-ship missile strikes** against the **Red amphibiou
 | `scripts/ShipLoadingModel.gd` | `resolve_bn_losses` — ship hulls → BN losses |
 | `scripts/model/AntishipCrossingContext.gd` | Typed input bundle for crossing damage; `Dice` stays explicit |
 | `scripts/model/ShipDef.gd` | Ship template (capacity, category, is_decoy) |
-| `scripts/model/ShipState.gd` | Runtime fleet counts (ready/sent/surviving/etc) |
+| `scripts/model/ShipState.gd` | Runtime fleet counts (ready/sent/offloading/returning/destroyed) — a projection of `SealiftState`, written only by `SealiftTransitions` |
 | `scripts/model/IndividualShip.gd` | Per-hull state (unused by crossing; deferred) |
 | `scripts/model/Minefield.gd` | One beach minefield (config + runtime fields) |
 | `scripts/model/AntishipSystem.gd` | One anti-ship launcher row (TO,type,quantity) |
@@ -211,6 +212,22 @@ What the authority guarantees, and why it matters to the model rather than to th
   reduces surviving strength.
 - One crossing resolves per turn, and the turn is the crossing's identity: applying the same turn's
   launch outcomes twice is refused rather than absorbed.
+
+### Hull losses are a different aggregate
+
+The ships the crossing sinks belong to the **`sealift_fleet`** aggregate, whose authority is
+`scripts/transitions/SealiftTransitions.gd` (plan 0045; rules in
+[amphibious-offload.md §10](../amphibious-offload/amphibious-offload.md)). The crossing calculator
+REPORTS kills per ship type; the authority decides which bucket each type loses them from — carriers out
+of this turn's sent cohorts, escorts off the ready screen — books them, and reprojects the fleet in the
+same call. Its receipt is `SealiftHullLossReceipt`: requested vs applied per type, plus the source
+bucket, because the two numbers legitimately differ. A crossing fires at the sailing snapshot while mine
+attrition resolves separately, so it can report more kills of a carrier type than its cohorts still
+hold; the application is capped at what is present and the cap is recorded rather than absorbed.
+
+Before plan 0045 this was booked in `FiresPhases` and repaired afterwards by a reprojection in
+`ReinforcementPhases`, which left `ShipState`'s conservation equation false in between — a window any
+newly inserted step would have shipped an invalid fleet through.
 
 ## 11. TIV-Port Fidelity Notes
 

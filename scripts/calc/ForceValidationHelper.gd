@@ -240,21 +240,20 @@ static func _transport_id_count(ship_reserve: Array, sealift_state: SealiftState
 		for bn_value in (entry_value as Dictionary).get("bns", []):
 			if String((bn_value as Dictionary).get("id", "")) == bn_id:
 				count += 1
-	for cohort_value in sealift_state.cohorts:
-		for id_value in (cohort_value as Dictionary).get("bn_ids", []):
-			if String(id_value) == bn_id:
+	for cohort in sealift_state.cohorts:
+		for id_value in cohort.bn_ids:
+			if id_value == bn_id:
 				count += 1
 	return count
 
 
 static func _cohort_id_count(sealift_state: SealiftState, bn_id: String, state_label: String) -> int:
 	var count := 0
-	for cohort_value in sealift_state.cohorts:
-		var cohort: Dictionary = cohort_value
-		if String(cohort.get("state", "")) != state_label:
+	for cohort in sealift_state.cohorts:
+		if cohort.cohort_state != state_label:
 			continue
-		for id_value in cohort.get("bn_ids", []):
-			if String(id_value) == bn_id:
+		for id_value in cohort.bn_ids:
+			if id_value == bn_id:
 				count += 1
 	return count
 

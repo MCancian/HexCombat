@@ -313,11 +313,35 @@ alongside a pier instead of 2.0× over the beach).
 
 ## 10. State & authority
 
-This subsystem mutates the **`force`** aggregate. Its designated authority is `ForceTransitions`, which handles all embark and offload transfers.
-- **Outcome/receipt types:** `ForceEmbarkReceipt`, `ForceOffloadReceipt`, `ForceCrossingCasualtyResult`.
-- **Manifest:** [tools/mutation_authority_manifest.json](../../tools/mutation_authority_manifest.json).
+This subsystem mutates **two** aggregates, because a cohort binds troops to hulls and each half has its
+own writer. They share the `SealiftCohort` object and split it by field; an operation that moves both
+(embark, crossing loss, offload) is two authority calls in one coordinator, never one call reaching
+across.
+
+**`force`** — who is aboard. Authority `ForceTransitions`; it handles all embark and offload transfers.
+- **Outcome/receipt types:** `ForceEmbarkReceipt`, `ForceOffloadReceipt`, `ForceCrossingCasualtyResult`,
+  `SealiftHullReleasePlan` (the hulls a drained cohort hands to the fleet authority).
+- **Manifest:** [tools/mutation_authority_manifest.json](../../../tools/mutation_authority_manifest.json).
 
 **Rules:**
 - Transfers move exact BN ids between mainland, sea reserves, and ashore with no roster change.
 - The authority guarantees conservation of BNs and id-set equality during transfers.
 - Drowned BNs are deleted from rosters at the crossing-loss application.
+
+**`sealift_fleet`** — what floats (plan 0045). Authority `SealiftTransitions`; it owns every hull
+transition: the `ShipState` bins, cohort hull counts and legs, the return/reload pipeline, and escort SAM
+magazines.
+- **Outcome/receipt types:** `SealiftHullLossReceipt`, `SealiftHullReleasePlan`.
+- **Manifest:** [tools/mutation_authority_manifest.json](../../../tools/mutation_authority_manifest.json).
+
+**Rules:**
+- Every surviving hull is in exactly one of ready / sent / offloading / returning-or-reloading, and
+  surviving buckets + destroyed = the fleet total, per ship type.
+- An operation that changes how many hulls SURVIVE reprojects the fleet before it returns, so the
+  conservation equation is never left false. Operations that only move hulls between sealift queues
+  leave the bins stale-but-valid for the phase's closing projection.
+- Hull losses are capped at what the source bucket holds, and the cap is reported rather than absorbed:
+  a crossing can legitimately report more kills of a carrier type than its cohorts still hold.
+- Carrier losses come out of this turn's SENT cohorts only; escorts are never in a cohort, so theirs come
+  off the ready screen.
+- A reloading escort type is wholly off the screen: all its surviving hulls count as returning.

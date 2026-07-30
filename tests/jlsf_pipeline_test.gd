@@ -129,7 +129,7 @@ func test_end_to_end_sealift_ride() -> void:
 	var ready := {"LPD": 4}
 
 	var reserve: Array = []
-	var result := SealiftResolver.resolve(state, reserve, ready, defs)
+	var result := SealiftResolver.resolve(state, reserve, ready, {}, defs)
 
 	# Apply embark via ForceTransitions
 	var embark_request = result["embark_request"]
@@ -139,8 +139,8 @@ func test_end_to_end_sealift_ride() -> void:
 
 	# Cohort holds all 4 JLSF BN ids
 	assert_int(state.cohorts.size()).is_equal(1)
-	var cohort: Dictionary = state.cohorts[0] as Dictionary
-	var bn_ids: Array = cohort.get("bn_ids", [])
+	var cohort: SealiftCohort = state.cohorts[0]
+	var bn_ids: Array = cohort.bn_ids
 	assert_int(bn_ids.size()).is_equal(4)
 	for i in range(4):
 		assert_str(String(bn_ids[i])).is_equal("JLSF:keelung:%d" % [i + 1])

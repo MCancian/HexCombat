@@ -109,7 +109,7 @@
         {
           "class": "SealiftState",
           "path": "res://scripts/model/SealiftState.gd",
-          "_doc": "Plan 0044 SEA-TRANSPORT remainder: mainland_pool and cohorts are force aggregate fields (drained/appended by ForceTransitions). return_pipeline, escort_sam, escort_sam_max, escort_sam_threshold, escort_reload are companion aggregate fields.",
+          "_doc": "Plan 0044 SEA-TRANSPORT remainder: mainland_pool and the cohorts array (which cohorts exist) are force aggregate fields, drained/appended by ForceTransitions. The hull queues on the same model — return_pipeline, escort_sam, escort_sam_max, escort_sam_threshold, escort_reload — are claimed by the sealift_fleet aggregate (plan 0045).",
           "fields": {
             "mainland_pool": "campaign",
             "cohorts": "campaign"
@@ -147,6 +147,14 @@
           "fields": {
             "qty": "campaign"
           }
+        },
+        {
+          "class": "SealiftCohort",
+          "path": "res://scripts/model/SealiftCohort.gd",
+          "_doc": "Plan 0045 typed cohorts: who is ABOARD one in-transit ship group. The hulls in the same cohort (hulls_by_type) and the leg it is on (cohort_state) belong to the sealift_fleet aggregate — one object, two authorities, split by field.",
+          "fields": {
+            "bn_ids": "campaign"
+          }
         }
       ],
       "construction_writers": [
@@ -174,13 +182,108 @@
             "MobilizationState.pending"
           ]
         },
-
         {
           "path": "res://scripts/builders/SealiftStateBuilder.gd",
           "why": "build() constructs a FRESH SealiftState from scenario data before any runtime play mutates it.",
           "fields": [
             "SealiftState.mainland_pool",
             "SealiftState.cohorts"
+          ]
+        },
+        {
+          "path": "res://scripts/model/SealiftCohort.gd",
+          "why": "The sent()/offloading() factories fill a FRESH cohort from a caller's plan before it is appended to any SealiftState. A cohort in flight is never rewritten here.",
+          "fields": [
+            "SealiftCohort.bn_ids"
+          ]
+        }
+      ],
+      "legacy_writers": []
+    },
+    {
+      "id": "sealift_fleet",
+      "summary": "The hull side of the amphibious lift (plan 0045): the ShipState fleet projection (which bucket every surviving hull of a type is in) and the persistent hull queues SealiftState holds. Its counterpart is the 'force' aggregate, which owns who is ABOARD a cohort; this one owns what FLOATS. A cohort is shared by field, never reached across.",
+      "status": "enforced",
+      "authority_class": "SealiftTransitions",
+      "authority_path": "res://scripts/transitions/SealiftTransitions.gd",
+      "owned_models": [
+        {
+          "class": "ShipState",
+          "path": "res://scripts/model/ShipState.gd",
+          "_doc": "Owned model: EVERY mutable field must be classified below or the gate fails. ShipState is wholly a fleet projection, so no other aggregate has a claim on any of its fields. Lifetimes: identity = fixed at construction; establishment = the hulls the scenario starts with; campaign = persists across turns; projection = recomputed from SealiftState on every fleet write.",
+          "fields": {
+            "ship_type": "identity",
+            "fleet_total": "establishment",
+            "destroyed": "campaign",
+            "fleet_surviving_total": "campaign",
+            "ready": "projection",
+            "surviving_sent": "projection",
+            "offloading": "projection",
+            "returning": "projection"
+          }
+        }
+      ],
+      "hosted_fields": [
+        {
+          "class": "GameStateData",
+          "path": "res://scripts/model/GameStateData.gd",
+          "_doc": "The fleet dictionary (ship name -> ShipState) itself. Replacing it is a scenario reset, which routes through SealiftTransitions.rebuild_fleet so the host file earns no writer exemption.",
+          "fields": {
+            "fleet": "campaign"
+          }
+        },
+        {
+          "class": "SealiftState",
+          "path": "res://scripts/model/SealiftState.gd",
+          "_doc": "The hull queues on the model the force aggregate shares (plan 0045). mainland_pool and cohorts are the force aggregate's troop-side fields and are claimed there; these five are the hull side. The hull counts INSIDE a cohort are not a field of their own — they live in untyped cohort dictionaries the scanner cannot see into, which is what plan 0045's typed-cohort step exists to fix.",
+          "fields": {
+            "return_pipeline": "campaign",
+            "escort_sam": "campaign",
+            "escort_sam_max": "establishment",
+            "escort_sam_threshold": "establishment",
+            "escort_reload": "campaign"
+          }
+        },
+        {
+          "class": "SealiftCohort",
+          "path": "res://scripts/model/SealiftCohort.gd",
+          "_doc": "Plan 0045 typed cohorts: what FLOATS in one in-transit ship group and which leg it is on. bn_ids on the same model is the force aggregate's. cohort_state is spelled out rather than 'state' because the gate protects field NAMES and 'state' is used everywhere else in this codebase for something unrelated.",
+          "fields": {
+            "hulls_by_type": "campaign",
+            "cohort_state": "campaign"
+          }
+        }
+      ],
+      "construction_writers": [
+        {
+          "path": "res://scripts/model/SealiftCohort.gd",
+          "why": "The sent()/offloading() factories fill a FRESH cohort from a caller's plan before it is appended to any SealiftState. Hull counts of a cohort in flight are only ever changed by SealiftTransitions.",
+          "fields": [
+            "SealiftCohort.hulls_by_type",
+            "SealiftCohort.cohort_state"
+          ]
+        },
+        {
+          "path": "res://scripts/builders/SealiftStateBuilder.gd",
+          "why": "build() seeds each escort type's SAM magazine at its scenario loadout while assembling a FRESH SealiftState, before anything holds it. The magazine is left empty when the scenario does not model reload.",
+          "fields": [
+            "SealiftState.escort_sam",
+            "SealiftState.escort_sam_max",
+            "SealiftState.escort_sam_threshold"
+          ]
+        },
+        {
+          "path": "res://scripts/builders/FleetBuilder.gd",
+          "why": "build() constructs a FRESH ShipState per ship definition, all hulls ready, before anything holds the fleet. It never accepts live fleet state; replacing a LIVE fleet goes through SealiftTransitions.rebuild_fleet.",
+          "fields": [
+            "ShipState.ship_type",
+            "ShipState.fleet_total",
+            "ShipState.fleet_surviving_total",
+            "ShipState.ready",
+            "ShipState.surviving_sent",
+            "ShipState.offloading",
+            "ShipState.returning",
+            "ShipState.destroyed"
           ]
         }
       ],

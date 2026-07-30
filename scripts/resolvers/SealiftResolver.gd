@@ -1,47 +1,48 @@
 class_name SealiftResolver
 extends RefCounted
 
-## Pure resolver for the cross-turn sealift phase (plan 0004): runs at the top of each turn,
-## BEFORE the anti-ship crossing. Three deterministic steps, no dice:
+## Pure planner for the cross-turn sealift phase (plan 0004): runs at the top of each turn, BEFORE the
+## anti-ship crossing. Two deterministic steps, no dice:
 ##
-##   1. tick   — advance the return/reload pipeline; hulls whose timer hits 0 rejoin the ready pool.
-##   2. adopt  — any at-sea BN in ship_reserve not yet bound to a cohort (the programmed first
+##   1. adopt  — any at-sea BN in ship_reserve not yet bound to a cohort (the programmed first
 ##               echelon on turn 1, or a straggler) is wrapped in a "sent" cohort using the same
 ##               minimum-lift derivation the crossing used before (ShipLoadingModel.build_sent_snapshots
 ##               over the FULL carrier set), so the default scenario's sent fleet is unchanged.
-##   3. embark — remaining ready AMPHIBIOUS capacity loads follow-on BNs from the mainland pool
+##   2. embark — remaining ready AMPHIBIOUS capacity loads follow-on BNs from the mainland pool
 ##               (departed brigades finished first, then new brigades), binding them in a new cohort.
 ##
-## Escorts (capacity 0) screen the wave and, unless they divert to reload their SAM magazine, stay in
+## The return/reload pipelines are ticked by the coordinator through SealiftTransitions BEFORE this
+## runs, and the hulls they released arrive here as `returned_by_type` — they are available to sail the
+## same turn they arrive back, so they join the local ready pool the packer works against.
+##
+## Escorts (capacity 0) screen the wave and, unless they diverted to reload their SAM magazine, stay in
 ## the ready pool (same-turn round trip). Only carrier hulls (capacity > 0) enter cohorts and go busy.
 ## Amphibious-lift eligibility is classified by ShipDef.is_amphibious_lift() / is_carrier() / sails().
 ##
-## Mutates only companion sealift fields (return/reload pipeline and escort magazines). It returns
-## typed force plans for cohort binding and mainland/reserve membership; ForceTransitions applies
-## those plans, and ReinforcementPhases projects ShipState bins.
+## Writes NO campaign state: it returns typed force plans for cohort binding and mainland/reserve
+## membership, which ForceTransitions applies, and hull totals, which SealiftTransitions applies.
 
 
-## state: SealiftState (mutated in place). ship_reserve: current active reserve (at-sea BNs).
-## ready_by_type: {ship_type -> ready hull count} (from fleet ShipState.ready). ship_defs:
-## {ship_type -> ShipDef}.
+## state: SealiftState (READ for cohort/pool membership; never written here). ship_reserve: current
+## active reserve (at-sea BNs). ready_by_type: {ship_type -> ready hull count} (from fleet
+## ShipState.ready, before this turn's pipeline release). returned_by_type: {ship_type -> int} the
+## pipeline released this turn. ship_defs: {ship_type -> ShipDef}.
 ##
 ## Returns {
 ##   "sent_by_type":            {ship_type -> int}  -- the sailing fleet for the crossing (all cohort
 ##                                                      carrier hulls this turn + all ready escorts),
 ##   "carriers_sent_by_type":   {ship_type -> int}  -- carrier hulls that entered cohorts (left ready),
-##   "returned_by_type":        {ship_type -> int}  -- hulls the pipeline released to ready this turn,
+##   "returned_by_type":        {ship_type -> int}  -- passed through, so the phase summary and tests
+##                                                      read one outcome rather than two,
 ##   "embarked_reserve_entries": Array              -- new/updated ship_reserve entries to merge,
 ## }.
 static func resolve(
 	state: SealiftState,
 	ship_reserve: Array,
 	ready_by_type: Dictionary,
+	returned_by_type: Dictionary,
 	ship_defs: Dictionary,
 ) -> Dictionary:
-	# --- step 1: tick the return/reload pipelines -----------------------------------------------
-	var returned_by_type := _tick_return_pipeline(state)
-	_tick_escort_reload(state)
-
 	# Local ready pool = current ready + hulls the pipeline just released (available to sail today).
 	var ready: Dictionary = {}
 	for t in ready_by_type.keys():
@@ -51,11 +52,11 @@ static func resolve(
 
 	var carriers_sent_by_type: Dictionary = {}
 
-	# --- step 2: adopt orphan at-sea BNs into a "sent" cohort -----------------------------------
+	# --- step 1: adopt orphan at-sea BNs into a "sent" cohort -----------------------------------
 	var adopt_plan := _plan_orphan_adoption(
 		state, ship_reserve, ready, ship_defs, carriers_sent_by_type)
 
-	# --- step 3: embark follow-on BNs onto remaining ready AMPHIBIOUS capacity -------------------
+	# --- step 2: embark follow-on BNs onto remaining ready AMPHIBIOUS capacity -------------------
 	var embark_result := _embark_followon(state, ship_reserve, ready, ship_defs, carriers_sent_by_type)
 
 	# --- assemble the sailing fleet for the crossing --------------------------------------------
@@ -100,28 +101,6 @@ static func _plan_orphan_adoption(
 	_consume(ready, adopted_hulls)
 	_accumulate(carriers_sent_by_type, adopted_hulls)
 	return {"bn_ids": _bn_ids(orphan_bns), "hulls_by_type": adopted_hulls}
-
-
-## Decrement every pipeline slot; slots at 0 release their hulls to ready. Returns {ship_type -> int}
-## released this turn. Mutates state.return_pipeline in place.
-static func _tick_return_pipeline(state: SealiftState) -> Dictionary:
-	var returned: Dictionary = {}
-	for ship_type in state.return_pipeline.keys():
-		var kept: Array = []
-		for slot_value in (state.return_pipeline[ship_type] as Array):
-			var slot: Dictionary = slot_value
-			var remaining := int(slot["turns_remaining"]) - 1
-			if remaining <= 0:
-				returned[String(ship_type)] = int(returned.get(String(ship_type), 0)) + int(slot["count"])
-			else:
-				slot["turns_remaining"] = remaining
-				kept.append(slot)
-		state.return_pipeline[ship_type] = kept
-	# Drop emptied type buckets to keep to_dict() minimal.
-	for ship_type in returned.keys():
-		if (state.return_pipeline.get(ship_type, []) as Array).is_empty():
-			state.return_pipeline.erase(ship_type)
-	return returned
 
 
 ## Build the ordered follow-on BN pool (departed brigades first, then new brigades in pool order),
@@ -231,81 +210,6 @@ static func _gather_carriers_and_screen(ready: Dictionary, ship_defs: Dictionary
 	return {"carriers": carriers, "screen": screen}
 
 
-## --- escort SAM magazine -------------------------------------------------------------------------
-
-## Deplete each escort type's SAM magazine by what it fired this crossing, then divert any type that
-## dropped to/below its reload threshold into a reload (escort_reload) for reload_time turns. No-op
-## when the magazine is unmodelled (escort_sam empty) or reload_time <= 0. Mutates state in place.
-static func apply_escort_consumption(state: SealiftState, consumed: Dictionary, reload_time: int) -> void:
-	for ship_type in consumed.keys():
-		var st := String(ship_type)
-		if state.escort_sam.has(st):
-			state.escort_sam[st] = maxi(0, int(state.escort_sam[st]) - int(consumed[ship_type]))
-	if reload_time <= 0:
-		return
-	for ship_type in state.escort_sam.keys():
-		var st := String(ship_type)
-		if state.escort_reload.has(st):
-			continue
-		if int(state.escort_sam[st]) <= int(state.escort_sam_threshold.get(st, 0)):
-			state.escort_reload[st] = reload_time
-
-
-## Advance escort reloads; a type whose timer hits 0 refills to its loadout max and rejoins the
-## screen. Mutates state.escort_reload + state.escort_sam in place.
-static func _tick_escort_reload(state: SealiftState) -> void:
-	var done: Array = []
-	for ship_type in state.escort_reload.keys():
-		var remaining := int(state.escort_reload[ship_type]) - 1
-		if remaining <= 0:
-			state.escort_sam[String(ship_type)] = int(state.escort_sam_max.get(String(ship_type), int(state.escort_sam.get(String(ship_type), 0))))
-			done.append(ship_type)
-		else:
-			state.escort_reload[ship_type] = remaining
-	for ship_type in done:
-		state.escort_reload.erase(ship_type)
-
-
-## --- post-crossing / offload cohort maintenance --------------------------------------------------
-
-## BN ids currently bound to a "sent" cohort (crossing THIS turn) — the wrapper uses these to slice
-## the crossing_reserve out of the full ship_reserve so only sailing BNs are attrited.
-static func sent_cohort_bn_ids(state: SealiftState) -> Dictionary:
-	var ids: Dictionary = {}
-	for cohort in state.cohorts:
-		if String(cohort.get("state", "")) != SealiftState.STATE_SENT:
-			continue
-		for id in cohort.get("bn_ids", []):
-			ids[String(id)] = true
-	return ids
-
-
-## Remove up to `count` carrier hulls of `ship_type` from this turn's "sent" cohorts (crossing
-## losses), in cohort order. Returns the number actually removed (<= count, capped by hulls present).
-static func remove_carrier_hulls(state: SealiftState, ship_type: String, count: int) -> int:
-	var removed := 0
-	for cohort in state.cohorts:
-		if removed >= count:
-			break
-		if String(cohort.get("state", "")) != SealiftState.STATE_SENT:
-			continue
-		var hulls: Dictionary = cohort["hulls_by_type"]
-		var have := int(hulls.get(ship_type, 0))
-		if have <= 0:
-			continue
-		var take := mini(have, count - removed)
-		hulls[ship_type] = have - take
-		removed += take
-	return removed
-
-
-## After the crossing, every surviving "sent" cohort is now ashore-bound: flip it to "offloading".
-static func flip_sent_to_offloading(state: SealiftState) -> void:
-	for cohort in state.cohorts:
-		if String(cohort.get("state", "")) == SealiftState.STATE_SENT:
-			cohort["state"] = SealiftState.STATE_OFFLOADING
-
-
 ## Stamp bns (in pool order) with the carrier category lifting them: walk bn_equiv_assigned
 ## ({ship_type -> BN-equiv carried}, insertion order = build_sent_snapshots' deterministic fill
 ## order) and assign each type's cumulative floor of BNs from the front of the pool. BNs beyond
@@ -330,8 +234,8 @@ static func _stamp_ship_categories(bns: Array, bn_equiv_assigned: Dictionary, sh
 static func _bound_bn_ids(state: SealiftState) -> Dictionary:
 	var ids: Dictionary = {}
 	for cohort in state.cohorts:
-		for id in cohort.get("bn_ids", []):
-			ids[String(id)] = true
+		for bn_id in cohort.bn_ids:
+			ids[bn_id] = true
 	return ids
 
 

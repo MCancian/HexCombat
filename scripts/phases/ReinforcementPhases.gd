@@ -9,7 +9,8 @@ extends RefCounted
 ## `TurnConductor` keeps the ORDERING (the when); this module only owns the how. Same contract as
 ## every other resolver: static, first argument `state: GameStateData` mutated in place, reads the
 ## GameData content autoload but never the GameState autoload singleton. Every force write is applied
-## by `ForceTransitions`; the resolvers below only calculate transition plans.
+## by `ForceTransitions` and every hull/fleet write by `SealiftTransitions`; the resolvers below only
+## calculate transition plans.
 
 
 # --- Sealift phase (plan 0004) -----------------------------------------------------------------
@@ -18,19 +19,29 @@ static func initialize_ship_reserve(state: GameStateData, reserve: Array) -> voi
 	ForceTransitions.initialize_ship_reserve(state, reserve)
 
 
+## Scenario reset of the fleet, for GameState's reset_to_scenario. Thin pass-through to the fleet's
+## authority, in the same style as FiresPhases.reset_antiship_establishment — GameState reaches the
+## sealift phase's state through this module, never around it (and so keeps its dependency ceiling).
+static func rebuild_fleet(state: GameStateData, ship_defs: Dictionary) -> void:
+	SealiftTransitions.rebuild_fleet(state, ship_defs)
+
+
 ## Advance the ship return pipeline and embark this turn's crossing wave. Dice-free and pure
-## (SealiftResolver); this wrapper routes force mutations through ForceTransitions and performs
-## companion updates (JLSF markers, fleet projection).
+## (SealiftResolver); this wrapper routes force mutations through ForceTransitions, hull/fleet
+## mutations through SealiftTransitions, and performs companion updates (JLSF markers).
 static func resolve_sealift_turn(state: GameStateData) -> void:
 	if state.sealift_state == null:
 		return
-	var ready_by_type: Dictionary = {}
-	for ship_type in state.fleet.keys():
-		ready_by_type[String(ship_type)] = (state.fleet[ship_type] as ShipState).ready
+	var ready_by_type := SealiftTransitions.ready_by_type(state)
 
 	consume_jlsf_orders(state)
+	# The hull queues advance first, through their authority: hulls whose return timer expires today
+	# sail again today, so the planner below packs against ready + just-returned. Escort reloads finish
+	# here too, which is what puts a diverted escort type back on the screen.
+	var returned_by_type := SealiftTransitions.tick_returns(state.sealift_state)
+	SealiftTransitions.tick_escort_reload(state.sealift_state)
 	var outcome := SealiftResolver.resolve(
-		state.sealift_state, state.ship_reserve, ready_by_type, GameData.ship_defs)
+		state.sealift_state, state.ship_reserve, ready_by_type, returned_by_type, GameData.ship_defs)
 
 	# Apply adopt plan (orphan BNs already in reserve → sent cohort).
 	var adopt_plan: Dictionary = outcome.get("adopt_plan", {})
@@ -61,7 +72,7 @@ static func resolve_sealift_turn(state: GameStateData) -> void:
 				state.infrastructure_state.nodes[port_id]["jlsf"] = InfrastructureState.JLSF_ENROUTE
 
 	state.last_sealift_sent_by_type = outcome["sent_by_type"]
-	project_sealift_onto_fleet(state)
+	SealiftTransitions.project_fleet(state)
 
 
 ## Consume the deploy_jlsf order buffer through the JlsfCargo queueing policy (plan 0006). New
@@ -76,43 +87,6 @@ static func consume_jlsf_orders(state: GameStateData) -> void:
 		GameData.beach_to_to, GameData.auto_jlsf, GameData.jlsf_lift_bn_equiv)
 	state.jlsf_orders.clear()
 	ForceTransitions.apply_queue_jlsf(state.sealift_state, entries)
-
-
-## Reproject the fleet ShipState bins from the sealift state (the single source of truth for where
-## hulls are): surviving_sent/offloading from cohorts, returning from the pipeline, ready as the
-## remainder of the surviving fleet. Keeps ShipState.validate()'s invariants honest (plan 0004).
-## Called from the crossing too (FiresPhases.resolve_antiship_turn) — hull losses reproject.
-static func project_sealift_onto_fleet(state: GameStateData) -> void:
-	var sent: Dictionary = {}
-	var offloading: Dictionary = {}
-	var returning: Dictionary = {}
-	for cohort_value in state.sealift_state.cohorts:
-		var cohort: Dictionary = cohort_value
-		var bucket: Dictionary = sent if String(cohort["state"]) == SealiftState.STATE_SENT else offloading
-		for ship_type in (cohort["hulls_by_type"] as Dictionary).keys():
-			bucket[String(ship_type)] = int(bucket.get(String(ship_type), 0)) + int(cohort["hulls_by_type"][ship_type])
-	for ship_type in state.sealift_state.return_pipeline.keys():
-		for slot_value in (state.sealift_state.return_pipeline[ship_type] as Array):
-			returning[String(ship_type)] = int(returning.get(String(ship_type), 0)) + int((slot_value as Dictionary)["count"])
-	# Escort types reloading SAMs are away from the screen: all their surviving hulls are busy
-	# (returning) until reload completes (plan 0004 D5).
-	for ship_type in state.sealift_state.escort_reload.keys():
-		var reloading_state: ShipState = state.fleet.get(String(ship_type), null)
-		if reloading_state != null:
-			returning[String(ship_type)] = int(returning.get(String(ship_type), 0)) + reloading_state.fleet_surviving_total
-
-	for ship_type in state.fleet.keys():
-		var ship_state: ShipState = state.fleet[ship_type]
-		var ss := int(sent.get(String(ship_type), 0))
-		var of := int(offloading.get(String(ship_type), 0))
-		var rt := int(returning.get(String(ship_type), 0))
-		ship_state.surviving_sent = ss
-		ship_state.sent_original = ss
-		ship_state.offloading = of
-		ship_state.returning = rt
-		ship_state.ready = ship_state.fleet_surviving_total - ss - of - rt
-		assert(ship_state.ready >= 0, "sealift projection: negative ready for %s (surviving=%d busy=%d)" % [ship_type, ship_state.fleet_surviving_total, ss + of + rt])
-		assert(ship_state.validate(), "sealift projection broke ShipState invariant for %s" % ship_type)
 
 
 # --- Amphibious offload phase ------------------------------------------------------------------
@@ -169,8 +143,10 @@ static func resolve_offload_turn(state: GameStateData, dice: Dice) -> Dictionary
 		if state.infrastructure_state != null and state.infrastructure_state.nodes.has(port_id):
 			state.infrastructure_state.nodes[port_id]["jlsf"] = InfrastructureState.JLSF_ARRIVED
 	if state.sealift_state != null:
-		ForceTransitions.free_emptied_cohorts(state.sealift_state, GameData.amphibious_return_time_turns)
-		project_sealift_onto_fleet(state)
+		SealiftTransitions.release_hulls(
+			state.sealift_state, ForceTransitions.free_emptied_cohorts(state.sealift_state),
+			GameData.amphibious_return_time_turns)
+		SealiftTransitions.project_fleet(state)
 	reconcile_lost_jlsf(state)
 
 	manifest["lost_at_sea"] = state.pending_lost_at_sea

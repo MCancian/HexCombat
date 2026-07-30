@@ -6,7 +6,8 @@ const SHIPS_PATH := "res://data/ships.json"
 const EXPECTED_SHIP_COUNT := 27
 const EXPECTED_CATEGORIES := ["Escort", "Military_Amphibious", "Civilian_Amphibious", "Civilian_Non_Amphibious", "Infrastructure"]
 
-const ShipStateResource = preload("res://scripts/model/ShipState.gd")
+const ShipDefResource = preload("res://scripts/model/ShipDef.gd")
+const FleetBuilderScript = preload("res://scripts/builders/FleetBuilder.gd")
 
 var _failures: Array[String] = []
 
@@ -95,21 +96,27 @@ func _validate_ship_contracts(ships_data: Array) -> void:
 	print("Ship contract check: %d ships validated" % names_seen.size())
 
 
+## The fresh-fleet invariant is proven against the REAL builder rather than a hand-rolled copy of its
+## arithmetic. FleetBuilder is the registered construction writer for ShipState (plan 0045); a second
+## copy of the bin arithmetic here could pass while the builder itself was wrong, which is the failure
+## mode this check exists to catch. FleetBuilder asserts each fresh row, so genuinely invalid data
+## aborts with the ship named instead of reaching the report below.
 func _validate_fresh_fleet(ships_data: Array) -> void:
+	var ship_defs: Dictionary = {}
 	for ship_data in ships_data:
-		var ship_state: ShipState = ShipStateResource.new()
-		ship_state.ship_type = String(ship_data.get("name", ""))
-		ship_state.fleet_total = int(ship_data.get("total_count", 0))
-		ship_state.fleet_surviving_total = int(ship_data.get("total_count", 0))
-		ship_state.ready = int(ship_data.get("total_count", 0))
-		ship_state.sent_original = 0
-		ship_state.surviving_sent = 0
-		ship_state.offloading = 0
-		ship_state.returning = 0
-		ship_state.destroyed = 0
+		var ship_def: ShipDef = ShipDefResource.new()
+		ship_def.name = String(ship_data.get("name", ""))
+		ship_def.total_count = int(ship_data.get("total_count", 0))
+		ship_defs[ship_def.name] = ship_def
+	if ship_defs.size() != ships_data.size():
+		_fail("Ship names are not unique: %d rows collapsed to %d fleet entries" % [
+			ships_data.size(), ship_defs.size()])
+	var fleet: Dictionary = FleetBuilderScript.build(ship_defs)
+	for ship_type in fleet.keys():
+		var ship_state: ShipState = fleet[ship_type]
 		if not ship_state.validate():
 			_fail("Fresh fleet state invalid for %s" % ship_state.ship_type)
-	print("Fresh fleet invariant check: %d ship states validated" % ships_data.size())
+	print("Fresh fleet invariant check: %d ship states validated" % fleet.size())
 
 
 func _fail(message: String) -> void:

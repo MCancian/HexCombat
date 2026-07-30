@@ -130,9 +130,17 @@ paths, dead fields, an unclassified field on an owned model, two aggregates clai
 stale allowance, an unregistered file under `scripts/transitions/`, and a scan that saw nothing all
 fail. Illegal fixtures under `tools/fixtures/mutation_authority/` declare the rule each line must
 trigger and are compared exactly on every run, so a detector that stops working fails as a false
-negative instead of going quietly green. **Two aggregates are registered and ENFORCED:**
+negative instead of going quietly green. **Three aggregates are registered and ENFORCED:**
 `antiship_establishment`, whose sole writer is `scripts/transitions/AntishipTransitions.gd` (plan
-0043; zero legacy writers), and the **`force`** aggregate (plan 0044), whose protected Brigade/Battalion runtime fields, placement, and manifest memberships are written solely by `scripts/transitions/ForceTransitions.gd`. All legacy writers and façades have been removed, routing every production write through the authority seam without moving golden pins.
+0043; zero legacy writers); the **`force`** aggregate (plan 0044), whose protected Brigade/Battalion runtime fields, placement, and manifest memberships are written solely by `scripts/transitions/ForceTransitions.gd`; and the **`sealift_fleet`** aggregate (plan 0045), whose `ShipState` fleet projection, cohort hulls and legs, return/reload pipeline and escort SAM magazines are written solely by `scripts/transitions/SealiftTransitions.gd`. All legacy writers and façades have been removed, routing every production write through the authority seam without moving golden pins.
+
+Plan 0045 also settled how ONE object can belong to two aggregates: a sealift cohort binds troops to
+hulls, so it became a typed `SealiftCohort` whose `bn_ids` is registered to `force` and whose
+`hulls_by_type`/`cohort_state` are registered to `sealift_fleet`. As an untyped dictionary neither half
+was enforceable — the gate resolves the receiver's TYPE, and `cohort["hulls_by_type"][t] = n` names no
+type at all. A phase that moves troops and hulls together now calls each authority in turn; neither
+reaches into the other's fields. `ShipState.sent_original` was deleted in the same plan: the projection
+assigned it `= surviving_sent` every turn, which made its own invariant vacuous, and nothing read it.
 
 ## What is NOT done (see `docs/plans/`)
 

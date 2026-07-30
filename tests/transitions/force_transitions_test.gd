@@ -28,11 +28,7 @@ func _store() -> GameDataStore:
 
 func _sent_state(ids: Array) -> SealiftState:
 	var state := SealiftState.new()
-	state.cohorts = [{
-		"hulls_by_type": {"LST": 1},
-		"bn_ids": ids,
-		"state": SealiftState.STATE_SENT,
-	}]
+	state.cohorts = [SealiftCohort.sent({"LST": 1}, ids)]
 	return state
 
 
@@ -134,7 +130,7 @@ func test_crossing_casualty_ignores_jlsf_cargo_ids() -> void:
 	assert_bool(result.success).is_true()
 	assert_array(result.receipts).is_empty()
 	assert_array(reserve).is_empty()
-	assert_array(state.cohorts[0]["bn_ids"]).is_empty()
+	assert_array(state.cohorts[0].bn_ids).is_empty()
 	assert_int(brigade.get_battalion_count()).is_equal(3)
 	store.free()
 
@@ -496,11 +492,11 @@ func test_apply_sent_cohort_creates_cohort_and_returns_receipt() -> void:
 
 	assert_bool(receipt.success).is_true()
 	assert_int(state.cohorts.size()).is_equal(1)
-	var cohort: Dictionary = state.cohorts[0]
-	assert_str(String(cohort.get("state", ""))).is_equal(SealiftState.STATE_SENT)
-	var stored_ids: Array = cohort.get("bn_ids", [])
+	var cohort: SealiftCohort = state.cohorts[0]
+	assert_str(cohort.cohort_state).is_equal(SealiftState.STATE_SENT)
+	var stored_ids: Array = cohort.bn_ids
 	assert_int(stored_ids.size()).is_equal(2)
-	assert_int(int(cohort.get("hulls_by_type", {}).get("LST", 0))).is_equal(1)
+	assert_int(int(cohort.hulls_by_type.get("LST", 0))).is_equal(1)
 	assert_array(stored_ids).contains(["bn-1", "bn-2"])
 
 
@@ -517,7 +513,7 @@ func test_apply_sent_cohort_empty_ids_refuses() -> void:
 
 func test_apply_sent_cohort_duplicate_id_across_cohorts_refuses() -> void:
 	var state := SealiftState.new()
-	state.cohorts = [{"hulls_by_type": {"LST": 1}, "bn_ids": ["bn-1"], "state": SealiftState.STATE_SENT}]
+	state.cohorts = [SealiftCohort.sent({"LST": 1}, ["bn-1"])]
 	var reserve := [{"brigade_id": "BDE-SEA", "bns": [
 		{"id": "bn-1", "type": "infantry"}, {"id": "bn-2", "type": "infantry"}]}]
 	var receipt := ForceTransitions.apply_sent_cohort(
@@ -526,24 +522,8 @@ func test_apply_sent_cohort_duplicate_id_across_cohorts_refuses() -> void:
 	assert_int(state.cohorts.size()).is_equal(1)
 
 
-# ── Sea transport: sent → offloading (plan 0044) ──────────────────────────────────────────────
-
-
-func test_apply_sent_to_offloading_flips_all_sent_cohorts() -> void:
-	var state := SealiftState.new()
-	state.cohorts = [
-		{"hulls_by_type": {"LST": 1}, "bn_ids": ["a"], "state": SealiftState.STATE_SENT},
-		{"hulls_by_type": {"LHA": 1}, "bn_ids": ["b"], "state": SealiftState.STATE_OFFLOADING},
-	]
-
-	ForceTransitions.apply_sent_to_offloading(state)
-
-	assert_str(String(state.cohorts[0].get("state", ""))).is_equal(SealiftState.STATE_OFFLOADING)
-	assert_str(String(state.cohorts[1].get("state", ""))).is_equal(SealiftState.STATE_OFFLOADING)
-
-
-func test_apply_sent_to_offloading_null_state_noop() -> void:
-	ForceTransitions.apply_sent_to_offloading(null)
+# NOTE: the sent → offloading flip moved to SealiftTransitions in plan 0045 — the cohort's leg is a
+# statement about the SHIPPING, not about who is aboard — and is covered by sealift_transitions_test.
 
 
 # ── Sea transport: embark (plan 0044) ─────────────────────────────────────────────────────────
@@ -596,9 +576,9 @@ func test_apply_embark_drains_pool_and_creates_cohort() -> void:
 	assert_str(String(remaining[0].get("id", ""))).is_equal("bn-3")
 	# Cohort created
 	assert_int(state.cohorts.size()).is_equal(1)
-	var cohort: Dictionary = state.cohorts[0]
-	assert_str(String(cohort.get("state", ""))).is_equal(SealiftState.STATE_SENT)
-	var cohort_ids: Array = cohort.get("bn_ids", [])
+	var cohort: SealiftCohort = state.cohorts[0]
+	assert_str(cohort.cohort_state).is_equal(SealiftState.STATE_SENT)
+	var cohort_ids: Array = cohort.bn_ids
 	assert_int(cohort_ids.size()).is_equal(2)
 	assert_int(reserve.size()).is_equal(1)
 	var reserve_bns: Array = reserve[0]["bns"]
@@ -674,7 +654,7 @@ func _offload_reserve() -> Array:
 func test_apply_offload_first_landing_places_brigade() -> void:
 	var store := _sea_store()
 	var state := SealiftState.new()
-	state.cohorts = [{"hulls_by_type": {"LST": 1}, "bn_ids": ["bn-1", "bn-2"], "state": SealiftState.STATE_OFFLOADING}]
+	state.cohorts = [SealiftCohort.offloading({"LST": 1}, ["bn-1", "bn-2"])]
 	var reserve := _offload_reserve()
 	var landings := [{"brigade_id": "BDE-SEA", "bn_ids": ["bn-1", "bn-2"], "hex_id": HEX_A}]
 	var request := ForceOffloadRequest.from_landings(landings)
@@ -690,7 +670,7 @@ func test_apply_offload_first_landing_places_brigade() -> void:
 	# Reserve entry removed (all BNs offloaded)
 	assert_int(reserve.size()).is_equal(0)
 	# Cohort drained
-	var cohort_bn_ids: Array = state.cohorts[0].get("bn_ids", [])
+	var cohort_bn_ids: Array = state.cohorts[0].bn_ids
 	assert_int(cohort_bn_ids.size()).is_equal(0)
 	store.free()
 
@@ -700,7 +680,7 @@ func test_apply_offload_followup_keeps_brigade_placed() -> void:
 	var brigade: Brigade = store.get_brigade("BDE-SEA")
 	brigade.hex_id = HEX_A
 	var state := SealiftState.new()
-	state.cohorts = [{"hulls_by_type": {"LST": 1}, "bn_ids": ["bn-3"], "state": SealiftState.STATE_OFFLOADING}]
+	state.cohorts = [SealiftCohort.offloading({"LST": 1}, ["bn-3"])]
 	var reserve := [{
 		"brigade_id": "BDE-SEA",
 		"locked_beach": 1,
@@ -718,7 +698,7 @@ func test_apply_offload_followup_keeps_brigade_placed() -> void:
 	# Brigade still at same hex
 	assert_str(brigade.hex_id).is_equal(HEX_A)
 	# Cohort drained
-	assert_int((state.cohorts[0].get("bn_ids", []) as Array).size()).is_equal(0)
+	assert_int(state.cohorts[0].bn_ids.size()).is_equal(0)
 	store.free()
 
 
@@ -747,11 +727,7 @@ func test_apply_offload_missing_bn_in_reserve_refuses() -> void:
 func test_apply_offload_jlsf_cargo_drains_without_force_receipt() -> void:
 	var store := _sea_store()
 	var state := SealiftState.new()
-	state.cohorts = [{
-		"hulls_by_type": {"LST": 1},
-		"bn_ids": ["JLSF:port-a:1"],
-		"state": SealiftState.STATE_OFFLOADING,
-	}]
+	state.cohorts = [SealiftCohort.offloading({"LST": 1}, ["JLSF:port-a:1"])]
 	var reserve := [{
 		"brigade_id": "JLSF:port-a", "cargo": JlsfCargo.CARGO_KIND, "port_id": "port-a",
 		"bns": [{"id": "JLSF:port-a:1", "type": JlsfCargo.BN_TYPE}],
@@ -764,7 +740,7 @@ func test_apply_offload_jlsf_cargo_drains_without_force_receipt() -> void:
 	assert_bool(receipt.success).is_true()
 	assert_array(receipt.bn_ids_landed).is_empty()
 	assert_array(reserve).is_empty()
-	assert_array(state.cohorts[0]["bn_ids"]).is_empty()
+	assert_array(state.cohorts[0].bn_ids).is_empty()
 	store.free()
 
 
@@ -784,7 +760,7 @@ func test_apply_offload_empty_landings_returns_empty_ok() -> void:
 func test_apply_crossing_loss_removes_from_reserve_cohorts_and_roster() -> void:
 	var store := _store()
 	var state := SealiftState.new()
-	state.cohorts = [{"hulls_by_type": {"LST": 1}, "bn_ids": ["bn-1"], "state": SealiftState.STATE_SENT}]
+	state.cohorts = [SealiftCohort.sent({"LST": 1}, ["bn-1"])]
 	var reserve := _troop_reserve("bn-1")
 	var request := ForceCrossingCasualtyRequest.from_crossing(["bn-1"], reserve, state)
 
@@ -797,7 +773,7 @@ func test_apply_crossing_loss_removes_from_reserve_cohorts_and_roster() -> void:
 	# Reserve entry removed (empty)
 	assert_int(reserve.size()).is_equal(0)
 	# Cohort BN removed
-	var cohort_bn_ids: Array = state.cohorts[0].get("bn_ids", [])
+	var cohort_bn_ids: Array = state.cohorts[0].bn_ids
 	assert_int(cohort_bn_ids.size()).is_equal(0)
 	store.free()
 
@@ -805,7 +781,7 @@ func test_apply_crossing_loss_removes_from_reserve_cohorts_and_roster() -> void:
 func test_apply_crossing_loss_duplicate_refuses() -> void:
 	var store := _store()
 	var state := SealiftState.new()
-	state.cohorts = [{"hulls_by_type": {"LST": 1}, "bn_ids": ["bn-1"], "state": SealiftState.STATE_SENT}]
+	state.cohorts = [SealiftCohort.sent({"LST": 1}, ["bn-1"])]
 	var reserve := _troop_reserve("bn-1")
 	var request := ForceCrossingCasualtyRequest.from_crossing(["bn-1", "bn-1"], reserve, state)
 
@@ -850,48 +826,43 @@ func test_apply_queue_jlsf_empty_entries_noop() -> void:
 # ── Cohort lifecycle (plan 0044) ─────────────────────────────────────────────────────────────
 
 
-func test_free_emptied_cohorts_frees_hulls_and_populates_pipeline() -> void:
+## Freeing a cohort is where the two authorities hand over: this one drops the binding and REPORTS the
+## hulls that were carrying it, and does not touch the return pipeline at all (plan 0045 — where a freed
+## hull goes next is the sealift authority's call, see sealift_transitions_test).
+func test_free_emptied_cohorts_drops_the_cohort_and_reports_its_hulls() -> void:
 	var state := SealiftState.new()
-	state.cohorts = [{
-		"hulls_by_type": {"LST": 2},
-		"bn_ids": [],
-		"state": SealiftState.STATE_OFFLOADING,
-	}]
-	var freed := ForceTransitions.free_emptied_cohorts(state, 3)
+	state.cohorts = [SealiftCohort.offloading({"LST": 2}, [])]
+	var plan := ForceTransitions.free_emptied_cohorts(state)
 
-	assert_int(int(freed.get("LST", 0))).is_equal(2)
-	assert_bool(state.cohorts.is_empty()).is_true()
-	assert_int((state.return_pipeline["LST"] as Array).size()).is_equal(1)
-	assert_int(int(state.return_pipeline["LST"][0]["count"])).is_equal(2)
-	assert_int(int(state.return_pipeline["LST"][0]["turns_remaining"])).is_equal(3)
-
-
-func test_free_emptied_cohorts_zero_return_time_skips_pipeline() -> void:
-	var state := SealiftState.new()
-	state.cohorts = [{
-		"hulls_by_type": {"LST": 2},
-		"bn_ids": [],
-		"state": SealiftState.STATE_OFFLOADING,
-	}]
-	var freed := ForceTransitions.free_emptied_cohorts(state, 0)
-
-	assert_int(int(freed.get("LST", 0))).is_equal(2)
+	assert_int(int(plan.total_by_type().get("LST", 0))).is_equal(2)
+	assert_int(plan.batches.size()).is_equal(1)
 	assert_bool(state.cohorts.is_empty()).is_true()
 	assert_bool(state.return_pipeline.is_empty()).is_true()
 
 
+## One batch per freed cohort, in cohort order — the pipeline slot granularity depends on it.
+func test_free_emptied_cohorts_reports_one_batch_per_freed_cohort() -> void:
+	var state := SealiftState.new()
+	state.cohorts = [
+		SealiftCohort.offloading({"LST": 2}, []),
+		SealiftCohort.offloading({"LST": 1, "LHA": 3}, []),
+	]
+	var plan := ForceTransitions.free_emptied_cohorts(state)
+
+	assert_int(plan.batches.size()).is_equal(2)
+	assert_int(int((plan.batches[0] as Dictionary)["LST"])).is_equal(2)
+	assert_int(int((plan.batches[1] as Dictionary)["LHA"])).is_equal(3)
+	assert_int(int(plan.total_by_type()["LST"])).is_equal(3)
+
+
 func test_free_emptied_cohorts_partial_keeps_cohort() -> void:
 	var state := SealiftState.new()
-	state.cohorts = [{
-		"hulls_by_type": {"LST": 2},
-		"bn_ids": ["bn-1"],
-		"state": SealiftState.STATE_OFFLOADING,
-	}]
-	var freed := ForceTransitions.free_emptied_cohorts(state, 3)
+	state.cohorts = [SealiftCohort.offloading({"LST": 2}, ["bn-1"])]
+	var plan := ForceTransitions.free_emptied_cohorts(state)
 
-	assert_bool(freed.is_empty()).is_true()
+	assert_bool(plan.is_empty()).is_true()
 	assert_int(state.cohorts.size()).is_equal(1)
-	var remaining: Array = state.cohorts[0].get("bn_ids", [])
+	var remaining: Array = state.cohorts[0].bn_ids
 	assert_int(remaining.size()).is_equal(1)
 
 
@@ -919,7 +890,7 @@ func test_embark_does_not_change_roster() -> void:
 func test_offload_does_not_change_roster() -> void:
 	var store := _sea_store()
 	var state := SealiftState.new()
-	state.cohorts = [{"hulls_by_type": {"LST": 1}, "bn_ids": ["bn-1", "bn-2"], "state": SealiftState.STATE_OFFLOADING}]
+	state.cohorts = [SealiftCohort.offloading({"LST": 1}, ["bn-1", "bn-2"])]
 	var reserve := _offload_reserve()
 	var brigade: Brigade = store.get_brigade("BDE-SEA")
 	brigade.hex_id = HEX_A
@@ -940,7 +911,7 @@ func test_offload_does_not_change_roster() -> void:
 func test_crossing_loss_wrong_type_id_refuses() -> void:
 	var store := _store()
 	var state := SealiftState.new()
-	state.cohorts = [{"hulls_by_type": {"LST": 1}, "bn_ids": ["cargo-x"], "state": SealiftState.STATE_SENT}]
+	state.cohorts = [SealiftCohort.sent({"LST": 1}, ["cargo-x"])]
 	var reserve := [{
 		"brigade_id": BRIGADE_ID,
 		"locked_beach": 1,
@@ -962,7 +933,7 @@ func test_crossing_loss_wrong_type_id_refuses() -> void:
 func test_crossing_loss_brigade_not_in_reserve_refuses() -> void:
 	var store := _store()
 	var state := SealiftState.new()
-	state.cohorts = [{"hulls_by_type": {"LST": 1}, "bn_ids": ["bn-orphan"], "state": SealiftState.STATE_SENT}]
+	state.cohorts = [SealiftCohort.sent({"LST": 1}, ["bn-orphan"])]
 	var reserve: Array = []
 	var request := ForceCrossingCasualtyRequest.from_crossing(
 		["bn-orphan"], reserve, state)
@@ -979,7 +950,7 @@ func test_crossing_loss_brigade_not_in_reserve_refuses() -> void:
 func test_crossing_loss_reserve_bn_mismatches_cohort_id() -> void:
 	var store := _store()
 	var state := SealiftState.new()
-	state.cohorts = [{"hulls_by_type": {"LST": 1}, "bn_ids": ["bn-in-cohort"], "state": SealiftState.STATE_SENT}]
+	state.cohorts = [SealiftCohort.sent({"LST": 1}, ["bn-in-cohort"])]
 	var reserve := [{
 		"brigade_id": BRIGADE_ID,
 		"locked_beach": 1,

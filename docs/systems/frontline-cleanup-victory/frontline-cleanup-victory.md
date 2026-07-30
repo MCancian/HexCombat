@@ -119,7 +119,7 @@ Cleanup runs last in resolve_turn (GameState.gd). Victory census is the tail of 
 
 This subsystem verifies the **`force`** aggregate via the victory census. Its designated authority is `ForceTransitions`.
 - **Outcome/receipt types:** `ForcePlacementReceipt`, `ForceValidationResult`.
-- **Manifest:** [tools/mutation_authority_manifest.json](../../tools/mutation_authority_manifest.json).
+- **Manifest:** [tools/mutation_authority_manifest.json](../../../tools/mutation_authority_manifest.json).
 
 **Rules:**
 - The census strictly counts present (landed) battalions.

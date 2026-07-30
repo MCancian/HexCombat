@@ -1,7 +1,13 @@
 extends GdUnitTestSuite
 
-# SealiftResolver pure resolver tests (plan 0004). Deterministic — no dice injected.
+# SealiftResolver pure planner tests (plan 0004). Deterministic — no dice injected.
 # Builds ShipDef and SealiftState fixtures locally; no GameData/autoload access.
+#
+# Scope after plan 0045: this suite covers PLANNING only — who is adopted, who embarks, in what order,
+# and which carrier category stamps each battalion. The hull queues the resolver used to tick (return
+# pipeline, escort magazines) moved to the fleet authority and are covered by
+# tests/transitions/sealift_transitions_test.gd; hulls the pipeline released this turn arrive as the
+# `returned_by_type` argument, which these tests pass as `{}` unless the case is about it.
 
 
 # --- fixture helpers ----------------------------------------------------------------------------
@@ -48,7 +54,7 @@ func test_adoption_creates_sent_cohort_from_reserve_orphans() -> void:
 	var reserve := [_reserve_entry("BdeA", bns)]
 	var ready := {"LHA": 3, "DDG": 5}
 
-	var result := SealiftResolver.resolve(state, reserve, ready, defs)
+	var result := SealiftResolver.resolve(state, reserve, ready, {}, defs)
 
 	# Adopt plan from resolver — apply via ForceTransitions
 	var adopt_plan: Dictionary = result.get("adopt_plan", {})
@@ -59,13 +65,13 @@ func test_adoption_creates_sent_cohort_from_reserve_orphans() -> void:
 
 	# Exactly one sent cohort wrapping both BNs
 	assert_int(state.cohorts.size()).is_equal(1)
-	var cohort := state.cohorts[0] as Dictionary
-	assert_str(cohort.get("state", "")).is_equal(SealiftState.STATE_SENT)
-	var bn_ids: Array = cohort.get("bn_ids", [])
+	var cohort := state.cohorts[0] as SealiftCohort
+	assert_str(cohort.cohort_state).is_equal(SealiftState.STATE_SENT)
+	var bn_ids: Array = cohort.bn_ids
 	assert_int(bn_ids.size()).is_equal(2)
 	assert_str(String(bn_ids[0])).is_equal("a")
 	assert_str(String(bn_ids[1])).is_equal("b")
-	assert_int(int(cohort.get("hulls_by_type", {}).get("LHA", 0))).is_equal(2)
+	assert_int(int(cohort.hulls_by_type.get("LHA", 0))).is_equal(2)
 
 	# carriers_sent_by_type non-empty
 	assert_int(int(result["carriers_sent_by_type"].get("LHA", 0))).is_equal(2)
@@ -87,7 +93,7 @@ func test_embark_cap_leaves_leftover_bns_in_mainland_pool() -> void:
 	var ready := {"LHA": 3}  # 3 hulls * 1.0 capacity = 3 BNs max
 
 	var reserve: Array = []
-	var result := SealiftResolver.resolve(state, reserve, ready, defs)
+	var result := SealiftResolver.resolve(state, reserve, ready, {}, defs)
 
 	# Apply embark via ForceTransitions
 	var embark_request = result["embark_request"]
@@ -97,7 +103,7 @@ func test_embark_cap_leaves_leftover_bns_in_mainland_pool() -> void:
 
 	# Cohort holds exactly 3 BNs (all capacity consumed)
 	assert_int(state.cohorts.size()).is_equal(1)
-	var bn_ids: Array = state.cohorts[0].get("bn_ids", [])
+	var bn_ids: Array = state.cohorts[0].bn_ids
 	assert_int(bn_ids.size()).is_equal(3)
 	assert_str(String(bn_ids[0])).is_equal("a")
 	assert_str(String(bn_ids[1])).is_equal("b")
@@ -122,7 +128,7 @@ func test_priority_departed_brigade_embarks_first() -> void:
 	]
 	var ready := {"LHA": 2}  # capacity for 2 BNs total
 
-	var result := SealiftResolver.resolve(state, reserve, ready, defs)
+	var result := SealiftResolver.resolve(state, reserve, ready, {}, defs)
 
 	# Apply adopt plan (orphan a1)
 	var adopt_plan: Dictionary = result.get("adopt_plan", {})
@@ -141,7 +147,7 @@ func test_priority_departed_brigade_embarks_first() -> void:
 	assert_int(state.cohorts.size()).is_equal(2)
 	var all_ids: Array = []
 	for cohort in state.cohorts:
-		all_ids.append_array(cohort.get("bn_ids", []))
+		all_ids.append_array(cohort.bn_ids)
 	assert_int(all_ids.size()).is_equal(2)
 	assert_str(String(all_ids[0])).is_equal("a1")
 	assert_str(String(all_ids[1])).is_equal("a2")
@@ -150,128 +156,13 @@ func test_priority_departed_brigade_embarks_first() -> void:
 	assert_int(state.mainland_pool.size()).is_equal(2)
 
 
-# --- test 4: free_emptied_cohorts full (migrated from drain_bn_ids) ------------------------------
-
-func test_drain_bn_ids_full_removes_cohort_and_populates_pipeline() -> void:
-	var state := SealiftState.new()
-	state.cohorts = [{
-		"hulls_by_type": {"LHA": 2},
-		"bn_ids": [],
-		"state": SealiftState.STATE_SENT,
-	}]
-
-	ForceTransitions.free_emptied_cohorts(state, 3)
-
-	assert_bool(state.cohorts.is_empty()).is_true()
-	assert_bool(state.return_pipeline.has("LHA")).is_true()
-	var slots: Array = state.return_pipeline["LHA"]
-	assert_int(slots.size()).is_equal(1)
-	var slot: Dictionary = slots[0]
-	assert_int(int(slot["count"])).is_equal(2)
-	assert_int(int(slot["turns_remaining"])).is_equal(3)
-
-
-func test_drain_bn_ids_full_zero_return_time_skips_pipeline() -> void:
-	var state := SealiftState.new()
-	state.cohorts = [{
-		"hulls_by_type": {"LHA": 2},
-		"bn_ids": [],
-		"state": SealiftState.STATE_SENT,
-	}]
-
-	ForceTransitions.free_emptied_cohorts(state, 0)
-
-	# Cohort gone; pipeline untouched (hulls implicitly ready)
-	assert_bool(state.cohorts.is_empty()).is_true()
-	assert_bool(state.return_pipeline.is_empty()).is_true()
-
-
-# --- test 5: free_emptied_cohorts partial (migrated from drain_bn_ids) --------------------------
-
-func test_drain_bn_ids_partial_keeps_cohort() -> void:
-	var state := SealiftState.new()
-	state.cohorts = [{
-		"hulls_by_type": {"LHA": 2},
-		"bn_ids": ["b", "c"],
-		"state": SealiftState.STATE_SENT,
-	}]
-
-	ForceTransitions.free_emptied_cohorts(state, 3)
-
-	# Cohort stays with remaining BNs
-	assert_int(state.cohorts.size()).is_equal(1)
-	var remaining_ids: Array = state.cohorts[0].get("bn_ids", [])
-	assert_int(remaining_ids.size()).is_equal(2)
-	assert_str(String(remaining_ids[0])).is_equal("b")
-	assert_str(String(remaining_ids[1])).is_equal("c")
-
-	# Pipeline untouched (cohort not freed)
-	assert_bool(state.return_pipeline.is_empty()).is_true()
-
-
-# --- test 6: return tick ------------------------------------------------------------------------
-
-func test_return_tick_releases_hulls_from_pipeline() -> void:
-	var defs := _ship_defs()
-	var state := SealiftState.new()
-	state.return_pipeline = {"LHA": [{"count": 2, "turns_remaining": 1}]}
-
-	var result := SealiftResolver.resolve(state, [], {}, defs)
-
-	# Pipeline released to returned_by_type
-	assert_int(int(result["returned_by_type"].get("LHA", 0))).is_equal(2)
-
-	# Pipeline bucket emptied
-	assert_bool(state.return_pipeline.is_empty()).is_true()
-
-
-# --- test 7: escort magazine --------------------------------------------------------------------
-
-func test_escort_magazine_consumption_and_reload() -> void:
-	var defs := _ship_defs()
-	var state := SealiftState.new()
-	state.escort_sam = {"DDG": 10}
-	state.escort_sam_max = {"DDG": 10}
-	state.escort_sam_threshold = {"DDG": 4}
-
-	# Fire 7 missiles -> 3 remain, trigger reload
-	SealiftResolver.apply_escort_consumption(state, {"DDG": 7}, 4)
-	assert_int(int(state.escort_sam["DDG"])).is_equal(3)
-	assert_int(int(state.escort_reload["DDG"])).is_equal(4)
-
-	# Tick 3 times — still reloading, SAM stays at 3
-	for _i in range(3):
-		SealiftResolver.resolve(state, [], {}, defs)
-		assert_bool(state.escort_reload.has("DDG")).is_true()
-		assert_int(int(state.escort_sam["DDG"])).is_equal(3)
-
-	# 4th tick completes reload -> SAM refilled, reload entry removed
-	SealiftResolver.resolve(state, [], {}, defs)
-	assert_int(int(state.escort_sam["DDG"])).is_equal(10)
-	assert_bool(state.escort_reload.has("DDG")).is_false()
-
-
-# --- test 8: flip to offloading -----------------------------------------------------------------
-
-func test_flip_sent_to_offloading() -> void:
-	var state := SealiftState.new()
-	state.cohorts = [{
-		"hulls_by_type": {"LHA": 2},
-		"bn_ids": ["a", "b"],
-		"state": SealiftState.STATE_SENT,
-	}]
-
-	SealiftResolver.flip_sent_to_offloading(state)
-	assert_str(String(state.cohorts[0].get("state", ""))).is_equal(SealiftState.STATE_OFFLOADING)
-
-
-# --- test 9: empty resolve ---------------------------------------------------------------------
+# --- test 4: empty resolve ---------------------------------------------------------------------
 
 func test_empty_resolve_does_not_crash() -> void:
 	var defs := _ship_defs()
 	var state := SealiftState.new()
 
-	var result := SealiftResolver.resolve(state, [], {}, defs)
+	var result := SealiftResolver.resolve(state, [], {}, {}, defs)
 
 	assert_bool(result["carriers_sent_by_type"].is_empty()).is_true()
 	assert_bool(result["sent_by_type"].is_empty()).is_true()
@@ -289,7 +180,7 @@ func test_adopted_bns_stamped_with_carrier_category() -> void:
 	var reserve := [_reserve_entry("BdeA", bns)]
 	var ready := {"LHA": 3, "DDG": 5}
 
-	SealiftResolver.resolve(state, reserve, ready, defs)
+	SealiftResolver.resolve(state, reserve, ready, {}, defs)
 
 	# Both orphans adopted onto LHA hulls (Military_Amphibious) — stamped in place.
 	assert_str(String(bns[0].get("ship_category", ""))).is_equal("Military_Amphibious")
@@ -302,7 +193,7 @@ func test_embarked_bns_stamped_with_carrier_category() -> void:
 	state.mainland_pool = [_reserve_entry("BdeA", [_bn("a"), _bn("b")])]
 	var ready := {"LPD": 2}
 
-	var result := SealiftResolver.resolve(state, [], ready, defs)
+	var result := SealiftResolver.resolve(state, [], ready, {}, defs)
 
 	var entries: Array = result["embarked_reserve_entries"]
 	assert_int(entries.size()).is_equal(1)
@@ -322,7 +213,7 @@ func test_adopt_stamping_splits_across_carrier_types_in_fill_order() -> void:
 	var reserve := [_reserve_entry("BdeA", bns)]
 	var ready := {"RO-RO": 1, "LST": 5}
 
-	SealiftResolver.resolve(state, reserve, ready, defs)
+	SealiftResolver.resolve(state, reserve, ready, {}, defs)
 
 	assert_str(String(bns[0].get("ship_category", ""))).is_equal("Civilian_Amphibious")
 	assert_str(String(bns[1].get("ship_category", ""))).is_equal("Civilian_Amphibious")

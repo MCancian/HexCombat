@@ -230,7 +230,7 @@ the same-named `GameData` property. Adding a knob is therefore three edits in th
 
 This subsystem mutates the **`force`** aggregate. Its designated authority is `ForceTransitions`, which applies all casualty and FEBA movement writes.
 - **Outcome/receipt types:** `ForceCasualtyReceipt`, `ForcePlacementReceipt`.
-- **Manifest:** [tools/mutation_authority_manifest.json](../../tools/mutation_authority_manifest.json).
+- **Manifest:** [tools/mutation_authority_manifest.json](../../../tools/mutation_authority_manifest.json).
 
 **Rules:**
 - Casualties shrink the roster exactly by the requested counts.

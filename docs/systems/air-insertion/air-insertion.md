@@ -177,7 +177,7 @@ resolved turn's picture, `pending_*`, `landed`, `history`.
 
 This subsystem mutates the **`force`** aggregate. Its designated authority is `ForceTransitions`.
 - **Outcome/receipt types:** `ForceAirInsertionReceipt`.
-- **Manifest:** [tools/mutation_authority_manifest.json](../../tools/mutation_authority_manifest.json).
+- **Manifest:** [tools/mutation_authority_manifest.json](../../../tools/mutation_authority_manifest.json).
 
 **Rules:**
 - Inserted battalions are removed from the air pool.
