@@ -157,7 +157,7 @@ Verification:
 
 ## Closeout homes
 
-On shipment: `docs/STATUS.md`; `docs/systems/supply-dos.md`, `llm-api-selfplay.md`,
+On shipment: `docs/STATUS.md`; `docs/systems/supply-dos/supply-dos.md`, `llm-api-selfplay.md`,
 `frontline-cleanup-victory.md`, and `turn-engine.md`; authority headers and architecture skill;
 `docs/DECISIONS.md`; plan archived. Owning docs update their short numbered **State & authority**
 section with aggregate, authority, operation-specific outcome/receipt types, and manifest link only.

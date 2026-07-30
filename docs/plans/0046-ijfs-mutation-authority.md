@@ -82,6 +82,28 @@ Do not introduce one generic `set_target_field` method. A method name must revea
 
 ## Model hardening
 
+**Why the typed conversions come FIRST, not last (lesson from plan 0045).** The enforcement gate
+resolves the RECEIVER'S TYPE and only then asks whether that (class, field) pair is protected. A value
+living inside a free-form `Dictionary` — `metadata.systems_remaining`, an untyped target row, a stock
+map — therefore names no type at all and is invisible to the gate no matter what the manifest says. It
+is the validator's documented aliased-container blind spot.
+
+Two consequences, both of which 0045 paid for the expensive way:
+
+1. **A field cannot be enforced until it lives on a typed object.** 0045 registered cohort hull counts
+   only after the cohort became a `SealiftCohort` Resource; as dictionaries the registration would have
+   been decoration. Register nothing here that is still inside `metadata`.
+3. **A file cannot be relocated (step 9) until its last untyped write is gone.** 0045's planner looked
+   write-free and was not: it stamped a field into force-owned rows through an untyped alias, which no
+   grep for the protected FIELD would surface. Moving it before that fix would have put a writer in
+   `scripts/calc/`, whose entire claim is that it holds none. Audit the aliases each file is HANDED, not
+   just the fields it names.
+
+The manifest's `_schema_rules` (`tools/mutation_authority_manifest.json`) states the registration rules
+this plan must satisfy — one field one aggregate, `owned_models` exhaustiveness, and disjoint
+`hosted_fields` across two aggregates. Read those six lines rather than re-deriving them from
+`tools/validate_mutation_authority.gd`, which is how they were learned the first time (~300 lines).
+
 - Replace authoritative `metadata.systems_remaining` with a typed field or typed sub-resource while
   preserving `metadata` serialization compatibility at the boundary.
 - Store an initial munition inventory only if needed to validate/report conservation. If added, it is
@@ -96,23 +118,32 @@ Do not introduce one generic `set_target_field` method. A method name must revea
 1. **Mutation inventory and characterization.** Register every direct writer and pin stage-specific
    outcomes with `ScriptedDice`, including warmup carry-over, inventory exhaustion, MANPADS, and
    squadron loss.
-2. **Typed hidden stocks.** Move MANPADS remaining stock out of free-form metadata behind a typed
+2. **Pay down `IjfsEngine._run_strike_phase`'s parameter ceiling, here rather than separately.** It
+   carries 11 grandfathered params (`tools/gd_metrics.py:111`) against a hard cap of 5, and
+   `docs/plans/BACKLOG.md` flags the collision explicitly: that paydown and this plan touch the same
+   internals. Doing it as separate backlog work means two independent golden byte-stability proofs over
+   one function; doing it here means one. It is also the same shape this plan already wants — stages
+   returning typed outcomes — so the typed context is a down payment on step 6, not a detour.
+   Follow the `AntishipResolutionContext` pattern: a typed Resource in `scripts/model/`, `Dice` kept
+   explicit, then REMOVE the `PARAM_CEILINGS` entry rather than editing its number. Byte-stability is
+   the acceptance test: this commit must not move a pin.
+3. **Typed hidden stocks.** Move MANPADS remaining stock out of free-form metadata behind a typed
    model while keeping `to_dict` output byte-stable. Add uniqueness/bounds validation.
-3. **Inventory authority.** Route every munition decrement through `IjfsTransitions`; preserve normal
+4. **Inventory authority.** Route every munition decrement through `IjfsTransitions`; preserve normal
    insufficient-inventory skips and exact rounds-expended reporting.
-4. **Squadron authority.** Route losses, RTB, and daily reset through checked transitions.
-5. **Target authority.** Route detection, suppression, destruction, intel lock, and carry-over through
+5. **Squadron authority.** Route losses, RTB, and daily reset through checked transitions.
+6. **Target authority.** Route detection, suppression, destruction, intel lock, and carry-over through
    named methods, one IJFS stage per commit.
-6. **Maneuver synchronization.** Consume force transition receipts/current authoritative counts;
+7. **Maneuver synchronization.** Consume force transition receipts/current authoritative counts;
    remove direct brigade composition mutation and duplicate target-state guesses.
-7. **Writeback boundary.** Build cumulative anti-ship and force casualty receipts from authoritative
+8. **Writeback boundary.** Build cumulative anti-ship and force casualty receipts from authoritative
    target state; apply them only through plans 0043/0044 authorities.
-8. **Role placement.** Move `IjfsDailyState` into `scripts/model/` (preserving `class_name`, UID,
+9. **Role placement.** Move `IjfsDailyState` into `scripts/model/` (preserving `class_name`, UID,
    serialization, and class-cache import) because it is persistent state, not a calculator. Move each
    IJFS algorithm to `scripts/calc/` only after it returns outcomes or calls the authority at the exact
    existing semantic point without retaining a protected write. Split mixed files rather than moving
    them by dominant role.
-9. **Close the gate.** Remove all IJFS legacy writer exceptions and prove direct, nested metadata,
+10. **Close the gate.** Remove all IJFS legacy writer exceptions and prove direct, nested metadata,
    model-mutator, dynamic, and wrong-authority writes to target, munition, squadron, and stock state
    fail.
 
@@ -162,8 +193,8 @@ Verification:
 
 ## Closeout homes
 
-On shipment: `docs/STATUS.md`; `docs/systems/ijfs.md`; anti-ship/force cross-seam pointers in their
-systems docs if behavior descriptions changed; phase wiring in `docs/systems/turn-engine.md`;
+On shipment: `docs/STATUS.md`; `docs/systems/ijfs/ijfs.md`; anti-ship/force cross-seam pointers in their
+systems docs if behavior descriptions changed; phase wiring in `docs/systems/turn-engine/turn-engine.md`;
 authority code headers and architecture skill; `docs/DECISIONS.md`; plan archived. Owning docs update
 their short numbered **State & authority** section with aggregate, authority, operation-specific
 outcome/receipt types, and manifest link only.

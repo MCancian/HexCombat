@@ -135,7 +135,7 @@ the census curves.
 `MobilizationState`/`MobilizationSummary`, `MobilizationStateBuilder`/`MobilizationResolver`, a
 mobilization phase between offload and movement, IJFS append-on-arrival, observation + record
 surfacing, `tools/validate_mobilization.gd` + 16 GdUnit cases. Facts:
-`docs/systems/roc-mobilization.md`. Default `held_back_brigades: 0` ⇒ inert, golden byte-stable.
+`docs/systems/roc-mobilization/roc-mobilization.md`. Default `held_back_brigades: 0` ⇒ inert, golden byte-stable.
 
 **Measured** (30 seeds/cell, `selfplay_default` vs `roc_defense`, `scenario_default`, 30 turns —
 full report: `docs/reports/2026-07-24-roc-mobilization-sweep.md`):

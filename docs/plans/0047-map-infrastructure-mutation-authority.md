@@ -148,9 +148,9 @@ Verification:
 
 ## Closeout homes
 
-On shipment: `docs/STATUS.md`; `docs/systems/hex-grid.md`, `terrain.md` only if their runtime-state
-claims change, `docs/systems/frontline-cleanup-victory.md`, `docs/systems/amphibious-offload.md`, and
-`docs/systems/turn-engine.md`; authority headers and architecture skill; `docs/DECISIONS.md`; plan
+On shipment: `docs/STATUS.md`; `docs/systems/hex-grid/hex-grid.md`, `docs/systems/terrain/terrain.md` only if their runtime-state
+claims change, `docs/systems/frontline-cleanup-victory/frontline-cleanup-victory.md`, `docs/systems/amphibious-offload/amphibious-offload.md`, and
+`docs/systems/turn-engine/turn-engine.md`; authority headers and architecture skill; `docs/DECISIONS.md`; plan
 archived. Owning docs update their short numbered **State & authority** section with aggregate,
 authority, operation-specific outcome/receipt types, and manifest link only. Immutable/view-only docs
 state explicitly that they own no protected runtime aggregate instead of inventing an authority.

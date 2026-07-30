@@ -134,8 +134,8 @@ Verification:
 
 ## Closeout homes
 
-On shipment: `docs/STATUS.md`; `docs/systems/air-insertion.md`; `docs/systems/roc-mobilization.md`;
-mobilization and phase flow in `docs/systems/turn-engine.md`; force cross-seam pointers where needed;
+On shipment: `docs/STATUS.md`; `docs/systems/air-insertion/air-insertion.md`; `docs/systems/roc-mobilization/roc-mobilization.md`;
+mobilization and phase flow in `docs/systems/turn-engine/turn-engine.md`; force cross-seam pointers where needed;
 authority headers and architecture skill; `docs/DECISIONS.md`; plan archived. Owning docs update their
 short numbered **State & authority** section with aggregate, authority, operation-specific
 outcome/receipt types, and manifest link only.

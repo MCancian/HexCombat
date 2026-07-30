@@ -24,7 +24,9 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   that generator exists — but the current check (`validate_llm_api.gd:271-277`) cannot catch that rot
   returning: a fixture with all the right keys and stale VALUES passes. Adding a real drift comparison
   is a gate change with a re-baseline decision attached (the fixture would then move whenever any
-  summary's payload legitimately changes), so it needs a USER call on whether that trade is wanted.
+  summary's payload legitimately changes). **USER call 2026-07-29: re-baselining is acceptable — build
+  the real drift comparison.** So the trade is settled; what remains is implementation, and the fixture
+  regenerator (`tools/LLMFixtures.gd`) is the intended way to move it rather than hand-editing.
 
 - [ ] **Gate the `consumer:` / `pinned by:` witness convention once there is a corpus (opened
   2026-07-29).** `hexcombat-docs-and-writing` now requires a greppable witness for any claim that

@@ -59,7 +59,7 @@ What it does in the regime the game actually occupies:
   replaces that anchor with "an intact system destroys everything, and anything above 0.667 AD health
   is equally total." That region is unreachable in play (the warmup always fires first), so it costs
   nothing operationally. **Implement the literal doubling — do not stop to ask.** Rewrite
-  `docs/systems/air-insertion.md` §5 (the anchor paragraph, currently lines 94–98) so the doc states
+  `docs/systems/air-insertion/air-insertion.md` §5 (the anchor paragraph, currently lines 94–98) so the doc states
   the new rationale instead of contradicting the value, and update §4's config example (line 76) in
   the same commit. If the USER, seeing the sweep, wants the 75%-at-intact anchor back while still
   doubling the cost of a *realistic* drop, the alternative is a constant floor term (`min_attrition`,
@@ -215,7 +215,7 @@ target win rate.
   (the phantom-path failure mode from `docs/plans/BACKLOG.md`).
 - `tools/validate_llm_api.gd` + `schemas/*.schema.json` — the observation gains fields; the contract
   is gated. `docs/LLM_OBSERVATION_SCHEMA.md` and the committed example observation move with it.
-- **Docs are part of the change, not the closeout:** `docs/systems/air-insertion.md` §4 (config
+- **Docs are part of the change, not the closeout:** `docs/systems/air-insertion/air-insertion.md` §4 (config
   block), §5 (the attrition rationale, which the doubling contradicts), §8 (the observation field
   list gains `next_sortie_turn`), plus a 3–5-line `docs/DECISIONS.md` entry per
   `hexcombat-change-control` — two decisions here, the doubled coefficient and the cadence.

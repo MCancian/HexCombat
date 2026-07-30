@@ -100,7 +100,7 @@ reasoning, and why the regression test in the test list asserts `available_firin
 
 **Therefore: suppress effect 2.** The destroyed launchers' contribution must arrive ONLY through the
 separate `destroyed_firing` row (effect 1). Concretely, `available_firing` must be computed from
-`truly_available` alone. Record this divergence from TIV in `docs/systems/antiship-mine.md` §11 with
+`truly_available` alone. Record this divergence from TIV in `docs/systems/antiship-mine/antiship-mine.md` §11 with
 the reasoning above — it is a deliberate, explained divergence, not a porting error.
 
 ## Trap 1 — cumulative vs per-cycle (the one that will bite you)
@@ -376,7 +376,7 @@ continuing.
 
 ## Closeout homes
 
-`docs/STATUS.md` (D3 bullet), `docs/systems/antiship-mine.md` (§9 turn flow + §11 the deliberate
+`docs/STATUS.md` (D3 bullet), `docs/systems/antiship-mine/antiship-mine.md` (§9 turn flow + §11 the deliberate
 `fire_pct` divergence), `hexcombat-config-and-knobs` (the new knob), `docs/DECISIONS.md` (USER call +
 measured consequence), report under `docs/reports/`, plan archived.
 
