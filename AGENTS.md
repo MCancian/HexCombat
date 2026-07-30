@@ -32,6 +32,15 @@ Every fact has exactly one home. Don't hunt for it elsewhere:
 | Exact expected numbers (goldens) | the validator (`tools/validate_*.gd`) — its PASS line is truth |
 | Why something is the way it is | `docs/DECISIONS.md` (changelog → pointers); deep history `docs/archive/` |
 | A problem that feels familiar | `hexcombat-failure-archaeology` |
+| How to invoke the tooling, and what it can/cannot see | the tool's own header + `.claude/REVIEWERS.md` (reviewers) |
+
+**Prefer making a mistake impossible over documenting it.** A fact that only lives in prose is a
+fact every new agent gets to rediscover. The canonical case: "a validator run bare resolves the research
+default, so its pins will not match" was recorded in a skill, in agent memory, and in one validator's
+header — and it still cost two reviewers a round each on 2026-07-29. One line printed at the point where
+the scenario is actually selected (`ScenarioCatalog.selected_path`) reached every validator, test and bare
+launch at once. When you are about to add a warning to a doc, ask first whether the tool can say it
+itself.
 
 **Task-shaped minimum reads** (skills via `.claude/skills/`):
 

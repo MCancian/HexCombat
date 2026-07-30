@@ -4,6 +4,28 @@ Work orders for multi-session efforts. Each plan is a focused doc; **this index 
 of truth** for status. Status vocabulary: `Sketch` → `Exploring` → `In progress` → `✅ Shipped`
 → `Superseded`.
 
+## ▶ Next up: plan 0046 — IJFS mutation authority
+
+Read in this order and stop when you can act; everything below is a pointer, not a duplicate.
+
+1. `docs/plans/0046-ijfs-mutation-authority.md` — the plan. Two things were prepared for you on
+   2026-07-29: **commit 2** folds in the `IjfsEngine._run_strike_phase` parameter-ceiling paydown
+   (the BACKLOG entry that collides with this plan), and **Model hardening** opens with why the typed
+   conversions must come FIRST rather than last.
+2. `tools/mutation_authority_manifest.json` → `_schema_rules` — the six registration rules. Read those
+   six lines instead of `tools/validate_mutation_authority.gd`; that is how they were learned the
+   first time, at a cost of ~300 lines.
+3. `docs/systems/amphibious-offload/amphibious-offload.md` §10 — the reference example for the shape
+   0046 needs: ONE object shared by two authorities, split by field, neither reaching across. IJFS is
+   where that gets tested hardest, because its writeback crosses into two already-enforced aggregates
+   (`AntishipTransitions` consumes `antiship_destroyed_by_type`; `ForceTransitions` consumes
+   `maneuver_casualties`).
+4. `.claude/skills/hexcombat-plan-review` + `.claude/REVIEWERS.md` — 0046 is still `Sketch` and has
+   NOT been reviewed. Per the work loop it gets a preflight-and-rewrite against the tree, then a
+   review, before any code. Probe reviewer availability first.
+
+Status: `Sketch`. Dependencies (0042, 0043, 0044, and running after 0045) are all satisfied.
+
 **Plans are ephemeral by contract.** A plan holds the design, the checklist, and progress notes
 *while the work is in flight*. It is not a reference: no durable fact may live only in a plan.
 
