@@ -148,9 +148,8 @@ static func sync_manpads_to_oob(ijfs_state: IjfsDailyState) -> void:
 static func add_maneuver_targets(ijfs_state: IjfsDailyState, brigades: Array, current_day: int) -> int:
 	if ijfs_state == null or brigades.is_empty():
 		return 0
-	var added := IjfsLoaders.build_maneuver_targets(brigades, maxi(1, current_day))
-	ijfs_state.targets.append_array(added)
-	return added.size()
+	return IjfsTransitions.add_targets(
+		ijfs_state, IjfsLoaders.build_maneuver_targets(brigades, maxi(1, current_day)))
 
 
 ## D4-H (2d follow-up): keep the live "Maneuver Units" IJFS target count in sync with the OOB

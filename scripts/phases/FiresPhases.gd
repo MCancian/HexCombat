@@ -19,7 +19,7 @@ static func resolve_ijfs_turn(state: GameStateData, dice: Dice) -> Dictionary:
 	if state.ijfs_state == null:
 		rebuild_ijfs_state(state)
 	var outcome := IjfsResolver.resolve(state.ijfs_state, GameData.brigades, state.turn_number, state._ijfs_day, dice)
-	state._ijfs_day = state.turn_number
+	IjfsTransitions.advance_day(state, state.turn_number)
 	var ledgers: Dictionary = outcome["ledgers"]
 	state.last_ijfs_summary = ledgers["summary"]
 	state.last_ijfs_writeback = outcome["writeback"]
@@ -37,9 +37,15 @@ static func reset_antiship_establishment(state: GameStateData) -> void:
 static func rebuild_ijfs_state(state: GameStateData) -> void:
 	# Anti-ship systems must exist first (their containers seed the per-(TO,type) IJFS targets).
 	AntishipTransitions.ensure_establishment(state)
-	state.ijfs_state = GameStateBuilder.build_ijfs_state(
-		state.antiship_containers, GameData.brigades, GameData.mobilization_holdback)
-	state._ijfs_day = 0
+	IjfsTransitions.install_daily_state(state, GameStateBuilder.build_ijfs_state(
+		state.antiship_containers, GameData.brigades, GameData.mobilization_holdback))
+
+
+## Scenario reset of the IJFS state, for GameState's reset_to_scenario — the same pass-through shape
+## as reset_antiship_establishment above. GameState reaches the fires phases' state through this
+## module, never around it.
+static func reset_ijfs_state(state: GameStateData) -> void:
+	IjfsTransitions.reset_daily_state(state)
 
 
 static func update_maneuver_posture(state: GameStateData) -> void:

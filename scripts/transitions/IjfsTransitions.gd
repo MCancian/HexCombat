@@ -48,3 +48,52 @@ static func consume_munition(munition: IjfsMunition, rounds: int) -> bool:
 		return false
 	munition.inventory_remaining -= rounds
 	return true
+
+
+# ── Daily-state lifecycle ───────────────────────────────────────────────────────────────────────
+
+## Publish a freshly built IjfsDailyState and start its day count. `_ijfs_day` 0 means "the warmup
+## has not run yet", which is what makes the FIRST IJFS of a game the multi-day prelanding campaign
+## rather than one plain day — so installing a state and zeroing the counter is a single transition
+## and must not be separable.
+static func install_daily_state(state: GameStateData, built: IjfsDailyState) -> void:
+	if built == null:
+		push_error("IjfsTransitions: refusing to install a null IJFS daily state")
+		return
+	state.ijfs_state = built
+	state._ijfs_day = 0
+
+
+## Drop the IJFS state so the next resolve rebuilds it from the (possibly changed) scenario. The
+## build is deliberately lazy — it pulls ~500KB of pairings and many Resource objects, and
+## eager-loading it in every booted process triggered the Godot 4.7 teardown crash.
+static func reset_daily_state(state: GameStateData) -> void:
+	state.ijfs_state = null
+	state._ijfs_day = 0
+
+
+## Record which turn the IJFS last resolved on. Monotonic: turns do not run backwards, and a day
+## count that moved backwards would re-run the prelanding warmup mid-campaign.
+static func advance_day(state: GameStateData, turn_number: int) -> void:
+	if turn_number < state._ijfs_day:
+		push_error("IjfsTransitions: IJFS day moved backwards, %d -> %d" % [
+			state._ijfs_day, turn_number])
+		return
+	state._ijfs_day = turn_number
+
+
+## Append targets for formations that have just come onto the map. APPEND-ONLY, because the existing
+## rows keep their list positions and their detection continuity (known_to_red / last_detected_day),
+## and the maneuver sync only ever retires excess targets, so the new rows survive it.
+static func add_targets(daily_state: IjfsDailyState, new_targets: Array[IjfsTarget]) -> int:
+	if daily_state == null or new_targets.is_empty():
+		return 0
+	var known: Dictionary = {}
+	for existing in daily_state.targets:
+		known[existing.target_id] = true
+	for candidate in new_targets:
+		if known.has(candidate.target_id):
+			push_error("IjfsTransitions: refusing the whole batch — duplicate target id '%s'" % candidate.target_id)
+			return 0
+	daily_state.targets.append_array(new_targets)
+	return new_targets.size()

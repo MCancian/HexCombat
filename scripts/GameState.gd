@@ -78,12 +78,13 @@ var last_contested_hexes: Array[String]:
 var last_combat_summaries: Array[CombatSummary]:
 	get: return data.last_combat_summaries
 	set(value): data.last_combat_summaries = value
+# Read-only: the IJFS state is built, replaced and dropped only by its mutation authority (plan
+# 0046), reached through FiresPhases. A setter here would be a public door around it — and neither
+# had a single caller.
 var ijfs_state: IjfsDailyState:
 	get: return data.ijfs_state
-	set(value): data.ijfs_state = value
 var _ijfs_day: int:
 	get: return data._ijfs_day
-	set(value): data._ijfs_day = value
 var last_ijfs_summary: Dictionary:
 	get: return data.last_ijfs_summary
 	set(value): data.last_ijfs_summary = value
@@ -174,8 +175,7 @@ func reset_to_scenario() -> void:
 	# Resource objects; eager-loading it in every booted process — validators, smoke, tests — bloated
 	# shutdown and triggered the Godot 4.7 teardown crash). Reset the handle; resolve_ijfs_turn builds
 	# it fresh per scenario.
-	data.ijfs_state = null
-	data._ijfs_day = 0
+	FiresPhases.reset_ijfs_state(data)
 	data.pending_lost_at_sea = 0
 	data.last_contested_hexes.clear()
 	data.last_combat_summaries.clear()

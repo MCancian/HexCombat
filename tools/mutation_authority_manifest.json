@@ -503,30 +503,11 @@
         },
         {
           "path": "res://scripts/resolvers/IjfsResolver.gd",
-          "why": "Activity posture, maneuver-target retirement and the append of newly mobilized targets still write directly; plan 0046 commit 6.",
+          "why": "Activity posture and maneuver-target retirement still write directly; plan 0046 commit 6.",
           "removal_plan": "docs/plans/0046-ijfs-mutation-authority.md",
           "fields": [
             "IjfsTarget.posture",
-            "IjfsTarget.destroyed",
-            "IjfsDailyState.targets"
-          ]
-        },
-        {
-          "path": "res://scripts/phases/FiresPhases.gd",
-          "why": "rebuild_ijfs_state and the per-turn day stamp still assign the handles; plan 0046 commit 4b.",
-          "removal_plan": "docs/plans/0046-ijfs-mutation-authority.md",
-          "fields": [
-            "GameStateData.ijfs_state",
-            "GameStateData._ijfs_day"
-          ]
-        },
-        {
-          "path": "res://scripts/GameState.gd",
-          "why": "The scenario reset nulls the handle, and two forwarding setters expose it; plan 0046 commit 4b deletes the setters and routes the reset through FiresPhases.",
-          "removal_plan": "docs/plans/0046-ijfs-mutation-authority.md",
-          "fields": [
-            "GameStateData.ijfs_state",
-            "GameStateData._ijfs_day"
+            "IjfsTarget.destroyed"
           ]
         }
       ]
