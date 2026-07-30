@@ -2,8 +2,8 @@ class_name IjfsManpads
 extends RefCounted
 
 ## MANPADS layer (2026-07-10, USER-approved divergence from the TIV oracle — see PLAN.md
-## Decisions). Stinger MANPADS are per-TO container bins (category "MANPADS", mutable
-## `systems_remaining` in metadata) deliberately OUTSIDE the SEAD / AD-health SAM categories:
+## Decisions). Stinger MANPADS are per-TO container bins (category "MANPADS", stock held in the
+## typed `IjfsTarget.manpads_remaining`) deliberately OUTSIDE the SEAD / AD-health SAM categories:
 ## passive-IR shoulder launchers are not SEAD-targetable, but they contest low-altitude air
 ## operations. Effects: (1) each low-altitude strike into a TO with ready launchers risks
 ## interception (roll BEFORE the strike's own rolls); (2) SEAD/strike squadrons take island-wide
@@ -40,11 +40,22 @@ static func ready_systems_by_to(targets: Array[IjfsTarget]) -> Dictionary:
 	return by_to
 
 
+## The bin's authoritative launcher stock, seeded lazily on first read so data files stay
+## declarative. A target rebuilt from a saved dict carries its stock in `metadata`, so that value
+## wins over the declarative `systems_represented` when present — otherwise a mid-campaign
+## round-trip would silently refill every bin.
 static func systems_remaining(target: IjfsTarget) -> int:
-	# systems_remaining is seeded lazily from systems_represented so data files stay declarative.
-	if not target.metadata.has("systems_remaining"):
-		target.metadata["systems_remaining"] = int(target.metadata.get("systems_represented", 0))
-	return int(target.metadata["systems_remaining"])
+	if target.manpads_remaining < 0:
+		set_remaining(target, int(target.metadata.get(
+			"systems_remaining", target.metadata.get("systems_represented", 0))))
+	return target.manpads_remaining
+
+
+## The ONE place the stock changes: the typed field and its serialization mirror move together, so
+## they cannot describe different stocks. Plan 0046 commit 6 moves this body into IjfsTransitions.
+static func set_remaining(target: IjfsTarget, value: int) -> void:
+	target.manpads_remaining = value
+	target.metadata["systems_remaining"] = value
 
 
 static func threat_fraction(ready_systems: int) -> float:
@@ -170,7 +181,7 @@ static func expend(targets: Array[IjfsTarget], to_number: int, count: int) -> vo
 			return
 		var stock := systems_remaining(target)
 		var spent := mini(stock, remaining)
-		target.metadata["systems_remaining"] = stock - spent
+		set_remaining(target, stock - spent)
 		remaining -= spent
 
 
@@ -183,7 +194,7 @@ static func _expend_island_wide(targets: Array[IjfsTarget], count: int) -> void:
 			return
 		var stock := systems_remaining(target)
 		var spent := mini(stock, remaining)
-		target.metadata["systems_remaining"] = stock - spent
+		set_remaining(target, stock - spent)
 		remaining -= spent
 
 

@@ -21,6 +21,17 @@ extends Resource
 @export var intel_locked: bool = false
 @export var sam_score: int = -1
 @export var sead_result: String = ""
+
+## MANPADS launchers still held by this bin (category "MANPADS" only; -1 = not yet seeded).
+## Plan 0046: this is the AUTHORITATIVE stock. It used to live in `metadata` as a free-form key,
+## where the mutation-authority gate could not see it — the gate resolves a write's receiver TYPE,
+## and a value inside a Dictionary names no type at all.
+##
+## `metadata["systems_remaining"]` is still maintained, as a SERIALIZATION MIRROR and nothing else:
+## `metadata` is aliased live into the strike, detection and target-status ledger rows, so dropping
+## the key would change ledger output. Read this field; never read the mirror.
+@export var manpads_remaining: int = -1
+
 @export var metadata: Dictionary = {}
 
 

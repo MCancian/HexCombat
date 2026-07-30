@@ -109,7 +109,48 @@ func test_rtb_today_has_no_runtime_writer() -> void:
 	).is_equal(0)
 
 
-# --- 3. destruction is monotonic across every reset path ----------------------------------------
+# --- 3. the typed MANPADS stock and its serialization mirror ------------------------------------
+# Plan 0046 commit 3 moved the stock out of the free-form `metadata` dictionary, where the mutation
+# gate could not see it, onto `IjfsTarget.manpads_remaining`. `metadata["systems_remaining"]`
+# survives as a MIRROR only, because metadata is aliased live into the ledger rows.
+
+func test_typed_stock_and_metadata_mirror_never_disagree() -> void:
+	var bin := _target("m1", IjfsManpads.CATEGORY)
+	bin.metadata = {"to_number": MANPADS_TO, "systems_represented": STOCK}
+	var targets: Array[IjfsTarget] = [bin]
+
+	assert_int(bin.manpads_remaining).override_failure_message(
+		"stock is seeded lazily, so an untouched bin carries the sentinel").is_equal(-1)
+	assert_int(IjfsManpads.systems_remaining(bin)).is_equal(STOCK)
+	assert_int(bin.manpads_remaining).is_equal(STOCK)
+	assert_int(bin.metadata["systems_remaining"]).is_equal(STOCK)
+
+	IjfsManpads.expend(targets, MANPADS_TO, 7)
+
+	assert_int(bin.manpads_remaining).is_equal(STOCK - 7)
+	assert_int(bin.metadata["systems_remaining"]).override_failure_message(
+		"the mirror is what the ledger serializes; it must track the typed field exactly"
+	).is_equal(STOCK - 7)
+	assert_int(bin.to_dict()["metadata"]["systems_remaining"]).is_equal(STOCK - 7)
+
+
+func test_a_bin_rebuilt_from_its_dict_keeps_its_depleted_stock() -> void:
+	var bin := _target("m1", IjfsManpads.CATEGORY)
+	bin.metadata = {"to_number": MANPADS_TO, "systems_represented": STOCK}
+	var targets: Array[IjfsTarget] = [bin]
+	IjfsManpads.expend(targets, MANPADS_TO, 400)
+
+	# A target rebuilt mid-campaign carries its stock in metadata and its typed field unseeded. The
+	# declarative systems_represented must NOT win, or a round-trip silently refills every bin.
+	var rebuilt := IjfsLoaders._target_from_dict(bin.to_dict())
+
+	assert_int(rebuilt.manpads_remaining).is_equal(-1)
+	assert_int(IjfsManpads.systems_remaining(rebuilt)).override_failure_message(
+		"a round-tripped bin must resume from its remaining stock, not from systems_represented"
+	).is_equal(STOCK - 400)
+
+
+# --- 4. destruction is monotonic across every reset path ----------------------------------------
 
 func test_destruction_survives_carry_over_and_maneuver_sync() -> void:
 	var state := IjfsDailyState.new()

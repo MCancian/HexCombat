@@ -127,11 +127,14 @@ func test_sync_manpads_to_oob_caps_by_to_survival() -> void:
 		_bin("mp3", 3, 50),
 	]
 	IjfsResolver.sync_manpads_to_oob(state)
+	assert_int(state.targets[3].manpads_remaining).is_equal(25)
 	assert_int(int(state.targets[3].metadata["systems_remaining"])).is_equal(25)
-	assert_int(int(state.targets[4].metadata["systems_remaining"])).is_equal(50)
-	# monotonic: usage already below the cap stays put
-	state.targets[3].metadata["systems_remaining"] = 10
+	assert_int(state.targets[4].manpads_remaining).is_equal(50)
+	# monotonic: usage already below the cap stays put. The stock moves through set_remaining —
+	# since plan 0046 the metadata key is a serialization mirror, so writing it alone changes nothing.
+	IjfsManpads.set_remaining(state.targets[3], 10)
 	IjfsResolver.sync_manpads_to_oob(state)
+	assert_int(state.targets[3].manpads_remaining).is_equal(10)
 	assert_int(int(state.targets[3].metadata["systems_remaining"])).is_equal(10)
 
 

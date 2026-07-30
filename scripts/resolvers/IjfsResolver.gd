@@ -137,7 +137,7 @@ static func sync_manpads_to_oob(ijfs_state: IjfsDailyState) -> void:
 			continue
 		var fraction := float(int(alive_by_to.get(to_key, 0))) / float(total)
 		var cap := int(roundf(float(int(target.metadata.get("systems_represented", 0))) * fraction))
-		target.metadata["systems_remaining"] = mini(IjfsManpads.systems_remaining(target), cap)
+		IjfsManpads.set_remaining(target, mini(IjfsManpads.systems_remaining(target), cap))
 
 
 ## Add "Maneuver Units" targets for brigades that have just come onto the map (plan 0029 Tier A2:
