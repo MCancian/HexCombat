@@ -84,14 +84,16 @@ static func run_daily(state: IjfsDailyState, dice: Dice, current_day: int, warmu
 	state.manpads_contest_log = []
 	state.exquisite_intel_overrides = []
 
-	var ctx := make_run_context(current_day, warmup_context)
+	var run_ctx := make_run_context(current_day, warmup_context)
 	var air_classes: Variant = state.air_classes
 	var air_classes_dict: Dictionary = air_classes if air_classes is Dictionary else {}
 	var squadron_force: Variant = state.squadron_force
 
-	var capacity_budget: Variant = null
-	var release_rules: Variant = null
-	var munition_filter: Variant = null
+	# One bundle threaded through both strike passes; `attacked` / `skip_reasons` accumulate across
+	# them, and `organic_budget` is filled in between (see IjfsStrikePhaseContext).
+	var ctx := IjfsStrikePhaseContext.new()
+	ctx.current_day = int(run_ctx["current_day"])
+	ctx.z_day = run_ctx["z_day"]
 
 	if warmup_context != null:
 		var wc: Dictionary = warmup_context
@@ -107,23 +109,21 @@ static func run_daily(state: IjfsDailyState, dice: Dice, current_day: int, warmu
 			state.exquisite_intel_overrides.append_array(overrides)
 		var firing_cfg: Dictionary = wc.get("firing_capacity_config", {})
 		if not firing_cfg.is_empty():
-			capacity_budget = IjfsFiringCapacity.FiringCapacityBudget.new(firing_cfg, state.munitions)
+			ctx.capacity_budget = IjfsFiringCapacity.FiringCapacityBudget.new(firing_cfg, state.munitions)
 		var wc_release: Array = wc.get("release_rules", [])
-		release_rules = wc_release if not wc_release.is_empty() else null
+		ctx.release_rules = wc_release if not wc_release.is_empty() else null
 		var wc_filter: Dictionary = wc.get("munition_filter", {})
-		munition_filter = wc_filter if not wc_filter.is_empty() else null
+		ctx.munition_filter = wc_filter if not wc_filter.is_empty() else null
 	else:
-		capacity_budget = IjfsFiringCapacity.FiringCapacityBudget.new(state.scenario.get("red_firing_capacity", {}), state.munitions)
+		ctx.capacity_budget = IjfsFiringCapacity.FiringCapacityBudget.new(state.scenario.get("red_firing_capacity", {}), state.munitions)
 
 	state.taiwan_ad_health_before = IjfsAdHealth.compute_taiwan_ad_health(state.targets, state.scenario)
 
 	var phase1 := IjfsDetection.satellite_detect_target_ids(state.targets, state.scenario, dice)
 	state.detection_log = phase1["log"]
-	IjfsDetection.apply_detection_ids(state.targets, phase1["detected_ids"], ctx["current_day"])
+	IjfsDetection.apply_detection_ids(state.targets, phase1["detected_ids"], ctx.current_day)
 
-	var attacked: Dictionary = {}        # target_id -> true (set)
-	var skip_reasons: Dictionary = {}    # target_id -> [reason, doctrine_name, doctrine_selection]
-	_run_strike_phase(state, ctx["current_day"], PRE_AD_PHASE, attacked, skip_reasons, dice, capacity_budget, null, ctx["z_day"], release_rules, munition_filter)
+	_run_strike_phase(state, ctx, PRE_AD_PHASE, dice)
 
 	state.taiwan_ad_health_after_missile_phase = IjfsAdHealth.compute_taiwan_ad_health(state.targets, state.scenario)
 
@@ -136,16 +136,17 @@ static func run_daily(state: IjfsDailyState, dice: Dice, current_day: int, warmu
 
 	state.taiwan_ad_health_after_sead = IjfsAdHealth.compute_taiwan_ad_health(state.targets, state.scenario)
 
-	var organic_budget: Variant = null
+	# Organic strike capacity depends on the aircraft that survived SEAD, so it is only known here —
+	# which is why the pre-AD pass ran with it still null.
 	if squadron_force != null:
-		organic_budget = IjfsFiringCapacity.OrganicStrikeBudget.new(state.scenario, squadron_force, state.munitions, air_classes)
+		ctx.organic_budget = IjfsFiringCapacity.OrganicStrikeBudget.new(state.scenario, squadron_force, state.munitions, air_classes)
 
-	var phase2 := IjfsDetection.aircraft_detect_target_ids(state.targets, state.scenario, squadron_force, air_classes_dict, 1.0, dice, int(ctx["isr_day"]))
+	var phase2 := IjfsDetection.aircraft_detect_target_ids(state.targets, state.scenario, squadron_force, air_classes_dict, 1.0, dice, int(run_ctx["isr_day"]))
 	state.detection_log.append_array(phase2["log"])
-	IjfsDetection.apply_detection_ids(state.targets, phase2["detected_ids"], ctx["current_day"])
+	IjfsDetection.apply_detection_ids(state.targets, phase2["detected_ids"], ctx.current_day)
 
-	_run_strike_phase(state, ctx["current_day"], POST_AD_PHASE, attacked, skip_reasons, dice, capacity_budget, organic_budget, ctx["z_day"], release_rules, munition_filter)
-	_append_final_skips(state, ctx["current_day"], attacked, skip_reasons, ctx["z_day"], release_rules)
+	_run_strike_phase(state, ctx, POST_AD_PHASE, dice)
+	_append_final_skips(state, ctx)
 
 	state.taiwan_ad_health_after = IjfsAdHealth.compute_taiwan_ad_health(state.targets, state.scenario)
 
@@ -163,8 +164,8 @@ static func run_daily(state: IjfsDailyState, dice: Dice, current_day: int, warmu
 	)
 
 	var summary := summarize_run(state)
-	if capacity_budget != null:
-		summary["firing_capacity_utilization"] = capacity_budget.utilization()
+	if ctx.capacity_budget != null:
+		summary["firing_capacity_utilization"] = ctx.capacity_budget.utilization()
 
 	return _build_ledgers(state, current_day, summary)
 
@@ -172,36 +173,27 @@ static func run_daily(state: IjfsDailyState, dice: Dice, current_day: int, warmu
 # --- Strike phases (port of run_daily_ijfs._run_strike_phase / _append_final_skips / _skip_log) ---
 
 static func _run_strike_phase(
-	state: IjfsDailyState,
-	current_day: int,
-	phase: String,
-	attacked: Dictionary,
-	skip_reasons: Dictionary,
-	dice: Dice,
-	capacity_budget: Variant,
-	organic_budget: Variant,
-	z_day: Variant,
-	release_rules: Variant,
-	munition_filter: Variant,
+	state: IjfsDailyState, ctx: IjfsStrikePhaseContext, phase: String, dice: Dice
 ) -> void:
-	for target in IjfsTargeting.targets_to_attack(state.targets, z_day, release_rules):
-		if attacked.has(target.target_id):
+	for target in IjfsTargeting.targets_to_attack(state.targets, ctx.z_day, ctx.release_rules):
+		if ctx.attacked.has(target.target_id):
 			continue
 		var sel := IjfsTargeting.select_munition_with_doctrine(
-			target, state.pairings, state.munitions, state.scenario, phase, munition_filter, capacity_budget, organic_budget)
+			target, state.pairings, state.munitions, state.scenario, phase, ctx.munition_filter,
+			ctx.capacity_budget, ctx.organic_budget)
 		var pairing: Variant = sel["selected"]
 		var doctrine_name: Variant = sel["doctrine_name"]
 		var doctrine_selection: Variant = sel["selection"]
 		if pairing == null:
 			var reason: Variant = sel["reason"]
-			skip_reasons[target.target_id] = [reason if reason != null else "no_compatible_pairing", doctrine_name, doctrine_selection]
+			ctx.skip_reasons[target.target_id] = [reason if reason != null else "no_compatible_pairing", doctrine_name, doctrine_selection]
 			continue
 		var mun: Variant = state.munitions.get(pairing.munition_id, null)
 		var is_organic: bool = mun != null and mun.category == "Organic"
-		var budget: Variant = organic_budget if is_organic else capacity_budget
+		var budget: Variant = ctx.organic_budget if is_organic else ctx.capacity_budget
 		var reason_key: String = "organic_capacity_exhausted" if is_organic else "firing_capacity_exhausted"
 		if budget != null and not budget.try_consume(pairing.munition_id):
-			skip_reasons[target.target_id] = [reason_key, doctrine_name, doctrine_selection]
+			ctx.skip_reasons[target.target_id] = [reason_key, doctrine_name, doctrine_selection]
 			continue
 		# MANPADS interception (see IjfsManpads): rolled BEFORE the strike's own rolls, only for
 		# rounds that will actually fly (mirrors resolve_strike's inventory sufficiency check).
@@ -217,31 +209,33 @@ static func _run_strike_phase(
 						if not is_organic:
 							(mun as IjfsMunition).inventory_remaining -= rounds
 						state.strike_log.append(IjfsManpads.intercepted_strike_log(
-							target, pairing, current_day, phase, doctrine_name, doctrine_selection))
-						attacked[target.target_id] = true
+							target, pairing, ctx.current_day, phase, doctrine_name, doctrine_selection))
+						ctx.attacked[target.target_id] = true
 						continue
 		state.strike_log.append(IjfsStrike.resolve_strike(
-			target, pairing, state.munitions, state.scenario, current_day, dice, phase, doctrine_name, doctrine_selection))
-		attacked[target.target_id] = true
+			target, pairing, state.munitions, state.scenario, ctx.current_day, dice, phase, doctrine_name, doctrine_selection))
+		ctx.attacked[target.target_id] = true
 
 
-static func _append_final_skips(state: IjfsDailyState, current_day: int, attacked: Dictionary, skip_reasons: Dictionary, z_day: Variant, release_rules: Variant) -> void:
-	for target in IjfsTargeting.targets_to_attack(state.targets, z_day, release_rules):
-		if attacked.has(target.target_id):
+static func _append_final_skips(state: IjfsDailyState, ctx: IjfsStrikePhaseContext) -> void:
+	for target in IjfsTargeting.targets_to_attack(state.targets, ctx.z_day, ctx.release_rules):
+		if ctx.attacked.has(target.target_id):
 			continue
-		var entry: Array = skip_reasons.get(target.target_id, ["no_compatible_pairing", null, null])
-		state.strike_log.append(_skip_log(target, current_day, entry[0], null, entry[1], entry[2]))
+		var entry: Array = ctx.skip_reasons.get(target.target_id, ["no_compatible_pairing", null, null])
+		state.strike_log.append(_skip_log(target, ctx.current_day, entry))
 
 
-static func _skip_log(target: IjfsTarget, current_day: int, skip_reason: Variant, phase: Variant = null, doctrine_rule_name: Variant = null, doctrine_selection: Variant = null) -> Dictionary:
-	var entry := target.to_dict()
-	entry["current_day"] = current_day
-	entry["phase"] = phase
-	entry["doctrine_rule_name"] = doctrine_rule_name
-	entry["doctrine_selection"] = doctrine_selection
-	entry["attack_executed"] = false
-	entry["skip_reason"] = skip_reason
-	return entry
+## `entry` is the [reason, doctrine_name, doctrine_selection] triple _run_strike_phase recorded.
+## `phase` is always null on this path: a final skip belongs to the day, not to one of the two passes.
+static func _skip_log(target: IjfsTarget, current_day: int, entry: Array) -> Dictionary:
+	var row := target.to_dict()
+	row["current_day"] = current_day
+	row["phase"] = null
+	row["doctrine_rule_name"] = entry[1]
+	row["doctrine_selection"] = entry[2]
+	row["attack_executed"] = false
+	row["skip_reason"] = entry[0]
+	return row
 
 
 # --- Summary (port of logging_utils.summarize_run) ----------------------------------------------

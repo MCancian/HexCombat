@@ -179,8 +179,9 @@ func _strike_state() -> IjfsDailyState:
 
 
 func _run_phase(state: IjfsDailyState, dice: Dice) -> void:
-	IjfsEngine._run_strike_phase(
-		state, 1, IjfsEngine.PRE_AD_PHASE, {}, {}, dice, null, null, null, null, null)
+	var ctx := IjfsStrikePhaseContext.new()
+	ctx.current_day = 1
+	IjfsEngine._run_strike_phase(state, ctx, IjfsEngine.PRE_AD_PHASE, dice)
 
 
 func _munition(state: IjfsDailyState) -> IjfsMunition:

@@ -214,13 +214,15 @@ func test_organic_munition_routes_to_organic_budget() -> void:
 	var force: Array[IjfsSquadron] = [_strike_squadron("s1", "4.5th Gen", 24)]
 	var organic_budget := IjfsFiringCapacity.OrganicStrikeBudget.new(state.scenario, force, state.munitions, null)
 
-	var attacked: Dictionary = {}
-	var skips: Dictionary = {}
-	IjfsEngine._run_strike_phase(state, 1, IjfsEngine.POST_AD_PHASE, attacked, skips,
-		ScriptedDice.new([], [], [0.5, 0.5, 0.5]), capacity_budget, organic_budget, null, null, null)
+	var ctx := IjfsStrikePhaseContext.new()
+	ctx.current_day = 1
+	ctx.capacity_budget = capacity_budget
+	ctx.organic_budget = organic_budget
+	IjfsEngine._run_strike_phase(
+		state, ctx, IjfsEngine.POST_AD_PHASE, ScriptedDice.new([], [], [0.5, 0.5, 0.5]))
 
-	assert_bool(attacked.has("t1")).override_failure_message("organic munition must consume organic_budget, not be blocked by capacity_budget").is_true()
-	assert_bool(skips.has("t1")).is_false()
+	assert_bool(ctx.attacked.has("t1")).override_failure_message("organic munition must consume organic_budget, not be blocked by capacity_budget").is_true()
+	assert_bool(ctx.skip_reasons.has("t1")).is_false()
 
 
 # --- helpers ------------------------------------------------------------------------------------
