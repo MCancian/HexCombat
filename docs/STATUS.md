@@ -50,10 +50,19 @@ whole point is that it holds none.
 | `scripts/phases/` | Coordinates one group of phases: computes nothing itself, applies nothing itself | Does it only ORDER calls and thread results? |
 | `scripts/resolvers/` | The per-phase resolver — decides what happens in that phase | Is it the phase's own logic, and does it still write campaign state? |
 | `scripts/calc/` | Write-free calculation: returns outcomes, never applies them | Does it write NO campaign state at all — including through arrays/dicts it was handed? |
+| `scripts/ijfs/` | A pipeline stage of one subsystem: computes AND applies, at its own draw point, through that aggregate's authority | Would applying its result later change how many dice are drawn? (if yes, it belongs here rather than in `calc/`) |
 | `scripts/builders/` | Builds fresh, unpublished state from content/scenario data | Does anything hold the object before `build()` returns? (must be "no") |
 | `scripts/loaders/` | Content files → typed objects | Is its input a data file rather than live state? |
 | `scripts/transitions/` | A mutation authority — THE writer for one aggregate | Is it named as an `authority_path` in the manifest? (the directory grants nothing on its own) |
 | `scripts/model/` | Data + its own structural self-checks | Does it hold state and validate only itself? |
+
+`scripts/ijfs/` is the one directory whose claim is neither "computes" nor "applies" but both, and it
+exists because of a constraint rather than a preference (plan 0046). IJFS stages consume dice
+CONDITIONALLY on state an earlier stage just wrote, and later stages choose which targets to iterate by
+reading it — so deferring application to the end of the day would change the draw count, which the
+golden pins forbid. They call `IjfsTransitions` at the exact point they used to assign. The three IJFS
+helpers that genuinely compute nothing else (`IjfsAdHealth`, `IjfsWarmup`, `IjfsFiringCapacity`) moved
+to `calc/`; widening `calc/`'s claim to cover the rest would have made it untrue everywhere.
 
 Two worked examples, because the boundary that matters is `resolvers/` vs `calc/`:
 `AntishipResolver` stays under `resolvers/` on purpose — it still rewrites the caller's `ship_reserve`

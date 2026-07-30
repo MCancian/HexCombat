@@ -365,7 +365,7 @@
       "hosted_fields": [
         {
           "class": "IjfsDailyState",
-          "path": "res://scripts/ijfs/IjfsDailyState.gd",
+          "path": "res://scripts/model/IjfsDailyState.gd",
           "_doc": "The three containers that persist across days (IjfsDailyState.gd's own header says so). The per-run ledgers and AD-health snapshots on the same object are rewritten wholesale by every run_daily and are outputs, not campaign state, so they are deliberately unregistered.",
           "fields": {
             "targets": "campaign",

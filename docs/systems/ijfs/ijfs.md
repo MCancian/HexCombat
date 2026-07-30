@@ -18,10 +18,10 @@ fires) and ground-casualty accumulation (open half).
 | `scripts/ijfs/IjfsTargeting.gd` | Target filtering, pairing matching, doctrine priority, munition filter, exquisite intel | `targeting.py` |
 | `scripts/ijfs/IjfsEngagement.gd` | SEAD engagement + return-fire (contest) + post-phase-2 free shot | `engagement.py` |
 | `scripts/ijfs/IjfsStrike.gd` | Strike probability (modifier system) and hit resolution | `strike_probability.py`, `strike_resolution.py` |
-| `scripts/ijfs/IjfsFiringCapacity.gd` | `FiringCapacityBudget` (inorganic daily sortie cap) + `OrganicStrikeBudget` (strike-aircraft scaled) | `firing_capacity.py` |
-| `scripts/ijfs/IjfsAdHealth.gd` | Taiwan AD health: per-category alive+unsuppressed fraction, SAM×radar effective health | `ad_health.py` |
-| `scripts/ijfs/IjfsWarmup.gd` | Prelanding attrition-profile multiplier + capacity scaling | `warmup_profiles.py` |
-| `scripts/ijfs/IjfsDailyState.gd` | Mutable container threaded through one daily cycle | `state.py` (IJFSDailyState, minus rng) |
+| `scripts/calc/IjfsFiringCapacity.gd` | `FiringCapacityBudget` (inorganic daily sortie cap) + `OrganicStrikeBudget` (strike-aircraft scaled) | `firing_capacity.py` |
+| `scripts/calc/IjfsAdHealth.gd` | Taiwan AD health: per-category alive+unsuppressed fraction, SAM×radar effective health | `ad_health.py` |
+| `scripts/calc/IjfsWarmup.gd` | Prelanding attrition-profile multiplier + capacity scaling | `warmup_profiles.py` |
+| `scripts/model/IjfsDailyState.gd` | Mutable container threaded through one daily cycle; targets/munitions/squadron_force persist across days | `state.py` (IJFSDailyState, minus rng) |
 | `scripts/ijfs/IjfsLoaders.gd` | JSON loading, target expansion, anti-ship container→target builder, SAM score enrichment | `loaders.py` + `default_targets.py` |
 | `scripts/model/ijfs/IjfsTarget.gd` | Resource model: target state fields + `to_dict()` | `state.py` (TargetInstance dataclass) |
 | `scripts/model/ijfs/IjfsMunition.gd` | Resource model: munition inventory row | `state.py` (MunitionInventory dataclass) |
