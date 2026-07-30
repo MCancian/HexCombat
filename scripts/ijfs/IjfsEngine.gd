@@ -385,10 +385,7 @@ static func carry_to_next_day(state: IjfsDailyState) -> void:
 	# Mirrors loaders.load_targets's runtime-reload branch: suppression + sead_result clear each
 	# day; destroyed / known_to_red / last_detected_day / detected_this_turn persist. Munitions and
 	# squadron_force carry forward unchanged (their attrition is already applied in-place).
-	for target in state.targets:
-		target.suppressed = false
-		target.suppressed_this_turn = false
-		target.sead_result = ""
+	IjfsTransitions.carry_to_next_day(state)
 
 
 # --- helpers ------------------------------------------------------------------------------------

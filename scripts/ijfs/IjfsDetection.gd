@@ -178,16 +178,7 @@ static func _run_detection_phase(targets: Array[IjfsTarget], scenario: Dictionar
 
 
 static func apply_detection_ids(targets: Array[IjfsTarget], detected_ids: Array, current_day: int) -> void:
-	for target in targets:
-		target.detected_this_turn = false
-		if target.destroyed:
-			target.known_to_red = false
-			continue
-		var detected := detected_ids.has(target.target_id)
-		target.detected_this_turn = detected
-		target.known_to_red = detected
-		if detected:
-			target.last_detected_day = current_day
+	IjfsTransitions.apply_detection_results(targets, detected_ids, current_day)
 
 
 static func _posture_for_detection(target: IjfsTarget) -> String:

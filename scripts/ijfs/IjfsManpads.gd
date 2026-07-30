@@ -54,8 +54,7 @@ static func systems_remaining(target: IjfsTarget) -> int:
 ## The ONE place the stock changes: the typed field and its serialization mirror move together, so
 ## they cannot describe different stocks. Plan 0046 commit 6 moves this body into IjfsTransitions.
 static func set_remaining(target: IjfsTarget, value: int) -> void:
-	target.manpads_remaining = value
-	target.metadata["systems_remaining"] = value
+	IjfsTransitions.set_manpads_remaining(target, value)
 
 
 static func threat_fraction(ready_systems: int) -> float:

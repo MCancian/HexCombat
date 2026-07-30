@@ -40,7 +40,7 @@ static func resolve_sead_engagement(
 
 	for target in targets:
 		if target.category in SAM_CATEGORIES and not target.destroyed:
-			target.sead_result = "unengaged"
+			IjfsTransitions.mark_sead_unengaged(target)
 
 	if not sead_enabled or total_alive <= 0 or float(force["sead_eff"]) <= 0.0:
 		return {"engagement_log": engagement_log, "contest_log": contest_log}
@@ -91,22 +91,15 @@ static func _engage_sam_target(target: IjfsTarget, effective_power: float, dice:
 	var destroyed := roll <= p_destroy
 	var suppressed := false
 	if destroyed:
-		target.destroyed = true
-		target.suppressed = false
-		target.suppressed_this_turn = false
-		target.detected_this_turn = false
-		target.known_to_red = false
-		target.sead_result = "destroyed"
+		IjfsTransitions.apply_sead_destruction(target)
 	else:
 		var p_suppress := p_destroy * SUPPRESSION_FACTOR
 		var supp_roll := dice.randf()
 		suppressed = supp_roll <= p_suppress
 		if suppressed:
-			target.suppressed = true
-			target.suppressed_this_turn = true
-			target.sead_result = "suppressed"
+			IjfsTransitions.apply_sead_suppression(target)
 		else:
-			target.sead_result = "unengaged"
+			IjfsTransitions.mark_sead_unengaged(target)
 
 	return {
 		"target_id": target.target_id,

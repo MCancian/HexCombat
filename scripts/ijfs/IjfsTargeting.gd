@@ -219,9 +219,7 @@ static func apply_munition_filter(munition_filter: Dictionary, pairings: Array[I
 static func apply_posture_override(targets: Array[IjfsTarget], posture: Variant) -> void:
 	if posture == null:
 		return
-	for target in targets:
-		if not target.destroyed and target.mobility != "static":
-			target.posture = String(posture)
+	IjfsTransitions.apply_warmup_posture_override(targets, String(posture))
 
 
 static func apply_exquisite_intel(
@@ -264,7 +262,7 @@ static func apply_exquisite_intel(
 			selected_targets.append(candidates[index])
 	var overridden: Array[String] = []
 	for target in selected_targets:
-		target.intel_locked = true
+		IjfsTransitions.mark_intel_locked(target)
 		overridden.append(target.target_id)
 	return overridden
 

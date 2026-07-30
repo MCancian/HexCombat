@@ -108,7 +108,8 @@ static func update_maneuver_posture(ijfs_state: IjfsDailyState, brigades: Dictio
 		var brigade: Brigade = brigades.get(brigade_id)
 		if brigade == null:
 			continue
-		target.posture = "active" if (brigade.moved_last_turn or brigade.fought_last_turn) else "hiding"
+		IjfsTransitions.apply_activity_posture(
+			target, brigade.moved_last_turn or brigade.fought_last_turn)
 
 
 ## MANPADS layer (2026-07-10): Stingers are distributed across TO ground forces, so a TO's pool
@@ -137,7 +138,8 @@ static func sync_manpads_to_oob(ijfs_state: IjfsDailyState) -> void:
 			continue
 		var fraction := float(int(alive_by_to.get(to_key, 0))) / float(total)
 		var cap := int(roundf(float(int(target.metadata.get("systems_represented", 0))) * fraction))
-		IjfsManpads.set_remaining(target, mini(IjfsManpads.systems_remaining(target), cap))
+		IjfsTransitions.set_manpads_remaining(
+			target, mini(IjfsManpads.systems_remaining(target), cap))
 
 
 ## Add "Maneuver Units" targets for brigades that have just come onto the map (plan 0029 Tier A2:
@@ -183,7 +185,7 @@ static func sync_maneuver_targets_to_oob(ijfs_state: IjfsDailyState, brigades: D
 		if excess > 0:
 			live_targets.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id > b.target_id)
 			for i in range(excess):
-				(live_targets[i] as IjfsTarget).destroyed = true
+				IjfsTransitions.retire_target(live_targets[i] as IjfsTarget)
 
 
 ## Consume IJFS maneuver casualties: remove each struck Green/ROC battalion from the OOB before

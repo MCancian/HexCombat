@@ -131,16 +131,12 @@ static func resolve_strike(
 	var suppression_roll: Variant = null
 	var suppressed := false
 	if destroyed:
-		target.destroyed = true
-		target.known_to_red = false
-		target.suppressed = false
-		target.suppressed_this_turn = false
+		IjfsTransitions.apply_strike_destruction(target)
 	elif p_suppressed > 0.0:
 		suppression_roll = dice.randf()
 		suppressed = float(suppression_roll) <= p_suppressed
 		if suppressed:
-			target.suppressed = true
-			target.suppressed_this_turn = true
+			IjfsTransitions.apply_strike_suppression(target)
 
 	return {
 		"current_day": current_day,
