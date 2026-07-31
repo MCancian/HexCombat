@@ -16,9 +16,13 @@ spawns independent substreams per phase and per contested hex (`ijfs:<turn>:<day
 `antiship:<turn>`, `combat:<turn>:<hex_id>`), so a roll-count change in one phase or hex never
 scrambles another's dice (`ScriptedDice.derive` returns self, so scripted fixtures are unaffected). `GameData` (autoload) loads hexes, both OOBs (PLA + ROC brigades),
 ships, theaters, beaches. `EventBus` for signals. **Every phase's logic lives in a pure
-`RefCounted` class under `scripts/resolvers/`** (`SupplyResolver`,
-`FrontlineResolver`, `CleanupResolver`, `OffloadResolver`, `AntishipResolver`, `IjfsResolver`,
-`CombatResolver`). Turn orchestration is **`TurnConductor`** (also `RefCounted`, all `static`):
+`RefCounted` class** — under `scripts/calc/` when it writes no campaign state (`AirInsertionResolver`,
+`MobilizationResolver`, `SealiftResolver` since 0045, `AntishipResolver` since 0050), otherwise under
+`scripts/resolvers/` (`FrontlineResolver`, `CleanupResolver`, `OffloadResolver`, `IjfsResolver`,
+`CombatResolver`, `InfrastructureResolver`). **The second set is empty in practice as of 2026-07-31**:
+the closeout measured all six and none writes campaign state either, so the directory split has
+outlived the distinction it encodes — plan 0055 proposes emptying it. (`SupplyResolver` is long gone —
+supply is `SupplyBill` + `DosConsumption` in `calc/` applied by `SupplyTransitions`.) Turn orchestration is **`TurnConductor`** (also `RefCounted`, all `static`):
 its methods take a `GameStateData` value object as their first argument, own the EventBus emits,
 cross-phase field assignment, and combat casualty/FEBA/retreat application (which stays in the
 conductor deliberately: per-hex application interleaves with the next hex's contributor
@@ -26,8 +30,8 @@ gathering). The four **arrival** phases (sealift, amphibious offload, ROC mobili
 insertion) live in **`ReinforcementPhases`**, the two **fires** phases (IJFS, anti-ship + mines) in
 **`FiresPhases`**, the end-of-turn accounting pair (supply, cleanup) in **`TurnClosure`**, and the
 force-authority seam every brigade placement/activity write and protected roster shrink uses in
-**`ForceTransitions`** (with `RosterMutations` kept as a compatibility wrapper for casualty call sites
-plus the pool/roster tripwire) — `TurnConductor.resolve_turn` still holds the whole ordered call list,
+**`ForceTransitions`** (which also hosts the pool/roster tripwire; the `RosterMutations` compatibility
+wrapper 0038 created was eliminated by 0044) — `TurnConductor.resolve_turn` still holds the whole ordered call list,
 so the modules own how a phase resolves and never when it runs (plans 0038/0044). **Directories name the role
 (plan 0043/0052)** — see the table below. Runtime state itself is the plain **`GameStateData`** value object
 (`scripts/model/`); **`GameState` (autoload) is a thin state-holder** — it owns one
@@ -48,7 +52,7 @@ whole point is that it holds none.
 | Directory | The claim | The test |
 |---|---|---|
 | `scripts/phases/` | Coordinates one group of phases: computes nothing itself, applies nothing itself | Does it only ORDER calls and thread results? |
-| `scripts/resolvers/` | The per-phase resolver — decides what happens in that phase | Is it the phase's own logic, and does it still write campaign state? |
+| `scripts/resolvers/` | The per-phase resolver — decides what happens in that phase | Is it the phase's own logic, and does it still write campaign state? **No file in it passes the second half any more** (measured 2026-07-31) — plan 0055 |
 | `scripts/calc/` | Write-free calculation: returns outcomes, never applies them | Does it write NO campaign state at all — including through arrays/dicts it was handed? |
 | `scripts/ijfs/` | A pipeline stage of one subsystem: computes AND applies, at its own draw point, through that aggregate's authority | Would applying its result later change how many dice are drawn? (if yes, it belongs here rather than in `calc/`) |
 | `scripts/builders/` | Builds fresh, unpublished state from content/scenario data | Does anything hold the object before `build()` returns? (must be "no") |
@@ -65,8 +69,12 @@ helpers that genuinely compute nothing else (`IjfsAdHealth`, `IjfsWarmup`, `Ijfs
 to `calc/`; widening `calc/`'s claim to cover the rest would have made it untrue everywhere.
 
 Two worked examples, because the boundary that matters is `resolvers/` vs `calc/`:
-`AntishipResolver` stays under `resolvers/` on purpose — it still rewrites the caller's `ship_reserve`
-entries in place, so it fails the `calc/` test. `SealiftResolver` moved TO `calc/` in plan 0045, but only
+`AntishipResolver` stayed under `resolvers/` from 0043 to 0050 for one reason — a single function
+rewrote the caller's `ship_reserve` entries in place, which failed the `calc/` test. Plan 0044 replaced
+that seam with `ForceTransitions.apply_crossing_loss` and left the function with **no production caller
+at all**, so 0050's closeout deleted it and the file moved to `calc/`. The lesson generalizes: a
+directory claim can go stale WITHOUT anyone editing the file, because what made it true was deleted
+somewhere else. `SealiftResolver` moved TO `calc/` in plan 0045, but only
 once it stopped writing anything at all — the last write was a `ship_category` stamp it put straight into
 force-owned reserve rows through an untyped alias, invisible to the gate. Moving it before that fix would
 have put a writer in `calc/`. Note also that a GDScript `class_name` is path-independent, so relocating a
@@ -194,7 +202,7 @@ lists or rationale. For anything more specific run `python3 tools/mutation_owner
 |---|---|---|---|
 | `antiship_establishment` | `AntishipTransitions.gd` | 0043 | Surviving launchers, permanent losses, temporary suppression, and the container projection IJFS targets |
 | `force` | `ForceTransitions.gd` | 0044 | Brigade/Battalion runtime fields, placement, roster memberships, and who is ABOARD a cohort (`bn_ids`) |
-| `sealift_fleet` | `SealiftTransitions.gd` | 0045 | `ShipState` fleet projection, cohort hulls and legs, return/reload pipeline, escort SAM magazines |
+| `sealift_fleet` | `SealiftTransitions.gd` | 0045, 0050 | `ShipState` fleet projection, cohort hulls and legs, return/reload pipeline, escort SAM magazines, the `sealift_state` handle, and the crossing's BN-equivalent loss ledger |
 | `ijfs` | `IjfsTransitions.gd` | 0046 | `IjfsTarget`/`IjfsMunition`/`IjfsSquadron`, the three cross-day `IjfsDailyState` containers, the `ijfs_state`/`_ijfs_day` handles |
 | `map` | `MapTransitions.gd` | 0047 | `HexState.hex_owner`/`feba_km` and the `GameDataStore.hex_states` container. **Zero allowances** — construction routes through the authority too |
 | `infrastructure` | `InfrastructureTransitions.gd` | 0047 | `InfrastructureNodeState` lifecycle (status, repair clock, JLSF marker), the `nodes` container, the `infrastructure_state` handle |

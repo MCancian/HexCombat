@@ -9,40 +9,18 @@ Work orders for multi-session efforts. Each plan is a focused doc; **this index 
 of truth** for status. Status vocabulary: `Sketch` → `Exploring` → `In progress` → `✅ Shipped`
 → `Superseded`.
 
-## ▶ Next up: plan 0050 — mutation-authority campaign closeout
+## ▶ Next up
 
-Plan 0049 shipped 2026-07-31 (eighth of the campaign, three aggregates at once). **0050 is the LAST
-one**, and 0042-0049 are all satisfied as dependencies.
+**The mutation-authority campaign (0042–0050) is CLOSED as of 2026-07-31.** Nothing in this index is
+blocked on it any more; pick from the Active table below. If you are about to touch mutable gameplay
+state, read `docs/systems/mutation-authority/mutation-authority.md` (the procedure) and the manifest's
+`_schema_rules` (six lines) before you write — adding an aggregate is now an addition to a closed
+world rather than a step in an open migration.
 
-Read in this order and stop when you can act; everything below is a pointer, not a duplicate.
-
-1. `docs/plans/0050-mutation-authority-enforcement-closeout.md` — the plan. It is still a `Sketch`, so
-   **preflight it first**: the work loop asks for a `file:line` inventory of every writer the plan
-   claims exists, and rewriting the Sketch against that inventory is what makes the implementation
-   safe. Every plan in this campaign has had premises die at that step — in 0046 three of them, one of
-   which would have added a game mechanic under cover of a refactor; in 0047 it shrank the claimed
-   mutation surface to 7 writes in 2 files; in 0048 it dissolved one of the two authorities the Sketch
-   specified; in 0049 it deleted a whole step and a whole class.
-2. **What 0050 actually inherits.** Three `GameStateData` fields are still `planned_transitional` and
-   name 0050 in `shared_model_policies`: `sealift_state`, `pending_lost_at_sea` and
-   `lost_at_sea_accumulator`. They are real mutable state no aggregate owns. USER call: treat them as
-   a closeout AUDIT, not a writer migration. Details and writer file:lines are in `BACKLOG.md`.
-   **Those three exclusions must be resolved before 0050 itself can be archived**, because a promise
-   classification naming an archived plan is designed to fail the gate.
-3. `docs/systems/mutation-authority/mutation-authority.md` — the campaign PROCEDURE: the registration
-   ordering, the field-naming rule, the ordering traps, and what an authority looks like. Read it
-   before the manifest; it exists so each plan stops re-deriving the same half-dozen rules.
-4. `tools/mutation_authority_manifest.json` → `_schema_rules` — the six registration rules. Read those
-   six lines instead of `tools/validate_mutation_authority.gd`; that is how they were learned the
-   first time, at a cost of ~300 lines.
-5. `docs/archive/0049-accounting-turn-mutation-authority.md` — the most recent worked example, and the
-   only one that shipped three aggregates together: how a preflight deletes a step and a class, how to
-   hold FOUR full dependency ceilings at once by paying each with a real simplification, and why
-   "private" is not a boundary in GDScript — the lifecycle authority's inexpressibility claim was
-   false in its first draft because the edges were factored through a private helper that took a
-   destination. `docs/archive/0048-reinforcement-state-mutation-authority.md` is the one before it.
-6. `docs/systems/amphibious-offload/amphibious-offload.md` §10 — the reference example for ONE object
-   shared by two authorities, split by field, neither reaching across.
+The three plans most worth doing next, in the maintainer's judgement, are **0051** (destroyed systems
+still fire — a real defect, already planned in detail), **0031** (graduated port suppression, unblocked
+by 0047) and **0002** (per-hull escort magazines, unblocked by 0043+0045). All three are USER-facing
+mechanics rather than architecture.
 
 **Plans are ephemeral by contract.** A plan holds the design, the checklist, and progress notes
 *while the work is in flight*. It is not a reference: no durable fact may live only in a plan.
@@ -79,7 +57,6 @@ agent would need to read the plan to act, the closeout wasn't done.
 | 0045 | [Sealift/fleet mutation authority](../archive/0045-sealift-fleet-mutation-authority.md) | High — hull/cohort/pipeline conservation and one writer | **✅ Shipped 2026-07-29** — `SealiftTransitions` sole writer; typed `SealiftCohort`; zero legacy writers; no behavior/RNG/golden change |
 | 0046 | [IJFS mutation authority](../archive/0046-ijfs-mutation-authority.md) | High — targets, munitions, squadrons, typed stocks and writeback | **✅ Shipped 2026-07-30** — `IjfsTransitions` sole writer; typed MANPADS stock; zero legacy writers; no behavior/RNG/golden change |
 | 0047 | [Map/infrastructure mutation authority](../archive/0047-map-infrastructure-mutation-authority.md) | High — ownership, FEBA, seizure, repair and JLSF lifecycle | **✅ Shipped 2026-07-30** — `MapTransitions` + `InfrastructureTransitions` sole writers; sticky ownership enforced by having no owner setter; zero legacy writers; no behavior/RNG/golden change |
-| 0050 | [Mutation-authority campaign closeout](0050-mutation-authority-enforcement-closeout.md) | High — independent audit, hard enforcement, deterministic closeout | Sketch |
 | 0051 | [Destroyed coastal launchers get a last salvo away](0051-destroyed-systems-still-fire.md) | Medium (balance; a ported TIV mechanic that has never once fired — needs a USER dial + a crossing-calibration re-run) | Sketch |
 | 0052 | [Legibility sweep: unenforced budget, dead seams, half-finished role layout](../archive/0052-legibility-and-dead-seams.md) | Medium (hygiene; documented parameter budget now enforced; dead seams removed; role directories completed) | **Complete 2026-07-27** — parameter budget enforced; dead seams removed; role directories completed; typed `AntishipResolver` context |
 | 0036 | [Airborne cost and sortie cadence](0036-airborne-cost-and-cadence.md) | Medium (balance; USER call 2026-07-25 answering the plan-0032 dial — double baseline attrition + 1 sortie per 2 days;`red_airborne` only, golden untouched, `validate_air_insertion` pin re-baselines) | Sketch |
@@ -88,85 +65,32 @@ agent would need to read the plan to act, the closeout wasn't done.
 
 | 0016 | [Separate State Data from Autoload](0016-separate-state-data.md) | Medium (hygiene/architecture) | Superseded by 0014 |
 | 0022 | [Red reactive beach-opening (feasibility first)](0022-red-beach-switching.md) | Medium (research; new mechanic, gated on a feasibility spike) | Sketch |
+| 0055 | [Empty `scripts/resolvers/`](0055-empty-the-resolvers-directory.md) | Low (hygiene; path-only, but a real stale directory claim measured by 0050's audit) | Sketch |
 
-## Mutation-authority campaign — required sequence
+## Mutation-authority campaign — ARCHIVED (0042–0050, complete 2026-07-31)
 
-**Implementation readiness:** the architecture and sequencing review is complete and USER-ratified.
-**0042 shipped 2026-07-26** — the enforceability question is answered (receiver-TYPE resolution, not
-field names; see the validator header) and the manifest format is fixed. The next implementation work
-starts at plan 0043. Later plans must not start early.
+| | |
+|---|---|
+| **What it did** | Gave every mutable gameplay aggregate exactly one named authority under `scripts/transitions/`, enforced by a source gate that resolves each write's RECEIVER TYPE. Ten aggregates, ten authorities, **zero** legacy-writer allowances. Eight of the nine plans were byte-stable; **plan 0043 is the exception** — it carried one separately committed, USER-approved behaviour correction (launchers destroyed while firing used to be alive again at the next crossing), and research records straddle that boundary. |
+| **Where the record is** | Per-plan reasoning in `docs/archive/0042-…` through `docs/archive/0050-…`, one row each in [ARCHIVE.md](ARCHIVE.md). The lessons that generalize are in `.claude/skills/hexcombat-architecture-contract` § Mutation authority and `docs/systems/mutation-authority/mutation-authority.md`. |
+| **Where the FACTS are** | `tools/mutation_authority_manifest.json` — the only home for ownership. `docs/STATUS.md` indexes which authority covers what, one line per aggregate. `python3 tools/mutation_ownership.py` queries it. |
+| **What is still open** | `E_STALE_ALLOWANCE` is the one manifest check with no proof surface — tracked in [BACKLOG.md](BACKLOG.md) with the reason the existing fixture harness cannot host it. |
 
-**USER direction:** every gameplay-relevant mutable aggregate gets one controller/API; calculators
-return outcomes, only the authority applies them, and cross-aggregate transitions prove exact deltas.
-This is a uniform mutation discipline, **not** one universal state representation or God controller.
-No new autoloads; `GameStateData` stays data-only; `TurnConductor` keeps phase order.
+The campaign's own sequencing rules, readiness gates and serial-agent protocol are **deleted rather
+than archived here**: they governed an in-flight migration that is over, and a future agent reading
+them as live guidance would be following instructions for work that no longer exists. What survives
+them — one authority per aggregate, calculators return outcomes, ceilings are paid for and never
+raised, one migration family per commit — is in the architecture-contract skill, where it applies to
+any change rather than only to this campaign.
 
-The campaign is intentionally serial. Each plan establishes APIs the next plan consumes, and every
-step touches deterministic turn-path state. Only one migration family lands per commit, with the full
-gate green before the next begins.
-
-**Plans 0042–0049 are SHIPPED.** Their per-plan rationale is not repeated here — each has an
-archived plan under `docs/archive/` and a one-row summary in [ARCHIVE.md](ARCHIVE.md), and the
-lessons that generalize are in `docs/systems/mutation-authority/mutation-authority.md` §5/§6. What
-each one established, in one line, so you can see the shape of the chain:
-
-| Plan | Established |
-| --- | --- |
-| 0042 | The enforceability gate and the manifest format. Receiver-TYPE resolution, not field names. |
-| 0043 | `antiship_establishment` — the pilot vertical slice, and the one deliberate behaviour change. |
-| 0044 | `force` — brigades, battalions, placement, casualty/transfer deltas. Supersedes 0039. |
-| 0045 | `sealift_fleet` — hulls, cohorts, return pipeline, escort magazines. |
-| 0046 | `ijfs` — targets, munitions, squadrons, cross-day carry-over. |
-| 0047 | `map` + `infrastructure` — sticky ownership, FEBA, node lifecycle. |
-| 0048 | `air_insertion` — the lift ledger; mobilization needed no authority of its own. |
-| 0049 | `supply`, `order_buffers`, `turn_lifecycle` — the last ten `GameStateData` fields. |
-
-9. **0050 — hard enforcement and closeout.** Independent source/runtime/contract sweep, remove all
-   legacy-writer allowances, run multi-scenario deterministic games, obtain two read-only external
-   reviews, update canonical docs, and archive the campaign. **Run
-   `python3 tools/mutation_ownership.py --plan 0050` first** — it prints the three orphan fields whose
-   exclusions must be resolved before this plan can itself be archived.
-
-### Interaction with existing plans
+### Interaction with existing plans (still current)
 
 - **0039 is superseded by 0044.** Do not implement its derived-ledger step.
-- **0033 brigade organization** should wait for 0044 or add no new Brigade writer.
-- **0002 per-hull escort magazines** is UNBLOCKED: 0043 and 0045 both shipped, so the aggregate per-type magazine now has one named writer (`SealiftTransitions`) to grow per-hull granularity behind.
-- **0031 graduated port suppression** is UNBLOCKED: 0047 shipped 2026-07-30, so node transitions now
-  have one named writer (`InfrastructureTransitions`) and a typed `InfrastructureNodeState` to grow a
-  graduated status behind. Its mechanic is still a USER design call.
-- **0036 airborne balance** may proceed as data/balance work, but any new air-state mutation waits for
-  0048.
-- **0041 autoload access** remains independent low-priority filler; it does not substitute for this
-  campaign's mutation enforcement.
-- Plans 0030 and other observability-only work may proceed if they do not add protected state writers.
-
-### Serial-agent execution protocol
-
-The campaign is designed for a succession of cold-start agents. Most of what used to be listed here
-now has a canonical home and is not repeated: the work loop is in `CLAUDE.md`, the ordering traps and
-authority shapes in `docs/systems/mutation-authority/mutation-authority.md` §5/§6, the registration
-rules in the manifest's `_schema_rules`, and `.gd.uid`/re-import handling in
-`hexcombat-build-and-env`. What is specific to THIS campaign:
-
-1. Verify every preceding campaign step is shipped and green before taking the next — no parallel
-   aggregate migrations, and no coding from a later plan against provisional APIs.
-2. One migration family per commit, with the manifest updated in the SAME commit as the writer it
-   adds or removes.
-3. Before adding an authority dependency to a ceilinged file, record the dependency removed in the
-   same commit. If no one-for-one swap exists, land a prior green extraction instead — never raise
-   the ceiling to fit.
-
-Stop and surface to the USER rather than improvising when alias detection is incomplete, a
-cross-authority operation can fail after its first write, a dependency ceiling would need to rise, a
-path-only commit moves a fixture/golden, or a new behavior/storage decision appears. Builders are
-exact construction exceptions for fresh unpublished objects, not alternate runtime authorities.
-
-**Change-control rule:** 0042, role-directory moves, and authority-only migration commits are
-byte-stable refactors. Plan 0043 contains one separately committed, USER-approved behavior change and
-may deliberately move only reachable anti-ship outcomes/fixtures. No later plan may rebaseline to make
-an architectural migration pass. Mutable `GameData` storage consolidation is not a campaign end-state;
-it requires a separate measured, USER-ratified plan if authority work proves it necessary.
+- **0033 brigade organization** may proceed; it must add no new `Brigade` writer outside `ForceTransitions`.
+- **0002 per-hull escort magazines** is UNBLOCKED: the aggregate per-type magazine has one named writer (`SealiftTransitions`) to grow per-hull granularity behind.
+- **0031 graduated port suppression** is UNBLOCKED: node transitions have one named writer (`InfrastructureTransitions`) and a typed `InfrastructureNodeState` to grow a graduated status behind. Its mechanic is still a USER design call.
+- **0036 airborne balance** may proceed as data/balance work; air-state mutation goes through `AirInsertionTransitions`.
+- **0041 autoload access** remains independent low-priority filler.
 
 **Standing research caveats:** studies before the landed-only/census corrections over-state Red, and
 studies before 0043 will also reflect resurrecting launch-attrition losses. Records remain identified

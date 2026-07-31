@@ -41,24 +41,14 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   and a stale allowance is only visible after a scan produces a Verdict. It needs the same treatment
   `_check_inert_authority_fixture` got: re-judge the fixture findings against a doctored usage record.
 
-- [ ] **Three `GameStateData` fields are real mutable state that no aggregate owns and no plan names
-  (found 2026-07-30, closing the shared-model hole; USER call: resolve in plan 0050's closeout audit).**
-  Exhaustive classification of every hosted class forced each one to be declared, and these three came
-  out as `planned_transitional` pointing at 0050 because owning them means moving writers, which that
-  change was not allowed to do:
-  - `sealift_state` — the `SealiftState` handle. Its siblings `fleet`, `ijfs_state` and
-    `infrastructure_state` ARE claimed by their aggregates, so this is a straight asymmetry. Writers:
-    `GameState.gd:324` (reset) and `ReinforcementPhases.gd:108,110`, which swaps a temporary sealift in
-    and the campaign one back.
-  - `lost_at_sea_accumulator` — fractional crossing-loss carry-over ACROSS turns, i.e. campaign state.
-    Written at `FiresPhases.gd:123`, one line from an `AntishipTransitions.apply_launch_attrition` call,
-    so the anti-ship authority is its natural owner.
-  - `pending_lost_at_sea` — BN-equivalents drowned this turn; `FiresPhases.gd:168` writes it and
-    `ReinforcementPhases.gd:134,166` reads it into the offload manifest and zeroes it. A within-turn
-    handoff between two phases belonging to no aggregate.
-  Their exclusions in `tools/mutation_authority_manifest.json` point at
-  `docs/plans/0050-mutation-authority-enforcement-closeout.md`, so archiving 0050 without resolving
-  them fails the gate with `E_STALE_POLICY_PLAN` rather than letting them slip.
+- [x] ~~**Three `GameStateData` fields are real mutable state that no aggregate owns and no plan
+  names**~~ **(found 2026-07-30; RESOLVED by plan 0050, 2026-07-31).** `sealift_state`,
+  `pending_lost_at_sea` and `lost_at_sea_accumulator` all joined the `sealift_fleet` aggregate —
+  `SealiftTransitions` owns the handle and the crossing's BN-equivalent ledger. `shared_model_policies`
+  now carries **no promise classification at all**, which is what let 0050 be archived: an exclusion
+  naming an archived plan is designed to fail `E_STALE_POLICY_PLAN`, and that is the mechanism that
+  made resolving these three non-optional. Rationale in
+  `docs/archive/0050-mutation-authority-enforcement-closeout.md`.
 
 - [ ] **Reviewer read-only is still a prompt, not a sandbox — opencode can enforce it (found 2026-07-30,
   plan 0054; USER raised the config route).** `opencode` supports per-agent permissions
@@ -244,19 +234,12 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   survivor-relative where TIV's is establishment-relative, so the port's
   `initial_system_count = survivors + destroyed` double-counts here. Read the plan, not this line.
 
-- **`IjfsResolver.apply_maneuver_casualties` bypasses the roster-shrinking seam — belongs to plan
-  0044, recorded 2026-07-27 so it does not have to be rediscovered.** `RosterMutations.apply_casualty`
-  is the sanctioned path and does three things; the IJFS path does only the first: it decrements
-  `battalion.qty`, but it never `composition.remove_at(index)` when a battalion hits zero, and never
-  calls `GameData.remove_brigade_from_map(brigade_id)` when a brigade is wiped out. So an IJFS-killed
-  brigade is flagged `destroyed` while remaining in the map index, and zero-qty battalions linger in
-  compositions — the roster/pool desync family the `RosterMutations` header warns about.
-  `docs/archive/0044-force-mutation-authority.md` already claims this by name ("Replace
-  `RosterMutations.apply_casualty` and IJFS's independent…"), so this line is evidence, not a new item.
-  **Two things 0044 must know.** (1) It is a BEHAVIOUR change — removing zero-qty entries and
-  de-indexing destroyed brigades moves combat contributor sets and the census, so golden pins will
-  move and it needs deliberate re-baseline change control; it cannot ride along in a refactor.
-  (2) The obvious fix of calling `RosterMutations.apply_casualty` from inside `IjfsResolver` would
-  break that resolver's purity — it is a pure resolver that receives `brigades` as a parameter and
-  never touches the `GameData` autoload, whereas `RosterMutations` is GameData-only. The seam that
-  already holds `GameData.brigades` is `FiresPhases.apply_ijfs_maneuver_casualties`.
+- ~~**`IjfsResolver.apply_maneuver_casualties` bypasses the roster-shrinking seam.**~~ **RESOLVED by
+  plan 0044; verified closed 2026-07-31 during the 0050 closeout audit.** The item (recorded
+  2026-07-27) said the IJFS path decremented `battalion.qty` without removing a zero-qty battalion
+  from `composition` or de-indexing a wiped-out brigade. `IjfsResolver.apply_maneuver_casualties` is
+  now **ABSENT**: the path is `FiresPhases.apply_ijfs_maneuver_casualties` →
+  `ForceTransitions.apply_battalion_casualties`, which does all three
+  (`ForceTransitions.gd:78` roster loss via `_apply_roster_loss`, which does
+  `composition.remove_at(index)` at `:605`; `:80-84` destroyed flag plus de-index). Kept as a
+  crossed-out line rather than deleted because the item's own text was the evidence 0044 acted on.

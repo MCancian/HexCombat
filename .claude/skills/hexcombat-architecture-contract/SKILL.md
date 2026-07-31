@@ -48,7 +48,7 @@ with an explicit signature like `resolve(<inputs>, dice) -> <TypedSummary>`:
 - `GameState` shrinks toward a thin orchestrator that sequences resolvers and owns cross-phase
   state. (Decomposition record: `docs/archive/refactor_audit.md` item 10.)
 
-## Mutation authority (campaign 0042–0050, foundation shipped)
+## Mutation authority (campaign 0042–0050 — COMPLETE, 2026-07-31)
 
 > Every mutable gameplay aggregate has one named authority. Calculators return outcomes; only the
 > authority applies them. Every cross-aggregate transition proves its preconditions and deltas
@@ -63,9 +63,10 @@ delta, and returns a typed receipt. It is **not** a base class, an autoload, or 
 two authorities but never writes their fields itself.
 
 **Where the facts live:** `tools/mutation_authority_manifest.json` is the single home for exact
-ownership — authority file, protected fields and their lifetimes, construction allowances, and
-temporary legacy writers each naming the plan that deletes it. Headers and systems docs point at it
-and must not copy its lists. `tools/validate_mutation_authority.gd` enforces it (its header
+ownership — authority file, protected fields and their lifetimes, and construction allowances.
+(Legacy-writer allowances were the campaign's migration device and are now **zero** across all ten
+aggregates; an entry that stops matching a real write fails as stale.) Headers and systems docs point
+at it and must not copy its lists. `tools/validate_mutation_authority.gd` enforces it (its header
 documents every write form it detects and every blind spot it does not). Its abstract fixtures prove
 write forms; generated probes bind every real claim to the real type corpus; a committed claim pin is
 an expected-output oracle only and is never read as ownership.
@@ -77,10 +78,34 @@ an expected-output oracle only and is never read as ownership.
 - An allowance that stops matching a real write fails as stale — dead exceptions get deleted.
 - If the gate cannot resolve your receiver's type, annotate it. That is the intended fix, not an
   allowance entry.
-- Aggregates migrate one at a time: one may be strict while the rest are unregistered.
+- Aggregates migrated one at a time, and the mechanism is still there: one may be strict while a new
+  one is unregistered. **All ten are `enforced` with zero legacy writers as of 2026-07-31**, so a new
+  aggregate is now an ADDITION to a closed world, not a step in an open migration.
+- `scripts/transitions/` grants nothing by being a directory: a file there that is no aggregate's
+  `authority_path` fails the gate.
 
-Registered so far: `antiship_establishment` — **enforced**, authority
-`scripts/transitions/AntishipTransitions.gd`, zero legacy writers (plan 0043).
+**The rule that survived the whole campaign, and the one to reach for first: enforce by ABSENCE.**
+An invariant you can express in the authority's API is documentation; an invariant you cannot express
+is enforced. `MapTransitions` has no owner setter at all, so sticky hex ownership cannot be written
+away (0047). `TurnLifecycleTransitions` has no destination setter, so an illegal phase transition is
+inexpressible (0049) — and the first draft of that claim was FALSE, because the edges were factored
+through a private helper taking a destination, and a GDScript underscore is not access control.
+Deleting a generic `set_x(target, value)` beats migrating it: one such setter lets any caller express
+nearly every forbidden assignment through the permitted file.
+
+**A forwarding property on an autoload is a public door the scan cannot see.** `GameState.<field> = x`
+resolves its receiver to `GameStateType`, not `GameStateData`, so the gate never judges it — seventeen
+validator writes to `GameState.turn_number` hid there. Every protected field's façade property is now
+get-only. When you register a field, delete its setter in the same change.
+
+**Field NAMES are protected repo-wide.** Register `IjfsMunition.name` and 22 unrelated view-layer lines
+become unresolved-write failures (0046). Prefer a distinctive name — `cohort_state`, not `state`.
+
+**Directory claims go stale without anyone editing the file.** `AntishipResolver` sat in
+`scripts/resolvers/` for seven plans because one function wrote the caller's `ship_reserve` in place;
+plan 0044 replaced that seam elsewhere and left the function with no production caller at all, which
+nothing noticed until 0050 swept for it. When you delete a writer, re-ask what its file's directory is
+still claiming.
 
 **The pilot, measured — copy this shape.** `AntishipTransitions` came out at 187 lines, 8 functions
 (5 public mutation operations, 3 private helpers) and 6 dependencies. Read it before writing the
@@ -108,6 +133,13 @@ next authority; the parts that are the pattern rather than the anti-ship domain:
 - **The ceiling is paid for, not raised.** Naming a new authority from a ceilinged phase module means
   finding a dependency that genuinely leaves. In the pilot that was deleting `Theaters`, whose last
   caller was re-deriving a map `GameData` already held.
+- **The cheapest owner is usually the right one — and the ceiling will tell you which it is.** Plan
+  0050 first gave the crossing's BN-equivalent ledger to the anti-ship authority because the anti-ship
+  phase produces it. Review killed that on a measurement: the consumer is `ReinforcementPhases`, whose
+  ceiling was exactly full, and it does not depend on `AntishipTransitions`. `SealiftTransitions` was
+  already a dependency of both coordinators — and, once asked, the more accurate owner too, because the
+  ledger is the BN-equivalent conversion of the HULL losses that authority books. When a ceiling refuses
+  an ownership choice, re-derive the boundary from the invariant before spending a dependency on it.
 
 ## Turn engine facts
 
@@ -116,10 +148,16 @@ next authority; the parts that are the pattern rather than the anti-ship domain:
 - **Resolution order** (fixed): IJFS → anti-ship crossing → amphibious offload → movement/commit →
   ground combat → front-line → cleanup (+ victory census). New phases slot into this sequence
   explicitly — never as a side effect of another phase.
-- **Cross-phase state** flows through fields owned by `GameState` (`ship_reserve`, `fleet`,
-  `pending_lost_at_sea`, `antiship_systems`/`antiship_containers`, `last_ijfs_writeback`,
-  `supply_state`, `game_over`/`winner`, per-brigade activity flags). Every producer→consumer edge
-  must be explicit; do not add hidden coupling between phases.
+- **Cross-phase state** flows through fields on `GameStateData`. Most are owned by exactly one
+  authority (`ship_reserve`, `fleet`, `sealift_state`, the crossing ledger, `antiship_systems`,
+  `supply_state`, `game_over`/`winner`, per-brigade activity flags). The `last_*` slots are NOT: they
+  are classified `phase_output` in the manifest, because they REPORT state that is authoritative
+  somewhere else. Several are still read by a later phase (`last_ijfs_writeback` by the anti-ship step,
+  `last_sealift_sent_by_type` by the crossing), so they are cross-phase edges without being protected —
+  reshaping one is a behaviour change even though no authority guards it. Every producer→consumer edge
+  must be explicit; do not add hidden coupling between phases. A handoff whose
+  consumer must also CLEAR it is one read-and-clear call on the authority, not a read plus an
+  assignment — a separate clear is a step a caller can forget or run twice.
 - **Brigade is the atomic on-map unit.** Battalions are brigade attributes, never separately
   positioned.
 

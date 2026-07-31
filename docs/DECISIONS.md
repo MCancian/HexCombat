@@ -25,6 +25,25 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-31 — The mutation-authority campaign is CLOSED: ten aggregates, zero legacy writers,
+  zero behaviour change (agent, reviewed).** Plan 0050 took the last three unowned `GameStateData`
+  fields — `sealift_state` and the crossing's BN-equivalent ledger (`pending_lost_at_sea`,
+  `lost_at_sea_accumulator`) — and gave all three to `sealift_fleet`/`SealiftTransitions`. The Sketch
+  and my first draft put the ledger under the anti-ship authority because the anti-ship phase produces
+  it; plan review refuted that on a measurement — the CONSUMER is `ReinforcementPhases`, whose
+  dependency ceiling was exactly full and which does not depend on `AntishipTransitions` — and the
+  cheaper owner proved the more accurate one, since the ledger is the BN-equivalent conversion of the
+  hull losses `SealiftTransitions` already books. An independent source sweep (not the manifest) found
+  the campaign's last invisible writer, `AntishipResolver.remaining_reserve_after_losses`, which
+  rewrote the caller's `ship_reserve` through an untyped alias, had been superseded by plan 0044, and
+  had no production caller at all — so it was deleted, its partial-prune coverage moved to
+  `force_transitions_test.gd`, and the file moved to `scripts/calc/`, the directory it had been
+  disqualified from by exactly that function. Evidence the closeout changed nothing: 40-turn
+  `scenario_golden` and `scenario_default` self-play records are byte-identical both across separate
+  processes and against the pre-change tree. Facts: `tools/mutation_authority_manifest.json`,
+  `docs/STATUS.md`, `.claude/skills/hexcombat-architecture-contract`,
+  `docs/archive/0050-mutation-authority-enforcement-closeout.md`.
+
 - **2026-07-31 — Accounting and turn lifecycle get three authorities; a "private" helper is not a
   boundary (agent, reviewed).** Plan 0049 claimed the LAST ten `GameStateData` fields the manifest
   promised it: `SupplyTransitions` (DOS balance + append-only ledger), `OrderTransitions` (all four
