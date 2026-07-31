@@ -49,10 +49,10 @@ static func resolve_cleanup_phase(state: GameStateData) -> Dictionary:
 	var outcome := CleanupResolver.resolve(
 		state.antiship_systems, GameData.brigades, state.pending_battalion_pools(),
 		GameData.victory_config, state.turn_number, state._china_has_landed)
-	state._china_has_landed = bool(outcome["china_has_landed"])
 	state.last_cleanup_summary = outcome["summary"]
-	state.game_over = state.last_cleanup_summary.game_over
-	state.winner = state.last_cleanup_summary.winner
+	# All three latches from ONE receipt. `outcome["china_has_landed"]` is deliberately NOT passed on:
+	# the authority derives the landing latch from the summary's census, so the trio cannot disagree.
+	TurnLifecycleTransitions.apply_cleanup_verdict(state, state.last_cleanup_summary)
 	EventBus.cleanup_resolved.emit(state.last_cleanup_summary.to_dict())
 	return state.last_cleanup_summary.to_dict()
 

@@ -6,8 +6,12 @@ extends RefCounted
 ## brigade's this-turn activity into the prior-turn flags that next turn's IJFS detection posture
 ## reads. Consumes NO dice; no autoload/engine access. The anti-ship reset is delegated to that
 ## aggregate's mutation authority (plan 0043) — this file does not write those rows itself; brigade
-## flags it still mutates directly. GameState's wrapper owns GameData.recompute_hex_ownership(),
-## the game_over/winner/_china_has_landed state writes, and the EventBus.cleanup_resolved emit.
+## flags it still mutates directly. `TurnClosure` owns GameData.recompute_hex_ownership() and the
+## EventBus.cleanup_resolved emit; the game_over / winner / _china_has_landed writes belong to
+## `TurnLifecycleTransitions` (plan 0049), which derives all three from the CleanupSummary below.
+## The `china_has_landed` key this file returns is consumed only by its own VictoryConditions call and
+## is report-only to the outside — the authority re-derives it from the summary's census so the two
+## cannot disagree.
 
 
 ## Count PLA (RED) vs ROC (GREEN) battalions on the hexes that count as "on Taiwan".

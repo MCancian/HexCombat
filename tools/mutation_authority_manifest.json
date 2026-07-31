@@ -27,16 +27,6 @@
       "path": "res://scripts/model/GameStateData.gd",
       "_doc": "The turn's whole value object. Five aggregates already claim a slice of it, so its remaining fields are where an unprotected field would hide most easily — hence the exhaustive list below. Most of it is either a request queue players fill, a report a phase emits, or state a named campaign plan is about to take ownership of.",
       "non_authority_fields": {
-        "turn_number": {
-          "classification": "planned_transitional",
-          "why": "Turn counter, advanced by GameState.begin_next_turn. Plan 0049 names TurnLifecycleTransitions as the only writer of phase and turn number.",
-          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
-        },
-        "phase": {
-          "classification": "planned_transitional",
-          "why": "Turn phase enum, same 0049 lifecycle authority as turn_number. Protecting it is worth something only together with the legal-transition rule (PLANNING -> RESOLUTION -> END -> PLANNING) that 0049 adds.",
-          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
-        },
         "turn_length_days": {
           "classification": "content_config",
           "why": "Scenario cadence copied onto the state by GameState.reset from GameData.turn_length_days (and floored to 1 there). No phase writes it during a game."
@@ -107,21 +97,6 @@
         "last_cleanup_summary": {
           "classification": "phase_output",
           "why": "The cleanup phase's record for the turn just resolved. Replaced wholesale by the phase that produced it, which then reads it straight back in the SAME function to latch game_over and winner off it (TurnClosure.gd:72-75) — so it is not a cross-phase handoff, but it is not write-only either. It stays unprotected because the authoritative state it describes lives elsewhere and this is a report of it."
-        },
-        "game_over": {
-          "classification": "planned_transitional",
-          "why": "Victory latch. Plan 0049 applies game_over, winner and _china_has_landed together from one cleanup receipt, which is the invariant worth enforcing — any one of them alone is half a verdict.",
-          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
-        },
-        "winner": {
-          "classification": "planned_transitional",
-          "why": "Victory latch, applied with game_over from one 0049 cleanup receipt.",
-          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
-        },
-        "_china_has_landed": {
-          "classification": "planned_transitional",
-          "why": "Monotone latch for the after_first_landing loss-check arm, applied with the other two victory latches by plan 0049.",
-          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
         }
       }
     },
@@ -1073,6 +1048,30 @@
             "commitments": "transient",
             "air_insert_orders": "transient",
             "jlsf_orders": "transient"
+          }
+        }
+      ],
+      "construction_writers": [],
+      "legacy_writers": []
+    },
+    {
+      "id": "turn_lifecycle",
+      "summary": "Where the game IS (plan 0049): the turn counter, the phase, and the three victory latches the end-of-turn census sets together. TurnLifecycleTransitions offers the three legal EDGES of the cycle (PLANNING -> RESOLUTION -> END -> PLANNING) and no destination setter, so an arbitrary phase assignment is unexpressible and a wrong-source call is refused without mutating anything. The counter moves on exactly one edge. The latch trio is applied from ONE CleanupSummary and the landing latch is derived from its census with `or`, so it cannot be disarmed short of a scenario reset. This authority decides no phase ORDER — TurnConductor still holds the ordered list — calls no other authority, and consumes no dice.",
+      "status": "enforced",
+      "authority_class": "TurnLifecycleTransitions",
+      "authority_path": "res://scripts/transitions/TurnLifecycleTransitions.gd",
+      "owned_models": [],
+      "hosted_fields": [
+        {
+          "class": "GameStateData",
+          "path": "res://scripts/model/GameStateData.gd",
+          "_doc": "Turn/phase lifecycle plus the victory latches. Lifetimes: campaign = persists across turns (the latches and the counter both survive every turn boundary and are cleared only by a scenario reset); phase is campaign for the same reason — it is never reset per turn, it is ADVANCED.",
+          "fields": {
+            "turn_number": "campaign",
+            "phase": "campaign",
+            "game_over": "campaign",
+            "winner": "campaign",
+            "_china_has_landed": "campaign"
           }
         }
       ],

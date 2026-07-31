@@ -83,7 +83,12 @@ func _validate_multi_turn_drain() -> void:
 	var start_pool: float = GameState.supply_state.current_dos_tons
 	GameState.resolve_supply_turn()
 	var after_first: float = GameState.supply_state.current_dos_tons
-	GameState.turn_number += 1
+	# Advance a turn the only legal way: PLANNING -> RESOLUTION -> END -> PLANNING. There is no turn
+	# setter any more (plan 0049) — the counter moves on exactly one edge, and driving the real edges
+	# consumes no dice, so this stays deterministic.
+	TurnLifecycleTransitions.begin_resolution(GameState.data)
+	TurnLifecycleTransitions.end_resolution(GameState.data)
+	TurnLifecycleTransitions.begin_next_turn(GameState.data)
 	GameState.resolve_supply_turn()
 	var after_second: float = GameState.supply_state.current_dos_tons
 	_assert_true("multi-turn first drain below start", after_first < start_pool)

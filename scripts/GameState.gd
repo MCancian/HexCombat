@@ -35,12 +35,14 @@ const FEBA_RETREAT_THRESHOLD_KM = TurnConductor.FEBA_RETREAT_THRESHOLD_KM
 # last_antiship_summary before the first antiship phase) from "property does not exist".
 var data := GameStateData.new()
 
+# Read-only façade: turn and phase are written only by TurnLifecycleTransitions (plan 0049), which
+# offers the three legal edges and no destination setter. These two setters were the widest hole in
+# the gate — seventeen tools/validate_*.gd lines wrote GameState.turn_number, and the scan could not
+# see any of them because the receiver resolves to GameStateType rather than GameStateData.
 var turn_number: int:
 	get: return data.turn_number
-	set(value): data.turn_number = value
 var phase: Phase:
 	get: return data.phase
-	set(value): data.phase = value
 var turn_length_days: int:
 	get: return data.turn_length_days
 	set(value): data.turn_length_days = value
@@ -136,12 +138,11 @@ var last_air_insertion_summary: AirInsertionSummary:
 	set(value): data.last_air_insertion_summary = value
 var air_insert_orders: Array:
 	get: return data.air_insert_orders
+# Read-only façade: the victory latches are applied together from one cleanup receipt.
 var game_over: bool:
 	get: return data.game_over
-	set(value): data.game_over = value
 var winner: String:
 	get: return data.winner
-	set(value): data.winner = value
 
 
 func _ready() -> void:
@@ -158,8 +159,7 @@ func reset_to_scenario() -> void:
 	# survive resets); before any load_all it falls back to the default.
 	GameData.load_scenario(GameData.scenario_path if not GameData.scenario_path.is_empty() else GameData.DEFAULT_SCENARIO_PATH)
 
-	data.turn_number = 1
-	data.phase = Phase.PLANNING
+	TurnLifecycleTransitions.reset_to_turn_one(data)
 	data.turn_length_days = GameData.turn_length_days
 	if data.turn_length_days == 0:
 		push_warning("GameData.turn_length_days is 0; falling back to 1 day")
@@ -192,9 +192,6 @@ func reset_to_scenario() -> void:
 	data.last_mobilization_summary = null
 	_rebuild_air_insertion_state()
 	data.last_air_insertion_summary = null
-	data.game_over = false
-	data.winner = ""
-	data._china_has_landed = false
 	EventBus.phase_changed.emit(data.phase)
 
 
@@ -236,9 +233,9 @@ func begin_next_turn() -> void:
 	for brigade in GameData.brigades.values():
 		var typed_brigade: Brigade = brigade
 		GameData.reset_brigade_turn_flags(typed_brigade)
+	# The coordinator calls BOTH authorities; neither reaches into the other's fields.
 	OrderTransitions.clear_turn_buffers(data)
-	data.turn_number += 1
-	data.phase = Phase.PLANNING
+	TurnLifecycleTransitions.begin_next_turn(data)
 	EventBus.phase_changed.emit(data.phase)
 
 

@@ -41,7 +41,6 @@ func _reserve_bn_count() -> int:
 
 func _validate_run_and_reconcile() -> void:
 	GameState.reset_to_scenario()
-	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))  # so the (TO,type) suppression join is exercised
 	GameState.resolve_sealift_turn()  # embark/adopt the crossing wave (plan 0004) before the crossing
 	var bns_before := _reserve_bn_count()
@@ -73,13 +72,11 @@ func _validate_run_and_reconcile() -> void:
 
 func _validate_determinism() -> void:
 	GameState.reset_to_scenario()
-	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
 	GameState.resolve_sealift_turn()
 	var first := JSON.stringify(GameState.resolve_antiship_turn(SeededDice.new(SEED)))
 
 	GameState.reset_to_scenario()
-	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
 	GameState.resolve_sealift_turn()
 	var second := JSON.stringify(GameState.resolve_antiship_turn(SeededDice.new(SEED)))
@@ -92,7 +89,6 @@ func _validate_determinism() -> void:
 # assert strictly fewer systems fire when its C2 is suppressed.
 func _validate_c2_suppression_reduces_firing() -> void:
 	GameState.reset_to_scenario()
-	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
 	# Snapshot the deterministic writeback, then find the TO actually under assault.
 	var writeback: Dictionary = GameState.last_ijfs_writeback.to_dict()
@@ -114,7 +110,6 @@ func _validate_c2_suppression_reduces_firing() -> void:
 
 func _fired_count_with_c2(writeback: Dictionary, c2_key: String, suppressed_value: int) -> int:
 	GameState.reset_to_scenario()
-	GameState.turn_number = 1
 	var wb: Dictionary = writeback.duplicate(true)
 	var supp: Dictionary = (wb.get("antiship_suppressed_by_type", {}) as Dictionary).duplicate(true)
 	supp[c2_key] = suppressed_value
@@ -133,7 +128,6 @@ func _fired_count_with_c2(writeback: Dictionary, c2_key: String, suppressed_valu
 # destroyed flag, or a writeback that silently falls back to per-day counts.
 func _validate_cumulative_ijfs_attrition() -> void:
 	GameState.reset_to_scenario()
-	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
 	var destroyed: Dictionary = GameState.last_ijfs_writeback.antiship_destroyed_by_type
 	var wb_sum := 0

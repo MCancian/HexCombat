@@ -46,7 +46,7 @@ func _validate_state_loaded() -> void:
 
 
 func _validate_day1_run() -> void:
-	GameState.turn_number = 1
+	# turn_number is already 1 from reset_to_scenario; the explicit set here was a no-op restatement.
 	var ledgers: Dictionary = GameState.resolve_ijfs_turn(SeededDice.new(SEED))
 	_assert_equal_int("ijfs day advanced to 1", GameState._ijfs_day, 1)
 	_assert_true("ijfs_state lazy-loaded on first turn", GameState.ijfs_state != null)
@@ -73,13 +73,11 @@ func _validate_day1_run() -> void:
 
 func _validate_determinism() -> void:
 	GameState.reset_to_scenario()
-	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
 	var first := JSON.stringify(GameState.last_ijfs_summary)
 	var first_wb := JSON.stringify(GameState.last_ijfs_writeback.to_dict())
 
 	GameState.reset_to_scenario()
-	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
 	var second := JSON.stringify(GameState.last_ijfs_summary)
 	var second_wb := JSON.stringify(GameState.last_ijfs_writeback.to_dict())
@@ -90,11 +88,15 @@ func _validate_determinism() -> void:
 
 func _validate_continuity() -> void:
 	GameState.reset_to_scenario()
-	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
 	var destroyed_day1 := _destroyed_target_count()
 
-	GameState.turn_number = 2
+	# Advance a turn the only legal way: PLANNING -> RESOLUTION -> END -> PLANNING. There is no turn
+	# setter any more (plan 0049) — the counter moves on exactly one edge, and driving the real edges
+	# consumes no dice, so this stays deterministic.
+	TurnLifecycleTransitions.begin_resolution(GameState.data)
+	TurnLifecycleTransitions.end_resolution(GameState.data)
+	TurnLifecycleTransitions.begin_next_turn(GameState.data)
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
 	_assert_equal_int("ijfs day advanced to 2", GameState._ijfs_day, 2)
 	var destroyed_day2 := _destroyed_target_count()

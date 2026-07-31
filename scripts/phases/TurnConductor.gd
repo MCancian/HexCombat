@@ -22,14 +22,14 @@ const FEBA_RETREAT_THRESHOLD_KM := 10.0
 
 
 static func resolve_turn(state: GameStateData, dice: Dice = null) -> void:
-	if state.phase != GameStateData.Phase.PLANNING:
-		push_error("Cannot resolve turn outside PLANNING phase")
+	# The authority is the SOLE phase guard — it emits the same message this function used to emit
+	# itself, so a duplicate check here would only risk the two drifting apart.
+	if not TurnLifecycleTransitions.begin_resolution(state):
 		return
 
 	if dice == null:
 		dice = SeededDice.new(state.turn_number)
 
-	state.phase = GameStateData.Phase.RESOLUTION
 	EventBus.phase_changed.emit(state.phase)
 	# Sea phase ordering (D3-D): IJFS (Red joint fires) suppresses/destroys Green anti-ship systems
 	# first; then Green anti-ship + mines attrit the Red crossing (removing BNs from the reserve);
@@ -104,7 +104,10 @@ static func resolve_turn(state: GameStateData, dice: Dice = null) -> void:
 		var roster_violations := ForceTransitions.pending_pool_roster_violations(GameData, state)
 		assert(roster_violations.is_empty(), "roster/pool desync at end of resolve_turn: %s" % "; ".join(roster_violations))
 
-	state.phase = GameStateData.Phase.END
+	# Announce completion only if the turn actually ENDED. Ignoring this refusal would fire
+	# turn_resolved for a turn still sitting in RESOLUTION (found in diff review).
+	if not TurnLifecycleTransitions.end_resolution(state):
+		return
 	EventBus.phase_changed.emit(state.phase)
 	EventBus.combat_resolved.emit(combat_summaries)
 	EventBus.turn_resolved.emit(state.turn_number)
@@ -118,7 +121,7 @@ static func apply_move_orders(state: GameStateData, team: Brigade.Team) -> void:
 		var move_order: MoveOrder = order
 		var brigade: Brigade = GameData.get_brigade(move_order.brigade_id)
 		GameData.set_brigade_hex(move_order.brigade_id, move_order.target_hex)
-		GameData.mark_brigade_moved(brigade, move_order.mode == Movement.MODE_ADMINISTRATIVE)
+		GameData.mark_brigade_moved(brigade, move_order.is_administrative())
 
 
 static func find_contested_hexes() -> Array[String]:

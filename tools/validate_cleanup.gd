@@ -70,7 +70,6 @@ func _initialize() -> void:
 
 func _validate_cleanup_resets_antiship_flags() -> void:
 	GameState.reset_to_scenario()
-	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
 	GameState.resolve_sealift_turn()  # form the crossing wave (plan 0004) before the anti-ship phase
 	GameState.resolve_antiship_turn(SeededDice.new(SEED))
@@ -105,7 +104,6 @@ func _validate_cleanup_resets_antiship_flags() -> void:
 
 func _validate_cleanup_determinism() -> void:
 	GameState.reset_to_scenario()
-	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
 	GameState.resolve_sealift_turn()  # form the crossing wave (plan 0004) before the anti-ship phase
 	GameState.resolve_antiship_turn(SeededDice.new(SEED))
@@ -116,7 +114,6 @@ func _validate_cleanup_determinism() -> void:
 		first_flags.append(system.fired + system.destroyed_this_turn + system.suppressed_now)
 
 	GameState.reset_to_scenario()
-	GameState.turn_number = 1
 	GameState.resolve_ijfs_turn(SeededDice.new(SEED))
 	GameState.resolve_sealift_turn()  # form the crossing wave (plan 0004) before the anti-ship phase
 	GameState.resolve_antiship_turn(SeededDice.new(SEED))
@@ -132,7 +129,6 @@ func _validate_cleanup_determinism() -> void:
 
 func _validate_cleanup_produces_summary() -> void:
 	GameState.reset_to_scenario()
-	GameState.turn_number = 1
 	GameState.resolve_cleanup_phase()
 	var summary: CleanupSummary = GameState.last_cleanup_summary
 	_assert_true("cleanup produces summary when no anti-ship systems", summary != null)
