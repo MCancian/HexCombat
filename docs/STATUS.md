@@ -194,6 +194,9 @@ manifest is the authoritative record, this table is the index. Procedure for add
 | `map` | `MapTransitions.gd` | 0047 | `HexState.hex_owner`/`feba_km` and the `GameDataStore.hex_states` container. **Zero allowances** — construction routes through the authority too |
 | `infrastructure` | `InfrastructureTransitions.gd` | 0047 | `InfrastructureNodeState` lifecycle (status, repair clock, JLSF marker), the `nodes` container, the `infrastructure_state` handle |
 | `air_insertion` | `AirInsertionTransitions.gd` | 0048 | `AirInsertionState.caps`/`initial_caps`/`history` — the airframe ledger and the drop log — plus the `air_insertion_state` handle. Who is in the pool and who has landed stay with `force`: one model, two authorities, disjoint fields |
+| `supply` | `SupplyTransitions.gd` | 0049 | `SupplyState.current_dos_tons` and its append-only `day_history` ledger, plus the `supply_state` handle. The new balance is DERIVED from the consumption row, so a ledger row that disagrees with the pool is unexpressible |
+| `order_buffers` | `OrderTransitions.gd` | 0049 | The four request queues — `orders`, `commitments`, `air_insert_orders`, `jlsf_orders`. One aggregate because the questions worth asking are about the SET (accepted outside PLANNING? survives begin-next-turn?) |
+| `turn_lifecycle` | `TurnLifecycleTransitions.gd` | 0049 | `turn_number`, `phase`, and the `game_over`/`winner`/`_china_has_landed` latches. Three legal EDGES and **no destination setter**, so an illegal phase is inexpressible rather than refused |
 
 Two lessons from 0046 generalize and are now in the procedure doc. First, **a protected field NAME is
 claimed repo-wide**, so registering a generic one poisons unrelated code — `IjfsMunition.name` turned

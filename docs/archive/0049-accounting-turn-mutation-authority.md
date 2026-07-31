@@ -1,11 +1,18 @@
 ---
 title: "0049: Accounting and turn-lifecycle mutation authority"
-status: "Ready"
+status: "Shipped"
 created: "2026-07-26"
 preflighted: "2026-07-31"
 ---
 
 # Plan 0049: Accounting and turn-lifecycle mutation authority
+
+> **CLOSED OUT 2026-07-31.** Shipped as four commits (`0a6a6d5` characterization, `8900a4f` supply,
+> `3f02d15` order buffers, `968a1ff` turn lifecycle). Durable facts live in
+> `tools/mutation_authority_manifest.json` (ownership), `docs/STATUS.md` (the aggregate table),
+> `docs/systems/supply-dos/supply-dos.md` §8, `docs/systems/turn-engine/turn-engine.md`, and
+> `docs/systems/mutation-authority/mutation-authority.md` §6 (the two generalizable lessons).
+> Nothing here is a reference — this file is kept for the reasoning, not the facts.
 
 ## Goal
 

@@ -178,6 +178,25 @@ house shape:
   rule: **when an authority could either re-derive a value or be handed it, re-deriving is what turns
   a checked invariant into an absent one.** The calculator's post-state stays report-only; pin that
   the two agree.
+- **"Private" is not a boundary — a helper that takes what the API refuses to take is the API.** Plan
+  0049's lifecycle authority claims an arbitrary phase assignment is INEXPRESSIBLE: it offers three
+  named edges and no destination setter. Its first draft factored those edges through a private
+  `_advance(state, from_phase, to_phase, label)`. A GDScript underscore is a naming convention, not
+  access control, so `_advance(state, state.phase, ANY_PHASE, "x")` was callable from any file in the
+  project — and the gate saw a perfectly authorized write, because the assignment lived inside the
+  authority. The structural test missed it too, because it filtered out underscored methods: **a test
+  that cannot see the back door cannot prove the door is shut.** The fix is that each operation writes
+  its destination as a LITERAL at exactly one site and any shared helper is READ-ONLY. Generic rule:
+  when an authority's guarantee is ABSENCE, audit the private surface too, and pin the COMPLETE method
+  list rather than the public one.
+
+- **An authority that is handed a mutable object must copy it in and out.** Plan 0049's supply
+  authority stamped and appended the caller's own consumption `Dictionary`. Reusing one row object for
+  a second bill would have rewritten the first day's committed history, and mutating the returned
+  report would have rewritten the ledger. Neither was reachable from the single caller, but "a row that
+  disagrees with the balance is unexpressible" is not true of a row anyone else still holds a
+  reference to. Copying costs one duplicate per operation and makes the claim literal.
+
 - **Apply where the old assignment was, when a later decision reads it.** Deferring application to
   end-of-phase is only safe when nothing downstream in the same pass reads the written state. Two
   measured counter-examples: IJFS stages consume dice conditionally on state an earlier stage wrote
@@ -201,8 +220,8 @@ holds those). This doc was written from one plan's experience and is deliberatel
 carries is stale *prose* over valid anchors, which `tools/validate_doc_anchors.gd` cannot catch.
 
 Open extraction task: plans 0042–0046 are archived with their own review rounds and retrospectives,
-and their generalizable lessons were never consolidated here. §5 and §6 currently reflect 0046, 0047
-and 0048 only.
+and their generalizable lessons were never consolidated here. §5 and §6 currently reflect 0046, 0047,
+0048 and 0049 only.
 
 ## 8. State & authority
 

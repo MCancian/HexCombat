@@ -27,6 +27,43 @@ entry to `docs/archive/RETROSPECTIVES_history.md`**.
 | Amphibious offload | `docs/systems/amphibious-offload/RETRO.md` |
 | Research harness | `docs/systems/research-harness/RETRO.md` |
 
+## 2026-07-31 — plan 0049: accounting + turn-lifecycle mutation authorities   (implementer: direct)
+
+**What would you do differently (implementer):**
+- **Two reviewers CONTRADICTED each other on the plan's headline claim, and the one that said
+  "verified/holds" was wrong.** agy confirmed that arbitrary phase assignment was inexpressible
+  because `_advance` was private; Sol showed a GDScript underscore is a naming convention, not access
+  control, so any file could call `_advance(state, state.phase, ANY, "x")` while the gate saw an
+  authorized write. **A verification is not evidence — the reasoning behind it is.** Both reviewers
+  reasoned about the same five lines and reached opposite conclusions; the tie was broken by reading
+  the language semantics, not by counting votes. Same shape as the duplicate-JLSF disagreement one
+  commit earlier, where agy again asserted a mechanism was load-bearing and tracing
+  `queue_deployments` showed it was not.
+- **My own structural test was written to pass, not to catch.** It enumerated the authority's methods
+  and filtered out anything starting with `_` — which is precisely where the hole was. A test that
+  cannot see the back door cannot prove the door is shut. After the fix I deliberately re-added an
+  `_advance(state, to_phase)` and watched the test fail before reverting; that took one command and is
+  the only reason I believe the test now.
+- **A comment claiming "a test pins this" is a claim that gets checked.** I wrote that
+  `CleanupResolver`'s own landing latch and the authority's derived one were pinned as agreeing. The
+  test did not exist. Review found it. If a header asserts a proof, write the proof in the same edit.
+- **Preflight paid for itself three times in one plan**: it deleted step 6 (the eleven `last_*` slots
+  were already settled exclusions, not deferred work), dissolved `SupplyResolver`, and measured that
+  ALL FOUR coordinators sat at exactly their dependency ceiling — which reshaped every call site
+  before a line was written, rather than after a red gate.
+
+**Orchestrator triage:**
+- "Private is not a boundary; pin the COMPLETE method list when the guarantee is absence" → act now —
+  added to `docs/systems/mutation-authority/mutation-authority.md` §6.
+- "An authority handed a mutable object must copy it in and out" → act now — added to the same §6.
+- Reviewers disagreeing on a mechanism, resolved by tracing rather than by vote → record only — the
+  roster already says a tier-2 verification needs checking; this is the second measured instance in
+  two rounds, and both times the citation line numbers were fabricated while the prose was plausible.
+- Green-LLM-seat-can-deploy-Red-JLSF (pre-existing; needs an action-schema change) → act later,
+  logged to `docs/plans/BACKLOG.md`.
+- Whether duplicate `deploy_jlsf` orders should be rejected → act later — USER design call, logged to
+  `docs/plans/BACKLOG.md` with the evidence both ways.
+
 ## 2026-07-30 — plan 0047 steps 4-8: map + infrastructure mutation authorities   (implementer: direct)
 
 **What would you do differently (implementer):**

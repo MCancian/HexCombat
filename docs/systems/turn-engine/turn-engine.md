@@ -168,6 +168,20 @@ ordering, not ownership: a phase that moves troops AND hulls calls each authorit
 both receipts, and the phase closes with `SealiftTransitions.project_fleet` so no later phase reads a
 fleet whose bins are stale. Rules per aggregate live in the owning system docs.
 
+Since plan 0049 the turn loop also owns three aggregates of its own:
+
+| Aggregate | Authority | Owns | Operations |
+|---|---|---|---|
+| `turn_lifecycle` | `TurnLifecycleTransitions` | `turn_number`, `phase`, `game_over`, `winner`, `_china_has_landed` | `begin_resolution` / `end_resolution` / `begin_next_turn` (the three legal edges), `reset_to_turn_one`, `apply_cleanup_verdict(state, CleanupSummary)` |
+| `order_buffers` | `OrderTransitions` | `orders`, `commitments`, `air_insert_orders`, `jlsf_orders` | `add_*` per order kind, `apply_bulk_order`, `clear_turn_buffers`, `reset_buffers`, `consume_*` |
+| `supply` | `SupplyTransitions` | see `docs/systems/supply-dos/supply-dos.md` §8 | reached from `TurnClosure` |
+
 **Rules:**
 - Every brigade placement, activity write, and protected roster shrink uses the `ForceTransitions` API.
+- **There is no phase setter.** `TurnConductor` still owns the phase ORDER and asks the lifecycle
+  authority for the two edges around its call list; an illegal transition is inexpressible rather than
+  refused, and a legal edge from the wrong source phase is refused without mutating anything.
+- The turn counter moves on exactly one edge (`begin_next_turn`).
+- Order legality lives in `OrderValidator` (`scripts/calc/`), which appends nothing; the authority
+  asks it and appends only on accept, so a rejection cannot half-apply.
 - Ownership facts live only in the manifest.

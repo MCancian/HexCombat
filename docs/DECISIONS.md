@@ -19,6 +19,23 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-31 — Accounting and turn lifecycle get three authorities; a "private" helper is not a
+  boundary (agent, reviewed).** Plan 0049 claimed the LAST ten `GameStateData` fields the manifest
+  promised it: `SupplyTransitions` (DOS balance + append-only ledger), `OrderTransitions` (all four
+  order queues), `TurnLifecycleTransitions` (turn, phase, victory latches). Preflight deleted the
+  Sketch's step 6 — the eleven `last_*` slots were already SETTLED as `phase_output` exclusions, not
+  deferred — and dissolved `SupplyResolver`, whose calculation was already `DosConsumption`. Every
+  applied value is DERIVED, never accepted: the balance from the consumption row, the victory trio
+  from one `CleanupSummary`, the landing latch by `or`. Diff review rescued the headline claim: the
+  lifecycle edges were first factored through a private `_advance(state, from, to)`, and since a
+  GDScript underscore is a naming convention rather than access control, an arbitrary phase assignment
+  was still expressible from anywhere while the gate saw an authorized write. USER-visible behaviour
+  change: `deploy_jlsf` was the only order with no validation API and is now phase- and id-checked.
+  Facts: `tools/mutation_authority_manifest.json`, `docs/STATUS.md`,
+  `docs/systems/supply-dos/supply-dos.md` §8, `docs/systems/turn-engine/turn-engine.md`,
+  `docs/systems/mutation-authority/mutation-authority.md` §4/§6,
+  `docs/archive/0049-accounting-turn-mutation-authority.md`.
+
 - **2026-07-30 — Air-insertion lift gets its own authority; mobilization does not (agent, reviewed).**
   Plan 0048's Sketch specified two authorities. Preflight against the tree dissolved one: plan 0044
   already owns every field of `MobilizationState`, so a `MobilizationTransitions` would have owned

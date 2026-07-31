@@ -4,34 +4,39 @@ Work orders for multi-session efforts. Each plan is a focused doc; **this index 
 of truth** for status. Status vocabulary: `Sketch` → `Exploring` → `In progress` → `✅ Shipped`
 → `Superseded`.
 
-## ▶ Next up: plan 0049 — accounting and turn-lifecycle authorities
+## ▶ Next up: plan 0050 — mutation-authority campaign closeout
 
-Seventh of the mutation-authority campaign shipped 2026-07-30 (0048); **0049 is next by number**, and
-0042-0048 are all satisfied as dependencies.
+Plan 0049 shipped 2026-07-31 (eighth of the campaign, three aggregates at once). **0050 is the LAST
+one**, and 0042-0049 are all satisfied as dependencies.
 
 Read in this order and stop when you can act; everything below is a pointer, not a duplicate.
 
-1. `docs/plans/0049-accounting-turn-mutation-authority.md` — the plan. It is still a `Sketch`, so
+1. `docs/plans/0050-mutation-authority-enforcement-closeout.md` — the plan. It is still a `Sketch`, so
    **preflight it first**: the work loop asks for a `file:line` inventory of every writer the plan
    claims exists, and rewriting the Sketch against that inventory is what makes the implementation
-   safe. In 0046 that step alone contradicted three of the Sketch's premises, one of which would have
-   added a game mechanic under cover of a refactor; in 0047 it shrank the claimed mutation surface to
-   7 writes in 2 files for the map; in 0048 it dissolved one of the two authorities the Sketch
-   specified, because plan 0044 had already taken every field it would have owned.
-2. `docs/systems/mutation-authority/mutation-authority.md` — the campaign PROCEDURE: the registration
-   ordering, the field-naming rule, the four ordering traps, and what an authority looks like. Read it
+   safe. Every plan in this campaign has had premises die at that step — in 0046 three of them, one of
+   which would have added a game mechanic under cover of a refactor; in 0047 it shrank the claimed
+   mutation surface to 7 writes in 2 files; in 0048 it dissolved one of the two authorities the Sketch
+   specified; in 0049 it deleted a whole step and a whole class.
+2. **What 0050 actually inherits.** Three `GameStateData` fields are still `planned_transitional` and
+   name 0050 in `shared_model_policies`: `sealift_state`, `pending_lost_at_sea` and
+   `lost_at_sea_accumulator`. They are real mutable state no aggregate owns. USER call: treat them as
+   a closeout AUDIT, not a writer migration. Details and writer file:lines are in `BACKLOG.md`.
+   **Those three exclusions must be resolved before 0050 itself can be archived**, because a promise
+   classification naming an archived plan is designed to fail the gate.
+3. `docs/systems/mutation-authority/mutation-authority.md` — the campaign PROCEDURE: the registration
+   ordering, the field-naming rule, the ordering traps, and what an authority looks like. Read it
    before the manifest; it exists so each plan stops re-deriving the same half-dozen rules.
-3. `tools/mutation_authority_manifest.json` → `_schema_rules` — the six registration rules. Read those
+4. `tools/mutation_authority_manifest.json` → `_schema_rules` — the six registration rules. Read those
    six lines instead of `tools/validate_mutation_authority.gd`; that is how they were learned the
    first time, at a cost of ~300 lines.
-4. `docs/archive/0048-reinforcement-state-mutation-authority.md` — the most recent worked example: how
-   a Sketch's premises are measured and rewritten before review, how to hold a FULL dependency ceiling
-   by a genuine one-for-one swap, and why an authority derives a value from the calculator's rows
-   instead of accepting its finished post-state. `docs/archive/0047-map-infrastructure-mutation-authority.md`
-   is the one before it — a façade-based ceiling hold, splitting a calculator from an authority when a
-   later branch reads what an earlier one decided, and why a generic `set_x` setter gets deleted
-   rather than migrated.
-5. `docs/systems/amphibious-offload/amphibious-offload.md` §10 — the reference example for ONE object
+5. `docs/archive/0049-accounting-turn-mutation-authority.md` — the most recent worked example, and the
+   only one that shipped three aggregates together: how a preflight deletes a step and a class, how to
+   hold FOUR full dependency ceilings at once by paying each with a real simplification, and why
+   "private" is not a boundary in GDScript — the lifecycle authority's inexpressibility claim was
+   false in its first draft because the edges were factored through a private helper that took a
+   destination. `docs/archive/0048-reinforcement-state-mutation-authority.md` is the one before it.
+6. `docs/systems/amphibious-offload/amphibious-offload.md` §10 — the reference example for ONE object
    shared by two authorities, split by field, neither reaching across.
 
 **Plans are ephemeral by contract.** A plan holds the design, the checklist, and progress notes
@@ -69,7 +74,6 @@ agent would need to read the plan to act, the closeout wasn't done.
 | 0045 | [Sealift/fleet mutation authority](../archive/0045-sealift-fleet-mutation-authority.md)       | High — hull/cohort/pipeline conservation and one writer                                                                                                                                                                                               | **✅ Shipped 2026-07-29** — `SealiftTransitions` sole writer; typed `SealiftCohort`; zero legacy writers; no behavior/RNG/golden change |
 | 0046 | [IJFS mutation authority](../archive/0046-ijfs-mutation-authority.md)                       | High — targets, munitions, squadrons, typed stocks and writeback                                                                                                                                                                                      | **✅ Shipped 2026-07-30** — `IjfsTransitions` sole writer; typed MANPADS stock; zero legacy writers; no behavior/RNG/golden change |
 | 0047 | [Map/infrastructure mutation authority](../archive/0047-map-infrastructure-mutation-authority.md) | High — ownership, FEBA, seizure, repair and JLSF lifecycle | **✅ Shipped 2026-07-30** — `MapTransitions` + `InfrastructureTransitions` sole writers; sticky ownership enforced by having no owner setter; zero legacy writers; no behavior/RNG/golden change |
-| 0049 | [Accounting/turn mutation authority](0049-accounting-turn-mutation-authority.md)             | High — supply, orders, latches, phase and result application                                                                                                                                                                                          | Sketch                                                                                                                                                                                                                                      |
 | 0050 | [Mutation-authority campaign closeout](0050-mutation-authority-enforcement-closeout.md)      | High — independent audit, hard enforcement, deterministic closeout                                                                                                                                                                                    | Sketch                                                                                                                                                                                                                                      |
 | 0051 | [Destroyed coastal launchers get a last salvo away](0051-destroyed-systems-still-fire.md) | Medium (balance; a ported TIV mechanic that has never once fired — needs a USER dial + a crossing-calibration re-run) | Sketch |
 | 0052 | [Legibility sweep: unenforced budget, dead seams, half-finished role layout](../archive/0052-legibility-and-dead-seams.md) | Medium (hygiene; documented parameter budget now enforced; dead seams removed; role directories completed) | **Complete 2026-07-27** — parameter budget enforced; dead seams removed; role directories completed; typed `AntishipResolver` context |
