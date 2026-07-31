@@ -164,6 +164,23 @@ committed non-authoritative claim pin is compared exactly by aggregate, owned/ho
 `Class.field`, so deleting, reassigning or demoting a claim fails instead of also deleting its generated
 expectation.
 
+**Shared models are closed-world too** (2026-07-30). `owned_models` was always exhaustive, but
+`hosted_fields` was not, so a field added to a model two aggregates share — `GameStateData` above all —
+arrived unprotected and nothing said so. Every class any aggregate hosts must now account for **every**
+mutable field it declares: claimed by exactly one aggregate, or listed under the manifest's
+`shared_model_policies` with a classification from a closed vocabulary and a concrete reason. 112 fields
+across 6 hosted classes were classified; the gate fails on an unclassified field, a field both claimed
+and excluded, an exclusion for a field that no longer exists, a policy naming a class no aggregate
+hosts or a path its host disagrees with, a duplicate policy, and a missing/unknown classification or
+reason. A classification that is a **promise** (`planned_transitional`, `order_buffer`) must also name
+a plan; that pointer has to sit under the manifest's `plan_dir` and still resolve, so a shipped plan
+being archived turns its exclusion red exactly when the reason expires, while a pointer at some other
+existing file — which could never go stale — is rejected outright. The section is not a second
+ownership list: claims are derived from `hosted_fields`, and repeating one inside a policy is an error.
+The same change widened the member-declaration scan **both** exhaustiveness checks enumerate: it now
+matches any annotation prefix and `static var`, because `@export_range(0, 10) var x` used to be
+matched by nothing at all — neither protected nor reported.
+
 **Registered aggregates.** All are `enforced` with zero legacy writers and zero golden movement; the
 manifest is the authoritative record, this table is the index. Procedure for adding one:
 `docs/systems/mutation-authority/mutation-authority.md`.

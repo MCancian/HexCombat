@@ -1,6 +1,6 @@
 {
-  "_doc": "A migration-only aggregate must still name the authority it is migrating toward.",
-  "_expect_error": "E_NO_AUTHORITY",
+  "_doc": "A plan pointer that no longer resolves must fail. A shipped plan is archived out of docs/plans/, so the exclusion has outlived the reason it was granted.",
+  "_expect_error": "E_STALE_POLICY_PLAN",
   "schema_version": 1,
   "scan_roots": [
     "res://tools/fixtures/mutation_authority"
@@ -21,7 +21,7 @@
         "pending_migration_note": {
           "classification": "planned_transitional",
           "why": "Fixture stand-in for state a later plan takes ownership of — the direction that must name a plan, and that goes stale when the plan is archived.",
-          "plan": "res://tools/fixtures/mutation_authority/README.md"
+          "plan": "res://tools/fixtures/mutation_authority/archived_fixture_plan.md"
         },
         "annotated_note": {
           "classification": "content_config",
@@ -42,10 +42,10 @@
   "aggregates": [
     {
       "id": "fixture_aggregate",
-      "status": "migration",
+      "status": "enforced",
       "planned_authority": null,
-      "authority_class": null,
-      "authority_path": null,
+      "authority_class": "FixtureTransitions",
+      "authority_path": "res://tools/fixtures/mutation_authority/authority.gdfixture",
       "owned_models": [
         {
           "class": "FixtureRow",

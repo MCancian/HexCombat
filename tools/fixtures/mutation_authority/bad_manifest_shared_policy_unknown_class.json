@@ -1,6 +1,6 @@
 {
-  "_doc": "A migration-only aggregate must still name the authority it is migrating toward.",
-  "_expect_error": "E_NO_AUTHORITY",
+  "_doc": "The policy section classifies leftover fields on SHARED models. Naming an OWNED model there must fail, because an owned model already classifies every field in its own 'fields' map.",
+  "_expect_error": "E_SHARED_POLICY_CLASS",
   "schema_version": 1,
   "scan_roots": [
     "res://tools/fixtures/mutation_authority"
@@ -37,15 +37,25 @@
           "plan": "res://tools/fixtures/mutation_authority/README.md"
         }
       }
+    },
+    {
+      "class": "FixtureRow",
+      "path": "res://tools/fixtures/mutation_authority/model.gdfixture",
+      "non_authority_fields": {
+        "profile_by_key": {
+          "classification": "content_config",
+          "why": "FixtureRow is an owned model, so it has no leftover half to classify."
+        }
+      }
     }
   ],
   "aggregates": [
     {
       "id": "fixture_aggregate",
-      "status": "migration",
+      "status": "enforced",
       "planned_authority": null,
-      "authority_class": null,
-      "authority_path": null,
+      "authority_class": "FixtureTransitions",
+      "authority_path": "res://tools/fixtures/mutation_authority/authority.gdfixture",
       "owned_models": [
         {
           "class": "FixtureRow",

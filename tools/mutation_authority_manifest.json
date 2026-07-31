@@ -4,7 +4,10 @@
   "_schema_rules": [
     "ONE FIELD, ONE AGGREGATE. 'Class.field' may be claimed once across the whole manifest; a second claim fails E_DUPLICATE_CLAIM. The check spans sections, so owned_models and hosted_fields cannot split the same field between two aggregates.",
     "owned_models = this aggregate owns the WHOLE model, and every mutable field it declares must appear in 'fields' or the gate fails E_UNCLASSIFIED_FIELD. Adding a field to such a model is therefore a manifest change too.",
-    "hosted_fields = fields this aggregate owns on a model SHARED with another aggregate; no exhaustiveness requirement. Registering ONE class under hosted_fields in TWO aggregates with DISJOINT field sets is legal and supported — it is how SealiftCohort splits troops (force: bn_ids) from hulls (sealift_fleet: hulls_by_type, cohort_state), and how GameStateData is shared.",
+    "hosted_fields = fields this aggregate owns on a model SHARED with another aggregate. Registering ONE class under hosted_fields in TWO aggregates with DISJOINT field sets is legal and supported — it is how SealiftCohort splits troops (force: bn_ids) from hulls (sealift_fleet: hulls_by_type, cohort_state), and how GameStateData is shared. A hosted class need not be claimed exhaustively by any ONE aggregate, but its leftover fields are not free: see shared_model_policies below.",
+    "shared_model_policies CLOSES the hosted half. Every class appearing under any aggregate's hosted_fields must account for EVERY mutable field it declares: claimed by exactly one aggregate, or listed here with a 'classification' from the validator's closed vocabulary and a concrete 'why'. Unclassified fails E_UNCLASSIFIED_HOSTED_FIELD; claimed AND excluded fails E_CLAIMED_AND_EXCLUDED; an exclusion for a field that no longer exists fails E_DEAD_EXCLUSION. Without this a field added to GameStateData arrives unprotected and nothing says so.",
+    "This section is NOT a second ownership list. Claimed fields are DERIVED from hosted_fields, so repeating one here is an error, not a duplicate.",
+    "A classification that is a PROMISE — 'planned_transitional' and 'order_buffer' — must also name a 'plan'. The pointer has to sit under 'plan_dir' AND still resolve: a shipped plan is archived out of plan_dir, so the exclusion fails E_STALE_POLICY_PLAN exactly when its reason expires, while a pointer anywhere else could never go stale and fails E_SHARED_POLICY_SCHEMA. plan_dir is configured rather than hardcoded so the abstract fixture world proves the rule against its own directory instead of moving every time a real plan is archived.",
     "The gate resolves the RECEIVER'S TYPE before judging a write, so protection only reaches fields on a TYPED object. Values inside an untyped Dictionary/Array are invisible (the validator header's aliased-container blind spot) — that is why a shared aggregate object is made a typed Resource before its fields are registered.",
     "Field NAMES are what get protected, and an unresolvable receiver writing a protected NAME is reported as a backstop. Prefer distinctive names: 'cohort_state' rather than 'state', which is used all over this codebase for unrelated things.",
     "construction_writers / legacy_writers list 'path' plus exact 'Class.field' symbols. An allowance that no longer writes anything fails E_STALE_ALLOWANCE, so removing the last write means removing the entry; legacy_writers additionally require a removal_plan."
@@ -17,6 +20,517 @@
     "res://tools/fixtures"
   ],
   "authority_dir": "res://scripts/transitions",
+  "plan_dir": "res://docs/plans",
+  "shared_model_policies": [
+    {
+      "class": "GameStateData",
+      "path": "res://scripts/model/GameStateData.gd",
+      "_doc": "The turn's whole value object. Five aggregates already claim a slice of it, so its remaining fields are where an unprotected field would hide most easily — hence the exhaustive list below. Most of it is either a request queue players fill, a report a phase emits, or state a named campaign plan is about to take ownership of.",
+      "non_authority_fields": {
+        "turn_number": {
+          "classification": "planned_transitional",
+          "why": "Turn counter, advanced by GameState.begin_next_turn. Plan 0049 names TurnLifecycleTransitions as the only writer of phase and turn number.",
+          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
+        },
+        "phase": {
+          "classification": "planned_transitional",
+          "why": "Turn phase enum, same 0049 lifecycle authority as turn_number. Protecting it is worth something only together with the legal-transition rule (PLANNING -> RESOLUTION -> END -> PLANNING) that 0049 adds.",
+          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
+        },
+        "turn_length_days": {
+          "classification": "content_config",
+          "why": "Scenario cadence copied onto the state by GameState.reset from GameData.turn_length_days (and floored to 1 there). No phase writes it during a game."
+        },
+        "orders": {
+          "classification": "order_buffer",
+          "why": "Team -> Array[MoveOrder] request queue: players fill it during planning and the movement phase drains it. Plan 0049's OrderTransitions is named as its only writer.",
+          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
+        },
+        "commitments": {
+          "classification": "order_buffer",
+          "why": "Team -> Array[CommitOrder] request queue, the same planning-to-resolution seam as `orders`.",
+          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
+        },
+        "sealift_state": {
+          "classification": "planned_transitional",
+          "why": "The SealiftState handle. Its siblings `fleet`, `ijfs_state` and `infrastructure_state` ARE claimed by their aggregates; this one is not, and both GameState.reset and ReinforcementPhases (which swaps a temporary sealift in and the campaign one back) write it. USER call 2026-07-30: the closeout audit moves those writers, so the asymmetry is recorded here rather than closed by a migration this change is not allowed to make.",
+          "plan": "res://docs/plans/0050-mutation-authority-enforcement-closeout.md"
+        },
+        "mobilization_state": {
+          "classification": "planned_transitional",
+          "why": "The MobilizationState handle; plan 0048 builds MobilizationTransitions over that aggregate and the handle goes with it. GameState.reset is its only writer today.",
+          "plan": "res://docs/plans/0048-reinforcement-state-mutation-authority.md"
+        },
+        "last_mobilization_summary": {
+          "classification": "phase_output",
+          "why": "The mobilization phase's report for the turn just resolved: replaced wholesale by the phase that produced it, cleared at reset, and read only by serialization/observation (TurnEventLog / TurnResult). Not an evolving quantity, so there is no transition to protect."
+        },
+        "air_insertion_state": {
+          "classification": "planned_transitional",
+          "why": "The AirInsertionState handle; plan 0048 builds AirInsertionTransitions over that aggregate. GameState.reset is its only writer today.",
+          "plan": "res://docs/plans/0048-reinforcement-state-mutation-authority.md"
+        },
+        "last_air_insertion_summary": {
+          "classification": "phase_output",
+          "why": "The air-insertion phase's report for the turn just resolved: replaced wholesale by the phase that produced it, cleared at reset, and read only by serialization/observation (TurnEventLog / TurnResult). Not an evolving quantity, so there is no transition to protect."
+        },
+        "air_insert_orders": {
+          "classification": "order_buffer",
+          "why": "Air-insert request queue. Plan 0049's OrderTransitions is named as its writer, taking the consumption handoff from 0048's insertion resolution.",
+          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
+        },
+        "isolated_air_landed_brigades": {
+          "classification": "derived_projection",
+          "why": "Recomputed wholesale every turn by TurnConductor from ReinforcementPhases.isolated_air_landed_brigades(state). Supply isolation is DERIVED from corridor reachability, never asserted onto this field."
+        },
+        "not_ashore_by_type": {
+          "classification": "derived_projection",
+          "why": "A cache of PendingBattalions.by_brigade_and_type over the three off-map pools. GameStateData.refresh_not_ashore_by_type() is its only writer and recomputes it from those pools, which are themselves protected (ship_reserve, mainland_pool, AirInsertionState.pool)."
+        },
+        "jlsf_orders": {
+          "classification": "order_buffer",
+          "why": "Port/airbridge ids with a pending explicit deploy_jlsf order — a request queue, not node state; the nodes it names belong to the infrastructure aggregate. Plan 0049's OrderTransitions owns JLSF order consumption.",
+          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
+        },
+        "pending_lost_at_sea": {
+          "classification": "planned_transitional",
+          "why": "BN-equivalents drowned this turn: FiresPhases writes it and ReinforcementPhases' offload reads it into the manifest and zeroes it — a within-turn handoff between two phases that belongs to no aggregate. USER call 2026-07-30: resolved by the closeout audit, which is where the writer moves.",
+          "plan": "res://docs/plans/0050-mutation-authority-enforcement-closeout.md"
+        },
+        "supply_state": {
+          "classification": "planned_transitional",
+          "why": "The SupplyState handle; plan 0049 builds SupplyTransitions over DOS balance and history. GameState.reset is its only writer today.",
+          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
+        },
+        "last_contested_hexes": {
+          "classification": "phase_output",
+          "why": "The contest-detection phase's record for the turn just resolved, replaced wholesale by the phase that produced it. NOT write-only, and not merely serialized either: TurnConductor.gd:84 and :269 drive the ground-combat and FEBA-retreat loops straight off it, so a LATER phase depends on it. It stays unprotected because the authoritative state it describes lives elsewhere and this is a report of it — but renaming or reshaping it is a behaviour change, not a doc edit."
+        },
+        "last_combat_summaries": {
+          "classification": "phase_output",
+          "why": "The ground-combat phase's report for the turn just resolved: replaced wholesale by the phase that produced it, cleared at reset, and read only by serialization/observation (TurnEventLog / TurnResult). Not an evolving quantity, so there is no transition to protect."
+        },
+        "last_ijfs_summary": {
+          "classification": "phase_output",
+          "why": "The IJFS phase's record for the turn just resolved, replaced wholesale by the phase that produced it. NOT write-only, and not merely serialized either: the air-insertion phase feeds it to AirInsertionResolver.threat_from_ijfs_summary (ReinforcementPhases.gd:270), so a LATER phase depends on it. It stays unprotected because the authoritative state it describes lives elsewhere and this is a report of it — but renaming or reshaping it is a behaviour change, not a doc edit."
+        },
+        "last_ijfs_writeback": {
+          "classification": "phase_output",
+          "why": "The IJFS writeback phase's record for the turn just resolved, replaced wholesale by the phase that produced it. NOT write-only, and not merely serialized either: the maneuver-casualty step takes its casualties (FiresPhases.gd:60) and the anti-ship step hands it to AntishipTransitions.apply_ijfs_effects (FiresPhases.gd:78), so a LATER phase depends on it. It stays unprotected because the authoritative state it describes lives elsewhere and this is a report of it — but renaming or reshaping it is a behaviour change, not a doc edit."
+        },
+        "lost_at_sea_accumulator": {
+          "classification": "planned_transitional",
+          "why": "Fractional crossing-loss carry-over across turns — real campaign state. FiresPhases writes it from the anti-ship outcome one line away from an AntishipTransitions call, so the anti-ship authority is its natural owner. USER call 2026-07-30: the closeout audit moves that writer; classifying it here does not pretend it is unprotectable.",
+          "plan": "res://docs/plans/0050-mutation-authority-enforcement-closeout.md"
+        },
+        "last_antiship_summary": {
+          "classification": "phase_output",
+          "why": "The anti-ship phase's record for the turn just resolved. Replaced wholesale by the phase that produced it, which then reads it straight back in the SAME function to stamp wave_bns onto it, emit it and return it (FiresPhases.gd:140-143) — so it is not a cross-phase handoff, but it is not write-only either. It stays unprotected because the authoritative state it describes lives elsewhere and this is a report of it."
+        },
+        "last_offload_summary": {
+          "classification": "phase_output",
+          "why": "The offload phase's report for the turn just resolved: replaced wholesale by the phase that produced it, cleared at reset, and read only by serialization/observation (TurnEventLog / TurnResult). Not an evolving quantity, so there is no transition to protect."
+        },
+        "last_sealift_sent_by_type": {
+          "classification": "phase_output",
+          "why": "The sealift send phase's record for the turn just resolved, replaced wholesale by the phase that produced it. NOT write-only, and not merely serialized either: the anti-ship crossing reads it as the crossing manifest (FiresPhases.gd:98), so a LATER phase depends on it. It stays unprotected because the authoritative state it describes lives elsewhere and this is a report of it — but renaming or reshaping it is a behaviour change, not a doc edit. Here that elsewhere is SealiftState.cohorts, which the sealift_fleet and force aggregates already protect."
+        },
+        "last_frontline_summary": {
+          "classification": "phase_output",
+          "why": "The front-line phase's record for the turn just resolved. Replaced wholesale by the phase that produced it, which then reads it straight back in the SAME function to replay its moves through GameData.set_brigade_hex (FrontlinePhase.gd:18-21) — so it is not a cross-phase handoff, but it is not write-only either. It stays unprotected because the authoritative state it describes lives elsewhere and this is a report of it."
+        },
+        "last_cleanup_summary": {
+          "classification": "phase_output",
+          "why": "The cleanup phase's record for the turn just resolved. Replaced wholesale by the phase that produced it, which then reads it straight back in the SAME function to latch game_over and winner off it (TurnClosure.gd:72-75) — so it is not a cross-phase handoff, but it is not write-only either. It stays unprotected because the authoritative state it describes lives elsewhere and this is a report of it."
+        },
+        "game_over": {
+          "classification": "planned_transitional",
+          "why": "Victory latch. Plan 0049 applies game_over, winner and _china_has_landed together from one cleanup receipt, which is the invariant worth enforcing — any one of them alone is half a verdict.",
+          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
+        },
+        "winner": {
+          "classification": "planned_transitional",
+          "why": "Victory latch, applied with game_over from one 0049 cleanup receipt.",
+          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
+        },
+        "_china_has_landed": {
+          "classification": "planned_transitional",
+          "why": "Monotone latch for the after_first_landing loss-check arm, applied with the other two victory latches by plan 0049.",
+          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
+        }
+      }
+    },
+    {
+      "class": "GameDataStore",
+      "path": "res://scripts/GameData.gd",
+      "_doc": "The scenario/content autoload. Two runtime projections on it are claimed (brigades_by_hex by force, hex_states by map); everything else is loaded once by GameData's own load_* functions and never written again. Measured 2026-07-30: no file outside scripts/GameData.gd assigns any GameDataStore field at all.",
+      "non_authority_fields": {
+        "scenario_name": {
+          "classification": "content_config",
+          "why": "Name of the loaded scenario, set by load_scenario() and read for record provenance."
+        },
+        "scenario_path": {
+          "classification": "content_config",
+          "why": "Path of the loaded scenario file, set by load_scenario() and read for record provenance."
+        },
+        "turn_length_days": {
+          "classification": "content_config",
+          "why": "Scenario setting parsed by load_scenario() before play starts; no phase writes it."
+        },
+        "red_dos_start": {
+          "classification": "content_config",
+          "why": "Scenario setting parsed by load_scenario() before play starts; no phase writes it."
+        },
+        "stacking_soft_cap": {
+          "classification": "content_config",
+          "why": "Scenario setting parsed by load_scenario() before play starts; no phase writes it."
+        },
+        "feba_base_km": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "red_out_of_supply_effectiveness": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "unscreened_support_strength": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "maneuver_casualty_weight": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "support_casualty_weight": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "support_multipliers": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "combat_base_loss_rate": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "combat_attacker_ratio_slope": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "combat_defender_ratio_slope": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "combat_loss_roll_midpoint": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "combat_loss_roll_scale": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "combat_min_loss_rate": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "combat_max_attacker_loss_rate": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "combat_max_defender_loss_rate": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "feba_balance_gain": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "feba_balance_clamp": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "feba_roll_factor_min": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "feba_roll_factor_span": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "combat_min_effective_strength": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "combat_attacker_advantage_ratio": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "combat_defender_advantage_ratio": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "default_combat_strength": {
+          "classification": "content_config",
+          "why": "Combat/FEBA tuning constant. Its default is declared on the field and load_scenario() overrides it from the scenario's tuning block; nothing writes it during a turn. Sweepable content (hexcombat-config-and-knobs), not runtime state."
+        },
+        "victory_config": {
+          "classification": "content_config",
+          "why": "The scenario's raw 'victory' block (loss_check_arm, taiwan_hexes), read by the cleanup resolver. The verdict it produces is latched on GameStateData, not here."
+        },
+        "green_mobilization": {
+          "classification": "content_config",
+          "why": "The scenario's raw 'mobilization' block. The live schedule built from it is MobilizationState, whose pending/released the force aggregate protects."
+        },
+        "mobilization_holdback": {
+          "classification": "content_config",
+          "why": "Brigades the scenario holds back from the starting order of battle, selected once at load by MobilizationStateBuilder.select_held_back()."
+        },
+        "red_air_insertion": {
+          "classification": "content_config",
+          "why": "The scenario's raw 'air_insertion' block. The live pool/caps built from it are AirInsertionState."
+        },
+        "disabled_phases": {
+          "classification": "content_config",
+          "why": "Phases the scenario switches off, parsed once by load_scenario(). A research-harness setting, not a turn-lifecycle fact."
+        },
+        "hexes": {
+          "classification": "content_config",
+          "why": "Content table cleared and refilled by GameData's own load_hex_grid() at startup; no phase writes it."
+        },
+        "hex_lookup": {
+          "classification": "derived_projection",
+          "why": "hex_id -> Hex index over `hexes`, rebuilt with it in load_hex_grid(). An index over content is not a second copy of it."
+        },
+        "coord_lookup": {
+          "classification": "derived_projection",
+          "why": "Vector2i -> hex_id index over `hexes`, rebuilt with it in load_hex_grid()."
+        },
+        "neighbor_lookup": {
+          "classification": "derived_projection",
+          "why": "hex_id -> neighbours, computed from the loaded grid's geometry by build_neighbor_lookup(). Pure function of `hexes`."
+        },
+        "terrain_types": {
+          "classification": "content_config",
+          "why": "Content table cleared and refilled by GameData's own load_terrain() at startup; no phase writes it."
+        },
+        "red_ship_reserve": {
+          "classification": "content_config",
+          "why": "The scenario's raw first-wave reserve entries. The live reserve is GameStateData.ship_reserve, which the force aggregate protects."
+        },
+        "red_followon_reserve": {
+          "classification": "content_config",
+          "why": "The scenario's raw follow-on echelon entries. The live pool is SealiftState.mainland_pool, which the force aggregate protects."
+        },
+        "auto_seed_followon_pool": {
+          "classification": "content_config",
+          "why": "Scenario setting parsed by load_scenario() before play starts; no phase writes it."
+        },
+        "amphibious_return_time_turns": {
+          "classification": "content_config",
+          "why": "Scenario setting parsed by load_scenario() before play starts; no phase writes it."
+        },
+        "escort_reload_time_turns": {
+          "classification": "content_config",
+          "why": "Scenario setting parsed by load_scenario() before play starts; no phase writes it."
+        },
+        "brigades": {
+          "classification": "content_config",
+          "why": "brigade_id -> Brigade registry, cleared and refilled from the OOB by load_brigades(). Membership never changes during a game — a destroyed brigade keeps its entry and carries Brigade.destroyed, which the force aggregate protects. The objects in here are protected; the container is content."
+        },
+        "beaches": {
+          "classification": "content_config",
+          "why": "Content table cleared and refilled by GameData's own load_beaches() at startup; no phase writes it."
+        },
+        "infrastructure": {
+          "classification": "content_config",
+          "why": "infra_id -> InfrastructureDef definitions, refilled by load_infrastructure(). The live per-node status is InfrastructureState.nodes, which the infrastructure aggregate owns."
+        },
+        "offload_weights": {
+          "classification": "content_config",
+          "why": "Content table cleared and refilled by GameData's own load_offload_weights() at startup; no phase writes it."
+        },
+        "use_offload_weight_matrix": {
+          "classification": "content_config",
+          "why": "Scenario setting parsed by load_scenario() before play starts; no phase writes it."
+        },
+        "auto_jlsf": {
+          "classification": "content_config",
+          "why": "Scenario setting parsed by load_scenario() before play starts; no phase writes it."
+        },
+        "jlsf_lift_bn_equiv": {
+          "classification": "content_config",
+          "why": "Scenario setting parsed by load_scenario() before play starts; no phase writes it."
+        },
+        "ship_defs": {
+          "classification": "content_config",
+          "why": "Content table cleared and refilled by GameData's own load_ships() at startup; no phase writes it."
+        },
+        "ship_defs_by_name": {
+          "classification": "derived_projection",
+          "why": "name -> ShipDef index over `ship_defs`, rebuilt with it in load_ships()."
+        },
+        "active_tos": {
+          "classification": "content_config",
+          "why": "Content table cleared and refilled by GameData's own load_theaters() at startup; no phase writes it."
+        },
+        "to_adjacency": {
+          "classification": "content_config",
+          "why": "Content table cleared and refilled by GameData's own load_theaters() at startup; no phase writes it."
+        },
+        "beach_to_to": {
+          "classification": "content_config",
+          "why": "Content table cleared and refilled by GameData's own load_theaters() at startup; no phase writes it."
+        }
+      }
+    },
+    {
+      "class": "Brigade",
+      "path": "res://scripts/model/Brigade.gd",
+      "_doc": "The force aggregate protects a brigade's runtime facts. What is left is OOB identity fixed at construction — and deliberately left unprotected, because a protected field NAME is claimed repo-wide: registering `id` or `name` would turn every unrelated `.id =` in the tree into an unresolved-write failure, which is exactly what IjfsMunition.name cost plan 0046 (22 innocent view-layer lines).",
+      "non_authority_fields": {
+        "id": {
+          "classification": "identity_construction_only",
+          "why": "OOB brigade id, written only by GameData._load_oob_file(). Registering the NAME 'id' would flag unrelated `.id =` writes repo-wide."
+        },
+        "name": {
+          "classification": "identity_construction_only",
+          "why": "OOB brigade name, written only by GameData._load_oob_file(). `name` is also a built-in Node property, so registering it poisons every scene-building line in the tree."
+        },
+        "team": {
+          "classification": "identity_construction_only",
+          "why": "Which side the brigade belongs to, fixed by the OOB file at load."
+        },
+        "to_number": {
+          "classification": "identity_construction_only",
+          "why": "Theater of operations the brigade belongs to, fixed by the OOB file at load."
+        },
+        "nato_type": {
+          "classification": "identity_construction_only",
+          "why": "NATO unit-type symbol from the OOB, used for display and strength lookup; fixed at load."
+        }
+      }
+    },
+    {
+      "class": "Battalion",
+      "path": "res://scripts/model/Battalion.gd",
+      "_doc": "The force aggregate protects surviving quantity. The other two members are the battalion's type and a computed property over it.",
+      "non_authority_fields": {
+        "type": {
+          "classification": "identity_construction_only",
+          "why": "Battalion type string from the OOB, written only by GameData._load_oob_file() and used to look up strength. Fixed for the life of the object."
+        },
+        "combat_strength": {
+          "classification": "derived_projection",
+          "why": "Not storage: a getter-only computed property returning UnitStats.strength_for_type(type, 1.0) * qty. It has no setter and no backing field; the validator's member-declaration scan sees the `var name: Type:` form, so it must be classified even though nothing can write it."
+        }
+      }
+    },
+    {
+      "class": "AirInsertionState",
+      "path": "res://scripts/model/AirInsertionState.gd",
+      "_doc": "The force aggregate protects the pool and the landed list (plan 0044). The lift capacity and the insertion ledger on the same object are plan 0048's AirInsertionTransitions.",
+      "non_authority_fields": {
+        "caps": {
+          "classification": "planned_transitional",
+          "why": "Current per-class lift capacity, written by ReinforcementPhases from the insertion summary. Plan 0048 names AirInsertionTransitions as its only writer and adds the '0 <= current <= initial, never rises' invariant.",
+          "plan": "res://docs/plans/0048-reinforcement-state-mutation-authority.md"
+        },
+        "initial_caps": {
+          "classification": "planned_transitional",
+          "why": "Establishment lift capacity, written today only by AirInsertionStateBuilder. Plan 0048 names it explicitly alongside `caps` because it is the bound the cap invariant is measured against.",
+          "plan": "res://docs/plans/0048-reinforcement-state-mutation-authority.md"
+        },
+        "first_turn": {
+          "classification": "identity_construction_only",
+          "why": "Earliest turn air insertion may run, read from the scenario by AirInsertionStateBuilder.build() and never written again."
+        },
+        "history": {
+          "classification": "planned_transitional",
+          "why": "Append-only insertion ledger, appended by ReinforcementPhases. Plan 0048 names it as an AirInsertionTransitions field and requires it to chain in resolution order and agree with the applied packet receipt.",
+          "plan": "res://docs/plans/0048-reinforcement-state-mutation-authority.md"
+        }
+      }
+    },
+    {
+      "class": "IjfsDailyState",
+      "path": "res://scripts/model/IjfsDailyState.gd",
+      "_doc": "The ijfs aggregate claims the three containers that persist across days. The rest splits exactly as the model's own header does: content loaded once by IjfsStateBuilder, and per-run ledgers reset at the top of every run_daily.",
+      "non_authority_fields": {
+        "pairings": {
+          "classification": "content_config",
+          "why": "Munition/target pairing table, loaded once from the content file by IjfsStateBuilder.build()."
+        },
+        "scenario": {
+          "classification": "content_config",
+          "why": "The IJFS scenario block, loaded once from the content file by IjfsStateBuilder.build()."
+        },
+        "air_classes": {
+          "classification": "content_config",
+          "why": "Aircraft-class table, loaded once from the content file by IjfsStateBuilder.build()."
+        },
+        "seed": {
+          "classification": "content_config",
+          "why": "Metadata field carried over from the Python original ijfs_standalone/state.py. Measured 2026-07-30: no writer exists anywhere in the scan roots — the shared Dice owns RNG identity here."
+        },
+        "source_files": {
+          "classification": "content_config",
+          "why": "Metadata field carried over from the Python original. Measured 2026-07-30: no writer exists anywhere in the scan roots."
+        },
+        "detection_log": {
+          "classification": "phase_output",
+          "why": "Per-run IJFS ledger. IjfsDailyState's own header divides its fields into inputs that persist across days (the three the ijfs aggregate claims) and per-run outputs reset at the top of every run_daily; this is one of the outputs."
+        },
+        "strike_log": {
+          "classification": "phase_output",
+          "why": "Per-run IJFS ledger. IjfsDailyState's own header divides its fields into inputs that persist across days (the three the ijfs aggregate claims) and per-run outputs reset at the top of every run_daily; this is one of the outputs."
+        },
+        "engagement_log": {
+          "classification": "phase_output",
+          "why": "Per-run IJFS ledger. IjfsDailyState's own header divides its fields into inputs that persist across days (the three the ijfs aggregate claims) and per-run outputs reset at the top of every run_daily; this is one of the outputs."
+        },
+        "contest_log": {
+          "classification": "phase_output",
+          "why": "Per-run IJFS ledger. IjfsDailyState's own header divides its fields into inputs that persist across days (the three the ijfs aggregate claims) and per-run outputs reset at the top of every run_daily; this is one of the outputs."
+        },
+        "free_shot_log": {
+          "classification": "phase_output",
+          "why": "Per-run IJFS ledger. IjfsDailyState's own header divides its fields into inputs that persist across days (the three the ijfs aggregate claims) and per-run outputs reset at the top of every run_daily; this is one of the outputs."
+        },
+        "manpads_intercept_log": {
+          "classification": "phase_output",
+          "why": "Per-run IJFS ledger. IjfsDailyState's own header divides its fields into inputs that persist across days (the three the ijfs aggregate claims) and per-run outputs reset at the top of every run_daily; this is one of the outputs."
+        },
+        "manpads_contest_log": {
+          "classification": "phase_output",
+          "why": "Per-run IJFS ledger. IjfsDailyState's own header divides its fields into inputs that persist across days (the three the ijfs aggregate claims) and per-run outputs reset at the top of every run_daily; this is one of the outputs."
+        },
+        "taiwan_ad_health_before": {
+          "classification": "phase_output",
+          "why": "Air-defence health snapshot taken during a run and rewritten by the next one; an observation of the targets the ijfs aggregate protects, not a second copy of them."
+        },
+        "taiwan_ad_health_after_missile_phase": {
+          "classification": "phase_output",
+          "why": "Air-defence health snapshot taken during a run and rewritten by the next one."
+        },
+        "taiwan_ad_health_after_sead": {
+          "classification": "phase_output",
+          "why": "Air-defence health snapshot taken during a run and rewritten by the next one."
+        },
+        "taiwan_ad_health_after": {
+          "classification": "phase_output",
+          "why": "Air-defence health snapshot taken during a run and rewritten by the next one."
+        },
+        "exquisite_intel_overrides": {
+          "classification": "phase_output",
+          "why": "Per-run IJFS ledger. IjfsDailyState's own header divides its fields into inputs that persist across days (the three the ijfs aggregate claims) and per-run outputs reset at the top of every run_daily; this is one of the outputs."
+        },
+        "warnings": {
+          "classification": "phase_output",
+          "why": "Per-run IJFS ledger. IjfsDailyState's own header divides its fields into inputs that persist across days (the three the ijfs aggregate claims) and per-run outputs reset at the top of every run_daily; this is one of the outputs."
+        }
+      }
+    }
+  ],
   "aggregates": [
     {
       "id": "antiship_establishment",

@@ -19,6 +19,26 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-30 — Shared models are closed-world; three orphan fields pointed at the closeout (agent
+  + USER).** `hosted_fields` was open-world, so a field added to `GameStateData` was unprotected and
+  silent about it. Every class an aggregate hosts now accounts for every mutable field it declares —
+  claimed, or excluded in the manifest's new `shared_model_policies` with a closed-vocabulary
+  classification and a reason; 112 fields across 6 classes were classified, and a classification that
+  is a promise must name a plan under `plan_dir` that still resolves, so it goes red when that plan is
+  archived. Two review rounds closed three scanner holes neither exhaustiveness check had ever
+  covered: the member-declaration pattern matched only bare `@export`/`@onready`, so
+  `@export_range(...) var x` and `static var x` were invisible; the declaration guard in the
+  bare-member-write matcher had the same blind spot in reverse, flagging `@export_range(0, 5) var x = 0`
+  on a *claimed* field as an unauthorized write (measured, then fixed); and the plan-pointer
+  containment test was lexical, so `res://docs/plans/../archive/x.md` escaped it. Exhaustive
+  classification exposed three GameStateData fields that are real
+  mutable state no plan names — `sealift_state` (its `fleet`/`ijfs_state`/`infrastructure_state`
+  siblings ARE claimed), `lost_at_sea_accumulator` and `pending_lost_at_sea`. **USER call:** point
+  them at plan 0050's closeout audit rather than migrating writers here; tracked in
+  `docs/plans/BACKLOG.md`. No behaviour, RNG, serialization or golden change. Current state:
+  `docs/STATUS.md`; rule and vocabulary: `tools/mutation_authority_manifest.json` `_schema_rules` +
+  the validator header.
+
 - **2026-07-30 — Mutation-authority evidence is repeating, not a reverted experiment (USER).**
   Abstract fixtures remain the write-form oracle; the validator now generates typed probes for every
   real manifest claim and real authority boundary, while a committed non-authoritative claim pin

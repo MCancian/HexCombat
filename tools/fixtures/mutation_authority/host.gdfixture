@@ -1,12 +1,27 @@
 class_name FixtureHost
 extends RefCounted
 
-## Fixture stand-in for a model SHARED between aggregates: only the two fields below are claimed,
-## and `unrelated_note` must stay unprotected so hosted_fields is proven non-exhaustive.
+## Fixture stand-in for a model SHARED between aggregates. Only the first three fields are claimed,
+## so hosted_fields is proven non-exhaustive; the rest stay unprotected and are classified under the
+## manifest's shared_model_policies, which is what makes the leftover half of a shared model
+## closed-world rather than merely unlisted. Between them the unclaimed fields cover one permanent
+## exclusion, one against a named plan, one order buffer, and the two declaration FORMS below.
 
 var rows_by_index: Array = []
 var rows_built: bool = false
+## Claimed AND annotated, so a declaration that does not start with `var` is proven not to read as a
+## write to the field it declares. It carries no `#@expect`: the scan must find nothing here.
+@export_range(0, 5) var rows_annotated = 0
+
 var unrelated_note: String = ""
+var pending_migration_note: String = ""
+var pending_request_note: String = ""
+
+## Two declaration FORMS the member scan has to see, or a field declared this way would be neither
+## protected nor reported as unclassified. `@export_range` is an ordinary GDScript annotation that the
+## old `@export`-only pattern did not match at all.
+@export_range(0, 10) var annotated_note: int = 0
+static var static_note: String = ""
 
 
 func direct_write_bypass() -> void:

@@ -5,7 +5,10 @@ every gate run — that it detects each write form its header claims. A claim no
 a claim nobody has checked.
 
 This fixture world is **abstract by design**. `FixtureRow` and friends test scanner grammar against
-`fixture_manifest.json`; they are not copies of production ownership. A separate generated
+`fixture_manifest.json`; they are not copies of production ownership. That is also why the fixture
+manifests set their own `plan_dir` to this directory: the shared-model policy's plan pointers must
+resolve, and pointing an abstract fixture at a REAL plan would turn nine fixtures red the day that
+plan was archived. A separate generated
 real-contract pass uses the real source corpus and `tools/mutation_authority_manifest.json` to prove
 every production claim plus every authority boundary. `real_claims_pin.json` is its independent
 expected-output oracle: the scanner never treats the pin as ownership.
@@ -23,7 +26,9 @@ text, which is all a source gate ever needed.
 - One violation per line — the comparison is keyed by `path:line`.
 - `bad_manifest_*.json` each declare `_expect_error`: the single manifest-check code that manifest
   must provoke. These cover the failures no source file can reach (dead paths, unclassified fields,
-  duplicate claims, a missing authority).
+  duplicate claims, a missing authority, and every way a shared-model policy can be wrong).
+  "Exactly one error, and it starts with the declared code" is the comparison, so a fixture that
+  provokes the right code plus a stray second one fails too.
 
 ## Files
 
@@ -33,7 +38,7 @@ text, which is all a source gate ever needed.
 | `real_claims_pin.json` | Non-authoritative exact pin of real claim identities; catches deletion, reassignment, and owned/hosted demotion |
 | generated in memory | One typed direct assignment per real claim plus every ordered wrong-authority pair, scanned against the real corpus and manifest |
 | `model.gdfixture` | `FixtureRow` — the owned protected model, including a sanctioned mutator |
-| `host.gdfixture` | `FixtureHost` — a shared model carrying two hosted protected fields |
+| `host.gdfixture` | `FixtureHost` — a shared model. Three hosted protected fields (one of them `@export_range(...) var`, proving an annotated declaration does not read as a write), plus five the manifest's `shared_model_policies` classifies as deliberately unprotected: one permanent, one against a named plan, one order buffer, and one each of `@export_range(...) var` / `static var` proving the member scan sees those declaration forms |
 | `facade.gdfixture` | `FixtureGameStateFacade` — stand-in for a GameState façade setter bypass |
 | `other_model.gdfixture` | `FixtureOtherModel` — an owned model for a second aggregate |
 | `authority.gdfixture` | `FixtureTransitions` — the authority for the first aggregate |

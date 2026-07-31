@@ -7,6 +7,38 @@
   ],
   "scan_excludes": [],
   "authority_dir": "res://tools/fixtures/mutation_authority/transitions_dir",
+  "plan_dir": "res://tools/fixtures/mutation_authority",
+  "shared_model_policies": [
+    {
+      "class": "FixtureHost",
+      "path": "res://tools/fixtures/mutation_authority/host.gdfixture",
+      "_doc": "Closes the abstract shared model: the two fields no aggregate claims are classified here, so FixtureHost has no field nobody has spoken for. Claimed fields are read out of the aggregates and must NOT be repeated here.",
+      "non_authority_fields": {
+        "unrelated_note": {
+          "classification": "content_config",
+          "why": "Fixture stand-in for a label loaded once and never written at runtime — the permanently-unprotected direction."
+        },
+        "pending_migration_note": {
+          "classification": "planned_transitional",
+          "why": "Fixture stand-in for state a later plan takes ownership of — the direction that must name a plan, and that goes stale when the plan is archived.",
+          "plan": "res://tools/fixtures/mutation_authority/README.md"
+        },
+        "annotated_note": {
+          "classification": "content_config",
+          "why": "Fixture stand-in proving the member scan sees an `@export_range(...)` declaration; the old @export-only pattern matched it as nothing at all."
+        },
+        "static_note": {
+          "classification": "content_config",
+          "why": "Fixture stand-in proving the member scan sees a `static var` declaration."
+        },
+        "pending_request_note": {
+          "classification": "order_buffer",
+          "why": "Fixture stand-in for a request queue. Present so the vocabulary's 'order_buffer is a promise' decision has a fixture oracle outside the validator's own table.",
+          "plan": "res://tools/fixtures/mutation_authority/README.md"
+        }
+      }
+    }
+  ],
   "aggregates": [
     {
       "id": "fixture_aggregate",
@@ -32,7 +64,8 @@
           "path": "res://tools/fixtures/mutation_authority/host.gdfixture",
           "fields": {
             "rows_by_index": "campaign",
-            "rows_built": "transient"
+            "rows_built": "transient",
+            "rows_annotated": "campaign"
           }
         }
       ],

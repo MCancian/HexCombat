@@ -101,6 +101,16 @@ fixture and game record moves.
   The two shapes that work: route through an existing façade (the
   `GameData.set_brigade_hex → ForceTransitions` pattern), or find a dependency that genuinely leaves
   (plan 0043 held `FiresPhases` at 14 by a one-for-one swap).
+- **Hosting a class costs you its WHOLE field list, not just your slice.** Since 2026-07-30 every
+  class under any aggregate's `hosted_fields` must account for every mutable field it declares —
+  claimed by exactly one aggregate, or excluded in `shared_model_policies` with a classification and a
+  reason. So the aggregate that first hosts a big shared model pays for classifying all of it (closing
+  `GameStateData` alone took 29 entries), and a later aggregate that claims one of those fields must
+  DELETE its exclusion in the same edit, or the gate fails `E_CLAIMED_AND_EXCLUDED`. Budget that in the
+  inventory step, not at the gate. A classification that is a PROMISE (`planned_transitional`,
+  `order_buffer`) must name a plan file under the manifest's `plan_dir` that still resolves, so
+  **archiving the plan that shipped it turns the exclusion red on purpose** — closing out a plan means
+  clearing its exclusions in the same commit.
 - **Allowances must stay live.** `construction_writers` are for fresh, unpublished objects only;
   an allowance that no longer writes anything fails `E_STALE_ALLOWANCE`, so removing the last write
   means removing the entry.

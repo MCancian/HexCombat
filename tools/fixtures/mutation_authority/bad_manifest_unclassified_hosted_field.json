@@ -1,6 +1,6 @@
 {
-  "_doc": "A migration-only aggregate must still name the authority it is migrating toward.",
-  "_expect_error": "E_NO_AUTHORITY",
+  "_doc": "A hosted class must classify every field it declares. Dropping one exclusion leaves a mutable field on a SHARED model that no aggregate claims and no policy explains — the exact hole this section closes.",
+  "_expect_error": "E_UNCLASSIFIED_HOSTED_FIELD",
   "schema_version": 1,
   "scan_roots": [
     "res://tools/fixtures/mutation_authority"
@@ -14,10 +14,6 @@
       "path": "res://tools/fixtures/mutation_authority/host.gdfixture",
       "_doc": "Closes the abstract shared model: the two fields no aggregate claims are classified here, so FixtureHost has no field nobody has spoken for. Claimed fields are read out of the aggregates and must NOT be repeated here.",
       "non_authority_fields": {
-        "unrelated_note": {
-          "classification": "content_config",
-          "why": "Fixture stand-in for a label loaded once and never written at runtime — the permanently-unprotected direction."
-        },
         "pending_migration_note": {
           "classification": "planned_transitional",
           "why": "Fixture stand-in for state a later plan takes ownership of — the direction that must name a plan, and that goes stale when the plan is archived.",
@@ -42,10 +38,10 @@
   "aggregates": [
     {
       "id": "fixture_aggregate",
-      "status": "migration",
+      "status": "enforced",
       "planned_authority": null,
-      "authority_class": null,
-      "authority_path": null,
+      "authority_class": "FixtureTransitions",
+      "authority_path": "res://tools/fixtures/mutation_authority/authority.gdfixture",
       "owned_models": [
         {
           "class": "FixtureRow",

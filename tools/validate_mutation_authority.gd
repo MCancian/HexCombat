@@ -94,6 +94,21 @@ extends SceneTree
 # The manifest is checked as hard as the source: dead paths, dead fields, an unclassified field
 # added to an owned model, two aggregates claiming one field, a stale allowance that no longer
 # writes anything, and a scan that saw nothing all fail. Prints PASS:/FAIL: for the gate's verdict.
+#
+# ── SHARED MODELS ARE CLOSED-WORLD TOO ──────────────────────────────────────────────────────────
+# `owned_models` has always been exhaustive; `hosted_fields` was not, so a field added to a model two
+# aggregates share — GameStateData most of all — arrived unprotected and nothing said so. Every class
+# any aggregate hosts must now account for every mutable field it declares: claimed by exactly one
+# aggregate, or listed under the manifest's `shared_model_policies` with a classification from the
+# closed vocabulary in POLICY_CLASSIFICATIONS and a concrete reason. Claimed and excluded at once
+# fails, as does an exclusion for a field that no longer exists.
+#
+# That section is NOT a second ownership list: claimed fields are derived from `hosted_fields`, and
+# naming one in a policy is an error rather than a duplicate. A classification that is a PROMISE
+# (`planned_transitional`, `order_buffer`) additionally names the plan that takes the field over; the
+# pointer must sit under the manifest's `plan_dir` AND still resolve, so a shipped plan being archived
+# turns its exclusion red exactly when the reason expires, while a pointer at some other existing file
+# — which could never go stale — is rejected outright.
 
 const MANIFEST_PATH := "res://tools/mutation_authority_manifest.json"
 const FIXTURE_DIR := "res://tools/fixtures/mutation_authority"
@@ -114,6 +129,26 @@ const MUTATOR_METHODS := [
 	"shuffle", "fill", "merge", "assign",
 ]
 const DYNAMIC_SETTERS := ["set", "set_indexed", "set_deferred"]
+# Why a mutable field on a SHARED model may go unclaimed. The vocabulary is closed, so a new reason
+# costs an edit here and a reviewer's attention rather than arriving as free text nobody reads. The
+# value says whether the entry must also name the plan that ends it.
+#   identity_construction_only  fixed when the object is built and never written again
+#   content_config              scenario/content loaded once by its loader; not gameplay state
+#   derived_projection          recomputed from authoritative state; never the source of truth
+#   phase_output                a per-turn record the producing phase replaces wholesale. NOT the same
+#                               as write-only: six of the eleven last_* slots are read back by a later
+#                               phase in the same turn, so each entry names its consumer.
+#   order_buffer                a request queue players fill and a phase drains — plan 0049's
+#                               OrderTransitions owns all four, so this one names a plan too
+#   planned_transitional        real state a named plan is going to take ownership of
+const POLICY_CLASSIFICATIONS := {
+	"identity_construction_only": false,
+	"content_config": false,
+	"derived_projection": false,
+	"phase_output": false,
+	"order_buffer": true,
+	"planned_transitional": true,
+}
 
 var _failures: Array[String] = []
 var _regex_cache: Dictionary = {}
@@ -179,8 +214,13 @@ func _build_corpus(paths: Array) -> Corpus:
 ## Member `var` declarations of a class body: name -> declared type ("" when untyped). The element
 ## type of a typed array is kept (`Array[IjfsTarget]`, not `Array`) because that is what tells the
 ## scanner what an untyped `for` over that field is iterating.
+##
+## ANY annotation prefix counts, not just bare `@export`/`@onready`, and `static var` counts too. This
+## regex is what BOTH exhaustiveness checks enumerate, so a declaration form it cannot see is a field
+## that is neither protected nor reported — `@export_range(0, 10) var x` used to be exactly that.
+## Proven by the annotated/static fields on the abstract FixtureHost and their bad-manifest fixtures.
 func _declared_fields(body: String) -> Dictionary:
-	var regex := _regex("(?m)^(?:@export(?:\\([^)]*\\))?\\s+|@onready\\s+)*var\\s+([A-Za-z_]\\w*)\\s*(?::\\s*(%s))?" % TYPE_EXPR)
+	var regex := _regex("(?m)^(?:@[a-z_]+(?:\\([^)]*\\))?\\s+)*(?:static\\s+)?var\\s+([A-Za-z_]\\w*)\\s*(?::\\s*(%s))?" % TYPE_EXPR)
 	var types: Dictionary = {}
 	var order: Array[String] = []
 	for found in regex.search_all(body):
@@ -436,7 +476,7 @@ func _receiver_types(lines: PackedStringArray, corpus: Corpus, path: String) -> 
 
 func _collect_types(types: Dictionary, body: String, corpus: Corpus, path: String) -> void:
 	var patterns := [
-		"(?m)^\\s*(?:@export(?:\\([^)]*\\))?\\s+|@onready\\s+)*var\\s+([A-Za-z_]\\w*)\\s*:\\s*(%s)" % TYPE_EXPR,
+		"(?m)^\\s*(?:@[a-z_]+(?:\\([^)]*\\))?\\s+)*(?:static\\s+)?var\\s+([A-Za-z_]\\w*)\\s*:\\s*(%s)" % TYPE_EXPR,
 		"(?m)^\\s*var\\s+([A-Za-z_]\\w*)\\s*:=\\s*([A-Za-z_]\\w*)\\.new\\(\\)",
 		"(?m)\\bfor\\s+([A-Za-z_]\\w*)\\s*:\\s*(%s)\\s+in\\b" % TYPE_EXPR,
 	]
@@ -541,12 +581,35 @@ func _scan_line(
 	return out
 
 
+## A declaration is not a write. Without this, every member declaration in a protected model reads as
+## a bare write to the field it declares. The annotation prefix is part of the pattern for the same
+## reason it is part of `_declared_fields`: `@export_range(0, 5) var rows_annotated = 0` does not
+## START with `var`, so a keyword test flagged its initializer as `direct_assign` on a claimed field.
+## Proven by the annotated claimed field on FixtureHost, which carries no `#@expect` marker.
+func _is_declaration(trimmed: String) -> bool:
+	var regex := _regex("^(?:@[a-z_]+(?:\\([^)]*\\))?\\s+)*(?:static\\s+)?(?:var|const|func)\\s")
+	return regex.search(trimmed) != null
+
+
+## Which write form a matched effect is. The three effect alternatives are mutually exclusive by
+## construction, so at most one group is non-empty. Shared by the two matchers that use the same
+## `<receiver> . <field> <effect>` shape but number their capture groups differently — the third copy
+## of this ladder is what the duplication budget forbids.
+func _effect_rule(element: String, container: String, assign: String) -> String:
+	if not element.is_empty():
+		return "element_assign"
+	if not container.is_empty():
+		return "container_mutate"
+	if not assign.begins_with("="):
+		return "compound_assign"
+	return "direct_assign"
+
+
 func _match_bare_member_writes(
 		line: String, corpus: Corpus, ownership: Ownership, self_class: String) -> Array[Finding]:
 	if self_class.is_empty():
 		return []
-	var trimmed := line.strip_edges()
-	if trimmed.begins_with("var ") or trimmed.begins_with("const ") or trimmed.begins_with("func "):
+	if _is_declaration(line.strip_edges()):
 		return []
 	var element_effect := "(\\[[^\\]\\n]*\\])\\s*(%s)" % ASSIGN_OPS
 	var container_effect := "(?:\\[[^\\]\\n]*\\])?\\s*\\.\\s*(%s)\\s*\\(" % "|".join(MUTATOR_METHODS)
@@ -561,13 +624,7 @@ func _match_bare_member_writes(
 		var key := "%s.%s" % [self_class, field]
 		if not ownership.protected.has(key):
 			continue
-		var rule := "direct_assign"
-		if not found.get_string(2).is_empty():
-			rule = "element_assign"
-		elif not found.get_string(4).is_empty():
-			rule = "container_mutate"
-		elif not found.get_string(5).begins_with("="):
-			rule = "compound_assign"
+		var rule := _effect_rule(found.get_string(2), found.get_string(4), found.get_string(5))
 		var finding := _finding(key, rule, ownership, line)
 		if finding != null:
 			out.append(finding)
@@ -591,13 +648,7 @@ func _match_field_writes(
 	for found in regex.search_all(line):
 		var receiver := found.get_string(1)
 		var field := found.get_string(2)
-		var rule := "direct_assign"
-		if not found.get_string(3).is_empty():
-			rule = "element_assign"
-		elif not found.get_string(5).is_empty():
-			rule = "container_mutate"
-		elif not found.get_string(6).begins_with("="):
-			rule = "compound_assign"
+		var rule := _effect_rule(found.get_string(3), found.get_string(5), found.get_string(6))
 		var class_id := _resolve(receiver, types, corpus)
 		var finding := _protected_finding(class_id, field, rule, corpus, ownership, line)
 		if finding != null:
@@ -781,6 +832,7 @@ func _check_manifest(manifest: Dictionary, corpus: Corpus, strict_paths: bool) -
 		_check_model_section(aggregate, corpus, "hosted_fields", false)
 		if strict_paths:
 			_check_writer_paths(aggregate, corpus)
+	_check_shared_model_policies(manifest, corpus)
 	return true
 
 
@@ -847,6 +899,154 @@ func _check_writer_paths(aggregate: Dictionary, corpus: Corpus) -> void:
 			if section == "legacy_writers" and _text(entry.get("removal_plan", "")).is_empty():
 				_fail("E_MANIFEST_SCHEMA: legacy writer '%s' (aggregate '%s') has no removal_plan. A legacy writer without an exit is just a permitted writer." % [
 					path, aggregate_id])
+
+
+# ── Shared-model closure: a hosted class classifies every field it declares ─────────────────────
+
+## `hosted_fields` claims only the fields one aggregate owns on a SHARED model, so on its own it is
+## open-world: a field added to GameStateData is unprotected and nothing says so. This closes it —
+## every mutable field of every hosted class is claimed by exactly one aggregate, or excluded here
+## with a classification and a concrete reason. Exclusions are NOT a second ownership list: claimed
+## fields are read out of the aggregates, and naming one here is an error rather than a duplicate.
+func _check_shared_model_policies(manifest: Dictionary, corpus: Corpus) -> void:
+	var hosted := _hosted_classes(manifest)
+	if hosted.is_empty():
+		_fail("E_VACUOUS: no class appears under hosted_fields, so the shared-model closure check would enforce nothing.")
+		return
+	var claimed := _claimed_fields_by_class(manifest)
+	var policies := _policies_by_class(manifest, hosted)
+	for class_id_value in hosted.keys():
+		var class_id := String(class_id_value)
+		# A class whose path is dead has no declared fields to close over, and _check_model_section
+		# has already said so. Reporting it twice would bury the fixable error.
+		if not corpus.order_of.has(class_id):
+			continue
+		_check_class_closure(
+			class_id, corpus,
+			Dictionary(claimed.get(class_id, {})), Dictionary(policies.get(class_id, {})))
+
+
+## class_name -> the path its host declares, for every class any aggregate registers under
+## `hosted_fields`. That is exactly the set of models shared between aggregates, and therefore the
+## set whose leftover fields nobody has spoken for.
+func _hosted_classes(manifest: Dictionary) -> Dictionary:
+	var hosted: Dictionary = {}
+	for aggregate_value in manifest.get("aggregates", []):
+		for entry_value in Dictionary(aggregate_value).get("hosted_fields", []):
+			var entry: Dictionary = entry_value
+			hosted[_text(entry.get("class", ""))] = _text(entry.get("path", ""))
+	return hosted
+
+
+## class_name -> {field: true} across BOTH claim sections, so "claimed and excluded at once" is
+## judged against every claim in the manifest rather than only the hosted half of it.
+func _claimed_fields_by_class(manifest: Dictionary) -> Dictionary:
+	var claimed: Dictionary = {}
+	for aggregate_value in manifest.get("aggregates", []):
+		for section in ["owned_models", "hosted_fields"]:
+			for entry_value in Dictionary(aggregate_value).get(section, []):
+				var entry: Dictionary = entry_value
+				var class_id := _text(entry.get("class", ""))
+				if not claimed.has(class_id):
+					claimed[class_id] = {}
+				for field_value in Dictionary(entry.get("fields", {})).keys():
+					claimed[class_id][String(field_value)] = true
+	return claimed
+
+
+## The policy section reduced to class_name -> non_authority_fields, with every exclusion judged on
+## its own terms along the way. Whether a field is REAL and unclaimed is a separate question, asked
+## afterwards against the corpus.
+func _policies_by_class(manifest: Dictionary, hosted: Dictionary) -> Dictionary:
+	var plan_dir := _text(manifest.get("plan_dir", ""))
+	var policies: Dictionary = {}
+	for policy_value in manifest.get("shared_model_policies", []):
+		var policy: Dictionary = policy_value
+		var class_id := _policy_target(policy, hosted, policies)
+		if class_id.is_empty():
+			continue
+		var fields := Dictionary(policy.get("non_authority_fields", {}))
+		for field_value in fields.keys():
+			_check_exclusion(
+				"%s.%s" % [class_id, String(field_value)],
+				Dictionary(fields[field_value]), plan_dir)
+		policies[class_id] = fields
+	return policies
+
+
+## The class one policy entry attaches to, or "" when the entry is unusable. A path that disagrees
+## with the host is reported but does NOT reject the entry: dropping it would bury one fixable error
+## under an E_UNCLASSIFIED_HOSTED_FIELD per field the entry did classify.
+func _policy_target(policy: Dictionary, hosted: Dictionary, seen: Dictionary) -> String:
+	var class_id := _text(policy.get("class", ""))
+	if seen.has(class_id):
+		_fail("E_DUPLICATE_SHARED_POLICY: '%s' has two shared-model policy entries. One class, one policy — a second entry splits the exclusion list into two homes that drift apart." % class_id)
+		return ""
+	if not hosted.has(class_id):
+		_fail("E_SHARED_POLICY_CLASS: shared-model policy names '%s', which no aggregate registers under hosted_fields. This section classifies leftover fields on SHARED models only; an owned model classifies every field in its own 'fields' map." % class_id)
+		return ""
+	var path := _text(policy.get("path", ""))
+	if path != String(hosted[class_id]):
+		_fail("E_SHARED_POLICY_CLASS: shared-model policy for '%s' declares path '%s', but the aggregate hosting it declares '%s'." % [
+			class_id, path, String(hosted[class_id])])
+	return class_id
+
+
+## One hosted class, closed over: every declared field is claimed or excluded, never both, and no
+## exclusion outlives the field it names.
+func _check_class_closure(
+		class_id: String, corpus: Corpus, claimed: Dictionary, excluded: Dictionary) -> void:
+	for field_value in corpus.order_of.get(class_id, []):
+		var declared_field := String(field_value)
+		if claimed.has(declared_field) or excluded.has(declared_field):
+			continue
+		_fail("E_UNCLASSIFIED_HOSTED_FIELD: %s.%s is mutable and nobody has spoken for it. Claim it in the hosted_fields of the aggregate that owns it, or classify it under shared_model_policies with a reason." % [
+			class_id, declared_field])
+	var declared: Dictionary = corpus.fields_of.get(class_id, {})
+	for field_value in excluded.keys():
+		var field := String(field_value)
+		if claimed.has(field):
+			_fail("E_CLAIMED_AND_EXCLUDED: %s.%s is claimed by an aggregate AND excluded by shared_model_policies. A field is protected or it is not; the exclusion would read as permission to write a protected field." % [
+				class_id, field])
+		elif not declared.has(field):
+			_fail("E_DEAD_EXCLUSION: shared_model_policies excludes %s.%s, which %s no longer declares. Delete the entry — a stale exclusion silently pre-clears the next field to take that name." % [
+				class_id, field, class_id])
+
+
+## One exclusion on its own terms: a classification from the closed vocabulary, a concrete reason,
+## and — for a classification that is a PROMISE — the plan that deletes the entry.
+##
+## The pointer must live under the manifest's `plan_dir` and still resolve. Both halves are load-bearing:
+## without the directory rule any existing file satisfies the check, and without the existence rule a
+## plan that ships and is archived leaves its exclusion looking permanent. `plan_dir` is configured
+## rather than hardcoded so the abstract fixture world can prove the rule without its expectations
+## moving every time a REAL plan is archived.
+func _check_exclusion(symbol: String, entry: Dictionary, plan_dir: String) -> void:
+	var classification := _text(entry.get("classification", ""))
+	if not POLICY_CLASSIFICATIONS.has(classification):
+		_fail("E_SHARED_POLICY_SCHEMA: %s is excluded as '%s'; expected one of %s." % [
+			symbol, classification, str(POLICY_CLASSIFICATIONS.keys())])
+		return
+	if _text(entry.get("why", "")).strip_edges().is_empty():
+		_fail("E_SHARED_POLICY_SCHEMA: %s is excluded with no 'why'. An unexplained exclusion is an unprotected field with paperwork." % symbol)
+		return
+	var plan := _text(entry.get("plan", ""))
+	if plan.is_empty():
+		if bool(POLICY_CLASSIFICATIONS[classification]):
+			_fail("E_SHARED_POLICY_SCHEMA: %s is excluded as '%s', which is a promise, so it must name the plan that takes ownership of the field." % [
+				symbol, classification])
+		return
+	# Normalised before the containment test: `res://docs/plans/../archive/x.md` passes a raw prefix
+	# check while pointing outside plan_dir entirely, which would let an ARCHIVED plan keep an
+	# exclusion alive — the exact failure this rule exists to prevent.
+	plan = plan.simplify_path()
+	if plan_dir.is_empty() or not plan.begins_with("%s/" % plan_dir.simplify_path()):
+		_fail("E_SHARED_POLICY_SCHEMA: %s points at '%s', which is not under the manifest's plan_dir '%s'. Only a live plan can expire, so a pointer anywhere else can never go stale." % [
+			symbol, plan, plan_dir])
+		return
+	if not FileAccess.file_exists(plan):
+		_fail("E_STALE_POLICY_PLAN: %s points at '%s', which no longer exists — a shipped plan is archived out of plan_dir. The exclusion has outlived its reason: claim the field now, or reclassify it." % [
+			symbol, plan])
 
 
 ## scripts/transitions/ is the authority directory. A file living there that no aggregate names is
@@ -1231,7 +1431,42 @@ func _run_self_test() -> void:
 	_check_authority_dir_fixture(manifest, ownership)
 	_check_inert_authority_fixture(manifest, verdict)
 	_check_real_contract_duplicate_self_test()
+	_check_promise_classification_self_test()
+	_check_empty_hosted_self_test(corpus)
 	print("Self-test: %d fixture file(s), %d expected violation(s) reproduced." % [paths.size(), expected.size()])
+
+
+## Proves the table is CONSISTENTLY IMPLEMENTED: every classification it marks a promise really does
+## demand a plan, and every one it does not really demands nothing. So a promise added later cannot
+## arrive unproven.
+##
+## What it deliberately CANNOT prove is the table's CONTENT, because it reads the same table it
+## checks — measured: flipping `order_buffer` back to `false` left this self-test green. That decision
+## is pinned from outside instead, by the bad-manifest fixture that omits an `order_buffer` plan and
+## declares the error it must provoke. Same reason `real_claims_pin.json` exists.
+func _check_promise_classification_self_test() -> void:
+	for classification_value in POLICY_CLASSIFICATIONS.keys():
+		var classification := String(classification_value)
+		var produced := _capture_failures(func() -> void:
+			_check_exclusion(
+				"SelfTest.field",
+				{"classification": classification, "why": "self-test"},
+				"res://docs/plans"))
+		if bool(POLICY_CLASSIFICATIONS[classification_value]):
+			_expect_single_error(produced, "E_SHARED_POLICY_SCHEMA",
+				"promise classification '%s' with no plan" % classification)
+		elif not produced.is_empty():
+			_fail("SELF-TEST: classification '%s' is not marked a promise, yet demanded something anyway: %s." % [
+				classification, str(produced)])
+
+
+## A manifest whose aggregates host nothing would make the whole closure check inert while still
+## printing PASS. The healthy fixture world always hosts a class, so the failing direction is only
+## reachable by re-judging a stripped manifest.
+func _check_empty_hosted_self_test(corpus: Corpus) -> void:
+	var produced := _capture_failures(func() -> void:
+		_check_shared_model_policies({"aggregates": [{"id": "no_hosts"}]}, corpus))
+	_expect_single_error(produced, "E_VACUOUS", "empty hosted-class set")
 
 
 ## Proves the authority-directory rule against a fixture folder, because scripts/transitions/ does
@@ -1302,11 +1537,12 @@ func _statement_start(lines: PackedStringArray, index: int) -> int:
 
 ## Broken-manifest fixtures: each declares the single error code it must provoke. They exercise the
 ## manifest checks the source fixtures cannot reach — dead paths, dead fields, an unclassified field,
-## two aggregates claiming one field, and a missing authority.
+## two aggregates claiming one field, a missing authority, and every way a shared-model policy can be
+## wrong.
 func _check_manifest_error_fixtures(corpus: Corpus) -> void:
 	var fixtures := _files_matching(FIXTURE_DIR, "bad_manifest_", ".json")
-	if fixtures.size() < 8:
-		_fail("SELF-TEST: found %d broken-manifest fixture(s), expected at least 8 — the manifest checks would go unproven." % fixtures.size())
+	if fixtures.size() < 23:
+		_fail("SELF-TEST: found %d broken-manifest fixture(s), expected at least 23 — the manifest checks would go unproven." % fixtures.size())
 	for path in fixtures:
 		var manifest := _read_json(path)
 		var produced := _capture_failures(func() -> void:

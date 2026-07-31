@@ -1,6 +1,6 @@
 {
-  "_doc": "A migration-only aggregate must still name the authority it is migrating toward.",
-  "_expect_error": "E_NO_AUTHORITY",
+  "_doc": "An exclusion naming a field the class no longer declares must fail. A stale exclusion silently pre-clears the next field to take that name.",
+  "_expect_error": "E_DEAD_EXCLUSION",
   "schema_version": 1,
   "scan_roots": [
     "res://tools/fixtures/mutation_authority"
@@ -23,6 +23,10 @@
           "why": "Fixture stand-in for state a later plan takes ownership of — the direction that must name a plan, and that goes stale when the plan is archived.",
           "plan": "res://tools/fixtures/mutation_authority/README.md"
         },
+        "deleted_note": {
+          "classification": "content_config",
+          "why": "Names a field FixtureHost does not declare."
+        },
         "annotated_note": {
           "classification": "content_config",
           "why": "Fixture stand-in proving the member scan sees an `@export_range(...)` declaration; the old @export-only pattern matched it as nothing at all."
@@ -42,10 +46,10 @@
   "aggregates": [
     {
       "id": "fixture_aggregate",
-      "status": "migration",
+      "status": "enforced",
       "planned_authority": null,
-      "authority_class": null,
-      "authority_path": null,
+      "authority_class": "FixtureTransitions",
+      "authority_path": "res://tools/fixtures/mutation_authority/authority.gdfixture",
       "owned_models": [
         {
           "class": "FixtureRow",
