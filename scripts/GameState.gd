@@ -117,15 +117,17 @@ var last_frontline_summary: FrontlineSummary:
 var last_cleanup_summary: CleanupSummary:
 	get: return data.last_cleanup_summary
 	set(value): data.last_cleanup_summary = value
+## Read-only: the schedule is replaced by _rebuild_mobilization_state, not by an assignment here
+## (plan 0048 — the force authority owns this handle along with the model's fields).
 var mobilization_state: MobilizationState:
 	get: return data.mobilization_state
-	set(value): data.mobilization_state = value
 var last_mobilization_summary: MobilizationSummary:
 	get: return data.last_mobilization_summary
 	set(value): data.last_mobilization_summary = value
+## Read-only: the pool and lift budgets are replaced by _rebuild_air_insertion_state, not by an
+## assignment here (plan 0048 — AirInsertionTransitions owns this handle).
 var air_insertion_state: AirInsertionState:
 	get: return data.air_insertion_state
-	set(value): data.air_insertion_state = value
 var last_air_insertion_summary: AirInsertionSummary:
 	get: return data.last_air_insertion_summary
 	set(value): data.last_air_insertion_summary = value
@@ -292,8 +294,8 @@ func resolve_frontline_phase(polyline_coords: Array) -> Dictionary:
 ## Green brigades held in mobilization by the scenario, plus their release schedule (plan 0029
 ## Tier A2). GameData.load_scenario already left them off-map; this only builds the schedule.
 func _rebuild_mobilization_state() -> void:
-	data.mobilization_state = GameStateBuilder.build_mobilization_state(
-		GameData.green_mobilization, GameData.mobilization_holdback)
+	ReinforcementPhases.rebuild_mobilization_state(
+		data, GameData.green_mobilization, GameData.mobilization_holdback)
 
 
 ## Test-called surface (tests/mobilization_*) — pure logic lives in
@@ -305,8 +307,8 @@ func resolve_mobilization_turn() -> MobilizationSummary:
 ## Red battalions waiting to fly plus the per-turn lift budgets (plan 0032). The PLAAF Airborne
 ## Corps is never placed by a scenario, so the pool is simply every unplaced air-lifted Red brigade.
 func _rebuild_air_insertion_state() -> void:
-	data.air_insertion_state = GameStateBuilder.build_air_insertion_state(
-		GameData.red_air_insertion, GameData.brigades)
+	ReinforcementPhases.rebuild_air_insertion_state(
+		data, GameData.red_air_insertion, GameData.brigades)
 
 
 ## Test-called surface (tests/air_insertion_*) — pure logic lives in

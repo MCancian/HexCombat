@@ -1,13 +1,14 @@
 class_name MobilizationResolver
 extends RefCounted
 
-## Pure resolver for the ROC mobilization phase (plan 0029 Tier A2): each turn, release the Green
+## Pure calculator for the ROC mobilization phase (plan 0029 Tier A2): each turn, release the Green
 ## brigades whose mobilization is complete onto the map. Consumes NO dice — release is a schedule,
 ## not a roll — so a scenario that holds nobody back is byte-identical to the pre-0029 engine.
 ##
-## Purity boundary: this computes the outcome (MobilizationSummary) but does NOT mutate
-## MobilizationState or GameData force fields. The CALLER (ReinforcementPhases) applies the
-## mutations via ForceTransitions.
+## Purity boundary: this computes the outcome (MobilizationSummary) but writes NOTHING — not
+## MobilizationState, not GameData force fields, nothing that outlives the call. It lives under
+## scripts/calc/ for exactly that reason (plan 0048). `ReinforcementPhases` hands what it returns to
+## `ForceTransitions`, which owns every field of MobilizationState.
 ##
 ## Live map knowledge enters through the `arrival_hex_for` Callable so no autoload is touched here.
 

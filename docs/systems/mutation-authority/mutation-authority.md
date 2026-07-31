@@ -86,7 +86,7 @@ So: prefer a distinctive name, check `grep -rn "\.<name>\s*=" scripts/ tools/` b
 and **keep the serialized key unchanged** — rename the field, not the `to_dict()` key, or every
 fixture and game record moves.
 
-## 5. The four ordering traps
+## 5. The ordering traps
 
 - **An authority file cannot exist before it is registered.** `_check_authority_dir` fails
   `E_UNREGISTERED_AUTHORITY_FILE` for any file under `scripts/transitions/` that no aggregate names as
@@ -111,6 +111,22 @@ fixture and game record moves.
   `order_buffer`) must name a plan file under the manifest's `plan_dir` that still resolves, so
   **archiving the plan that shipped it turns the exclusion red on purpose** — closing out a plan means
   clearing its exclusions in the same commit.
+- **When two authorities share one model, whichever commits FIRST decides where the refusals must
+  go.** Plan 0048 split `AirInsertionState`: `ForceTransitions` drains the pool, applies roster losses
+  and places brigades; `AirInsertionTransitions` then erodes the lift and appends the log. The force
+  commit is irreversible, so a refusal in the SECOND authority leaves the roster moved and the ledger
+  unwritten — a partial write that no single authority's guards can see. The fix is not ordering, it
+  is a **preflight predicate**: the second authority exposes `can_<operation>(...)` sharing one private
+  helper with its guard, the coordinator asks it BEFORE calling the first authority, and a refusal
+  then costs nothing because nothing has been written. Adding an authority to a model another one
+  already writes means auditing this even when the field sets are disjoint.
+- **A new authority costs its caller a dependency, and its REQUEST TYPE costs a second one — unless
+  the factory lives on the authority.** Plan 0048 needed `AirInsertionTransitions` plus an
+  `AirLiftRequest` from a coordinator with zero headroom. Putting `lift_request()` on the authority
+  (as `ForceTransitions` already does with `ground_combat_casualty_request`) means `var x :=
+  Authority.factory(...)` names one class, not two: `tools/gd_metrics.py` counts `class_name` tokens
+  appearing literally in the file, so a type reached only through another file's declared return type
+  is free. Worth knowing before concluding a ceiling cannot be met.
 - **Allowances must stay live.** `construction_writers` are for fresh, unpublished objects only;
   an allowance that no longer writes anything fails `E_STALE_ALLOWANCE`, so removing the last write
   means removing the entry.
@@ -151,6 +167,17 @@ house shape:
   one label per entity cannot express that, and a planner reading the pre-tick snapshot in both
   branches silently adds a turn. Splitting calculate-from-apply does not mean evaluating everything
   against the starting state.
+- **Take the calculator's ROWS, not its post-state.** Plan 0048's first draft had the authority accept
+  `AirInsertionSummary.caps_after` — the budget the resolver had already computed — and guard that it
+  had only fallen. A reviewer pointed out what that shape actually permits: a plausible cap decrease
+  with no corresponding loss, and a log that disagrees with the erosion, because the two arrive as
+  separate inputs. Taking the per-packet rows instead and DERIVING the new budget from them
+  (`caps[c] = max(0, caps[c] - lost)`, the resolver's own arithmetic) makes "the cap fell by exactly
+  the reported losses" true by construction, makes the log and the erosion literally the same array,
+  and deletes the guard entirely — a raised cap stops being refused and becomes unexpressible. Generic
+  rule: **when an authority could either re-derive a value or be handed it, re-deriving is what turns
+  a checked invariant into an absent one.** The calculator's post-state stays report-only; pin that
+  the two agree.
 - **Apply where the old assignment was, when a later decision reads it.** Deferring application to
   end-of-phase is only safe when nothing downstream in the same pass reads the written state. Two
   measured counter-examples: IJFS stages consume dice conditionally on state an earlier stage wrote
@@ -159,13 +186,13 @@ house shape:
 
 ## 7. Maintaining this doc
 
-**Every remaining campaign plan (0048, 0049, 0050) updates this file at closeout** — it is in the
+**Every remaining campaign plan (0049, 0050) updates this file at closeout** — it is in the
 ownership table in `hexcombat-docs-and-writing`, so the check is mechanical, not a thing to remember.
 Add only what generalizes:
 
 - a **new ordering trap** in §5 — something that made the gate red in a way the existing rules did not
   predict;
-- a **new authority shape** in §6 — a situation the two worked examples do not cover;
+- a **new authority shape** in §6 — a situation the worked examples do not cover;
 - a **field-naming casualty** in §4, with the measured cost.
 
 Do **not** add per-aggregate ownership facts (the manifest holds those), per-plan narrative (the
@@ -174,8 +201,8 @@ holds those). This doc was written from one plan's experience and is deliberatel
 carries is stale *prose* over valid anchors, which `tools/validate_doc_anchors.gd` cannot catch.
 
 Open extraction task: plans 0042–0046 are archived with their own review rounds and retrospectives,
-and their generalizable lessons were never consolidated here. §5 and §6 currently reflect 0046 and
-0047 only.
+and their generalizable lessons were never consolidated here. §5 and §6 currently reflect 0046, 0047
+and 0048 only.
 
 ## 8. State & authority
 

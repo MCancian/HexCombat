@@ -111,7 +111,7 @@ PARAM_CEILINGS = {
     "scripts/ijfs/IjfsStrike.gd::resolve_strike": 9,
     "scripts/ijfs/IjfsTargeting.gd::apply_exquisite_intel": 6,
     "scripts/ijfs/IjfsTargeting.gd::select_munition_with_doctrine": 8,
-    "scripts/resolvers/AirInsertionResolver.gd::resolve": 7,
+    "scripts/calc/AirInsertionResolver.gd::resolve": 7,
     "scripts/resolvers/CleanupResolver.gd::resolve": 6,
     "scripts/resolvers/IjfsResolver.gd::build_warmup_context": 8,
     "scripts/resolvers/OffloadResolver.gd::resolve": 8,

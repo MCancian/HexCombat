@@ -1,14 +1,17 @@
 class_name AirInsertionResolver
 extends RefCounted
 
-## Pure resolver for the air insertion phase (plan 0032) — the PLA's non-amphibious path onto
+## Pure calculator for the air insertion phase (plan 0032) — the PLA's non-amphibious path onto
 ## Taiwan. Each turn it flies the ordered brigades' battalions out of AirInsertionState.pool, up to
 ## a per-lift-class budget, rolls each battalion against the air-defence environment, and reports
 ## which ones came down alive and where.
 ##
-## Purity boundary: this computes the outcome (summary + landings) but does NOT mutate
-## AirInsertionState or GameData force fields. The CALLER (ReinforcementPhases) applies the
-## mutations via ForceTransitions, then performs companion updates (caps erosion, history).
+## Purity boundary: this computes the outcome (summary + landings) but writes NOTHING — not
+## AirInsertionState, not GameData force fields, nothing that outlives the call. It lives under
+## scripts/calc/ for exactly that reason (plan 0048). `ReinforcementPhases` hands what it returns to
+## the two authorities that share the model: `ForceTransitions` for who moved,
+## `AirInsertionTransitions` for what the lift cost. `caps_after` here is REPORT-ONLY — the authority
+## derives the applied budget from the drop rows rather than copying it.
 ##
 ## Dice: ONE derived substream per turn (`air_insertion:<turn>`), consumed only when a packet
 ## actually flies. No orders => no derive, no draws => the golden stream is untouched.

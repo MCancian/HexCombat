@@ -1,6 +1,10 @@
 {
   "_doc": "Non-authoritative regression oracle for the real ownership manifest. The validator compares this sorted claim identity set exactly on every run, so deleting, reassigning, or changing owned_models <-> hosted_fields cannot silently weaken protection. The scanner NEVER reads this file as ownership. Update it only with the same reviewed change that intentionally changes tools/mutation_authority_manifest.json.",
   "claims": [
+    "air_insertion|hosted_fields|AirInsertionState.caps",
+    "air_insertion|hosted_fields|AirInsertionState.history",
+    "air_insertion|hosted_fields|AirInsertionState.initial_caps",
+    "air_insertion|hosted_fields|GameStateData.air_insertion_state",
     "antiship_establishment|hosted_fields|GameStateData._antiship_built",
     "antiship_establishment|hosted_fields|GameStateData._antiship_launch_turn",
     "antiship_establishment|hosted_fields|GameStateData.antiship_containers",
@@ -34,6 +38,7 @@
     "force|hosted_fields|Brigade.moved_this_turn",
     "force|hosted_fields|Brigade.organization",
     "force|hosted_fields|GameDataStore.brigades_by_hex",
+    "force|hosted_fields|GameStateData.mobilization_state",
     "force|hosted_fields|GameStateData.ship_reserve",
     "force|hosted_fields|SealiftCohort.bn_ids",
     "force|hosted_fields|SealiftState.cohorts",

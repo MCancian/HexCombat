@@ -403,7 +403,7 @@ static func _air_insertion_observation() -> Dictionary:
 ## suppressing more air defence first lowers the real number.
 static func _estimated_insertion_attrition() -> Dictionary:
 	var threat := AirInsertionResolver.threat_from_ijfs_summary(_game_state().last_ijfs_summary)
-	var config := AirInsertionStateBuilder.attrition_config(_game_data().red_air_insertion)
+	var config: Dictionary = _game_data().air_insertion_attrition_config()
 	var estimates: Dictionary = {}
 	for lift_class in LiftClass.ALL:
 		estimates[lift_class] = AirInsertionResolver.attrition_rate(

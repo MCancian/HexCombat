@@ -8,9 +8,11 @@ extends RefCounted
 ##
 ## `TurnConductor` keeps the ORDERING (the when); this module only owns the how. Same contract as
 ## every other resolver: static, first argument `state: GameStateData` mutated in place, reads the
-## GameData content autoload but never the GameState autoload singleton. Every force write is applied
-## by `ForceTransitions` and every hull/fleet write by `SealiftTransitions`; the resolvers below only
-## calculate transition plans.
+## GameData content autoload but never the GameState autoload singleton. Every write is applied by the
+## aggregate's authority — `ForceTransitions`, `SealiftTransitions`, `InfrastructureTransitions`,
+## `AirInsertionTransitions` — and the resolvers below only calculate transition plans. Which fields
+## each of those owns is in tools/mutation_authority_manifest.json and is deliberately not repeated
+## here.
 
 
 # --- Sealift phase (plan 0004) -----------------------------------------------------------------
@@ -31,6 +33,21 @@ static func rebuild_fleet(state: GameStateData, ship_defs: Dictionary) -> void:
 ## module that owns the phase, never around it, and so keeps its own dependency ceiling.
 static func rebuild_infrastructure(state: GameStateData, infra_defs: Dictionary) -> void:
 	InfrastructureTransitions.rebuild_infrastructure(state, infra_defs)
+
+
+## Scenario reset of the ROC mobilization schedule, for GameState's reset_to_scenario. Same
+## pass-through shape and reason as the two above. `MobilizationState`'s fields are the force
+## aggregate's (plan 0044), so the handle is installed by that authority too.
+static func rebuild_mobilization_state(
+		state: GameStateData, config: Dictionary, holdback: Array) -> void:
+	ForceTransitions.rebuild_mobilization_state(state, config, holdback)
+
+
+## Scenario reset of the air-insertion pool and lift budgets, for GameState's reset_to_scenario.
+## Same pass-through shape and reason as the three above.
+static func rebuild_air_insertion_state(
+		state: GameStateData, config: Dictionary, brigades: Dictionary) -> void:
+	AirInsertionTransitions.rebuild_air_insertion_state(state, config, brigades)
 
 
 ## Advance the ship return pipeline and embark this turn's crossing wave. Dice-free and pure
@@ -257,9 +274,14 @@ static func hex_can_receive_mobilized(hex_id: String) -> bool:
 # --- Air insertion (plan 0032) — Red's non-amphibious reinforcement phase ----------------------
 
 ## Fly this turn's ordered battalions onto the island. The resolver decides who flies, who dies and
-## what the lift loses; this wrapper owns building the typed request, calling ForceTransitions to
-## apply force mutations, then performing companion updates (caps erosion, history append, ownership
-## recompute) and the EventBus emit.
+## what the lift loses; this wrapper coordinates the TWO authorities that share AirInsertionState —
+## ForceTransitions for who moved, AirInsertionTransitions for what the lift cost — then recomputes
+## ownership and emits.
+##
+## Both authorities are PREFLIGHTED before either writes. The force commit is irreversible (it drains
+## the pool, applies roster losses and places brigades), so a lift-ledger refusal discovered after it
+## would leave the roster moved and the lift unspent. Asking `can_record_insertions` first means a
+## refusal costs nothing.
 ##
 ## The air-defence picture comes from THIS turn's IJFS summary (post-strike), so suppressing SAMs
 ## before dropping visibly pays off; the MANPADS layer is read separately because it is deliberately
@@ -268,13 +290,31 @@ static func resolve_air_insertion_turn(state: GameStateData, dice: Dice) -> AirI
 	var outcome := AirInsertionResolver.resolve(
 		state.air_insertion_state, state.air_insert_orders, state.turn_number,
 		AirInsertionResolver.threat_from_ijfs_summary(state.last_ijfs_summary),
-		AirInsertionStateBuilder.attrition_config(GameData.red_air_insertion),
+		GameData.air_insertion_attrition_config(),
 		func(hex_id: String) -> bool: return hex_can_receive_insertion(hex_id),
 		dice)
 	var summary: AirInsertionSummary = outcome["summary"]
 	state.air_insert_orders = []
 	var landings: Array = outcome["landings"]
 	if landings.is_empty():
+		EventBus.air_insertion_resolved.emit(summary.to_dict())
+		return summary
+
+	# The two authorities receive two independently shaped requests built from ONE resolver outcome:
+	# force gets the landings, lift gets the drops. `AirInsertionResolver._append_drop` emits both in
+	# the same call, so they are 1:1 by construction — but neither authority can see the other's
+	# request, so nothing downstream would notice if that ever stopped being true. A count mismatch
+	# here means force would move battalions no drop paid lift for, so it is checked where both are
+	# still visible, before either commits.
+	if summary.drops.size() != landings.size():
+		push_error("Air insertion: %d drop(s) but %d landing(s); refusing to apply either" % [
+			summary.drops.size(), landings.size()])
+		EventBus.air_insertion_resolved.emit(summary.to_dict())
+		return summary
+
+	var lift := AirInsertionTransitions.lift_request(state.turn_number, summary.drops)
+	if not AirInsertionTransitions.can_record_insertions(state.air_insertion_state, lift):
+		push_error("AirInsertionTransitions refused the lift ledger; no force mutation applied")
 		EventBus.air_insertion_resolved.emit(summary.to_dict())
 		return summary
 
@@ -285,18 +325,7 @@ static func resolve_air_insertion_turn(state: GameStateData, dice: Dice) -> AirI
 		EventBus.air_insertion_resolved.emit(summary.to_dict())
 		return summary
 
-	# Companion updates: caps erosion and history (NOT part of the force aggregate).
-	state.air_insertion_state.caps = summary.caps_after.duplicate()
-	for drop_value in summary.drops:
-		var drop: Dictionary = drop_value
-		state.air_insertion_state.history.append({
-			"turn": state.turn_number,
-			"brigade_id": String(drop["brigade_id"]),
-			"lift_class": String(drop["lift_class"]),
-			"hex_id": String(drop["hex_id"]),
-			"landed": int(drop["landed"]),
-			"lost": int(drop["lost"]),
-		})
+	AirInsertionTransitions.record_insertions(state.air_insertion_state, lift)
 	GameData.recompute_hex_ownership()
 	EventBus.air_insertion_resolved.emit(summary.to_dict())
 	return summary

@@ -21,8 +21,9 @@ This is the defender-side answer to the research question in `docs/plans/0029-dy
 | `scripts/model/MobilizationState.gd` | `MobilizationState` (Resource). Cross-turn state: `pending` (brigades still forming, each `{brigade_id, garrison_hex, release_turn}`) and `released` (arrival log). `pending_battalions()` sums the off-map force. |
 | `scripts/model/MobilizationSummary.gd` | `MobilizationSummary` (Resource). Per-turn result: `arrivals`, `deferred`, `battalions_arrived`, `pending_brigades`, `pending_battalions`. `to_dict()` is the JSON contract. |
 | `scripts/builders/MobilizationStateBuilder.gd` | Pure builder. `select_held_back()` picks WHICH brigades start off-map; `build()` turns that list into the release schedule. |
-| `scripts/resolvers/MobilizationResolver.gd` | Pure resolver. `resolve()` releases due brigades; `find_arrival_hex()` is the BFS fallback when a garrison hex is overrun. Consumes no dice. |
-| `scripts/phases/ReinforcementPhases.gd` | `resolve_mobilization_turn()` — the wrapper: applies `GameData.set_brigade_hex`, appends IJFS targets, recomputes ownership, emits `EventBus.mobilization_resolved`. `hex_can_receive_mobilized()` is the arrival-site rule. |
+| `scripts/calc/MobilizationResolver.gd` | Pure resolver. `resolve()` releases due brigades; `find_arrival_hex()` is the BFS fallback when a garrison hex is overrun. Consumes no dice. |
+| `scripts/phases/ReinforcementPhases.gd` | `resolve_mobilization_turn()` — the coordinator: hands the summary's force request to `ForceTransitions.release_mobilized_brigades`, appends IJFS targets, recomputes ownership, emits `EventBus.mobilization_resolved`. `hex_can_receive_mobilized()` is the arrival-site rule. `rebuild_mobilization_state()` is the reset pass-through. |
+| `scripts/transitions/ForceTransitions.gd` | The authority: `release_mobilized_brigades()` drains `pending`, appends `released` and places the brigades in one transaction; `rebuild_mobilization_state()` installs a fresh schedule at scenario reset. |
 | `scripts/GameData.gd` | Parses the scenario `green_mobilization` block into `green_mobilization`; `load_scenario` computes `mobilization_holdback` BEFORE the placement loop and leaves those brigades off-map. |
 | `scripts/GameState.gd` | Holds `mobilization_state` / `last_mobilization_summary` (on `GameStateData`), `_rebuild_mobilization_state()` at scenario reset. |
 | `scripts/resolvers/IjfsResolver.gd` | `add_maneuver_targets()` — append-only IJFS targets for brigades that just arrived. |
@@ -120,3 +121,13 @@ golden-touching decision — see `docs/plans/BACKLOG.md`.
 
 No TIV oracle: TaiwanInvasionViewer has no mobilization model (its ROC laydown is static). This is
 HexCombat design, settled with the USER on 2026-07-24 — see `docs/DECISIONS.md`.
+
+## 9. State & authority
+
+This subsystem mutates the **`force`** aggregate; its designated authority is `ForceTransitions`,
+which owns every field of `MobilizationState` (plan 0044) and the `mobilization_state` handle on the
+turn state (plan 0048). There is deliberately no mobilization authority of its own: an authority
+class whose only field were a handle to another authority's model would be one in name only.
+
+- **Outcome/receipt types:** `MobilizationSummary` → `ForcePlacementReceipt`.
+- **Manifest:** [tools/mutation_authority_manifest.json](../../../tools/mutation_authority_manifest.json) — the field lists live there and are deliberately not repeated here.

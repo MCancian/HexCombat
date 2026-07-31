@@ -193,6 +193,7 @@ manifest is the authoritative record, this table is the index. Procedure for add
 | `ijfs` | `IjfsTransitions.gd` | 0046 | `IjfsTarget`/`IjfsMunition`/`IjfsSquadron`, the three cross-day `IjfsDailyState` containers, the `ijfs_state`/`_ijfs_day` handles |
 | `map` | `MapTransitions.gd` | 0047 | `HexState.hex_owner`/`feba_km` and the `GameDataStore.hex_states` container. **Zero allowances** — construction routes through the authority too |
 | `infrastructure` | `InfrastructureTransitions.gd` | 0047 | `InfrastructureNodeState` lifecycle (status, repair clock, JLSF marker), the `nodes` container, the `infrastructure_state` handle |
+| `air_insertion` | `AirInsertionTransitions.gd` | 0048 | `AirInsertionState.caps`/`initial_caps`/`history` — the airframe ledger and the drop log — plus the `air_insertion_state` handle. Who is in the pool and who has landed stay with `force`: one model, two authorities, disjoint fields |
 
 Two lessons from 0046 generalize and are now in the procedure doc. First, **a protected field NAME is
 claimed repo-wide**, so registering a generic one poisons unrelated code — `IjfsMunition.name` turned

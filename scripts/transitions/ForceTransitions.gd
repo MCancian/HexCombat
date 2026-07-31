@@ -493,6 +493,16 @@ static func initialize_ship_reserve(state: GameStateData, reserve: Array) -> voi
 	state.ship_reserve = reserve
 
 
+## Install the mobilization schedule a scenario reset produces (plan 0048). This aggregate already
+## owns every field of `MobilizationState`, so the handle lives here rather than in an authority of
+## its own — the same reasoning that puts `infrastructure_state` with the node fields. Built here
+## rather than accepted from the caller, so there is no seam for handing this aggregate a schedule it
+## did not derive from scenario content.
+static func rebuild_mobilization_state(
+		state: GameStateData, config: Dictionary, holdback: Array) -> void:
+	state.mobilization_state = MobilizationStateBuilder.build(config, holdback)
+
+
 static func reset_placement_index(data_store: GameDataStore) -> void:
 	data_store.brigades_by_hex.clear()
 

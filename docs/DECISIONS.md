@@ -19,6 +19,21 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-30 — Air-insertion lift gets its own authority; mobilization does not (agent, reviewed).**
+  Plan 0048's Sketch specified two authorities. Preflight against the tree dissolved one: plan 0044
+  already owns every field of `MobilizationState`, so a `MobilizationTransitions` would have owned
+  nothing but the handle — that joined `force` instead, matching how `infrastructure_state` sits with
+  its node fields. `AirInsertionTransitions` owns the airframe ledger and the state handle while
+  `ForceTransitions` keeps the pool and who has landed: one model, two authorities, disjoint fields.
+  Review changed the shape twice — the authority now DERIVES cap erosion from the resolver's packet
+  rows rather than accepting its `caps_after` (a raised cap became unexpressible instead of guarded),
+  and both authorities are preflighted before either writes, because the force commit cannot be rolled
+  back. The dependency ceiling was paid for, not raised. Facts:
+  `tools/mutation_authority_manifest.json`, `docs/STATUS.md`,
+  `docs/systems/air-insertion/air-insertion.md` §10, `docs/systems/roc-mobilization/roc-mobilization.md` §9,
+  `docs/systems/mutation-authority/mutation-authority.md` §5/§6,
+  `docs/archive/0048-reinforcement-state-mutation-authority.md`.
+
 - **2026-07-30 — Shared models are closed-world; three orphan fields pointed at the closeout (agent
   + USER).** `hosted_fields` was open-world, so a field added to `GameStateData` was unprotected and
   silent about it. Every class an aggregate hosts now accounts for every mutable field it declares —

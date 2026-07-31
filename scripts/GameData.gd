@@ -488,6 +488,17 @@ func get_hex(hex_id: String) -> Hex:
 	return hex_lookup.get(hex_id, null)
 
 
+## The air path's attrition coefficients, defaulted, for AirInsertionResolver.resolve (plan 0048).
+##
+## Parsed ON DEMAND rather than cached at load. The coefficients cannot change during a game — all
+## five air-insertion knobs are `scenario:` paths applied before this block is read — so a cached
+## field would not go stale, but it would move the unknown-key `push_error` from resolution time to
+## load time for no reason beyond a caller's dependency budget. Reaching the parser through here is
+## what lets `ReinforcementPhases` stop naming `AirInsertionStateBuilder` at all.
+func air_insertion_attrition_config() -> Dictionary:
+	return AirInsertionStateBuilder.attrition_config(red_air_insertion)
+
+
 func get_neighbors(hex_id: String) -> Array:
 	return neighbor_lookup.get(hex_id, [])
 

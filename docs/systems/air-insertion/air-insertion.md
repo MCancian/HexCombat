@@ -55,8 +55,10 @@ cannot fly while the rest of the formation sails.
 | `scripts/model/AirInsertionState.gd` | Cross-turn state: `pool` (battalions waiting to fly, `{brigade_id, lift_class, bns}`), `caps` / `initial_caps` (the airframe ledger), `first_turn`, `landed`, `history`. `eligible_orders(brigades, pending)` builds the order-legality list without touching a singleton. |
 | `scripts/model/AirInsertionSummary.gd` | Per-turn result: `drops`, `rejected`, battalion/cap totals, `attrition_by_class`. `to_dict()` projects drops onto `DROP_REPORT_KEYS` — the per-battalion manifests are application detail, not contract. |
 | `scripts/builders/AirInsertionStateBuilder.gd` | Pure builder: pool from the OOB, caps and `attrition_config` from the scenario block. Unknown config keys fail loud. |
-| `scripts/resolvers/AirInsertionResolver.gd` | Pure resolver: `resolve()` flies the packets, `attrition_rate()` is the loss model, `threat_from_ijfs_summary()` is the one place that knows which IJFS fields the air path reads, `isolated_brigades()` is the supply-corridor flood. |
-| `scripts/phases/ReinforcementPhases.gd` | `resolve_air_insertion_turn()` (the wrapper: casualties, landings, ownership, EventBus), `hex_can_receive_insertion()`, `isolated_air_landed_brigades()`, `red_lodgement_hexes()`. |
+| `scripts/calc/AirInsertionResolver.gd` | Pure resolver: `resolve()` flies the packets, `attrition_rate()` is the loss model, `threat_from_ijfs_summary()` is the one place that knows which IJFS fields the air path reads, `isolated_brigades()` is the supply-corridor flood. |
+| `scripts/transitions/AirInsertionTransitions.gd` | The lift aggregate's authority (plan 0048): `record_insertions()` erodes the budget and appends the log as one job, `can_record_insertions()` is the preflight, `rebuild_air_insertion_state()` is the scenario reset. No setters; cap erosion is derived, never assigned. |
+| `scripts/model/AirLiftRequest.gd` | Typed input for the authority — the packet rows, not a finished budget. Built via `AirInsertionTransitions.lift_request()`. |
+| `scripts/phases/ReinforcementPhases.gd` | `resolve_air_insertion_turn()` (the coordinator: preflights both authorities, applies force then lift, recomputes ownership, emits), `hex_can_receive_insertion()`, `isolated_air_landed_brigades()`, `red_lodgement_hexes()`. |
 | `scripts/resolvers/OrderValidator.gd` | `add_air_insert_order()` + `eligible_air_insert_brigades()`. |
 | `scripts/resolvers/CleanupResolver.gd` | `census()` subtracts battalions not yet ashore — from the ship reserve **and** the air pool. |
 | `scripts/builders/SealiftStateBuilder.gd` | Excludes air-lifted brigades from the follow-on auto-seed (the corps never queues for a hull). |
@@ -64,6 +66,7 @@ cannot fly while the rest of the formation sails.
 | `scripts/LLMGameAPI.gd` | `_air_insertion_observation()` + the `air_insert` action. |
 | `tools/validate_air_insertion.gd` | End-to-end gate coverage on `red_airborne`. |
 | `tests/air_insertion_resolver_test.gd`, `tests/air_insertion_builder_test.gd`, `tests/air_insertion_order_test.gd` | Pure unit coverage: caps, attrition, cap erosion, order legality, supply corridor. |
+| `tests/transitions/air_insertion_transitions_test.gd`, `tests/transitions/air_insertion_authority_characterization_test.gd` | The authority's own refusals, and the whole-phase behaviours plan 0048 routed through it. |
 
 ## 4. Scenario configuration
 
@@ -175,11 +178,21 @@ resolved turn's picture, `pending_*`, `landed`, `history`.
 
 ## 10. State & authority
 
-This subsystem mutates the **`force`** aggregate. Its designated authority is `ForceTransitions`.
-- **Outcome/receipt types:** `ForceAirInsertionReceipt`.
-- **Manifest:** [tools/mutation_authority_manifest.json](../../../tools/mutation_authority_manifest.json).
+`AirInsertionState` is shared by **two** aggregates, split by disjoint fields (plan 0048):
+
+| Aggregate | Authority | Owns here | Outcome/request types |
+|---|---|---|---|
+| `force` | `ForceTransitions` | who is in the pool, who has landed, plus the roster and placement effects | `ForceAirInsertionRequest` → `ForceAirInsertionReceipt` |
+| `air_insertion` | `AirInsertionTransitions` | the lift budget, the budget it started with, the insertion log, and the state handle | `AirLiftRequest` |
+
+- **Manifest:** [tools/mutation_authority_manifest.json](../../../tools/mutation_authority_manifest.json) — the field lists live there and are deliberately not repeated here.
 
 **Rules:**
 - Inserted battalions are removed from the air pool.
 - Survivors are placed ashore; losses shrink the roster.
 - First placement on the map occurs only if at least one battalion lands.
+- A lost battalion permanently destroys one battalion of lift. The authority DERIVES that erosion from
+  the packet rows, so a raised cap is not refused — it cannot be expressed. `AirInsertionSummary`'s
+  `caps_after` is report-only.
+- Both authorities are preflighted before either writes, because the force commit is irreversible: a
+  lift-ledger refusal discovered after it would leave the roster moved and the lift unspent.

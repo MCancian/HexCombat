@@ -56,19 +56,9 @@
           "why": "The SealiftState handle. Its siblings `fleet`, `ijfs_state` and `infrastructure_state` ARE claimed by their aggregates; this one is not, and both GameState.reset and ReinforcementPhases (which swaps a temporary sealift in and the campaign one back) write it. USER call 2026-07-30: the closeout audit moves those writers, so the asymmetry is recorded here rather than closed by a migration this change is not allowed to make.",
           "plan": "res://docs/plans/0050-mutation-authority-enforcement-closeout.md"
         },
-        "mobilization_state": {
-          "classification": "planned_transitional",
-          "why": "The MobilizationState handle; plan 0048 builds MobilizationTransitions over that aggregate and the handle goes with it. GameState.reset is its only writer today.",
-          "plan": "res://docs/plans/0048-reinforcement-state-mutation-authority.md"
-        },
         "last_mobilization_summary": {
           "classification": "phase_output",
           "why": "The mobilization phase's report for the turn just resolved: replaced wholesale by the phase that produced it, cleared at reset, and read only by serialization/observation (TurnEventLog / TurnResult). Not an evolving quantity, so there is no transition to protect."
-        },
-        "air_insertion_state": {
-          "classification": "planned_transitional",
-          "why": "The AirInsertionState handle; plan 0048 builds AirInsertionTransitions over that aggregate. GameState.reset is its only writer today.",
-          "plan": "res://docs/plans/0048-reinforcement-state-mutation-authority.md"
         },
         "last_air_insertion_summary": {
           "classification": "phase_output",
@@ -430,24 +420,9 @@
       "path": "res://scripts/model/AirInsertionState.gd",
       "_doc": "The force aggregate protects the pool and the landed list (plan 0044). The lift capacity and the insertion ledger on the same object are plan 0048's AirInsertionTransitions.",
       "non_authority_fields": {
-        "caps": {
-          "classification": "planned_transitional",
-          "why": "Current per-class lift capacity, written by ReinforcementPhases from the insertion summary. Plan 0048 names AirInsertionTransitions as its only writer and adds the '0 <= current <= initial, never rises' invariant.",
-          "plan": "res://docs/plans/0048-reinforcement-state-mutation-authority.md"
-        },
-        "initial_caps": {
-          "classification": "planned_transitional",
-          "why": "Establishment lift capacity, written today only by AirInsertionStateBuilder. Plan 0048 names it explicitly alongside `caps` because it is the bound the cap invariant is measured against.",
-          "plan": "res://docs/plans/0048-reinforcement-state-mutation-authority.md"
-        },
         "first_turn": {
           "classification": "identity_construction_only",
           "why": "Earliest turn air insertion may run, read from the scenario by AirInsertionStateBuilder.build() and never written again."
-        },
-        "history": {
-          "classification": "planned_transitional",
-          "why": "Append-only insertion ledger, appended by ReinforcementPhases. Plan 0048 names it as an AirInsertionTransitions field and requires it to chain in resolution order and agree with the applied packet receipt.",
-          "plan": "res://docs/plans/0048-reinforcement-state-mutation-authority.md"
         }
       }
     },
@@ -623,9 +598,10 @@
         {
           "class": "GameStateData",
           "path": "res://scripts/model/GameStateData.gd",
-          "_doc": "Plan 0044 SEA-TRANSPORT remainder: ship_reserve troop membership (BN ids in entries) is protected. JLSF cargo pseudo-entries (cargo='jlsf') are companion and exempt from force validation.",
+          "_doc": "Plan 0044 SEA-TRANSPORT remainder: ship_reserve troop membership (BN ids in entries) is protected. JLSF cargo pseudo-entries (cargo='jlsf') are companion and exempt from force validation. Plan 0048 added the MobilizationState handle: this aggregate already owns every field of that model, so the handle lives with its contents rather than in an authority of its own — the same reasoning that puts infrastructure_state with the node fields.",
           "fields": {
-            "ship_reserve": "campaign"
+            "ship_reserve": "campaign",
+            "mobilization_state": "campaign"
           }
         },
         {
@@ -1025,6 +1001,45 @@
         }
       ],
       "construction_writers": [],
+      "legacy_writers": []
+    },
+    {
+      "id": "air_insertion",
+      "summary": "The PLAAF air path's LIFT (plan 0048): the per-lift-class battalions-per-turn budget, the budget it started with, the append-only insertion log, and the AirInsertionState handle GameStateData holds. Who is in the pool and who has landed belongs to the 'force' aggregate (plan 0044) — one model, two authorities, split by disjoint fields, exactly as SealiftCohort splits troops from hulls. This authority never moves a battalion, and the force authority never touches a cap. Cap erosion is DERIVED from the resolver's packet rows rather than assigned, so a raised cap is not merely refused, it is unexpressible.",
+      "status": "enforced",
+      "authority_class": "AirInsertionTransitions",
+      "authority_path": "res://scripts/transitions/AirInsertionTransitions.gd",
+      "owned_models": [],
+      "hosted_fields": [
+        {
+          "class": "AirInsertionState",
+          "path": "res://scripts/model/AirInsertionState.gd",
+          "_doc": "The lift half of the model: what a class can still fly, what it could fly at H-hour, and the log of every packet. pool and landed on the same model are the force aggregate's. first_turn is scenario identity written once at build and is excluded under shared_model_policies rather than claimed — it participates in no invariant this authority enforces. Lifetimes: campaign = persists across turns.",
+          "fields": {
+            "caps": "campaign",
+            "initial_caps": "campaign",
+            "history": "campaign"
+          }
+        },
+        {
+          "class": "GameStateData",
+          "path": "res://scripts/model/GameStateData.gd",
+          "_doc": "The AirInsertionState handle itself. Replacing it is a scenario reset, which routes through AirInsertionTransitions.rebuild_air_insertion_state, so the host file earns no writer exemption. air_insert_orders on the same model is an ORDER BUFFER, not lift state, and belongs to plan 0049.",
+          "fields": {
+            "air_insertion_state": "campaign"
+          }
+        }
+      ],
+      "construction_writers": [
+        {
+          "path": "res://scripts/builders/AirInsertionStateBuilder.gd",
+          "why": "build() sets the initial lift budgets on a FRESH AirInsertionState from scenario data before anything holds it. Replacing a LIVE state goes through AirInsertionTransitions.rebuild_air_insertion_state, which calls this builder rather than accepting a caller-built state.",
+          "fields": [
+            "AirInsertionState.caps",
+            "AirInsertionState.initial_caps"
+          ]
+        }
+      ],
       "legacy_writers": []
     }
   ]
