@@ -44,8 +44,10 @@ DEP_CEILINGS = {
     # deleted; measured deps stayed flat because the remaining typed forwarding surface dominates.
     "scripts/GameState.gd": 29,
     # TurnConductor.gd legitimately depends on every phase resolver it orchestrates (IjfsResolver,
-    # SealiftResolver, AntishipResolver, OffloadResolver, InfrastructureResolver, SupplyResolver,
-    # CleanupResolver, FrontlineResolver, CombatResolver, …) — that is cohesion, not lamination.
+    # OffloadResolver, InfrastructureResolver, CleanupResolver, FrontlineResolver, CombatResolver, …)
+    # — that is cohesion, not lamination. (Historically this list also named SealiftResolver,
+    # AntishipResolver and SupplyResolver; the first two moved to scripts/calc/ and SupplyResolver was
+    # dissolved in 0049, and most of the fan-out now reaches TurnConductor through the phase modules.)
     # Ceiling here catches it acquiring UNRELATED responsibilities (the god-object failure mode),
     # not the resolver fan-out that is its actual job. Measured 32 at commit time.
     # 36 -> 38 (plan 0032): AirInsertionResolver + AirInsertionStateBuilder, i.e. one more phase in
@@ -72,7 +74,11 @@ DEP_CEILINGS = {
     # mutation authority `AntishipTransitions` took its place.
     # 14 -> 15 (plan 0052): `AntishipResolutionContext` is the typed model that replaces the
     # anti-ship resolver's 11-parameter signature; this coordinator is the call-site assembler.
-    "scripts/phases/FiresPhases.gd": 15,
+    # 15 -> 13 (plan 0050): the slack 0052 left was never spent, so the closeout takes it back to the
+    # measured value. The crossing-ledger writes this file gave up went to SealiftTransitions, which
+    # it already depended on, so nothing was traded for it — it is headroom being locked in rather
+    # than left available to the next mechanic.
+    "scripts/phases/FiresPhases.gd": 13,
     # TurnClosure.gd (plan 0038 step 3): the end-of-turn accounting pair (supply bills who fought,
     # cleanup censuses who is left). Measured 7 at commit time.
     "scripts/phases/TurnClosure.gd": 7,
