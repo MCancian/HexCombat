@@ -14,7 +14,9 @@ extends RefCounted
 ##   ForceTransitions owns  — who is aboard: cohort membership, `bn_ids`, `mainland_pool`,
 ##                            `ship_reserve`, and every roster consequence of a landing or a drowning.
 ##   SealiftTransitions owns — what floats: the hull counts inside a cohort, its sent/offloading state,
-##                            the return/reload pipeline, escort magazines, and the ShipState bins.
+##                            the return/reload pipeline, escort magazines, the ShipState bins, the
+##                            `sealift_state` handle itself, and the crossing's BN-equivalent ledger
+##                            (plan 0050 — see "Crossing ledger" below for why that lives here).
 ##
 ## Operations that move both (embark, crossing loss, offload) are two authority calls in one
 ## coordinator, each preflighted before either writes, never one call that reaches across.
@@ -48,6 +50,68 @@ extends RefCounted
 ##     stays TRUE across them because nothing on `ShipState` changed: its bins go STALE, not invalid, and
 ##     the closing `project_fleet` of the phase that used them recomputes the lot. Reprojecting inside
 ##     each would be four projections a turn to reach the same fleet.
+
+
+# ── Sealift-state lifecycle ─────────────────────────────────────────────────────────────────────
+
+## Publish a freshly built campaign SealiftState AND clear the crossing ledger it feeds. The two are
+## one transition, not two: a fresh scenario's sealift carrying the PREVIOUS scenario's drowned-BN
+## count is not a state the game can be in, and separating them is how the old reset grew two
+## unowned assignments in GameState (plan 0050).
+static func install_campaign_state(state: GameStateData, built: SealiftState) -> void:
+	if built == null:
+		push_error("SealiftTransitions: refusing to install a null campaign sealift state")
+		return
+	state.sealift_state = built
+	state.pending_lost_at_sea = 0
+	state.lost_at_sea_accumulator = 0.0
+
+
+## Put a different SealiftState behind the handle and hand back the one that was there. For the
+## unopposed-offload façade, which runs the offload against a temporary sealift and must restore the
+## campaign one — hence RETURNING the previous value rather than making the caller stash it, so the
+## restore cannot be written against a handle that has already moved on.
+##
+## Deliberately does NOT touch the crossing ledger: swapping the sealift under a test façade must not
+## discard drowned BNs the real crossing already registered. That is the whole reason this is a second
+## method rather than a flag on install_campaign_state.
+static func swap_state(state: GameStateData, replacement: SealiftState) -> SealiftState:
+	var previous := state.sealift_state
+	state.sealift_state = replacement
+	return previous
+
+
+# ── Crossing ledger ─────────────────────────────────────────────────────────────────────────────
+#
+# The BN-equivalent conversion of the crossing's HULL losses, which is why it lives with the hulls
+# rather than with the launchers that sank them (plan 0050). `pending_lost_at_sea` is whole BNs
+# waiting for the offload phase to report them; `lost_at_sea_accumulator` is the same conversion's
+# fractional remainder, carried to the next crossing so repeated part-BN losses eventually cost a BN.
+
+## Carry the crossing's fractional BN remainder to the next one. Replaced outright, never summed: the
+## calculator already folded the previous carry-over into the value it returns.
+static func record_crossing_carryover(state: GameStateData, accumulator: float) -> void:
+	if accumulator < 0.0:
+		push_error("SealiftTransitions: crossing carry-over may not be negative (%f)" % accumulator)
+		return
+	state.lost_at_sea_accumulator = accumulator
+
+
+## Book the whole BNs this crossing drowned, for the offload phase to report. Clamped at zero rather
+## than refused: a crossing that reports no losses is ordinary, and a negative conversion is a
+## calculator bug that must not leave a negative count in the manifest.
+static func register_ship_losses(state: GameStateData, bn_equiv_lost: int) -> void:
+	state.pending_lost_at_sea = maxi(0, bn_equiv_lost)
+
+
+## Hand the pending drowned-BN count to the offload phase AND clear it, in one call. Read-with-clear
+## is deliberate — it is the same shape as `tick_returns` above and `ForceTransitions.free_emptied_cohorts`
+## — because a separate clear is a step a caller can forget (reporting the same drownings twice) or
+## run twice (losing them).
+static func consume_ship_losses(state: GameStateData) -> int:
+	var pending := state.pending_lost_at_sea
+	state.pending_lost_at_sea = 0
+	return pending
 
 
 # ── Fleet lifecycle ─────────────────────────────────────────────────────────────────────────────

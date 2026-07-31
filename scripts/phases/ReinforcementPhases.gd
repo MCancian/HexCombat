@@ -21,6 +21,15 @@ static func initialize_ship_reserve(state: GameStateData, reserve: Array) -> voi
 	ForceTransitions.initialize_ship_reserve(state, reserve)
 
 
+## Scenario reset of the sealift state, for GameState's reset_to_scenario. Takes the ALREADY-BUILT
+## state rather than the builder's arguments — unlike its four siblings below — because
+## `GameStateBuilder` is a dependency GameState already carries and this module cannot afford
+## (plan 0050). Installing it also clears the crossing ledger; that pairing is the authority's, not
+## this module's, so the two are one call here as well.
+static func install_sealift_state(state: GameStateData, built: SealiftState) -> void:
+	SealiftTransitions.install_campaign_state(state, built)
+
+
 ## Scenario reset of the fleet, for GameState's reset_to_scenario. Thin pass-through to the fleet's
 ## authority, in the same style as FiresPhases.reset_antiship_establishment — GameState reaches the
 ## sealift phase's state through this module, never around it (and so keeps its dependency ceiling).
@@ -121,10 +130,9 @@ static func consume_jlsf_orders(state: GameStateData) -> void:
 ## skipped crossing so ForceTransitions still receives a valid OFFLOADING source location.
 static func resolve_unopposed_offload_turn(
 		state: GameStateData, dice: Dice, temporary_sealift: SealiftState) -> Dictionary:
-	var campaign_sealift := state.sealift_state
-	state.sealift_state = temporary_sealift
+	var campaign_sealift := SealiftTransitions.swap_state(state, temporary_sealift)
 	var manifest := resolve_offload_turn(state, dice)
-	state.sealift_state = campaign_sealift
+	SealiftTransitions.swap_state(state, campaign_sealift)
 	return manifest
 
 
@@ -146,9 +154,9 @@ static func resolve_offload_turn(state: GameStateData, dice: Dice) -> Dictionary
 
 	if state.ship_reserve.is_empty():
 		var empty_manifest := OffloadResolver.empty_manifest()
-		empty_manifest["lost_at_sea"] = state.pending_lost_at_sea
-		# D3-F applies lost_at_sea to the reserve; D0-C only threads the value.
-		state.pending_lost_at_sea = 0
+		# D3-F applies lost_at_sea to the reserve; D0-C only threads the value. The authority hands it
+		# over and clears it in one call, so the handoff cannot be reported twice or dropped.
+		empty_manifest["lost_at_sea"] = SealiftTransitions.consume_ship_losses(state)
 		EventBus.offload_resolved.emit(empty_manifest)
 		return empty_manifest
 
@@ -179,8 +187,7 @@ static func resolve_offload_turn(state: GameStateData, dice: Dice) -> Dictionary
 		SealiftTransitions.project_fleet(state)
 	reconcile_lost_jlsf(state)
 
-	manifest["lost_at_sea"] = state.pending_lost_at_sea
-	state.pending_lost_at_sea = 0
+	manifest["lost_at_sea"] = SealiftTransitions.consume_ship_losses(state)
 	EventBus.offload_resolved.emit(manifest)
 	return manifest
 

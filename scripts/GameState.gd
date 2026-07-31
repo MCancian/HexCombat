@@ -60,9 +60,12 @@ var ship_reserve: Array:
 # SealiftTransitions (plan 0045). Scenario reset goes through _rebuild_fleet, not an assignment here.
 var fleet: Dictionary:
 	get: return data.fleet
+# Read-only façade: the sealift state is built by SealiftStateBuilder and thereafter written only by
+# SealiftTransitions (plan 0050). Scenario reset goes through _rebuild_sealift_state, not an
+# assignment here — the setter had zero callers and was a public door around the authority, because
+# the receiver of `GameState.sealift_state = x` resolves to GameStateType and the scan cannot see it.
 var sealift_state: SealiftState:
 	get: return data.sealift_state
-	set(value): data.sealift_state = value
 # Read-only façade: the infrastructure map is built by InfrastructureStateBuilder and thereafter
 # written only by InfrastructureTransitions (plan 0047). Scenario reset goes through
 # _rebuild_infrastructure_state, not an assignment here.
@@ -70,9 +73,10 @@ var infrastructure_state: InfrastructureState:
 	get: return data.infrastructure_state
 var jlsf_orders: Array[String]:
 	get: return data.jlsf_orders
+# Read-only façade: the crossing's BN-equivalent ledger is written only by SealiftTransitions
+# (plan 0050) — booked by the anti-ship phase, consumed and cleared by the offload phase.
 var pending_lost_at_sea: int:
 	get: return data.pending_lost_at_sea
-	set(value): data.pending_lost_at_sea = value
 # Read-only façade: the DOS pool is built by SupplyStateBuilder and thereafter written only by
 # SupplyTransitions (plan 0049). Scenario reset goes through _rebuild_supply_state, not an assignment
 # here — a setter would be a public door around the authority, which is how the fifteen validator
@@ -104,9 +108,10 @@ var antiship_systems: Array:
 	get: return data.antiship_systems
 var antiship_containers: Array:
 	get: return data.antiship_containers
+# Read-only façade: the other half of that ledger — the fractional BN remainder carried to the next
+# crossing. Same authority, same reason (plan 0050).
 var lost_at_sea_accumulator: float:
 	get: return data.lost_at_sea_accumulator
-	set(value): data.lost_at_sea_accumulator = value
 var last_antiship_summary: AntishipSummary:
 	get: return data.last_antiship_summary
 	set(value): data.last_antiship_summary = value
@@ -175,7 +180,6 @@ func reset_to_scenario() -> void:
 	# shutdown and triggered the Godot 4.7 teardown crash). Reset the handle; resolve_ijfs_turn builds
 	# it fresh per scenario.
 	FiresPhases.reset_ijfs_state(data)
-	data.pending_lost_at_sea = 0
 	data.last_contested_hexes.clear()
 	data.last_combat_summaries.clear()
 	data.last_ijfs_summary = {}
@@ -183,7 +187,9 @@ func reset_to_scenario() -> void:
 	# Anti-ship systems are lazily (re)built on first use (resolve_ijfs_turn / resolve_antiship_turn),
 	# matching the IJFS state's lazy-load pattern; clearing here forces a fresh build per scenario.
 	FiresPhases.reset_antiship_establishment(data)
-	data.lost_at_sea_accumulator = 0.0
+	# The crossing ledger (pending_lost_at_sea / lost_at_sea_accumulator) is cleared by
+	# _rebuild_sealift_state above: installing a fresh campaign sealift and clearing what the last
+	# scenario's crossing drowned is one transition, owned by SealiftTransitions (plan 0050).
 	data.last_antiship_summary = null
 	data.last_sealift_sent_by_type = {}
 	data.last_frontline_summary = null
@@ -318,10 +324,13 @@ func _rebuild_ship_reserve() -> void:
 		data, GameStateBuilder.build_ship_reserve(GameData.red_ship_reserve, GameData.brigades))
 
 
+## Also clears the crossing ledger — see SealiftTransitions.install_campaign_state for why the two
+## are one transition. Reached through ReinforcementPhases rather than the authority directly, like
+## every other phase state this autoload resets.
 func _rebuild_sealift_state() -> void:
-	data.sealift_state = GameStateBuilder.build_sealift_state(
+	ReinforcementPhases.install_sealift_state(data, GameStateBuilder.build_sealift_state(
 		GameData.red_followon_reserve, GameData.red_ship_reserve, GameData.brigades,
-		GameData.auto_seed_followon_pool, GameData.escort_reload_time_turns)
+		GameData.auto_seed_followon_pool, GameData.escort_reload_time_turns))
 
 
 ## Sealift phase (plan 0004): advance the ship return pipeline and embark this turn's crossing wave.

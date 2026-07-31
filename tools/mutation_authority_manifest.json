@@ -31,11 +31,6 @@
           "classification": "content_config",
           "why": "Scenario cadence copied onto the state by GameState.reset from GameData.turn_length_days (and floored to 1 there). No phase writes it during a game."
         },
-        "sealift_state": {
-          "classification": "planned_transitional",
-          "why": "The SealiftState handle. Its siblings `fleet`, `ijfs_state` and `infrastructure_state` ARE claimed by their aggregates; this one is not, and both GameState.reset and ReinforcementPhases (which swaps a temporary sealift in and the campaign one back) write it. USER call 2026-07-30: the closeout audit moves those writers, so the asymmetry is recorded here rather than closed by a migration this change is not allowed to make.",
-          "plan": "res://docs/plans/0050-mutation-authority-enforcement-closeout.md"
-        },
         "last_mobilization_summary": {
           "classification": "phase_output",
           "why": "The mobilization phase's report for the turn just resolved: replaced wholesale by the phase that produced it, cleared at reset, and read only by serialization/observation (TurnEventLog / TurnResult). Not an evolving quantity, so there is no transition to protect."
@@ -52,11 +47,6 @@
           "classification": "derived_projection",
           "why": "A cache of PendingBattalions.by_brigade_and_type over the three off-map pools. GameStateData.refresh_not_ashore_by_type() is its only writer and recomputes it from those pools, which are themselves protected (ship_reserve, mainland_pool, AirInsertionState.pool)."
         },
-        "pending_lost_at_sea": {
-          "classification": "planned_transitional",
-          "why": "BN-equivalents drowned this turn: FiresPhases writes it and ReinforcementPhases' offload reads it into the manifest and zeroes it — a within-turn handoff between two phases that belongs to no aggregate. USER call 2026-07-30: resolved by the closeout audit, which is where the writer moves.",
-          "plan": "res://docs/plans/0050-mutation-authority-enforcement-closeout.md"
-        },
         "last_contested_hexes": {
           "classification": "phase_output",
           "why": "The contest-detection phase's record for the turn just resolved, replaced wholesale by the phase that produced it. NOT write-only, and not merely serialized either: TurnConductor.gd:84 and :269 drive the ground-combat and FEBA-retreat loops straight off it, so a LATER phase depends on it. It stays unprotected because the authoritative state it describes lives elsewhere and this is a report of it — but renaming or reshaping it is a behaviour change, not a doc edit."
@@ -72,11 +62,6 @@
         "last_ijfs_writeback": {
           "classification": "phase_output",
           "why": "The IJFS writeback phase's record for the turn just resolved, replaced wholesale by the phase that produced it. NOT write-only, and not merely serialized either: the maneuver-casualty step takes its casualties (FiresPhases.gd:60) and the anti-ship step hands it to AntishipTransitions.apply_ijfs_effects (FiresPhases.gd:78), so a LATER phase depends on it. It stays unprotected because the authoritative state it describes lives elsewhere and this is a report of it — but renaming or reshaping it is a behaviour change, not a doc edit."
-        },
-        "lost_at_sea_accumulator": {
-          "classification": "planned_transitional",
-          "why": "Fractional crossing-loss carry-over across turns — real campaign state. FiresPhases writes it from the anti-ship outcome one line away from an AntishipTransitions call, so the anti-ship authority is its natural owner. USER call 2026-07-30: the closeout audit moves that writer; classifying it here does not pretend it is unprotectable.",
-          "plan": "res://docs/plans/0050-mutation-authority-enforcement-closeout.md"
         },
         "last_antiship_summary": {
           "classification": "phase_output",
@@ -650,7 +635,7 @@
     },
     {
       "id": "sealift_fleet",
-      "summary": "The hull side of the amphibious lift (plan 0045): the ShipState fleet projection (which bucket every surviving hull of a type is in) and the persistent hull queues SealiftState holds. Its counterpart is the 'force' aggregate, which owns who is ABOARD a cohort; this one owns what FLOATS. A cohort is shared by field, never reached across.",
+      "summary": "The hull side of the amphibious lift (plan 0045): the ShipState fleet projection (which bucket every surviving hull of a type is in), the persistent hull queues SealiftState holds, the sealift_state handle, and the crossing's BN-equivalent loss ledger (plan 0050). Its counterpart is the 'force' aggregate, which owns who is ABOARD a cohort; this one owns what FLOATS and what sank. A cohort is shared by field, never reached across.",
       "status": "enforced",
       "authority_class": "SealiftTransitions",
       "authority_path": "res://scripts/transitions/SealiftTransitions.gd",
@@ -675,9 +660,12 @@
         {
           "class": "GameStateData",
           "path": "res://scripts/model/GameStateData.gd",
-          "_doc": "The fleet dictionary (ship name -> ShipState) itself. Replacing it is a scenario reset, which routes through SealiftTransitions.rebuild_fleet so the host file earns no writer exemption.",
+          "_doc": "The fleet dictionary (ship name -> ShipState), the SealiftState handle itself, and the crossing's BN-equivalent ledger (plan 0050). Replacing the fleet or the handle is a scenario reset, which routes through SealiftTransitions.rebuild_fleet / install_campaign_state so the host file earns no writer exemption. The ledger pair is here rather than with the anti-ship launchers because it is the BN-equivalent conversion of the HULL losses this aggregate books: pending_lost_at_sea is whole BNs awaiting the offload phase's report, lost_at_sea_accumulator the same conversion's fractional remainder. pending_lost_at_sea is `campaign`, not `transient`: it survives a turn in which no wave crosses.",
           "fields": {
-            "fleet": "campaign"
+            "fleet": "campaign",
+            "sealift_state": "campaign",
+            "pending_lost_at_sea": "campaign",
+            "lost_at_sea_accumulator": "campaign"
           }
         },
         {

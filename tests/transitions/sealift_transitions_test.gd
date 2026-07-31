@@ -565,3 +565,113 @@ func test_a_bn_bound_to_two_cohorts_is_reported() -> void:
 	await assert_error(func() -> void:
 		SealiftTransitions.project_fleet(state)
 	).is_push_error("SealiftTransitions: BN a is bound to more than one cohort")
+
+
+# --- sealift-state lifecycle and the crossing ledger (plan 0050) ---------------------------------
+
+
+## Installing a fresh campaign sealift is ALSO a ledger clear. Pinned together because they are one
+## transition: a new scenario carrying the last one's drowned BNs is not a state the game can be in,
+## and the two used to be three separate assignments spread across GameState.reset_to_scenario.
+func test_install_campaign_state_publishes_the_handle_and_clears_the_ledger() -> void:
+	var state := _state(6, 4)
+	SealiftTransitions.register_ship_losses(state, 7)
+	SealiftTransitions.record_crossing_carryover(state, 0.75)
+	var fresh := SealiftState.new()
+
+	SealiftTransitions.install_campaign_state(state, fresh)
+
+	assert_object(state.sealift_state).is_same(fresh)
+	assert_int(state.pending_lost_at_sea).is_equal(0)
+	assert_float(state.lost_at_sea_accumulator).is_equal(0.0)
+
+
+func test_install_campaign_state_refuses_null_and_changes_nothing() -> void:
+	var state := _state(6, 4)
+	var original := state.sealift_state
+	SealiftTransitions.register_ship_losses(state, 3)
+
+	await assert_error(func() -> void:
+		SealiftTransitions.install_campaign_state(state, null)
+	).is_push_error("SealiftTransitions: refusing to install a null campaign sealift state")
+
+	assert_object(state.sealift_state).is_same(original)
+	assert_int(state.pending_lost_at_sea).is_equal(3)
+
+
+## The swap returns the handle it replaced, so the restore cannot be written against a handle that
+## has already moved on — and it leaves the ledger alone, because running an offload against a
+## temporary sealift must not discard BNs the real crossing already drowned.
+func test_swap_state_returns_the_previous_handle_and_leaves_the_ledger_alone() -> void:
+	var state := _state(6, 4)
+	var campaign := state.sealift_state
+	SealiftTransitions.register_ship_losses(state, 4)
+	SealiftTransitions.record_crossing_carryover(state, 0.5)
+	var temporary := SealiftState.new()
+
+	var previous := SealiftTransitions.swap_state(state, temporary)
+
+	assert_object(previous).is_same(campaign)
+	assert_object(state.sealift_state).is_same(temporary)
+	assert_int(state.pending_lost_at_sea).is_equal(4)
+	assert_float(state.lost_at_sea_accumulator).is_equal(0.5)
+
+	assert_object(SealiftTransitions.swap_state(state, previous)).is_same(temporary)
+	assert_object(state.sealift_state).is_same(campaign)
+
+
+## The carry-over is REPLACED, never summed: the crossing calculator has already folded the previous
+## remainder into the value it returns, so adding here would double-count every fraction.
+func test_record_crossing_carryover_replaces_rather_than_accumulates() -> void:
+	var state := _state(6, 4)
+
+	SealiftTransitions.record_crossing_carryover(state, 0.4)
+	SealiftTransitions.record_crossing_carryover(state, 0.9)
+
+	assert_float(state.lost_at_sea_accumulator).is_equal(0.9)
+
+
+func test_record_crossing_carryover_refuses_a_negative_remainder() -> void:
+	var state := _state(6, 4)
+	SealiftTransitions.record_crossing_carryover(state, 0.25)
+
+	await assert_error(func() -> void:
+		SealiftTransitions.record_crossing_carryover(state, -0.1)
+	).is_push_error("SealiftTransitions: crossing carry-over may not be negative (-0.100000)")
+
+	assert_float(state.lost_at_sea_accumulator).is_equal(0.25)
+
+
+## Clamped rather than refused: a crossing that drowned nobody is ordinary, and a negative conversion
+## is a calculator bug that must not reach the offload manifest as a negative BN count.
+func test_register_ship_losses_clamps_at_zero() -> void:
+	var state := _state(6, 4)
+
+	SealiftTransitions.register_ship_losses(state, -5)
+
+	assert_int(state.pending_lost_at_sea).is_equal(0)
+
+
+## The handoff is read-with-clear so a caller can neither forget the clear (reporting the same
+## drownings on the next offload too) nor run it twice (losing them). A second consume in the same
+## turn must therefore return 0, not the same count again.
+func test_consume_ship_losses_hands_over_once_and_then_returns_zero() -> void:
+	var state := _state(6, 4)
+	SealiftTransitions.register_ship_losses(state, 9)
+
+	assert_int(SealiftTransitions.consume_ship_losses(state)).is_equal(9)
+	assert_int(state.pending_lost_at_sea).is_equal(0)
+	assert_int(SealiftTransitions.consume_ship_losses(state)).is_equal(0)
+
+
+## A turn in which no wave crosses does not clear what the last crossing drowned — which is why
+## pending_lost_at_sea is registered `campaign` and not `transient`. FiresPhases returns early
+## without touching it; only the offload phase's consume takes it away.
+func test_the_pending_count_survives_until_it_is_consumed() -> void:
+	var state := _state(6, 4)
+	SealiftTransitions.register_ship_losses(state, 6)
+
+	SealiftTransitions.project_fleet(state)
+	SealiftTransitions.tick_escort_reload(state.sealift_state)
+
+	assert_int(state.pending_lost_at_sea).is_equal(6)

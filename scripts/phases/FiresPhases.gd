@@ -66,7 +66,8 @@ static func apply_ijfs_maneuver_casualties(state: GameStateData) -> void:
 
 ## D3-D: Green coastal anti-ship fires + mine warfare against the Red amphibious crossing. Threads the
 ## firing plan (D3-B2) -> crossing (D3-B3) -> mines (D3-C); ship losses convert to BNs lost at sea
-## (ShipLoadingModel) and feed register_ship_losses (the D0-C seam offload consumes). Runs after IJFS
+## (ShipLoadingModel) and feed SealiftTransitions.register_ship_losses (the D0-C seam offload
+## consumes). Runs after IJFS
 ## (Green systems suppressed/destroyed first) and before offload (only survivors land). Draws from an
 ## INDEPENDENT substream so the ground-combat golden invariant stays byte-stable.
 static func resolve_antiship_turn(state: GameStateData, dice: Dice) -> Dictionary:
@@ -120,7 +121,7 @@ static func resolve_antiship_turn(state: GameStateData, dice: Dice) -> Dictionar
 
 	# Book what the crossing's launch attrition destroyed. The resolver only reported it.
 	AntishipTransitions.apply_launch_attrition(state, outcome["launch_outcomes"])
-	state.lost_at_sea_accumulator = float(outcome["accumulator"])
+	SealiftTransitions.record_crossing_carryover(state, float(outcome["accumulator"]))
 	# Apply hull losses to the sealift cohorts (carriers) + the fleet in one checked call; free hulls
 	# from cohorts whose BNs all drowned; flip survivors to offloading. The receipt records requested
 	# vs applied per type (the crossing may over-report a carrier type); nothing consumes it yet, because
@@ -136,7 +137,7 @@ static func resolve_antiship_turn(state: GameStateData, dice: Dice) -> Dictionar
 	SealiftTransitions.apply_escort_consumption(
 		state.sealift_state, outcome["escort_sam_consumed"], GameData.escort_reload_time_turns)
 	SealiftTransitions.project_fleet(state)
-	register_ship_losses(state, int(outcome["bn_equiv_lost"]))
+	SealiftTransitions.register_ship_losses(state, int(outcome["bn_equiv_lost"]))
 	state.last_antiship_summary = outcome["summary"]
 	state.last_antiship_summary.wave_bns = wave_bns
 	EventBus.antiship_resolved.emit(state.last_antiship_summary.to_dict())
@@ -162,8 +163,4 @@ static func crossing_reserve_from_sent_cohorts(state: GameStateData) -> Array:
 		trimmed["bns"] = bns
 		crossing.append(trimmed)
 	return crossing
-
-
-static func register_ship_losses(state: GameStateData, bn_equiv_lost: int) -> void:
-	state.pending_lost_at_sea = maxi(0, bn_equiv_lost)
 
