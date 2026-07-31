@@ -35,7 +35,7 @@ func test_landed_qty_subtracts_by_type() -> void:
 
 
 func test_landed_qty_clamps_at_zero() -> void:
-	# The pools should never claim more than the roster holds (RosterMutations.pending_pool_roster_
+	# The pools should never claim more than the roster holds (ForceTransitions.pending_pool_roster_
 	# violations is the tripwire for that), but if they ever do, the subtraction must not go negative
 	# and hand a side imaginary strength via a negative unit count.
 	var brigade := _brigade("R1")

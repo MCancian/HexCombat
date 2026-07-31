@@ -13,8 +13,8 @@ scrambles another's dice (`ScriptedDice.derive` returns self, so scripted fixtur
 - **`GameState` (autoload) is a thin state-holder** — owns one `GameStateData` and delegates to `TurnConductor`, `OrderValidator`, and `GameStateBuilder`.
 - Turn orchestration is **`TurnConductor`** (pure `RefCounted`, `static` methods): holds the full ordered call list for `resolve_turn`.
 - **Phase Coordinators (`scripts/phases/`)**: `ReinforcementPhases` (sealift, offload, mobilization, air insertion), `FiresPhases` (IJFS, anti-ship + mines), `TurnClosure` (supply, cleanup).
-- **resolvers (`scripts/resolvers/`)**: pure per-phase logic (`SupplyResolver`, `FrontlineResolver`, `CleanupResolver`, `OffloadResolver`, `AntishipResolver`, `IjfsResolver`, `CombatResolver`).
-- **Mutation Authorities (`scripts/transitions/`)**: `ForceTransitions` (sole writer for `force` aggregate), `AntishipTransitions` (sole writer for `antiship_establishment` aggregate).
+- **resolvers (`scripts/resolvers/`)**: per-phase decision logic — `FrontlineResolver`, `CleanupResolver`, `OffloadResolver`, `InfrastructureResolver`, `IjfsResolver`, `CombatResolver`. A resolver that stops writing campaign state moves to `scripts/calc/`: `SealiftResolver` did in 0045, `AntishipResolver` in 0050. **Measured 2026-07-31: all six remaining files are now write-free too**, so the directory's distinguishing claim no longer distinguishes anything — see `docs/plans/0055-empty-the-resolvers-directory.md`. Supply has no resolver at all: it is `SupplyBill` in `calc/` applied by `SupplyTransitions`.
+- **Mutation Authorities (`scripts/transitions/`)**: ten of them, one per registered aggregate. `docs/STATUS.md` indexes which owns what; `tools/mutation_authority_manifest.json` is the record.
 
 **Turn resolution order** (12-step high-level summary of `TurnConductor.gd`'s actual 16 granular execution steps):
 1. IJFS air/missile fires (`FiresPhases.resolve_ijfs_turn`)

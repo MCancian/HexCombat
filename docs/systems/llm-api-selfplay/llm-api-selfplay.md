@@ -214,3 +214,21 @@ TaiwanInvasionViewer has no LLM agent API — it is a Python/Flask web app with 
 # Batch mixed policies over a common seed set (use --parallel 1 for a live local model)
 python3 tools/run_batch.py --name mixed --scenarios roc_full_defense --matchups llm_local:selfplay_default,selfplay_default:llm_local --n 30
 ```
+
+## 10. State & authority
+
+**This subsystem owns no protected runtime aggregate.** `LLMGameAPI` is a translation layer in both
+directions: it projects state into an observation, and it turns a validated action back into an order.
+It never assigns campaign state itself.
+
+The seam that matters is the second direction. An action does **not** become state here — it becomes a
+buffered order, and the buffer is the `order_buffers` aggregate, whose authority is `OrderTransitions`
+(plan 0049). So an LLM seat can only reach the game through the same validated `add_move_order` /
+`add_commit_order` / `add_air_insert_order` / `add_jlsf_order` surface a human operator uses, each
+returning a typed `OrderResult` the API surfaces as a rejection reason rather than a `push_error`.
+Everything downstream of that runs in `resolve_turn`, through the ten authorities.
+
+- **Manifest:** [tools/mutation_authority_manifest.json](../../../tools/mutation_authority_manifest.json).
+- **Known hole, not a doc gap:** `deploy_jlsf` carries no team in the action schema, so a Green seat
+  can buffer Red cargo. Tracked in `docs/plans/BACKLOG.md`; fixing it means new action-schema
+  vocabulary, which no plan in the 0042–0050 campaign was allowed to add.

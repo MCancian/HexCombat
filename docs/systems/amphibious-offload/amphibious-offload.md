@@ -78,8 +78,9 @@ static func resolve_bn_losses(destroyed_by_ship_type, capacity_by_type,
 static func ship_reserve_priority_order(state: GameStateData) -> Array[String]
 static func resolve_offload_turn(state: GameStateData, dice: Dice) -> Dictionary
 
-# FiresPhases (scripts/phases/FiresPhases.gd) — the crossing that feeds the offload seam
+# SealiftTransitions (scripts/transitions/SealiftTransitions.gd) — the crossing ledger the offload consumes
 static func register_ship_losses(state: GameStateData, bn_equiv_lost: int) -> void
+static func consume_ship_losses(state: GameStateData) -> int          # returns the count AND clears it
 
 # GameState (scripts/GameState.gd) — the autoload façade external callers use
 func ship_reserve_priority_order() -> Array[String]
@@ -146,8 +147,8 @@ two `ShipLoadingModel` simplifications below diverge, and both are intentional/c
 ### Crossing losses are casualties (2026-07-24)
 
 A BN that drowns in the crossing is **dead** and is deleted from its `Brigade.composition`, not just
-from `ship_reserve`. `RosterMutations.apply_crossing_casualties()` runs at the crossing-loss
-application (before `remaining_reserve_after_losses` rebuilds the reserve), mapping each drowned id
+from `ship_reserve`. `ForceTransitions.apply_crossing_loss()` runs at the crossing-loss
+application and prunes the reserve in the same transaction, mapping each drowned id
 back to its `(brigade_id, battalion type)` via the pre-removal reserve entries and applying one
 roster casualty per drowned BN through the shared `apply_casualty` (consumes no dice). Before this,
 drowned BNs left `ship_reserve` but stayed in the roster, so the victory census
@@ -358,9 +359,10 @@ rebuild routes `GameState → ReinforcementPhases.rebuild_infrastructure → the
   marker the previous iteration wrote.
 - The hex a node sits on belongs to the `map` aggregate. Neither authority writes the other's fields.
 
-**`sealift_fleet`** — what floats (plan 0045). Authority `SealiftTransitions`; it owns every hull
-transition: the `ShipState` bins, cohort hull counts and legs, the return/reload pipeline, and escort SAM
-magazines.
+**`sealift_fleet`** — what floats, and what sank (plans 0045, 0050). Authority `SealiftTransitions`; it
+owns every hull transition — the `ShipState` bins, cohort hull counts and legs, the return/reload
+pipeline, escort SAM magazines — plus the `GameStateData.sealift_state` handle itself and the crossing's
+BN-equivalent loss ledger.
 - **Outcome/receipt types:** `SealiftHullLossReceipt`, `SealiftHullReleasePlan`.
 - **Manifest:** [tools/mutation_authority_manifest.json](../../../tools/mutation_authority_manifest.json).
 
@@ -372,6 +374,16 @@ magazines.
   leave the bins stale-but-valid for the phase's closing projection.
 - Hull losses are capped at what the source bucket holds, and the cap is reported rather than absorbed:
   a crossing can legitimately report more kills of a carrier type than its cohorts still hold.
+- The crossing ledger lives with the hulls because it IS the hulls: `pending_lost_at_sea` is the
+  BN-equivalent conversion of the hulls this crossing destroyed, and `lost_at_sea_accumulator` is that
+  conversion's fractional remainder, carried forward so repeated part-BN losses eventually cost a BN.
+  The anti-ship phase books both; the offload phase takes the whole-BN count with a single
+  read-and-clear call, so the same drownings can be neither reported twice nor dropped.
+- `GameState.sealift_state` is a read-only façade. Scenario rebuild routes
+  `GameState → ReinforcementPhases.install_sealift_state → the authority`, and installing a fresh
+  campaign sealift clears the crossing ledger in the same call — a new scenario cannot inherit what the
+  last one drowned. The temporary-sealift swap used by the unopposed-offload façade is a SECOND,
+  narrower edge that returns the handle it replaced and deliberately leaves the ledger alone.
 - Carrier losses come out of this turn's SENT cohorts only; escorts are never in a cohort, so theirs come
   off the ready screen.
 - A reloading escort type is wholly off the screen: all its surviving hulls count as returning.

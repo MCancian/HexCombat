@@ -117,7 +117,7 @@ Fallback categories (`FALLBACK_CATEGORY_DEFS`) provide strength/tag values for u
 
 The "at least one battalion ashore" test is load-bearing, not a tidy-up: `CombatCalculator` floors a degenerate zero-strength side to `combat_min_effective_strength`, so a brigade holding a hex with its whole composition still at sea would otherwise fight — and inflict real casualties — with nobody on the island.
 
-It then delegates the dice-consuming core to `CombatResolver.resolve_at` (`scripts/resolvers/CombatResolver.gd`) — read that class's header for the resolver/`GameState` purity split. Red is always assigned as attacker, Green as defender. Casualty application is a force-aggregate mutation: `TurnConductor` sends the casualty reports through `RosterMutations.apply_casualty`, which delegates the protected `Brigade.composition` / `Battalion.qty` writes and destruction placement to `ForceTransitions`.
+It then delegates the dice-consuming core to `CombatResolver.resolve_at` (`scripts/resolvers/CombatResolver.gd`) — read that class's header for the resolver/`GameState` purity split. Red is always assigned as attacker, Green as defender. Casualty application is a force-aggregate mutation: `TurnConductor` sends the casualty reports straight to `ForceTransitions.apply_battalion_casualties`, which owns the protected `Brigade.composition` / `Battalion.qty` writes and the destruction placement.
 
 ## 7. Movement
 
@@ -147,7 +147,7 @@ Canonical order (see `docs/STATUS.md` → "Turn resolution order"; each phase's 
   7. _resolve_combat_at(hex)       — Per contested hex (CombatResolver → CombatCalculator)
   8. _apply_feba_retreats()        — Push defenders back by feba_km
   9. GameData.recompute_hex_ownership()
- 10. resolve_supply_turn()         — Red DOS (SupplyResolver)
+ 10. resolve_supply_turn()         — Red DOS (SupplyBill + SupplyTransitions)
  11. resolve_frontline_phase()     — D5 front-line redistribution (FrontlineResolver; user-triggered, not auto-run every turn)
  12. resolve_cleanup_phase()       — Per-turn flag reset + victory census (CleanupResolver)
 ```

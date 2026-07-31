@@ -143,3 +143,20 @@ Godot view was built from scratch.
 - Map/terrain polish: terrain-class overlay is done (§3, Track F stage 6); elevation tint and
   additional labels remain open
 - All visual items are not headless-gateable and deferred to Track 5
+
+## 8. State & authority
+
+**This subsystem owns no protected runtime aggregate, and must not acquire one.** The view is a pure
+reader: it renders `GameData` / `GameState` and the typed summaries a turn produced, and every write it
+appears to make is to a Godot scene node (marker position, scale, colour), never to campaign state.
+
+Two consequences worth stating, because both have been violated in this repo's history:
+
+- A panel that "just corrects" a value it is displaying is writing campaign state through the widest
+  possible door. If the view needs a number the model does not hold, the fix is a derived accessor on
+  the model, not an assignment here.
+- Field NAMES are protected repo-wide, so registering a generic one breaks this layer first. Plan 0046
+  registered `IjfsMunition.name` and turned 22 innocent view-layer lines into gate failures; the field
+  was renamed `munition_name` rather than the view exempted.
+
+- **Manifest:** [tools/mutation_authority_manifest.json](../../../tools/mutation_authority_manifest.json).

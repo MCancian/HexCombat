@@ -22,7 +22,7 @@ crossing calibration before it is turned on.
 | What | Where |
 |---|---|
 | The calculator that already implements it | `scripts/calc/AntishipCalculator.gd` → `build_firing_plan` |
-| Who calls it with `{}` today | `scripts/resolvers/AntishipResolver.gd` → `resolve` (the `build_firing_plan(...)` call) and `_firing_inputs` |
+| Who calls it with `{}` today | `scripts/calc/AntishipResolver.gd` → `resolve` (the `build_firing_plan(...)` call) and `_firing_inputs` |
 | The only writer of the launcher rows | `scripts/transitions/AntishipTransitions.gd` (**do not write those fields anywhere else — the gate will fail you by file:line**) |
 | The precedent to copy, end to end | plan 0028's `off_island_strike`: a default-0 block in `data/antiship/antiship_crossing_config.json` + registry knobs + byte-stable at default. Read `docs/plans/0028-sustained-followon-interdiction.md` and the `off_island_strike` block in that JSON, plus `AntishipResolver._append_off_island_strikes` for how such a block is consumed. |
 | Field lifetimes + the establishment equation | header of `scripts/model/AntishipSystem.gd` |

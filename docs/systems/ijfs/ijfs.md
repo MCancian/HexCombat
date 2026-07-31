@@ -177,7 +177,7 @@ SEAD return-fire. Snapshot after SEAD: used by post-AD strike. Final snapshot: u
 **Impact on D3 (anti-ship)**: suppressed Green systems are excluded from the AD health calculation.
 `IjfsResolver.compute_writeback` reads cumulative `target.suppressed` from `ijfs_state.targets`
 for each "Anti-Ship Systems" category target, producing `antiship_suppressed_by_type` by
-(TO,type) key. `AntishipResolver.resolve` (called by `GameState.resolve_antiship_turn`) applies
+(TO,type) key. `AntishipResolver.resolve` (called by `FiresPhases.resolve_antiship_turn`) applies
 these to reduce `system.quantity` and `fire_pct`.
 
 ## 7. Writeback — Per-(TO,type) Outputs

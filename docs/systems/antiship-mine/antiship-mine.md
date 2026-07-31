@@ -8,8 +8,8 @@ Resolves **Green coastal anti-ship missile strikes** against the **Red amphibiou
 
 | File | Role |
 |---|---|
-| `scripts/resolvers/AntishipResolver.gd` | Pure resolver (Phase C): `resolve()` — derives the firing percentages from the post-IJFS establishment, builds the firing plan, resolves launch attrition/crossing/mines, converts ship losses to BNs lost at sea. Writes no anti-ship state; read its header for the purity boundary. |
-| `scripts/phases/FiresPhases.gd` | Thin coordinator (plan 0038): `resolve_antiship_turn(dice)` derives the independent substream, materializes the TO-adjacency map, delegates to `AntishipResolver.resolve()`, then hands the outcome to the three authorities in order — roster casualties to `ForceTransitions`, launch attrition to `AntishipTransitions`, hull losses/cohort legs/escort magazines to `SealiftTransitions` — calls `register_ship_losses`, and owns the `EventBus.antiship_resolved` emit. It writes no aggregate itself (plan 0045). `GameState` forwards to it under the same method name. |
+| `scripts/calc/AntishipResolver.gd` | Pure resolver (Phase C): `resolve()` — derives the firing percentages from the post-IJFS establishment, builds the firing plan, resolves launch attrition/crossing/mines, converts ship losses to BNs lost at sea. Writes no anti-ship state; read its header for the purity boundary. |
+| `scripts/phases/FiresPhases.gd` | Thin coordinator (plan 0038): `resolve_antiship_turn(dice)` derives the independent substream, materializes the TO-adjacency map, delegates to `AntishipResolver.resolve()`, then hands the outcome to the three authorities in order — roster casualties to `ForceTransitions`, launch attrition to `AntishipTransitions`, hull losses/cohort legs/escort magazines plus the crossing's BN-equivalent ledger to `SealiftTransitions` — and owns the `EventBus.antiship_resolved` emit. It writes no aggregate itself (plan 0045). `GameState` forwards to it under the same method name. |
 | `scripts/transitions/SealiftTransitions.gd` | The sealift/fleet mutation authority (plan 0045): the only writer of the `ShipState` bins and of the cohort hulls a crossing sinks. See amphibious-offload.md §10. |
 | `scripts/transitions/AntishipTransitions.gd` | The establishment's mutation authority (§10): the only writer of the `AntishipSystem` rows. |
 | `scripts/calc/AntishipCalculator.gd` | D3-B2 firing-plan + launch attrition |
@@ -93,7 +93,10 @@ TIV's separate `mine_warfare_service.py` (great-circle `offset_coordinate_meters
 - `bn_equiv_lost = floor(capacity_lost + accumulator)`. Fractional remainder carried to next turn via `accumulator`.
 - BNs at sea are shuffled via `dice.shuffle_indices`; the first N are lost.
 - If the pool is exhausted, unrealized capacity stays in the accumulator (not silently dropped).
-- `AntishipResolver.resolve` applies the accumulator and computes the surviving `ship_reserve` (via `remaining_reserve_after_losses`); `GameState.resolve_antiship_turn` assigns the returned reserve/accumulator and calls `register_ship_losses`.
+- `AntishipResolver.resolve` applies the accumulator and REPORTS the drowned ids; it writes nothing.
+  `FiresPhases.resolve_antiship_turn` then hands them to `ForceTransitions.apply_crossing_loss` (which prunes
+  the reserve and the rosters in one transaction) and books the carry-over and the BN-equivalent total
+  through `SealiftTransitions.record_crossing_carryover` / `register_ship_losses` (plan 0050).
 
 ## 7. Data Files
 
@@ -125,9 +128,9 @@ TIV's separate `mine_warfare_service.py` (great-circle `offset_coordinate_meters
 | `AntishipLoaders.load_minefields(path)` → `Array[Minefield]` | Parse beach minefield blocks into Runtime resources |
 | `AntishipLoaders.load_systems(grouping_path, types)` → `Array[AntishipSystem]` | Aggregate platform groups into per-(TO, type) rows |
 
-## 9. Turn Flow (`AntishipResolver.resolve`, called by `GameState.resolve_antiship_turn`)
+## 9. Turn Flow (`AntishipResolver.resolve`, called by `FiresPhases.resolve_antiship_turn`)
 
-The pipeline runs inside the pure resolver `scripts/resolvers/AntishipResolver.gd` (Phase C of the
+The pipeline runs inside the pure resolver `scripts/calc/AntishipResolver.gd` (Phase C of the
 GameState decomposition — read its header for the full purity boundary). `GameState.resolve_antiship_turn`
 is now a thin wrapper over the `FiresPhases` coordinator: derive the independent `"antiship:<turn>"`
 substream, have `AntishipTransitions` apply the IJFS effects to the arsenal, pass `GameData`'s
@@ -169,12 +172,14 @@ IJFS writeback (cumulative destroyed / this-cycle suppressed)
     ├─9. Combine crossing + mine destroyed_by_type
     │
     ├─10. ShipLoadingModel.resolve_bn_losses()
-    │       → lost_ids, accumulator, bn_equiv_lost
-    │       → remaining_reserve_after_losses()
+    │       → lost_ids, accumulator, bn_equiv_lost   (REPORTED; the reserve is pruned by
+    │         ForceTransitions.apply_crossing_loss in the coordinator, not here)
     │
-    └─11. Return {summary, remaining_ship_reserve, bn_equiv_lost, accumulator} to the
-          GameState wrapper, which assigns fields, calls register_ship_losses, and emits
-          EventBus.antiship_resolved
+    └─11. Return {summary, lost_ids, destroyed_by_type, bn_equiv_lost, accumulator} to
+          FiresPhases, which routes each part to its authority — drowned BNs to
+          ForceTransitions, launch attrition to AntishipTransitions, hulls and the
+          crossing ledger to SealiftTransitions — then assigns last_antiship_summary
+          (a phase_output, owned by nobody) and emits EventBus.antiship_resolved
 ```
 
 Feeds from: IJFS (Green system destroyed/suppressed writeback). Feeds into: offload (survivors land; `pending_lost_at_sea` threads BN losses to the D0-C seam).

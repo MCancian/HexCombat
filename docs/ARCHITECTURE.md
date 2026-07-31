@@ -91,6 +91,10 @@ The full per-system source map (all D1–D5 phases, IJFS, anti-ship/mine) lives 
 (`CombatResolver`, `FrontlineResolver`, `CleanupResolver`, `OffloadResolver`, `AntishipResolver`,
 `IjfsResolver`, `SupplyResolver`, plus the Phase-A builders), each with an explicit
 `resolve(<inputs>, dice) -> <TypedSummary>` signature (USER-decided interface; no new autoloads).
+**That list is the 2026-07-02 roster, not today's.** The mutation-authority campaign (plans
+0042–0050) moved every resolver that stopped writing campaign state into `scripts/calc/` and
+dissolved `SupplyResolver` entirely; `docs/STATUS.md` → "Where a file goes" holds the current
+directory claims and the test for each.
 `GameState` is now the thin orchestrator that sequences them and owns EventBus emits, autoload
 access, and cross-phase state. New phases follow this shape going forward. Contract and campaign
 record: `.claude/skills/hexcombat-architecture-contract` and
