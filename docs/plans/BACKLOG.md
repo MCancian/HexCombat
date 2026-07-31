@@ -12,6 +12,16 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
 
 *(Agents: append new technical debt and hygiene observations here)*
 
+- [ ] **`docs/plans/` is excluded from the doc-anchor gate, so an ACTIVE plan's code references rot
+  silently (found 2026-07-31 while widening the gate; accepted trade-off, not an oversight).** Plans are
+  excluded because a proposal legitimately names classes it intends to CREATE — failing a plan for
+  describing its own work would make the gate an obstacle to planning. The cost is the other half: a
+  Sketch that cites six real files (0055 does) rots the moment one is renamed, and the agent who picks
+  it up follows a dead reference. The symmetric fix is a `(planned)` line marker beside `(historical)`
+  and `(upstream)`, then removing the exclusion — but turning it on means triaging every active Sketch
+  at once, several of which predate two refactor campaigns. Do it as its own unit of work, not as a
+  rider on something else.
+
 - [ ] **A Green LLM seat can deploy Red JLSF cargo (found 2026-07-31 by the Sol diff-review role on
   plan 0049 commit 3; PRE-EXISTING, not a regression).** `deploy_jlsf` has no team in the action
   schema (`schemas/llm_action_response.schema.json`), `LLMGameAPI._apply_deploy_jlsf_action` parses

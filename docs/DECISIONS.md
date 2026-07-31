@@ -110,7 +110,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   **zero allowances** and deliberately has **no owner setter**: ownership is derived by
   `HexOwnershipCalculator` and applied by iterating only the occupied hexes, so the sticky rule that
   keeps a seized port seized after Red moves inland can no longer be defaulted away — it was a missing
-  `else` branch before. `GameData.set_hex_owner`/`set_hex_feba` and both `HexMap` stubs were deleted
+  `else` branch before. `GameData.set_hex_owner`/`set_hex_feba` and both `HexMap` stubs were deleted  (historical)
   rather than migrated; the one caller that wanted them (`tools/validate_headless_infrastructure.gd`)
   now places a real brigade and recomputes. `InfrastructureResolver.tick` became the pure `plan_tick`,
   whose plan carries an ORDERED event list because one node can legitimately emit `seized` and
@@ -244,7 +244,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
     some time ago — fixture drift is now the gate's regenerate-then-`git diff --exit-code docs/examples/`
     phase. One was a `hexcombat-debugging-playbook` triage row keyed on that validator going red, i.e. an
     instruction to debug a state that can no longer occur. All four corrected; the orphan
-    `tools/validate_fixtures.gd.uid` deleted.
+    `tools/validate_fixtures.gd.uid` deleted.  (historical)
   - **Why gate skills at all**: a skill is the first thing an agent reads and is read as instruction, not
     description. `validate_doc_anchors.gd` guards `docs/systems` only, so nothing watched them.
   - **Deliberately narrow, because a reviewer was right that this could be a trap**: skills legitimately
@@ -312,7 +312,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 - **2026-07-25 — Gate hardening: the two silent-failure holes this session fell into are now gated.**
   - **Who**: agent, from a refactor review the USER asked to be run past `agy-explore` and `opencode`.
-  - **What**: (1) `tools/validate_tool_script_purity.gd` replaces `validate_llm_api_purity.gd` — the
+  - **What**: (1) `tools/validate_tool_script_purity.gd` replaces `validate_llm_api_purity.gd` — the  (historical)
     guarded set is now the **transitive compile-time closure of `tools/*.gd`** — by `class_name` or by
     literal `preload` path — not one hand-picked file; `SelfPlayRunner` was outside the old gate and broke exactly there. (2)
     `run_all_tests.py` passes `--quit-after` to every validator, so a dependency that fails to compile
@@ -454,7 +454,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
     - at_sea`) therefore **ghost-landed** a partially-landed brigade's drowned BNs (they had left
     `at_sea` but not the roster), and ground combat over-counted the same brigade's strength. Fixed by
     deleting drowned BNs from their rosters at the crossing-loss application
-    (`RosterMutations.apply_crossing_casualties`, mirrors ground `apply_casualty`; consumes no dice).
+    (`RosterMutations.apply_crossing_casualties`, mirrors ground `apply_casualty`; consumes no dice).  (historical)
   - **Impact / re-baseline**: golden headless turn byte-stable (scripted fight is pre-placed, no
     crossing). Deliberate re-baselines: `validate_golden_victory` china 25→**12** (Taiwan 76 unchanged
     — Green never crosses), `validate_cleanup` `casualties=6/feba=0.34`→**`casualties=7/feba=2.24`**,
@@ -536,7 +536,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   Track F backlog item completed. Grouped and hoisted 93 view-layer color and offset literals from `HexMap.gd` into named constants at the top of the file. Behavior preserving. Code headers in `scripts/HexMap.gd`.
 
 - **2026-07-22 — Scenario files moved to one home (plan 0013; agent implementation).**
-  Moved `data/scenario_default.json` and `data/scenario_golden.json` into `data/scenarios/` so all scenarios share a single location. `ScenarioCatalog` simplified to use a pure glob and no longer needs special-casing for the default scenario id. Fixed test paths and references across documentation. Golden byte-stable; Windows gate run pending but assumed green. Facts: `docs/STATUS.md`.
+  Moved `data/scenario_default.json` and `data/scenario_golden.json` into `data/scenarios/` so all scenarios share a single location. `ScenarioCatalog` simplified to use a pure glob and no longer needs special-casing for the default scenario id. Fixed test paths and references across documentation. Golden byte-stable; Windows gate run pending but assumed green. Facts: `docs/STATUS.md`.  (historical)
 - **2026-07-21 — Garrison draw policy and sweep (plan 0021; agent implementation, USER design calls).**
   Added `garrison_draw` policy to simulate ROC commanders pulling non-landing theater garrisons toward
   the landing hexes while fighting locally at the landing. Introduced `garrison_draw_fraction` knob in
@@ -551,7 +551,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   the array-addressing follow-on. Extracted `JsonPath.parse_segment` / `select_indices` / `is_all_elements`
   as the canonical grammar; both callers use them (read stays lenient/null, write stays fail-loud —
   the asymmetry is why the traversals are NOT merged). Docs reconciled onto it: fixed the ghost method
-  reference (`registry.json` said `GameData.dump_tunables()`, which never existed — it is
+  reference (`registry.json` said `GameData.dump_tunables()`, which never existed — it is  (historical)
   `KnobRegistry.resolve_all`), removed stale "(dump-only)" array claims from the config skill +
   `KnobRegistry` header, pointed the four grammar re-specs at the JsonPath header, unified the
   `beach_capacities` path/label on `beaches[*]`, and dropped array-sweeping from the README follow-ups.
@@ -594,19 +594,19 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 - **2026-07-20 — Plan 0019 shipped: the `Brigade.Team → "Red"/"Green"` display converter is now
   owned by the enum's owner (agent implementation).** Added `Brigade.team_name(team)` static; the
-  six byte-identical local copies (`OrderValidator.team_to_string`, plus `_team_to_string`/`_team_str`
+  six byte-identical local copies (`OrderValidator.team_to_string`, plus `_team_to_string`/`_team_str`  (historical)
   in `GameData`, `GameController`, `InfoPanel`, `LLMGameAPI`, `TurnEventLog`) deleted and repointed
   to it. Lowercase `"red"/"green"` record serialization is a distinct mapping, untouched. Pure dedup;
   golden byte-stable; no STATUS change.
 
 - **2026-07-20 — Plan 0019 follow-on: the inverse `string → Brigade.Team` parser folded onto
   `Brigade` too (agent implementation).** Added `Brigade.team_from_name(name)` (case-insensitive,
-  silent RED default). `GameData._parse_team` deleted (both callers inlined); `LLMGameAPI._parse_team_string`
+  silent RED default). `GameData._parse_team` deleted (both callers inlined); `LLMGameAPI._parse_team_string`  (historical)
   reduced to a thin wrapper that appends the unknown-team parse error (the guard `_parse_action_team`
   relies on) then delegates. Input-side only; golden byte-stable.
 
 - **2026-07-20 — Plan 0017 shipped: order validation returns a typed `OrderResult`, not
-  `push_error` (agent implementation).** `OrderValidator.add_move_order` / `add_commit_order` (and
+  `push_error` (agent implementation).** `OrderValidator.add_move_order` / `add_commit_order` (and  (historical)
   their `GameState` wrappers) now return `OrderResult` (`ok` / `code`:enum / `message`; new
   `scripts/model/OrderResult.gd`, following the CombatResult/MineResult typed-Resource pattern)
   instead of `push_error(<string>)` + void. Callers branch on `result.ok`; the LLM API's old
@@ -637,7 +637,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   (same pending-Windows-gate caveat as plan 0013).
 
 - **2026-07-18 — Plan 0012 shipped: unified sweep extraction on the batch backend (agent
-  implementation).** `run_sweep_cells.gd` deleted; every sweep cell is now a parallel
+  implementation).** `run_sweep_cells.gd` deleted; every sweep cell is now a parallel  (historical)
   `run_batch.py` set of standard `run_selfplay_game.gd` games, with `sweep_metrics.py` extracting
   raw numbers from game records (`wave_bns` added to `AntishipSummary` for the denominator) and
   `make_sweep_report.py` owning all formatting. Canned specs run `matchup: noop` (new
@@ -658,7 +658,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   implementation, USER-approved).** `run_sweep.py` restructured into `run_spec_sweep` /
   `run_cli_sweep` + shared helpers, with metrics validated against the `sweep_metrics.REGISTRY`
   at launch; `mines_only` moved from a fake override key to a cell-level runner directive (the
-  overrides namespace now holds only `file:dot.path` keys); `run_sweep_cells.gd` drops the
+  overrides namespace now holds only `file:dot.path` keys); `run_sweep_cells.gd` drops the  (historical)
   redundant eager `_rebuild_ijfs_state` (reset lazy-nulls it; the CRBM path keeps one eager
   build for its pre-resolve pool census); `run_batch.py`'s manifest override embed fails loud
   instead of silently recording a path. Proof: both canned sweeps byte-identical before/after;
@@ -670,8 +670,8 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   mines-only floor — because since plan 0004 (`a2b60fc`) `resolve_antiship_turn` fires only on
   the sent sealift cohort, and the harness (old scripts and migration alike) never called
   `resolve_sealift_turn`. The 0≡0 "parity" that gated the legacy-script deletion was vacuous.
-  Fixed: `run_sweep_cells.gd` now resolves sealift between IJFS and the crossing and measures the
-  wave as `SealiftResolver.sent_cohort_bn_ids` (~81 BNs with follow-on echelons, vs the old 36-BN
+  Fixed: `run_sweep_cells.gd` now resolves sealift between IJFS and the crossing and measures the  (historical)
+  wave as `SealiftResolver.sent_cohort_bn_ids` (~81 BNs with follow-on echelons, vs the old 36-BN  (historical)
   reserve) — so the plan-0001 ~25% dial reads differently now and awaits USER re-reading. Also
   fixed in the same pass: spec `scenario` is now actually applied (was silently ignored; the CRBM
   spec's `roc_full_defense` claim was wrong — pinned parity ran `scenario_default`, spec
@@ -684,10 +684,10 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   floor cell is declared in the spec (`extra_cells`) and rendered in the report; manifests store
   full seed lists; `--backend batch` with `--spec` errors until plan 0012. **USER call 2026-07-18: the golden dial stays at ic=36/bonus=0.20 — the 32.9% reading on the new 81-BN sent-cohort wave is accepted as the standing calibration** (supersedes plan 0001's ~25%-of-36-BN target; no re-dial).
 
-- **2026-07-18 — Sweep orchestrator + cell backend (Plan 0011; agent implementation).** The Python `run_sweep.py` tool now orchestrates sweeps through `run_batch.py` or the new `run_sweep_cells.gd` backend. The legacy bespoke sweep scripts (`sweep_antiship_crossing.gd`, `sweep_crbm_maneuver.gd`, `ijfs_sweep_support.gd`) have been deleted. Replaced with generalized canned sweep specifications in `tools/sweeps/*.json`. Legacy powershell sweep tool `run_sweep.ps1` is deleted. Facts: `docs/STATUS.md` and `.claude/skills/hexcombat-research-runs`.
+- **2026-07-18 — Sweep orchestrator + cell backend (Plan 0011; agent implementation).** The Python `run_sweep.py` tool now orchestrates sweeps through `run_batch.py` or the new `run_sweep_cells.gd` backend. The legacy bespoke sweep scripts (`sweep_antiship_crossing.gd`, `sweep_crbm_maneuver.gd`, `ijfs_sweep_support.gd`) have been deleted. Replaced with generalized canned sweep specifications in `tools/sweeps/*.json`. Legacy powershell sweep tool `run_sweep.ps1` is deleted. Facts: `docs/STATUS.md` and `.claude/skills/hexcombat-research-runs`.  (historical)
 
 - **2026-07-17 — Removed the legacy mobile-target-destroy-cap Pk path (USER call, refactor idea #3).**
-  `IjfsStrike._legacy_cap_probability`/`_resolve_cap`, the `mobile_target_destroy_caps` scenario
+  `IjfsStrike._legacy_cap_probability`/`_resolve_cap`, the `mobile_target_destroy_caps` scenario  (historical)
   block, and the always-null `mobile_cap_applied`/`legacy_cap_applied` strike-log fields are deleted.
   The path was inert in production: `destruction_probability` only reached it when
   `strike_probability_modifiers` was empty, and the shipped scenario always carries modifiers (it was
@@ -796,7 +796,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   crossing numbers shifted (fixture regenerated). Escort SAM magazine + reload cycle is off by
   default (seeded only when a scenario sets `escort_reload_time_turns > 0`), so the default pin stays
   byte-stable. Facts: `docs/systems/amphibious-offload.md` → "Sealift lifecycle"; knobs in
-  `hexcombat-config-and-knobs`; code headers in `scripts/resolvers/SealiftResolver.gd` +
+  `hexcombat-config-and-knobs`; code headers in `scripts/resolvers/SealiftResolver.gd` +  (historical)
   `scripts/model/SealiftState.gd`. Evidence: roc_full_defense self-play (seed 20260624) — crossing
   resumes at turn 6 (was 0 for turns 4–30), red reaches china_majority by turn 9.
 

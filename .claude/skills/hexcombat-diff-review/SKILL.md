@@ -40,7 +40,7 @@ The gate proves the pins did not move. It cannot tell you:
 - an invariant that now holds **only by luck** — correct today, silently wrong after the next change
 - a **default that returns the pre-fix answer** (`snapshot_state(pending_pools := [])` silently reported
   whole rosters — the exact bug the change had just fixed)
-- **dead code left behind** that a future editor will find and use (`Brigade.to_combat_units` did not
+- **dead code left behind** that a future editor will find and use (`Brigade.to_combat_units` did not (historical)
   subtract pools and was a trap)
 - **test gaps**: a test that would pass without the fix, i.e. proves nothing
 

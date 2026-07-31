@@ -64,7 +64,9 @@ Anything hard-coded that a variant would want to vary is a bug — promote it to
 Unit strengths live ONLY in `UnitStats.TYPE_DEFS`; DOS constants only in `DosConsumption.gd`
 (300/150/150); offload only in `OffloadRates.gd`. Support multipliers are ALREADY scenario-driven —
 `GameData.support_multipliers` (loaded from the scenario key `support_multipliers`) threaded through
-`CombatRules.support_multipliers`; there is no `CombatCalculator.SUPPORT_MULTIPLIERS` constant to promote.
+`CombatRules.support_multipliers`; there is no CombatCalculator.SUPPORT_MULTIPLIERS constant to promote
+(deliberately unbackticked — it names something that does not exist, which the anchor gate would read
+as a dead reference).
 `CombatCalculator.resolve_map_attack`'s `feba_base_km` is a required param (no default) — real
 callers always pass the scenario value; there is no fallback to silently diverge to.
 

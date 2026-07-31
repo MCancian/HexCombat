@@ -145,6 +145,19 @@ ghost-landing family structurally: it walks live state for anything shaped like 
 pool and fails if `GameStateData.pending_battalion_pools()` does not return it, so a new pool is caught
 by its **shape** rather than by someone remembering to register it.
 
+`tools/validate_doc_anchors.gd` closes it for documentation. It fails on a backticked repo path, script
+name or `Class.member` in the docs that no longer resolves — including, since 2026-07-31, a class that
+resolves to **nothing at all**. That inversion is the whole point: the check used to begin "if the class
+does not exist, return", so it was strongest for classes that still exist and blind to every reference to
+a DELETED one. Its scope now covers `docs/**` and `.claude/skills/**` rather than `docs/systems/` alone,
+minus the four kinds of doc where a dead anchor is correct (archive, plans, dated reports, and the
+append-only history docs; `docs/DECISIONS.md` is deliberately NOT exempt, because a closeout entry names
+the classes just changed and is the likeliest place for a dead one). Escape markers: `(historical)` for a
+past-tense passage, `(upstream)` for a name that lives in the TaiwanInvasionViewer source rather than
+here — and `(upstream)` forgives only "no such thing here", so a line citing an upstream name and one of
+ours still checks ours. The detector self-tests both directions on every run, so it cannot decay into a
+check that passes because it fires at nothing.
+
 `tools/validate_combat_rules_threading.gd` closes the same family for combat knobs: every field
 declared on `CombatRules` must be assigned in `TurnConductor.resolve_combat_at`, sourced from the
 same-named `GameData` property (or listed as a computed exception with a reason), written nowhere else,

@@ -143,7 +143,7 @@ HexCombat's turn engine is an **adaptation**, not a port. TIV (`TaiwanInvasionVi
 **What maps:**
 - The **phase-run order** is the same: IJFS → Anti-ship → Offload → BOOTS (ground combat) → Cleanup.
 - Each phase's data inputs and outputs (manifests, strike logs, supply ledgers) are conceptually equivalent.
-- `GameView.IJFS` / `ANTISHIP` / `OFFLOAD` / `BOOTS` / `CLEANUP` → HexCombat's `resolve_ijfs_turn`, `resolve_antiship_turn`, `resolve_offload_turn`, etc.
+- `GameView.IJFS` / `ANTISHIP` / `OFFLOAD` / `BOOTS` / `CLEANUP` → HexCombat's `resolve_ijfs_turn`, `resolve_antiship_turn`, `resolve_offload_turn`, etc. (upstream)
 
 **What is HexCombat-original:**
 - **WeGo planning layer** — TIV has no order buffers; each phase is a full-run-you're-done view. HexCombat's `Phase.PLANNING`, `add_move_order()`, `add_commit_order()`, `commitments[]` and `orders[]` are entirely new.

@@ -65,7 +65,7 @@ geometry goes through `HexMath`; never hand-roll adjacency.
 
 - **TIV** (`C:\Users\mdogg\TaiwanInvasionViewer` — the real source tree is **nested**:
   `TaiwanInvasionViewer\TaiwanInvasionViewer\src\…`; the outer dir looks empty of source):
-  original Python/Flask sim; its `tests/python/` were the behavioral oracle for the port.
+  original Python/Flask sim; its `tests/python/` were the behavioral oracle for the port. (upstream)
   Per-phase file map with line refs: `ROADMAP.md` D1–D5 sections.
 - **TaiwanDefenseRefactor** (`C:\Users\mdogg\My Drive\Projects\TaiwanDefenseRefactor`): source of
   the geometric mine model (`mine_warfare.py`).

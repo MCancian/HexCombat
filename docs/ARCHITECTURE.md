@@ -68,7 +68,7 @@ Each TaiwanInvasionViewer phase becomes a self-contained module that reuses `Gam
 2. **Pure logic lib** under `scripts/` (`static`/`RefCounted`).
 3. **Wiring** through `GameData`/`GameState` and the event bus — no reach-through between phases.
 4. **Tests:** a `tools/validate_*.gd` data-contract script + GdUnit4 unit/golden tests mirroring
-   the source `tests/python/` cases.
+   the source `tests/python/` cases. (upstream)
 
 BOOTS is the reference implementation of this template.
 

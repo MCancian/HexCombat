@@ -202,7 +202,7 @@ silently absorbing a config that never arrived — see `hexcombat-failure-archae
 - Hex grid is geometry-only (no terrain/land flag) → victory census "on Taiwan land hexes" uses
   the all-placed-hexes default; `taiwan_hexes` config is the future hook.
 - `CombatCalculator.gd` has a stale `feba_base_km = 2.0` default parameter (real callers pass
-  `GameData.feba_base_km` = 3.5 from scenario); `BOOTSCalculator.gd` wrapper carries the same.
+  `GameData.feba_base_km` = 3.5 from scenario); TIV's `BOOTSCalculator.gd` wrapper carries the same. (upstream)
 - Godot 4.7 headless teardown crash (see `hexcombat-debugging-playbook`) — engine-level, gated
   around, not fixable here.
 
