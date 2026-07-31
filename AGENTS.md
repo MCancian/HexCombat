@@ -83,6 +83,10 @@ the module's system doc, 3–5-line `docs/DECISIONS.md` entry), close out any pl
   `tools/mutation_authority_manifest.json` and are gated by `tools/validate_mutation_authority.gd`
   — do not copy its field/writer lists into a header or doc. Adding a field to a registered model,
   or a new write to one, needs a manifest entry; the gate names the file, line, and write form.
+  To READ that manifest, run `python3 tools/mutation_ownership.py` (`--fields`, `--exclusions`,
+  `--plan NNNN`, `--writers`, `--check-pin`) rather than opening 65 KB of JSON or hand-rolling a
+  `python3 -c "import json..."` — the campaign wrote that same extraction once per plan before the
+  view existed.
 - Deeper rationale + invariants: `docs/ARCHITECTURE.md` and `hexcombat-architecture-contract`.
 
 ## Running & verifying

@@ -1,5 +1,9 @@
 # HexCombat — Tech Debt & Hygiene Backlog
 
+> **Read budget — 260 lines of unordered items.** Nothing here is scheduled and nothing here is a
+> dependency. `grep -n '^- \[ \]' docs/plans/BACKLOG.md` gives you every open item's headline; read
+> the body of one only if you are about to act on it.
+
 This document is strictly a place for agents to dump observations of tech debt, hygiene issues, and necessary refactors encountered during development.
 
 Focused multi-session efforts (features, content, balancing) get a numbered plan in the `docs/plans/` directory and are tracked in [README.md](README.md).

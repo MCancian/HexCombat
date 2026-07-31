@@ -1,5 +1,14 @@
 # Mutation authority (campaign 0042–0050)
 
+> **Read budget — this doc is 230 lines and you probably need 60 of them.**
+> Implementing an aggregate for the first time: **§5 then §6** (the traps and the shapes — that is
+> where the time actually goes), then §3 for the commit ordering. §1–2 are provenance; skip on a
+> re-read. §4 only when you are choosing a field NAME.
+> **Ownership facts are not in this file and never will be** — run
+> `python3 tools/mutation_ownership.py` (add `--fields`, `--exclusions`, `--plan NNNN`, `--writers`,
+> `--check-pin`). Sections are deliberately NOT renumbered when content moves: code headers,
+> `DECISIONS.md` and archived plans cite them by number.
+
 ## 1. Purpose
 
 Every mutable gameplay aggregate has **one named authority class** that is its only production
@@ -12,7 +21,7 @@ are not copied here:
 
 | Question | Home |
 |---|---|
-| Which class owns which fields, allowances, legacy writers | `tools/mutation_authority_manifest.json` |
+| Which class owns which fields, allowances, legacy writers | `tools/mutation_authority_manifest.json` — READ IT VIA `python3 tools/mutation_ownership.py` |
 | What write forms the scanner detects, and its blind spots | `tools/validate_mutation_authority.gd` header |
 
 Why it exists: the campaign runs one aggregate per plan (0043 → 0050), so each step is a fresh agent
@@ -24,6 +33,7 @@ several archived plans. Read this first, then the manifest.
 | File | Responsibility |
 |---|---|
 | `tools/mutation_authority_manifest.json` | THE ownership record: aggregates, protected fields, allowances. `_schema_rules` is normative. |
+| `tools/mutation_ownership.py` | Read-only VIEWS of that manifest. Prints what the manifest says, so it cannot drift; deliberately not part of the gate, because a reading aid must not be able to break one. |
 | `tools/validate_mutation_authority.gd` | The gate. Resolves each write's receiver TYPE, then asks whether that (class, field) pair is protected. |
 | `tools/fixtures/mutation_authority/*.gdfixture` | Abstract illegal-write forms, compared exactly every run against the abstract fixture manifest. |
 | `tools/fixtures/mutation_authority/real_claims_pin.json` | Non-authoritative regression oracle for real claim identities; never an ownership input. |

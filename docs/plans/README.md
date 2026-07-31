@@ -1,5 +1,10 @@
 # HexCombat — plans index
 
+> **Read budget.** Starting a task? Read **"Next up"** (the next ~45 lines) and stop. The tables
+> below are an index of `docs/plans/`, not reading material — open a plan only when you are about to
+> work on it. Shipped plans are one row in [ARCHIVE.md](ARCHIVE.md); their reasoning stays in
+> `docs/archive/` and is not summarized twice.
+
 Work orders for multi-session efforts. Each plan is a focused doc; **this index is the source
 of truth** for status. Status vocabulary: `Sketch` → `Exploring` → `In progress` → `✅ Shipped`
 → `Superseded`.
@@ -51,33 +56,33 @@ agent would need to read the plan to act, the closeout wasn't done.
 
 ## Active
 
-| #    | Plan                                                                                      | Priority                                                                                                                                                                                                                                               | Status                                                                                                                                                                                                                                      |
-| ---- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0002 | [Per-hull escort magazines (D3-B3)](0002-per-hull-escort-magazines.md)                       | Low (needs ship-ammo subsystem)                                                                                                                                                                                                                        | Sketch                                                                                                                                                                                                                                      |
-| 0003 | [Combat-summary team attribution](0003-combat-summary-team-attribution.md)                   | Low (blocked on USER counterattack call)                                                                                                                                                                                                               | Sketch                                                                                                                                                                                                                                      |
-| 0024 | [Order-entry facilitator flow (live play)](0024-order-entry-facilitator-flow.md)             | Medium (live-facilitator UI)                                                                                                                                                                                                                           | Sketch                                                                                                                                                                                                                                      |
-| 0025 | [Front-line polyline-draw UI (D5-D)](0025-frontline-polyline-draw-ui.md)                     | Medium (live-facilitator UI; large feature)                                                                                                                                                                                                            | Sketch                                                                                                                                                                                                                                      |
-| 0026 | [Live-play Godot map: camera, HUD, replay screenshotter](0026-liveplay-map-camera-hud.md)    | Low (live-operator polish)                                                                                                                                                                                                                             | Sketch                                                                                                                                                                                                                                      |
-| 0027 | [Front-view per-beachhead pager (ocean-spanning fronts)](0027-front-view-beachhead-pager.md) | Low (build only when a talk needs it AND the sim produces an ocean-spanning front)                                                                                                                                                                     | Sketch                                                                                                                                                                                                                                      |
-| 0028 | [Sustained follow-on interdiction](0028-sustained-followon-interdiction.md)                  | Medium (research; new mechanic — interdiction is a one-shot toll, follow-on crosses at 3% loss)                                                                                                                                                       | Sketch                                                                                                                                                                                                                                      |
-| 0029 | [Dynamic ROC defense](0029-dynamic-roc-defense.md)                                           | Medium (research; Tier A policy cheap, Tier B counterattack deep — blocked on 0003 + USER call)                                                                                                                                                       | Tier A shipped 2026-07-24 (Red 100%→83.3%); Tier B gated on USER call                                                                                                                           |
-| 0030 | [JLSF first-class cohort (legibility)](0030-jlsf-first-class-cohort.md)                      | Low (refactor; byte-stable observability — enables 0031)                                                                                                                                                                                              | Sketch                                                                                                                                                                                                                                      |
-| 0031 | [Graduated port suppression](0031-graduated-port-suppression.md)                             | Medium (new mechanic; ROC-only, continuous port capacity, 0%-start default w/ deliberate golden re-baseline + deck refresh, JLSF repair vs off-island fires + IJFS-attritable HIMARS; DataOverrides wiring absorbed as step 0 — design calls settled) | Sketch                                                                                                                                                                                                                                      |
-| 0033 | [Brigade organization](0033-brigade-organization.md)                                         | Medium (new mechanic; USER intends to build on it — currently a monotonic decay to zero that nothing reads and the observation misdescribes; design calls open)                                                                                       | Sketch                                                                                                                                                                                                                                      |
-| 0035 | [Scenario variant inheritance](0035-scenario-inheritance.md)                                 | Medium (refactor; variants are full copies of the default, so "differs only in X" is unchecked — comparability is the research product)                                                                                                               | Sketch                                                                                                                                                                                                                                      |
-| 0039 | [One truth about where a battalion is](0039-battalion-location-single-truth.md)              | Superseded — a derived ledger cannot catch the historical one-sided transition bug                                                                                                                                                                    | **Superseded by 0044**                                                                                                                                                                                                                |
-| 0040 | [CombatRules — stop hand-threading 26 fields](../archive/0040-combatrules-threading.md)     | Medium (risk buydown; a field added but not threaded is a silently-inert knob, no gate watches it. Recommended path was the completeness validator ALONE — not the restructure)                                                                       | **Complete 2026-07-26** — completeness validator shipped; deferred (a)/(b)                                                      |
-| 0041 | [One pattern for reaching an autoload](0041-autoload-access-one-pattern.md)                  | Low (ergonomics; the failure is already CAUGHT by validate_tool_script_purity — this makes the correct pattern obvious rather than remembered)                                                                                                        | Sketch                                                                                                                                                                                                                                      |
+| # | Plan | Priority | Status |
+| --- | --- | --- | --- |
+| 0002 | [Per-hull escort magazines (D3-B3)](0002-per-hull-escort-magazines.md) | Low (needs ship-ammo subsystem) | Sketch |
+| 0003 | [Combat-summary team attribution](0003-combat-summary-team-attribution.md) | Low (blocked on USER counterattack call) | Sketch |
+| 0024 | [Order-entry facilitator flow (live play)](0024-order-entry-facilitator-flow.md) | Medium (live-facilitator UI) | Sketch |
+| 0025 | [Front-line polyline-draw UI (D5-D)](0025-frontline-polyline-draw-ui.md) | Medium (live-facilitator UI; large feature) | Sketch |
+| 0026 | [Live-play Godot map: camera, HUD, replay screenshotter](0026-liveplay-map-camera-hud.md) | Low (live-operator polish) | Sketch |
+| 0027 | [Front-view per-beachhead pager (ocean-spanning fronts)](0027-front-view-beachhead-pager.md) | Low (build only when a talk needs it AND the sim produces an ocean-spanning front) | Sketch |
+| 0028 | [Sustained follow-on interdiction](0028-sustained-followon-interdiction.md) | Medium (research; new mechanic — interdiction is a one-shot toll, follow-on crosses at 3% loss) | Sketch |
+| 0029 | [Dynamic ROC defense](0029-dynamic-roc-defense.md) | Medium (research; Tier A policy cheap, Tier B counterattack deep — blocked on 0003 + USER call) | Tier A shipped 2026-07-24 (Red 100%→83.3%); Tier B gated on USER call |
+| 0030 | [JLSF first-class cohort (legibility)](0030-jlsf-first-class-cohort.md) | Low (refactor; byte-stable observability — enables 0031) | Sketch |
+| 0031 | [Graduated port suppression](0031-graduated-port-suppression.md) | Medium (new mechanic; ROC-only, continuous port capacity, 0%-start default w/ deliberate golden re-baseline + deck refresh, JLSF repair vs off-island fires + IJFS-attritable HIMARS; DataOverrides wiring absorbed as step 0 — design calls settled) | Sketch |
+| 0033 | [Brigade organization](0033-brigade-organization.md) | Medium (new mechanic; USER intends to build on it — currently a monotonic decay to zero that nothing reads and the observation misdescribes; design calls open) | Sketch |
+| 0035 | [Scenario variant inheritance](0035-scenario-inheritance.md) | Medium (refactor; variants are full copies of the default, so "differs only in X" is unchecked — comparability is the research product) | Sketch |
+| 0039 | [One truth about where a battalion is](0039-battalion-location-single-truth.md) | Superseded — a derived ledger cannot catch the historical one-sided transition bug | **Superseded by 0044** |
+| 0040 | [CombatRules — stop hand-threading 26 fields](../archive/0040-combatrules-threading.md) | Medium (risk buydown; a field added but not threaded is a silently-inert knob, no gate watches it. Recommended path was the completeness validator ALONE — not the restructure) | **Complete 2026-07-26** — completeness validator shipped; deferred (a)/(b) |
+| 0041 | [One pattern for reaching an autoload](0041-autoload-access-one-pattern.md) | Low (ergonomics; the failure is already CAUGHT by validate_tool_script_purity — this makes the correct pattern obvious rather than remembered) | Sketch |
 | 0043 | [Anti-ship mutation authority + permanent launch destruction](../archive/0043-antiship-mutation-authority.md) | **High — first vertical slice + USER-ruled permanent launch destruction** | **Complete 2026-07-27** — `AntishipTransitions` sole writer; permanent launch destruction; no pin moved, no rebalance |
-| 0042 | [Mutation-authority foundation](../archive/0042-mutation-authority-foundation.md)            | **High — establishes the controller/API rule and staged enforcement gate**                                                                                                                                                                      | **Complete 2026-07-26** — enforcement gate + manifest; anti-ship in migration mode; no production code moved |
-| 0044 | [Force mutation authority](../archive/0044-force-mutation-authority.md)                                 | **High — brigades, battalions, manifests, placement; replaces 0039**                                                                                                                                                                            | **✅ Shipped 2026-07-29** — `ForceTransitions` sole writer                                                                                    |
-| 0045 | [Sealift/fleet mutation authority](../archive/0045-sealift-fleet-mutation-authority.md)       | High — hull/cohort/pipeline conservation and one writer                                                                                                                                                                                               | **✅ Shipped 2026-07-29** — `SealiftTransitions` sole writer; typed `SealiftCohort`; zero legacy writers; no behavior/RNG/golden change |
-| 0046 | [IJFS mutation authority](../archive/0046-ijfs-mutation-authority.md)                       | High — targets, munitions, squadrons, typed stocks and writeback                                                                                                                                                                                      | **✅ Shipped 2026-07-30** — `IjfsTransitions` sole writer; typed MANPADS stock; zero legacy writers; no behavior/RNG/golden change |
+| 0042 | [Mutation-authority foundation](../archive/0042-mutation-authority-foundation.md) | **High — establishes the controller/API rule and staged enforcement gate** | **Complete 2026-07-26** — enforcement gate + manifest; anti-ship in migration mode; no production code moved |
+| 0044 | [Force mutation authority](../archive/0044-force-mutation-authority.md) | **High — brigades, battalions, manifests, placement; replaces 0039** | **✅ Shipped 2026-07-29** — `ForceTransitions` sole writer |
+| 0045 | [Sealift/fleet mutation authority](../archive/0045-sealift-fleet-mutation-authority.md) | High — hull/cohort/pipeline conservation and one writer | **✅ Shipped 2026-07-29** — `SealiftTransitions` sole writer; typed `SealiftCohort`; zero legacy writers; no behavior/RNG/golden change |
+| 0046 | [IJFS mutation authority](../archive/0046-ijfs-mutation-authority.md) | High — targets, munitions, squadrons, typed stocks and writeback | **✅ Shipped 2026-07-30** — `IjfsTransitions` sole writer; typed MANPADS stock; zero legacy writers; no behavior/RNG/golden change |
 | 0047 | [Map/infrastructure mutation authority](../archive/0047-map-infrastructure-mutation-authority.md) | High — ownership, FEBA, seizure, repair and JLSF lifecycle | **✅ Shipped 2026-07-30** — `MapTransitions` + `InfrastructureTransitions` sole writers; sticky ownership enforced by having no owner setter; zero legacy writers; no behavior/RNG/golden change |
-| 0050 | [Mutation-authority campaign closeout](0050-mutation-authority-enforcement-closeout.md)      | High — independent audit, hard enforcement, deterministic closeout                                                                                                                                                                                    | Sketch                                                                                                                                                                                                                                      |
+| 0050 | [Mutation-authority campaign closeout](0050-mutation-authority-enforcement-closeout.md) | High — independent audit, hard enforcement, deterministic closeout | Sketch |
 | 0051 | [Destroyed coastal launchers get a last salvo away](0051-destroyed-systems-still-fire.md) | Medium (balance; a ported TIV mechanic that has never once fired — needs a USER dial + a crossing-calibration re-run) | Sketch |
 | 0052 | [Legibility sweep: unenforced budget, dead seams, half-finished role layout](../archive/0052-legibility-and-dead-seams.md) | Medium (hygiene; documented parameter budget now enforced; dead seams removed; role directories completed) | **Complete 2026-07-27** — parameter budget enforced; dead seams removed; role directories completed; typed `AntishipResolver` context |
-| 0036 | [Airborne cost and sortie cadence](0036-airborne-cost-and-cadence.md)                        | Medium (balance; USER call 2026-07-25 answering the plan-0032 dial — double baseline attrition + 1 sortie per 2 days;`red_airborne` only, golden untouched, `validate_air_insertion` pin re-baselines)                                            | Sketch                                                                                                                                                                                                                                      |
+| 0036 | [Airborne cost and sortie cadence](0036-airborne-cost-and-cadence.md) | Medium (balance; USER call 2026-07-25 answering the plan-0032 dial — double baseline attrition + 1 sortie per 2 days;`red_airborne` only, golden untouched, `validate_air_insertion` pin re-baselines) | Sketch |
 | 0053 | [Documentation hierarchy refactor (hub-and-spoke)](../archive/0053-doc-hierarchy-refactor.md) | Medium (developer experience; ~85% orientation token reduction) | **✅ Shipped 2026-07-29** — per-module STATUS/RETRO hierarchy; hub-and-spoke |
 | 0054 | [Reviewer tiers, one canonical home, one fan-out command](../archive/0054-reviewer-tiers-and-doc-consolidation.md) | Medium (agent workflow; USER tier model + 2-of-3 quorum on plan implementations) | **✅ Shipped 2026-07-30** — `.claude/REVIEWERS.md` canonical; `tools/review_fanout.sh` runs a round; `tools/validate_reviewer_facts.gd` gates one-home + launcher drift |
 
@@ -100,39 +105,27 @@ The campaign is intentionally serial. Each plan establishes APIs the next plan c
 step touches deterministic turn-path state. Only one migration family lands per commit, with the full
 gate green before the next begins.
 
-1. **0042 — foundation and enforceability gate; no production moves.** Inventory write forms across
-   all script trees, prove the source gate can detect direct, nested, alias, setter/model-mutator, and
-   container mutations, establish `tools/mutation_authority_manifest.json`, and register anti-ship in
-   migration mode. Authority permission is exact-file, never directory-wide. **Stop the campaign** if
-   enforcement would be a regex that misses aliases while claiming completeness; choose a proven
-   narrower mechanism first. Keep suffix/exact-manifest orientation in the current layout through this
-   plan.
-2. **0043 — anti-ship pilot, permanent destruction, then role-layout checkpoint.** First complete
-   vertical slice. Separate launch calculation from state application; keep IJFS and launch
-   destruction permanently, keep suppression transient, remove contradictory writers, then measure
-   the deliberate outcome change. Review the shipped API/manifest/snapshot/receipt pattern before
-   copying it. Only after that review, make separate byte-stable mechanical commits for clear phase,
-   builder, and proven-pure anti-ship calculator moves; mixed files stay put until their owning plan.
-3. **0044 — force authority.** Brigades, battalion roster counts, manifests, map placement and exact
-   casualty/transfer deltas. This supersedes 0039: a ledger derived from already-drifted inputs cannot
-   detect the ghost-landing bug. Keep counts and serialized BN ids; instances remain deferred.
-4. **0045 — sealift/fleet authority.** Hull buckets, cohorts, return pipeline and escort ammunition;
-   reconcile exact BN ids with the force authority. Eliminate temporarily invalid fleet state between
-   loss booking and projection.
-5. **0046 — IJFS authority.** Persistent targets, munition inventory, squadrons, typed MANPADS stock,
-   carry-over and cumulative writeback. Preserve every conditional RNG draw.
-6. **0047 — map/infrastructure authorities.** ✅ Shipped 2026-07-30. FEBA, sticky ownership, seizure,
-   repair and JLSF node lifecycle, all preserved exactly; zero-ashore territorial control and phase
-   timing unchanged.
-7. **0048 — reinforcement-state authority.** ✅ Shipped 2026-07-30. Air-insertion lift capacity and
-   the drop log behind `AirInsertionTransitions`; mobilization needed no authority of its own,
-   because 0044 already owned every field of `MobilizationState`, so only its handle moved to `force`.
-8. **0049 — accounting and turn lifecycle.** Supply balance/history, order buffers, legal phase/turn
-   transitions, victory latches and result application. It invokes domain reset APIs rather than
-   editing their fields.
+**Plans 0042–0049 are SHIPPED.** Their per-plan rationale is not repeated here — each has an
+archived plan under `docs/archive/` and a one-row summary in [ARCHIVE.md](ARCHIVE.md), and the
+lessons that generalize are in `docs/systems/mutation-authority/mutation-authority.md` §5/§6. What
+each one established, in one line, so you can see the shape of the chain:
+
+| Plan | Established |
+| --- | --- |
+| 0042 | The enforceability gate and the manifest format. Receiver-TYPE resolution, not field names. |
+| 0043 | `antiship_establishment` — the pilot vertical slice, and the one deliberate behaviour change. |
+| 0044 | `force` — brigades, battalions, placement, casualty/transfer deltas. Supersedes 0039. |
+| 0045 | `sealift_fleet` — hulls, cohorts, return pipeline, escort magazines. |
+| 0046 | `ijfs` — targets, munitions, squadrons, cross-day carry-over. |
+| 0047 | `map` + `infrastructure` — sticky ownership, FEBA, node lifecycle. |
+| 0048 | `air_insertion` — the lift ledger; mobilization needed no authority of its own. |
+| 0049 | `supply`, `order_buffers`, `turn_lifecycle` — the last ten `GameStateData` fields. |
+
 9. **0050 — hard enforcement and closeout.** Independent source/runtime/contract sweep, remove all
    legacy-writer allowances, run multi-scenario deterministic games, obtain two read-only external
-   reviews, update canonical docs, and archive the campaign.
+   reviews, update canonical docs, and archive the campaign. **Run
+   `python3 tools/mutation_ownership.py --plan 0050` first** — it prints the three orphan fields whose
+   exclusions must be resolved before this plan can itself be archived.
 
 ### Interaction with existing plans
 
@@ -150,21 +143,19 @@ gate green before the next begins.
 
 ### Serial-agent execution protocol
 
-The campaign is designed for a succession of cold-start agents. Each agent:
+The campaign is designed for a succession of cold-start agents. Most of what used to be listed here
+now has a canonical home and is not repeated: the work loop is in `CLAUDE.md`, the ordering traps and
+authority shapes in `docs/systems/mutation-authority/mutation-authority.md` §5/§6, the registration
+rules in the manifest's `_schema_rules`, and `.gd.uid`/re-import handling in
+`hexcombat-build-and-env`. What is specific to THIS campaign:
 
-1. reads `AGENTS.md`, `docs/STATUS.md`, this sequence, the active plan, and the canonical skills named
-   by AGENTS for that task;
-2. verifies every preceding campaign step is shipped/green before taking the next one—no parallel
-   aggregate migrations and no coding from a later plan against provisional APIs;
-3. implements one numbered migration family or one mechanical destination-directory move per commit;
-4. updates `tools/mutation_authority_manifest.json` in the same commit as the writer it adds/removes;
-5. before adding an authority dependency to a ceilinged file, records the dependency removed in the
-   same commit; if no one-for-one swap exists, lands a prior green application-coordinator extraction
-   instead—never raises the ceiling to fit;
-6. preserves RNG order, JSON records, class names during path-only moves, and each script's `.gd.uid`;
-7. re-imports after class/path changes, runs focused tests twice where required, then judges the full
-   gate by marker lines; and
-8. leaves the active plan checklist/progress and canonical closeout homes current before handoff.
+1. Verify every preceding campaign step is shipped and green before taking the next — no parallel
+   aggregate migrations, and no coding from a later plan against provisional APIs.
+2. One migration family per commit, with the manifest updated in the SAME commit as the writer it
+   adds or removes.
+3. Before adding an authority dependency to a ceilinged file, record the dependency removed in the
+   same commit. If no one-for-one swap exists, land a prior green extraction instead — never raise
+   the ceiling to fit.
 
 Stop and surface to the USER rather than improvising when alias detection is incomplete, a
 cross-authority operation can fail after its first write, a dependency ceiling would need to rise, a

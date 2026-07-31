@@ -185,6 +185,11 @@ matched by nothing at all — neither protected nor reported.
 manifest is the authoritative record, this table is the index. Procedure for adding one:
 `docs/systems/mutation-authority/mutation-authority.md`.
 
+**This table is an INDEX, capped at one line per aggregate.** It exists so you can see the shape of
+the campaign without opening the manifest; it is not the ownership record and must never grow field
+lists or rationale. For anything more specific run `python3 tools/mutation_ownership.py`
+(`--fields`, `--exclusions`, `--plan NNNN`, `--writers`, `--check-pin`).
+
 | Aggregate | Authority (`scripts/transitions/`) | Plan | Covers |
 |---|---|---|---|
 | `antiship_establishment` | `AntishipTransitions.gd` | 0043 | Surviving launchers, permanent losses, temporary suppression, and the container projection IJFS targets |
@@ -194,9 +199,9 @@ manifest is the authoritative record, this table is the index. Procedure for add
 | `map` | `MapTransitions.gd` | 0047 | `HexState.hex_owner`/`feba_km` and the `GameDataStore.hex_states` container. **Zero allowances** — construction routes through the authority too |
 | `infrastructure` | `InfrastructureTransitions.gd` | 0047 | `InfrastructureNodeState` lifecycle (status, repair clock, JLSF marker), the `nodes` container, the `infrastructure_state` handle |
 | `air_insertion` | `AirInsertionTransitions.gd` | 0048 | `AirInsertionState.caps`/`initial_caps`/`history` — the airframe ledger and the drop log — plus the `air_insertion_state` handle. Who is in the pool and who has landed stay with `force`: one model, two authorities, disjoint fields |
-| `supply` | `SupplyTransitions.gd` | 0049 | `SupplyState.current_dos_tons` and its append-only `day_history` ledger, plus the `supply_state` handle. The new balance is DERIVED from the consumption row, so a ledger row that disagrees with the pool is unexpressible |
-| `order_buffers` | `OrderTransitions.gd` | 0049 | The four request queues — `orders`, `commitments`, `air_insert_orders`, `jlsf_orders`. One aggregate because the questions worth asking are about the SET (accepted outside PLANNING? survives begin-next-turn?) |
-| `turn_lifecycle` | `TurnLifecycleTransitions.gd` | 0049 | `turn_number`, `phase`, and the `game_over`/`winner`/`_china_has_landed` latches. Three legal EDGES and **no destination setter**, so an illegal phase is inexpressible rather than refused |
+| `supply` | `SupplyTransitions.gd` | 0049 | The DOS pool, its append-only `day_history` ledger, and the `supply_state` handle |
+| `order_buffers` | `OrderTransitions.gd` | 0049 | The four request queues: `orders`, `commitments`, `air_insert_orders`, `jlsf_orders` |
+| `turn_lifecycle` | `TurnLifecycleTransitions.gd` | 0049 | `turn_number`, `phase`, and the `game_over`/`winner`/`_china_has_landed` latches |
 
 Two lessons from 0046 generalize and are now in the procedure doc. First, **a protected field NAME is
 claimed repo-wide**, so registering a generic one poisons unrelated code — `IjfsMunition.name` turned

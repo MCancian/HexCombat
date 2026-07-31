@@ -1,5 +1,11 @@
 # Decisions changelog
 
+> **Read budget — 800+ lines, append-only, NEWEST FIRST.** Read from the top and stop when entries
+> stop being about your subsystem; you almost never need more than the first few. This is a
+> changelog, not a reference: every entry ends in pointers, and the pointer is the thing to read.
+> Searching for a decision you half-remember? `grep -n '^- \*\*20' docs/DECISIONS.md` lists every
+> entry's date and headline in ~60 lines.
+
 Append-only, newest first. **An entry is a changelog, never a reference**: 3–5 lines — what was
 decided, who decided (USER vs agent), and POINTERS to where the durable facts landed. If an agent
 would need this entry to act, the fact is filed in the wrong place; put it in its canonical home:
