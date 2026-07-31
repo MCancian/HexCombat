@@ -175,25 +175,74 @@ func test_an_order_outside_planning_is_rejected() -> void:
 	assert_int(GameState.orders_for(Brigade.Team.RED).size()).is_equal(before)
 
 
-# --- 3. the deploy_jlsf hole, pinned as it stands TODAY --------------------------------------------
-# Plan 0049 closes this. The assertions below describe the CURRENT (defective) behaviour so the fix
-# shows up as a deliberate, reviewed change of these two cases rather than as silent drift.
-# EXPECTED TO BE REWRITTEN IN COMMIT 3 — see the plan's `add_jlsf_order` contract table.
+# --- 3. the deploy_jlsf hole, now CLOSED -----------------------------------------------------------
+# These two cases were committed first as a characterization of a DEFECT: deploy_jlsf was the only
+# order with no validation API, so it was accepted outside PLANNING and with an id naming nothing.
+# Plan 0049 commit 3 gave it one. The assertions are inverted here deliberately, in the commit that
+# changes the behaviour, so the fix is visible in the diff rather than silent.
 
-func test_today_a_jlsf_order_is_accepted_outside_planning() -> void:
+func test_a_jlsf_order_outside_planning_is_rejected_and_appends_nothing() -> void:
 	GameState.resolve_turn(SeededDice.new(1))
 	assert_int(GameState.phase).is_equal(GameStateData.Phase.END)
 
-	GameState._apply_order({"kind": "deploy_jlsf", "port_id": "PORT-KAOHSIUNG"}, Brigade.Team.RED)
+	var result := GameState.add_jlsf_order(_a_real_port_id())
 
-	assert_array(GameState.jlsf_orders).override_failure_message(
-		"CHARACTERIZATION OF A DEFECT: deploy_jlsf currently bypasses the PLANNING check"
-	).contains(["PORT-KAOHSIUNG"])
+	assert_bool(result.ok).is_false()
+	assert_int(result.code).is_equal(OrderResult.Code.WRONG_PHASE)
+	assert_array(GameState.jlsf_orders).is_empty()
 
 
-func test_today_a_jlsf_order_with_an_unknown_port_is_accepted() -> void:
-	GameState._apply_order({"kind": "deploy_jlsf", "port_id": "NO-SUCH-PORT"}, Brigade.Team.RED)
+func test_a_jlsf_order_with_an_unknown_port_is_rejected_and_appends_nothing() -> void:
+	var result := GameState.add_jlsf_order("NO-SUCH-PORT")
 
-	assert_array(GameState.jlsf_orders).override_failure_message(
-		"CHARACTERIZATION OF A DEFECT: deploy_jlsf currently validates no port id"
-	).contains(["NO-SUCH-PORT"])
+	assert_bool(result.ok).is_false()
+	assert_int(result.code).is_equal(OrderResult.Code.UNKNOWN_INFRASTRUCTURE)
+	assert_array(GameState.jlsf_orders).is_empty()
+
+
+func test_a_valid_jlsf_order_is_accepted() -> void:
+	var result := GameState.add_jlsf_order(_a_real_port_id())
+
+	assert_bool(result.ok).is_true()
+	assert_array(GameState.jlsf_orders).contains([_a_real_port_id()])
+
+
+## A REPEATED port id stays legal to preserve pre-existing behaviour, NOT because anything depends on
+## it. Diff review disproved the first draft's "load-bearing" claim, and the test below proves the
+## disproof: two buffered orders and one buffered order both emit exactly ONE pool entry, because
+## InfrastructureTransitions.queue_jlsf refuses the second occurrence. Rejecting duplicates at
+## planning time would therefore be an equivalent — but out-of-scope — behaviour change.
+func test_a_duplicate_jlsf_order_is_still_accepted() -> void:
+	GameState.add_jlsf_order(_a_real_port_id())
+	var second := GameState.add_jlsf_order(_a_real_port_id())
+
+	assert_bool(second.ok).override_failure_message(
+		"duplicate deploy_jlsf must stay legal — JlsfCargo's second pass depends on it"
+	).is_true()
+	assert_int(GameState.jlsf_orders.size()).is_equal(2)
+
+
+## The disproof, end to end: a duplicated order does NOT double the cargo.
+func test_two_buffered_jlsf_orders_emit_exactly_one_pool_entry() -> void:
+	var port_id := _a_real_port_id()
+	var single := JlsfCargo.queue_deployments(
+		[port_id], _fresh_infrastructure(), GameData.infrastructure, GameData.beaches,
+		GameData.beach_to_to, false, GameData.jlsf_lift_bn_equiv)
+	var doubled := JlsfCargo.queue_deployments(
+		[port_id, port_id], _fresh_infrastructure(), GameData.infrastructure, GameData.beaches,
+		GameData.beach_to_to, false, GameData.jlsf_lift_bn_equiv)
+
+	assert_int(single.size()).is_equal(1)
+	assert_int(doubled.size()).override_failure_message(
+		"a duplicate order must not queue a second JLSF package — the marker refuses the second pass"
+	).is_equal(1)
+
+
+func _fresh_infrastructure() -> InfrastructureState:
+	return InfrastructureStateBuilder.build(GameData.infrastructure)
+
+
+func _a_real_port_id() -> String:
+	for id_value in GameData.infrastructure.keys():
+		return String(id_value)
+	return ""

@@ -8,6 +8,25 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
 
 *(Agents: append new technical debt and hygiene observations here)*
 
+- [ ] **A Green LLM seat can deploy Red JLSF cargo (found 2026-07-31 by the Sol diff-review role on
+  plan 0049 commit 3; PRE-EXISTING, not a regression).** `deploy_jlsf` has no team in the action
+  schema (`schemas/llm_action_response.schema.json`), `LLMGameAPI._apply_deploy_jlsf_action` parses
+  none, and the façade `GameState.add_jlsf_order` hardcodes `Brigade.Team.RED` — exactly as the
+  pre-0049 code hardcoded it when calling the private `_apply_order`. `OrderValidator.check_jlsf_order`
+  now HAS a `TEAM_MISMATCH` arm, but nothing on the LLM path can ever reach it, and both seats buffer
+  through the same unlabelled path in `SelfPlayRunner`. Plan 0049 deliberately did not fix it: the fix
+  requires adding `"team"` to the action schema, which is "new action-schema vocabulary" and explicitly
+  out of that plan's scope. Fixing it means threading seat identity through `SelfPlayRunner` so a Green
+  seat cannot claim Red. Worth doing before any research run where both seats are live LLMs.
+
+- [ ] **Should a duplicate `deploy_jlsf` order be rejected? (USER design call, raised 2026-07-31.)**
+  Two buffered orders for one port emit exactly ONE pool entry — `InfrastructureTransitions.queue_jlsf`
+  refuses the second occurrence — so accepting duplicates is harmless, and plan 0049 kept accepting
+  them only to preserve pre-existing behaviour. Rejecting them at planning time would be an equivalent
+  outcome with a clearer contract (and a `DUPLICATE_JLSF` code, matching `DUPLICATE_MOVE`/
+  `DUPLICATE_COMMIT`/`DUPLICATE_AIR_INSERT`). Proof both ways:
+  `tests/transitions/accounting_authority_characterization_test.gd::test_two_buffered_jlsf_orders_emit_exactly_one_pool_entry`.
+
 - [ ] **`E_STALE_ALLOWANCE` is the one mutation-manifest check with no proof surface (found 2026-07-30
   by the DeepSeek enumeration role; pre-existing, not a regression).** Every other manifest-check code
   is either declared by a `bad_manifest_*.json` fixture or perturbed by a `_capture_failures`

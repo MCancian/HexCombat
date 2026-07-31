@@ -41,16 +41,6 @@
           "classification": "content_config",
           "why": "Scenario cadence copied onto the state by GameState.reset from GameData.turn_length_days (and floored to 1 there). No phase writes it during a game."
         },
-        "orders": {
-          "classification": "order_buffer",
-          "why": "Team -> Array[MoveOrder] request queue: players fill it during planning and the movement phase drains it. Plan 0049's OrderTransitions is named as its only writer.",
-          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
-        },
-        "commitments": {
-          "classification": "order_buffer",
-          "why": "Team -> Array[CommitOrder] request queue, the same planning-to-resolution seam as `orders`.",
-          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
-        },
         "sealift_state": {
           "classification": "planned_transitional",
           "why": "The SealiftState handle. Its siblings `fleet`, `ijfs_state` and `infrastructure_state` ARE claimed by their aggregates; this one is not, and both GameState.reset and ReinforcementPhases (which swaps a temporary sealift in and the campaign one back) write it. USER call 2026-07-30: the closeout audit moves those writers, so the asymmetry is recorded here rather than closed by a migration this change is not allowed to make.",
@@ -64,11 +54,6 @@
           "classification": "phase_output",
           "why": "The air-insertion phase's report for the turn just resolved: replaced wholesale by the phase that produced it, cleared at reset, and read only by serialization/observation (TurnEventLog / TurnResult). Not an evolving quantity, so there is no transition to protect."
         },
-        "air_insert_orders": {
-          "classification": "order_buffer",
-          "why": "Air-insert request queue. Plan 0049's OrderTransitions is named as its writer, taking the consumption handoff from 0048's insertion resolution.",
-          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
-        },
         "isolated_air_landed_brigades": {
           "classification": "derived_projection",
           "why": "Recomputed wholesale every turn by TurnConductor from ReinforcementPhases.isolated_air_landed_brigades(state). Supply isolation is DERIVED from corridor reachability, never asserted onto this field."
@@ -76,11 +61,6 @@
         "not_ashore_by_type": {
           "classification": "derived_projection",
           "why": "A cache of PendingBattalions.by_brigade_and_type over the three off-map pools. GameStateData.refresh_not_ashore_by_type() is its only writer and recomputes it from those pools, which are themselves protected (ship_reserve, mainland_pool, AirInsertionState.pool)."
-        },
-        "jlsf_orders": {
-          "classification": "order_buffer",
-          "why": "Port/airbridge ids with a pending explicit deploy_jlsf order — a request queue, not node state; the nodes it names belong to the infrastructure aggregate. Plan 0049's OrderTransitions owns JLSF order consumption.",
-          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
         },
         "pending_lost_at_sea": {
           "classification": "planned_transitional",
@@ -1074,6 +1054,29 @@
           ]
         }
       ],
+      "legacy_writers": []
+    },
+    {
+      "id": "order_buffers",
+      "summary": "The four request queues players fill during planning and the turn drains during resolution (plan 0049): move orders, commitments, air-insert orders and JLSF deployments. They are one aggregate because the questions worth asking are about the SET — is anything accepted outside PLANNING, does anything survive begin-next-turn — and an answer split across four authorities is not an answer. OrderValidator (scripts/calc/) decides legality and appends nothing; OrderTransitions asks it and appends only on accept, so a rejection cannot half-apply.",
+      "status": "enforced",
+      "authority_class": "OrderTransitions",
+      "authority_path": "res://scripts/transitions/OrderTransitions.gd",
+      "owned_models": [],
+      "hosted_fields": [
+        {
+          "class": "GameStateData",
+          "path": "res://scripts/model/GameStateData.gd",
+          "_doc": "The four order queues. `orders` and `commitments` are Team -> Array request maps cleared at begin-next-turn; `air_insert_orders` and `jlsf_orders` are consumed mid-resolution by the phase that acts on them, which is why the authority separates clear_turn_buffers from the two consume_* operations. Lifetimes: transient = reset each turn.",
+          "fields": {
+            "orders": "transient",
+            "commitments": "transient",
+            "air_insert_orders": "transient",
+            "jlsf_orders": "transient"
+          }
+        }
+      ],
+      "construction_writers": [],
       "legacy_writers": []
     }
   ]

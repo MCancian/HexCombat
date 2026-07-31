@@ -27,6 +27,10 @@ enum Code {
 	IMPASSABLE_HEX,
 	BRIGADE_ALREADY_LANDED,
 	DUPLICATE_AIR_INSERT,
+	# JLSF deployment (plan 0049 — this order had no validation API before then)
+	UNKNOWN_INFRASTRUCTURE,
+	# Bulk/scripted entry only: the order spec named a kind that does not exist.
+	UNKNOWN_ORDER_KIND,
 }
 
 @export var ok: bool = true

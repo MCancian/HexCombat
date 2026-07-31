@@ -44,12 +44,13 @@ var phase: Phase:
 var turn_length_days: int:
 	get: return data.turn_length_days
 	set(value): data.turn_length_days = value
+# Read-only façade: the four order queues are written only by OrderTransitions (plan 0049). A
+# forwarding SETTER is a public door the mutation gate cannot see — the receiver resolves to
+# GameStateType, not GameStateData — so the setters are gone rather than merely unused.
 var orders: Dictionary:
 	get: return data.orders
-	set(value): data.orders = value
 var commitments: Dictionary:
 	get: return data.commitments
-	set(value): data.commitments = value
 # Read-only façade: force transport storage is initialized and mutated only by ForceTransitions.
 var ship_reserve: Array:
 	get: return data.ship_reserve
@@ -67,7 +68,6 @@ var infrastructure_state: InfrastructureState:
 	get: return data.infrastructure_state
 var jlsf_orders: Array[String]:
 	get: return data.jlsf_orders
-	set(value): data.jlsf_orders = value
 var pending_lost_at_sea: int:
 	get: return data.pending_lost_at_sea
 	set(value): data.pending_lost_at_sea = value
@@ -136,7 +136,6 @@ var last_air_insertion_summary: AirInsertionSummary:
 	set(value): data.last_air_insertion_summary = value
 var air_insert_orders: Array:
 	get: return data.air_insert_orders
-	set(value): data.air_insert_orders = value
 var game_over: bool:
 	get: return data.game_over
 	set(value): data.game_over = value
@@ -165,14 +164,7 @@ func reset_to_scenario() -> void:
 	if data.turn_length_days == 0:
 		push_warning("GameData.turn_length_days is 0; falling back to 1 day")
 		data.turn_length_days = 1
-	data.orders = {
-		Brigade.Team.RED: [],
-		Brigade.Team.GREEN: []
-	}
-	data.commitments = {
-		Brigade.Team.RED: [],
-		Brigade.Team.GREEN: []
-	}
+	OrderTransitions.reset_buffers(data)
 	_rebuild_ship_reserve()
 	_rebuild_sealift_state()
 	_rebuild_fleet()
@@ -200,7 +192,6 @@ func reset_to_scenario() -> void:
 	data.last_mobilization_summary = null
 	_rebuild_air_insertion_state()
 	data.last_air_insertion_summary = null
-	data.air_insert_orders = []
 	data.game_over = false
 	data.winner = ""
 	data._china_has_landed = false
@@ -208,11 +199,18 @@ func reset_to_scenario() -> void:
 
 
 func add_move_order(team: Brigade.Team, brigade_id: String, target_hex: String, mode: String) -> OrderResult:
-	return OrderValidator.add_move_order(data, team, brigade_id, target_hex, mode)
+	return OrderTransitions.add_move_order(
+		data, GameData, team, OrderTransitions.move_order(brigade_id, target_hex, mode))
 
 
 func add_air_insert_order(team: Brigade.Team, brigade_id: String, target_hex: String) -> OrderResult:
-	return OrderValidator.add_air_insert_order(data, team, brigade_id, target_hex)
+	return OrderTransitions.add_air_insert_order(data, GameData, team, brigade_id, target_hex)
+
+
+## Public entry for the JLSF deployment order (plan 0049). It previously had none: the LLM boundary
+## reached the buffer through the private `_apply_order`, which validated nothing.
+func add_jlsf_order(port_id: String) -> OrderResult:
+	return OrderTransitions.add_jlsf_order(data, GameData, Brigade.Team.RED, port_id)
 
 
 ## Full WeGo turn resolution — delegates to TurnConductor (plan 0014 P3); see that class's header
@@ -222,11 +220,12 @@ func resolve_turn(dice: Dice = null) -> void:
 
 
 func add_commit_order(team: Brigade.Team, brigade_id: String, target_hex: String) -> OrderResult:
-	return OrderValidator.add_commit_order(data, team, brigade_id, target_hex)
+	return OrderTransitions.add_commit_order(
+		data, GameData, team, OrderTransitions.commit_order(brigade_id, target_hex))
 
 
 func eligible_commit_brigades(team: Brigade.Team, target_hex: String) -> Array:
-	return OrderValidator.eligible_commit_brigades(data, team, target_hex)
+	return OrderTransitions.eligible_commit_brigades(data, GameData, team, target_hex)
 
 
 func begin_next_turn() -> void:
@@ -237,10 +236,7 @@ func begin_next_turn() -> void:
 	for brigade in GameData.brigades.values():
 		var typed_brigade: Brigade = brigade
 		GameData.reset_brigade_turn_flags(typed_brigade)
-	data.orders[Brigade.Team.RED].clear()
-	data.orders[Brigade.Team.GREEN].clear()
-	data.commitments[Brigade.Team.RED].clear()
-	data.commitments[Brigade.Team.GREEN].clear()
+	OrderTransitions.clear_turn_buffers(data)
 	data.turn_number += 1
 	data.phase = Phase.PLANNING
 	EventBus.phase_changed.emit(data.phase)
@@ -265,7 +261,7 @@ func resolve_offload_turn(dice: Dice) -> Dictionary:
 
 func _rebuild_infrastructure_state() -> void:
 	ReinforcementPhases.rebuild_infrastructure(data, GameData.infrastructure)
-	data.jlsf_orders.clear()
+	OrderTransitions.consume_jlsf_orders(data)
 
 
 func resolve_supply_turn() -> Dictionary:
@@ -355,10 +351,14 @@ func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> Tur
 		push_error("play_turn requires PLANNING phase")
 		return null
 
+	# A rejected bulk order is REPORTED, not swallowed. The pre-0049 dispatcher returned void, so a
+	# malformed order vanished silently; now that every entry point returns an OrderResult, dropping it
+	# on the floor here would be a new silent failure — an unknown JLSF port id used to be appended and
+	# is now refused, and a research run must not record that as a clean turn (found in diff review).
 	for raw_order in red_orders:
-		_apply_order(raw_order, Brigade.Team.RED)
+		_report_rejected_bulk_order(apply_bulk_order(raw_order, Brigade.Team.RED), raw_order)
 	for raw_order in green_orders:
-		_apply_order(raw_order, Brigade.Team.GREEN)
+		_report_rejected_bulk_order(apply_bulk_order(raw_order, Brigade.Team.GREEN), raw_order)
 
 	resolve_turn(dice)
 
@@ -380,22 +380,16 @@ func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> Tur
 	return result
 
 
-func _apply_order(order: Dictionary, team: Brigade.Team) -> void:
-	var kind := String(order.get("kind", "move"))
-	match kind:
-		"move":
-			var mode := String(order.get("mode", Movement.MODE_TACTICAL))
-			add_move_order(team, String(order["brigade_id"]), String(order["target_hex"]), mode)
-		"commit":
-			add_commit_order(team, String(order["brigade_id"]), String(order["target_hex"]))
-		"deploy_jlsf":
-			if team == Brigade.Team.RED:
-				data.jlsf_orders.append(String(order.get("port_id", "")))
-			else:
-				push_error("deploy_jlsf is a Red order")
-		"air_insert":
-			add_air_insert_order(team, String(order["brigade_id"]), String(order["target_hex"]))
-		_:
-			push_error("Unknown order kind: %s" % kind)
+func _report_rejected_bulk_order(result: OrderResult, raw_order: Dictionary) -> void:
+	if result == null or result.ok:
+		return
+	push_error("play_turn dropped a rejected %s order: %s" % [
+		String(raw_order.get("kind", "move")), result.message])
+
+
+## Apply one order from a bulk spec. The dispatcher itself lives on OrderTransitions so the bulk path
+## and the four public wrappers above cannot drift apart.
+func apply_bulk_order(order: Dictionary, team: Brigade.Team) -> OrderResult:
+	return OrderTransitions.apply_bulk_order(data, GameData, order, team)
 
 

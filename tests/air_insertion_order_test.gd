@@ -31,8 +31,8 @@ func _state() -> GameStateData:
 
 func test_the_corps_can_be_ordered_onto_any_passable_hex() -> void:
 	var state := _state()
-	var result := OrderValidator.add_air_insert_order(
-		state, Brigade.Team.RED, AIRBORNE_BRIGADE, PASSABLE_HEX)
+	var result := OrderTransitions.add_air_insert_order(
+		state, GameData, Brigade.Team.RED, AIRBORNE_BRIGADE, PASSABLE_HEX)
 
 	assert_bool(result.ok).is_true()
 	assert_int(state.air_insert_orders.size()).is_equal(1)
@@ -41,8 +41,8 @@ func test_the_corps_can_be_ordered_onto_any_passable_hex() -> void:
 
 func test_a_sea_lifted_brigade_cannot_be_flown() -> void:
 	var state := _state()
-	var result := OrderValidator.add_air_insert_order(
-		state, Brigade.Team.RED, SEA_BRIGADE, PASSABLE_HEX)
+	var result := OrderTransitions.add_air_insert_order(
+		state, GameData, Brigade.Team.RED, SEA_BRIGADE, PASSABLE_HEX)
 
 	assert_bool(result.ok).is_false()
 	assert_int(result.code).is_equal(OrderResult.Code.NOT_AIR_LIFTED)
@@ -51,8 +51,8 @@ func test_a_sea_lifted_brigade_cannot_be_flown() -> void:
 
 func test_green_cannot_issue_the_order() -> void:
 	var state := _state()
-	var result := OrderValidator.add_air_insert_order(
-		state, Brigade.Team.GREEN, AIRBORNE_BRIGADE, PASSABLE_HEX)
+	var result := OrderTransitions.add_air_insert_order(
+		state, GameData, Brigade.Team.GREEN, AIRBORNE_BRIGADE, PASSABLE_HEX)
 
 	assert_bool(result.ok).is_false()
 	assert_int(result.code).is_equal(OrderResult.Code.TEAM_MISMATCH)
@@ -60,21 +60,21 @@ func test_green_cannot_issue_the_order() -> void:
 
 func test_impassable_and_unknown_hexes_are_rejected() -> void:
 	var state := _state()
-	assert_int(OrderValidator.add_air_insert_order(
-		state, Brigade.Team.RED, AIRBORNE_BRIGADE, IMPASSABLE_HEX).code) \
+	assert_int(OrderTransitions.add_air_insert_order(
+		state, GameData, Brigade.Team.RED, AIRBORNE_BRIGADE, IMPASSABLE_HEX).code) \
 		.is_equal(OrderResult.Code.IMPASSABLE_HEX)
-	assert_int(OrderValidator.add_air_insert_order(
-		state, Brigade.Team.RED, AIRBORNE_BRIGADE, "hex_999_999").code) \
+	assert_int(OrderTransitions.add_air_insert_order(
+		state, GameData, Brigade.Team.RED, AIRBORNE_BRIGADE, "hex_999_999").code) \
 		.is_equal(OrderResult.Code.UNKNOWN_HEX)
 	assert_array(state.air_insert_orders).is_empty()
 
 
 func test_one_order_per_brigade_per_turn() -> void:
 	var state := _state()
-	assert_bool(OrderValidator.add_air_insert_order(
-		state, Brigade.Team.RED, AIRBORNE_BRIGADE, PASSABLE_HEX).ok).is_true()
-	var second := OrderValidator.add_air_insert_order(
-		state, Brigade.Team.RED, AIRBORNE_BRIGADE, OTHER_PASSABLE_HEX)
+	assert_bool(OrderTransitions.add_air_insert_order(
+		state, GameData, Brigade.Team.RED, AIRBORNE_BRIGADE, PASSABLE_HEX).ok).is_true()
+	var second := OrderTransitions.add_air_insert_order(
+		state, GameData, Brigade.Team.RED, AIRBORNE_BRIGADE, OTHER_PASSABLE_HEX)
 
 	assert_bool(second.ok).is_false()
 	assert_int(second.code).is_equal(OrderResult.Code.DUPLICATE_AIR_INSERT)
@@ -85,14 +85,14 @@ func test_follow_up_packets_must_reinforce_the_brigade_where_it_stands() -> void
 	var state := _state()
 	GameData.set_brigade_hex(AIRBORNE_BRIGADE, PASSABLE_HEX)
 
-	var elsewhere := OrderValidator.add_air_insert_order(
-		state, Brigade.Team.RED, AIRBORNE_BRIGADE, OTHER_PASSABLE_HEX)
+	var elsewhere := OrderTransitions.add_air_insert_order(
+		state, GameData, Brigade.Team.RED, AIRBORNE_BRIGADE, OTHER_PASSABLE_HEX)
 	assert_bool(elsewhere.ok).is_false()
 	assert_int(elsewhere.code).is_equal(OrderResult.Code.BRIGADE_ALREADY_LANDED)
 
 	# Same hex is fine — that is a reinforcement, not a second lodgement.
-	assert_bool(OrderValidator.add_air_insert_order(
-		state, Brigade.Team.RED, AIRBORNE_BRIGADE, PASSABLE_HEX).ok).is_true()
+	assert_bool(OrderTransitions.add_air_insert_order(
+		state, GameData, Brigade.Team.RED, AIRBORNE_BRIGADE, PASSABLE_HEX).ok).is_true()
 
 
 func test_a_brigade_with_nothing_left_to_fly_is_rejected() -> void:
@@ -106,8 +106,8 @@ func test_a_brigade_with_nothing_left_to_fly_is_rejected() -> void:
 	state.air_insertion_state.pool = state.air_insertion_state.pool.filter(
 		func(e: Dictionary) -> bool: return not (e["bns"] as Array).is_empty())
 
-	var result := OrderValidator.add_air_insert_order(
-		state, Brigade.Team.RED, AIRBORNE_BRIGADE, PASSABLE_HEX)
+	var result := OrderTransitions.add_air_insert_order(
+		state, GameData, Brigade.Team.RED, AIRBORNE_BRIGADE, PASSABLE_HEX)
 	assert_bool(result.ok).is_false()
 	assert_int(result.code).is_equal(OrderResult.Code.NO_LIFT_REMAINING)
 
@@ -115,28 +115,28 @@ func test_a_brigade_with_nothing_left_to_fly_is_rejected() -> void:
 func test_orders_outside_planning_are_rejected() -> void:
 	var state := _state()
 	state.phase = GameStateData.Phase.RESOLUTION
-	assert_int(OrderValidator.add_air_insert_order(
-		state, Brigade.Team.RED, AIRBORNE_BRIGADE, PASSABLE_HEX).code) \
+	assert_int(OrderTransitions.add_air_insert_order(
+		state, GameData, Brigade.Team.RED, AIRBORNE_BRIGADE, PASSABLE_HEX).code) \
 		.is_equal(OrderResult.Code.WRONG_PHASE)
 
 
 func test_eligible_list_covers_the_corps_and_drops_the_ones_already_ordered() -> void:
 	var state := _state()
-	var before := OrderValidator.eligible_air_insert_brigades(state)
+	var before := OrderTransitions.eligible_air_insert_brigades(state, GameData)
 	var ids: Array[String] = []
 	for row_value in before:
 		ids.append(String((row_value as Dictionary)["brigade_id"]))
 	assert_array(ids).contains([AIRBORNE_BRIGADE, AIR_ASSAULT_BRIGADE])
 	assert_int(before.size()).is_equal(6)
 
-	OrderValidator.add_air_insert_order(state, Brigade.Team.RED, AIRBORNE_BRIGADE, PASSABLE_HEX)
-	assert_int(OrderValidator.eligible_air_insert_brigades(state).size()).is_equal(5)
+	OrderTransitions.add_air_insert_order(state, GameData, Brigade.Team.RED, AIRBORNE_BRIGADE, PASSABLE_HEX)
+	assert_int(OrderTransitions.eligible_air_insert_brigades(state, GameData).size()).is_equal(5)
 
 
 func test_eligible_rows_report_the_lift_class_and_the_locked_hex() -> void:
 	var state := _state()
 	GameData.set_brigade_hex(AIRBORNE_BRIGADE, PASSABLE_HEX)
-	for row_value in OrderValidator.eligible_air_insert_brigades(state):
+	for row_value in OrderTransitions.eligible_air_insert_brigades(state, GameData):
 		var row: Dictionary = row_value
 		if String(row["brigade_id"]) == AIRBORNE_BRIGADE:
 			assert_str(String(row["lift_class"])).is_equal(LiftClass.AIRBORNE)

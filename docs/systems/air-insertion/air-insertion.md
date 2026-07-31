@@ -59,7 +59,8 @@ cannot fly while the rest of the formation sails.
 | `scripts/transitions/AirInsertionTransitions.gd` | The lift aggregate's authority (plan 0048): `record_insertions()` erodes the budget and appends the log as one job, `can_record_insertions()` is the preflight, `rebuild_air_insertion_state()` is the scenario reset. No setters; cap erosion is derived, never assigned. |
 | `scripts/model/AirLiftRequest.gd` | Typed input for the authority — the packet rows, not a finished budget. Built via `AirInsertionTransitions.lift_request()`. |
 | `scripts/phases/ReinforcementPhases.gd` | `resolve_air_insertion_turn()` (the coordinator: preflights both authorities, applies force then lift, recomputes ownership, emits), `hex_can_receive_insertion()`, `isolated_air_landed_brigades()`, `red_lodgement_hexes()`. |
-| `scripts/resolvers/OrderValidator.gd` | `add_air_insert_order()` + `eligible_air_insert_brigades()`. |
+| `scripts/calc/OrderValidator.gd` | `check_air_insert_order()` + `eligible_air_insert_brigades()` — pure legality, appends nothing. |
+| `scripts/transitions/OrderTransitions.gd` | The `order_buffers` authority: `add_air_insert_order()` appends on accept, `consume_air_insert_orders()` empties the queue after the phase resolves. |
 | `scripts/resolvers/CleanupResolver.gd` | `census()` subtracts battalions not yet ashore — from the ship reserve **and** the air pool. |
 | `scripts/builders/SealiftStateBuilder.gd` | Excludes air-lifted brigades from the follow-on auto-seed (the corps never queues for a hull). |
 | `scripts/AirAssaultPolicy.gd` | Policy id `air_assault`: selfplay_default plus the standing airborne doctrine. |

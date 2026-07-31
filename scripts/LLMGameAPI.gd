@@ -208,12 +208,14 @@ static func _apply_air_insert_action(action: Dictionary, errors: Array[String]) 
 		errors.append("air_insert rejected: %s -> %s: %s" % [brigade_id, target_hex, result.message])
 
 
+## deploy_jlsf now goes through a real validation API like the other three orders (plan 0049). This
+## used to call the PRIVATE `_apply_order`, which appended the port id with no phase or id check; the
+## unknown-id guard below was the only validation the order ever had, and it lived out here.
 static func _apply_deploy_jlsf_action(action: Dictionary, errors: Array[String]) -> void:
 	var port_id := String(action.get("port_id", ""))
-	if _game_data().get_infrastructure(port_id) == null:
-		errors.append("deploy_jlsf rejected: unknown infrastructure id '%s'" % port_id)
-		return
-	_game_state()._apply_order({"kind": "deploy_jlsf", "port_id": port_id}, Brigade.Team.RED)
+	var result: OrderResult = _game_state().add_jlsf_order(port_id)
+	if not result.ok:
+		errors.append("deploy_jlsf rejected: %s" % result.message)
 
 
 ## Offload infrastructure (plan 0006): every port/airbridge with its lifecycle status and JLSF

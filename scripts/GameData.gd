@@ -595,6 +595,18 @@ func recompute_hex_ownership() -> void:
 	MapTransitions.recompute_ownership(self)
 
 
+## Who holds `hex_id` right now, as a HexOwner constant — or "" when the hex has no runtime state.
+##
+## The EMPTY STRING IS NOT A DEFAULT OWNER, and callers must not treat it as one. It means "this hex
+## is not on the runtime map at all", which is a different question from "nobody holds it"
+## (HexOwner.NONE). A caller that needs the hex to exist must check for "" explicitly — see
+## ReinforcementPhases.hex_can_receive_mobilized, which rejects on it. Reading ownership through this
+## query rather than casting `hex_states[...]` keeps HexState out of caller after caller.
+func hex_owner_of(hex_id: String) -> String:
+	var hex_state: HexState = hex_states.get(hex_id, null)
+	return String(hex_state.hex_owner) if hex_state != null else ""
+
+
 func apply_feba_delta(hex_id: String, delta_km: float) -> void:
 	MapTransitions.apply_feba_delta(self, hex_id, delta_km)
 

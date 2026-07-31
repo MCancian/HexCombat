@@ -105,12 +105,12 @@ static func resolve_sealift_turn(state: GameStateData) -> void:
 ## troops help); JlsfCargo.queue_deployments owns ordering + marker flips.
 static func consume_jlsf_orders(state: GameStateData) -> void:
 	if state.infrastructure_state == null or state.sealift_state == null:
-		state.jlsf_orders.clear()
+		OrderTransitions.consume_jlsf_orders(state)
 		return
 	var entries := JlsfCargo.queue_deployments(
 		state.jlsf_orders, state.infrastructure_state, GameData.infrastructure, GameData.beaches,
 		GameData.beach_to_to, GameData.auto_jlsf, GameData.jlsf_lift_bn_equiv)
-	state.jlsf_orders.clear()
+	OrderTransitions.consume_jlsf_orders(state)
 	ForceTransitions.apply_queue_jlsf(state.sealift_state, entries)
 
 
@@ -194,7 +194,7 @@ static func ship_reserve_priority_order(state: GameStateData) -> Array[String]:
 static func owner_by_hex() -> Dictionary:
 	var owners: Dictionary = {}
 	for hex_id in GameData.hex_states.keys():
-		owners[String(hex_id)] = String((GameData.hex_states[hex_id] as HexState).hex_owner)
+		owners[String(hex_id)] = GameData.hex_owner_of(String(hex_id))
 	return owners
 
 
@@ -262,10 +262,13 @@ static func resolve_mobilization_turn(state: GameStateData) -> MobilizationSumma
 ## contests. Enemy-held ground is not a mobilization site — taking it back is a counterattack
 ## (plan 0029 Tier B), not a reinforcement.
 static func hex_can_receive_mobilized(hex_id: String) -> bool:
-	var hex_state: HexState = GameData.hex_states.get(hex_id, null)
-	if hex_state == null:
+	# "" means the hex has no runtime state at all, which is NOT the same as unowned — a hex missing
+	# from the map is not a mobilization site, and this rejection must come before the terrain check
+	# exactly as the old null-guard did.
+	var owner := GameData.hex_owner_of(hex_id)
+	if owner.is_empty():
 		return false
-	if hex_state.hex_owner == HexOwner.RED or hex_state.hex_owner == HexOwner.CONTESTED:
+	if owner == HexOwner.RED or owner == HexOwner.CONTESTED:
 		return false
 	var terrain: TerrainType = GameData.get_terrain(hex_id)
 	return terrain != null and not terrain.impassable
@@ -294,7 +297,7 @@ static func resolve_air_insertion_turn(state: GameStateData, dice: Dice) -> AirI
 		func(hex_id: String) -> bool: return hex_can_receive_insertion(hex_id),
 		dice)
 	var summary: AirInsertionSummary = outcome["summary"]
-	state.air_insert_orders = []
+	OrderTransitions.consume_air_insert_orders(state)
 	var landings: Array = outcome["landings"]
 	if landings.is_empty():
 		EventBus.air_insertion_resolved.emit(summary.to_dict())
@@ -344,9 +347,7 @@ static func isolated_air_landed_brigades(state: GameStateData) -> Dictionary:
 			brigade_hexes[brigade.id] = brigade.hex_id
 	return AirInsertionResolver.isolated_brigades(
 		state.air_insertion_state.landed, brigade_hexes, red_lodgement_hexes(state),
-		func(hex_id: String) -> bool:
-			var hex_state: HexState = GameData.hex_states.get(hex_id, null)
-			return hex_state != null and hex_state.hex_owner == HexOwner.RED,
+		func(hex_id: String) -> bool: return GameData.hex_owner_of(hex_id) == HexOwner.RED,
 		func(hex_id: String) -> Array: return GameData.get_neighbors(hex_id))
 
 
