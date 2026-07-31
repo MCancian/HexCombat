@@ -31,8 +31,9 @@ static func build_unopposed_offload_state(ship_reserve: Array) -> SealiftState:
 	return SealiftStateBuilder.build_unopposed_offload_state(ship_reserve)
 
 
-static func build_supply_state(red_dos_start: float) -> SupplyState:
-	return SupplyStateBuilder.build(red_dos_start)
+# build_supply_state removed (plan 0049): its one caller now reaches SupplyStateBuilder through
+# SupplyTransitions, because replacing a LIVE supply handle is a scenario reset and routes through the
+# authority. SupplyStateBuilder itself is unchanged and keeps its construction allowance.
 
 
 ## brigades: the full GameData.brigades map; filtered here to Green, non-destroyed (IJFS targets

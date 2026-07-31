@@ -8,8 +8,9 @@ Red DOS (Days Of Supply) models consumable supply for PLA brigades that have **l
 
 | File | Role |
 |---|---|
-| `scripts/resolvers/SupplyResolver.gd` | Pure resolver that computes and deducts supply tons, delegated from `TurnClosure`. |
-| `scripts/GameState.gd` | Autoload runtime state. Holds `supply_state: SupplyState`. `_rebuild_supply_state()` initialises the pool. |
+| `scripts/calc/SupplyBill.gd` | Pure calculator: decides which Red battalions are ashore and active, and returns the day's consumption row. Writes nothing. |
+| `scripts/transitions/SupplyTransitions.gd` | The `supply` mutation authority (plan 0049) — the only writer of the pool and the ledger. |
+| `scripts/GameState.gd` | Autoload runtime state. Holds `supply_state: SupplyState` (read-only façade). `_rebuild_supply_state()` initialises the pool through `TurnClosure`. |
 | `scripts/GameData.gd` | Autoload. `red_dos_start: int` loaded from scenario JSON. |
 | `scripts/calc/CombatCalculator.gd` | Reads `supply_effectiveness` from unit dict — this is where a depleted pool would penalise combat. |
 | `scripts/model/Brigade.gd` | Model class. Initialises each BN's `supply_effectiveness: 1.0`. |
@@ -65,7 +66,7 @@ A unit that **both moved and fought** burns the full base (300 or 150). Each omi
 
 ## 5. Consumption summary — `calculate_consumption(units, moved_brigade_ids, engaged_brigade_ids, day)`
 
-Iterates all landed Red battalions (`TurnClosure.active_red_battalion_units()`), classifies each, sums per-unit tons, and builds a by-brigade breakdown. Only battalions ASHORE are billed (plan 0037): the function subtracts the off-map pools, so a brigade's ration bill and its fighting strength always name the same battalions.
+Iterates all landed Red battalions (`SupplyBill.active_red_battalion_units()`), classifies each, sums per-unit tons, and builds a by-brigade breakdown. Only battalions ASHORE are billed (plan 0037): the function subtracts the off-map pools, so a brigade's ration bill and its fighting strength always name the same battalions.
 
 Returns a Dictionary with fields:
 
@@ -83,18 +84,19 @@ Returns a Dictionary with fields:
 | `mechanized_unit_count` / `non_mechanized_unit_count` | int | classification breakdown |
 | `moved_unit_count` / `combat_unit_count` | int | activity breakdown |
 
-## 6. Wiring — `SupplyResolver` via `TurnClosure`
+## 6. Wiring — `SupplyBill` + `SupplyTransitions` via `TurnClosure`
 
-Called at the end of each combat turn, coordinated by `TurnConductor` delegating to `TurnClosure` which delegates to `SupplyResolver`.
+Called at the end of each combat turn, coordinated by `TurnConductor` delegating to `TurnClosure`, which asks the calculator for the day's bill and hands it to the authority.
 
 ```
-1. Collect landed Red battalions via TurnClosure.active_red_battalion_units().
-2. Build moved_brigade_ids (brigade.moved_this_turn) and engaged_brigade_ids (brigade.fought_this_turn).
-3. Call DosConsumption.calculate_consumption(...).
-4. Deduct red_dos_consumed_tons from supply_state.current_dos_tons (clamped to 0).
-5. Set summary.applied = true, record pool_before/pool_after.
-6. Append to supply_state.day_history.
-7. Emit EventBus.supply_updated.
+1. TurnClosure refreshes the not-ashore map (it writes a cache, so a calculator may not do it).
+2. SupplyBill collects landed Red battalions, moved_brigade_ids and engaged_brigade_ids,
+   and calls DosConsumption.calculate_consumption(...) -> the consumption row.
+3. SupplyTransitions.apply_daily_bill DERIVES the new balance from that row:
+   pool_after = max(0, pool_before - red_dos_consumed_tons).
+4. It stamps applied / pool_before / pool_after onto the row, in that order.
+5. It appends the row to supply_state.day_history.
+6. TurnClosure emits EventBus.supply_updated.
 ```
 
 **Initial pool:** `_rebuild_supply_state()` sets `current_dos_tons = GameData.red_dos_start * TONS_PER_DOS` (100 × 150 = 15 000 tons in `scenario_default.json`).
@@ -106,13 +108,14 @@ A second driver was added by plan 0032: `CombatRules.isolated_red_brigade_ids` f
 **Flow summary:**
 
 ```
-TurnConductor.resolve_combat_turn()
+TurnConductor.resolve_turn()
   → (resolve combats, FEBA, ownership)
-  → TurnClosure.resolve_closure_phases()
-    → SupplyResolver.resolve_supply_turn()
-      → TurnClosure.active_red_battalion_units()
-      → DosConsumption.calculate_consumption()
-      → supply_state.current_dos_tons -= consumed
+  → TurnClosure.resolve_supply_turn()
+      → state.refresh_not_ashore_by_type()
+      → SupplyBill.for_turn()
+          → SupplyBill.active_red_battalion_units()
+          → DosConsumption.calculate_consumption()
+      → SupplyTransitions.apply_daily_bill()   # the ONLY writer
       → EventBus.supply_updated.emit()
 ```
 
@@ -148,3 +151,18 @@ golden invariant is unchanged. v1 is binary-at-exhaustion; a graded ramp is a fu
 `SupplyState`; the typed `supply_state: SupplyState` is correct — alias inconsistency only.
 
 **Name mismatch:** `GameState.gd` uses `const SupplyStateResource = preload(...)` but the class is named `SupplyState`. The declared type `supply_state: SupplyState` is correct; the preload alias is a cosmetic inconsistency only.
+
+## 8. State & authority
+
+| Aggregate | Authority | Owns | Operation |
+|---|---|---|---|
+| `supply` | `SupplyTransitions` | `SupplyState.current_dos_tons`, `SupplyState.day_history`, and the `GameStateData.supply_state` handle | `apply_daily_bill(supply_state, consumption)` → the completed ledger row; `rebuild_supply_state(state, red_dos_start)` |
+
+- **Manifest:** [tools/mutation_authority_manifest.json](../../../tools/mutation_authority_manifest.json) — the field lists live there and are deliberately not repeated here.
+
+**Rules:**
+- The pool is spent only by billing a day; there is no setter, so it cannot rise mid-campaign.
+- The new balance is DERIVED from the consumption row, never supplied by a caller — so a ledger row
+  that disagrees with the pool is unexpressible, and the chain needs no guard.
+- `day_history` is append-only, one row per billed day, including days that bill nothing.
+- `SupplyStateBuilder` fills a fresh, unpublished state and holds a construction allowance.

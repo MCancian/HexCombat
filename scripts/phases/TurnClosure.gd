@@ -13,50 +13,31 @@ extends RefCounted
 
 # --- Supply phase — the DOS bill for the day ---------------------------------------------------
 
+## Rebuild the Red DOS pool for a (re)loaded scenario. GameState reaches the supply authority through
+## this module rather than naming it directly, the same way `_rebuild_infrastructure_state` reaches
+## `InfrastructureTransitions` through `ReinforcementPhases` — the phase's owner is its door.
+static func rebuild_supply_state(state: GameStateData, red_dos_start: float) -> void:
+	SupplyTransitions.rebuild_supply_state(state, red_dos_start)
+
+
 static func resolve_supply_turn(state: GameStateData) -> Dictionary:
 	assert(state.supply_state != null, "resolve_supply_turn requires supply_state")
-	var units := active_red_battalion_units(state)
-	var moved_ids: Array[String] = []
-	var engaged_ids: Array[String] = []
-	for brigade_value in GameData.brigades.values():
-		var brigade: Brigade = brigade_value
-		if brigade.team != Brigade.Team.RED or brigade.destroyed or brigade.hex_id.is_empty():
-			continue
-		if brigade.moved_this_turn:
-			moved_ids.append(brigade.id)
-		if brigade.fought_this_turn:
-			engaged_ids.append(brigade.id)
-
-	var summary := SupplyResolver.resolve(state.supply_state, units, moved_ids, engaged_ids, state.turn_number)
-	EventBus.supply_updated.emit(summary)
-	return summary
-
-
-## Red battalions drawing Taiwan-theater supply. Only battalions ASHORE eat (plan 0037, USER call
-## 2026-07-25): one still at sea, on the mainland, or waiting to fly is not being supplied across the
-## strait by this pool. Same not-ashore definition combat uses, so a brigade's fighting strength and
-## its ration bill always describe the same battalions.
-static func active_red_battalion_units(state: GameStateData) -> Array:
-	var units: Array = []
 	# A FRESH recompute, not the combat loop's cached map: the supply phase runs after combat, and a
 	# future phase order could drain a pool in between. Pools are unchanged today, so this is the same
 	# value TurnConductor.resolve_turn cached before the combat loop — but the bill must not depend on
-	# that staying true.
+	# that staying true. It is refreshed HERE, not inside SupplyBill, because the refresh writes a
+	# cache that outlives the call and a calculator may not do that.
 	var not_ashore := state.refresh_not_ashore_by_type()
-	for brigade_value in GameData.brigades.values():
-		var brigade: Brigade = brigade_value
-		if brigade.team != Brigade.Team.RED or brigade.destroyed or brigade.hex_id.is_empty():
-			continue
-		var brigade_not_ashore: Dictionary = not_ashore.get(brigade.id, {})
-		for battalion_value in brigade.composition:
-			var battalion: Battalion = battalion_value
-			for _qty_index in range(Brigade.landed_qty(battalion, brigade_not_ashore)):
-				units.append({
-					"brigade_id": brigade.id,
-					"type": battalion.type,
-					"brigade_type": brigade.nato_type,
-				})
-	return units
+	var consumption := SupplyBill.for_turn(GameData, not_ashore, state.turn_number)
+	var summary := SupplyTransitions.apply_daily_bill(state.supply_state, consumption)
+	if summary.is_empty():
+		# The authority refused the bill and already said why. Emitting an empty Dictionary on
+		# supply_updated would announce a billed day that never reached the ledger, which reads
+		# downstream as a successful phase — so stay silent and let the day be visibly missing.
+		push_error("TurnClosure.resolve_supply_turn: the day's bill was refused; no ledger row written")
+		return {}
+	EventBus.supply_updated.emit(summary)
+	return summary
 
 
 # --- D5-C Cleanup phase — end-of-turn per-system flag reset ------------------------------------

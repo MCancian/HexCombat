@@ -8,6 +8,10 @@ const INITIAL_POOL_TONS := 15000.0
 # Red amphibious brigades are on-map with 16 of their 36 battalions landed (the 4 Amphibious Infantry
 # BNs each; the recon / mechanized-artillery / air-defence / support / service-support BNs are all
 # still at sea), so the ration bill is 16 units, not 36. 2800 -> 1600 idle, 5600 -> 3200 moved.
+# Upper bound on billed days needed to empty the starting pool in the clamp check below. The real
+# figure is well under this (an idle day bills IDLE_CONSUMPTION_TONS against INITIAL_POOL_TONS); the
+# constant exists only so a mechanic that stopped draining fails loudly instead of looping forever.
+const MAX_DRAIN_DAYS := 200
 const IDLE_CONSUMPTION_TONS := 1600
 const MOVED_CONSUMPTION_TONS := 3200
 
@@ -88,13 +92,40 @@ func _validate_multi_turn_drain() -> void:
 
 
 # The pool clamps at zero (never negative) when consumption exceeds the remaining supply.
+#
+# The pool is drained by BILLING it, not by assigning to it (plan 0049). `current_dos_tons` is
+# protected, and this validator used to set it to 10.0 directly through the GameState façade — a
+# public door around the authority that the gate could not see, because the receiver resolved to
+# GameStateType rather than SupplyState. Repeated billing reaches empty through the real mechanic and
+# proves the clamp on the SAME path the game uses.
 func _validate_clamp_at_zero() -> void:
 	GameData.load_all()
 	GameState.reset_to_scenario()
 	GameState.resolve_offload_turn(SeededDice.new(DICE_SEED))
-	GameState.supply_state.current_dos_tons = 10.0
-	GameState.resolve_supply_turn()
+
+	# Capture the day that actually CROSSES zero. Asserting only "the pool reached zero" would keep
+	# passing if a future re-dial happened to land on zero exactly, which never exercises the clamp.
+	var guard := 0
+	var crossing: Dictionary = {}
+	while GameState.supply_state.current_dos_tons > 0.0 and guard < MAX_DRAIN_DAYS:
+		crossing = GameState.resolve_supply_turn()
+		guard += 1
+	_assert_true("pool drained within %d billed days" % MAX_DRAIN_DAYS, guard < MAX_DRAIN_DAYS)
 	_assert_equal_float("pool clamps at zero", GameState.supply_state.current_dos_tons, 0.0)
+
+	_assert_true("crossing day was billed", not crossing.is_empty())
+	var pool_before := float(crossing["pool_before"])
+	var consumed := float(crossing["red_dos_consumed_tons"])
+	_assert_true("crossing day started with supply left", pool_before > 0.0)
+	_assert_true(
+		"crossing day's bill (%.1f) exceeded the remainder (%.1f) — the clamp really fired"
+			% [consumed, pool_before],
+		consumed > pool_before)
+	_assert_equal_float("crossing day clamped to zero", float(crossing["pool_after"]), 0.0)
+
+	# One more billed day against an empty pool must stay at zero rather than going negative.
+	GameState.resolve_supply_turn()
+	_assert_equal_float("pool stays at zero once empty", GameState.supply_state.current_dos_tons, 0.0)
 
 
 # The resolve_turn() hook runs the supply phase each turn (day_history grows; pool never increases).

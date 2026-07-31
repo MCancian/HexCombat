@@ -71,9 +71,12 @@ var jlsf_orders: Array[String]:
 var pending_lost_at_sea: int:
 	get: return data.pending_lost_at_sea
 	set(value): data.pending_lost_at_sea = value
+# Read-only façade: the DOS pool is built by SupplyStateBuilder and thereafter written only by
+# SupplyTransitions (plan 0049). Scenario reset goes through _rebuild_supply_state, not an assignment
+# here — a setter would be a public door around the authority, which is how the fifteen validator
+# writes to `GameState.turn_number` escaped the gate for so long.
 var supply_state: SupplyState:
 	get: return data.supply_state
-	set(value): data.supply_state = value
 var last_contested_hexes: Array[String]:
 	get: return data.last_contested_hexes
 	set(value): data.last_contested_hexes = value
@@ -337,7 +340,7 @@ func resolve_sealift_turn() -> void:
 
 
 func _rebuild_supply_state() -> void:
-	data.supply_state = GameStateBuilder.build_supply_state(float(GameData.red_dos_start))
+	TurnClosure.rebuild_supply_state(data, float(GameData.red_dos_start))
 
 
 func _rebuild_fleet() -> void:

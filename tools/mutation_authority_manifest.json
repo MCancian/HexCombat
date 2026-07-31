@@ -87,11 +87,6 @@
           "why": "BN-equivalents drowned this turn: FiresPhases writes it and ReinforcementPhases' offload reads it into the manifest and zeroes it — a within-turn handoff between two phases that belongs to no aggregate. USER call 2026-07-30: resolved by the closeout audit, which is where the writer moves.",
           "plan": "res://docs/plans/0050-mutation-authority-enforcement-closeout.md"
         },
-        "supply_state": {
-          "classification": "planned_transitional",
-          "why": "The SupplyState handle; plan 0049 builds SupplyTransitions over DOS balance and history. GameState.reset is its only writer today.",
-          "plan": "res://docs/plans/0049-accounting-turn-mutation-authority.md"
-        },
         "last_contested_hexes": {
           "classification": "phase_output",
           "why": "The contest-detection phase's record for the turn just resolved, replaced wholesale by the phase that produced it. NOT write-only, and not merely serialized either: TurnConductor.gd:84 and :269 drive the ground-combat and FEBA-retreat loops straight off it, so a LATER phase depends on it. It stays unprotected because the authoritative state it describes lives elsewhere and this is a report of it — but renaming or reshaping it is a behaviour change, not a doc edit."
@@ -1037,6 +1032,45 @@
           "fields": [
             "AirInsertionState.caps",
             "AirInsertionState.initial_caps"
+          ]
+        }
+      ],
+      "legacy_writers": []
+    },
+    {
+      "id": "supply",
+      "summary": "The Red theater DOS balance and its audit ledger (plan 0049): current_dos_tons is the authoritative pool, day_history is the append-only row per billed day, and the SupplyState handle GameStateData holds. SupplyBill (scripts/calc/) decides who eats; this authority alone spends the pool. The new balance is DERIVED from the consumption row rather than accepted, so a row that disagrees with the pool is unexpressible and no second running total exists to drift.",
+      "status": "enforced",
+      "authority_class": "SupplyTransitions",
+      "authority_path": "res://scripts/transitions/SupplyTransitions.gd",
+      "owned_models": [
+        {
+          "class": "SupplyState",
+          "path": "res://scripts/model/SupplyState.gd",
+          "_doc": "Owned model: EVERY mutable field must be classified below or the gate fails. Lifetimes: campaign = persists across turns. Both fields are campaign state — the pool survives every turn boundary (a turn that restored it would make the whole DOS mechanic inert) and the ledger is append-only for the life of the game.",
+          "fields": {
+            "current_dos_tons": "campaign",
+            "day_history": "campaign"
+          }
+        }
+      ],
+      "hosted_fields": [
+        {
+          "class": "GameStateData",
+          "path": "res://scripts/model/GameStateData.gd",
+          "_doc": "The SupplyState handle itself. Replacing it is a scenario reset, which routes through SupplyTransitions.rebuild_supply_state (reached from GameState via TurnClosure, the supply phase's owner), so the host file earns no writer exemption.",
+          "fields": {
+            "supply_state": "campaign"
+          }
+        }
+      ],
+      "construction_writers": [
+        {
+          "path": "res://scripts/builders/SupplyStateBuilder.gd",
+          "why": "build() fills a FRESH, unpublished SupplyState with the scenario's starting pool before anything holds it. Replacing a LIVE state goes through SupplyTransitions.rebuild_supply_state, which is the only caller.",
+          "fields": [
+            "SupplyState.current_dos_tons",
+            "SupplyState.day_history"
           ]
         }
       ],

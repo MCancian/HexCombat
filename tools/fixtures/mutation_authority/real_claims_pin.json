@@ -109,6 +109,9 @@
     "sealift_fleet|owned_models|ShipState.ready",
     "sealift_fleet|owned_models|ShipState.returning",
     "sealift_fleet|owned_models|ShipState.ship_type",
-    "sealift_fleet|owned_models|ShipState.surviving_sent"
+    "sealift_fleet|owned_models|ShipState.surviving_sent",
+    "supply|hosted_fields|GameStateData.supply_state",
+    "supply|owned_models|SupplyState.current_dos_tons",
+    "supply|owned_models|SupplyState.day_history"
   ]
 }
