@@ -41,17 +41,6 @@ func test_snapshots_from_sent_sorted_and_skips_zero_counts() -> void:
 	assert_str(String((snapshots[1] as Dictionary)["ship_type"])).is_equal("LST")
 
 
-func test_remaining_reserve_after_losses_prunes_bns_and_empty_entries() -> void:
-	var reserve := [
-		{"brigade_id": "A", "bns": [{"id": "a1"}, {"id": "a2"}]},
-		{"brigade_id": "B", "bns": [{"id": "b1"}]},
-	]
-	var kept := AntishipResolver.remaining_reserve_after_losses(reserve, ["a1", "b1"])
-	assert_int(kept.size()).is_equal(1)
-	assert_str(String((kept[0] as Dictionary)["brigade_id"])).is_equal("A")
-	assert_int(((kept[0] as Dictionary)["bns"] as Array).size()).is_equal(1)
-
-
 func test_distribute_minesweepers_round_robin_ascending() -> void:
 	var assignments := AntishipResolver.distribute_minesweepers(5, [8, 2])
 	assert_int(int(assignments[2])).is_equal(3)  # beach 2 first (ascending), gets the odd sweeper

@@ -93,7 +93,8 @@ def test_real_repo_metric_gate() -> None:
         _assert("PASS: metric ceilings OK" in result.stdout, result.stdout)
         metrics = json.loads(out.read_text(encoding="utf-8"))
         by_key = _functions_by_key(metrics)
-        params = by_key["scripts/resolvers/AntishipResolver.gd::resolve"][0]["params"]
+        # Path-keyed, so it moves when the file does: AntishipResolver became a calculator in plan 0050.
+        params = by_key["scripts/calc/AntishipResolver.gd::resolve"][0]["params"]
         _assert(params == 3, f"AntishipResolver.resolve should stay paid down to 3 params, got {params}")
 
 

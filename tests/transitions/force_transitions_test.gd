@@ -778,6 +778,59 @@ func test_apply_crossing_loss_removes_from_reserve_cohorts_and_roster() -> void:
 	store.free()
 
 
+## The MIXED case: one reserve entry loses one of its two BNs and must SURVIVE with the other, while a
+## second entry loses its only BN and must be dropped. Ported from the deleted
+## `AntishipResolver.remaining_reserve_after_losses` unit test (plan 0050) — the prune moved to
+## `ForceTransitions` in 0044 and the coverage moved with it, because the two-BN partial case is the
+## one an "if empty, drop the entry" rewrite gets wrong while every sole-BN test stays green.
+## Two brigades on purpose. The deleted test used entries "A" and "B" and asserted the survivor kept its
+## own `brigade_id`; a single-brigade version would pass even if the prune attributed the survivor to the
+## wrong entry, which is the specific mistake this case exists to catch (diff review, plan 0050).
+func test_apply_crossing_loss_keeps_a_partly_drowned_entry_and_drops_an_emptied_one() -> void:
+	var store := _store()
+	var second := Brigade.new()
+	second.id = "BDE-2"
+	second.hex_id = HEX_B
+	var second_support := Battalion.new()
+	second_support.type = "artillery"
+	second_support.qty = 1
+	second.composition = [second_support]
+	store.brigades["BDE-2"] = second
+	store.brigades_by_hex[HEX_B] = ["BDE-2"]
+
+	var state := SealiftState.new()
+	state.cohorts = [SealiftCohort.sent({"LST": 1}, ["a1", "a2", "b1"])]
+	var reserve: Array = [
+		{
+			"brigade_id": BRIGADE_ID, "locked_beach": 1, "beach_hex": HEX_A, "offset_bearing": 0.0,
+			"bns": [{"id": "a1", "type": "infantry"}, {"id": "a2", "type": "infantry"}],
+		},
+		{
+			"brigade_id": "BDE-2", "locked_beach": 2, "beach_hex": HEX_B, "offset_bearing": 0.0,
+			"bns": [{"id": "b1", "type": "artillery"}],
+		},
+	]
+	var request := ForceCrossingCasualtyRequest.from_crossing(["a1", "b1"], reserve, state)
+
+	var result := ForceTransitions.apply_crossing_loss(store, state, reserve, request)
+
+	assert_bool(result.success).is_true()
+	# The partly-drowned entry survives, carrying only its surviving BN — and it is still ITS OWN entry.
+	assert_int(reserve.size()).is_equal(1)
+	var kept: Dictionary = reserve[0]
+	assert_str(String(kept["brigade_id"])).is_equal(BRIGADE_ID)
+	assert_int(int(kept["locked_beach"])).is_equal(1)
+	var kept_bns: Array = kept["bns"]
+	assert_int(kept_bns.size()).is_equal(1)
+	assert_str(String((kept_bns[0] as Dictionary)["id"])).is_equal("a2")
+	# Both drowned BNs left the cohort; the survivor did not.
+	assert_array(state.cohorts[0].bn_ids).contains_exactly(["a2"])
+	# Each drowned BN came off ITS OWN brigade's roster: BDE-1 loses one of two infantry, BDE-2 is wiped.
+	assert_int((store.get_brigade(BRIGADE_ID) as Brigade).get_battalion_count()).is_equal(2)
+	assert_int((store.get_brigade("BDE-2") as Brigade).get_battalion_count()).is_equal(0)
+	store.free()
+
+
 func test_apply_crossing_loss_duplicate_refuses() -> void:
 	var store := _store()
 	var state := SealiftState.new()

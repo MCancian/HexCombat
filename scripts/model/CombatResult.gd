@@ -15,20 +15,7 @@ class_name CombatResult
 @export var defender_casualties: Array = []
 @export var combat_detail: Dictionary = {}
 
-
-func to_dictionary() -> Dictionary:
-	return {
-		"attacker_strength": attacker_strength,
-		"defender_strength": defender_strength,
-		"attacker_maneuver_strength": attacker_maneuver_strength,
-		"defender_maneuver_strength": defender_maneuver_strength,
-		"force_ratio": force_ratio,
-		"unmodified_force_ratio": unmodified_force_ratio,
-		"defender_terrain_modifier": defender_terrain_modifier,
-		"attacker_losses": attacker_losses,
-		"defender_losses": defender_losses,
-		"feba_movement_km": feba_movement_km,
-		"attacker_casualties": attacker_casualties,
-		"defender_casualties": defender_casualties,
-		"combat_detail": combat_detail
-	}
+## No serialization seam here on purpose (plan 0050). A `to_dictionary()` used to sit at this spot with
+## zero callers — the only type in the repo whose serializer was not named `to_dict`, so it was invisible
+## to anything looking for the convention. What actually reaches a record is `CombatSummary.to_dict()`;
+## this type is the calculator's internal result and never leaves the turn.

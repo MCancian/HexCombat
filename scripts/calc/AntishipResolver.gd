@@ -9,15 +9,21 @@ extends RefCounted
 ##
 ## It writes NO anti-ship state (plan 0043): the IJFS effects have already been applied by
 ## AntishipTransitions before it is called, and the launch destruction it reports is returned as
-## typed AntishipLaunchOutcome rows for the same authority to apply afterwards. Field reassignment
-## (ship_reserve, lost_at_sea_accumulator, pending_lost_at_sea, last_antiship_summary) and the
-## EventBus emit stay in the FiresPhases coordinator. TO lookups arrive as plain maps so this file
+## typed AntishipLaunchOutcome rows for the same authority to apply afterwards. What it reports is
+## turned into state by the FiresPhases coordinator calling three authorities: drowned BNs leave the
+## reserve and their rosters through ForceTransitions.apply_crossing_loss, the crossing ledger
+## (lost_at_sea_accumulator, pending_lost_at_sea) is booked through SealiftTransitions, and only
+## last_antiship_summary — a phase_output, owned by nobody — plus the EventBus emit are assigned in the
+## coordinator itself. TO lookups arrive as plain maps so this file
 ## never reaches for the GameData autoload.
 ##
-## It stays in scripts/resolvers/ rather than moving to scripts/calc/ with the anti-ship calculators
-## (plan 0043 step 9) for ONE reason: `remaining_reserve_after_losses` rewrites `entry["bns"]` on the
-## caller's live `ship_reserve` entries in place. That is a mixed file by the role-directory rule, and
-## it moves when the plan that owns the reserve splits that function out — not before.
+## It lives in scripts/calc/ as of plan 0050. Between 0043 and then it stayed in scripts/resolvers/ for
+## ONE reason — `remaining_reserve_after_losses` rewrote `entry["bns"]` on the caller's live
+## `ship_reserve` entries in place, which made this a mixed file by the role-directory rule. Plan 0044
+## replaced that seam with `ForceTransitions.apply_crossing_loss` and left the function with no
+## production caller at all, so 0050 deleted it (its two-BN partial-prune case moved to
+## tests/transitions/force_transitions_test.gd) and the file passed the `calc/` test: it writes NO
+## campaign state, including through arrays and dictionaries it was handed.
 
 ## Data sources (single source of truth — used only by this resolver).
 const CATALOG_PATH := "res://data/antiship/antiship_combat_catalog.json"
@@ -262,27 +268,6 @@ static func ship_capacity_by_type(ship_defs: Dictionary) -> Dictionary:
 		var ship_def: ShipDef = ship_def_value
 		caps[ship_def.name] = ship_def.carrying_capacity_bn_equiv
 	return caps
-
-
-## Remove sunk BNs from the reserve entries (in place) and return the kept entries.
-static func remaining_reserve_after_losses(ship_reserve: Array, lost_ids: Array) -> Array:
-	if lost_ids.is_empty():
-		return ship_reserve
-	var lost: Dictionary = {}
-	for id in lost_ids:
-		lost[String(id)] = true
-	var kept: Array = []
-	for entry in ship_reserve:
-		var bns: Array = entry.get("bns", [])
-		var surviving: Array = []
-		for bn in bns:
-			if not lost.has(String(bn.get("id", ""))):
-				surviving.append(bn)
-		if surviving.is_empty():
-			continue
-		entry["bns"] = surviving
-		kept.append(entry)
-	return kept
 
 
 ## Per-ship-type metadata the geometric mine model needs: decoy flag (sponge ordering), value
