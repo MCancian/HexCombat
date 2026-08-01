@@ -27,3 +27,11 @@ tools/terrain/out/
 # Frozen review artifacts (tools/review_fanout.sh) — must live in-repo so workspace-scoped
 # reviewer CLIs can read them, but are never committed.
 .review-fanout/
+
+# Throwaway measurement probes and scratch scripts. MUST live here, never in tools/:
+# tools/*.gd seeds the compile closure that validate_tool_script_purity.gd walks, so a
+# scratch script there can fail unrelated gate phases. The gate globs tools/validate_*.gd
+# and tests/**/*_test.gd, so nothing here is ever collected. README.md is tracked so the
+# directory exists on a fresh checkout and explains itself.
+/scratch/*
+!/scratch/README.md
