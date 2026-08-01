@@ -1,6 +1,6 @@
 ---
 title: "0057: 40 files at scripts/ root sit outside the role layout entirely"
-status: "Preflighted — ready for review"
+status: "COMPLETE (2026-07-31)"
 created: "2026-07-31"
 ---
 

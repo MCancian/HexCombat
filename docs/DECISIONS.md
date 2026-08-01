@@ -25,6 +25,20 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-07-31 — `scripts/` root is now an exact 4-file allowlist, and the placement gate is
+  deny-by-default (agent, reviewed).** Plan 0057. 36 of the 40 unclassified files at root moved into
+  `ui/`, `policies/`, `api/`, `support/`, `calc/` and `model/`, one family per commit; root keeps the
+  three autoload singletons plus `OffloadCalculator`. `tools/validate_authority_call_placement.gd`
+  now FAILS on any unclassified GDScript directory or unlisted root file, so the next family cannot
+  land unchecked — the defect that let 40 files accumulate. New
+  `tools/validate_scene_script_bindings.gd` covers the `.tscn` path bindings, which the smoke phase
+  did not: `scenes/SymbolPreview.tscn` was loaded by nothing in the gate at all.
+  **`OffloadCalculator` did NOT move to `calc/`**: preflight found it writes `offload_progress_tons`
+  into BN dicts owned by `state.ship_reserve`, so it applies campaign state and the plan's "only two
+  root files change campaign state, that question is settled" premise was false. It stays at root
+  until plan 0058 hoists the write. Role table + the gate's real coverage: `docs/STATUS.md` ->
+  "Where a file goes". Deferred work: `docs/plans/BACKLOG.md` (0058; the preload-alias detector hole).
+
 - **2026-07-31 — The role directories now track who APPLIES campaign state, and a gate keeps them
   honest (agent, reviewed).** Plan 0055. `scripts/resolvers/` and `scripts/ijfs/` are gone (historical); thirteen
   files moved into `scripts/calc/` (pure), `scripts/interleaved/` (computes AND applies at its own
