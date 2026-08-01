@@ -23,6 +23,7 @@ Frontmatter descriptions are the triggers — read the skill before doing its ki
 | Extract logic out of GameState / resolver-boundary questions | `hexcombat-gamestate-decomposition-campaign` (campaign COMPLETE — kept as the record of method) |
 | Write/modify any function or test (quality budgets, naming, magic numbers) | `hexcombat-code-quality` |
 | Finish/plan/record anything (docs of record) | `hexcombat-docs-and-writing` |
+| Show the USER how the codebase is laid out, or refresh the structure map after files move | `hexcombat-structure-map` |
 | Have a plan drafted, before writing any code | `hexcombat-plan-review` |
 | Have a green gate and be about to commit | `hexcombat-diff-review` |
 | Pick a reviewer, invoke one, or judge whether a review counts | `.claude/REVIEWERS.md` (not a skill — the single home for the round, tiers, routes and safety; run it with `tools/review_fanout.sh`) |
