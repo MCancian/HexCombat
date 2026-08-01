@@ -12,6 +12,26 @@ numbers: `docs/reports/2026-07-16-code-quality-baseline.md`. Re-measure anytime:
 per-function parameter grandfather list in `tools/gd_metrics.py`; lower entries after refactors,
 never raise them to hide a breach.
 
+**Both budgets are opt-OUT, and they have deliberately different scopes** (plan 0056). Until
+2026-08-01 the dependency budget was opt-IN — checked only where someone had added a `DEP_CEILINGS`
+entry, which covered 5 files out of 167 — so the hard cap of 10 in the table below was documented but
+unenforced, and a new file could reach any coupling at all with nothing to say so. Now:
+
+| Budget | Scope | Rule |
+|---|---|---|
+| Dependencies (`ndeps`) | **`scripts/` only** | at or above **10**, a file MUST carry a `DEP_CEILINGS` entry or the gate fails |
+| Parameters | **repo-wide**, incl. `tests/` and `tools/` | above `PARAM_HARD_CAP` (5) without a `PARAM_CEILINGS` entry fails |
+
+`tests/` and `tools/` are exempt from the dependency budget on purpose: a fixture legitimately names
+many classes (the top test file is at 19) and capping that discourages thorough tests for no
+architectural gain. So a `tests/` file at 15 deps is not a hole — it is the design. **Do not "tidy"
+`PARAM_CEILINGS` to match the narrower scope**; it grandfathers live `tests/` and `tools/` entries.
+
+Adding an entry is not free forgiveness: seed it at the **measured** value and write, next to it, why
+that file's coupling is legitimate. If you cannot say why, that is the signal to fix the coupling
+instead. Eleven entries seeded in 2026-08-01's baseline carry no rationale yet, deliberately — the
+reasoning belongs to whoever first has cause to move one.
+
 **Check headroom while you are DESIGNING the call shape, not after the gate goes red.** Several
 coordinators sit at *exactly* their ceiling, so naming one new class in them is an instant breach —
 read `ndeps` for the files you will touch out of `/tmp/m.json` before you decide who calls whom.
@@ -28,7 +48,7 @@ entry stale and fails the gate**; re-key it in the same commit as the move.
 | Function cyclomatic complexity | ≤ 10 | 15 | extract helpers named by job |
 | Function length | ≤ 40 lines | 60 | split by phase: parse → compute → mutate → report |
 | Parameters | ≤ 4 | 5 | pass a typed context object (`scripts/model/`) |
-| File class references (preload/class_name/autoload) | ≤ 8 | 10 | split file or justify in the file header comment |
+| File class references (preload/class_name/autoload) | ≤ 8 | 10 — **enforced in `scripts/`** | split file, or add a `DEP_CEILINGS` entry at the measured value saying why it is legitimate |
 | Copies of a logic block | 2 | 2 | third copy = extract a shared static helper instead |
 
 `GameState` is the sanctioned exception on deps (turn conductor) — but never ADD a dependency

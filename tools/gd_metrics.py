@@ -90,6 +90,32 @@ DEP_CEILINGS = {
     # `ForceActivityRequest` off this budget. Bumped to the value that buys the purity, not to the
     # value the first attempt happened to produce.
     "scripts/phases/TurnClosure.gd": 9,
+    # ---- Seeded 2026-08-01 (plan 0056), at each file's MEASURED value ----------------------
+    # These eleven entries were generated, not hand-written: before this plan the dependency budget
+    # was enforced only where someone had opted in, so every file below was unbounded. Seeding at the
+    # measured value converts "unbounded" into "cannot grow", which is the whole change — it forgives
+    # nothing and asks for no reduction. The ratchet rule in this header applies to them from now on:
+    # lower them after a refactor, never raise one to silence a breach.
+    #
+    # None carries a rationale yet, deliberately. The per-file prose above was written by whoever had
+    # cause to move that ceiling and therefore knew why its coupling was legitimate; inventing that
+    # reasoning at seeding time would be fabrication. Write it when you first need to move one.
+    #
+    # ForceTransitions at 30 is the number worth arguing about: it is the most-connected file in the
+    # repo and, unlike the orchestrators above, an authority whose whole design purpose is to own ONE
+    # aggregate narrowly. Plan 0056 deliberately does not reduce it — that is a refactor with its own
+    # risk, and this plan only stops it growing further.
+    "scripts/transitions/ForceTransitions.gd": 30,
+    "scripts/GameData.gd": 25,
+    "scripts/api/LLMGameAPI.gd": 22,
+    "scripts/interleaved/IjfsEngine.gd": 14,
+    "scripts/model/GameStateData.gd": 14,
+    "scripts/calc/OrderValidator.gd": 12,
+    "scripts/interleaved/IjfsResolver.gd": 12,
+    "scripts/calc/AntishipResolver.gd": 11,
+    "scripts/loaders/IjfsLoaders.gd": 11,
+    "scripts/calc/ForceValidationHelper.gd": 10,
+    "scripts/ui/HexMap.gd": 10,
 }
 
 # Parameter ceilings (plan 0052): a function's measured params exceeding the hard cap of 5 fails
@@ -138,6 +164,51 @@ PARAM_CEILINGS = {
     "tools/validate_mutation_authority.gd::_protected_finding": 6,
 }
 
+# Dependency budget scope (plan 0056). The budget itself is NOT new: hexcombat-code-quality has
+# declared "File class references (preload/class_name/autoload) | <= 8 | 10" since it was written.
+# What was opt-in was its ENFORCEMENT — a file's ndeps was checked only if someone remembered to add a
+# DEP_CEILINGS entry, which covered 5 files out of 167. DEP_THRESHOLD makes the gate agree with the
+# stated hard cap: at or above it, a scripts/ file MUST carry a ceiling or the gate fails.
+#
+# Scope is scripts/ only, deliberately. tests/ legitimately names many classes to build fixtures (the
+# top test file is at 19) and capping that discourages thorough tests for no architectural gain;
+# tools/ is validators and one-shot scripts. Neither is a place where architecture is claimed.
+# PARAM_CEILINGS keeps its own, WIDER scope — it grandfathers tests/ and tools/ entries above, and
+# must not be "tidied" to match this one.
+DEP_THRESHOLD = 10
+DEP_SCOPE_PREFIX = "scripts/"
+
+
+def dep_ceiling_breaches(files_by_rel, ceilings, threshold=DEP_THRESHOLD, scope=DEP_SCOPE_PREFIX):
+    """Dependency-budget verdict. Pure: takes the measurements and the table as ARGUMENTS.
+
+    Explicit arguments rather than the module globals so a fixture can exercise this against a
+    temporary tree without inheriting the production table (every real entry would then report stale
+    against a fixture tree) and without editing the live tool.
+
+    Two directions, and the second is the one plan 0056 adds:
+      1. a LISTED file that is gone, or has grown past its entry, fails;
+      2. an UNLISTED file in scope at or above `threshold` fails — the opt-out this closes.
+    """
+    breaches = []
+    for rel, ceiling in sorted(ceilings.items()):
+        info = files_by_rel.get(rel)
+        if info is None:
+            breaches.append("%s: not found (ceiling entry stale — file moved/deleted?)" % rel)
+            continue
+        if info["ndeps"] > ceiling:
+            breaches.append("%s: ndeps=%d exceeds ceiling %d" % (rel, info["ndeps"], ceiling))
+    for rel, info in sorted(files_by_rel.items()):
+        if not rel.startswith(scope) or rel in ceilings:
+            continue
+        if info["ndeps"] >= threshold:
+            breaches.append(
+                "%s: ndeps=%d is at/above the dependency threshold %d with NO ceiling entry. "
+                "Reduce the coupling, or add an entry at the measured value with a comment saying why "
+                "it is legitimate (see the DEP_CEILINGS header)." % (rel, info["ndeps"], threshold))
+    return breaches
+
+
 FUNC_RE = re.compile(r"^(\s*)(static\s+)?func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*)$")
 BRANCH_RE = re.compile(r"^\s*(if|elif|for|while)\b")
 MATCH_ARM_RE = re.compile(r"^\s*[^#\s].*:\s*(#.*)?$")
@@ -152,9 +223,39 @@ DEP_PATTERNS = [
 CLASSNAME_RE = re.compile(r"^class_name\s+([A-Za-z_][A-Za-z0-9_]*)")
 EXTENDS_RE = re.compile(r"^extends\s+([A-Za-z_][A-Za-z0-9_.]*)")
 
-def gd_files():
-    for dp, dns, fns in os.walk(ROOT):
-        dns[:] = [d for d in dns if d not in SKIP_DIRS]
+def to_posix(path, sep=os.sep):
+    """Separator normalization, split out from rel_path so it is testable on a POSIX box.
+
+    `sep` is injectable for exactly one reason: on Linux `os.sep` is already "/", so a test that
+    round-trips a natively-joined path proves nothing — delete the replace and it still passes. Passing
+    sep="\\" lets the Linux gate prove the Windows behaviour. (Diff-review finding, 2026-08-01.)
+    """
+    return path.replace(sep, "/")
+
+
+def rel_path(path, root=None):
+    """Path relative to ROOT, ALWAYS with forward slashes.
+
+    Every key this tool emits — result["files"], fn["file"], result["classnames"] — and every key the
+    ceiling tables are written with is forward-slash. `os.path.relpath` returns the OS separator, so on
+    Windows an unnormalized key is "scripts\\GameState.gd" and no ceiling lookup can ever match it:
+    all five entries would report "stale (file moved/deleted?)" and --check-ceiling would fail for a
+    reason that has nothing to do with the code. Normalize once, here, at the only two places a
+    relative path is produced. `_self_test_path_wiring` asserts those are still the only two.
+    """
+    return to_posix(os.path.relpath(path, ROOT if root is None else root))
+
+
+def gd_files(root=None):
+    root = ROOT if root is None else root
+    for dp, dns, fns in os.walk(root):
+        # Prune ONLY at the top level. `dns[:] = ...` at every depth meant any nested directory that
+        # happened to be named "addons"/".godot"/".git" was pruned too, so scripts/addons/foo.gd was
+        # invisible to this tool entirely — no metrics, and silently exempt from the dependency budget
+        # that claims to cover all of scripts/. These three are project-root artifacts; nothing nested
+        # should match them. (Diff-review finding, 2026-08-01, reproduced before fixing.)
+        if os.path.abspath(dp) == os.path.abspath(root):
+            dns[:] = [d for d in dns if d not in SKIP_DIRS]
         for fn in fns:
             if fn.endswith(".gd"):
                 yield os.path.join(dp, fn)
@@ -261,14 +362,125 @@ def _self_test_signature_params():
             raise AssertionError("%s: expected %d params, got %d" % (label, expected, got))
 
 
+def _self_test_dependency_budget():
+    """Prove the dependency budget fires in BOTH directions.
+
+    Fixture measurements only — no real file is read and the production table is never consulted,
+    which is why `dep_ceiling_breaches` takes its inputs as arguments. Case 2 is the point: a test
+    that only shows "the current table passes" would still pass if the new branch did nothing at all.
+
+    (Plan 0056 also had three cases covering the one-shot `--seed-ceilings` generator. They were
+    removed with it — a permanent seeder is an opt-out for every future high-coupling file. Its
+    ADD-ONLY and comment-preserving behaviour was watched to hold against the real table before
+    removal; the generator and those tests are recoverable from this plan's history if a future
+    baseline ever needs reseeding.)
+    """
+    def _files(**kw):
+        return {rel: {"ndeps": n} for rel, n in kw.items()}
+
+    # 1. a seeded table passes, and out-of-scope files are ignored however coupled they are.
+    measured = {"scripts/a.gd": {"ndeps": 12}, "tests/big_test.gd": {"ndeps": 40},
+                "tools/t.gd": {"ndeps": 30}, "scripts/small.gd": {"ndeps": 3}}
+    if dep_ceiling_breaches(measured, {"scripts/a.gd": 12}):
+        raise AssertionError("seeded table should pass: %s" % dep_ceiling_breaches(measured, {"scripts/a.gd": 12}))
+
+    # 2. THE WHOLE FEATURE: an UNLISTED in-scope file at the threshold fails.
+    #    LITERAL 10 and 9, not DEP_THRESHOLD +/- 1. A fixture that derives its expectation from the
+    #    constant under test moves with it, so changing the policy to 11 would pass unchanged — the
+    #    self-test-reads-its-own-table failure this repo has hit before. The pin is the assertion.
+    if DEP_THRESHOLD != 10:
+        raise AssertionError(
+            "DEP_THRESHOLD is %d, but hexcombat-code-quality declares a hard cap of 10 for file class "
+            "references. Change both together and update the literals below, deliberately."
+            % DEP_THRESHOLD)
+    hits = dep_ceiling_breaches(_files(**{"scripts/new.gd": 10}), {})
+    if len(hits) != 1 or "NO ceiling entry" not in hits[0]:
+        raise AssertionError("unlisted file at 10 must fail: %r" % hits)
+    if dep_ceiling_breaches(_files(**{"scripts/new.gd": 9}), {}):
+        raise AssertionError("a file at 9 must NOT require an entry")
+
+    # 3. a listed file grown past its entry still fails — the pre-existing direction, kept because
+    #    seeding eleven files made it cover eleven more, and a regression here would be silent.
+    grown = {"scripts/a.gd": {"ndeps": 14}}
+    hits = dep_ceiling_breaches(grown, {"scripts/a.gd": 12})
+    if len(hits) != 1 or "exceeds ceiling" not in hits[0]:
+        raise AssertionError("growth past a ceiling must fail: %r" % hits)
+
+    # 4. a listed file that has VANISHED is reported stale rather than passing quietly.
+    hits = dep_ceiling_breaches({}, {"scripts/gone.gd": 12})
+    if len(hits) != 1 or "stale" not in hits[0]:
+        raise AssertionError("a ceiling entry whose file is gone must fail: %r" % hits)
+
+    # 5. path keys are forward-slash on EVERY platform. Feed a Windows-shaped path with an explicit
+    #    separator: on Linux os.sep is already "/", so joining natively and round-tripping would pass
+    #    even with the normalization deleted. This case fails here if it is.
+    if to_posix("scripts\\builders\\a.gd", "\\") != "scripts/builders/a.gd":
+        raise AssertionError("to_posix must normalize the Windows separator")
+    if rel_path(os.path.join("root", "scripts", "a.gd"), "root") != "scripts/a.gd":
+        raise AssertionError("rel_path must produce a forward-slash relative key")
+
+
+def _self_test_walker_scope():
+    """A nested directory named like a project-root artifact must NOT be pruned.
+
+    `dns[:] = [...]` applied at every depth silently excluded scripts/addons/ from the tool entirely —
+    no metrics and, worse, exemption from the dependency budget that claims to cover all of scripts/.
+    Reproduced before it was fixed: a probe file there left the file count unchanged at 305 and its key
+    absent from the JSON. Root-level addons/ (GdUnit4) and .godot/ must still be skipped.
+    (Diff-review finding, 2026-08-01.)
+    """
+    import shutil, tempfile
+    tmp = tempfile.mkdtemp(prefix="gd_metrics_walker_")
+    try:
+        for rel in ("addons/root_addon.gd", ".godot/cache.gd",
+                    "scripts/addons/nested_addon.gd", "scripts/plain.gd"):
+            full = os.path.join(tmp, *rel.split("/"))
+            os.makedirs(os.path.dirname(full), exist_ok=True)
+            open(full, "w", encoding="utf-8").write("extends RefCounted\n")
+        found = sorted(rel_path(p, tmp) for p in gd_files(tmp))
+        expected = ["scripts/addons/nested_addon.gd", "scripts/plain.gd"]
+        if found != expected:
+            raise AssertionError("walker scope wrong: expected %r, found %r" % (expected, found))
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def _self_test_path_wiring():
+    """Assert the normalization is still WIRED IN, not merely present.
+
+    Cases above prove `to_posix`/`rel_path` behave. They cannot see the failure that actually matters:
+    someone reverting a call site to a bare relpath call, which on Linux is indistinguishable and on
+    Windows silently un-keys every ceiling. So derive the check from this file's own source — the
+    technique this repo already uses for combat-knob threading and tool-script purity — and require
+    that the only such call lives inside `rel_path` itself.
+    (Diff-review finding, 2026-08-01: "which realistic regression would still pass these tests?")
+
+    The needle is assembled from fragments on purpose: written literally, this function's own lines
+    would match it and the check would fail against itself. That is not cleverness for its own sake —
+    it is the reason the first version of this test could not pass.
+    """
+    needle = "os.path." + "relpath("
+    src = open(os.path.abspath(__file__), encoding="utf-8").read()
+    hits = [ln.strip() for ln in src.splitlines()
+            if needle in ln and not ln.strip().startswith("#")]
+    expected = ["return to_posix(%spath, ROOT if root is None else root))" % needle]
+    if hits != expected:
+        raise AssertionError(
+            "the relpath call must appear ONLY inside rel_path(); every emitted key has to go "
+            "through the separator normalization. Expected %r, found %r" % (expected, hits))
+
+
 if SELF_TEST or CHECK_CEILING:
     _self_test_signature_params()
+    _self_test_dependency_budget()
+    _self_test_walker_scope()
+    _self_test_path_wiring()
 
 norm_windows = defaultdict(list)  # hash -> [(file, startline)]
 W = 6
 
 for f in files:
-    rel = os.path.relpath(f, ROOT)
+    rel = rel_path(f)
     lines = open(f, encoding="utf-8", errors="replace").read().splitlines()
     deps = set()
     extends = None
@@ -378,7 +590,7 @@ result["dup"] = {
     "dup_lines_by_file": {k: len(v) for k, v in sorted(dup_lines_per_file.items(), key=lambda kv: -len(kv[1]))},
     "total_dup_lines": sum(len(v) for v in dup_lines_per_file.values()),
 }
-result["classnames"] = {k: os.path.relpath(v, ROOT) for k, v in classnames.items()}
+result["classnames"] = {k: rel_path(v) for k, v in classnames.items()}
 result["autoloads"] = sorted(AUTOLOADS)
 
 if OUT_PATH:
@@ -388,14 +600,7 @@ print("files", len(files), "funcs", len(result["functions"]),
       "total_dup_lines", result["dup"]["total_dup_lines"])
 
 if CHECK_CEILING:
-    breaches = []
-    for rel, ceiling in DEP_CEILINGS.items():
-        info = result["files"].get(rel)
-        if info is None:
-            breaches.append("%s: not found (ceiling entry stale — file moved/deleted?)" % rel)
-            continue
-        if info["ndeps"] > ceiling:
-            breaches.append("%s: ndeps=%d exceeds ceiling %d" % (rel, info["ndeps"], ceiling))
+    breaches = dep_ceiling_breaches(result["files"], DEP_CEILINGS)
 
     functions_by_key = defaultdict(list)
     for fn in result["functions"]:
@@ -421,5 +626,10 @@ if CHECK_CEILING:
         for b in breaches:
             print("  -", b)
         sys.exit(1)
-    print("PASS: metric ceilings OK (%d file(s), %d function(s) checked)" % (
-        len(DEP_CEILINGS), len(PARAM_CEILINGS)))
+    # The "PASS: metric ceilings OK" prefix is asserted verbatim by tools/validate_gd_metrics.py, which
+    # is how this check reaches the gate. Counts inside the parentheses may change freely; the prefix
+    # may not — rewording it turns the gate red in a file nobody edited.
+    _in_scope = sum(1 for r in result["files"] if r.startswith(DEP_SCOPE_PREFIX))
+    print("PASS: metric ceilings OK (%d file(s), %d function(s) checked; "
+          "dependency budget enforced over %d file(s) in %s at threshold %d)" % (
+              len(DEP_CEILINGS), len(PARAM_CEILINGS), _in_scope, DEP_SCOPE_PREFIX, DEP_THRESHOLD))
