@@ -52,6 +52,26 @@ func _initialize() -> void:
 	if TARGET_HEX not in result.contested_hexes:
 		_fail("result.contested_hexes missing %s: %s" % [TARGET_HEX, str(result.contested_hexes)])
 
+	# Air OOB reaches the turn record (plan 0059). This is the end-to-end proof: the ledger is built
+	# deep inside IjfsEngine, retained by FiresPhases and read back out by play_turn, and before 0059
+	# it was discarded at every one of those hops. A real resolved turn must carry a populated force.
+	if result.air_oob.is_empty():
+		_fail("result.air_oob is empty after a resolved turn — the air OOB is not reaching TurnResult")
+	elif not (result.air_oob as Dictionary).has("squadrons"):
+		_fail("result.air_oob has no squadrons key")
+	else:
+		# Row SHAPE is checked, not row COUNT. A scenario with no Red air is legitimate and would
+		# carry `squadrons: []`; asserting non-empty here would make this validator quietly
+		# scenario-dependent, which is how a future no-air excursion would fail for the wrong reason.
+		# The `air_oob.is_empty()` check above is the real end-to-end proof that the ledger arrives.
+		for row_value in ((result.air_oob as Dictionary)["squadrons"] as Array):
+			var row: Dictionary = row_value
+			for field in ["squadron_id", "class", "kind", "initial", "alive", "losses_today", "losses_campaign"]:
+				if not row.has(field):
+					_fail("air_oob squadron row missing '%s'" % field)
+			if String(row["kind"]) not in ["manned", "unmanned"]:
+				_fail("air_oob squadron kind is '%s'; expected manned/unmanned" % row["kind"])
+
 	# Event-log assertions.
 	if result.events.is_empty():
 		_fail("result.events is empty")

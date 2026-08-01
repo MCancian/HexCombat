@@ -59,6 +59,10 @@
           "classification": "phase_output",
           "why": "The IJFS phase's record for the turn just resolved, replaced wholesale by the phase that produced it. NOT write-only, and not merely serialized either: the air-insertion phase feeds it to AirInsertionResolver.threat_from_ijfs_summary (ReinforcementPhases.gd:270), so a LATER phase depends on it. It stays unprotected because the authoritative state it describes lives elsewhere and this is a report of it — but renaming or reshaping it is a behaviour change, not a doc edit."
         },
+        "last_ijfs_air_oob": {
+          "classification": "phase_output",
+          "why": "Red's per-squadron air order of battle for the turn just resolved, replaced wholesale by FiresPhases.resolve_ijfs_turn. Unlike its two siblings here it is genuinely write-once-read-once: NO later phase consumes it, and its only reader is GameState.play_turn putting it into TurnResult for the research record (plan 0059). The authoritative state it describes is IjfsSquadron, which the ijfs aggregate owns; this is a copy of it, so there is no transition to protect."
+        },
         "last_ijfs_writeback": {
           "classification": "phase_output",
           "why": "The IJFS writeback phase's record for the turn just resolved, replaced wholesale by the phase that produced it. NOT write-only, and not merely serialized either: the maneuver-casualty step takes its casualties (FiresPhases.gd:60) and the anti-ship step hands it to AntishipTransitions.apply_ijfs_effects (FiresPhases.gd:78), so a LATER phase depends on it. It stays unprotected because the authoritative state it describes lives elsewhere and this is a report of it — but renaming or reshaping it is a behaviour change, not a doc edit."

@@ -345,11 +345,31 @@ static func _build_ledgers(state: IjfsDailyState, current_day: int, summary: Dic
 
 	var air_oob_after: Variant = null
 	if state.squadron_force != null:
+		# `kind` (manned/unmanned) is stamped here rather than left for the consumer to re-derive by
+		# joining air_classes.json on the class name — the record is read by research tooling that has
+		# no access to the data files.
+		#
+		# Both lookups below are HARD INDEXES, deliberately. An earlier draft used
+		# `classes.get(cls_name, {})` and emitted `kind: ""` when it missed, which is the
+		# get-with-default-across-a-boundary this project forbids (non-negotiable #2, the
+		# exquisite-intel incident) wearing a push_error as a disguise: it logged and then published a
+		# row whose airframes were neither manned nor unmanned. The OOB↔air-classes join is only
+		# checked by tools/validate_ijfs_data.gd, i.e. at gate time and not at load, so a missing class
+		# has to fail HERE rather than be papered over.
+		var classes: Dictionary = {}
+		if state.air_classes != null:
+			classes = (state.air_classes as Dictionary)["classes"]
 		var squadrons: Array = []
 		for sq: IjfsSquadron in (state.squadron_force as Array):
+			if not classes.has(sq.aircraft_class):
+				push_error("IjfsEngine: squadron %s has class '%s' with no air_classes entry" % [
+					sq.squadron_id, sq.aircraft_class])
+				assert(false, "air OOB references a class absent from air_classes")
+			var cls: Dictionary = classes[sq.aircraft_class]
 			squadrons.append({
 				"squadron_id": sq.squadron_id,
 				"class": sq.aircraft_class,
+				"kind": cls["kind"],
 				"role": sq.role,
 				"initial": sq.initial,
 				"alive": sq.alive,
@@ -360,6 +380,11 @@ static func _build_ledgers(state: IjfsDailyState, current_day: int, summary: Dic
 		# model_version 4 (2026-08-01): losses_campaign added, and losses_today changed MEANING from
 		# campaign-cumulative to per-day. A consumer reading v3 semantics off a v4 payload would
 		# silently under-report, which is exactly what the version is for.
+		#
+		# `kind` was added later the same day (plan 0059) and deliberately did NOT bump the version:
+		# it is purely additive, and no v4 payload had ever been persisted anywhere — this ledger
+		# reached no fixture, record or API until 0059 surfaced it — so no consumer can be misled by
+		# a widened row. Bump only when a field's MEANING moves, as losses_today's did.
 		air_oob_after = {"model_version": 4, "squadrons": squadrons, "provenance": {}}
 
 	return {

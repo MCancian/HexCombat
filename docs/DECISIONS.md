@@ -25,6 +25,21 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-08-01 — Plan 0059 step 1 shipped: Red's air order of battle reaches the turn record (agent,
+  reviewed 2-of-3).** The `air_oob_after` ledger was built by `IjfsEngine` and discarded at every hop;
+  it is now retained on `GameStateData.last_ijfs_air_oob` and copied into `TurnResult.air_oob`, so a
+  research run can chart the fixed 584-airframe force (408 manned / 176 unmanned) grinding down across
+  a campaign. Each squadron row gains `kind` so aircraft and UAVs are separable without re-deriving the
+  air-classes join. **The diff review killed two fake fail-loud sites**: both `push_error`-ed and then
+  continued, and the `kind` lookup was a `get`-with-default across a boundary that would have published
+  rows classified as neither manned nor unmanned — both now assert and hard-index. It also found the
+  retained ledger aliased the dict returned through the public `resolve_ijfs_turn`, so a caller could
+  mutate record state through it. **Three comments and the plan claimed a wiped-out force serializes as
+  `squadrons: []`; that is false** — attrition only decrements, so it is rows with `alive: 0`. No golden
+  movement, no new RNG; the fixture grew 281 lines with 0 deletions. Facts:
+  `docs/plans/0059-sam-interception-and-rtb.md` (step 1 checklist + both review rounds),
+  `scripts/model/GameStateData.gd` (the lifecycle rules), `tools/mutation_authority_manifest.json`.
+
 - **2026-08-01 — The three decided backlog items are implemented; the air OOB ledger is v4 (agent).**
   `deploy_jlsf` duplicates are refused with `DUPLICATE_JLSF`; the advantage ratios are `sweepable:false`
   with the correction that they were never inert; `IjfsSquadron.losses_today` is now genuinely per-day

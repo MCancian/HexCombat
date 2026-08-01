@@ -23,6 +23,20 @@ static func resolve_ijfs_turn(state: GameStateData, dice: Dice) -> Dictionary:
 	var ledgers: Dictionary = outcome["ledgers"]
 	state.last_ijfs_summary = ledgers["summary"]
 	state.last_ijfs_writeback = outcome["writeback"]
+	# Retained for the turn record only — no later phase reads it (plan 0059). A null ledger means
+	# IjfsEngine found no squadron force, which cannot happen through a healthy build: IjfsStateBuilder
+	# sets squadron_force unconditionally from the OOB. So this is an assert, not a tolerated branch:
+	# push_error alone would log and then publish a research record that looks merely empty, and the
+	# caller cannot rescue it because TurnConductor discards this function's return value.
+	#
+	# Deep-copied on the way in. `ledgers` is returned to the public GameState.resolve_ijfs_turn, so
+	# retaining the reference would let any caller mutate campaign-record state through it. (The two
+	# siblings above alias for the same reason and predate this; not changed here.)
+	var air_oob: Variant = ledgers["air_oob_after"]
+	if air_oob == null:
+		push_error("FiresPhases: IJFS resolved with no squadron force — air OOB ledger is null")
+		assert(false, "IJFS air OOB ledger is null; the squadron force was not built")
+	state.last_ijfs_air_oob = (air_oob as Dictionary).duplicate(true) if air_oob != null else {}
 	EventBus.ijfs_resolved.emit(state.last_ijfs_summary)
 	return ledgers
 

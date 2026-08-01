@@ -82,40 +82,50 @@ earlier note in this plan said otherwise.)
 *(Revised after the 2026-08-01 plan-review round — see "Review findings folded in" below. Four items
 here changed; do not work from an older copy.)*
 
-- [ ] `GameStateData.last_ijfs_air_oob: Dictionary = {}`, cleared in `reset_to_scenario` alongside
+- [x] `GameStateData.last_ijfs_air_oob: Dictionary = {}`, cleared in `reset_to_scenario` alongside
       `last_ijfs_summary` / `last_ijfs_writeback`. **Do not add a `GameState` façade property for it** —
       `play_turn` reads `data` directly, so a façade would be pattern-matching the siblings past the
       point where the pattern applies.
-- [ ] `FiresPhases.resolve_ijfs_turn` stores `ledgers["air_oob_after"]` onto it. **`null` must fail
-      loud, not become `{}`.** `IjfsStateBuilder` unconditionally sets
-      `state.squadron_force = IjfsLoaders.expand_oob_to_squadrons(...)`, so a null force at this
-      boundary is a broken invariant, and quietly recording `{}` would let a research consumer read it
-      as "the force is gone". A legitimately empty force is still a structured payload —
-      `{"model_version": 4, "squadrons": []}` — never `{}`.
-- [ ] `IjfsEngine`'s squadron row gains `"kind"` (manned/unmanned) read from the air-classes table,
-      so aircraft and UAVs are separable without the consumer re-deriving the join. **Fail loud on a
-      missing class** — no `dict.get(key, default)` across this boundary (non-negotiable #2; the
-      exquisite-intel incident).
-- [ ] **Keep `model_version` at 4 — do NOT bump to 5.** `kind` is additive and backward-compatible,
+- [x] `FiresPhases.resolve_ijfs_turn` stores `ledgers["air_oob_after"]` onto it, **deep-copied** —
+      `ledgers` is returned to the public `GameState.resolve_ijfs_turn`, so retaining the reference
+      would let a caller mutate campaign-record state through it (diff review). **`null` asserts.**
+      `IjfsStateBuilder` unconditionally sets `state.squadron_force`, so a null force here is a broken
+      invariant; `push_error` alone would log and then publish a record that merely looks empty, and
+      the caller cannot rescue it because `TurnConductor` discards this function's return.
+- [x] `IjfsEngine`'s squadron row gains `"kind"` (manned/unmanned) read from the air-classes table,
+      so aircraft and UAVs are separable without the consumer re-deriving the join. **Hard-indexed,
+      not `get`-with-default** — no `dict.get(key, default)` across this boundary (non-negotiable #2;
+      the exquisite-intel incident), and a missing class asserts.
+- [x] **Keep `model_version` at 4 — do NOT bump to 5.** `kind` is additive and backward-compatible,
       unlike the 3→4 bump, whose recorded rationale was that `losses_today` *changed meaning*. The
       decisive point: no v4 `air_oob_after` payload has ever been persisted anywhere (it reaches no
       fixture, record or API today), so there is no v4 consumer that a silently-widened row could
       mislead. If the project ever wants "every additive revision bumps", that is a policy to state
       once, not to invent here.
-- [ ] **There are TWO pins on this version, and the earlier draft named only one:**
+- [x] **There are TWO pins on this version, and the earlier draft named only one:**
       `tools/validate_headless_ijfs.gd` and `tests/ijfs/ijfs_engine_test.gd`. Since the version stays
       at 4 neither pin moves — but the GdUnit row-shape assertion in the latter must grow `kind`.
-- [ ] `TurnResult` gains `air_oob: Dictionary` + its `to_dict()` key; `GameState.play_turn` populates
+- [x] `TurnResult` gains `air_oob: Dictionary` + its `to_dict()` key; `GameState.play_turn` populates
       it from the state field.
-- [ ] **Add `air_oob` to `schemas/llm_action_result.schema.json`** under `turn_result.properties`.
+- [x] **Add `air_oob` to `schemas/llm_action_result.schema.json`** under `turn_result.properties`.
       Missing this would pass every existing check silently: the top level is
       `"additionalProperties": true` and `tools/validate_llm_api.gd` only checks top-level result keys.
-- [ ] `shared_model_policies` entry for the new `GameStateData` field, `"classification": "phase_output"`.
-- [ ] GdUnit: the OOB reaches `TurnResult.to_dict()`; `initial`/`alive`/both loss counters/`kind` are
-      present; a turn with zero air losses still emits the block (absence must mean "no force", not
-      "no losses").
-- [ ] Regenerate `docs/examples/llm_result_after_turn.json` via `tools/LLMFixtures.gd`; diff to confirm
-      only the new keys moved.
+- [x] `shared_model_policies` entry for the new `GameStateData` field, `"classification": "phase_output"`.
+- [x] GdUnit: the OOB reaches `TurnResult.to_dict()`; `initial`/`alive`/both loss counters/`kind` are
+      present. End-to-end proof lives in `tools/validate_play_turn.gd`, which checks row SHAPE and not
+      row COUNT — a future no-air scenario legitimately carries `squadrons: []`, and asserting
+      non-empty would make that validator quietly scenario-dependent (diff review).
+- [x] Regenerate `docs/examples/llm_result_after_turn.json` via `tools/LLMFixtures.gd`; diff to confirm
+      only the new keys moved. **Measured: 281 insertions, 0 deletions, every added key inside the new
+      `air_oob` block; independently reproduced by a second reviewer.**
+
+**Correction to a claim this plan repeated three times:** a wiped-out force does NOT serialize as
+`squadrons: []`. Attrition only ever does `alive -= losses` and the ledger appends every squadron, so
+total destruction is 25 rows with `alive: 0` — which keeps each squadron's campaign history and is the
+better record. `squadrons: []` means an establishment with no squadrons at all, which only a no-air
+scenario would produce. Separately, `{}` means "no turn has resolved yet" and nothing more:
+`begin_next_turn` does not clear the field, so during a planning phase it still holds the previous
+turn's ledger.
 
 ### Verification
 

@@ -184,6 +184,7 @@ func reset_to_scenario() -> void:
 	data.last_combat_summaries.clear()
 	data.last_ijfs_summary = {}
 	data.last_ijfs_writeback = null
+	data.last_ijfs_air_oob = {}
 	# Anti-ship systems are lazily (re)built on first use (resolve_ijfs_turn / resolve_antiship_turn),
 	# matching the IJFS state's lazy-load pattern; clearing here forces a fresh build per scenario.
 	FiresPhases.reset_antiship_establishment(data)
@@ -374,6 +375,7 @@ func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> Tur
 	result.combat_summaries = data.last_combat_summaries.duplicate()
 	result.ijfs_summary = data.last_ijfs_summary.duplicate(true)
 	result.ijfs_writeback = data.last_ijfs_writeback.to_dict() if data.last_ijfs_writeback != null else {}
+	result.air_oob = data.last_ijfs_air_oob.duplicate(true)
 	result.antiship_summary = data.last_antiship_summary.to_dict() if data.last_antiship_summary != null else {}
 	result.offload_summary = data.last_offload_summary.duplicate(true)
 	result.mobilization_summary = data.last_mobilization_summary.to_dict() if data.last_mobilization_summary != null else {}

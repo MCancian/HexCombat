@@ -1,0 +1,30 @@
+extends GdUnitTestSuite
+
+## TurnResult is the turn record: SelfPlayRunner appends `result["turn_result"]` to `turn_digests`
+## once per turn, and that array IS the research record a campaign is charted from. Plan 0059 put
+## Red's air order of battle in it, so these tests pin the serialized shape of that block.
+
+func test_air_oob_reaches_to_dict() -> void:
+	var result := TurnResult.new()
+	result.air_oob = {
+		"model_version": 4,
+		"squadrons": [{"squadron_id": "sq1", "class": "5th Gen", "kind": "manned", "alive": 20}],
+	}
+
+	var out := result.to_dict()
+
+	assert_bool(out.has("air_oob")).override_failure_message(
+		"air_oob must be serialized — the turn record is the only surface that carries the air OOB"
+	).is_true()
+	var squadrons: Array = (out["air_oob"] as Dictionary)["squadrons"]
+	assert_int(squadrons.size()).is_equal(1)
+	assert_str(String((squadrons[0] as Dictionary)["kind"])).is_equal("manned")
+
+
+func test_air_oob_defaults_to_an_empty_dict_not_null() -> void:
+	# `{}` means "no turn has resolved yet" — never null, so a consumer has two cases, not three.
+	# It does NOT mean "the force is gone": a wiped-out force is rows with alive: 0, because attrition
+	# only decrements and the ledger appends every squadron.
+	var out := TurnResult.new().to_dict()
+	assert_bool(out["air_oob"] is Dictionary).is_true()
+	assert_bool((out["air_oob"] as Dictionary).is_empty()).is_true()

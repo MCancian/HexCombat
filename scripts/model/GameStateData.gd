@@ -58,6 +58,22 @@ var ijfs_state: IjfsDailyState = null
 var _ijfs_day: int = 0
 var last_ijfs_summary: Dictionary = {}
 var last_ijfs_writeback: IjfsWriteback = null
+## The IJFS `air_oob_after` ledger for the turn just resolved — Red's per-squadron order of battle,
+## carrying initial/alive/kind and both loss counters. Unlike its two siblings above, NO later phase
+## reads this: it exists solely so `GameState.play_turn` can put it in `TurnResult`, because the
+## research record is where the USER wants to watch the fixed 584-airframe force grind down (plan
+## 0059).
+##
+## Two lifecycle facts that are easy to get wrong (both caught in review, both were stated backwards
+## in the first draft of this comment):
+##   - `{}` means "no turn has resolved YET", and only that. `begin_next_turn` does NOT clear it, so
+##     during a planning phase it still holds the PREVIOUS turn's ledger. Only `reset_to_scenario`
+##     empties it.
+##   - A wiped-out force does NOT serialize as `squadrons: []`. Attrition only ever does
+##     `alive -= losses` and the ledger appends every squadron, so total destruction is 25 rows with
+##     `alive: 0` — which is the more useful record anyway, since each row keeps its campaign history.
+##     `squadrons: []` would mean an establishment with no squadrons at all.
+var last_ijfs_air_oob: Dictionary = {}
 # D3 anti-ship Green firing systems (AntishipSystem rows aggregated by (to_number, type_id)). Persist
 # across turns so launcher destruction/suppression carries forward; lazily built on first use.
 var antiship_systems: Array = []

@@ -53,9 +53,15 @@ func test_full_run_produces_all_ledgers() -> void:
 	assert_int(oob["model_version"]).is_equal(4)
 	assert_bool((oob["squadrons"] as Array).size() > 0).is_true()
 	var first_sq: Dictionary = oob["squadrons"][0]
-	for f in ["squadron_id", "class", "role", "initial", "alive", "losses_today", "losses_campaign"]:
+	for f in ["squadron_id", "class", "kind", "role", "initial", "alive", "losses_today", "losses_campaign"]:
 		assert_bool(first_sq.has(f)).override_failure_message(
 			"air_oob_after squadron row is missing '%s'" % f
+		).is_true()
+	# `kind` must be resolved from air_classes, never left blank — a blank means the class lookup
+	# failed and the row would silently misclassify an airframe as neither manned nor unmanned.
+	for row in (oob["squadrons"] as Array):
+		assert_bool(String((row as Dictionary)["kind"]) in ["manned", "unmanned"]).override_failure_message(
+			"squadron %s has kind '%s'; expected manned or unmanned" % [row["squadron_id"], row["kind"]]
 		).is_true()
 
 	# Summary surfaces the documented keys.

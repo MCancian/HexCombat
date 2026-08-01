@@ -6,6 +6,11 @@ class_name TurnResult
 @export var combat_summaries: Array = []
 @export var ijfs_summary: Dictionary = {}
 @export var ijfs_writeback: Dictionary = {}
+## Red's per-squadron air order of battle after this turn — the fixed establishment with each
+## squadron's initial/alive/kind and both loss counters, so a research run can chart the force curve
+## across a campaign (plan 0059). `{}` before the first turn resolves. A destroyed force is rows with
+## `alive: 0`, never an empty `squadrons` array — see GameStateData.last_ijfs_air_oob.
+@export var air_oob: Dictionary = {}
 @export var antiship_summary: Dictionary = {}
 @export var offload_summary: Dictionary = {}
 @export var mobilization_summary: Dictionary = {}
@@ -30,6 +35,7 @@ func to_dict() -> Dictionary:
 		"combat_summaries": combat_out,
 		"ijfs_summary": ijfs_summary.duplicate(true),
 		"ijfs_writeback": ijfs_writeback.duplicate(true),
+		"air_oob": air_oob.duplicate(true),
 		"antiship_summary": antiship_summary.duplicate(true),
 		"offload_summary": offload_summary.duplicate(true),
 		"mobilization_summary": mobilization_summary.duplicate(true),

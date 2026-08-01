@@ -2081,6 +2081,287 @@
 			"pending_brigades": 0,
 			"rejected": []
 		},
+		"air_oob": {
+			"model_version": 4,
+			"provenance": {},
+			"squadrons": [
+				{
+					"alive": 24,
+					"class": "5th Gen",
+					"initial": 24,
+					"kind": "manned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "strike",
+					"rtb_today": 0,
+					"squadron_id": "5th_gen__strike__001"
+				},
+				{
+					"alive": 24,
+					"class": "5th Gen",
+					"initial": 24,
+					"kind": "manned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "strike",
+					"rtb_today": 0,
+					"squadron_id": "5th_gen__strike__002"
+				},
+				{
+					"alive": 24,
+					"class": "4.5th Gen",
+					"initial": 24,
+					"kind": "manned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "strike",
+					"rtb_today": 0,
+					"squadron_id": "4_5th_gen__strike__001"
+				},
+				{
+					"alive": 24,
+					"class": "4.5th Gen",
+					"initial": 24,
+					"kind": "manned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "strike",
+					"rtb_today": 0,
+					"squadron_id": "4_5th_gen__strike__002"
+				},
+				{
+					"alive": 24,
+					"class": "4.5th Gen",
+					"initial": 24,
+					"kind": "manned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "strike",
+					"rtb_today": 0,
+					"squadron_id": "4_5th_gen__strike__003"
+				},
+				{
+					"alive": 24,
+					"class": "4.5th Gen",
+					"initial": 24,
+					"kind": "manned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "strike",
+					"rtb_today": 0,
+					"squadron_id": "4_5th_gen__strike__004"
+				},
+				{
+					"alive": 24,
+					"class": "4th Gen",
+					"initial": 24,
+					"kind": "manned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "strike",
+					"rtb_today": 0,
+					"squadron_id": "4th_gen__strike__001"
+				},
+				{
+					"alive": 24,
+					"class": "4th Gen",
+					"initial": 24,
+					"kind": "manned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "strike",
+					"rtb_today": 0,
+					"squadron_id": "4th_gen__strike__002"
+				},
+				{
+					"alive": 24,
+					"class": "4th Gen",
+					"initial": 24,
+					"kind": "manned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "strike",
+					"rtb_today": 0,
+					"squadron_id": "4th_gen__strike__003"
+				},
+				{
+					"alive": 24,
+					"class": "4th Gen",
+					"initial": 24,
+					"kind": "manned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "strike",
+					"rtb_today": 0,
+					"squadron_id": "4th_gen__strike__004"
+				},
+				{
+					"alive": 24,
+					"class": "J-16D",
+					"initial": 24,
+					"kind": "manned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "sead",
+					"rtb_today": 0,
+					"squadron_id": "j_16d__sead__001"
+				},
+				{
+					"alive": 24,
+					"class": "J-16D",
+					"initial": 24,
+					"kind": "manned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "sead",
+					"rtb_today": 0,
+					"squadron_id": "j_16d__sead__002"
+				},
+				{
+					"alive": 24,
+					"class": "JH-7",
+					"initial": 24,
+					"kind": "manned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "strike",
+					"rtb_today": 0,
+					"squadron_id": "jh_7__strike__001"
+				},
+				{
+					"alive": 24,
+					"class": "JH-7",
+					"initial": 24,
+					"kind": "manned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "strike",
+					"rtb_today": 0,
+					"squadron_id": "jh_7__strike__002"
+				},
+				{
+					"alive": 24,
+					"class": "JH-7",
+					"initial": 24,
+					"kind": "manned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "strike",
+					"rtb_today": 0,
+					"squadron_id": "jh_7__strike__003"
+				},
+				{
+					"alive": 24,
+					"class": "JH-7",
+					"initial": 24,
+					"kind": "manned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "strike",
+					"rtb_today": 0,
+					"squadron_id": "jh_7__strike__004"
+				},
+				{
+					"alive": 12,
+					"class": "H-6",
+					"initial": 12,
+					"kind": "manned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "strike",
+					"rtb_today": 0,
+					"squadron_id": "h_6__strike__001"
+				},
+				{
+					"alive": 12,
+					"class": "H-6",
+					"initial": 12,
+					"kind": "manned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "strike",
+					"rtb_today": 0,
+					"squadron_id": "h_6__strike__002"
+				},
+				{
+					"alive": 12,
+					"class": "HALE Armed",
+					"initial": 12,
+					"kind": "unmanned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "isr",
+					"rtb_today": 0,
+					"squadron_id": "hale_armed__isr__001"
+				},
+				{
+					"alive": 12,
+					"class": "HALE Armed",
+					"initial": 12,
+					"kind": "unmanned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "isr",
+					"rtb_today": 0,
+					"squadron_id": "hale_armed__isr__002"
+				},
+				{
+					"alive": 18,
+					"class": "MALE Armed",
+					"initial": 18,
+					"kind": "unmanned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "isr",
+					"rtb_today": 0,
+					"squadron_id": "male_armed__isr__001"
+				},
+				{
+					"alive": 18,
+					"class": "MALE Armed",
+					"initial": 18,
+					"kind": "unmanned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "isr",
+					"rtb_today": 0,
+					"squadron_id": "male_armed__isr__002"
+				},
+				{
+					"alive": 8,
+					"class": "Stealth",
+					"initial": 8,
+					"kind": "unmanned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "isr",
+					"rtb_today": 0,
+					"squadron_id": "stealth__isr__001"
+				},
+				{
+					"alive": 48,
+					"class": "HARM",
+					"initial": 48,
+					"kind": "unmanned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "sead",
+					"rtb_today": 0,
+					"squadron_id": "harm__sead__001"
+				},
+				{
+					"alive": 60,
+					"class": "Decoys",
+					"initial": 60,
+					"kind": "unmanned",
+					"losses_campaign": 0,
+					"losses_today": 0,
+					"role": "strike",
+					"rtb_today": 0,
+					"squadron_id": "decoys__strike__001"
+				}
+			]
+		},
 		"antiship_summary": {
 			"bns_lost_at_sea": 8,
 			"crossing_casualties": {

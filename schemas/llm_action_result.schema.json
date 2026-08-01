@@ -30,6 +30,7 @@
         "combat_summaries": {"type": "array"},
         "ijfs_summary": {"type": "object"},
         "ijfs_writeback": {"type": "object"},
+        "air_oob": {"type": "object"},
         "antiship_summary": {"type": "object"},
         "frontline_summary": {"type": "object"},
         "cleanup_summary": {"type": "object"},
