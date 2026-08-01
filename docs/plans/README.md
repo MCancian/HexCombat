@@ -22,21 +22,15 @@ still fire — a real defect, already planned in detail), **0031** (graduated po
 by 0047) and **0002** (per-hull escort magazines, unblocked by 0043+0045). All three are USER-facing
 mechanics rather than architecture.
 
-**0055 and 0057 have both SHIPPED (2026-07-31); only 0056 remains in the chain.**
-All three are path-keyed, and the ordering existed because 0056 seeds a path-keyed ceiling table:
-seeding it before the files moved would have guaranteed stale keys — the `KeyError` failure plan 0050
-already hit once. **That hazard is now spent.** 0055 settled the role vocabulary
-(`scripts/interleaved/` exists; `scripts/resolvers/` and `scripts/ijfs/` are gone) and 0057 moved the
-36 files, so the layout 0056 must key against is final.
+**The structural-hygiene chain is COMPLETE (0055 -> 0057 -> 0056, all shipped 2026-07-31/08-01).**
+0055 settled the role vocabulary, 0057 made `scripts/` root a 4-file allowlist, and 0056 turned the
+dependency budget from opt-in into enforced-over-`scripts/`. The ordering was load-bearing: 0056 seeds
+a PATH-KEYED table, and five of the eleven files it seeded got their current path from the first two.
 
-**0056 was preflighted 2026-08-01 and rewritten; it is ready for plan review.** Three of its numbers
-had gone stale (`TurnClosure`'s ceiling, and the ≥8 / ≥6 rows of its distribution table), and its
-Sequencing section justified its own ordering with a claim that was false: 0057 did *not* move
-`scripts/GameState.gd`, which is one of the four files it deliberately kept at root. None of the five
-existing ceiling entries moved at all. The ordering hazard was nonetheless real — it applied to the
-files 0056 will SEED, five of which got their current path on 2026-07-31. `docs/plans/` is excluded
-from the doc-anchor gate, so nothing flagged any of this; preflight did. That check has now corrected
-a premise in three consecutive plans.
+**Preflight killed a premise in all three.** 0055's "six pure resolvers" table came from an instrument
+built to answer a different question; 0057's "only two root files apply state" was false; 0056 quoted a
+superseded ceiling and justified its own ordering with a move that never happened. `docs/plans/` is
+outside the doc-anchor gate, so nothing flagged any of it. Measure before you review, not after.
 
 **Plans are ephemeral by contract.** A plan holds the design, the checklist, and progress notes
 *while the work is in flight*. It is not a reference: no durable fact may live only in a plan.
@@ -82,7 +76,7 @@ agent would need to read the plan to act, the closeout wasn't done.
 | 0016 | [Separate State Data from Autoload](../archive/0016-separate-state-data.md) | Medium (hygiene/architecture) | Superseded by 0014 |
 | 0022 | [Red reactive beach-opening (feasibility first)](0022-red-beach-switching.md) | Medium (research; new mechanic, gated on a feasibility spike) | Sketch |
 | 0057 | [Give `scripts/` root a role layout](../archive/0057-scripts-root-role-layout.md) | Medium (hygiene; 40 files / 5,864 lines sit outside the role table entirely, so nothing can be wrong about where they are. Path-only but riskier than 0055 — 8 files are bound by path in `.tscn`/`project.godot`, where a miss fails at scene load, not compile) | **COMPLETE** (2026-07-31) |
-| 0056 | [Make the coupling budget opt-out](0056-coupling-budget-opt-out.md) | Medium (risk buydown; dependency ceilings police 5 files of 167 because they are opt-in, while the parameter cap is opt-out and universal. Enforces only — fixes no coupling) | Sketch |
+| 0056 | [Make the coupling budget opt-out](../archive/0056-coupling-budget-opt-out.md) | Medium (risk buydown; dependency ceilings policed 5 files of 167 because they were opt-in, while the parameter cap was opt-out and universal. Enforces only — fixes no coupling) | **COMPLETE** (2026-08-01) |
 
 ## Mutation-authority campaign — ARCHIVED (0042–0050, complete 2026-07-31)
 

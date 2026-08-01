@@ -25,6 +25,28 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-08-01 — The dependency budget is enforced over all of `scripts/`, not the 5 files that had
+  opted in (agent, reviewed 2-of-3).** Plan 0056, closing the structural-hygiene chain. The cap was
+  never new — `hexcombat-code-quality` had declared "file class references: target 8, hard cap 10"
+  all along — only its enforcement was opt-in, so 162 of 167 files were unbounded and the repo's
+  most-connected file (`ForceTransitions`, 30) was uncapped while `GameState` (29) was capped.
+  Eleven ceilings seeded at MEASURED values by a one-shot generator that was **deleted in the same
+  unit of work**: a permanent seeder is an opt-out for every future high-coupling file. Fixes no
+  coupling — unbounded becomes cannot-grow. Diff review found that `scripts/addons/*.gd` escaped the
+  metrics tool entirely (`SKIP_DIRS` pruned at every depth), that the boundary fixture derived its
+  expectation from the constant under test, and that the tests proved the path helpers behaved but
+  not that they were wired in. **Windows is unverified** — the new separator normalization is
+  believed to fix a latent defect there. Facts:
+  `.claude/skills/hexcombat-code-quality` (the rule and both budgets' scopes),
+  `tools/gd_metrics.py` (`DEP_THRESHOLD`, `dep_ceiling_breaches`, the four self-tests).
+
+- **2026-08-01 — Four eclipsed documents left `docs/plans/` for `docs/archive/` (agent).** The
+  source-of-truth sweep brief (a survey never run, and answered better by the 0042–0050 campaign's
+  manifest), plan 0057 (COMPLETE but never archived — its sibling 0055 was, the same day), and plans
+  0039/0016 (superseded). Established that `validate_doc_anchors` exempts `archive/` and `plans/`
+  from CLASS anchors but checks dead doc-LINKS everywhere, which is how two broken links surfaced.
+  Facts: `docs/plans/ARCHIVE.md` (the index), `docs/plans/README.md`.
+
 - **2026-07-31 — `scripts/` root is now an exact 4-file allowlist, and the placement gate is
   deny-by-default (agent, reviewed).** Plan 0057. 36 of the 40 unclassified files at root moved into
   `ui/`, `policies/`, `api/`, `support/`, `calc/` and `model/`, one family per commit; root keeps the

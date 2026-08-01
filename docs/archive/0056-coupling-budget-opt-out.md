@@ -1,10 +1,28 @@
 ---
 title: "0056: The coupling budget is opt-in, so it polices 5 files out of 167"
-status: "Sketch"
+status: "COMPLETE (2026-08-01)"
 created: "2026-07-31"
 ---
 
 # Plan 0056: Make the coupling budget opt-out
+
+> **CLOSED 2026-08-01 — shipped in `dd0d25b`.** `DEP_THRESHOLD = 10` over `scripts/`; 11 ceilings
+> seeded at measured values; the `--seed-ceilings` generator added, used, and REMOVED in the same unit
+> of work. Gate ALL PHASES GREEN. Durable facts live in `.claude/skills/hexcombat-code-quality`
+> (the rule, and why the two budgets have different scopes) and in `tools/gd_metrics.py`'s own
+> headers; `docs/DECISIONS.md` carries the changelog entry. Nothing here is a reference.
+>
+> **Diff review: 3 substantive returns, quorum met.** Four findings applied, each watched to fail
+> before and pass after — `scripts/addons/*.gd` escaped the metrics tool entirely (`SKIP_DIRS` pruned
+> at every depth, reproduced before fixing); the threshold fixture derived its expectation from the
+> constant under test, so moving the policy to 11 would have passed unchanged; case 5 could not fail
+> on Linux because `os.sep` is already `/`; and the tests proved the path helpers BEHAVED but not that
+> they were WIRED IN. Six regressions are now caught that were not before.
+>
+> **One thing left open: Windows is unverified.** The separator normalization is believed to fix a
+> latent defect — before it, every ceiling key on that box would have been backslashed and reported
+> stale — but this was implemented and tested on Linux only. One `--check-ceiling` run on the Windows
+> box settles it.
 
 ## The finding
 
