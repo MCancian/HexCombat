@@ -25,6 +25,27 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-08-01 — Four backlog design calls settled, and two of them rested on a false premise (USER).**
+  A duplicate `deploy_jlsf` will be REFUSED with `DUPLICATE_JLSF` (same outcome, but the seat is told);
+  the air ledger will report per-day AND campaign-cumulative squadron losses rather than renaming
+  `losses_today`; the combat advantage ratios stay a REPORT LABEL and lose `sweepable`; `rtb_today`
+  becomes plan 0059 rather than being deleted. **Both "inert knob" claims were wrong.** The advantage
+  ratios are not inert — `CombatCalculator._result_label` reads both, and the label is asserted by
+  `tests/combat_golden_test.gd`, so an override is not byte-identical; they merely do not touch losses
+  or FEBA. And `losses_today` does not corrupt the daily summary — `red_air_losses` is summed fresh
+  from three logs that clear every day. Corrections are recorded in the items themselves, since a
+  backlog entry is what a future agent acts on. Facts: `docs/plans/BACKLOG.md` (all four items),
+  `docs/plans/0059-sam-interception-and-rtb.md` (the RTB mechanic and its four open design calls).
+
+- **2026-08-01 — `docs/plans/BACKLOG.md` triaged: the index grep undercounted, and 6 items were notes
+  wearing checkboxes (agent).** The stated read budget claimed `grep '^- \[ \]'` lists every open item;
+  it returned 21 of 25, because four items were written as bare `- **Bold.**`. Every open item now
+  carries a checkbox and nothing else does. Six deliberately-deferred items moved to a checkbox-free
+  "Standing limits & blocked" section, each naming its unblocking precondition. Two items were the same
+  job written twice, and merging them found the survivor half-stale: `validate_doc_anchors.gd`'s
+  `DOC_ROOTS` was widened on 2026-07-31, so STATUS and DECISIONS **are** anchor-checked; only
+  `docs/plans/` is the accidental gap. Facts: `docs/plans/BACKLOG.md` (the items and the bundle table).
+
 - **2026-08-01 — The dependency budget is enforced over all of `scripts/`, not the 5 files that had
   opted in (agent, reviewed 2-of-3).** Plan 0056, closing the structural-hygiene chain. The cap was
   never new — `hexcombat-code-quality` had declared "file class references: target 8, hard cap 10"

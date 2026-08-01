@@ -84,13 +84,18 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   requires adding `"team"` to the action schema, which is "new action-schema vocabulary" and explicitly
   out of that plan's scope. Fixing it means threading seat identity through `SelfPlayRunner` so a Green
   seat cannot claim Red. Worth doing before any research run where both seats are live LLMs.
-- [ ] **Should a duplicate `deploy_jlsf` order be rejected? (USER design call, raised 2026-07-31.)**
-  Two buffered orders for one port emit exactly ONE pool entry — `InfrastructureTransitions.queue_jlsf`
-  refuses the second occurrence — so accepting duplicates is harmless, and plan 0049 kept accepting
-  them only to preserve pre-existing behaviour. Rejecting them at planning time would be an equivalent
-  outcome with a clearer contract (and a `DUPLICATE_JLSF` code, matching `DUPLICATE_MOVE`/
-  `DUPLICATE_COMMIT`/`DUPLICATE_AIR_INSERT`). Proof both ways:
+- [ ] **Reject a duplicate `deploy_jlsf` order with `DUPLICATE_JLSF` (USER call 2026-08-01 — DECIDED,
+  raised 2026-07-31).** Two buffered orders for one port emit exactly ONE pool entry —
+  `InfrastructureTransitions.queue_jlsf` returns `false` when `node.jlsf != JLSF_NONE` — so accepting
+  duplicates is harmless, and plan 0049 kept accepting them only to preserve pre-existing behaviour.
+  **The USER's call is to refuse the second at planning time**: same game outcome, but the player or
+  LLM seat is told the order was redundant instead of it vanishing silently, and `deploy_jlsf` stops
+  being the one order kind with no duplicate code. Add `DUPLICATE_JLSF` alongside `DUPLICATE_MOVE` /
+  `DUPLICATE_COMMIT` / `DUPLICATE_AIR_INSERT`. The characterization test that pins today's accepting
+  behaviour must be changed deliberately:
   `tests/transitions/accounting_authority_characterization_test.gd::test_two_buffered_jlsf_orders_emit_exactly_one_pool_entry`.
+  Pool-entry count is unchanged either way, so no golden movement — this is an order-validation
+  change only.
 - [ ] **Order-kind dispatch lives in three places.** `GameState._apply_order`, `LLMGameAPI.apply_agent_response`
   and `schemas/llm_action_response.schema.json` each enumerate the order kinds independently. Adding
   `air_insert` (plan 0032) meant editing all three, and the duplication had already rotted: `deploy_jlsf`
@@ -144,20 +149,49 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   (caught by agy-explore; two other models wrongly agreed it would). That hole is closed separately by
   `--quit-after` in `run_all_tests.py`. So this is deduplication only, worth doing when validators are
   being touched anyway, in slices of 5-6 with the gate green between. Good `opencode` delegation.
-- [ ] **`IjfsSquadron.losses_today` is campaign-cumulative, not per-day (found 2026-07-30, plan 0046
-  preflight; USER design call attached).** Nothing resets it — `carry_to_next_day` touches targets only
-  — so a name that promises "today" reports the whole campaign, and it is serialized into the
-  `air_oob_after` ledger and the daily summary's `red_air_losses`. Deliberately preserved by 0046,
-  which was an authority migration with byte-stability as its acceptance test; changing it is a
-  behaviour change needing a golden re-baseline and a USER call on which number the ledger should carry.
-  `rtb_today` is the related oddity: no runtime writer at all, reported as a constant 0. Both are
-  pinned as-is by `tests/ijfs/ijfs_authority_characterization_test.gd`, so a fix has to go through
-  those tests deliberately rather than by accident.
-- [ ] **Inert knob-registry entries: `combat_defender_advantage_ratio` / `combat_attacker_advantage_ratio`
-  (found 2026-07-23, MC sweep investigation; USER design call attached).** Both are dumped into every
-  record but do NOT affect the sim — overriding them yields byte-identical games — so a sweep on either
-  silently reports false robustness. Either wire them into `CombatResolver`'s math or drop them from
-  `data/knobs/registry.json`. That is the USER call: they are a knob nobody has decided should exist.
+- [ ] **The air ledger should report per-day AND campaign-cumulative squadron losses (USER call
+  2026-08-01 — DECIDED; found 2026-07-30, plan 0046 preflight).** `IjfsSquadron.losses_today` is
+  campaign-cumulative despite its name: `IjfsTransitions.apply_squadron_losses` increments it, and the
+  only reset is at load time in `IjfsLoaders`. `carry_to_next_day` touches targets only.
+  **Premise correction 2026-08-01 — the blast radius is smaller than this item claimed.** It said the
+  field feeds "the `air_oob_after` ledger and the daily summary's `red_air_losses`". The summary half
+  is FALSE: `IjfsEngine` computes `red_air_losses` independently as
+  `_sum_losses(contest_log) + _sum_losses(free_shot_log) + _sum_losses(manpads_contest_log)`, and all
+  three logs are cleared at the start of every day, so that number is correctly per-day and always has
+  been. The cumulative value appears in exactly one place: the per-squadron rows of `air_oob_after`.
+  **The call is to report both** — a true per-day loss count and a campaign-to-date count, rather than
+  renaming or resetting the existing field. Most informative for reading an OOB after a turn; the cost
+  is a wider payload and two numbers that must stay consistent. Needs a golden/fixture re-baseline and
+  goes through `tests/ijfs/ijfs_authority_characterization_test.gd`, which pins today's behaviour
+  deliberately. Do this BEFORE [[0059-sam-interception-and-rtb]] so that plan's re-baseline is the
+  only behavioural one.
+- [ ] **`rtb_today` is a mechanic that was never built — opened as plan
+  [[0059-sam-interception-and-rtb]] (USER call 2026-08-01).** The field has no runtime writer at all
+  and is reported as a constant 0 every turn. The USER's call was not to delete it: aircraft should be
+  driven off by SAM interception rather than only shot down. **Measured while opening the plan: the SAM
+  side is not involved and has to be built.** All three air-attrition paths — SEAD return fire, the
+  post-phase-2 free shot, and the island-wide MANPADS contest — are binary Bernoulli draws per alive
+  airframe landing in `apply_squadron_losses`, with no damaged, aborted or mission-killed state
+  anywhere. A SAM target has three outcomes (destroyed / suppressed / unengaged); an aircraft has two.
+  Design calls and scope are in the plan; this entry stays only until that plan ships.
+- [ ] **`combat_attacker_advantage_ratio` / `combat_defender_advantage_ratio` are REPORTING thresholds,
+  not combat math — mark them not-sweepable (USER call 2026-08-01 — DECIDED; found 2026-07-23, MC sweep
+  investigation).**
+  **Premise correction 2026-08-01 — the old wording here was wrong and would have sent someone hunting
+  for a bug that does not exist.** It said both knobs are "recorded but never reach `CombatResolver`"
+  and that "overriding them yields byte-identical games". They are not inert:
+  `CombatCalculator._result_label` reads both — force ratio `>= combat_attacker_advantage_ratio` gives
+  `"Attacker Advantage"`, `<= combat_defender_advantage_ratio` gives `"Defender Advantage"`, else
+  `"Contested"` — and that label ships in the combat detail, appears in
+  `docs/examples/llm_result_after_turn.json`, and is asserted by `tests/combat_golden_test.gd`. So an
+  override changes the record, and the games are NOT byte-identical. What the knobs genuinely do not
+  touch is losses and FEBA movement, both computed from the raw strength balance.
+  **The USER's call is that a label is all they should be.** So the defect is the metadata, not the
+  math: both are `"sweepable": true` in `data/knobs/registry.json`, which invites a sensitivity study
+  to treat a readout threshold as an outcome lever and then report false robustness when outcomes do
+  not move. Set them not-sweepable and say in the registry entry that they select a report label.
+  No combat math changes; no golden movement. The sweepable-override gate check below is the general
+  form of the same problem.
 - [ ] **Gate check: a `sweepable:true` registry knob whose override does not actually apply should fail
   (found 2026-07-23, same investigation).** This would have caught the phantom `offload_beach_base_rate`
   path and would catch the two inert combat ratios above without anyone having to notice by hand. Listed
