@@ -19,9 +19,11 @@ ships, theaters, beaches. `EventBus` for signals. **Every phase's logic lives in
 `RefCounted` class** — under `scripts/calc/` when it writes no campaign state (`AirInsertionResolver`,
 `MobilizationResolver`, `SealiftResolver` since 0045, `AntishipResolver` since 0050), otherwise under
 `scripts/resolvers/` (`FrontlineResolver`, `CleanupResolver`, `OffloadResolver`, `IjfsResolver`,
-`CombatResolver`, `InfrastructureResolver`). **The second set is empty in practice as of 2026-07-31**:
-the closeout measured all six and none writes campaign state either, so the directory split has
-outlived the distinction it encodes — plan 0055 proposes emptying it. (`SupplyResolver` is long gone —
+`CombatResolver`, `InfrastructureResolver`). **That split does not hold as of 2026-07-31**: four of the
+six are pure, but `CleanupResolver` and `IjfsResolver` apply campaign state through their authorities,
+and `JlsfCargo` does so from inside `calc/`. Applying via an authority is a function call, not an
+assignment, so the write-scan that reported "all six clean" could not see it — plan 0055 has the
+census and the corrected role layout. (`SupplyResolver` is long gone —
 supply is `SupplyBill` + `DosConsumption` in `calc/` applied by `SupplyTransitions`.) Turn orchestration is **`TurnConductor`** (also `RefCounted`, all `static`):
 its methods take a `GameStateData` value object as their first argument, own the EventBus emits,
 cross-phase field assignment, and combat casualty/FEBA/retreat application (which stays in the
@@ -52,8 +54,8 @@ whole point is that it holds none.
 | Directory | The claim | The test |
 |---|---|---|
 | `scripts/phases/` | Coordinates one group of phases: computes nothing itself, applies nothing itself | Does it only ORDER calls and thread results? |
-| `scripts/resolvers/` | The per-phase resolver — decides what happens in that phase | Is it the phase's own logic, and does it still write campaign state? **No file in it passes the second half any more** (measured 2026-07-31) — plan 0055 |
-| `scripts/calc/` | Write-free calculation: returns outcomes, never applies them | Does it write NO campaign state at all — including through arrays/dicts it was handed? |
+| `scripts/resolvers/` | The per-phase resolver — decides what happens in that phase | Is it the phase's own logic, and does it still change campaign state? **The directory now holds both answers** — four pure files and two that apply through an authority (measured 2026-07-31) — plan 0055 |
+| `scripts/calc/` | Write-free calculation: returns outcomes, never applies them | Does it change NO campaign state at all — by direct write, through arrays/dicts it was handed, **or by calling an authority**? (`JlsfCargo` currently fails the last clause — plan 0055) |
 | `scripts/ijfs/` | A pipeline stage of one subsystem: computes AND applies, at its own draw point, through that aggregate's authority | Would applying its result later change how many dice are drawn? (if yes, it belongs here rather than in `calc/`) |
 | `scripts/builders/` | Builds fresh, unpublished state from content/scenario data | Does anything hold the object before `build()` returns? (must be "no") |
 | `scripts/loaders/` | Content files → typed objects | Is its input a data file rather than live state? |
@@ -80,9 +82,11 @@ force-owned reserve rows through an untyped alias, invisible to the gate. Moving
 have put a writer in `calc/`. Note also that a GDScript `class_name` is path-independent, so relocating a
 file changes no call site — the cost of such a move is the path, its `.uid` and doc references, nothing more.
 
-**Turn resolution order** (12-step high-level summary of `TurnConductor.gd`'s actual 16 granular execution steps): IJFS air/missile fires → IJFS maneuver casualties →
+**Turn resolution order** (12-step high-level summary of `TurnConductor.gd`'s actual 16 granular
+execution steps; the numbered version with the function each step calls is the one home for this —
+`docs/systems/turn-engine/STATUS.md`): IJFS air/missile fires → IJFS maneuver casualties →
 **sealift (tick ship returns + embark the crossing wave)** → anti-ship crossing → amphibious offload
-→ ROC mobilization → air insertion → movement & commit → ground combat → FEBA retreats → hex
+→ ROC mobilization → air insertion → movement & commit → ground combat & FEBA retreats → hex
 ownership → supply → cleanup (+ victory census). The front-line phase is **not** in this pipeline —
 it takes operator-drawn polyline coordinates and is called only through the `GameState` façade.
 
