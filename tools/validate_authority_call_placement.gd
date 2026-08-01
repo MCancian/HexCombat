@@ -173,6 +173,10 @@ func _strip(source: String) -> String:
 	return out
 
 
+## RECURSIVE, deliberately: a nested directory inherits its parent's claim. `scripts/model/ijfs/`
+## exists and holds five files; a non-recursive scan would report `scripts/model/` clean while never
+## opening them, which is the "green means nothing was checked" failure this validator is supposed to
+## be the answer to.
 func _gd_files(dir_path: String) -> Array[String]:
 	var files: Array[String] = []
 	var dir := DirAccess.open(dir_path)
@@ -181,7 +185,10 @@ func _gd_files(dir_path: String) -> Array[String]:
 	dir.list_dir_begin()
 	var name := dir.get_next()
 	while name != "":
-		if not dir.current_is_dir() and name.ends_with(".gd"):
+		if dir.current_is_dir():
+			if not name.begins_with("."):
+				files.append_array(_gd_files("%s/%s" % [dir_path, name]))
+		elif name.ends_with(".gd"):
 			files.append("%s/%s" % [dir_path, name])
 		name = dir.get_next()
 	dir.list_dir_end()
