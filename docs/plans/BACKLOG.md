@@ -323,3 +323,20 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   scenario row without a dedup check, so malformed scenario content is the one way in.
   Golden exposure is still real (offload sequencing), so this needs its own gate run and must not ride
   on a path move.
+
+- [ ] **The authority-call detector is blind to an ALIASED receiver, so a FORBIDS file could call an
+  authority under another name (found 2026-07-31 by the Sol diff-review role on plan 0057; a standing
+  limit of the detector, NOT a regression).** `tools/validate_authority_call_placement.gd` matches the
+  literal manifest class name as the receiver:
+  `regex.compile("(?<![A-Za-z0-9_])%s\\.[a-z_][a-z0-9_]*\\s*\\(" % authority)`. A file that does
+  `const FT = preload("res://scripts/transitions/ForceTransitions.gd")` and then calls `FT.apply_x()`
+  matches nothing — the path string is removed by `_strip`, and the local receiver name is not the
+  manifest class name. The detector's self-test has cases for comments, strings, longer identifiers
+  and constant reads, but **none for a preload alias**, so the hole is not even pinned as known-open.
+  **Not fixed in 0057** because it is new detector capability rather than the placement layout that
+  plan was about, and because it needs a design call first: the cheap version tracks
+  `const X = preload("<authority_path>")` and treats `X` as an authority receiver, which is bounded
+  and testable; the general version is local alias analysis, which is not. Do the cheap version, and
+  add the self-test case for it in the same commit. Weigh against how the codebase actually calls
+  authorities today — every current call site uses the bare class name, so this is prophylactic, which
+  is also why it is worth doing while it is still cheap and not a migration.

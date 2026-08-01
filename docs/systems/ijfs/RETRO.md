@@ -5,7 +5,7 @@ Lessons from IJFS work, newest first. Symptom → cause → what to do different
 ## 2026-07-30 — plan 0046, the IJFS mutation authority
 
 **A protected field NAME is claimed across the whole repo, not within its class.** Registering
-`IjfsMunition.name` turned 22 untouched lines in `scripts/HexMap.gd` and `scripts/SymbolPreview.gd`
+`IjfsMunition.name` turned 22 untouched lines in `scripts/ui/HexMap.gd` and `scripts/ui/SymbolPreview.gd`
 into `E_UNRESOLVED_WRITE` gate failures, because `name` is a Godot `Node` property and the gate's
 name-backstop fires on any unresolvable receiver writing a protected name. The fix was to rename the
 field (`munition_name`, JSON key unchanged). The manifest's `_schema_rules` already ask for

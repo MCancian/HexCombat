@@ -69,7 +69,12 @@ extends SceneTree
 const MANIFEST := "res://tools/mutation_authority_manifest.json"
 const SCRIPTS_ROOT := "res://scripts"
 
-## A directory that changes NO campaign state by any route — a direct authority call here is a finding.
+## A directory whose CLAIM in docs/STATUS.md is that it changes no campaign state. What is ENFORCED
+## here is narrower and it matters: zero DIRECT authority calls. The two are not the same, and
+## `scripts/ui/` and `scripts/api/` are the honest illustration — both route real state changes
+## through the `GameState` façade (`GameController.gd` calls `GameState.resolve_turn()`,
+## `LLMGameAPI.gd` calls `play_turn`/`begin_next_turn`), which is correct design and invisible here.
+## So FORBIDS means "makes no direct authority call", never "applies nothing".
 const FORBIDS := "FORBIDS"
 ## The directory whose claim REQUIRES applying: computes AND applies at its own draw point.
 const REQUIRES := "REQUIRES"
@@ -130,23 +135,19 @@ func _initialize() -> void:
 		var dir_path := "%s/%s" % [SCRIPTS_ROOT, dir_name]
 		for file_path in _gd_files(dir_path):
 			var hits := _authority_calls(_strip(_read(file_path)), authorities)
-			if policy == FORBIDS and not hits.is_empty():
-				_failures.append("%s calls %s — scripts/%s/ applies NO campaign state (docs/STATUS.md -> 'Where a file goes'). Move the file to scripts/interleaved/, or hoist the application into its caller." % [
-					file_path, ", ".join(hits), dir_name])
-			elif policy == REQUIRES and hits.is_empty():
-				_failures.append("%s makes NO direct authority call — scripts/%s/ means 'computes AND applies at its own draw point'. If it stopped applying, move it to scripts/calc/; if it now applies through a helper, this validator cannot see that and the file needs a header note saying so." % [
-					file_path, dir_name])
+			var violation := _policy_violation(policy, file_path, "scripts/%s/" % dir_name, hits)
+			if violation != "":
+				_failures.append(violation)
 
 	for file_name in root_files:
 		if not ROOT_FILE_POLICY.has(file_name):
 			continue
-		if String(ROOT_FILE_POLICY[file_name]) != FORBIDS:
-			continue
 		var root_path := "%s/%s" % [SCRIPTS_ROOT, file_name]
 		var root_hits := _authority_calls(_strip(_read(root_path)), authorities)
-		if not root_hits.is_empty():
-			_failures.append("%s calls %s — this root file is allowlisted as FORBIDS. Only the façade autoloads (GameState, GameData) may call authorities from root." % [
-				root_path, ", ".join(root_hits)])
+		var root_violation := _policy_violation(
+			String(ROOT_FILE_POLICY[file_name]), root_path, "scripts/ root", root_hits)
+		if root_violation != "":
+			_failures.append(root_violation)
 
 	if _failures.is_empty():
 		print("PASS: authority-call placement — %d authorities; %d GDScript directory(ies) all classified and clean; %d root file(s) allowlisted" % [
@@ -157,6 +158,22 @@ func _initialize() -> void:
 		push_error(failure)
 	print("FAIL: authority-call placement found %d issue(s)" % _failures.size())
 	quit(1)
+
+
+## The per-file verdict, as a pure function of (policy, hits) so the self-test can drive EVERY branch
+## — including PERMITS — without a filesystem. `_initialize` calls exactly this for both directory
+## files and root files, so the test cannot drift away from the enforced path. Returns "" when fine.
+## (Extracted on a review finding, 2026-07-31: the previous PERMITS "test" only asserted a table
+## value and never exercised the enforcement branch, so that branch could have drifted while the
+## self-test stayed green.)
+func _policy_violation(policy: String, file_path: String, home: String, hits: Array[String]) -> String:
+	if policy == FORBIDS and not hits.is_empty():
+		return "%s calls %s — %s must make NO direct authority call (docs/STATUS.md -> 'Where a file goes'). Move the file to scripts/interleaved/, or hoist the application into its caller." % [
+			file_path, ", ".join(hits), home]
+	if policy == REQUIRES and hits.is_empty():
+		return "%s makes NO direct authority call — %s means 'computes AND applies at its own draw point'. If it stopped applying, move it to scripts/calc/; if it now applies through a helper, this validator cannot see that and the file needs a header note saying so." % [
+			file_path, home]
+	return ""
 
 
 ## The deny-by-default half, as a pure function of two name lists so the self-test can drive it
@@ -393,9 +410,30 @@ func _self_test_classification() -> bool:
 		push_error("self-test: a ROOT_FILE_POLICY entry naming an absent file must fail as stale")
 		return false
 
-	# A PERMITS root file may call an authority — GameState/GameData are the façade layer. This is
-	# asserted by construction: only FORBIDS root files are checked in _initialize.
 	if String(ROOT_FILE_POLICY.get("GameState.gd", "")) != PERMITS:
 		push_error("self-test: GameState.gd must be PERMITS — it is the order/lifecycle façade and calls authorities by design")
 		return false
+	return _self_test_policy_branches()
+
+
+## Every branch of the enforced per-file verdict, driven through the same helper `_initialize` uses.
+func _self_test_policy_branches() -> bool:
+	var some: Array[String] = ["ForceTransitions"]
+	var none: Array[String] = []
+	var cases := [
+		# [policy, hits, must_be_a_violation, why]
+		[PERMITS, some, false, "a PERMITS file calling an authority is fine — this is GameState/GameData and scripts/phases/"],
+		[PERMITS, none, false, "a PERMITS file calling nothing is fine — PERMITS never requires a call"],
+		[FORBIDS, some, true, "a FORBIDS file calling an authority is the core finding"],
+		[FORBIDS, none, false, "a FORBIDS file calling nothing is the normal case"],
+		[REQUIRES, none, true, "a REQUIRES file that has gone inert — the AntishipResolver failure mode"],
+		[REQUIRES, some, false, "a REQUIRES file still applying is the normal case"],
+	]
+	for case_value in cases:
+		var case: Array = case_value
+		var got := _policy_violation(String(case[0]), "res://scripts/x/Fixture.gd", "scripts/x/", case[1])
+		if (got != "") != bool(case[2]):
+			push_error("self-test: %s — expected violation=%s, got %s" % [
+				String(case[3]), case[2], JSON.stringify(got)])
+			return false
 	return true

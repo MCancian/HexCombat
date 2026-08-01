@@ -57,6 +57,14 @@ func _initialize() -> void:
 			continue
 		for script_path in _script_paths(text):
 			checked += 1
+			if not script_path.ends_with(".gd"):
+				# Existence alone is not enough: every moved script has a `.gd.uid` sidecar sitting
+				# right beside it, so a binding mistyped as `…/HexMap.gd.uid` names a file that DOES
+				# exist and cannot load as a Script. Checking the extension first turns that into a
+				# failure instead of a pass. (Review finding, 2026-07-31.)
+				_failures.append("%s binds a script at %s, which is not a .gd file — it cannot load as a GDScript, so the node would end up with a null script even though the path resolves." % [
+					scene_path, script_path])
+				continue
 			if not FileAccess.file_exists(script_path):
 				_failures.append("%s binds a script at %s, which does not exist — a file was moved without updating the scene. The engine will NOT fail to compile; the node just loads with a null script." % [
 					scene_path, script_path])
