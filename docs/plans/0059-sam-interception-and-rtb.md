@@ -224,7 +224,15 @@ draw aborts on SEAD return fire alone, or let an abort carry into the NEXT day s
 
 So the rule as stated lets **516 airframes** abort, including 60 Decoys and 48 HARM — both unmanned,
 and both arguably expendable systems for which "returns to base" is the wrong idea — while excluding
-all 68 ISR. Needs a USER ruling before implementation.
+all 68 ISR. **USER ruling 2026-08-01: all strike and SEAD roles, decoys and HARM included.** So the
+filter is `role in ["strike", "sead"]` and nothing consults `kind`; `kind` stays a reporting field.
+
+**Consequence (a) is now its own plan: [[0060-air-attrition-before-the-strike]]** (USER 2026-08-01,
+asking whether the sources could move before the firing). They can, but it is not a neutral reorder —
+it is a Red nerf on two compounding axes, and the free shot's post-strike position is definitional
+rather than incidental. **0059 does not wait for it.** If 0060 lands, aborts become meaningful in every
+source and call 4 collapses to "all three"; if it does not, 0059 draws aborts on **SEAD return fire
+alone**, the only source the strike budget can still see.
 
 ### The original four design calls (kept for context)
 
