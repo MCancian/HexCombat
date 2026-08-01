@@ -9,7 +9,7 @@ Defines the hex-grid coordinate system, geometric computations (distance, neighb
 | File | Responsibility |
 |---|---|
 | `scripts/HexMath.gd` | Axial coordinate math: directions, distance, BFS pathfinding |
-| `scripts/MapProjection.gd` | Lat/lon → pixel projection with aspect-correct uniform fit |
+| `scripts/ui/MapProjection.gd` | Lat/lon → pixel projection with aspect-correct uniform fit |
 | `scripts/model/Hex.gd` | `Hex` Resource — id, axial coord, center lat/lon, vertex array |
 | `scripts/HexOwner.gd` | Ownership string constants: `RED`, `GREEN`, `CONTESTED`, `NONE` |
 | `scripts/GameData.gd` | Loads JSON into `Hex` objects, builds neighbor index, exposes `get_distance`/`find_path`/`find_reachable` wrappers, and the `map` authority façades (`recompute_hex_ownership`, `apply_feba_delta`, `clear_feba`) |

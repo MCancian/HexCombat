@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://scripts/SymbolPreview.gd" id="1_symbol_preview"]
+[ext_resource type="Script" path="res://scripts/ui/SymbolPreview.gd" id="1_symbol_preview"]
 
 [node name="SymbolPreview" type="Control"]
 layout_mode = 3

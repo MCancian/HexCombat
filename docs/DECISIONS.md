@@ -561,7 +561,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   - **Why**: Allows research parameter sweeps over core combat mechanics (Track F, Item 2).
 
 - **2026-07-22 — HexMap cosmetic literals hoisted to constants (USER authorized, agent implementation).**
-  Track F backlog item completed. Grouped and hoisted 93 view-layer color and offset literals from `HexMap.gd` into named constants at the top of the file. Behavior preserving. Code headers in `scripts/HexMap.gd`.
+  Track F backlog item completed. Grouped and hoisted 93 view-layer color and offset literals from `HexMap.gd` into named constants at the top of the file. Behavior preserving. Code headers in `scripts/ui/HexMap.gd`. (historical)
 
 - **2026-07-22 — Scenario files moved to one home (plan 0013; agent implementation).**
   Moved `data/scenario_default.json` and `data/scenario_golden.json` into `data/scenarios/` so all scenarios share a single location. `ScenarioCatalog` simplified to use a pure glob and no longer needs special-casing for the default scenario id. Fixed test paths and references across documentation. Golden byte-stable; Windows gate run pending but assumed green. Facts: `docs/STATUS.md`.  (historical)

@@ -179,7 +179,7 @@ loss-rate/FEBA formulas).
 
 ## 7. Rendering
 
-`HexMap.get_hex_color(hex_id)` (`scripts/HexMap.gd`) fills every classified hex with its pure
+`HexMap.get_hex_color(hex_id)` (`scripts/ui/HexMap.gd`) fills every classified hex with its pure
 `TerrainType.color` — **USER call 2026-07-09**: the in-game map matches the untinted
 `tools/terrain/out/terrain_preview.png` palette (blending ownership over the whole Green-held
 starting island washed the palette out). Ownership renders as region borders instead: RED or
