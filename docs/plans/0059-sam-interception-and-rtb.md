@@ -61,10 +61,31 @@ an abort rate blind. Surfacing it should report at least `initial`, `alive` and 
 squadron, and should preserve the manned/unmanned split so "aircraft" and "UAVs" can be read
 separately rather than summed.
 
-**One open call for the USER:** which surface carries it — the LLM observation (so a seat can plan
-around its own attrition), the turn record (so research runs can chart the curve), or a report
-exporter (so it lands in a deck). These are not exclusive; each grows a serialized contract, which is
-why the plan does not pick one.
+**SURFACE DECIDED (USER 2026-08-01): the turn record.** So research runs can chart the force curve
+across a campaign. Traced to its concrete insertion point, with three consequences worth knowing
+before implementation:
+
+1. **The turn record IS `turn_result`.** `SelfPlayRunner` builds `turn_digests` by appending
+   `result["turn_result"]` per turn, and that is the dict `LLMGameAPI` assembles — the same one
+   captured in `docs/examples/llm_result_after_turn.json`. So the insertion point is the IJFS block of
+   that dict, built by `LLMGameAPI._ijfs_observation`.
+2. **It reaches the seat's post-turn feedback for free, but NOT its planning observation.**
+   `_ijfs_observation` feeds both the result and the observation payloads, so the OOB will appear in
+   what a seat is told after a turn resolves. The planning-time observation is a separate document; if
+   the USER later wants a seat to plan around its own remaining airframes, that is a further decision,
+   not something this step silently grants.
+3. **`FiresPhases` must start retaining the ledger, which is a state decision, not a formatting one.**
+   `resolve_ijfs_turn` currently keeps only `ledgers["summary"]` on `state.last_ijfs_summary` and drops
+   the rest; `_ijfs_observation` can only read what is on the state. So step 1 needs a new
+   `GameStateData` field holding the air OOB — which makes it a **mutation-manifest decision** with a
+   real-claims pin entry, exactly like `IjfsSquadron.losses_campaign` was. Budget for that; it is the
+   step's only non-trivial part.
+
+**Correction to this plan's earlier claim that step 1 needs no re-baseline:** no GOLDEN re-baseline —
+nothing consumes RNG or changes behaviour — but `turn_result` grows, so
+`docs/examples/llm_result_after_turn.json` WILL move and the gate's fixture-drift phase will fire.
+That is intended contract growth: regenerate via `tools/LLMFixtures.gd` and commit the result, having
+diffed it to confirm only the new keys moved.
 
 ## The design calls — USER, before implementation
 
@@ -89,9 +110,10 @@ These are game questions, not technical ones, and the plan cannot be specified w
 
 ## Scope
 
-- **Step 1 — surface the air order of battle** (see the section above): the standing inventory becomes
-  readable, manned and unmanned separable, on a surface the USER picks. Additive; no mechanic change;
-  this can land on its own and be useful before any of the RTB work starts.
+- **Step 1 — surface the air order of battle in the turn record** (see the section above): the
+  standing inventory becomes readable, manned and unmanned separable. Additive; no mechanic change;
+  lands on its own and is useful before any RTB work starts. Carries a `GameStateData` field, a
+  manifest entry + real-claims pin, and an additive fixture regen.
 - A per-day availability concept distinct from `alive`. `IjfsSquadron` currently has exactly six
   fields — `squadron_id`, `aircraft_class`, `role`, `initial`, `alive`, `rtb_today`, `losses_today`
   (seven) — and `alive` is the only strength number. RTB needs "alive but not flying today", which does not
