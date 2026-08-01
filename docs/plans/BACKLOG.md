@@ -144,10 +144,13 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   `tools/validate_headless_ijfs.gd`. So `air_oob_after` — the per-squadron order of battle, now
   carrying both a per-day and a campaign loss count — cannot actually be READ after a turn by a player,
   an LLM seat, or a research record. `grep air_oob_after docs/examples/*.json` is empty, which is why
-  the split needed no fixture re-baseline at all. **This is a design question before it is a task:** if
-  the point of an OOB ledger is that someone reads it, it needs a home — the turn record, the LLM
-  observation, or a report exporter. Surfacing it is additive but grows a serialized contract, so it is
-  a USER call on which surface, not a free hygiene fix.
+  the split needed no fixture re-baseline at all. Note the AGGREGATE is fine —
+  `red_air_losses` (this turn's total from all three sources) does reach the LLM payload and
+  `GameNarrative`; it is the per-squadron breakdown that is lost.
+  **Absorbed into [[0059-sam-interception-and-rtb]] as its step 1 (USER 2026-08-01)**, because the
+  USER wants to watch Red's fixed air inventory tick down and because RTB adds a third number to this
+  same ledger — a mechanic whose effect cannot be observed cannot be dialled. Which surface carries it
+  (LLM observation / turn record / report exporter) is an open USER call in that plan.
 - [ ] **`rtb_today` is a mechanic that was never built — opened as plan
   [[0059-sam-interception-and-rtb]] (USER call 2026-08-01).** The field has no runtime writer at all
   and is reported as a constant 0 every turn. The USER's call was not to delete it: aircraft should be

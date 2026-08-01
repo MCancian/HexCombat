@@ -1,5 +1,5 @@
 ---
-title: "0059: SAM interception has one outcome — make aircraft able to abort and return to base"
+title: "0059: Make Red's air inventory readable, then let SAM interception drive aircraft off rather than only kill them"
 status: "Sketch"
 created: "2026-08-01"
 ---
@@ -33,6 +33,39 @@ third outcome on the aircraft side, and it is the mirror of suppression: the air
 it stops contributing today. That symmetry is the reason this is a coherent mechanic rather than a
 bolt-on, and it is the shape the plan should follow.
 
+## The fixed air inventory already exists — what is missing is reading it (USER 2026-08-01)
+
+The USER asked for "a fixed inventory of aircraft and UAVs that ticks down over time as they suffer
+attrition". **Measured 2026-08-01: that mechanic is already built and has been all along.**
+
+- `data/ijfs/red_air_oob.json` declares a fixed establishment — **584 airframes** across 11 classes:
+  408 manned (5th/4.5th/4th Gen, J-16D, JH-7, H-6) and 176 unmanned (Stealth ISR, MALE Armed, HALE
+  Armed, HARM, Decoys). `air_classes.json` already carries the `kind: manned | unmanned` split, so
+  aircraft and UAVs are distinguishable today without new data.
+- `IjfsSquadron.alive` starts at `initial` and only ever decreases — `IjfsTransitions.apply_squadron_losses`
+  is the sole writer and there is no replenishment path anywhere.
+- **It ticks down for the whole campaign, not per turn.** `FiresPhases.resolve_ijfs_turn` rebuilds the
+  IJFS state only when the handle is null, and the only caller of `reset_ijfs_state` is
+  `GameState.reset_to_scenario` — a new game. Losses therefore persist across every turn boundary.
+
+So this plan must NOT build an inventory. What it must add is the **surface**: today the standing
+inventory cannot be read. `red_air_losses` (this turn's total, all sources) does reach the LLM payload
+and the narrative, but the per-squadron order of battle — how many of the 584 remain, by class —
+lives in `air_oob_after`, which `FiresPhases` drops on the floor: it keeps `ledgers["summary"]` and
+nothing consumes the rest except `tools/validate_headless_ijfs.gd`. `grep air_oob_after
+docs/examples/*.json` is empty.
+
+**This is step 1 of the plan, and it comes before the mechanic.** RTB adds a third number to that
+ledger, and a mechanic whose effect cannot be observed cannot be dialled — the USER would be tuning
+an abort rate blind. Surfacing it should report at least `initial`, `alive` and both loss counters per
+squadron, and should preserve the manned/unmanned split so "aircraft" and "UAVs" can be read
+separately rather than summed.
+
+**One open call for the USER:** which surface carries it — the LLM observation (so a seat can plan
+around its own attrition), the turn record (so research runs can chart the curve), or a report
+exporter (so it lands in a deck). These are not exclusive; each grows a serialized contract, which is
+why the plan does not pick one.
+
 ## The design calls — USER, before implementation
 
 These are game questions, not technical ones, and the plan cannot be specified without them.
@@ -56,6 +89,9 @@ These are game questions, not technical ones, and the plan cannot be specified w
 
 ## Scope
 
+- **Step 1 — surface the air order of battle** (see the section above): the standing inventory becomes
+  readable, manned and unmanned separable, on a surface the USER picks. Additive; no mechanic change;
+  this can land on its own and be useful before any of the RTB work starts.
 - A per-day availability concept distinct from `alive`. `IjfsSquadron` currently has exactly six
   fields — `squadron_id`, `aircraft_class`, `role`, `initial`, `alive`, `rtb_today`, `losses_today`
   (seven) — and `alive` is the only strength number. RTB needs "alive but not flying today", which does not
