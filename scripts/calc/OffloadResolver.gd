@@ -5,6 +5,16 @@ extends RefCounted
 ## exact troop/cargo landing plans without changing reserve or cohort membership. Consumes NO dice.
 ## ReinforcementPhases passes the typed request to ForceTransitions, then owns infrastructure,
 ## ownership, pending_lost_at_sea, fleet projection, and the EventBus emit.
+##
+## CAVEAT, and it is the reason this file is named in plan 0058. "Without changing reserve or cohort
+## MEMBERSHIP" is accurate and is not the whole story: this file appends the caller's live
+## `ship_reserve` entries into `troop_reserve` (:63) and hands them to `OffloadCalculator` (:68),
+## which writes `offload_progress_tons` into their BN dicts. So campaign state IS changed on this
+## call path, transitively, through a helper. That makes this file a live instance of the blind spot
+## `tools/validate_authority_call_placement.gd` documents — it sees direct authority calls, so this
+## reads as clean and `scripts/calc/`'s claim is not actually true here today. Plan 0058 hoists the
+## write into `ForceTransitions.apply_offload`; do not treat a green placement run as proof that this
+## path applies nothing.
 
 
 static func empty_manifest() -> Dictionary:

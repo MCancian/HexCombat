@@ -9,6 +9,21 @@ extends RefCounted
 #   tests/python/unit/test_offload_brigade_priority.py
 #
 # Pure RefCounted lib — no Node dependency, headless-testable.
+#
+# "Pure" above means NO NODE DEPENDENCY. It does NOT mean this file applies no campaign state, and
+# in this repo's role vocabulary that is the reading you would expect — so, explicitly:
+#
+#   THIS FILE APPLIES CAMPAIGN STATE, which is why it is still at scripts/ root and not in
+#   scripts/calc/. `_resolve_day_n` writes `offload_progress_tons` into the BN dictionaries it is
+#   handed (:259 banks, :244 erases on landing, :241 reads it back a turn later). Those dicts are
+#   `state.ship_reserve`, aliased the whole way down with no duplicate(): ReinforcementPhases ->
+#   OffloadResolver.resolve -> resolve_offload_day. The field is cross-turn persistent BY DESIGN —
+#   it is the plan 0006 C8 fractional-flow carry-over — so the fix is to hoist the write, not delete
+#   it. tools/validate_authority_call_placement.gd cannot see this: it detects direct authority
+#   calls and this is a bare dictionary write.
+#
+# Plan 0058 hoists the write into ForceTransitions.apply_offload, after which this file becomes
+# genuinely non-applying and moves to scripts/calc/. Until then, do not "tidy" it into calc/.
 
 # BN types whose landing counts as "maneuver" — bypass beach throughput on Day 1.
 # Source: TaiwanInvasionViewer src/services/offload/beach_throughput_factory.py maneuver_bn_types.
