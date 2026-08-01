@@ -10,6 +10,34 @@ created: "2026-08-01"
 > yet specified. It needs the same design session as [[0060-air-attrition-before-the-strike]], and the
 > reading below needs the USER's confirmation before anyone builds anything.**
 
+## USER RULING — design session 2026-08-01: this plan splits in two
+
+**Ruled.** The DAG is **an on-demand artifact builder, not a runtime graph**. Same shape as
+`hexcombat-structure-map`: a skill the USER runs on command, which regenerates the resolution-graph
+page from the tree. It is **allowed to go stale** between runs — nothing forces a rebuild, and no gate
+fails because it is out of date. `agy` should be able to build it; the 18-edge read/write inventory
+below is exactly the input, and `agy-explore` produced it once already.
+
+That answers open question 2 ("declared and validated, or executed?") with a third option the plan did
+not offer: **generated and read**. It also makes open question 1 (scope) far less load-bearing — an
+artifact can cover one calculator or all 29 in `scripts/calc/` without committing the codebase to
+anything.
+
+**The split, and the honest consequence.** Two separable things were bundled here:
+
+1. **The artifact** — ruled above. Cheap, needs no golden re-baseline, directly addresses the USER's
+   stated problem ("I can't visualize it"). Sequence this first regardless of what 0060 decides.
+2. **The substream-per-node code change** — `Dice.derive(label)` per step, so reordering stops
+   perturbing every later draw. **The artifact delivers none of this.** It must be re-argued on its own
+   merits, later, as its own plan.
+
+**Why (2) can no longer lean on 0060.** This plan's payoff argument was "ordering questions become
+cheap, and 0060 is only the first". The 2026-08-01 measurements undercut that: the ordering change
+actually on the table is worth 15.6 airframes of 584, confined to turns 2-6, in a model where Taiwan's
+SAM network is annihilated on turn 2 and MANPADS runs dry on turn 7. There is no queue of expensive
+ordering questions for the substream work to make cheap. It may still be worth doing — but on
+determinism and legibility grounds, priced honestly, not on a payoff that was measured away.
+
 ## What the USER asked for
 
 > "We'll need to make a dag for this calculator and fold it into a larger campaign to make days for all
