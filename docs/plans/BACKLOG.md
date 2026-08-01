@@ -12,6 +12,21 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
 
 *(Agents: append new technical debt and hygiene observations here)*
 
+- [ ] **Mutation-authority protection reaches only TYPED receivers, so state passed through an untyped
+  `Dictionary`/`Array` is unprotected and the gate cannot say so (standing limit, restated 2026-07-31;
+  NOT a defect to fix, a rule to follow).** The enforcement gate judges a write by resolving the
+  receiver's type; a value reached through an untyped container has no type to resolve, so the write is
+  neither permitted nor refused — it is invisible. The manifest's `_schema_rules` documents this as the
+  "aliased-container blind spot", and it is not theoretical: `SealiftResolver`'s last illegal write was a
+  `ship_category` stamp put into force-owned reserve rows through exactly such an alias, found by hand in
+  plan 0045, not by the gate. **Deliberately not opened as a plan.** The fix is "make shared state a typed
+  `Resource` before registering its fields", which is what plans 0042–0050 already did aggregate by
+  aggregate — there is no bounded remaining unit of work, only a standing rule for new code. What would
+  make this actionable is a *measurement* nobody has: how much live campaign state still travels through
+  untyped containers. If someone produces that number and it is large, this becomes a plan; until then,
+  opening one would be scheduling an unbounded refactor. Adjacent, already logged separately:
+  `E_STALE_ALLOWANCE` is the one manifest check with no proof surface.
+
 - [ ] **`docs/plans/` is excluded from the doc-anchor gate, so an ACTIVE plan's code references rot
   silently (found 2026-07-31 while widening the gate; accepted trade-off, not an oversight).** Plans are
   excluded because a proposal legitimately names classes it intends to CREATE — failing a plan for
