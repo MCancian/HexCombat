@@ -300,3 +300,81 @@ byte-stable. Guard: `validate_deep_pool_smoke` now runs 12 turns and asserts lan
 past turn 10 (pre-fix: 0). Lesson: **any per-item cost drawn from a per-turn budget needs a
 carry-over or a proof that max(cost) ≤ min(budget)** — and end-to-end research runs longer than
 the smoke horizon are part of a feature's verification, not an optional extra.
+
+### The `tools/` compile-closure family (collected, 2026-07-26 → 2026-08-01)
+
+**Symptom, every time:** the gate fails naming a file you did not touch — `scripts/ui/HexMap.gd names
+'GameData'` — or hangs with no diagnostic. **Root cause:** a `-s` tool script is loaded BEFORE the
+autoloads exist, so every class it NAMES as a bare identifier, or `preload()`s by path, compiles at
+that moment along with everything those name, transitively. `validate_tool_script_purity.gd` guards
+this and derives the closure from `tools/*.gd`, so **anything you drop in `tools/` joins the seed.**
+
+Four distinct ways it has fired:
+
+- **Naming a production class in a tool** (plan 0040). Reach production source by `res://` path
+  STRING + `FileAccess.get_file_as_string`, never by identifier or `preload`.
+- **A self-test fixture's escaped quotes** (plan 0057). The purity scanner blanks strings with
+  `"[^"\n]*"`, which is NOT escape-aware; a fixture containing `\"` ended the match early and leaked a
+  class name as a bare identifier. Write fixtures with SINGLE-quoted literals and name classes that do
+  not exist.
+- **Throwaway probes** (plan 0060, and five more in the 2026-08-01 design session). Scratch scripts
+  belong in `scratch/`, which is gitignored and outside the seed — a deliberately broken `.gd` there
+  was verified to leave the purity gate at PASS. Never write scratch to `tools/`.
+- **Option (b) of plan 0040** is permanently blocked by this rule. Do not re-propose it.
+
+### Mutation-gate bypasses found by probing, not by reading (plans 0042 / 0046)
+
+**Symptom:** the gate is green and a write is unprotected anyway. The gate resolves the receiver's
+TYPE (a field-NAME scan is not viable — `destroyed` is declared on four different classes). Four ways
+that resolution has silently failed:
+
+- A `Variant` / `Object` / `Resource` annotation resolved to "typed, not protected" and silenced the
+  gate entirely. **Any type not in the corpus must be treated as UNRESOLVED, not as safe.**
+- A typed-array PARAMETER (`rows: Array[AntishipSystem]`) lost its element type.
+- An INDEXED receiver (`rows[i].quantity = 0`) matched nothing — the chain pattern accepted only dot
+  segments. Idiomatic GDScript, and the only truly silent miss.
+- An untyped alias handed to a callee (`entry["bns"]`, `cohort["hulls_by_type"][t]`) names no type at
+  all. Found twice by independent source sweeps, never by the manifest.
+
+**Also:** the gate protects field NAMES globally, so registering a generic one poisons the repo —
+`IjfsMunition.name` turned 22 innocent `HexMap`/`SymbolPreview` lines red because `name` is a Godot
+Node property. Rename the field, keep the JSON key, and check each name rather than reasoning by feel.
+
+**Method that works:** write a throwaway probe with ~15 candidate bypass forms, run the validator,
+read which lines it names, delete it. Faster and more honest than argument. **Known-good rejection:**
+GDScript does not allow multiline dot-chaining, so `obj` newline `.field = 0` is a parse error — a
+reviewer claimed it as a blind spot and it was verified false by running it.
+
+### Dependency ceilings are a design force, not a budget to raise (plans 0047 / 0048 / 0050 / 0055)
+
+**Symptom:** a correct-looking hoist turns the gate red mid-plan. `TurnConductor` (18),
+`ReinforcementPhases` (22) and `GameState` (29) have repeatedly sat at their ceilings EXACTLY.
+
+Every time the ceiling refused a design, the second design was better:
+
+- 0055: making `CleanupResolver` pure pushed `TurnClosure` 7 → 11. Hosting the latch INSIDE the
+  authority (`ForceTransitions.latch_prior_activity`) kept two types off the coordinator's budget → 9.
+- 0050: the crossing ledger was assigned to `AntishipTransitions` because that phase produces it.
+  Review refuted it mechanically — the consumer was at its ceiling and did not depend on it, and
+  `SealiftTransitions` was the truer owner anyway.
+- 0047 held `ReinforcementPhases` at 22 by having one type leave as another arrived.
+
+**Rules:** measure `ndeps` while designing the call shape, not after. Bump a ceiling to the number
+that buys the property, never to the number the first attempt produced. `PARAM_CEILINGS` is keyed by
+`path::function`, so moving a file makes its entry stale and fails the gate.
+
+### "Private" is not a boundary in GDScript, and a test written to pass will hide it (plan 0049)
+
+**Symptom:** an authority claims an illegal state is *inexpressible*; a structural test agrees; the
+hole is real. The lifecycle authority factored its three phase edges through a private
+`_advance(state, from, to, label)` — callable from any file, with the gate seeing an authorized write
+because the assignment lived inside the authority. **The structural test filtered out `_`-prefixed
+methods, i.e. exactly where the hole was.**
+
+**Fix pattern:** each edge writes its destination as a LITERAL at one site, any shared helper is
+READ-ONLY, and the test pins the COMPLETE method list rather than a filtered subset. Generalized into
+the mutation-authority procedure doc §6.
+
+**Companion trap:** an authority handed a mutable object must copy it in and out. The supply authority
+stamped and appended the caller's own `Dictionary`, so "a row that disagrees with the balance is
+unexpressible" was false of a row someone else still referenced.
