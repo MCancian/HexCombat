@@ -281,3 +281,45 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
   (`ForceTransitions.gd:78` roster loss via `_apply_roster_loss`, which does
   `composition.remove_at(index)` at `:605`; `:80-84` destroyed flag plus de-index). Kept as a
   crossed-out line rather than deleted because the item's own text was the evidence 0044 acted on.
+
+- [ ] **`OffloadCalculator` applies campaign state through a handed dict, so it cannot go to
+  `scripts/calc/` — deferred out of plan 0057 as plan 0058 (found 2026-07-31 preflighting 0057;
+  PRE-EXISTING, not a regression).** `scripts/OffloadCalculator.gd:259` banks leftover tonnage into
+  `bn["offload_progress_tons"]`, `:244` erases it on landing, `:241` reads it back a turn later. The
+  dicts are live campaign state the whole way down with no `duplicate()`:
+  `ReinforcementPhases.gd:165` passes `state.ship_reserve` → `OffloadResolver.gd:63` appends the same
+  entries into `troop_reserve` → `:68` hands them to `resolve_offload_day`. The field is cross-turn
+  persistent **by design** — it is the plan 0006 C8 fractional-flow carry-over, not an accident — so
+  the fix is to hoist the write, not to delete it. This fails the `calc/` test on its "**or through
+  arrays/dicts it was handed**" clause, and `tools/validate_authority_call_placement.gd` **cannot see
+  it**: that validator detects direct authority calls, and this is a bare dictionary write. Note
+  `OffloadResolver` already sits in `calc/` and applies transitively through this helper.
+  **This is the bounded instance of the aliased-container blind spot logged above** — and a data point
+  toward the measurement that item says would make the general case actionable. Unlike the general
+  case it IS bounded: one field, one writer, one owning aggregate (`ship_reserve`, owned by
+  `ForceTransitions`). Shape of the fix: `OffloadCalculator` returns banked-progress deltas in its
+  manifest and `ForceTransitions.apply_offload` — which already receives both the reserve and the
+  force request at `ReinforcementPhases.gd:169` — performs the write.
+  **The deferrability question is half answered, and the answer is the awkward one.** `ordered_ids` CAN
+  repeat a brigade id: `OffloadCalculator.gd:104-107` appends every id in `priority_order` that is in
+  `brigade_map` with **no dedup check**, and only the second loop (`:108-111`) tests
+  `bid not in ordered_ids`. Upstream, `OffloadResolver.priority_order` (`:22-27`) emits one id per
+  reserve ENTRY, not per brigade. So if two `ship_reserve` entries ever carry the same `brigade_id`,
+  that brigade is processed twice in one `_resolve_day_n`, its BNs' banked value is read back within
+  the call, and the write is **not** freely deferrable — which would make this an `interleaved/`
+  candidate rather than a hoist. (Independently reached by the Sol plan-review role, 2026-07-31.)
+  Note `brigade_map[bid] = brigade` at `:100` also keeps only the LAST entry per id, so a duplicate
+  would additionally drop a reserve entry's own BN list — **if duplicates are reachable, that is a
+  latent double-processing bug independent of any file move, and 0058 should open there.**
+  **Measured, and it resolves the other way — the hoist IS the right shape.** `ship_reserve` holds at
+  most one entry per `brigade_id` by construction: `ForceTransitions._merge_reserve_entry` (`:857-862`)
+  searches for an existing entry with the same `brigade_id` and **merges the BNs into it**, appending a
+  new entry only when none matches. So the duplicate path above is unreachable on the embark route, no
+  banked value is read back within a `_resolve_day_n` call, the write is freely deferrable, and 0058
+  should hoist into `ForceTransitions.apply_offload` rather than re-home the file to `interleaved/`.
+  Two residual notes for whoever opens it: the dedup is an invariant of the *authority*, not of
+  `OffloadCalculator`, which still has the un-deduped loop and would double-process if ever handed one
+  — worth an assert rather than a rewrite; and `ShipReserveBuilder.gd:33` appends one entry per
+  scenario row without a dedup check, so malformed scenario content is the one way in.
+  Golden exposure is still real (offload sequencing), so this needs its own gate run and must not ride
+  on a path move.
