@@ -1,18 +1,35 @@
 #!/usr/bin/env -S godot --headless -s
-# Validates WHERE a direct mutation-authority call may appear (plan 0055).
+# Validates WHERE a direct mutation-authority call may appear (plan 0055; deny-by-default 0057).
 #
 # WHAT THIS OWNS — one half of the placement rule in docs/STATUS.md -> "Where a file goes":
 #
-#   1. A directory whose claim FORBIDS applying campaign state must make ZERO direct authority
-#      calls. (`scripts/calc/`, `builders/`, `loaders/`, `model/`, `transitions/`.)
-#   2. Every file in `scripts/interleaved/` must make AT LEAST ONE. That directory's whole claim is
-#      "computes AND applies at its own draw point"; a file that stops applying no longer belongs
-#      there and must be re-homed to `calc/`.
+#   1. Every directory under `scripts/` that contains GDScript must be CLASSIFIED here, and an
+#      unclassified one FAILS. This is the deny-by-default half, added by plan 0057.
+#   2. A directory classified FORBIDS must make ZERO direct authority calls.
+#   3. Every file in the REQUIRES directory (`scripts/interleaved/`) must make AT LEAST ONE.
+#   4. `scripts/` root is governed by an exact FILE allowlist, not a directory row. A root file that
+#      is not named here FAILS.
 #
-# Rule 2 is not symmetry for its own sake. The failure mode this validator exists for is
-# `AntishipResolver`, which became misplaced with NOBODY EDITING IT — plan 0044 deleted the seam
-# elsewhere, and its directory's claim quietly stopped being true. A one-directional check ("the
-# forbidden directories are clean") lets that exact case walk straight through.
+# WHY DENY-BY-DEFAULT (plan 0057). Before it, this validator held an allow/deny LIST and anything
+# unlisted was simply never scanned — including `scripts/` root, where 40 files sat making no claim
+# at all. That is the same defect the role table exists to prevent: a directory that asserts nothing
+# is a directory nothing can be wrong in. Adding rows for the new families and leaving the default
+# open would have recreated it on the next family. So: classify or fail.
+#
+# WHY ROOT IS A FILE ALLOWLIST AND NOT A ROW. Of the four files left at root, `GameState.gd` and
+# `GameData.gd` legitimately call authorities as the façade layer; `EventBus.gd` and
+# `OffloadCalculator.gd` must not. A row saying "root may call authorities" would license any future
+# root file to do so, which is exactly how the unpoliced root came about.
+#
+# SCOPED TO GDSCRIPT, DELIBERATELY (review finding, 2026-07-31). Rule 1 applies only to directories
+# that actually contain a `.gd` file, directly or nested. A `scripts/shaders/` or a scratch directory
+# holding no GDScript is not this validator's business, and failing for it would make the gate an
+# obstacle for a reason this file has no opinion about. Nested directories inherit the nearest
+# classified ancestor, so `scripts/model/ijfs/` needs no entry of its own.
+#
+# Rule 3 is not symmetry for its own sake. The failure mode it exists for is `AntishipResolver`,
+# which became misplaced with NOBODY EDITING IT — plan 0044 deleted the seam elsewhere, and its
+# directory's claim quietly stopped being true. A one-directional check lets that case walk through.
 #
 # WHAT THIS DOES NOT OWN — read this before trusting a green run:
 #
@@ -20,17 +37,20 @@
 #     authority; a file can therefore apply campaign state TRANSITIVELY and read as pure here.
 #     Closing that needs call-graph analysis over a dynamically-typed language and is deliberately
 #     not attempted. This is the single biggest blind spot and it is not small.
+#   * It cannot see an application made by writing into a Dictionary or Array the file was HANDED.
+#     That is not hypothetical: `scripts/OffloadCalculator.gd` writes `offload_progress_tons` into BN
+#     dicts owned by `state.ship_reserve` and reads as clean here. It is why that file is FORBIDS at
+#     root rather than living in `scripts/calc/`, and why plan 0058 exists. A green run does NOT mean
+#     the FORBIDS directories apply nothing — only that they call no authority to do it.
 #   * It cannot answer "does this apply at its own DRAW POINT?" — the actual test for
-#     `scripts/interleaved/` membership. That needs knowing whether deferral changes the dice, which
-#     is a human judgement. A file with one authority call passes rule 2 whether or not it belongs.
-#   * It does not check `scripts/phases/`, which may call authorities freely (ordering them is the
-#     job) and is not required to.
+#     `scripts/interleaved/` membership. A file with one authority call passes rule 3 either way.
 #   * It says nothing about whether a pure file is in the RIGHT non-applying directory.
 #
-# So: green here means "no forbidden directory makes a direct authority call, and no interleaved
-# file has gone inert". It does not mean placement is correct. The name is deliberately
-# `validate_authority_call_placement`, not `validate_role_directories`, because a broader name is
-# what would make the next agent trust it past that line.
+# So: green here means "every GDScript directory is classified, no FORBIDS directory and no FORBIDS
+# root file makes a direct authority call, and no interleaved file has gone inert". It does not mean
+# placement is correct. The name is deliberately `validate_authority_call_placement`, not
+# `validate_role_directories`, because a broader name is what would make the next agent trust it
+# past that line.
 #
 # The authority list is derived from `tools/mutation_authority_manifest.json` (`authority_path` per
 # aggregate), never from a hard-coded `[A-Za-z]+Transitions` regex — the manifest is the single home
@@ -41,26 +61,46 @@
 #
 # It carries its own comment/string stripper, which makes a fifth copy in the repo. That is
 # deliberate and already adjudicated: docs/plans/BACKLOG.md records the 2026-07-26 decision NOT to
-# unify the existing strippers, to be revisited only on new evidence. Adding a fifth follows that
-# decision rather than violating it.
+# unify the existing strippers, to be revisited only on new evidence.
 #
 # Prints PASS:/FAIL: for the gate's verdict.
 extends SceneTree
 
 const MANIFEST := "res://tools/mutation_authority_manifest.json"
+const SCRIPTS_ROOT := "res://scripts"
 
-## Directories whose claim forbids changing campaign state by ANY route. A direct authority call
-## here is a finding.
-const FORBIDDEN_DIRS := [
-	"res://scripts/calc",
-	"res://scripts/builders",
-	"res://scripts/loaders",
-	"res://scripts/model",
-	"res://scripts/transitions",
-]
+## A directory that changes NO campaign state by any route — a direct authority call here is a finding.
+const FORBIDS := "FORBIDS"
+## The directory whose claim REQUIRES applying: computes AND applies at its own draw point.
+const REQUIRES := "REQUIRES"
+## Ordering authority calls is this directory's job, so it may make as many as it likes.
+const PERMITS := "PERMITS"
 
-## The directory whose claim REQUIRES applying. Every file here must make at least one call.
-const REQUIRED_DIR := "res://scripts/interleaved"
+## Every directory under `scripts/` that holds GDScript. Unlisted => FAIL (deny-by-default).
+const DIR_POLICY := {
+	"calc": FORBIDS,
+	"builders": FORBIDS,
+	"loaders": FORBIDS,
+	"model": FORBIDS,
+	"transitions": FORBIDS,
+	"ui": FORBIDS,
+	"policies": FORBIDS,
+	"api": FORBIDS,
+	"support": FORBIDS,
+	"interleaved": REQUIRES,
+	"phases": PERMITS,
+}
+
+## The exact files permitted at `scripts/` root, and whether each may call an authority.
+## Anything else at root => FAIL.
+const ROOT_FILE_POLICY := {
+	"GameState.gd": PERMITS,
+	"GameData.gd": PERMITS,
+	"EventBus.gd": FORBIDS,
+	# Applies campaign state, but by writing a handed dict — invisible to this validator. Kept at
+	# root and FORBIDS so it cannot additionally acquire an authority call. Leaves under plan 0058.
+	"OffloadCalculator.gd": FORBIDS,
+}
 
 var _failures: Array[String] = []
 
@@ -77,30 +117,103 @@ func _initialize() -> void:
 		quit(1)
 		return
 
-	for dir_path in FORBIDDEN_DIRS:
+	var dirs_with_gd := _top_level_dirs_with_gd()
+	var root_files := _root_gd_files()
+	_failures.append_array(_classification_failures(dirs_with_gd, root_files))
+
+	var checked_dirs := 0
+	for dir_name in dirs_with_gd:
+		if not DIR_POLICY.has(dir_name):
+			continue
+		checked_dirs += 1
+		var policy := String(DIR_POLICY[dir_name])
+		var dir_path := "%s/%s" % [SCRIPTS_ROOT, dir_name]
 		for file_path in _gd_files(dir_path):
 			var hits := _authority_calls(_strip(_read(file_path)), authorities)
-			if not hits.is_empty():
-				_failures.append("%s calls %s — this directory applies NO campaign state (docs/STATUS.md -> 'Where a file goes'). Move the file to %s, or hoist the application into its caller." % [
-					file_path, ", ".join(hits), REQUIRED_DIR.trim_prefix("res://")])
+			if policy == FORBIDS and not hits.is_empty():
+				_failures.append("%s calls %s — scripts/%s/ applies NO campaign state (docs/STATUS.md -> 'Where a file goes'). Move the file to scripts/interleaved/, or hoist the application into its caller." % [
+					file_path, ", ".join(hits), dir_name])
+			elif policy == REQUIRES and hits.is_empty():
+				_failures.append("%s makes NO direct authority call — scripts/%s/ means 'computes AND applies at its own draw point'. If it stopped applying, move it to scripts/calc/; if it now applies through a helper, this validator cannot see that and the file needs a header note saying so." % [
+					file_path, dir_name])
 
-	var interleaved := _gd_files(REQUIRED_DIR)
-	if interleaved.is_empty():
-		_failures.append("%s holds no .gd files — either the directory was emptied without updating this validator, or the path is wrong" % REQUIRED_DIR)
-	for file_path in interleaved:
-		if _authority_calls(_strip(_read(file_path)), authorities).is_empty():
-			_failures.append("%s makes NO direct authority call — %s means 'computes AND applies at its own draw point'. If it stopped applying, move it to scripts/calc/; if it now applies through a helper, this validator cannot see that and the file needs a header note saying so." % [
-				file_path, REQUIRED_DIR.trim_prefix("res://")])
+	for file_name in root_files:
+		if not ROOT_FILE_POLICY.has(file_name):
+			continue
+		if String(ROOT_FILE_POLICY[file_name]) != FORBIDS:
+			continue
+		var root_path := "%s/%s" % [SCRIPTS_ROOT, file_name]
+		var root_hits := _authority_calls(_strip(_read(root_path)), authorities)
+		if not root_hits.is_empty():
+			_failures.append("%s calls %s — this root file is allowlisted as FORBIDS. Only the façade autoloads (GameState, GameData) may call authorities from root." % [
+				root_path, ", ".join(root_hits)])
 
 	if _failures.is_empty():
-		print("PASS: authority-call placement — %d authorities, %d forbidden directories clean, %d interleaved file(s) all still applying" % [
-			authorities.size(), FORBIDDEN_DIRS.size(), interleaved.size()])
+		print("PASS: authority-call placement — %d authorities; %d GDScript directory(ies) all classified and clean; %d root file(s) allowlisted" % [
+			authorities.size(), checked_dirs, root_files.size()])
 		quit(0)
 		return
 	for failure in _failures:
 		push_error(failure)
 	print("FAIL: authority-call placement found %d issue(s)" % _failures.size())
 	quit(1)
+
+
+## The deny-by-default half, as a pure function of two name lists so the self-test can drive it
+## without a fake filesystem. Returns one failure per unclassified directory, unlisted root file, and
+## stale policy entry naming something that no longer exists.
+func _classification_failures(dirs_with_gd: Array[String], root_files: Array[String]) -> Array[String]:
+	var failures: Array[String] = []
+	for dir_name in dirs_with_gd:
+		if not DIR_POLICY.has(dir_name):
+			failures.append("scripts/%s/ holds GDScript but is NOT classified in DIR_POLICY. Every directory under scripts/ must declare FORBIDS / REQUIRES / PERMITS — an unclassified directory is one nothing can be wrong in, which is the defect plan 0057 closed. Add it, and add its row to docs/STATUS.md -> 'Where a file goes'." % dir_name)
+	for file_name in root_files:
+		if not ROOT_FILE_POLICY.has(file_name):
+			failures.append("scripts/%s is not in ROOT_FILE_POLICY. scripts/ root is an exact allowlist: the three autoload singletons plus OffloadCalculator (until plan 0058). A new file belongs in a role directory, not at root." % file_name)
+	for dir_name_value in DIR_POLICY.keys():
+		var dir_name := String(dir_name_value)
+		if not dirs_with_gd.has(dir_name):
+			failures.append("DIR_POLICY classifies scripts/%s/ but no such directory holds GDScript — the entry is stale (directory renamed or emptied?)." % dir_name)
+	for file_name_value in ROOT_FILE_POLICY.keys():
+		var file_name := String(file_name_value)
+		if not root_files.has(file_name):
+			failures.append("ROOT_FILE_POLICY allowlists scripts/%s but the file is not there — the entry is stale (moved or deleted?)." % file_name)
+	return failures
+
+
+## Top-level directory names under `scripts/` that contain at least one .gd, directly or nested.
+## A directory with no GDScript is not this validator's business and is not returned.
+func _top_level_dirs_with_gd() -> Array[String]:
+	var names: Array[String] = []
+	var dir := DirAccess.open(SCRIPTS_ROOT)
+	if dir == null:
+		return names
+	dir.list_dir_begin()
+	var name := dir.get_next()
+	while name != "":
+		if dir.current_is_dir() and not name.begins_with("."):
+			if not _gd_files("%s/%s" % [SCRIPTS_ROOT, name]).is_empty():
+				names.append(name)
+		name = dir.get_next()
+	dir.list_dir_end()
+	names.sort()
+	return names
+
+
+func _root_gd_files() -> Array[String]:
+	var names: Array[String] = []
+	var dir := DirAccess.open(SCRIPTS_ROOT)
+	if dir == null:
+		return names
+	dir.list_dir_begin()
+	var name := dir.get_next()
+	while name != "":
+		if not dir.current_is_dir() and name.ends_with(".gd"):
+			names.append(name)
+		name = dir.get_next()
+	dir.list_dir_end()
+	names.sort()
+	return names
 
 
 ## The `class_name` of every registered mutation authority, derived from the manifest's
@@ -207,6 +320,10 @@ func _read(path: String) -> String:
 ## has already shipped here and passed for weeks. Each case asserts the exact confusion that would
 ## otherwise make a green run meaningless.
 func _self_test() -> bool:
+	return _self_test_detector() and _self_test_classification()
+
+
+func _self_test_detector() -> bool:
 	var authorities: Array[String] = ["ForceTransitions", "IjfsTransitions"]
 	var cases := [
 		# [source, must_be_detected, why]
@@ -228,4 +345,57 @@ func _self_test() -> bool:
 			push_error("self-test: %s — expected detected=%s, got %s for source %s" % [
 				String(case[2]), case[1], detected, JSON.stringify(case[0])])
 			return false
+	return true
+
+
+## The deny-by-default half needs its own cases: rule 1 and rule 4 are new failure modes, and a new
+## failure mode that no case asserts is a validator whose green run proves less than it looks like.
+func _self_test_classification() -> bool:
+	var every_dir: Array[String] = []
+	for key in DIR_POLICY.keys():
+		every_dir.append(String(key))
+	every_dir.sort()
+	var every_root: Array[String] = []
+	for key in ROOT_FILE_POLICY.keys():
+		every_root.append(String(key))
+	every_root.sort()
+
+	# Baseline: exactly what the policy tables describe must produce no classification failure.
+	if not _classification_failures(every_dir, every_root).is_empty():
+		push_error("self-test: the policy tables disagree with themselves — a baseline built from DIR_POLICY/ROOT_FILE_POLICY should classify cleanly")
+		return false
+
+	# An unclassified directory holding GDScript FAILS.
+	var with_stray := every_dir.duplicate()
+	with_stray.append("not_a_registered_role")
+	if _classification_failures(with_stray, every_root).size() != 1:
+		push_error("self-test: an unclassified GDScript directory must produce exactly one failure")
+		return false
+
+	# An unlisted root file FAILS.
+	var with_root_stray := every_root.duplicate()
+	with_root_stray.append("SomethingNew.gd")
+	if _classification_failures(every_dir, with_root_stray).size() != 1:
+		push_error("self-test: an unlisted root .gd file must produce exactly one failure")
+		return false
+
+	# A classified directory that has vanished FAILS as a stale entry.
+	var missing_dir := every_dir.duplicate()
+	missing_dir.erase("calc")
+	if _classification_failures(missing_dir, every_root).size() != 1:
+		push_error("self-test: a DIR_POLICY entry naming a directory that holds no GDScript must fail as stale")
+		return false
+
+	# An allowlisted root file that has vanished FAILS as a stale entry.
+	var missing_root := every_root.duplicate()
+	missing_root.erase("EventBus.gd")
+	if _classification_failures(every_dir, missing_root).size() != 1:
+		push_error("self-test: a ROOT_FILE_POLICY entry naming an absent file must fail as stale")
+		return false
+
+	# A PERMITS root file may call an authority — GameState/GameData are the façade layer. This is
+	# asserted by construction: only FORBIDS root files are checked in _initialize.
+	if String(ROOT_FILE_POLICY.get("GameState.gd", "")) != PERMITS:
+		push_error("self-test: GameState.gd must be PERMITS — it is the order/lifecycle façade and calls authorities by design")
+		return false
 	return true
