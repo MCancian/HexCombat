@@ -37,8 +37,8 @@ Three open items are blocked only on a USER design call and can be answered in o
 budget above depends on it. If the observation is a standing rule or is blocked on something absent,
 put it in the section below WITHOUT a checkbox and say what would unblock it.)*
 
-- [ ] **The applies/pure CENSUS scan is still prose in two homes; only the pass/fail half became a tool
-  (plan 0055, 2026-07-31).** `.claude/skills/hexcombat-structure-map` asked whoever implemented 0055 to
+- [ ] **The applies/pure CENSUS scan is still prose in two homes.**
+  Only the pass/fail half became a tool (plan 0055, 2026-07-31). `.claude/skills/hexcombat-structure-map` asked whoever implemented 0055 to
   promote its `grep`-based census to a real script under `tools/`, because the comment-stripping detail
   is load-bearing and was being kept in two copies. **Half of that happened and half did not.**
   `tools/validate_authority_call_placement.gd` now owns the *verdict* — is any file in a forbidding
@@ -49,9 +49,9 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   prints `path count authority,...` and exits 0, letting the skill call it instead of restating it.
   Not done here because the validator's own commit was already the plan's last step and adding an output
   mode is a separate, testable change.
-- [ ] **The authority-call detector is blind to an ALIASED receiver, so a FORBIDS file could call an
-  authority under another name (found 2026-07-31 by the Sol diff-review role on plan 0057; a standing
-  limit of the detector, NOT a regression).** `tools/validate_authority_call_placement.gd` matches the
+- [ ] **The authority-call detector is blind to an ALIASED receiver.**
+  So a FORBIDS file could call an authority under another name (found 2026-07-31 by the Sol diff-review role on plan 0057; a standing
+  limit of the detector, NOT a regression). `tools/validate_authority_call_placement.gd` matches the
   literal manifest class name as the receiver:
   `regex.compile("(?<![A-Za-z0-9_])%s\\.[a-z_][a-z0-9_]*\\s*\\(" % authority)`. A file that does
   `const FT = preload("res://scripts/transitions/ForceTransitions.gd")` and then calls `FT.apply_x()`
@@ -65,8 +65,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   add the self-test case for it in the same commit. Weigh against how the codebase actually calls
   authorities today — every current call site uses the bare class name, so this is prophylactic, which
   is also why it is worth doing while it is still cheap and not a migration.
-- [ ] **`E_STALE_ALLOWANCE` is the one mutation-manifest check with no proof surface (found 2026-07-30
-  by the DeepSeek enumeration role; pre-existing, not a regression).** Every other manifest-check code
+- [ ] **`E_STALE_ALLOWANCE` is the one mutation-manifest check with no proof surface.**
+  Found 2026-07-30 by the DeepSeek enumeration role; pre-existing, not a regression. Every other manifest-check code
   is either declared by a `bad_manifest_*.json` fixture or perturbed by a `_capture_failures`
   self-test. `tools/validate_mutation_authority.gd`'s `_report_stale_allowances` is not: it is the
   only emission site, and nothing exercises it. So if a construction or legacy writer outlives its
@@ -74,8 +74,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   — `_check_manifest_error_fixtures` runs only `_check_manifest` + `_build_ownership`, never `_scan`,
   and a stale allowance is only visible after a scan produces a Verdict. It needs the same treatment
   `_check_inert_authority_fixture` got: re-judge the fixture findings against a doctored usage record.
-- [ ] **A Green LLM seat can deploy Red JLSF cargo (found 2026-07-31 by the Sol diff-review role on
-  plan 0049 commit 3; PRE-EXISTING, not a regression).** `deploy_jlsf` has no team in the action
+- [ ] **A Green LLM seat can deploy Red JLSF cargo.**
+  Found 2026-07-31 by the Sol diff-review role on plan 0049 commit 3; PRE-EXISTING, not a regression. `deploy_jlsf` has no team in the action
   schema (`schemas/llm_action_response.schema.json`), `LLMGameAPI._apply_deploy_jlsf_action` parses
   none, and the façade `GameState.add_jlsf_order` hardcodes `Brigade.Team.RED` — exactly as the
   pre-0049 code hardcoded it when calling the private `_apply_order`. `OrderValidator.check_jlsf_order`
@@ -84,7 +84,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   requires adding `"team"` to the action schema, which is "new action-schema vocabulary" and explicitly
   out of that plan's scope. Fixing it means threading seat identity through `SelfPlayRunner` so a Green
   seat cannot claim Red. Worth doing before any research run where both seats are live LLMs.
-- [ ] **Order-kind dispatch lives in three places.** `GameState._apply_order`, `LLMGameAPI.apply_agent_response`
+- [ ] **Order-kind dispatch lives in three places.**
+  `GameState._apply_order`, `LLMGameAPI.apply_agent_response`
   and `schemas/llm_action_response.schema.json` each enumerate the order kinds independently. Adding
   `air_insert` (plan 0032) meant editing all three, and the duplication had already rotted: `deploy_jlsf`
   was missing from the schema until 2026-07-24. Give the kinds one home and derive the dispatch (or at
@@ -97,8 +98,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   summary's payload legitimately changes). **USER call 2026-07-29: re-baselining is acceptable — build
   the real drift comparison.** So the trade is settled; what remains is implementation, and the fixture
   regenerator (`tools/LLMFixtures.gd`) is the intended way to move it rather than hand-editing.
-- [ ] **Seven summary headers promise byte-stability the gate does not check (found 2026-07-29,
-  witness sweep).** `CleanupSummary`, `CombatSummary`, `FrontlineSummary`, `AntishipSummary`,
+- [ ] **Seven summary headers promise byte-stability the gate does not check.**
+  Found 2026-07-29, witness sweep. `CleanupSummary`, `CombatSummary`, `FrontlineSummary`, `AntishipSummary`,
   `MobilizationSummary`, `AirInsertionSummary` and `IjfsWriteback` each say `to_dict()` is "the
   JSON-serialization boundary … so golden/observation fixtures stay byte-stable". The boundary half is
   TRUE — all seven land in `turn_result` in `docs/examples/llm_result_after_turn.json` (verified: that
@@ -109,8 +110,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   each header per `hexcombat-docs-and-writing` ("pinned by: …, which checks key presence only").
   **Do the drift-check item above FIRST** — if the gate gains a real value comparison, these headers
   become true as written and this item reduces to naming the real witness instead of documenting a hole.
-- [ ] **`docs/plans/` is excluded from the doc-anchor gate, so an ACTIVE plan's code references rot
-  silently (found 2026-07-31 while widening the gate; accepted trade-off, not an oversight).** Plans are
+- [ ] **`docs/plans/` is excluded from the doc-anchor gate, so an ACTIVE plan's code references rot silently.**
+  Found 2026-07-31 while widening the gate; accepted trade-off, not an oversight. Plans are
   excluded because a proposal legitimately names classes it intends to CREATE — failing a plan for
   describing its own work would make the gate an obstacle to planning. The cost is the other half: a
   Sketch that cites six real files (0055 does) rots the moment one is renamed, and the agent who picks
@@ -129,16 +130,16 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   correct. Note check 5 (doc-to-doc `docs/plans/<name>.md` pointers must resolve) already applies
   everywhere with no escape hatch, so plan *filenames* are gated; only the code references inside a
   plan are not.
-- [ ] **Validator harness: `_fail` / `_finish` / asserts are copy-pasted across the validators
-  (found 2026-07-25, refactor review).** Measured: `func _fail` in **30 of 36** `tools/validate_*.gd`,
+- [ ] **Validator harness: `_fail` / `_finish` / asserts are copy-pasted across the validators.**
+  Found 2026-07-25, refactor review. Measured: `func _fail` in **30 of 36** `tools/validate_*.gd`,
   `_finish` in 31, `_assert_equal_int` in 12, `_assert_true` in 11. A `tools/ValidatorHarness.gd`
   owning the assert vocabulary would remove the duplication. **Note the claim that failed review:**
   this does NOT fix the gate-hang class — a script that fails to COMPILE never runs, harness included
   (caught by agy-explore; two other models wrongly agreed it would). That hole is closed separately by
   `--quit-after` in `run_all_tests.py`. So this is deduplication only, worth doing when validators are
   being touched anyway, in slices of 5-6 with the gate green between. Good `opencode` delegation.
-- [ ] **The `air_oob_after` ledger reaches no game record, LLM payload or fixture — only the headless
-  validator (found 2026-08-01 while implementing the per-day/campaign loss split; PRE-EXISTING).**
+- [ ] **The `air_oob_after` ledger reaches only the headless validator.**
+  It reaches no game record, LLM payload or fixture (found 2026-08-01 while implementing the per-day/campaign loss split; PRE-EXISTING).
   `FiresPhases.resolve_ijfs_turn` keeps `ledgers["summary"]` on `state.last_ijfs_summary` and returns
   the rest to its caller; the only consumer of the full ledger dict is
   `tools/validate_headless_ijfs.gd`. So `air_oob_after` — the per-squadron order of battle, now
@@ -151,8 +152,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   USER wants to watch Red's fixed air inventory tick down and because RTB adds a third number to this
   same ledger — a mechanic whose effect cannot be observed cannot be dialled. Which surface carries it
   (LLM observation / turn record / report exporter) is an open USER call in that plan.
-- [ ] **`rtb_today` is a mechanic that was never built — opened as plan
-  [[0059-sam-interception-and-rtb]] (USER call 2026-08-01).** The field has no runtime writer at all
+- [ ] **`rtb_today` is a mechanic that was never built.**
+  Opened as plan [[0059-sam-interception-and-rtb]] (USER call 2026-08-01). The field has no runtime writer at all
   and is reported as a constant 0 every turn. The USER's call was not to delete it: aircraft should be
   driven off by SAM interception rather than only shot down. **Measured while opening the plan: the SAM
   side is not involved and has to be built.** All three air-attrition paths — SEAD return fire, the
@@ -160,8 +161,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   airframe landing in `apply_squadron_losses`, with no damaged, aborted or mission-killed state
   anywhere. A SAM target has three outcomes (destroyed / suppressed / unengaged); an aircraft has two.
   Design calls and scope are in the plan; this entry stays only until that plan ships.
-- [ ] **The `turn_result` schema is now gated on KEY PRESENCE only — the nested shapes are still
-  unchecked (opened 2026-08-01, replacing the five-field drift item, which is FIXED).** The drift
+- [ ] **The `turn_result` schema is now gated on KEY PRESENCE only — the nested shapes are still unchecked.**
+  Opened 2026-08-01, replacing the five-field drift item, which is FIXED. The drift
   itself is closed: `air_insertion_summary`, `mobilization_summary`, `offload_summary`, `game_over` and
   `winner` are declared, and `tests/turn_result_serialization_test.gd` now fails if any `TurnResult`
   key is absent from the schema. What that check does NOT do is verify the other direction (a schema
@@ -170,8 +171,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   would not register as a contract violation. Worth doing when the turn record is next treated as a
   durable research contract rather than a convenience payload — and note the same
   presence-not-shape weakness is what the LLM fixture drift-check item above is about.
-- [ ] **Nothing enforces `sweepable`, so the flag records intent and no more (measured 2026-08-01 while
-  marking the combat advantage ratios `false`).** `tools/run_sweep.py` never consults the knob registry;
+- [ ] **Nothing enforces `sweepable`, so the flag records intent and no more.**
+  Measured 2026-08-01 while marking the combat advantage ratios `false`. `tools/run_sweep.py` never consults the knob registry;
   the only code that touches the field is `tools/validate_knob_registry.gd`, which checks it is a bool
   and that a `kind` knob is not sweepable. So a `sweepable:false` knob can still be swept via
   `DataOverrides` and nothing complains. Two checks are wanted and they are NOT the same:
@@ -183,14 +184,13 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   override *does* apply — it changes the `result` label in the record. A check that only asks "did
   anything move?" sees them move and passes. Only (b) expresses "this knob must not be a study
   variable".
-- [ ] **`UnitStats.FALLBACK_CATEGORY_DEFS` reachability is unknown.** 90 entries, and NO composition entry in
-  either OOB declares a `category` — the table is reachable only through `_fallback_category_for_type`'s
+- [ ] **`UnitStats.FALLBACK_CATEGORY_DEFS` reachability is unknown.**
+  90 entries, and NO composition entry in either OOB declares a `category` — the table is reachable only through `_fallback_category_for_type`'s
   type-name heuristics. Plan 0032 anchored two new airborne strengths on entries that were dead until
   then. Instrument `_fallback_category_for_type` over both OOBs, list the keys actually hit, and delete
   or document the rest. Do NOT delete on inspection alone; the matching is indirect.
-- [ ] **`OffloadCalculator` applies campaign state through a handed dict, so it cannot go to
-  `scripts/calc/` — scoped as plan 0058, PLAN FILE NOT YET OPENED (found 2026-07-31 preflighting 0057;
-  PRE-EXISTING, not a regression).** This entry is currently the only home of 0058's preflight
+- [ ] **`OffloadCalculator` applies campaign state through a handed dict, so it cannot go to `scripts/calc/`.**
+  Scoped as plan 0058, PLAN FILE NOT YET OPENED (found 2026-07-31 preflighting 0057; PRE-EXISTING, not a regression). This entry is currently the only home of 0058's preflight
   measurement — `docs/plans/0058-*.md` does not exist. Do not delete it until that file does.
   `scripts/OffloadCalculator.gd:259` banks leftover tonnage into
   `bn["offload_progress_tons"]`, `:244` erases it on landing, `:241` reads it back a turn later. The
@@ -217,8 +217,7 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   the call, and the write is **not** freely deferrable — which would make this an `interleaved/`
   candidate rather than a hoist. (Independently reached by the Sol plan-review role, 2026-07-31.)
   Note `brigade_map[bid] = brigade` at `:100` also keeps only the LAST entry per id, so a duplicate
-  would additionally drop a reserve entry's own BN list — **if duplicates are reachable, that is a
-  latent double-processing bug independent of any file move, and 0058 should open there.**
+  would additionally drop a reserve entry's own BN list — **if duplicates are reachable, that is a latent double-processing bug independent of any file move, and 0058 should open there.**
   **Measured, and it resolves the other way — the hoist IS the right shape.** `ship_reserve` holds at
   most one entry per `brigade_id` by construction: `ForceTransitions._merge_reserve_entry` (`:857-862`)
   searches for an existing entry with the same `brigade_id` and **merges the BNs into it**, appending a
@@ -231,8 +230,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   scenario row without a dedup check, so malformed scenario content is the one way in.
   Golden exposure is still real (offload sequencing), so this needs its own gate run and must not ride
   on a path move.
-- [ ] **DeepSeek's strength is narrower than "bounded enumeration" — it needs the material HANDED to
-  it, and times out on multi-module call-chain tracing (measured 2026-08-01, two flakes).** The roster
+- [ ] **DeepSeek's strength is narrower than "bounded enumeration" — it needs the material HANDED to it.**
+  It times out on multi-module call-chain tracing (measured 2026-08-01, two flakes). The roster
   records 3/3 as a bounded enumerator, which is true but under-specified. Measured across four
   invocations in one session: **succeeded twice** when given material to read — a committed plan file
   (16.3 KB return) and a frozen diff (23.9 KB, and it caught a second `model_version` pin nobody else
@@ -249,8 +248,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   **And note how the failure presents:** `opencode` buffers until exit, so a timeout leaves an empty
   file and a wrapper that can still report success. The only signal is exit code 124. An empty return
   read as "reviewed, nothing found" is the exact flake-is-not-a-pass trap.
-- [ ] **Reviewer read-only is still a prompt, not a sandbox — opencode can enforce it (found 2026-07-30,
-  plan 0054; USER raised the config route).** `opencode` supports per-agent permissions
+- [ ] **Reviewer read-only is still a prompt, not a sandbox — opencode can enforce it.**
+  Found 2026-07-30, plan 0054; USER raised the config route. `opencode` supports per-agent permissions
   (`opencode.json` → `agent.plan.permission`), so `"edit": "deny"` would make read-only ENFORCED for the
   DeepSeek route instead of merely requested in prose — the hole `.claude/REVIEWERS.md` § Safety
   currently just warns about. Measured context: `external_directory` defaults to `ask`, and an "ask" in
@@ -259,8 +258,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   including `edit`, and these models have been measured announcing a fallback from the read-only agent to
   the writing `build` agent. Verify any change by having the `plan` agent attempt an edit and watching it
   be denied. Global `~/.config/opencode/opencode.json` currently has no `permission` block at all.
-- [ ] **A reviewer brief should demand NUMBERED findings from every role, including nil returns
-  (found 2026-07-30, plan 0047 steps 4-7 round).** `tools/review_fanout.sh --report` scores a return
+- [ ] **A reviewer brief should demand NUMBERED findings from every role, including nil returns.**
+  Found 2026-07-30, plan 0047 steps 4-7 round. `tools/review_fanout.sh --report` scores a return
   `FLAKE` on "no numbered findings", which is right as a default — a died-early route is
   indistinguishable from approval. But that round produced two genuine returns it could not count: the
   tier-1 reviewer's 342-byte "no actionable findings" (a real read: it named a non-equivalence and two
@@ -271,8 +270,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   entry, and require an enumeration role to number its lists. Then the mechanical count matches reality
   and no agent has to reason its way past a `QUORUM NOT MET` line. Pairs with the `--format json` item
   below; do them together if either is touched.
-- [ ] **DeepSeek's return is unparseable by the byte band because its stdout is prompt echo + tool
-  traces + report (found 2026-07-30, plan 0047; USER raised it).** Both plan-0047 rounds were
+- [ ] **DeepSeek's return is unparseable by the byte band because its stdout contains noise.**
+  Its stdout is prompt echo + tool traces + report (found 2026-07-30, plan 0047; USER raised it). Both plan-0047 rounds were
   substantive enumerations (23.6 KB and 14.7 KB) and both were labelled `SUSPECT` on size alone, so a
   future agent may discard a good return — one of them held the only catch of its round. **The fix is
   `--format json`** on the opencode route (it emits raw JSON events), plus a `tools/review_fanout.sh`
@@ -284,9 +283,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   (one reviewer's artifact read off disk and returned verbatim by another as fake corroboration).
   Note an enumeration return is legitimately long even once the noise is stripped, so the 1–10 KB band
   needs a role-aware exception either way.
-- [ ] **Mobile SAMs are invisible and die anyway — a survivability knob was RULED by the USER
-  2026-08-01 (design session out of [[0060-air-attrition-before-the-strike]]); ships with a return-fire
-  reshape or not at all.** `IjfsEngagement.resolve_sead_engagement` iterates every non-destroyed
+- [ ] **Mobile SAMs are invisible and die anyway — a survivability knob was RULED by the USER.**
+  2026-08-01 (design session out of [[0060-air-attrition-before-the-strike]]); ships with a return-fire reshape or not at all. `IjfsEngagement.resolve_sead_engagement` iterates every non-destroyed
   SAM-category target with **no `detected_this_turn` check**, unlike `IjfsTargeting.targets_to_attack`
   which requires one. Measured on turn 2, 10 seeds, scenario_default — SAM targets by detection outcome
   against what SEAD destroyed anyway:
@@ -313,8 +311,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   at **1.0**, and Red's entire air force dies in one day — no stable middle between ~8% and 100%. R10
   moves return fire into the per-target SEAD loop so it becomes per-engagement, which removes the clamp
   by construction. **Plan R10 first or with this; do not turn the knob below 1.0 before it lands.**
-- [ ] **SEAD allocation should scale with the surviving mobile-SAM threat — USER SPEC 2026-08-01, but
-  the numbers as specified CANNOT BITE. Needs one more USER call before it can be planned.**
+- [ ] **SEAD allocation should scale with the surviving mobile-SAM threat.**
+  USER SPEC 2026-08-01, but the numbers as specified CANNOT BITE. Needs one more USER call before it can be planned.
   Direction: Red must divert airframes to SEAD in proportion to the mobile SAMs alive last turn, so a
   prolonged mobile-SAM fight costs Red **strike capacity**, not just airframes. This is what gives the
   survivability knob above its teeth.
