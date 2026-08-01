@@ -101,10 +101,57 @@ Resulting role table: `phases/` orders, `calc/` computes, `stages/` computes-and
 - **Widen `calc/` to permit authority calls.** Foreclosed by `docs/STATUS.md`'s own reasoning from
   plan 0046: widening `calc/`'s claim to cover appliers "would have made it untrue everywhere". It
   also destroys the only cheap, greppable way to ask "what can change the game?"
-- **Refactor the appliers to return outcomes and hoist application to their callers.** This is the
-  purist option and it is wrong here for a measured reason: for at least `JlsfCargo` and the IJFS
-  stages, deferral changes the result (dice count, or duplicate entries). It would be a behaviour
-  change wearing a refactor's clothes, and the golden pins would catch it as drift.
+- **Refactor ALL the appliers to return outcomes and hoist application to their callers.** The purist
+  option, and wrong as a blanket rule: for the IJFS stages deferral changes the dice count. But it is
+  right for at least one file — see the `CleanupResolver` decision below — so this is rejected as a
+  *policy*, not case by case.
+
+### Two naming calls, one settled and one open
+
+**The `*Resolver` class names do NOT get renamed. Settled.** Ten files carry the suffix and after this
+plan eight sit in `calc/` and two in `stages/`, which looks like the suffix has stopped meaning
+anything. Round 1 pushed back and is right: "Resolver" names a *phase endpoint* — the thing that
+decides what happens in a phase — and it never encoded purity. Renaming would touch every call site and
+doc for no gain, and unlike a file move a class rename is not free. **The directory carries the
+application policy; the suffix carries the phase role.** Say that in the role table so the next reader
+does not re-open this.
+
+**`scripts/stages/` is an OPEN name question.** "Stage" is already in this repo's vocabulary — ~21
+matches under `scripts/` including the pure anti-ship pipeline in `AntishipCrossing`, ~101 across
+source and docs — and it reads as *ordering*, which is `phases/`'s job, rather than as *interleaved
+application*. `scripts/interleaved/` was proposed as more precise. Decide before step 2; the plan does
+not depend on which wins, but renaming the directory afterwards costs the whole sweep again.
+
+## `CleanupResolver` qualifies for neither directory — the one open decision
+
+Round 1 found this from both sides and both are right, which is what makes it a real hole rather than a
+disagreement:
+
+- It **does** mutate campaign state — `ForceTransitions.apply_activity` latches `moved_last_turn` /
+  `fought_last_turn`, both classified `campaign` in the manifest. So it cannot go to `calc/`.
+- It **fails `stages/`'s own test** — nothing in the function reads either mutation, and deferring both
+  to its caller would change neither a decision nor a die. So it is not a draw-point applier either.
+
+It applies for no draw-point reason. That is a fourth category, and it has exactly one member: the
+IJFS stages and `JlsfCargo` all have a real ordering constraint, `CleanupResolver` does not.
+
+**Recommendation: make it pure, and hoist both mutations into `TurnClosure`.** Measured cost —
+`resolve()` has four call sites (`TurnClosure.gd:49` plus three tests); `census()` is already pure and
+separate so its callers are untouched; `census()` reads neither the reset nor the latched fields, so
+ordering inside the function is free. `TurnClosure` already applies through three authorities and its
+claim ("orders calls and threads results") covers this exactly. Its own comment at `:47` already
+describes the flag reset and activity latch as *"Pure work"* — the same write/apply confusion this plan
+is fixing, sitting in a code comment on this exact code.
+
+**Why not defer it.** Deferring leaves three bad options: put a file in `stages/` that fails the
+directory's test on day one, keep a one-file `scripts/resolvers/` alive, or knowingly misfile it in
+`calc/`. The first is worst — the new directory would be born with the exact defect this plan exists to
+cure, and the validator (which checks only *may* it call an authority, not *must* it be a draw-point
+applier) would not catch it.
+
+**The cost is honest: this makes the plan no longer purely path-only.** It is a behaviour-neutral
+hoist of six lines plus three test call sites, fully covered by the golden pins — but it is a code
+change, and if it is deferred the plan must say which of the three bad options it is taking.
 
 ## The moves are half of it — the other half is a gate
 
@@ -137,19 +184,43 @@ a file lives has prose.
 
 So the validator is green the moment step 2 lands. It costs one file and locks in the whole plan.
 
+### It must check BOTH directions
+
+A one-directional check ("forbidden directories make zero calls") does not close the failure mode this
+plan cites. The historical case — `AntishipResolver` — was a file that STOPPED applying and became
+misplaced without anyone editing it. A file going pure inside an *allowed* directory stays legal under
+a one-directional rule, so the exact defect walks straight through.
+
+So: forbidden directories must have **zero** direct authority calls, **and every `scripts/stages/` file
+must have at least one.** A stage that stops applying fails the gate and gets re-homed, which is the
+case that actually rotted.
+
+Derive the authority names from `tools/mutation_authority_manifest.json` rather than from a
+`[A-Za-z]+Transitions` regex. The manifest is the single home for that list; a regex is a second,
+silent one that drifts the moment an authority is renamed.
+
 ### The half that is NOT checkable — say so plainly
 
-A validator that implied full coverage would be worse than none. It cannot decide *"does this apply at
-its own draw point?"* (requires knowing whether deferral changes the dice), nor *"does `phases/` only
-order calls?"*, nor whether a pure file is in `calc/` versus somewhere else sensible. Those stay prose,
-and the validator's header must say which half it owns — the same way the mutation gate's header names
-its aliased-container blind spot rather than letting a reader assume completeness.
+A validator that implied full coverage would be worse than none, and this one's blind spot is bigger
+than "some things are judgement calls": **it sees only DIRECT calls.** `IjfsResolver` calls
+`IjfsEngine.run_daily`, which calls authorities — so application through a helper is invisible, and a
+file can apply transitively while reading as pure. Transitive closure is not worth building here (it
+would need call-graph analysis over a dynamically-typed language), but it MUST be stated, because the
+name is what a future agent trusts.
+
+It also cannot decide *"does this apply at its own draw point?"* (requires knowing whether deferral
+changes the dice), nor *"does `phases/` only order calls?"*, nor whether a pure file is in `calc/`
+versus somewhere else sensible.
 
 ### Shape
 
-A self-contained `tools/validate_role_directories.gd`, auto-discovered by the gate's
-`tools/validate_*.gd` phase — no wiring, unlike a Python validator, which needs its own block and
-`PASS:` regex in `tools/run_all_tests.py`.
+**Name it `tools/validate_authority_call_placement.gd`, not `validate_role_directories.gd`.** It checks
+where direct authority calls may appear — not role correctness, and not application. The broader name
+invites exactly the over-confidence the section above warns about, and a name is the only part of a
+validator most agents ever read.
+
+Self-contained, auto-discovered by the gate's `tools/validate_*.gd` phase — no wiring, unlike a Python
+validator, which needs its own block and `PASS:` regex in `tools/run_all_tests.py`.
 
 It will carry its own comment/string stripper, making a fifth copy. **That is deliberate and already
 adjudicated** — the backlog records the 2026-07-26 decision NOT to unify the four existing strippers,
@@ -178,13 +249,48 @@ directory and a role-table row rather than only deleting one, and that it ships 
 4. **Sweep for path-keyed references** — the failure mode plan 0050 hit was
    `tools/validate_gd_metrics.py` hard-coding `"scripts/resolvers/AntishipResolver.gd::resolve"`,
    which no call-site grep finds. Measured live references, 2026-07-31:
-   - `tools/gd_metrics.py` — `DEP_CEILINGS` and `PARAM_CEILINGS` keys are path-keyed; a stale key
-     fails the gate with *"not found (ceiling entry stale — file moved/deleted?)"*
-   - `docs/STATUS.md:21`, `:24`, `:55` — the role table and the two worked examples
-   - `docs/ARCHITECTURE.md:90`
-   - `docs/systems/turn-engine/STATUS.md:16` (also cites this plan by its old filename)
-   - `.claude/skills/hexcombat-docs-and-writing/SKILL.md:22`
-   - `project.godot`, `.import`
+   **`tools/mutation_authority_manifest.json:816` holds `"path": "res://scripts/ijfs/IjfsLoaders.gd"`**
+   — a `construction_writers` allowance consumed by the mutation-authority gate. Moving that file
+   without updating this breaks the OWNERSHIP gate, which is the one guarantee this repo most relies
+   on. It was missing from this list until the round-1 enumeration found it; it is first here because
+   it is the highest-consequence reference in the sweep.
+
+   **`tools/gd_metrics.py` — twelve `PARAM_CEILINGS` keys name moving files.** A stale key fails the
+   gate with *"not found (ceiling entry stale — function moved/renamed?)"*. Enumerated, so nobody has
+   to re-derive them:
+   - `:99` `scripts/calc/JlsfCargo.gd::queue_deployments`
+   - `:112`–`:114` `scripts/ijfs/IjfsDetection.gd::` `_log_detection`, `_run_detection_phase`,
+     `aircraft_detect_target_ids`
+   - `:115` `scripts/ijfs/IjfsEngagement.gd::resolve_sead_engagement`
+   - `:116` `scripts/ijfs/IjfsManpads.gd::intercepted_strike_log`
+   - `:117` `scripts/ijfs/IjfsStrike.gd::resolve_strike`
+   - `:118`–`:119` `scripts/ijfs/IjfsTargeting.gd::` `apply_exquisite_intel`,
+     `select_munition_with_doctrine`
+   - `:121`–`:123` `scripts/resolvers/` `CleanupResolver.gd::resolve`,
+     `IjfsResolver.gd::build_warmup_context`, `OffloadResolver.gd::resolve`
+
+   `DEP_CEILINGS` names no moving file — all five entries are `GameState` and `phases/`. Its *comments*
+   do name several (`:38`, `:46`, `:47`, `:49`, `:60`, `:61`) and will describe a dead layout
+   afterwards; comments are gated by nothing, so fix them here or they rot silently.
+
+   Remaining references, all documentation:
+   - `docs/STATUS.md:21`, `:24`, `:55`, and the `scripts/ijfs/` rows at `:59`, `:65`
+   - `docs/ARCHITECTURE.md:90`; `docs/DECISIONS.md:129`, `:624`
+   - `docs/systems/turn-engine/STATUS.md:16`; `docs/systems/ijfs/ijfs.md` (many);
+     `docs/systems/ground-combat/ground-combat.md:20`, `:120`, `:138`;
+     `docs/systems/amphibious-offload/amphibious-offload.md:19`, `:22`;
+     `docs/systems/air-insertion/air-insertion.md:64`;
+     `docs/systems/roc-mobilization/roc-mobilization.md:29`; `docs/systems/terrain/terrain.md:137`
+   - `.claude/skills/` — `hexcombat-architecture-contract` (`:31`, `:42`, `:105`),
+     `hexcombat-add-phase-resolver` (`:9`, `:53`), `hexcombat-structure-map` (`:77`),
+     `hexcombat-docs-and-writing:22`
+   **These are stale PROSE, not gate failures.** `tools/validate_skill_references.gd`'s pattern
+   requires a concrete `.gd` path, so a bare `scripts/resolvers/` directory reference is not matched
+   and the gate stays green with every one of them wrong. Do not rely on a red gate to find them.
+
+   **`project.godot`, `*.tscn`, `*.tres`, `*.import`, `*.cfg`: ABSENT.** No engine or config file
+   references either directory — the only path-bound scripts are at `scripts/` root and none moves
+   here. (That is what makes this plan materially safer than 0057, which moves eight of them.)
    **`docs/archive/**` takes a narrower rule, learned by getting it wrong during this rewrite.** Ten
    hits live there and they are the historical record — do **not** restate them as if they described
    current code. But a dead *link* is not history, it is a broken pointer: when the referent still
@@ -208,7 +314,7 @@ directory and a role-table row rather than only deleting one, and that it ships 
    calls — correct under the intended reading, a flagrant violation under the plain one. Fix the whole
    table to one vocabulary: **writes** = assigns a field directly; **applies** = changes campaign state
    by any route, including through an authority. Every row states which it means.
-6. **Add `tools/validate_role_directories.gd`** with the permission table above, as its own commit
+6. **Add `tools/validate_authority_call_placement.gd`** with the permission table above, as its own commit
    after the moves. Its header states which half of the placement rule it owns and which half it
    cannot. Then **prove it bites**: temporarily add an authority call to a file in `scripts/calc/`,
    confirm the validator fails and names the file, revert. A gate nobody has watched fail is not known
@@ -226,7 +332,7 @@ Low on behaviour — nothing here changes what any code computes. Three real ris
 confusing `KeyError` when one specific validator runs. The gate does run it, so a miss is caught —
 sweep first so it is caught by reading rather than by debugging.
 
-**A validator that over-claims.** If `validate_role_directories.gd` reads as "placement is now
+**A validator that over-claims.** If it reads as "placement is now
 enforced", the next agent trusts it for the questions it cannot answer, and the unpoliced half becomes
 *more* dangerous than before because it now looks covered. Mitigated only by the header and by step 6's
 failure demonstration — a gate whose scope is stated but never observed failing tends to get believed

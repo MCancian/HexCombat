@@ -63,11 +63,13 @@ The 5 data holders are the genuinely open question — see below.
 
 ## Open questions for review
 
-**1. Do the 5 `RefCounted` data holders belong in `scripts/model/`?** That directory is 59 `Resource`
-subclasses to 3 `RefCounted`, so it has a de-facto convention the table does not state. Either these
-five move there and the table admits both base types, or `model/` means "serializable `Resource`" and
-these five need a different home. **Do not move them until this is answered** — moving them first is
-what would make the convention permanently ambiguous.
+**1. ~~Do the 5 `RefCounted` data holders belong in `scripts/model/`?~~ ANSWERED in round 1 — yes.**
+The concern was that `model/` is overwhelmingly `Resource` subclasses (64 to 3 counting
+`model/ijfs/`), implying an unstated "serializable `Resource`" convention these five would violate.
+A reviewer checked the three existing `RefCounted` members — `GameStateData`, `IjfsDailyState`,
+`LiftClass` — and they are structural holders, exactly what the five root files are. So `model/`
+already admits both base types and the five move there. The role table should state that explicitly,
+since the de-facto convention was invisible enough to stall this question once.
 
 **2. Is `LLMGameAPI` one file or three?** At 564 lines and `ndeps` 22 it is the third most-coupled
 file in the codebase, and it is on the backlog for a separate reason (order-kind dispatch lives in
@@ -80,12 +82,18 @@ three places, one of which is inside it). Moving it is fine; splitting it is not
 1. Settle open question 1 in review. Steps 2–6 proceed regardless; only the 5 holders wait on it.
 2. `git mv` one family per commit, sidecar `.uid` with each file. Six commits, not one — a mixed
    40-file move is unreviewable and a bad path lands invisibly inside it.
-3. **After the UI and autoload families specifically**, update the 8 path-bound references:
-   `res://scripts/*.gd` in `.tscn` files and in `project.godot`'s autoload block. These break at
-   runtime rather than at compile time, so the smoke phase is the check that matters, not the compile.
-4. Sweep for path-keyed references exactly as 0055 does: `tools/gd_metrics.py` ceiling keys
-   (`scripts/GameState.gd` is one), `tools/*.py`, `tools/*.gd`, `.import`, `docs/systems/**`,
-   `.claude/skills/**`. Repoint dead links in `docs/archive/**`; do not restate their claims.
+3. **After the UI family specifically**, update the 5 scene-bound references — `res://scripts/*.gd` in
+   `scenes/Main.tscn` (`HexMap`, `GameController`, `InfoPanel`, `CompositionPanel`) and
+   `scenes/SymbolPreview.tscn` (`SymbolPreview`). These break at runtime rather than at compile time,
+   so the smoke phase is the check that matters, not the compile.
+   **`project.godot`'s autoload block is NOT touched.** The three autoloads stay at root, so their
+   paths do not change — an earlier draft of this plan scheduled that edit and was self-contradictory.
+   Do not "fix" the autoload paths; there is nothing to fix.
+4. Sweep for path-keyed references exactly as 0055 does: `tools/*.py`, `tools/*.gd`, `.import`,
+   `docs/systems/**`, `.claude/skills/**`. Repoint dead links in `docs/archive/**`; do not restate
+   their claims. **`scripts/GameState.gd` and `scripts/GameData.gd` keep their paths**, so the
+   `DEP_CEILINGS` entry for `GameState` does NOT go stale from this plan — check the other ceiling
+   keys against the families that do move.
 5. Add the new rows to the role table in `docs/STATUS.md`, and rewrite root's row from absent to
    "the autoload singletons only".
 6. `bash tools/run_all_tests.sh` → ALL PHASES GREEN, with the **smoke phase** given particular
@@ -116,10 +124,18 @@ property-named `scripts/stages/` exists — and it settles the applies/pure ques
 calculation files this plan wants to send to `calc/`. Doing them in the other order means inventing
 the role vocabulary twice and moving some files twice.
 
-0055 also ships `tools/validate_role_directories.gd`, which enforces the "may this directory call an
-authority?" table. **This plan extends that validator rather than inventing one** — each new directory
-gets a row when it is created, in the same commit, so root's row changes from an absent claim to a
-checked one. A family moved without its row is the failure this sequencing exists to prevent.
+0055 also ships `tools/validate_authority_call_placement.gd`, which enforces the "may this directory
+call an authority?" table. **This plan extends that validator rather than inventing one** — each new
+directory gets a row when it is created, in the same commit. A family moved without its row is the
+failure this sequencing exists to prevent.
 
-**Before 0056.** Both plans key on paths; 0056 seeds a path-keyed ceiling table, and `scripts/GameState.gd`
-is already one of its five entries. Seeding before this lands guarantees stale keys.
+**Root needs an exact FILE allowlist, not a directory row.** Of the three autoloads left at root, only
+`GameState.gd` and `GameData.gd` call authorities; `EventBus.gd` does not. A row saying "root may call
+authorities" would license any future root file to do so — recreating the unpoliced root under a
+nominally checked entry. Unknown top-level directories default to DENY; nested directories inherit the
+nearest registered role.
+
+**Before 0056.** Both plans key on paths, and 0056 seeds a path-keyed ceiling table. The rationale is
+NOT `scripts/GameState.gd` — that file stays at root and its entry survives. It is the roughly
+thirty-five files that DO move: any of them at or above 0056's threshold would be seeded under a path
+this plan then invalidates, and `PARAM_CEILINGS` keys for their functions would go stale outright.

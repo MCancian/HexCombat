@@ -82,15 +82,36 @@ fixtures (the top test file is at 19), and capping that discourages thorough tes
 architectural gain. `tools/` is validators and one-shot scripts. Both should be excluded explicitly
 and in the header, not by accident.
 
-**Seeding — recommend generated, then committed.** Add a `--seed-ceilings` mode that rewrites the
-`DEP_CEILINGS` block from measurement. Hand-transcribing eleven numbers is exactly the kind of task
-that produces one wrong digit which then reads as a deliberate allowance forever.
+**Seeding — recommend generated, then committed, and STRICTLY ADD-ONLY.** Add a `--seed-ceilings` mode
+that emits entries for files that have none. Hand-transcribing eleven numbers is exactly the kind of
+task that produces one wrong digit which then reads as a deliberate allowance forever.
+
+Two constraints on that mode, both from round 1, and both load-bearing enough that the mode is worse
+than useless without them:
+
+**It must never raise or replace an existing entry.** A mode that "rewrites the `DEP_CEILINGS` block
+from measurement" — the original wording here — becomes the sanctioned way to launder a breach: hit a
+ceiling, re-run the generator, and every ceiling silently resets to the newly measured value. That is
+precisely what `tools/gd_metrics.py`'s own header forbids. Seeding adds missing keys and refuses to
+touch present ones, and the self-test must prove a re-seed cannot bless an existing breach.
+
+**It must preserve the comments.** The `DEP_CEILINGS` block is not a list of numbers; it carries
+per-file prose explaining *why* each file's coupling is legitimate — that `TurnConductor` depends on
+every phase resolver it orchestrates is cohesion, not lamination, and so on. A generated number cannot
+reconstruct that, and it is exactly the reasoning a future agent needs before deciding whether a
+ceiling may move. Either insert comment-preservingly, or emit candidates outside the source for manual
+review. Test that existing comments stay byte-identical.
 
 ## Steps
 
 1. Add the threshold constant, the scope filter, and `--seed-ceilings` to `tools/gd_metrics.py`.
-   Extend the existing `--self-test` to cover the new mode: seeding a fixture tree must produce
-   entries equal to its measured counts, and re-running `--check-ceiling` on it must pass.
+   Extend the existing `--self-test` to cover the new mode with **four** cases, not one — seeding that
+   only proves "seeded values pass" proves nothing interesting:
+   - seeding a fixture tree produces entries equal to its measured counts, and `--check-ceiling` passes;
+   - an UNLISTED fixture file at or above the threshold **fails** (this is the whole feature);
+   - a listed file that has grown past its entry **fails**, and re-running `--seed-ceilings` does NOT
+     silence it;
+   - existing comments in the block survive seeding byte-identically.
 2. Run the seeding, commit the generated `DEP_CEILINGS` block **on its own**, so the diff of what
    became enforced is reviewable as a list of numbers rather than buried in a logic change.
 3. Verify the ratchet actually bites: pick one seeded file, add a throwaway dependency, confirm the

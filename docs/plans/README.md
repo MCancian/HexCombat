@@ -14,7 +14,7 @@ of truth** for status. Status vocabulary: `Sketch` → `Exploring` → `In progr
 **The mutation-authority campaign (0042–0050) is CLOSED as of 2026-07-31.** Nothing in this index is
 blocked on it any more; pick from the Active table below. If you are about to touch mutable gameplay
 state, read `docs/systems/mutation-authority/mutation-authority.md` (the procedure) and the manifest's
-`_schema_rules` (six lines) before you write — adding an aggregate is now an addition to a closed
+`_schema_rules` (nine rules) before you write — adding an aggregate is now an addition to a closed
 world rather than a step in an open migration.
 
 The three plans most worth doing next, in the maintainer's judgement, are **0051** (destroyed systems
