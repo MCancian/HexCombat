@@ -66,8 +66,15 @@ precedent against this.
 - **The edges have to be discovered, not asserted.** The dependency claims in 0060 were only found by
   reading (`IjfsManpads.contest_squadrons` counts ready systems off `state.targets`; the free shot
   scales off `taiwan_ad_health_after`). A DAG whose edges are guessed would be worse than no DAG,
-  because it would look authoritative. The enumeration commissioned for 0060 is the start of this
-  inventory and should be reused.
+  because it would look authoritative.
+
+  The edge inventory has the precise shape **"for each of the six steps, which model fields does it
+  READ and which does it WRITE"**, from which the edges fall out mechanically: an edge exists wherever
+  a later step reads a field an earlier step writes. That is a bounded enumeration and is delegable —
+  but note the first attempt to delegate it **flaked on a timeout after 15 minutes and returned zero
+  bytes**, because the brief asked for six broad lists rather than one narrow one. `opencode` buffers
+  until exit, so a killed run is indistinguishable from a clean empty return except by its exit code
+  (124). Scope the ask to the read/write table alone.
 
 ## Sequencing
 
