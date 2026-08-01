@@ -125,8 +125,13 @@ the next reader tell a stale page from a wrong one.
 
 ## Worth promoting
 
-The applies/pure scan above is inline prose here, and plan 0055's step 1 requires running the same
-scan. Whoever implements 0055 should promote it to a real script under `tools/` and have both this
-skill and that plan call it, rather than keeping two copies of a `grep` whose comment-stripping detail
-is load-bearing. Left as prose for now because a `tools/` script is a code change with its own gate,
-and this skill is documentation.
+**Half done as of plan 0055 (2026-07-31).** The *verdict* half is now a real tool —
+`tools/validate_authority_call_placement.gd` runs in the gate, derives its authority list from
+`tools/mutation_authority_manifest.json`, and fails the build if a forbidding directory calls an
+authority or an `scripts/interleaved/` file stops calling one. Run it before trusting the table above;
+it is the enforcement, and this skill is not.
+
+The *census* half — per-file counts, which is what the plates actually need — is still the inline
+`grep` above, so the comment-stripping detail still lives in two places. The cheap fix is a `--census`
+flag on that validator that prints `path count authority,...`, letting this skill call it rather than
+restate it. Logged in `docs/plans/BACKLOG.md`.

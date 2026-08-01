@@ -12,6 +12,19 @@ Focused multi-session efforts (features, content, balancing) get a numbered plan
 
 *(Agents: append new technical debt and hygiene observations here)*
 
+- [ ] **The applies/pure CENSUS scan is still prose in two homes; only the pass/fail half became a tool
+  (plan 0055, 2026-07-31).** `.claude/skills/hexcombat-structure-map` asked whoever implemented 0055 to
+  promote its `grep`-based census to a real script under `tools/`, because the comment-stripping detail
+  is load-bearing and was being kept in two copies. **Half of that happened and half did not.**
+  `tools/validate_authority_call_placement.gd` now owns the *verdict* — is any file in a forbidding
+  directory calling an authority, and has any `interleaved/` file gone inert — and derives its authority
+  list from the manifest. What it does NOT emit is the census: per-file counts, which is what the skill
+  needs to regenerate the structure map and what a future plan needs to re-derive a table. So the `grep`
+  still lives as prose in the skill. The cheap fix is a `--census` flag on the existing validator that
+  prints `path count authority,...` and exits 0, letting the skill call it instead of restating it.
+  Not done here because the validator's own commit was already the plan's last step and adding an output
+  mode is a separate, testable change.
+
 - [ ] **Mutation-authority protection reaches only TYPED receivers, so state passed through an untyped
   `Dictionary`/`Array` is unprotected and the gate cannot say so (standing limit, restated 2026-07-31;
   NOT a defect to fix, a rule to follow).** The enforcement gate judges a write by resolving the
