@@ -46,7 +46,7 @@ There appear to be three distinct shapes, which need different responses:
 `SealiftState.mainland_pool` and `AirInsertionState.pool`, with no owning object and no total, so
 "ashore" is derived by subtraction (`Brigade.landed_qty()`) and nothing can validate it centrally. Two
 silent, result-changing bugs have already come out of that seam (`bff4a1c`, `5f79317`), both found by
-inspection rather than by any gate. This is the subject of `docs/plans/0039-battalion-location-single-truth.md`.
+inspection rather than by any gate. This is the subject of `docs/archive/0039-battalion-location-single-truth.md`.
 
 ## What I want from you
 

@@ -29,10 +29,14 @@ already hit once. **That hazard is now spent.** 0055 settled the role vocabulary
 (`scripts/interleaved/` exists; `scripts/resolvers/` and `scripts/ijfs/` are gone) and 0057 moved the
 36 files, so the layout 0056 must key against is final.
 
-**Preflight 0056 against the tree before implementing it.** It was drafted against the pre-0055
-layout and cites paths that no longer exist; `docs/plans/` is excluded from the doc-anchor gate, so
-nothing flagged that. This is not a formality — the same check killed 0057's central premise, and
-0055's before it. Its own Sequencing section says so too.
+**0056 was preflighted 2026-08-01 and rewritten; it is ready for plan review.** Three of its numbers
+had gone stale (`TurnClosure`'s ceiling, and the ≥8 / ≥6 rows of its distribution table), and its
+Sequencing section justified its own ordering with a claim that was false: 0057 did *not* move
+`scripts/GameState.gd`, which is one of the four files it deliberately kept at root. None of the five
+existing ceiling entries moved at all. The ordering hazard was nonetheless real — it applied to the
+files 0056 will SEED, five of which got their current path on 2026-07-31. `docs/plans/` is excluded
+from the doc-anchor gate, so nothing flagged any of this; preflight did. That check has now corrected
+a premise in three consecutive plans.
 
 **Plans are ephemeral by contract.** A plan holds the design, the checklist, and progress notes
 *while the work is in flight*. It is not a reference: no durable fact may live only in a plan.
@@ -60,7 +64,7 @@ agent would need to read the plan to act, the closeout wasn't done.
 | 0031 | [Graduated port suppression](0031-graduated-port-suppression.md) | Medium (new mechanic; ROC-only, continuous port capacity, 0%-start default w/ deliberate golden re-baseline + deck refresh, JLSF repair vs off-island fires + IJFS-attritable HIMARS; DataOverrides wiring absorbed as step 0 — design calls settled) | Sketch |
 | 0033 | [Brigade organization](0033-brigade-organization.md) | Medium (new mechanic; USER intends to build on it — currently a monotonic decay to zero that nothing reads and the observation misdescribes; design calls open) | Sketch |
 | 0035 | [Scenario variant inheritance](0035-scenario-inheritance.md) | Medium (refactor; variants are full copies of the default, so "differs only in X" is unchecked — comparability is the research product) | Sketch |
-| 0039 | [One truth about where a battalion is](0039-battalion-location-single-truth.md) | Superseded — a derived ledger cannot catch the historical one-sided transition bug | **Superseded by 0044** |
+| 0039 | [One truth about where a battalion is](../archive/0039-battalion-location-single-truth.md) | Superseded — a derived ledger cannot catch the historical one-sided transition bug | **Superseded by 0044** |
 | 0040 | [CombatRules — stop hand-threading 26 fields](../archive/0040-combatrules-threading.md) | Medium (risk buydown; a field added but not threaded is a silently-inert knob, no gate watches it. Recommended path was the completeness validator ALONE — not the restructure) | **Complete 2026-07-26** — completeness validator shipped; deferred (a)/(b) |
 | 0041 | [One pattern for reaching an autoload](0041-autoload-access-one-pattern.md) | Low (ergonomics; the failure is already CAUGHT by validate_tool_script_purity — this makes the correct pattern obvious rather than remembered) | Sketch |
 | 0043 | [Anti-ship mutation authority + permanent launch destruction](../archive/0043-antiship-mutation-authority.md) | **High — first vertical slice + USER-ruled permanent launch destruction** | **Complete 2026-07-27** — `AntishipTransitions` sole writer; permanent launch destruction; no pin moved, no rebalance |
@@ -75,9 +79,9 @@ agent would need to read the plan to act, the closeout wasn't done.
 | 0053 | [Documentation hierarchy refactor (hub-and-spoke)](../archive/0053-doc-hierarchy-refactor.md) | Medium (developer experience; ~85% orientation token reduction) | **✅ Shipped 2026-07-29** — per-module STATUS/RETRO hierarchy; hub-and-spoke |
 | 0054 | [Reviewer tiers, one canonical home, one fan-out command](../archive/0054-reviewer-tiers-and-doc-consolidation.md) | Medium (agent workflow; USER tier model + 2-of-3 quorum on plan implementations) | **✅ Shipped 2026-07-30** — `.claude/REVIEWERS.md` canonical; `tools/review_fanout.sh` runs a round; `tools/validate_reviewer_facts.gd` gates one-home + launcher drift |
 
-| 0016 | [Separate State Data from Autoload](0016-separate-state-data.md) | Medium (hygiene/architecture) | Superseded by 0014 |
+| 0016 | [Separate State Data from Autoload](../archive/0016-separate-state-data.md) | Medium (hygiene/architecture) | Superseded by 0014 |
 | 0022 | [Red reactive beach-opening (feasibility first)](0022-red-beach-switching.md) | Medium (research; new mechanic, gated on a feasibility spike) | Sketch |
-| 0057 | [Give `scripts/` root a role layout](0057-scripts-root-role-layout.md) | Medium (hygiene; 40 files / 5,864 lines sit outside the role table entirely, so nothing can be wrong about where they are. Path-only but riskier than 0055 — 8 files are bound by path in `.tscn`/`project.godot`, where a miss fails at scene load, not compile) | **COMPLETE** (2026-07-31) |
+| 0057 | [Give `scripts/` root a role layout](../archive/0057-scripts-root-role-layout.md) | Medium (hygiene; 40 files / 5,864 lines sit outside the role table entirely, so nothing can be wrong about where they are. Path-only but riskier than 0055 — 8 files are bound by path in `.tscn`/`project.godot`, where a miss fails at scene load, not compile) | **COMPLETE** (2026-07-31) |
 | 0056 | [Make the coupling budget opt-out](0056-coupling-budget-opt-out.md) | Medium (risk buydown; dependency ceilings police 5 files of 167 because they are opt-in, while the parameter cap is opt-out and universal. Enforces only — fixes no coupling) | Sketch |
 
 ## Mutation-authority campaign — ARCHIVED (0042–0050, complete 2026-07-31)
