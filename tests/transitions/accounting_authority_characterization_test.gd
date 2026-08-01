@@ -207,22 +207,30 @@ func test_a_valid_jlsf_order_is_accepted() -> void:
 	assert_array(GameState.jlsf_orders).contains([_a_real_port_id()])
 
 
-## A REPEATED port id stays legal to preserve pre-existing behaviour, NOT because anything depends on
-## it. Diff review disproved the first draft's "load-bearing" claim, and the test below proves the
-## disproof: two buffered orders and one buffered order both emit exactly ONE pool entry, because
-## InfrastructureTransitions.queue_jlsf refuses the second occurrence. Rejecting duplicates at
-## planning time would therefore be an equivalent — but out-of-scope — behaviour change.
-func test_a_duplicate_jlsf_order_is_still_accepted() -> void:
-	GameState.add_jlsf_order(_a_real_port_id())
+## A REPEATED port id is REFUSED (USER call 2026-08-01). Until then it was accepted, purely to
+## preserve pre-existing behaviour — plan 0049's diff review disproved the first draft's claim that
+## anything depended on it, and the test below still proves that disproof: two buffered orders and one
+## buffered order both emit exactly ONE pool entry, because InfrastructureTransitions.queue_jlsf
+## refuses the second occurrence. That equivalence is precisely what makes refusing safe here: the
+## pool is unchanged, so only the feedback to the seat differs.
+func test_a_duplicate_jlsf_order_is_refused() -> void:
+	var first := GameState.add_jlsf_order(_a_real_port_id())
 	var second := GameState.add_jlsf_order(_a_real_port_id())
 
+	assert_bool(first.ok).is_true()
 	assert_bool(second.ok).override_failure_message(
-		"duplicate deploy_jlsf must stay legal — JlsfCargo's second pass depends on it"
-	).is_true()
-	assert_int(GameState.jlsf_orders.size()).is_equal(2)
+		"a duplicate deploy_jlsf must be refused rather than silently buffered"
+	).is_false()
+	assert_int(second.code).is_equal(OrderResult.Code.DUPLICATE_JLSF)
+	assert_int(GameState.jlsf_orders.size()).override_failure_message(
+		"the refused order must not reach the buffer"
+	).is_equal(1)
 
 
-## The disproof, end to end: a duplicated order does NOT double the cargo.
+## The disproof, end to end: a duplicated order does NOT double the cargo. Since 2026-08-01 the order
+## path can no longer PRODUCE a duplicate (check_jlsf_order refuses it), so this drives JlsfCargo
+## directly and is kept as defence in depth — it is the reason refusing duplicates was safe, and it
+## would catch a regression if the marker check in queue_jlsf were ever weakened.
 func test_two_buffered_jlsf_orders_emit_exactly_one_pool_entry() -> void:
 	var port_id := _a_real_port_id()
 	var single := JlsfCargo.queue_deployments(

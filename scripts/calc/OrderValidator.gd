@@ -141,13 +141,13 @@ static func check_air_insert_order(
 ## validation API at all — `GameState._apply_order` appended the raw port id — so it was the one order
 ## accepted outside PLANNING and with an id naming nothing. Both are checked here now.
 ##
-## A DUPLICATE port id is deliberately still legal, but only to PRESERVE EXISTING BEHAVIOUR — the old
-## bulk dispatcher appended anything, and rejecting a duplicate would be a behaviour change this plan
-## is not entitled to make. It is NOT load-bearing: diff review disproved the first draft's claim that
-## it was. `JlsfCargo.queue_deployments` calls `InfrastructureTransitions.queue_jlsf` per occurrence,
-## and the second call returns false because the marker is already set, so two buffered orders emit
-## exactly ONE pool entry — the same result one buffered order would give. Whether duplicates SHOULD
-## be rejected is an open design question for the USER, not a mechanic that depends on them.
+## A DUPLICATE port id is REFUSED (USER call 2026-08-01). Plan 0049 kept accepting duplicates only to
+## preserve existing behaviour — the old bulk dispatcher appended anything — while recording that
+## nothing depended on them: `JlsfCargo.queue_deployments` calls `InfrastructureTransitions.queue_jlsf`
+## per occurrence and the second call returns false because the marker is already set, so two buffered
+## orders emit exactly ONE pool entry. That disproof is what makes refusing them safe: the pool is
+## identical either way, so this changes what the SEAT IS TOLD, not what the game does. Before, a
+## redundant order vanished silently and `deploy_jlsf` was the one order kind with no duplicate code.
 static func check_jlsf_order(
 	state: GameStateData, store: GameDataStore, team: Brigade.Team, port_id: String
 ) -> OrderResult:
@@ -157,6 +157,8 @@ static func check_jlsf_order(
 		return OrderResult.reject(OrderResult.Code.TEAM_MISMATCH, "deploy_jlsf is a Red order")
 	if not store.infrastructure.has(port_id):
 		return OrderResult.reject(OrderResult.Code.UNKNOWN_INFRASTRUCTURE, "unknown infrastructure id '%s'" % port_id)
+	if port_id in state.jlsf_orders:
+		return OrderResult.reject(OrderResult.Code.DUPLICATE_JLSF, "Port already has a pending deploy_jlsf order this turn: %s" % port_id)
 	return OrderResult.accept()
 
 

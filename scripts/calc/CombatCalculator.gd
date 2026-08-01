@@ -210,6 +210,17 @@ static func _feba_shift(attacker_strength: float, defender_strength: float, feba
 	}
 
 
+## The force-ratio thresholds are a REPORT LABEL and nothing else (USER call 2026-08-01). They pick
+## which of three words the combat detail carries; they do not touch losses or FEBA movement, both of
+## which are computed from the raw strength balance above. That makes them the one pair of combat
+## knobs whose override changes the record without changing the game — which is why both are
+## `sweepable: false` in `data/knobs/registry.json`: a sensitivity study that swept them would report
+## "no outcome effect" and be right for the wrong reason. Scenario files may still set them (they are
+## scenario knobs); only the DataOverrides sweep path is closed off.
+##
+## Note the flag is ADVISORY: nothing reads `sweepable` at runtime — `tools/run_sweep.py` never
+## consults the registry — so it records intent rather than enforcing it. The enforcement item is in
+## `docs/plans/BACKLOG.md`.
 static func _result_label(ratio: float, rules: CombatRules) -> String:
 	if ratio >= rules.combat_attacker_advantage_ratio:
 		return "Attacker Advantage"

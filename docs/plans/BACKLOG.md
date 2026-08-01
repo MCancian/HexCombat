@@ -84,18 +84,6 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   requires adding `"team"` to the action schema, which is "new action-schema vocabulary" and explicitly
   out of that plan's scope. Fixing it means threading seat identity through `SelfPlayRunner` so a Green
   seat cannot claim Red. Worth doing before any research run where both seats are live LLMs.
-- [ ] **Reject a duplicate `deploy_jlsf` order with `DUPLICATE_JLSF` (USER call 2026-08-01 — DECIDED,
-  raised 2026-07-31).** Two buffered orders for one port emit exactly ONE pool entry —
-  `InfrastructureTransitions.queue_jlsf` returns `false` when `node.jlsf != JLSF_NONE` — so accepting
-  duplicates is harmless, and plan 0049 kept accepting them only to preserve pre-existing behaviour.
-  **The USER's call is to refuse the second at planning time**: same game outcome, but the player or
-  LLM seat is told the order was redundant instead of it vanishing silently, and `deploy_jlsf` stops
-  being the one order kind with no duplicate code. Add `DUPLICATE_JLSF` alongside `DUPLICATE_MOVE` /
-  `DUPLICATE_COMMIT` / `DUPLICATE_AIR_INSERT`. The characterization test that pins today's accepting
-  behaviour must be changed deliberately:
-  `tests/transitions/accounting_authority_characterization_test.gd::test_two_buffered_jlsf_orders_emit_exactly_one_pool_entry`.
-  Pool-entry count is unchanged either way, so no golden movement — this is an order-validation
-  change only.
 - [ ] **Order-kind dispatch lives in three places.** `GameState._apply_order`, `LLMGameAPI.apply_agent_response`
   and `schemas/llm_action_response.schema.json` each enumerate the order kinds independently. Adding
   `air_insert` (plan 0032) meant editing all three, and the duplication had already rotted: `deploy_jlsf`
@@ -174,29 +162,19 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   airframe landing in `apply_squadron_losses`, with no damaged, aborted or mission-killed state
   anywhere. A SAM target has three outcomes (destroyed / suppressed / unengaged); an aircraft has two.
   Design calls and scope are in the plan; this entry stays only until that plan ships.
-- [ ] **`combat_attacker_advantage_ratio` / `combat_defender_advantage_ratio` are REPORTING thresholds,
-  not combat math — mark them not-sweepable (USER call 2026-08-01 — DECIDED; found 2026-07-23, MC sweep
-  investigation).**
-  **Premise correction 2026-08-01 — the old wording here was wrong and would have sent someone hunting
-  for a bug that does not exist.** It said both knobs are "recorded but never reach `CombatResolver`"
-  and that "overriding them yields byte-identical games". They are not inert:
-  `CombatCalculator._result_label` reads both — force ratio `>= combat_attacker_advantage_ratio` gives
-  `"Attacker Advantage"`, `<= combat_defender_advantage_ratio` gives `"Defender Advantage"`, else
-  `"Contested"` — and that label ships in the combat detail, appears in
-  `docs/examples/llm_result_after_turn.json`, and is asserted by `tests/combat_golden_test.gd`. So an
-  override changes the record, and the games are NOT byte-identical. What the knobs genuinely do not
-  touch is losses and FEBA movement, both computed from the raw strength balance.
-  **The USER's call is that a label is all they should be.** So the defect is the metadata, not the
-  math: both are `"sweepable": true` in `data/knobs/registry.json`, which invites a sensitivity study
-  to treat a readout threshold as an outcome lever and then report false robustness when outcomes do
-  not move. Set them not-sweepable and say in the registry entry that they select a report label.
-  No combat math changes; no golden movement. The sweepable-override gate check below is the general
-  form of the same problem.
-- [ ] **Gate check: a `sweepable:true` registry knob whose override does not actually apply should fail
-  (found 2026-07-23, same investigation).** This would have caught the phantom `offload_beach_base_rate`
-  path and would catch the two inert combat ratios above without anyone having to notice by hand. Listed
-  separately from the knobs themselves because it is detector work, not a balance decision, and it stays
-  worth doing whichever way the USER calls those two.
+- [ ] **Nothing enforces `sweepable`, so the flag records intent and no more (measured 2026-08-01 while
+  marking the combat advantage ratios `false`).** `tools/run_sweep.py` never consults the knob registry;
+  the only code that touches the field is `tools/validate_knob_registry.gd`, which checks it is a bool
+  and that a `kind` knob is not sweepable. So a `sweepable:false` knob can still be swept via
+  `DataOverrides` and nothing complains. Two checks are wanted and they are NOT the same:
+  (a) **a `sweepable:true` knob whose override does not actually apply should fail** — this is the
+  original 2026-07-23 item, and it would have caught the phantom `offload_beach_base_rate` path;
+  (b) **a `sweepable:false` knob that is swept anyway should be refused** — which is what would make
+  the advantage-ratio decision real rather than advisory.
+  **Note (a) would NOT have caught the advantage ratios**, which is why both checks are listed: their
+  override *does* apply — it changes the `result` label in the record. A check that only asks "did
+  anything move?" sees them move and passes. Only (b) expresses "this knob must not be a study
+  variable".
 - [ ] **`UnitStats.FALLBACK_CATEGORY_DEFS` reachability is unknown.** 90 entries, and NO composition entry in
   either OOB declares a `category` — the table is reachable only through `_fallback_category_for_type`'s
   type-name heuristics. Plan 0032 anchored two new airborne strengths on entries that were dead until

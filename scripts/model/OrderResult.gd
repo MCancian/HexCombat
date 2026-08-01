@@ -29,6 +29,7 @@ enum Code {
 	DUPLICATE_AIR_INSERT,
 	# JLSF deployment (plan 0049 — this order had no validation API before then)
 	UNKNOWN_INFRASTRUCTURE,
+	DUPLICATE_JLSF,
 	# Bulk/scripted entry only: the order spec named a kind that does not exist.
 	UNKNOWN_ORDER_KIND,
 }

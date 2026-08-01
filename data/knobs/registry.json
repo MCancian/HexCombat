@@ -278,16 +278,16 @@
     {
       "id": "combat_attacker_advantage_ratio",
       "path": "scenario:combat_attacker_advantage_ratio",
-      "label": "Combat Attacker Advantage Ratio",
+      "label": "Combat Attacker Advantage Ratio (report-label threshold)",
       "group": "combat",
-      "sweepable": true
+      "sweepable": false
     },
     {
       "id": "combat_defender_advantage_ratio",
       "path": "scenario:combat_defender_advantage_ratio",
-      "label": "Combat Defender Advantage Ratio",
+      "label": "Combat Defender Advantage Ratio (report-label threshold)",
       "group": "combat",
-      "sweepable": true
+      "sweepable": false
     },
     {
       "id": "default_combat_strength",

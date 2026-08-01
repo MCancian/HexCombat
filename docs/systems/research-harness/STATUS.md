@@ -83,6 +83,10 @@ Culminates" + `tools/mc_chart.py --crossing`; spec `tools/sweeps/mc_offload_thro
 a registry bug in the process: `offload_beach_base_rate` pointed at the phantom `offload_rates.json`
 (never loaded at runtime — throughput is `OffloadRates` constants; the JSON is only a validation
 mirror), so its sweep silently no-op'd; repointed to the real `beaches[*].offload_rate`, and marked
-`offload_operational_port_rate` `sweepable:false` (dump-only code constant). Still open:
-`combat_{defender,attacker}_advantage_ratio` are registry knobs recorded but inert (don't reach
-`CombatResolver`).
+`offload_operational_port_rate` `sweepable:false` (dump-only code constant).
+`combat_{defender,attacker}_advantage_ratio` were recorded here as "inert (don't reach
+`CombatResolver`)" — **that was wrong, corrected 2026-08-01.** `CombatCalculator` reads both to pick
+the combat detail's `result` label ("Attacker Advantage" / "Contested" / "Defender Advantage"), which
+ships in the record and is asserted by `tests/combat_golden_test.gd`; an override is therefore not
+byte-identical. What they do not touch is losses and FEBA movement. USER call: a label is all they
+should be, so both are now `sweepable:false` — the knob is dump-only, scenario files may still set it.

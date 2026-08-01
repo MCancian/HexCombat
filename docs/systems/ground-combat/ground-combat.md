@@ -68,6 +68,9 @@ Resolve ground combat when Red and Green brigades occupy the same hex after move
   ```
 
 **Result label**: `ratio ≥ 1.2 → "Attacker Advantage"`, `ratio ≤ 0.85 → "Defender Advantage"`, else `"Contested"`.
+Both thresholds are scenario knobs (`combat_attacker_advantage_ratio` / `combat_defender_advantage_ratio`,
+defaults shown). They select this label and nothing else — losses and FEBA movement come from the raw
+strength balance above — which is why both are `sweepable: false`; see `CombatCalculator._result_label`.
 
 ## 4. Casualty selection
 

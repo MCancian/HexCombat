@@ -134,8 +134,12 @@ knob-space and be compared. Adding a knob is a deliberate one-line entry here (n
   `llm_sidecar.py` into the JSONL log (capture-only; prompt-variant *files* are a follow-up).
 - **`sweepable`:** `true` = overridable via `DataOverrides` — **scalars and array knobs alike**
   (array knobs fan out, so `run_sweep.py --knob "data/beaches.json:beaches[*].capacity_battalions"
-  --values 2,4,6` scales all nine beaches at once). `false` = dump-only (only the two capture `kind`
-  knobs today).
+  --values 2,4,6` scales all nine beaches at once). `false` = dump-only — the two capture `kind`
+  knobs, `offload_operational_port_rate` (a code constant the JSON only mirrors), and the two
+  `combat_*_advantage_ratio` thresholds, which select a report label and touch no combat math
+  (USER call 2026-08-01; the fact lives on `CombatCalculator._result_label`). **The flag is
+  advisory** — nothing reads it at runtime, so it records intent; the enforcement item is in
+  `docs/plans/BACKLOG.md`.
 - **Validator:** `tools/validate_knob_registry.gd` (in the gate) proves structure + that every
   path knob resolves against the default scenario — catches typos and the silent-default class.
   A scenario knob absent from the default (code-default applies) resolves null and is allowed.
