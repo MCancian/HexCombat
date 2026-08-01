@@ -192,7 +192,41 @@ engaged aircraft has **two**. RTB is the missing third outcome and the mirror of
 airframe survives but stops contributing today. That symmetry is why this is a mechanic rather than a
 bolt-on, and it is the shape the implementation should follow.
 
-### The four design calls — USER, before any code
+### USER answers, 2026-08-01 — three of four settled
+
+1. **What does an abort cost?** — *"An aborted aircraft doesn't fly its mission."* So RTB is a
+   same-day availability effect, not campaign attrition: `alive` is untouched, the airframe is out for
+   the rest of today, back tomorrow.
+2. **Who can abort?** — *"Both strike and SEAD aircraft."* This matches the MANPADS role filter, which
+   already contests "SEAD + strike roles" only.
+3. **How likely?** — *"An abort is twice as likely as a kill."* `RTB_FACTOR = 2.0`, applied to the same
+   per-airframe loss probability each source already computes.
+4. **Which sources?** — the third is the island-wide MANPADS contest; still open, see below.
+
+### Two consequences of those answers, found while identifying the third source
+
+**(a) Two of the three sources would produce an INERT number.** Phase order in `IjfsEngine.run_daily`
+is: SEAD engagement (return fire hits squadrons) → **`OrganicStrikeBudget` computed from the force** →
+detection → strike phase → MANPADS contest → free shot. The strike budget is the ONLY consumer of
+availability, and it is computed before MANPADS and the free shot ever fire. So under "an aborted
+aircraft doesn't fly its mission", only a **SEAD-return-fire** abort changes anything today; aborts
+drawn in MANPADS or the free shot happen after the mission is already flown and would be recorded but
+mechanically inert — the exact pattern of the two inert combat knobs corrected earlier today. Either
+draw aborts on SEAD return fire alone, or let an abort carry into the NEXT day so all three bite.
+
+**(b) "Strike and SEAD" is a ROLE filter, and the roles cut across manned/unmanned.** By role:
+
+| role | manned | unmanned | total |
+|---|---|---|---|
+| strike | 360 | 60 (Decoys) | 420 |
+| sead | 48 (J-16D) | 48 (HARM) | 96 |
+| isr | 0 | 68 (HALE/MALE/Stealth) | 68 |
+
+So the rule as stated lets **516 airframes** abort, including 60 Decoys and 48 HARM — both unmanned,
+and both arguably expendable systems for which "returns to base" is the wrong idea — while excluding
+all 68 ISR. Needs a USER ruling before implementation.
+
+### The original four design calls (kept for context)
 
 1. **What does RTB cost?** Natural reading: aborted the sortie, alive, unavailable for the rest of
    today, back tomorrow — a strike-capacity effect with no campaign attrition. Alternatives:
