@@ -1,6 +1,6 @@
 # LLM Observation and Action Schema
 
-Canonical human-readable reference for the JSON-style API exposed by `scripts/LLMGameAPI.gd`.
+Canonical human-readable reference for the JSON-style API exposed by `scripts/api/LLMGameAPI.gd`.
 
 Machine-readable schemas live in:
 

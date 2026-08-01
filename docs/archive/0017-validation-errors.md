@@ -54,7 +54,7 @@ method fed a bad hex), not user-order validation — leave it as `push_error`. M
 **Callers of the two migrated methods:**
 - `scripts/GameState.gd:182,192` — thin `void` delegating wrappers (`add_move_order`,
   `add_commit_order`); also invoked from `GameState._apply_order` (lines 387/389).
-- `scripts/LLMGameAPI.gd:142,155` — the before/after count workaround to be deleted.
+- `scripts/api/LLMGameAPI.gd:142,155` — the before/after count workaround to be deleted.
 
 **Tests asserting validation `is_push_error` (migration targets):**
 `tests/composition_test.gd` (6), `tests/movement_test.gd` (3), `tests/game_state_test.gd` (4).

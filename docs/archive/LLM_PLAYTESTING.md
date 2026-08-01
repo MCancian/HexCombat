@@ -26,7 +26,7 @@ This avoids brittle mouse automation while still allowing screenshots when visua
 
 ## Added LLM playtesting tools
 
-- `scripts/LLMGameAPI.gd` — JSON-style observation builder and action applier for `move`, `commit`, and `end_turn` commands. It routes actions through `GameState` rather than mutating state directly. `end_turn.seed` is required for reproducibility.
+- `scripts/api/LLMGameAPI.gd` — JSON-style observation builder and action applier for `move`, `commit`, and `end_turn` commands. It routes actions through `GameState` rather than mutating state directly. `end_turn.seed` is required for reproducibility.
 - `tools/validate_llm_api.gd` — headless gate validation for the LLM API; confirms observations expose required keys/legal moves, examples parse/apply, movement-mode keys serialize as `tactical`/`administrative`, and missing seeds are rejected.
 - `tools/export_llm_observation.gd` — on-demand fixture/export helper for generating observation JSON for docs, prompts, or harness input.
 - `tools/capture_screenshot.gd` — windowed/display-backed screenshot capture for `scenes/Main.tscn`; saves PNG artifacts for human review or multimodal LLM prompts.

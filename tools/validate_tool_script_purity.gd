@@ -2,7 +2,7 @@
 # godot --headless --path . -s res://tools/validate_tool_script_purity.gd
 extends SceneTree
 
-# Guards the load-bearing invariant documented at the top of scripts/LLMGameAPI.gd, for EVERY script
+# Guards the load-bearing invariant documented at the top of scripts/api/LLMGameAPI.gd, for EVERY script
 # it actually applies to — not just that one file.
 #
 # THE INVARIANT: a `-s` SceneTree tool script is loaded BEFORE the autoload singletons are registered

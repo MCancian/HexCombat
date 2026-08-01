@@ -21,10 +21,10 @@ Six converters, all mapping `GREEN → "Green"`, else `"Red"`:
 | `scripts/GameData.gd:729` | `_team_to_string` | content autoload |
 | `scripts/GameController.gd:154` | `_team_to_string` | UI |
 | `scripts/InfoPanel.gd:91` | `_team_to_string` | UI |
-| `scripts/LLMGameAPI.gd:404` | `_team_to_string` (static) | API |
+| `scripts/api/LLMGameAPI.gd:404` | `_team_to_string` (static) | API |
 | `scripts/TurnEventLog.gd:67` | `_team_str` (static) | event log |
 
-Inverse (string→Team): `scripts/LLMGameAPI.gd:393` `_parse_team_string`.
+Inverse (string→Team): `scripts/api/LLMGameAPI.gd:393` `_parse_team_string`.
 
 ## ⚠️ Scope exclusion — the lowercase mapping is different
 

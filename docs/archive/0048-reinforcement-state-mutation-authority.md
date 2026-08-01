@@ -79,13 +79,13 @@ are the complete set. `.history` has no direct assignment anywhere; row 2 is its
 
 Nothing assigns through the `GameState` forwarding properties: `GameState.air_insertion_state = …`,
 `GameState.mobilization_state = …` and their `_game_state()` equivalents are ABSENT from `scripts/`,
-`tools/` and `tests/`; every use is a read (`scripts/LLMGameAPI.gd:351`, `:381`;
+`tools/` and `tests/`; every use is a read (`scripts/api/LLMGameAPI.gd:351`, `:381`;
 `tools/validate_mobilization.gd:102`; `tools/validate_air_insertion.gd:100`, `:144`). Rows 5 and 7 can
 therefore simply be deleted. `tests/air_insertion_order_test.gd:28` looks like a counter-example and is
 not one: its receiver is a standalone `GameStateData.new()` (`:26`), not the autoload, so the setter
 deletion does not reach it and that fixture stays as it is.
 
-No writer exists in `tools/`. `scripts/LLMGameAPI.gd:392/393/397` **reads** `caps`, `initial_caps` and
+No writer exists in `tools/`. `scripts/api/LLMGameAPI.gd:392/393/397` **reads** `caps`, `initial_caps` and
 `history` and duplicates them into the observation; it writes none of them.
 
 ### 1.4 `first_turn` stays excluded; `initial_caps` is claimed

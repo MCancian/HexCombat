@@ -10,7 +10,7 @@ The protocol is intentionally evolving. Keep docs, examples, and code synchroniz
 
 Current implementation targets:
 
-- `scripts/LLMGameAPI.gd` is the Godot-side public protocol surface.
+- `scripts/api/LLMGameAPI.gd` is the Godot-side public protocol surface.
 - `tools/validate_llm_api.gd` already exists and should be expanded, not replaced.
 - `tools/export_llm_observation.gd` is an on-demand fixture/export tool, distinct from the validator.
 

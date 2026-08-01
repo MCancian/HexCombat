@@ -83,7 +83,7 @@ aggregate at scenario reset. `GameStateData.infrastructure_state` is registered 
 ### The 14 aliased node locals that must be retyped
 
 Typing the node turns every `var node: Dictionary = …nodes[id]` into a runtime type error if missed.
-The complete list (`agy` pass, verbatim): `scripts/JlsfCargo.gd:92,98`; `scripts/LLMGameAPI.gd:229`;
+The complete list (`agy` pass, verbatim): `scripts/JlsfCargo.gd:92,98`; `scripts/api/LLMGameAPI.gd:229`;
 `scripts/model/InfrastructureState.gd:36,37`; `scripts/phases/ReinforcementPhases.gd:178`;
 `scripts/resolvers/InfrastructureResolver.gd:24,25,67,68`;
 `tools/validate_headless_infrastructure.gd:46,57,67,79`.
@@ -326,7 +326,7 @@ Each step ends with a green `bash tools/run_all_tests.sh`.
    shape for both models. These must pass BEFORE any refactor.
 2. **Rename `HexState.owner` → `hex_owner`.** Mechanical, `to_dict` key unchanged. Own commit, so
    any golden movement is unambiguous. Readers to update include `scripts/InfoPanel.gd:48` and
-   `scripts/LLMGameAPI.gd:297` alongside `HexMap`, `ReinforcementPhases`, `TurnConductor`,
+   `scripts/api/LLMGameAPI.gd:297` alongside `HexMap`, `ReinforcementPhases`, `TurnConductor`,
    `GameData`, and the two `tools/` validators.
 3. **Type the infrastructure node.** Introduce `InfrastructureNodeState`; convert the builder, the
    resolver, `JlsfCargo`, `ReinforcementPhases`, `LLMGameAPI`, the validator and both suites. All 14

@@ -172,7 +172,7 @@ loss-rate/FEBA formulas).
 
 ## 6. Observation surfacing
 
-`LLMGameAPI._occupied_hex_observations()` (`scripts/LLMGameAPI.gd`) adds a `"terrain"` key
+`LLMGameAPI._occupied_hex_observations()` (`scripts/api/LLMGameAPI.gd`) adds a `"terrain"` key
 (the class name string, `""` if unclassified) to every `occupied_hexes` entry — documented in
 `docs/LLM_OBSERVATION_SCHEMA.md`'s Occupied hex object table. No JSON-schema change was needed:
 `occupied_hexes` is an untyped array in `schemas/llm_observation.schema.json`.

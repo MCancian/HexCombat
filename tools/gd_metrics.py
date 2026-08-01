@@ -105,7 +105,7 @@ PARAM_CEILINGS = {
     "scripts/calc/CombatCalculator.gd::_select_casualties": 6,
     "scripts/calc/CombatCalculator.gd::resolve_map_attack": 8,
     "scripts/interleaved/JlsfCargo.gd::queue_deployments": 7,
-    "scripts/LLMGameAPI.gd::_action_result": 6,
+    "scripts/api/LLMGameAPI.gd::_action_result": 6,
     "scripts/OffloadCalculator.gd::_resolve_day_n": 10,
     "scripts/OffloadCalculator.gd::resolve_offload_day": 9,
     "scripts/builders/SealiftStateBuilder.gd::build": 6,

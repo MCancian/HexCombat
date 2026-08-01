@@ -64,7 +64,7 @@ cannot fly while the rest of the formation sails.
 | `scripts/calc/CleanupResolver.gd` | `census()` subtracts battalions not yet ashore — from the ship reserve **and** the air pool. |
 | `scripts/builders/SealiftStateBuilder.gd` | Excludes air-lifted brigades from the follow-on auto-seed (the corps never queues for a hull). |
 | `scripts/policies/AirAssaultPolicy.gd` | Policy id `air_assault`: selfplay_default plus the standing airborne doctrine. |
-| `scripts/LLMGameAPI.gd` | `_air_insertion_observation()` + the `air_insert` action. |
+| `scripts/api/LLMGameAPI.gd` | `_air_insertion_observation()` + the `air_insert` action. |
 | `tools/validate_air_insertion.gd` | End-to-end gate coverage on `red_airborne`. |
 | `tests/air_insertion_resolver_test.gd`, `tests/air_insertion_builder_test.gd`, `tests/air_insertion_order_test.gd` | Pure unit coverage: caps, attrition, cap erosion, order legality, supply corridor. |
 | `tests/transitions/air_insertion_transitions_test.gd`, `tests/transitions/air_insertion_authority_characterization_test.gd` | The authority's own refusals, and the whole-phase behaviours plan 0048 routed through it. |

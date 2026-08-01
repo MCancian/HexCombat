@@ -423,7 +423,7 @@ caveat is resolved.
   walk. Verified: 2-value × 2-common-seed smoke sweep → 4/4 games, one report row per value.
 
 - **2026-07-02 — Research harness B4: narrative renderer (`GameNarrative` +
-  `make_game_narrative`).** Pure `scripts/GameNarrative.gd` renders one per-game record's
+  `make_game_narrative`).** Pure `scripts/api/GameNarrative.gd` renders one per-game record's
   turn_digests/event log into a turn-by-turn Markdown account for a wargaming researcher (IJFS
   strikes + destroyed-by-category + integrated-air-defense degradation before→after, the
   crossing with ships sailed/destroyed + BNs lost at sea, maneuver/commitment orders, per-hex
@@ -437,7 +437,7 @@ caveat is resolved.
   PHASES GREEN (44 suites).
 
 - **2026-07-02 — Research harness B3: outcome reports (`BatchReport` + `make_batch_report`).**
-  Aggregation and Markdown rendering live in pure `scripts/BatchReport.gd` statics
+  Aggregation and Markdown rendering live in pure `scripts/api/BatchReport.gd` statics
   (`aggregate(records)` → per-condition dict keyed `scenario|policy`; `render_markdown`)
   with `tests/batch_report_test.gd` over synthetic records; `tools/make_batch_report.gd` is the
   thin file-I/O wrapper (`--batch=<name-or-dir>` → `report.md`). Report shape per the
@@ -847,7 +847,7 @@ caveat is resolved.
   2026-06-28 — Option B".
 
 - **2026-06-28 — Track E: reusable self-play runner + pluggable policy (via opencode).** Extracted the
-  self-play loop into `scripts/SelfPlayRunner.gd` (`static play_game(policy: Callable, turns, base_seed) ->
+  self-play loop into `scripts/api/SelfPlayRunner.gd` (`static play_game(policy: Callable, turns, base_seed) ->
   {final_snapshot, turn_digests, all_resolved, final_turn, index_violations}`) and `scripts/policies/SelfPlayPolicy.gd`
   (RefCounted reference policy with the `build_actions(observation) -> Array` contract a real agent
   implements), and rewrote `tools/validate_headless_selfplay.gd` (133→75 lines) to delegate to them — all

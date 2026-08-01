@@ -687,7 +687,7 @@ byte-stable both. The trivial policy drives combat in all 4 turns.
 ## 2026-06-28 — selfplay-runner: reusable runner + pluggable policy extraction   (implementer: opencode deepseek-v4-flash-free)
 
 The agent-vs-agent foundation follow-up flagged by the selfplay-harness retrospective. Brief: extract the
-self-play loop into scripts/SelfPlayRunner.gd + scripts/policies/SelfPlayPolicy.gd and rewire the validator to use
+self-play loop into scripts/api/SelfPlayRunner.gd + scripts/policies/SelfPlayPolicy.gd and rewire the validator to use
 them, LEAVING the golden validator untouched. Pure refactor; behavior preserved. Gated independently
 (validator PASS twice cross-process, identical "combat in 4 turns"; full gate ALL PHASES GREEN — clean run;
 golden 20260624 → casualties=2, feba=0.76 byte-stable).

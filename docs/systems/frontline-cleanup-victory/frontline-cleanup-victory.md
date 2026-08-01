@@ -20,7 +20,7 @@ Front-line is user-driven (requires a drawn polyline). Cleanup + victory are aut
 | `scripts/GameData.gd` | `recompute_hex_ownership()` (a façade onto `MapTransitions`), `hex_states` dict, `victory_config` from scenario. | TIV `cleanup_hex_service.py` — `update_hex_ownership` per hex (DB persistence). |
 | `scripts/GameState.gd` / `scripts/phases/TurnClosure.gd` / `scripts/phases/FrontlinePhase.gd` | `GameState` exposes `resolve_frontline_phase()` / `resolve_cleanup_phase()` and holds `game_over`/`winner`; `FrontlinePhase` and `TurnClosure` own phase application, including `TurnClosure.taiwan_battalion_census()`. | TIV `cleanup_application_service.py` + `cleanup_calculator.py` (system reset). |
 | `scripts/model/TurnResult.gd` | `game_over: bool`, `winner: String` (lines 13–14). | N/A |
-| `scripts/LLMGameAPI.gd` | Exposes `game_over`/`winner` in observation (lines 42–43). | N/A |
+| `scripts/api/LLMGameAPI.gd` | Exposes `game_over`/`winner` in observation (lines 42–43). | N/A |
 | `data/scenarios/scenario_default.json` | `victory` block: `loss_check_arm`, `taiwan_hexes` (lines 7–11). | N/A |
 
 ## 3. Front-line service (`FrontLineService.gd`)

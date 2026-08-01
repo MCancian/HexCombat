@@ -27,7 +27,7 @@ sealift model instead of a one-shot pool.
 
 Crossing is **100% engine-scheduled** — there is no player "crossing" order (that part is correct):
 
-- `scripts/LLMGameAPI.gd:68–86` accepts only `move`, `commit`, `end_turn`. No crossing/landing/
+- `scripts/api/LLMGameAPI.gd:68–86` accepts only `move`, `commit`, `end_turn`. No crossing/landing/
   reinforce action exists, so "Red never issues a crossing order" is by design, not a bug.
 - `scripts/resolvers/AntishipResolver.gd:44` — *"The crossing wave = BNs still at sea. No wave →
   no anti-ship phase."* Each turn every battalion still in `ship_reserve` auto-crosses; survivors

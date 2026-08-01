@@ -49,7 +49,7 @@ Retire the bespoke, stdout-only GDScript sweeps and the Windows-only `run_sweep.
   (`games/*.json` + `manifest.json` + `report.md`), checkpointing via `read_valid_record` (:85),
   report via `tools/make_batch_report.gd`. Guarded by `tools/validate_batch_runner.py` in the gate.
 - **Selfplay runner seeding convention:** turn seed = `base_seed + turn_index`
-  (`scripts/SelfPlayRunner.gd:99-101`); `tools/run_selfplay_game.gd` uses `play_game_seats(...,
+  (`scripts/api/SelfPlayRunner.gd:99-101`); `tools/run_selfplay_game.gd` uses `play_game_seats(...,
   stop_on_game_over=true)`. The CRBM sweep instead runs a **fixed 40-turn horizon** (no early
   stop, same convention as `validate_golden_victory.gd`) with the same per-turn seeding — so a
   `--run-past-game-over` flag on `run_selfplay_game.gd` closes the convention gap.

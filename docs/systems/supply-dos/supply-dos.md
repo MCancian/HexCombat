@@ -15,7 +15,7 @@ Red DOS (Days Of Supply) models consumable supply for PLA brigades that have **l
 | `scripts/calc/CombatCalculator.gd` | Reads `supply_effectiveness` from unit dict — this is where a depleted pool would penalise combat. |
 | `scripts/model/Brigade.gd` | Model class. Initialises each BN's `supply_effectiveness: 1.0`. |
 | `scripts/EventBus.gd` | Fires `supply_updated(summary: Dictionary)` so views/logs can react. |
-| `scripts/LLMGameAPI.gd` | Exposes `supply_state` in `get_observation()` via `_supply_state_observation()`. |
+| `scripts/api/LLMGameAPI.gd` | Exposes `supply_state` in `get_observation()` via `_supply_state_observation()`. |
 
 ## 3. Constants (`scripts/calc/DosConsumption.gd`)
 
