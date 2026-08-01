@@ -275,6 +275,27 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
 precondition that would move it up into the open list; without that precondition, opening a plan for
 one means scheduling an unbounded refactor or re-litigating a decision that was already made.)*
 
+- **A typed turn-resolution outcome carrying all phase reports — proposed by the tier-1 reviewer during
+  plan 0059's review, and MEASURED DOWN rather than adopted (2026-08-01).** The idea: instead of each
+  phase writing a report onto `GameStateData` and `GameState.play_turn` reading eleven fields back out,
+  `TurnConductor` returns one typed outcome carrying them all. It is a genuinely better shape in the
+  abstract, and it is **not worth doing here** for a reason that only shows up when you count the
+  fields. Of the eleven `phase_output` fields on `GameStateData`:
+  - **Five are read by `LLMGameAPI` at PLANNING time, between turns** — `last_ijfs_summary`,
+    `last_antiship_summary`, `last_combat_summaries`, `last_contested_hexes`, `last_ijfs_writeback`.
+    A resolution outcome exists only from resolve until `play_turn` returns; these are read long after
+    that, when a seat builds its next observation. **They must stay on the state whatever happens**, so
+    a typed outcome cannot replace them — it runs in parallel with them.
+  - **Seven are read by a later phase**, which is genuine cross-phase state; the architecture contract
+    routes exactly that through `GameStateData` fields on purpose.
+  - **Three are transport-only** — `last_offload_summary` (read by nothing but `play_turn`),
+    `last_air_insertion_summary` and `last_mobilization_summary` (read only by `TurnEventLog`).
+  So the refactor cleans up three fields, cannot touch five, and adds a second transport mechanism
+  alongside the one it failed to remove — across every phase, `TurnConductor` and `play_turn`.
+  **Unblocks when:** the transport-only set grows materially (say past half), or the observation API
+  stops reading phase reports off the state between turns. Plan 0059's `last_ijfs_air_oob` is a twelfth
+  field in the transport-only group; it does not make this refactor harder, and folds into it if it is
+  ever built.
 - **Mutation-authority protection reaches only TYPED receivers, so state passed through an untyped
   `Dictionary`/`Array` is unprotected and the gate cannot say so (standing limit, restated 2026-07-31;
   NOT a defect to fix, a rule to follow).** The enforcement gate judges a write by resolving the
