@@ -13,6 +13,51 @@ created: "2026-08-01"
 > balance ruling the USER has reserved. The plan-review round does not substitute: reviewers can check
 > whether the consequences are stated correctly, not which consequence is wanted.
 
+## MEASURED 2026-08-01 — the question is not moot, and it is almost entirely about MANPADS
+
+The cheapest item below was done first, because it was the one that could retire the plan. It did not.
+
+**10 games × 12 IJFS days, scenario_default:**
+
+| source | position | airframes lost |
+|---|---|---|
+| SEAD return fire | **before** the strike budget | 116 |
+| MANPADS contest | **after** the strike | 133 |
+| post-phase-2 free shot | **after** the strike | 4 |
+| | **total** | **253** |
+
+**54.2% of Red's air losses happen after the aircraft has already flown its mission.** So the effect
+being argued about is a majority of all air attrition, not a rounding error.
+
+Two things that change the shape of the decision:
+
+1. **The free shot is negligible — 4 losses, 1.6% of the total.** That matters because the free shot is
+   the hard case: its post-strike position is definitional, not incidental (see below). Since it barely
+   fires, **the decision reduces almost entirely to MANPADS**, which is the one that is cleanly
+   movable. The awkward half of the question is worth ~1.6% of air losses.
+2. **The multi-day prelanding warmup produces ZERO air attrition** — turn 1 was 0/0/0 across all ten
+   seeds. `IjfsResolver.build_warmup_context` reads `ad_attrition_enabled` from the scenario's
+   prelanding rules and **defaults it to `false`**, so every air loss in a campaign comes from turn 2
+   onward. Whether the warmup *should* attrit Red air is a separate USER question this plan did not set
+   out to ask, and it may matter more than the ordering does.
+
+**Method, so it can be rebuilt** (the throwaway script was deleted; `tools/` is inside the gate's
+compile closure and must not accumulate scratch): drive `GameState.resolve_ijfs_turn` directly per
+seed, summing the `losses` field of `contest_log` (SEAD return fire), `manpads_contest_log` and
+`free_shot_log` from the returned ledgers.
+
+**Two traps this measurement hit, for whoever redoes it at larger scale:**
+
+- **Check the identity, do not trust the sum.** Summed log losses must equal
+  `initial - alive` over the force. The first run reported a mismatch, which turned out to be a flaw in
+  the *check* — `alive` was sampled before the lazily-built IJFS state existed, so the baseline was 0.
+  Once fixed: 253 = 253, MATCH. Without that identity the count would have been believable and unproven.
+- **Driving `resolve_ijfs_turn` in a loop does not advance the turn.** `advance_day` sets
+  `_ijfs_day = turn_number`, and `turn_number` only moves when a real turn is played — measured,
+  `_ijfs_day` stayed `1` for all twelve calls. Call 1 takes the warmup branch, calls 2-12 each resolve
+  one plain day via `carry_to_next_day`, so distinct days DO resolve; but there is no ground combat and
+  no target churn. **Treat the SHARE as the finding and the absolute numbers as indicative only.**
+
 ## What to bring to that session
 
 The design calls are in "Design calls for the USER" below. What would make the session decide rather
@@ -25,12 +70,12 @@ than speculate is **evidence that does not exist yet**:
 - **The per-turn air force curve** from [[0059-sam-interception-and-rtb]] step 1 (shipped): every turn
   record now carries the per-squadron OOB, so "how much air does Red have left by turn N" is now
   answerable and should be answered for both orderings.
-- **How many airframes currently die AFTER striking** — i.e. the size of the effect being argued
-  about. Countable today from `manpads_contest_log` + `free_shot_log` against `contest_log`, with no
-  code change at all. If it is small, the whole question is moot; nobody has measured it.
+- ~~**How many airframes currently die AFTER striking**~~ — **DONE 2026-08-01, see above: 54.2%.**
+  The plan is not moot and the session is warranted.
 
-The third item is cheap and should be done first: it is the one that can retire the plan without a
-session.
+Bring the two questions the measurement raised, which are arguably bigger than the one this plan
+opened with: whether the free shot is worth moving at all given it accounts for 1.6% of air losses,
+and whether the prelanding warmup should attrit Red air at all, since today it does not.
 
 ## Motivation (USER question 2026-08-01, out of plan 0059)
 
