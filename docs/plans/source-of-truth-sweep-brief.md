@@ -62,7 +62,7 @@ For each modelled entity, state:
   turn has already resolved wrongly; a validator that runs in the gate detects at commit time.
 - **Whether the guard has ever been seen to fire.** A check nobody has watched go red is not evidence.
 
-Be exhaustive about where to look: `scripts/model/`, `scripts/resolvers/`, `scripts/GameData.gd`,
+Be exhaustive about where to look: `scripts/model/`, `scripts/calc/`, `scripts/interleaved/`, `scripts/GameData.gd`,
 `scripts/GameState.gd`, `scripts/model/GameStateData.gd`, the `tools/validate_*.gd` family, and the
 serialization surfaces (`scripts/LLMGameAPI.gd`, `docs/examples/*.json`, `schemas/*.schema.json`).
 

@@ -81,7 +81,7 @@
         },
         "last_cleanup_summary": {
           "classification": "phase_output",
-          "why": "The cleanup phase's record for the turn just resolved. Replaced wholesale by the phase that produced it, which then reads it straight back in the SAME function to latch game_over and winner off it (TurnClosure.gd:72-75) — so it is not a cross-phase handoff, but it is not write-only either. It stays unprotected because the authoritative state it describes lives elsewhere and this is a report of it."
+          "why": "The cleanup phase's record for the turn just resolved. Replaced wholesale by the phase that produced it, which then reads it straight back in the SAME function to latch game_over and winner off it (TurnClosure.gd:55-58) — so it is not a cross-phase handoff, but it is not write-only either. It stays unprotected because the authoritative state it describes lives elsewhere and this is a report of it."
         }
       }
     },
@@ -813,7 +813,7 @@
       ],
       "construction_writers": [
         {
-          "path": "res://scripts/ijfs/IjfsLoaders.gd",
+          "path": "res://scripts/loaders/IjfsLoaders.gd",
           "why": "Builds FRESH target/munition/squadron rows from the content files before anything holds them, and enriches SAM scores on rows still inside IjfsStateBuilder.build. It never accepts live campaign state.",
           "fields": [
             "IjfsTarget.target_id",

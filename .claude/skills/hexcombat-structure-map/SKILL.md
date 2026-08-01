@@ -74,7 +74,7 @@ campaign state is *supposed* to change, so most hits are correct code. Compare e
 |---|---|
 | `scripts/phases/` | **Yes** — ordering those calls is the entire job. It is normal for these files to hold the most hits in the repo by a wide margin. |
 | `scripts/transitions/` | They *are* the authorities. |
-| `scripts/ijfs/` | **Yes** — its claim is "computes AND applies at its own draw point". |
+| `scripts/interleaved/` | **Yes** — its claim is "computes AND applies at its own draw point". |
 | `scripts/calc/` | **No.** Its claim is that it applies nothing. A hit here is a finding. |
 | `scripts/builders/`, `loaders/`, `model/` | **No.** |
 

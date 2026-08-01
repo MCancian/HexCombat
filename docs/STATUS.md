@@ -15,15 +15,14 @@ RNG — enforced by a validator). RNG is **hierarchical** (`Dice.derive(salt)`):
 spawns independent substreams per phase and per contested hex (`ijfs:<turn>:<day>`,
 `antiship:<turn>`, `combat:<turn>:<hex_id>`), so a roll-count change in one phase or hex never
 scrambles another's dice (`ScriptedDice.derive` returns self, so scripted fixtures are unaffected). `GameData` (autoload) loads hexes, both OOBs (PLA + ROC brigades),
-ships, theaters, beaches. `EventBus` for signals. **Every phase's logic lives in a pure
-`RefCounted` class** — under `scripts/calc/` when it writes no campaign state (`AirInsertionResolver`,
-`MobilizationResolver`, `SealiftResolver` since 0045, `AntishipResolver` since 0050), otherwise under
-`scripts/resolvers/` (`FrontlineResolver`, `CleanupResolver`, `OffloadResolver`, `IjfsResolver`,
-`CombatResolver`, `InfrastructureResolver`). **That split does not hold as of 2026-07-31**: four of the
-six are pure, but `CleanupResolver` and `IjfsResolver` apply campaign state through their authorities,
-and `JlsfCargo` does so from inside `calc/`. Applying via an authority is a function call, not an
-assignment, so the write-scan that reported "all six clean" could not see it — plan 0055 has the
-census and the corrected role layout. (`SupplyResolver` is long gone —
+ships, theaters, beaches. `EventBus` for signals. **Every phase's logic lives in a `RefCounted`
+class, and the directory says whether it applies** (plan 0055) — under `scripts/calc/` when it
+applies NO campaign state by any route (`AirInsertionResolver`, `MobilizationResolver`,
+`SealiftResolver` since 0045, `AntishipResolver` since 0050, and `FrontlineResolver`,
+`OffloadResolver`, `CombatResolver`, `InfrastructureResolver`, `CleanupResolver` since 0055), and
+under `scripts/interleaved/` when it computes AND applies at its own draw point (`IjfsResolver`,
+`JlsfCargo` and the six IJFS pipeline stages). `scripts/resolvers/` no longer exists (historical): it
+had drifted to holding both categories at once, which is what 0055 measured and fixed. (`SupplyResolver` is long gone —
 supply is `SupplyBill` + `DosConsumption` in `calc/` applied by `SupplyTransitions`.) Turn orchestration is **`TurnConductor`** (also `RefCounted`, all `static`):
 its methods take a `GameStateData` value object as their first argument, own the EventBus emits,
 cross-phase field assignment, and combat casualty/FEBA/retreat application (which stays in the
@@ -51,36 +50,64 @@ The directory a file lives in is a CLAIM about the file, and each claim has a te
 without reading the file's history. Getting this wrong is how a writer ends up in a directory whose
 whole point is that it holds none.
 
+**Two words, two meanings — keep them apart** (settled by plan 0055, because conflating them is what
+produced a confidently wrong table). **Writes** = assigns a field directly. **Applies** = changes
+campaign state by ANY route, including by calling a mutation authority. Before the 0042–0050 campaign
+these were the same act; the authorities split them, and every row below now says which it means. A
+scan for *writes* cannot see an *apply*, since an authority call is a function call and not an
+assignment.
+
 | Directory | The claim | The test |
 |---|---|---|
-| `scripts/phases/` | Coordinates one group of phases: computes nothing itself, applies nothing itself | Does it only ORDER calls and thread results? |
-| `scripts/resolvers/` | The per-phase resolver — decides what happens in that phase | Is it the phase's own logic, and does it still change campaign state? **The directory now holds both answers** — four pure files and two that apply through an authority (measured 2026-07-31) — plan 0055 |
-| `scripts/calc/` | Write-free calculation: returns outcomes, never applies them | Does it change NO campaign state at all — by direct write, through arrays/dicts it was handed, **or by calling an authority**? (`JlsfCargo` currently fails the last clause — plan 0055) |
-| `scripts/ijfs/` | A pipeline stage of one subsystem: computes AND applies, at its own draw point, through that aggregate's authority | Would applying its result later change how many dice are drawn? (if yes, it belongs here rather than in `calc/`) |
+| `scripts/phases/` | Coordinates one group of phases: computes nothing itself, and originates no decision — but it is where a phase's authority calls are ORDERED, so it applies plenty | Does it only sequence calls and thread results? |
+| `scripts/calc/` | Pure calculation: returns outcomes, applies none of them | Does it change NO campaign state at all — by direct write, through arrays/dicts it was handed, **or by calling an authority**? |
+| `scripts/interleaved/` | Computes AND applies, at its own draw point, through that aggregate's authority | Would deferring its application change how many dice are drawn, or what a later iteration decides? (if yes it belongs here; if no, it belongs in `calc/` with the application hoisted to its caller) |
 | `scripts/builders/` | Builds fresh, unpublished state from content/scenario data | Does anything hold the object before `build()` returns? (must be "no") |
 | `scripts/loaders/` | Content files → typed objects | Is its input a data file rather than live state? |
 | `scripts/transitions/` | A mutation authority — THE writer for one aggregate | Is it named as an `authority_path` in the manifest? (the directory grants nothing on its own) |
 | `scripts/model/` | Data + its own structural self-checks | Does it hold state and validate only itself? |
 
-`scripts/ijfs/` is the one directory whose claim is neither "computes" nor "applies" but both, and it
-exists because of a constraint rather than a preference (plan 0046). IJFS stages consume dice
+**The `*Resolver` suffix is orthogonal to all of this.** It names a *phase endpoint* — the thing that
+decides what happens in a phase — and it never encoded purity. Nine resolvers sit in `calc/` and one in
+`interleaved/`; that is not drift. **The directory carries the application policy, the suffix carries
+the phase role.**
+
+`scripts/interleaved/` is the one directory whose claim is neither "computes" nor "applies" but both,
+and it exists because of a constraint rather than a preference (plan 0046). IJFS stages consume dice
 CONDITIONALLY on state an earlier stage just wrote, and later stages choose which targets to iterate by
 reading it — so deferring application to the end of the day would change the draw count, which the
-golden pins forbid. They call `IjfsTransitions` at the exact point they used to assign. The three IJFS
-helpers that genuinely compute nothing else (`IjfsAdHealth`, `IjfsWarmup`, `IjfsFiringCapacity`) moved
-to `calc/`; widening `calc/`'s claim to cover the rest would have made it untrue everywhere.
+golden pins forbid. They call `IjfsTransitions` at the exact point they used to assign. `JlsfCargo`
+qualifies for the same reason in a different subsystem: whether it emits a queue entry depends on state
+its own previous iteration wrote. The three IJFS helpers that genuinely compute nothing else
+(`IjfsAdHealth`, `IjfsWarmup`, `IjfsFiringCapacity`) are in `calc/`; widening `calc/`'s claim to cover
+the rest would have made it untrue everywhere. **Named for the property, not for a subsystem** — plan
+0055 renamed the old `scripts/ijfs/` (historical) precisely because a subsystem name is why
+`JlsfCargo` and `IjfsResolver` were never pulled in.
 
-Two worked examples, because the boundary that matters is `resolvers/` vs `calc/`:
-`AntishipResolver` stayed under `resolvers/` from 0043 to 0050 for one reason — a single function
-rewrote the caller's `ship_reserve` entries in place, which failed the `calc/` test. Plan 0044 replaced
-that seam with `ForceTransitions.apply_crossing_loss` and left the function with **no production caller
-at all**, so 0050's closeout deleted it and the file moved to `calc/`. The lesson generalizes: a
-directory claim can go stale WITHOUT anyone editing the file, because what made it true was deleted
-somewhere else. `SealiftResolver` moved TO `calc/` in plan 0045, but only
-once it stopped writing anything at all — the last write was a `ship_category` stamp it put straight into
-force-owned reserve rows through an untyped alias, invisible to the gate. Moving it before that fix would
-have put a writer in `calc/`. Note also that a GDScript `class_name` is path-independent, so relocating a
-file changes no call site — the cost of such a move is the path, its `.uid` and doc references, nothing more.
+**The claims are partly enforced, and it matters which part.**
+`tools/validate_authority_call_placement.gd` checks that no file in a forbidding directory makes a
+DIRECT authority call, and that every `scripts/interleaved/` file makes at least one. It cannot see
+application through a helper, cannot judge the draw-point question, and does not check `phases/`.
+Read its header before trusting it — the unpoliced half is still prose.
+
+Two worked examples, kept because the *lessons* outlive the directories they happened in.
+**A claim can go stale with nobody editing the file.** `AntishipResolver` sat in the old
+`scripts/resolvers/` (historical) from 0043 to 0050 for one reason — a single function rewrote the caller's
+`ship_reserve` entries in place, failing the `calc/` test. Plan 0044 replaced that seam with
+`ForceTransitions.apply_crossing_loss` and left the function with **no production caller at all**, so
+0050's closeout deleted it and the file moved to `calc/`. Nothing about the file changed; what made its
+placement true was deleted somewhere else. That is the failure mode the "every `interleaved/` file must
+still apply" half of the validator exists to catch.
+**And a measurement can go stale by being reused.** Plan 0055's first table said all six of those
+resolvers were pure. It was produced by the alias-taint scan built for 0050 — an instrument that finds
+illegal direct writes, in a codebase where the only remaining way to change state is a legal authority
+CALL. Two of the six changed campaign state every turn. Ask what question your instrument answers
+before you reuse it. `SealiftResolver` is the counter-example that went the right way: it moved TO
+`calc/` in 0045 only once it stopped writing anything at all — the last write was a `ship_category`
+stamp put straight into force-owned reserve rows through an untyped alias, invisible to the gate.
+Moving it before that fix would have put a writer in `calc/`. Note also that a GDScript `class_name` is
+path-independent, so relocating a file changes no call site — the cost of such a move is the path, its
+`.uid` and doc references, nothing more.
 
 **Turn resolution order** (12-step high-level summary of `TurnConductor.gd`'s actual 16 granular
 execution steps; the numbered version with the function each step calls is the one home for this —

@@ -26,7 +26,7 @@ This is the defender-side answer to the research question in `docs/plans/0029-dy
 | `scripts/transitions/ForceTransitions.gd` | The authority: `release_mobilized_brigades()` drains `pending`, appends `released` and places the brigades in one transaction; `rebuild_mobilization_state()` installs a fresh schedule at scenario reset. |
 | `scripts/GameData.gd` | Parses the scenario `green_mobilization` block into `green_mobilization`; `load_scenario` computes `mobilization_holdback` BEFORE the placement loop and leaves those brigades off-map. |
 | `scripts/GameState.gd` | Holds `mobilization_state` / `last_mobilization_summary` (on `GameStateData`), `_rebuild_mobilization_state()` at scenario reset. |
-| `scripts/resolvers/IjfsResolver.gd` | `add_maneuver_targets()` — append-only IJFS targets for brigades that just arrived. |
+| `scripts/interleaved/IjfsResolver.gd` | `add_maneuver_targets()` — append-only IJFS targets for brigades that just arrived. |
 | `scripts/LLMGameAPI.gd` | `_mobilization_observation()` — the `mobilization` observation block (both seats). |
 | `tools/validate_mobilization.gd` | End-to-end gate coverage on `scenario_default`. |
 | `tests/mobilization_builder_test.gd`, `tests/mobilization_resolver_test.gd` | Pure unit coverage for selection, schedule, release, displacement, deferral, BFS bounds. |

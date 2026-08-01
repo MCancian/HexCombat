@@ -16,10 +16,10 @@ anti-ship crossing model and converts ship losses into BN casualties.
 | `scripts/OffloadRates.gd` | Throughput constants (tons/day per infrastructure type); TONS_PER_BN |
 | `scripts/calc/OffloadCostModel.gd` | Per-BN day-N offload cost: transport weight × bn_class/ship_category multiplier (plan 0006) |
 | `scripts/model/InfrastructureDef.gd` / `InfrastructureState.gd` | Port/airbridge node defs + per-node lifecycle state |
-| `scripts/resolvers/InfrastructureResolver.gd` | Pure seizure + JLSF repair CALCULATOR (`plan_tick`, writes nothing); `red_offload_nodes` throughput feed |
+| `scripts/calc/InfrastructureResolver.gd` | Pure seizure + JLSF repair CALCULATOR (`plan_tick`, writes nothing); `red_offload_nodes` throughput feed |
 | `scripts/model/InfrastructureNodeState.gd` / `InfrastructureTickPlan.gd` | One node's typed lifecycle; what one tick decided (staged end states + an ORDERED event list) |
 | `scripts/transitions/InfrastructureTransitions.gd` | The `infrastructure` aggregate's mutation authority — the only writer of node status, repair clock and JLSF marker |
-| `scripts/calc/JlsfCargo.gd` | JLSF pseudo pool-entry builder (rides the 0004 sealift pipeline) |
+| `scripts/interleaved/JlsfCargo.gd` | JLSF pseudo pool-entry builder (rides the 0004 sealift pipeline) |
 | `data/infrastructure.json` | 5 ports + 8 main-island airbridges (explicit `hex_id` + `to_number`) |
 | `data/offload_weights.json` | Per-BN-type transport weights + bn_class map + multiplier matrix |
 | `scripts/ShipLoadingModel.gd` | BN-to-ship fleet derivation (forward) and ship-loss-to-BN-casualty (backward) |

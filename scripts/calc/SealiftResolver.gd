@@ -19,7 +19,7 @@ extends RefCounted
 ## the ready pool (same-turn round trip). Only carrier hulls (capacity > 0) enter cohorts and go busy.
 ## Amphibious-lift eligibility is classified by ShipDef.is_amphibious_lift() / is_carrier() / sails().
 ##
-## It lives in `scripts/calc/` rather than `scripts/resolvers/` for one reason and one reason only: that
+## It lives in `scripts/calc/` rather than with the appliers for one reason and one reason only: that
 ## directory's claim is that it holds no file which writes campaign state, and this one qualifies as of
 ## plan 0045. `AntishipResolver` still sits under `resolvers/` because it still rewrites the caller's
 ## reserve entries in place — same rule, opposite answer.

@@ -87,7 +87,9 @@ The full per-system source map (all D1–D5 phases, IJFS, anti-ship/mine) lives 
 
 ## Resolver decomposition (shipped 2026-07-02)
 
-`GameState` was decomposed into pure `RefCounted` resolver classes under `scripts/resolvers/`
+`GameState` was decomposed into `RefCounted` resolver classes under `scripts/resolvers/` (historical)
+— plan 0055 dissolved that directory; the resolvers now live in `scripts/calc/`, except
+`IjfsResolver`, which is in `scripts/interleaved/`
 (`CombatResolver`, `FrontlineResolver`, `CleanupResolver`, `OffloadResolver`, `AntishipResolver`,
 `IjfsResolver`, `SupplyResolver`, plus the Phase-A builders), each with an explicit
 `resolve(<inputs>, dice) -> <TypedSummary>` signature (USER-decided interface; no new autoloads).

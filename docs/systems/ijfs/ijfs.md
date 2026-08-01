@@ -13,21 +13,21 @@ fires) and ground-casualty accumulation (open half).
 
 | HexCombat file | Role | TIV oracle counterpart |
 |---|---|---|
-| `scripts/ijfs/IjfsEngine.gd` | Daily orchestration (6-phase pipeline), run context, ledgers, continuity | `run_daily_ijfs.py`, `run_context.py`, `logging_utils.py` |
-| `scripts/ijfs/IjfsDetection.gd` | Satellite (phase1) + aircraft (phase2) ISR detection | `detection.py`, `isr_sources.py`, `antiship_exposure.py`, `math_utils.py` |
-| `scripts/ijfs/IjfsTargeting.gd` | Target filtering, pairing matching, doctrine priority, munition filter, exquisite intel | `targeting.py` |
-| `scripts/ijfs/IjfsEngagement.gd` | SEAD engagement + return-fire (contest) + post-phase-2 free shot | `engagement.py` |
-| `scripts/ijfs/IjfsStrike.gd` | Strike probability (modifier system) and hit resolution | `strike_probability.py`, `strike_resolution.py` |
+| `scripts/interleaved/IjfsEngine.gd` | Daily orchestration (6-phase pipeline), run context, ledgers, continuity | `run_daily_ijfs.py`, `run_context.py`, `logging_utils.py` |
+| `scripts/interleaved/IjfsDetection.gd` | Satellite (phase1) + aircraft (phase2) ISR detection | `detection.py`, `isr_sources.py`, `antiship_exposure.py`, `math_utils.py` |
+| `scripts/interleaved/IjfsTargeting.gd` | Target filtering, pairing matching, doctrine priority, munition filter, exquisite intel | `targeting.py` |
+| `scripts/interleaved/IjfsEngagement.gd` | SEAD engagement + return-fire (contest) + post-phase-2 free shot | `engagement.py` |
+| `scripts/interleaved/IjfsStrike.gd` | Strike probability (modifier system) and hit resolution | `strike_probability.py`, `strike_resolution.py` |
 | `scripts/calc/IjfsFiringCapacity.gd` | `FiringCapacityBudget` (inorganic daily sortie cap) + `OrganicStrikeBudget` (strike-aircraft scaled) | `firing_capacity.py` |
 | `scripts/calc/IjfsAdHealth.gd` | Taiwan AD health: per-category alive+unsuppressed fraction, SAM×radar effective health | `ad_health.py` |
 | `scripts/calc/IjfsWarmup.gd` | Prelanding attrition-profile multiplier + capacity scaling | `warmup_profiles.py` |
 | `scripts/model/IjfsDailyState.gd` | Mutable container threaded through one daily cycle; targets/munitions/squadron_force persist across days | `state.py` (IJFSDailyState, minus rng) |
-| `scripts/ijfs/IjfsLoaders.gd` | JSON loading, target expansion, anti-ship container→target builder, SAM score enrichment | `loaders.py` + `default_targets.py` |
+| `scripts/loaders/IjfsLoaders.gd` | JSON loading, target expansion, anti-ship container→target builder, SAM score enrichment | `loaders.py` + `default_targets.py` |
 | `scripts/model/ijfs/IjfsTarget.gd` | Resource model: target state fields + `to_dict()` | `state.py` (TargetInstance dataclass) |
 | `scripts/model/ijfs/IjfsMunition.gd` | Resource model: munition inventory row | `state.py` (MunitionInventory dataclass) |
 | `scripts/model/ijfs/IjfsPairing.gd` | Resource model: munition-target effect pairing | `state.py` (PairingRule dataclass) |
 | `scripts/model/ijfs/IjfsSquadron.gd` | Resource model: squadron state (class, role, alive, losses) | `state.py` (SquadronState dataclass) |
-| `scripts/resolvers/IjfsResolver.gd` | Pure resolver (Phase C): `resolve()` orchestrates the daily pipeline call (warmup loop or single plain day), `build_warmup_context()`, `compute_writeback()`, maneuver-target sync/posture/consume. Read its header for the purity boundary with `GameState`. | TIV warmup driver + write-outputs aggregation |
+| `scripts/interleaved/IjfsResolver.gd` | Pure resolver (Phase C): `resolve()` orchestrates the daily pipeline call (warmup loop or single plain day), `build_warmup_context()`, `compute_writeback()`, maneuver-target sync/posture/consume. Read its header for the purity boundary with `GameState`. | TIV warmup driver + write-outputs aggregation |
 | `scripts/phases/FiresPhases.gd` | Thin wrapper (plan 0038): `resolve_ijfs_turn()` lazily builds `ijfs_state` then delegates to `IjfsResolver.resolve()`; `build_warmup_context()` delegates to `IjfsResolver.build_warmup_context()`. Owns the `EventBus.ijfs_resolved` emit and cross-turn field writes (`_ijfs_day`, `last_ijfs_summary`, `last_ijfs_writeback`). `GameState` forwards to it under the same method names. | — |
 
 ## 3. Daily Pipeline — Stage Order in `IjfsEngine.run_daily`
@@ -239,7 +239,7 @@ just wrote, and later stages choose which targets to iterate by reading it
 on ready stock). Deferring application to end-of-day would change which targets are iterated and
 therefore how many draws are consumed, which the golden pins forbid. The boundary this buys is a named,
 checked, single-file writer — not a deferred one. That is also why the stage files stay in
-`scripts/ijfs/` rather than moving to `scripts/calc/`; see the directory table in `docs/STATUS.md`.
+`scripts/interleaved/` rather than moving to `scripts/calc/`; see the directory table in `docs/STATUS.md`.
 
 ## 10. TIV-Port Fidelity Notes
 
@@ -298,7 +298,7 @@ return fire).
 `data/ijfs/targets_master.json`, per-TO: TO2 500 / TO3 1000 / TO4 500 / TO5 500; mutable
 `systems_remaining` seeded from `systems_represented`). The category sits OUTSIDE
 `IjfsEngagement.SAM_CATEGORIES` and `IjfsAdHealth.AD_CATEGORIES`: SEAD cannot hunt passive-IR
-shoulder launchers. Instead (`scripts/ijfs/IjfsManpads.gd`, wired in `IjfsEngine.run_daily`):
+shoulder launchers. Instead (`scripts/interleaved/IjfsManpads.gd`, wired in `IjfsEngine.run_daily`):
 
 1. **Strike interception** — each about-to-execute strike whose munition has
    `manpads_vulnerability > 0` (`red_munitions.json`: attack UAV 1.0, OWA drone 1.0, strike

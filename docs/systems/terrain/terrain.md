@@ -134,7 +134,7 @@ Tests: `tests/terrain_movement_test.gd` — `test_slow_brigade_min_one_step_and_
 
 ## 5. Combat effects
 
-`CombatResolver.resolve_at` (`scripts/resolvers/CombatResolver.gd`, pure — no `GameData`
+`CombatResolver.resolve_at` (`scripts/calc/CombatResolver.gd`, pure — no `GameData`
 access) takes `defender_terrain_modifier: float = 1.0` as its last parameter and forwards it
 straight into `CombatCalculator.resolve_map_attack`. `TurnConductor.defender_combat_modifier(hex_id)`
 (`scripts/GameState.gd`) computes the value passed in:

@@ -4,8 +4,9 @@ class_name GameStateData
 ## Plain mutable runtime-state value object (plan 0014 P1, folded 0016): every field GameState used
 ## to carry directly now lives here. No engine/scene concerns, no autoload access, no logic — this
 ## is data only. GameState (autoload) owns a single `data := GameStateData.new()` and forwards the
-## small set of fields/methods external callers read; TurnConductor/OrderValidator/GameStateBuilder
-## (scripts/resolvers/) take an instance of this class as their first argument and mutate it
+## small set of fields/methods external callers read; TurnConductor (`scripts/phases/`),
+## OrderValidator (`scripts/calc/`) and GameStateBuilder (`scripts/builders/`) take an instance of
+## this class as their first argument and mutate it
 ## in place. Building a GameStateData from scratch (no autoload) is what makes those resolvers
 ## unit-testable in isolation.
 

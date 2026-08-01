@@ -165,17 +165,11 @@ func test_frontline_resolver_moves_nothing_itself() -> void:
 
 # --- CleanupResolver -----------------------------------------------------------------------------
 
-func _antiship_system() -> AntishipSystem:
-	var sys := AntishipSystem.new()
-	sys.fired = 5
-	sys.destroyed_this_turn = 2
-	sys.suppressed_now = 4
-	sys.active = true
-	return sys
-
-
-func test_cleanup_resolver_resets_antiship_systems_and_latches_posture() -> void:
-	var system := _antiship_system()
+# The anti-ship flag reset and the brigade activity latch are NOT tested here — plan 0055 hoisted
+# both into `TurnClosure.resolve_cleanup_phase`, and both keep their end-to-end coverage there:
+# `tools/validate_cleanup.gd` for the reset, `tests/brigade_activity_history_test.gd` for the latch.
+# What is left for this resolver is the census + verdict, and the guarantee below.
+func test_cleanup_resolver_censuses_and_reports_the_reset_count_it_was_given() -> void:
 	var brigade := Brigade.new()
 	brigade.id = "bde-1"
 	brigade.team = Brigade.Team.RED
@@ -187,17 +181,17 @@ func test_cleanup_resolver_resets_antiship_systems_and_latches_posture() -> void
 	bn.qty = 1
 	brigade.composition = [bn]
 	var brigades := {"bde-1": brigade}
-	
-	var outcome := CleanupResolver.resolve([system], brigades, [], {}, 1, false)
+
+	var outcome := CleanupResolver.resolve(1, brigades, [], {}, 1, false)
 	var summary: CleanupSummary = outcome["summary"]
-	
-	assert_int(system.fired).is_equal(0)
-	assert_int(system.destroyed_this_turn).is_equal(0)
-	assert_int(system.suppressed_now).is_equal(0)
-	assert_bool(system.active).is_false()
-	
-	assert_bool(brigade.moved_last_turn).is_true()
-	assert_bool(brigade.fought_last_turn).is_true()
-	
+
 	assert_int(summary.antiship_systems_reset).is_equal(1)
 	assert_int(summary.china_battalions_on_taiwan).is_equal(1)
+
+	# The resolver is PURE (plan 0055) — the reason it may live in `scripts/calc/`. It was handed a
+	# brigade with both activity flags set and must not have latched them: doing so is what it used to
+	# do, and the directory it now sits in forbids changing campaign state by any route.
+	assert_bool(brigade.moved_last_turn).override_failure_message(
+		"CleanupResolver latched activity — it applied campaign state and can no longer live in calc/"
+	).is_false()
+	assert_bool(brigade.fought_last_turn).is_false()

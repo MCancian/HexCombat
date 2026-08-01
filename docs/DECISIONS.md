@@ -13,7 +13,7 @@ would need this entry to act, the fact is filed in the wrong place; put it in it
 | Fact type | Only home |
 |---|---|
 | Golden pins / exact validator output | `tools/validate_*.gd` (the PASS line is truth) |
-| Module architecture, purity boundaries | code headers (`scripts/resolvers/*.gd`, `GameState.gd`) |
+| Module architecture, purity boundaries | code headers (`scripts/calc/*.gd`, `scripts/interleaved/*.gd`, `GameState.gd`) |
 | Cross-module flow, data files, TIV divergence rationale | `docs/systems/<module>.md` |
 | Procedures, gotchas | `.claude/skills/` |
 | Incident history (root cause, rejected fixes) | `hexcombat-failure-archaeology` |
@@ -24,6 +24,31 @@ History before 2026-07-10 lives verbatim in `docs/archive/PLAN.md` (→ "Decisio
 code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
+
+- **2026-07-31 — The role directories now track who APPLIES campaign state, and a gate keeps them
+  honest (agent, reviewed).** Plan 0055. `scripts/resolvers/` and `scripts/ijfs/` are gone (historical); thirteen
+  files moved into `scripts/calc/` (pure), `scripts/interleaved/` (computes AND applies at its own
+  draw point) and `scripts/loaders/`. The plan's original premise — "all six resolvers are pure, move
+  them to `calc/`" — was **wrong and was killed at preflight by re-running the measurement**: it came
+  from plan 0050's alias-taint scan, which finds illegal *direct field writes*, and after the
+  mutation-authority campaign the only remaining way to change state is to *call* an authority, which
+  is a function call and invisible to that scan. Two of the six changed campaign state every turn. The
+  vocabulary that hid it is now settled repo-wide: **writes** = assigns a field directly, **applies** =
+  changes campaign state by any route. The new directory is named for the property and not for a
+  subsystem, which is why the old `scripts/ijfs/` (historical) never pulled in `JlsfCargo` or `IjfsResolver`; it is
+  `interleaved/` rather than `stages/` because `InfrastructureTickPlan.stage()` already makes "stage" this
+  codebase's verb for *deferring* application. `CleanupResolver` qualified for neither directory —
+  it applied, but nothing read either mutation — so both applications were **hoisted into
+  `TurnClosure`** and it is now pure; `ForceTransitions.latch_prior_activity` hosts the roster-wide
+  batch so the request type stays off the coordinator's dependency budget (`TurnClosure` 7 → 9, the
+  raw hoist measured 11). `tools/validate_authority_call_placement.gd` enforces the checkable half in
+  BOTH directions — forbidden directories make zero direct authority calls, **and every
+  `interleaved/` file must still make one**, because the failure mode being closed (`AntishipResolver`,
+  0043–0050) was a file that went inert with nobody editing it. Its header states plainly what it
+  cannot see: transitive application through a helper. Watched to fail in both directions before being
+  trusted. No behaviour change; no pin moved. Facts: `docs/STATUS.md` -> "Where a file goes",
+  `tools/validate_authority_call_placement.gd`, `docs/archive/0055-directory-claims-vs-appliers.md`.
+
 
 - **2026-07-31 — The mutation-authority campaign is CLOSED: ten aggregates, zero legacy writers,
   zero behaviour change (agent, reviewed).** Plan 0050 took the last three unowned `GameStateData`
@@ -126,8 +151,11 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   `ijfs_state` / `_ijfs_day` handles. Unlike the first three aggregates it is called from within the
   pipeline stages rather than once from a coordinator, because IJFS consumes dice conditionally on
   state an earlier stage just wrote and later stages select targets by reading it — deferring
-  application would change the draw count. That forced a new directory claim for `scripts/ijfs/`
+  application would change the draw count. That forced a new directory claim for `scripts/ijfs/` (historical)
   rather than widening `scripts/calc/`'s "writes nothing" claim to accommodate one subsystem.
+  (2026-07-31, plan 0055: the claim was right and its NAME was wrong — a subsystem name is why the
+  two appliers outside IJFS were never pulled in. The directory is now `scripts/interleaved/`,
+  named for the property.)
   MANPADS stock moved from a free-form `metadata` key to a typed field first, with the key kept as a
   serialization mirror because `metadata` is aliased live into the ledger rows. Also folded in the
   `IjfsEngine._run_strike_phase` parameter-ceiling paydown (11 params, plus two more functions), which
@@ -621,7 +649,8 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   (agent implementation, USER-directed re-scope).** `GameState` (autoload) was split three ways:
   runtime state moved to a plain `GameStateData` value object (`scripts/model/`, absorbing plan
   0016), and orchestration/construction/order-validation moved to `static` services
-  `TurnConductor` / `GameStateBuilder` / `OrderValidator` (`scripts/resolvers/`) that take a
+  `TurnConductor` / `GameStateBuilder` / `OrderValidator` (`scripts/resolvers/` at the time — (historical),
+  dissolved by plan 0055) that take a
   `GameStateData` and never the autoload — genuine decoupling, not the reference-laundering of the
   reverted first attempt. `GameState` is now a thin state-holder with typed forwarding properties;
   deps 48→24. Ceiling enforced in the gate via `gd_metrics.py --check-ceiling` (GameState 27,

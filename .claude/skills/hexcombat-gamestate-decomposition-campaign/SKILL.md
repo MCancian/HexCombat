@@ -9,7 +9,8 @@ description: COMPLETE 2026-07-02 — kept as the record of HOW the ~1,400-line G
 > The "what deliberately stayed in GameState" list is in `docs/archive/refactor_audit.md` item 10.
 
 **Objective:** `GameState.gd` (~1,415 lines, 52 methods) becomes a thin orchestrator that
-sequences pure `RefCounted` resolver classes in `scripts/resolvers/`, each headless-testable with
+sequences pure `RefCounted` resolver classes in `scripts/resolvers/` (historical — plan 0055
+dissolved that directory into `scripts/calc/` + `scripts/interleaved/`), each headless-testable with
 an explicit `resolve(<inputs>, dice) -> <TypedSummary>` signature. Highest-payoff, highest-risk
 refactor in the backlog. Full spec: `docs/archive/refactor_audit.md` item 10; interface decided by
 USER 2026-06-30 (docs/archive/PLAN.md → Decisions) — **do not relitigate: pure RefCounted resolvers, NOT

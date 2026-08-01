@@ -1,5 +1,40 @@
 # Turn Engine — Retrospectives
 
+## 2026-07-31 — plan 0055: directory claims vs who applies campaign state   (implementer: direct)
+
+**What would you do differently (implementer):**
+- **Re-derive the QUESTION before reusing an instrument, not just the numbers.** The plan's original
+  table said all six `scripts/resolvers/` files were pure. It was produced by plan 0050's alias-taint
+  scan, which finds illegal *direct field writes* — a question that stopped being the right one the
+  moment the mutation-authority campaign made every legal state change a *function call*. Two of the
+  six changed campaign state every turn. Two independent reviewers confirmed the table, because
+  reading cannot catch a measurement error. The check that worked took one command: run the
+  counter-scan and see whether the answers agree.
+- **A word already in the codebase can be the wrong name precisely because it is familiar.** The
+  directory was nearly called `scripts/stages/`. The disqualifier was not the 37 prose uses of
+  "stage" — those were genuinely split — but one line of code: `InfrastructureTickPlan.stage()`, the
+  repo's own verb for recording a change so it can be applied LATER. Naming the
+  deferral-is-impossible directory after the deferral primitive is an inversion, not a shade. Grep
+  the candidate name as CODE, not only as prose.
+- **The dependency ceiling caught the hoist and was right to.** Moving `CleanupResolver`'s two
+  applications into `TurnClosure` took it 7 → 11. Rather than bump to what the first attempt
+  produced, hosting the roster-wide latch inside `ForceTransitions` as a batch (plan 0048's pattern)
+  kept `Brigade` and `ForceActivityRequest` off the budget, landing at 9. Bump to the number that
+  buys the property, not the number the first draft happened to measure.
+- **`(historical)` is a literal token, and prose that reads historical is not.** Eight doc lines
+  legitimately name the dead directories; the doc-anchor gate skips a line only for the exact string
+  `(historical)`. Writing "(historical — dissolved by 0055)" fails. Cheap, but it cost a gate cycle.
+
+**Orchestrator triage:**
+- The manifest cited `TurnClosure.gd:72-75` for behaviour living at `:52-55`; the file was 62 lines.
+  Stale before this plan touched it → **acted now** (repointed). Line citations in the manifest are
+  gated by nothing, so this class of rot is silent.
+- The new validator sees DIRECT calls only — `IjfsResolver` applies through `IjfsEngine`, so a file
+  can apply transitively and read as pure → **deliberately not fixed**; stated in the validator's
+  header and in `docs/STATUS.md` rather than closed, because transitive closure needs call-graph
+  analysis over a dynamically-typed language. The risk of a validator that over-claims is that the
+  unpoliced half becomes MORE dangerous for looking covered.
+
 ## 2026-07-25 — plan 0038: TurnConductor phase extraction   (implementer: direct)
 
 **What would you do differently (implementer):**

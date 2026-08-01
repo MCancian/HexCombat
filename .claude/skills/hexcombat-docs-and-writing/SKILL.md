@@ -19,7 +19,7 @@ code headers were correct.
 | What works today (current behavior) | `docs/STATUS.md` — if another doc disagrees, STATUS wins; fix the other doc |
 | Golden pins / exact validator outputs | `tools/validate_*.gd` — no doc or skill ever quotes a pin; "the validator's PASS line is truth" |
 | Who may write which aggregate: authority class, protected fields, construction/legacy allowances | `tools/mutation_authority_manifest.json` — headers and systems docs name the aggregate and its authority and then point here; copying the field or writer list creates the second home this rule exists to prevent |
-| Module architecture, purity boundaries, wiring | code headers (`scripts/resolvers/*.gd`, `GameState.gd`) — docs point at the class by NAME, never file:line (line numbers rot) |
+| Module architecture, purity boundaries, wiring | code headers (`scripts/calc/*.gd`, `scripts/interleaved/*.gd`, `GameState.gd`) — docs point at the class by NAME, never file:line (line numbers rot) |
 | Per-system data flow, data files, TIV fidelity/divergence rationale | `docs/systems/<module>.md` |
 | Procedures (how to build/debug/verify/author) | `.claude/skills/` |
 | Incident history (root cause, evidence, rejected fixes) | `hexcombat-failure-archaeology` |
@@ -39,7 +39,7 @@ code headers were correct.
 
    | Touched code | Owning doc (`docs/systems/`) |
    |---|---|
-   | `scripts/ijfs/**`, `IjfsResolver`, `data/ijfs/**` | `ijfs.md` |
+   | `scripts/interleaved/Ijfs*.gd`, `IjfsResolver`, `data/ijfs/**` | `ijfs.md` |
    | `AntishipCalculator`, `MineWarfareService`, `AntishipResolver`, `data/antiship/**` | `antiship-mine.md` |
    | `CombatCalculator`, `CombatForces`, `CombatResolver`, `Movement`, `UnitStats` | `ground-combat.md` |
    | `Offload*`, `ShipLoadingModel` | `amphibious-offload.md` |

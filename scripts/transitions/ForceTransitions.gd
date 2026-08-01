@@ -113,6 +113,27 @@ static func apply_activity(brigade: Brigade, request: ForceActivityRequest) -> v
 			brigade.fought_this_turn = false
 
 
+## Latch every brigade's this-turn activity into its prior-turn flags, and report how many were
+## latched. The end-of-turn cleanup phase applies this to the WHOLE roster, and it is hosted here
+## rather than written as a loop in the caller for the reason plan 0048 established: an authority
+## that hosts the batch keeps both `Brigade` and the request type off the caller's dependency
+## budget, and there is then exactly one place that knows a roster-wide latch is a single operation.
+## `brigades` is the id -> Brigade map (`GameData.brigades`).
+##
+## The count is what was ACTUALLY latched. A null entry is refused by `apply_activity` (which reports
+## it) and must not be counted, or the return value claims work the aggregate never did — the current
+## caller ignores the count, which is exactly why an untrue one would go unnoticed.
+static func latch_prior_activity(brigades: Dictionary) -> int:
+	var request := ForceActivityRequest.make(ForceActivityRequest.Operation.LATCH_PRIOR_FROM_CURRENT)
+	var latched := 0
+	for brigade_value in brigades.values():
+		var brigade := brigade_value as Brigade
+		apply_activity(brigade, request)  # a null is refused and reported by the authority
+		if brigade != null:
+			latched += 1
+	return latched
+
+
 # ── Air insertion (plan 0032) ────────────────────────────────────────────────────────────────────
 
 ## Apply a resolver-computed air insertion outcome: drain the pool of the BNs that flew,

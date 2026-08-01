@@ -6,7 +6,7 @@ class_name GameStateType
 ## `GameStateBuilder`, turn orchestration in `TurnConductor` — with the arrival phases (sealift,
 ## offload, mobilization, air insertion) in `ReinforcementPhases`, the fires phases (IJFS, anti-ship)
 ## in `FiresPhases` and the end-of-turn accounting (supply, cleanup) in `TurnClosure`, plan 0038 —
-## and order legality in `OrderValidator` (all scripts/resolvers/, all static, all taking
+## and order legality in `OrderValidator` (all static, all taking
 ## `GameStateData` — never this
 ## autoload — as their first argument). What remains here: the typed forwarding properties that
 ## keep the pre-refactor `GameState.<field>` API byte-stable for external callers, a handful of

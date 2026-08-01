@@ -6,7 +6,8 @@ description: Template for adding a NEW game phase or mechanic to the decomposed 
 # Adding a phase / mechanic (per-phase template, resolver era)
 
 > **Activation status: ACTIVE** (decomposition campaign complete 2026-07-02). Every phase's
-> logic now lives in `scripts/resolvers/`; never add a new inline phase body to `GameState`.
+> logic now lives in `scripts/calc/` (pure) or `scripts/interleaved/` (applies at its own draw
+> point); never add a new inline phase body to `GameState`.
 
 ## The checklist (every box, in order)
 
@@ -15,7 +16,7 @@ description: Template for adding a NEW game phase or mechanic to the decomposed 
    user; record in docs/DECISIONS.md)? Scope big phases into sub-tasks.
 2. **Typed model** — new state shapes become `Resource` classes in `scripts/model/` with typed
    fields and `to_dict()` (exact key set/types = the JSON contract; `null` = unresolved sentinel).
-3. **Pure resolver** — `scripts/resolvers/<Phase>Resolver.gd`, `RefCounted`, explicit
+3. **Pure resolver** — `scripts/calc/<Phase>Resolver.gd`, `RefCounted`, explicit
    `static func resolve(<inputs>, dice) -> <TypedSummary>`. No autoload access, no EventBus, no
    Node. If it needs randomness: a **derived substream** (`dice.derive("<phase>:<context>")`),
    never the base stream. **Check the body of any helper you pull in for hidden autoload reads** —
@@ -50,7 +51,8 @@ description: Template for adding a NEW game phase or mechanic to the decomposed 
 ## Reference implementations
 
 Ground combat (BOOTS) is the original template; the D1–D5 systems each followed it (see
-`docs/systems/`). Live resolver examples in `scripts/resolvers/`:
+`docs/systems/`). Live resolver examples (`scripts/calc/`, except `IjfsResolver` which is in
+`scripts/interleaved/` because it applies at its own draw point):
 - **`OffloadResolver.gd`** — cleanest dice-free case: pure resolve + explicit
   wrapper split (state application, EventBus emit, and autoload access stay in GameState).
 - **`IjfsResolver.gd`** — the derived-substream pattern (`dice.derive("ijfs:%d:%d")`) plus

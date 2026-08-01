@@ -22,7 +22,8 @@ targets to iterate by reading it, so deferring application would change the draw
 golden pins. The authority is therefore called from inside the stages, at the exact point the old
 assignment sat. What it buys is a named, checked, single-file writer — not a deferred one. That
 forced a new directory claim for `scripts/ijfs/` rather than widening `scripts/calc/`'s "writes
-nothing" claim to accommodate one subsystem.
+nothing" claim to accommodate one subsystem. (2026-07-31, plan 0055: the claim held, the name did
+not — it is now `scripts/interleaved/`, named for the property rather than the subsystem.)
 
 **Monotonic invariants are best enforced by absence, not by a guard.** Nothing in `IjfsTransitions`
 can clear `destroyed`. There is no guard to argue with or bypass, because there is no way to express

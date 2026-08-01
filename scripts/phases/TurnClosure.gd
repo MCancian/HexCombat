@@ -3,8 +3,11 @@ extends RefCounted
 
 ## The end-of-turn accounting pair (plan 0038 step 3): supply bills who fought, cleanup censuses who
 ## is left. They run last, back to back, and neither draws dice — supply reads the flags combat just
-## set (`moved_this_turn`, `fought_this_turn`), cleanup then resets those flags, recounts both sides
-## and decides whether the game is over.
+## set (`moved_this_turn`, `fought_this_turn`), cleanup then latches those flags into their
+## prior-turn counterparts, clears the anti-ship per-turn flags, recounts both sides and decides
+## whether the game is over. (The per-turn flags themselves are cleared by `begin_next_turn`, not
+## here.) Both of the cleanup phase's applications live in THIS file rather than in
+## `CleanupResolver`, which is pure — plan 0055.
 ##
 ## `TurnConductor` keeps the ORDERING (the when); this module only owns the how. Same contract as
 ## every other resolver: static, first argument `state: GameStateData` mutated in place, reads the
@@ -44,15 +47,21 @@ static func resolve_supply_turn(state: GameStateData) -> Dictionary:
 
 static func resolve_cleanup_phase(state: GameStateData) -> Dictionary:
 	GameData.recompute_hex_ownership()
-	# Pure work (flag reset, victory census + verdict, activity latch) lives in CleanupResolver;
-	# consumes no dice, so the golden RNG stream is unaffected.
+	# The cleanup phase's two applications live HERE, not in the resolver (plan 0055). Both are
+	# ordering-free — nothing in the census or the verdict reads the transient flags or the latched
+	# activity — so the resolver stays pure and this module keeps the whole apply surface, which is
+	# what `scripts/phases/` is for. Neither consumes dice, so the golden RNG stream is unaffected.
+	var reset_count := AntishipTransitions.reset_transient_flags(state.antiship_systems)
 	var outcome := CleanupResolver.resolve(
-		state.antiship_systems, GameData.brigades, state.pending_battalion_pools(),
+		reset_count, GameData.brigades, state.pending_battalion_pools(),
 		GameData.victory_config, state.turn_number, state._china_has_landed)
 	state.last_cleanup_summary = outcome["summary"]
 	# All three latches from ONE receipt. `outcome["china_has_landed"]` is deliberately NOT passed on:
 	# the authority derives the landing latch from the summary's census, so the trio cannot disagree.
 	TurnLifecycleTransitions.apply_cleanup_verdict(state, state.last_cleanup_summary)
+	# Latch this turn's activity into prior-turn flags (for next turn's IJFS detection posture)
+	# BEFORE begin_next_turn resets the per-turn flags.
+	ForceTransitions.latch_prior_activity(GameData.brigades)
 	EventBus.cleanup_resolved.emit(state.last_cleanup_summary.to_dict())
 	return state.last_cleanup_summary.to_dict()
 

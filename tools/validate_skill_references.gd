@@ -13,7 +13,7 @@ extends SceneTree
 #
 # DELIBERATELY NARROW. A diff reviewer's objection to gating skills was that they are full of
 # illustrative prose, and that is correct: the skills legitimately write `tools/validate_<thing>.gd`,
-# `scripts/resolvers/<Phase>Resolver.gd`, `tools/export_llm_*.gd` and `tools/validate_*.gd`. So this
+# `scripts/calc/<Phase>Resolver.gd`, `tools/export_llm_*.gd` and `tools/validate_*.gd`. So this
 # checks ONE thing — a backticked, fully concrete `.gd` path — and skips any token carrying a glob or a
 # placeholder. Measured against the tree at the time it was written: one hit, the real one, and no false
 # positives. It does not check members, headings, links, or line citations; `validate_doc_anchors.gd`

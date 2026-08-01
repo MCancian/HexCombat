@@ -126,7 +126,7 @@ func test_cleanup_applies_game_over_and_winner_from_the_same_summary() -> void:
 
 func test_a_landed_latch_survives_a_turn_with_nobody_ashore() -> void:
 	var latched := CleanupResolver.resolve(
-		[], GameData.brigades, [], GameData.victory_config, 1, true)
+		0, GameData.brigades, [], GameData.victory_config, 1, true)
 
 	assert_bool(bool(latched["china_has_landed"])).override_failure_message(
 		"a turn with ZERO Red battalions ashore must not un-latch a previous landing"
@@ -135,7 +135,7 @@ func test_a_landed_latch_survives_a_turn_with_nobody_ashore() -> void:
 
 func test_the_landing_latch_starts_false_and_needs_a_real_landing() -> void:
 	var fresh := CleanupResolver.resolve(
-		[], GameData.brigades, [], GameData.victory_config, 1, false)
+		0, GameData.brigades, [], GameData.victory_config, 1, false)
 
 	assert_bool(bool(fresh["china_has_landed"])).is_false()
 

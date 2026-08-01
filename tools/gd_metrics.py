@@ -81,7 +81,15 @@ DEP_CEILINGS = {
     "scripts/phases/FiresPhases.gd": 13,
     # TurnClosure.gd (plan 0038 step 3): the end-of-turn accounting pair (supply bills who fought,
     # cleanup censuses who is left). Measured 7 at commit time.
-    "scripts/phases/TurnClosure.gd": 7,
+    # 7 -> 9 (plan 0055): the cleanup phase's two applications — the anti-ship transient-flag reset
+    # and the roster-wide activity latch — moved OUT of CleanupResolver, which is now pure and lives
+    # in calc/. This is the ceiling doing its job rather than being evaded: the two new deps are
+    # AntishipTransitions and ForceTransitions, i.e. the phase owner acquiring the authority calls
+    # that are precisely what scripts/phases/ exists to hold. The raw hoist measured 11; hosting the
+    # latch loop inside ForceTransitions as a batch (plan 0048's pattern) kept `Brigade` and
+    # `ForceActivityRequest` off this budget. Bumped to the value that buys the purity, not to the
+    # value the first attempt happened to produce.
+    "scripts/phases/TurnClosure.gd": 9,
 }
 
 # Parameter ceilings (plan 0052): a function's measured params exceeding the hard cap of 5 fails
@@ -96,7 +104,7 @@ PARAM_CEILINGS = {
     "scripts/calc/CombatCalculator.gd::_loss_counts": 6,
     "scripts/calc/CombatCalculator.gd::_select_casualties": 6,
     "scripts/calc/CombatCalculator.gd::resolve_map_attack": 8,
-    "scripts/calc/JlsfCargo.gd::queue_deployments": 7,
+    "scripts/interleaved/JlsfCargo.gd::queue_deployments": 7,
     "scripts/LLMGameAPI.gd::_action_result": 6,
     "scripts/OffloadCalculator.gd::_resolve_day_n": 10,
     "scripts/OffloadCalculator.gd::resolve_offload_day": 9,
@@ -109,18 +117,18 @@ PARAM_CEILINGS = {
     "scripts/calc/MineWarfareService.gd::_beach_result": 8,
     "scripts/calc/MineWarfareService.gd::_count_dangerous_mines": 9,
     "scripts/calc/MineWarfareService.gd::resolve_ship_losses": 7,
-    "scripts/ijfs/IjfsDetection.gd::_log_detection": 7,
-    "scripts/ijfs/IjfsDetection.gd::_run_detection_phase": 8,
-    "scripts/ijfs/IjfsDetection.gd::aircraft_detect_target_ids": 7,
-    "scripts/ijfs/IjfsEngagement.gd::resolve_sead_engagement": 6,
-    "scripts/ijfs/IjfsManpads.gd::intercepted_strike_log": 6,
-    "scripts/ijfs/IjfsStrike.gd::resolve_strike": 9,
-    "scripts/ijfs/IjfsTargeting.gd::apply_exquisite_intel": 6,
-    "scripts/ijfs/IjfsTargeting.gd::select_munition_with_doctrine": 8,
+    "scripts/interleaved/IjfsDetection.gd::_log_detection": 7,
+    "scripts/interleaved/IjfsDetection.gd::_run_detection_phase": 8,
+    "scripts/interleaved/IjfsDetection.gd::aircraft_detect_target_ids": 7,
+    "scripts/interleaved/IjfsEngagement.gd::resolve_sead_engagement": 6,
+    "scripts/interleaved/IjfsManpads.gd::intercepted_strike_log": 6,
+    "scripts/interleaved/IjfsStrike.gd::resolve_strike": 9,
+    "scripts/interleaved/IjfsTargeting.gd::apply_exquisite_intel": 6,
+    "scripts/interleaved/IjfsTargeting.gd::select_munition_with_doctrine": 8,
     "scripts/calc/AirInsertionResolver.gd::resolve": 7,
-    "scripts/resolvers/CleanupResolver.gd::resolve": 6,
-    "scripts/resolvers/IjfsResolver.gd::build_warmup_context": 8,
-    "scripts/resolvers/OffloadResolver.gd::resolve": 8,
+    "scripts/calc/CleanupResolver.gd::resolve": 6,
+    "scripts/interleaved/IjfsResolver.gd::build_warmup_context": 8,
+    "scripts/calc/OffloadResolver.gd::resolve": 8,
     "tests/batch_report_test.gd::_legacy_record": 7,
     "tests/batch_report_test.gd::_record": 8,
     "tests/ijfs/ijfs_loaders_test.gd::_container": 6,

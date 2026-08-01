@@ -1045,6 +1045,54 @@ static func _ensure_bns_at_sea(_brigade: Brigade, _count: int) -> void:
 	pass
 
 
+# --- latch_prior_activity (plan 0055) -----------------------------------------------------------
+# The roster-wide latch is hosted on the authority so the cleanup coordinator does not need `Brigade`
+# or the request type on its dependency budget. Its return is a COUNT, and diff review caught it
+# counting refused entries — the current caller ignores the count, which is exactly why an untrue one
+# would never surface on its own.
+
+func _activity_brigade(id: String, moved: bool, fought: bool) -> Brigade:
+	var brigade := Brigade.new()
+	brigade.id = id
+	brigade.moved_this_turn = moved
+	brigade.fought_this_turn = fought
+	return brigade
+
+
+func test_latch_prior_activity_latches_every_brigade_and_counts_them() -> void:
+	var moved := _activity_brigade("BDE-M", true, false)
+	var fought := _activity_brigade("BDE-F", false, true)
+	var idle := _activity_brigade("BDE-I", false, false)
+
+	var latched := ForceTransitions.latch_prior_activity(
+		{moved.id: moved, fought.id: fought, idle.id: idle})
+
+	assert_int(latched).is_equal(3)
+	assert_bool(moved.moved_last_turn).is_true()
+	assert_bool(moved.fought_last_turn).is_false()
+	assert_bool(fought.fought_last_turn).is_true()
+	assert_bool(fought.moved_last_turn).is_false()
+	assert_bool(idle.moved_last_turn).is_false()
+	assert_bool(idle.fought_last_turn).is_false()
+
+
+func test_latch_prior_activity_counts_only_what_it_actually_latched() -> void:
+	var real := _activity_brigade("BDE-REAL", true, true)
+
+	# `apply_activity` refuses a null receiver and pushes an error rather than latching. The count
+	# must report the work DONE, not the entries walked.
+	var latched := ForceTransitions.latch_prior_activity({"BDE-REAL": real, "BDE-GONE": null})
+
+	assert_int(latched).override_failure_message(
+		"latch_prior_activity counted a refused null entry as latched"
+	).is_equal(1)
+	assert_bool(real.moved_last_turn).is_true()
+
+
+func test_latch_prior_activity_on_an_empty_roster_is_zero() -> void:
+	assert_int(ForceTransitions.latch_prior_activity({})).is_equal(0)
+
+
 static func _remove_from_reserve(reserve: Array, bn_id: String) -> void:
 	for entry in reserve:
 		var bns: Array = entry.get("bns", [])

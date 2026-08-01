@@ -28,7 +28,8 @@ display). Ratified 2026-07-02 (docs/archive/PLAN.md → Decisions). Consequences
 | Layer | Location | Rules |
 |---|---|---|
 | Model | `scripts/model/` | Typed `Resource` DTOs. Plain data; no engine/scene/screen concerns. |
-| Pure logic | `scripts/` (+ `scripts/ijfs/`, `scripts/resolvers/`) | `RefCounted`/`static func`; no `Node` dependency; no autoload access from inside; headless-testable in isolation. |
+| Pure logic | `scripts/` + `scripts/calc/` | `RefCounted`/`static func`; no `Node` dependency; no autoload access from inside; headless-testable in isolation; applies NO campaign state by any route. |
+| Computes and applies | `scripts/interleaved/` | Same shape, but calls its aggregate's authority at its own draw point, because deferring would change the dice count. Plan 0055. |
 | Data service | `GameData` autoload | Loads JSON into typed objects once; holds lookups. |
 | Runtime state | `GameState` autoload | Turn/phase/orders; sequences phase resolvers. Being decomposed (see below). |
 | View/control | `HexMap`, `GameController`, `InfoPanel`, scenes | Reads state, draws, translates input into actions. Owns NO game state. |
@@ -39,8 +40,9 @@ signatures, wired by the existing autoloads.
 
 ## The resolver interface (decided — the shape of all phase logic)
 
-Each turn phase is (or is becoming) a **pure `RefCounted` resolver class** in `scripts/resolvers/`
-with an explicit signature like `resolve(<inputs>, dice) -> <TypedSummary>`:
+Each turn phase is a **`RefCounted` resolver class** — in `scripts/calc/` when pure, in
+`scripts/interleaved/` when it must apply at its own draw point — with an explicit signature like
+`resolve(<inputs>, dice) -> <TypedSummary>`:
 
 - Dependencies are **visible in the signature** — pass data in, return data out.
 - No `EventBus` emits, no `GameData`/`GameState` autoload reads inside the class. Signal emits and
@@ -101,8 +103,8 @@ get-only. When you register a field, delete its setter in the same change.
 **Field NAMES are protected repo-wide.** Register `IjfsMunition.name` and 22 unrelated view-layer lines
 become unresolved-write failures (0046). Prefer a distinctive name — `cohort_state`, not `state`.
 
-**Directory claims go stale without anyone editing the file.** `AntishipResolver` sat in
-`scripts/resolvers/` for seven plans because one function wrote the caller's `ship_reserve` in place;
+**Directory claims go stale without anyone editing the file.** `AntishipResolver` sat in the old
+`scripts/resolvers/` (historical) for seven plans because one function wrote the caller's `ship_reserve` in place;
 plan 0044 replaced that seam elsewhere and left the function with no production caller at all, which
 nothing noticed until 0050 swept for it. When you delete a writer, re-ask what its file's directory is
 still claiming.

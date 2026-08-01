@@ -17,7 +17,8 @@ extends RefCounted
 ## coordinator itself. TO lookups arrive as plain maps so this file
 ## never reaches for the GameData autoload.
 ##
-## It lives in scripts/calc/ as of plan 0050. Between 0043 and then it stayed in scripts/resolvers/ for
+## It lives in scripts/calc/ as of plan 0050. Between 0043 and then it stayed in the since-deleted
+## scripts/resolvers/ (dissolved by plan 0055) for
 ## ONE reason — `remaining_reserve_after_losses` rewrote `entry["bns"]` on the caller's live
 ## `ship_reserve` entries in place, which made this a mixed file by the role-directory rule. Plan 0044
 ## replaced that seam with `ForceTransitions.apply_crossing_loss` and left the function with no

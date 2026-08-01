@@ -349,7 +349,7 @@ everything in it, and my own preflight had asserted the opposite ("seven files s
 logic that writes campaign state") without measuring. Both round-1 reviewers passed over that claim.
 It is not folded in here: it is a fifteen-file path move discovered *after* this diff was reviewed,
 and folding it in would ship it unreviewed, which this plan's own campaign-fatigue stop condition
-forbids. Opened as `docs/plans/0055-directory-claims-vs-appliers.md` with the measurement.
+forbids. Opened as `docs/archive/0055-directory-claims-vs-appliers.md` with the measurement (shipped 2026-07-31).
 **That measurement was wrong, and this paragraph records what was believed on 2026-07-31, not what is
 true** — the write-scan reused here detects direct field assignment, and after this campaign the only
 application left is via authority CALLS, which it cannot see. `CleanupResolver` and `IjfsResolver` do

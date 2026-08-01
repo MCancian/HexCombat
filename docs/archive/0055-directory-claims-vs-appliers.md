@@ -1,9 +1,21 @@
 ---
 title: "0055: The directory claims do not track who applies campaign state"
-status: "Sketch"
+status: "Shipped"
 created: "2026-07-31"
 rewritten: "2026-07-31"
+decided: "2026-07-31"
+shipped: "2026-07-31"
 ---
+
+> **CLOSED 2026-07-31 — shipped as specified, with both open decisions settled by measurement.**
+> `scripts/resolvers/` and `scripts/ijfs/` are gone; the property-named directory is
+> **`scripts/interleaved/`** (not `stages/` — `InfrastructureTickPlan.stage()` already makes "stage"
+> this repo's verb for DEFERRING application), and `CleanupResolver` was made pure rather than
+> misfiled, its two applications hoisted into `TurnClosure`. Durable facts now live in
+> `docs/STATUS.md` -> "Where a file goes", `tools/validate_authority_call_placement.gd`'s header, the
+> `docs/DECISIONS.md` entry and `docs/systems/turn-engine/RETRO.md`. **Every path this document cites
+> is PRE-move and deliberately not updated** — the finding is about where files were.
+
 
 # Plan 0055: The directory claims do not track who applies campaign state
 
@@ -81,17 +93,29 @@ correct and the reasoning is the `scripts/ijfs/` reasoning verbatim — only the
 
 ## Proposal
 
-Name the category after the property, and put all nine appliers in it.
+Name the category after the property, and put every applier in it that belongs there.
 
-Introduce **`scripts/stages/`** — *computes AND applies, at its own draw point, through that
+Introduce **`scripts/interleaved/`** — *computes AND applies, at its own draw point, through that
 aggregate's authority.* Test: **would deferring its application change how many dice are drawn, or
-what a later iteration decides?** Move the nine appliers there. `scripts/ijfs/` dissolves;
-`IjfsLoaders` goes to `scripts/loaders/`, whose claim it already satisfies. The four pure resolvers go
-to `scripts/calc/`, and `scripts/resolvers/` is deleted as the original plan intended — just not with
-the six files it named.
+what a later iteration decides?**
 
-Resulting role table: `phases/` orders, `calc/` computes, `stages/` computes-and-applies,
+Of the nine appliers, **eight move there and one is made pure** — `CleanupResolver` applies for no
+draw-point reason and fails the new directory's test on day one, so it is hoisted rather than misfiled
+(settled below). `scripts/ijfs/` dissolves; `IjfsLoaders` goes to `scripts/loaders/`, whose claim it
+already satisfies. The **five** pure resolvers go to `scripts/calc/`, and `scripts/resolvers/` is
+deleted as the original plan intended — just not with the six files it named.
+
+Resulting role table: `phases/` orders, `calc/` computes, `interleaved/` computes-and-applies,
 `transitions/` owns, `builders/` + `loaders/` construct, `model/` holds.
+
+**Final destinations, 13 files:**
+
+| To | Files |
+|---|---|
+| `scripts/interleaved/` (new, 8) | `IjfsDetection`, `IjfsEngagement`, `IjfsEngine`, `IjfsManpads`, `IjfsStrike`, `IjfsTargeting`, `IjfsResolver`, `JlsfCargo` |
+| `scripts/calc/` (5) | `FrontlineResolver`, `InfrastructureResolver`, `OffloadResolver`, `CombatResolver`, `CleanupResolver` (after the hoist) |
+| `scripts/loaders/` (1) | `IjfsLoaders` |
+| deleted | `scripts/resolvers/`, `scripts/ijfs/` |
 
 ### Considered and rejected
 
@@ -106,30 +130,53 @@ Resulting role table: `phases/` orders, `calc/` computes, `stages/` computes-and
   right for at least one file — see the `CleanupResolver` decision below — so this is rejected as a
   *policy*, not case by case.
 
-### Two naming calls, one settled and one open
+### Two naming calls, both settled
 
 **The `*Resolver` class names do NOT get renamed. Settled.** Ten files carry the suffix and after this
-plan eight sit in `calc/` and two in `stages/`, which looks like the suffix has stopped meaning
+plan nine sit in `calc/` and one in `interleaved/`, which looks like the suffix has stopped meaning
 anything. Round 1 pushed back and is right: "Resolver" names a *phase endpoint* — the thing that
 decides what happens in a phase — and it never encoded purity. Renaming would touch every call site and
 doc for no gain, and unlike a file move a class rename is not free. **The directory carries the
 application policy; the suffix carries the phase role.** Say that in the role table so the next reader
 does not re-open this.
 
-**`scripts/stages/` is an OPEN name question.** "Stage" is already in this repo's vocabulary — ~21
-matches under `scripts/` including the pure anti-ship pipeline in `AntishipCrossing`, ~101 across
-source and docs — and it reads as *ordering*, which is `phases/`'s job, rather than as *interleaved
-application*. `scripts/interleaved/` was proposed as more precise. Decide before step 2; the plan does
-not depend on which wins, but renaming the directory afterwards costs the whole sweep again.
+**The directory is `scripts/interleaved/`, not `scripts/stages/`. SETTLED 2026-07-31 by measurement.**
+Round 1 left this open on the argument that "stage" reads as *ordering*. Measuring the word decided it,
+and not on the count — on one usage:
 
-## `CleanupResolver` qualifies for neither directory — the one open decision
+```
+scripts/model/InfrastructureTickPlan.gd:32:  func stage(id, node_status, repair_turns_remaining) -> void:
+```
+
+**In this repo `stage` is already a verb meaning "record this change into a plan so it can be applied
+LATER".** `InfrastructureTickPlan.stage()` is the deferral primitive — the thing a file calls precisely
+when it is *not* applying at its own draw point. Naming the deferral-is-impossible directory
+`scripts/stages/` would label it with the codebase's own word for deferring. That is not a shade of
+ambiguity; it is the exact inversion.
+
+The rest of the measurement (37 `stage` matches under `scripts/`) is genuinely split and would not have
+settled anything on its own: `IjfsTransitions.gd:13` uses it for exactly this property ("its six stages
+consume dice CONDITIONALLY on state an earlier stage just wrote"), while `AntishipCrossing.gd:8` uses it
+for a **pure** seven-step pipeline sitting in `calc/`. A word that already names both sides of the
+boundary cannot be the name of the boundary.
+
+`interleaved` has no such conflict: 15 matches across source and docs, **every one of them describing
+this property** — `CombatResolver.gd:9` "mutates state the next hex's contributor gathering reads (the
+interleaving is part of the contract)", `TurnConductor.gd:16`, `docs/STATUS.md:30`. The repo already
+reaches for this word when it means computation and application that cannot be pulled apart. The
+directory adopts the word the codebase already uses for the thing.
+
+Cost of being wrong here is the whole reference sweep again, which is why it is settled before step 2
+rather than during it.
+
+## `CleanupResolver` qualifies for neither directory — SETTLED: make it pure
 
 Round 1 found this from both sides and both are right, which is what makes it a real hole rather than a
 disagreement:
 
 - It **does** mutate campaign state — `ForceTransitions.apply_activity` latches `moved_last_turn` /
   `fought_last_turn`, both classified `campaign` in the manifest. So it cannot go to `calc/`.
-- It **fails `stages/`'s own test** — nothing in the function reads either mutation, and deferring both
+- It **fails `interleaved/`'s own test** — nothing in the function reads either mutation, and deferring both
   to its caller would change neither a decision nor a die. So it is not a draw-point applier either.
 
 It applies for no draw-point reason. That is a fourth category, and it has exactly one member: the
@@ -143,7 +190,7 @@ claim ("orders calls and threads results") covers this exactly. Its own comment 
 describes the flag reset and activity latch as *"Pure work"* — the same write/apply confusion this plan
 is fixing, sitting in a code comment on this exact code.
 
-**Why not defer it.** Deferring leaves three bad options: put a file in `stages/` that fails the
+**Why not defer it.** Deferring leaves three bad options: put a file in `interleaved/` that fails the
 directory's test on day one, keep a one-file `scripts/resolvers/` alive, or knowingly misfile it in
 `calc/`. The first is worst — the new directory would be born with the exact defect this plan exists to
 cure, and the validator (which checks only *may* it call an authority, not *must* it be a draw-point
@@ -152,6 +199,28 @@ applier) would not catch it.
 **The cost is honest: this makes the plan no longer purely path-only.** It is a behaviour-neutral
 hoist of six lines plus three test call sites, fully covered by the golden pins — but it is a code
 change, and if it is deferred the plan must say which of the three bad options it is taking.
+
+**SETTLED 2026-07-31: hoist. `CleanupResolver` becomes pure and moves to `calc/` with the other four.**
+Taken under the standing instruction to prefer the option that is harder up front and leaves the
+cleanest code. Two facts measured while settling it, both of which make the hoist cheaper than the
+section above estimated:
+
+- **The signature does not grow.** `resolve()` takes `antiship_systems: Array` only to hand it to
+  `AntishipTransitions.reset_transient_flags`, whose return feeds `summary.antiship_systems_reset`.
+  Hoisting the reset to the caller replaces that parameter with the `int` it produced —
+  `antiship_systems_reset: int` — so the arity stays at 6 and `PARAM_CEILINGS` needs only its key
+  repathed, not its value changed.
+- **Ordering inside the function is genuinely free, confirmed by reading the body.** `census()` reads
+  `brigade.hex_id`, `team` and `get_battalion_count()`; `VictoryConditions.evaluate` reads only the two
+  counts and the arm. Neither touches the anti-ship transient flags nor `moved_last_turn` /
+  `fought_last_turn`. So both hoisted calls can move to either side of the census without changing a
+  value — which is what makes this behaviour-neutral rather than merely believed to be.
+
+The activity latch moves into `TurnClosure.resolve_cleanup_phase` **after** the
+`TurnLifecycleTransitions.apply_cleanup_verdict` call, keeping the source order of authority calls
+identical to today's. `TurnClosure.gd:47`'s comment calling the reset and latch *"Pure work"* is
+deleted, not reworded — it is the write/apply confusion this plan exists to fix, and after the hoist the
+line it describes really is pure.
 
 ## The moves are half of it — the other half is a gate
 
@@ -179,8 +248,14 @@ a file lives has prose.
 | `scripts/model/` | no | 0 ✅ |
 | `scripts/transitions/` | they *are* the authorities | 0 ✅ |
 | `scripts/calc/` | **no** | **1 — `JlsfCargo`, the violation this plan moves** |
-| `scripts/stages/` (new) | yes — that is its claim | 16 + 6 on arrival |
-| `scripts/phases/` | yes — ordering those calls is the job | 64 |
+| `scripts/interleaved/` (new) | yes — that is its claim | 16 (from `ijfs/`) + 5 on arrival = **21 across 8 files** |
+| `scripts/phases/` | yes — ordering those calls is the job | 64 → **66** after the `CleanupResolver` hoist |
+
+Two of those numbers are consequences of the settled decisions and are stated here so a reviewer can
+check them rather than re-derive them. `interleaved/` receives `JlsfCargo` (1) and `IjfsResolver` (4),
+not `CleanupResolver` (2) — the round-1 draft of this table said "16 + 6", which matched no split of
+the nine appliers under either decision. `phases/` rises by the two calls the hoist moves into
+`TurnClosure`.
 
 So the validator is green the moment step 2 lands. It costs one file and locks in the whole plan.
 
@@ -191,7 +266,7 @@ plan cites. The historical case — `AntishipResolver` — was a file that STOPP
 misplaced without anyone editing it. A file going pure inside an *allowed* directory stays legal under
 a one-directional rule, so the exact defect walks straight through.
 
-So: forbidden directories must have **zero** direct authority calls, **and every `scripts/stages/` file
+So: forbidden directories must have **zero** direct authority calls, **and every `scripts/interleaved/` file
 must have at least one.** A stage that stops applying fails the gate and gets re-homed, which is the
 case that actually rotted.
 
@@ -243,10 +318,15 @@ directory and a role-table row rather than only deleting one, and that it ships 
 1. **Re-run both scans and confirm the census still holds.** The alias-taint scan (illegal direct
    writes — expect zero) *and* the comment-stripped authority-call scan above. If any file has changed
    category since 2026-07-31, re-derive the table before moving anything.
-2. Create `scripts/stages/`. `git mv` the nine appliers and their `.uid` sidecars together, one commit.
-3. `git mv` the four pure resolvers to `scripts/calc/`, `IjfsLoaders` to `scripts/loaders/`, and delete
-   `scripts/resolvers/` and `scripts/ijfs/`. One commit.
-4. **Sweep for path-keyed references** — the failure mode plan 0050 hit was
+2. **Make `CleanupResolver` pure** — hoist `AntishipTransitions.reset_transient_flags` and the
+   `ForceTransitions.apply_activity` latch loop into `TurnClosure.resolve_cleanup_phase`, swap the
+   `antiship_systems: Array` parameter for the `antiship_systems_reset: int` it produced, update the
+   four call sites (`TurnClosure.gd:49` + three tests), delete the "Pure work" comment. No file moves
+   in this commit — it is the only behaviour-touching step and it stands alone so a bisect can find it.
+3. Create `scripts/interleaved/`. `git mv` the eight appliers and their `.uid` sidecars together.
+4. `git mv` the five pure resolvers to `scripts/calc/`, `IjfsLoaders` to `scripts/loaders/`, and delete
+   `scripts/resolvers/` and `scripts/ijfs/`. One commit with step 3's reference sweep.
+5. **Sweep for path-keyed references** — the failure mode plan 0050 hit was
    `tools/validate_gd_metrics.py` hard-coding `"scripts/resolvers/AntishipResolver.gd::resolve"`,
    which no call-site grep finds. Measured live references, 2026-07-31:
    **`tools/mutation_authority_manifest.json:816` holds `"path": "res://scripts/ijfs/IjfsLoaders.gd"`**
@@ -297,8 +377,8 @@ directory and a role-table row rather than only deleting one, and that it ships 
    exists under a new path, repoint it (the doc-anchor gate fails otherwise), and where the archived
    claim is now known false, append a dated correction rather than editing the original sentence.
    Only mark a line `(historical)` when the thing it names is genuinely gone.
-5. Rewrite the role table in `docs/STATUS.md`: delete the `scripts/resolvers/` row, replace the
-   `scripts/ijfs/` row with the `scripts/stages/` row and its property-based test, and correct the
+6. Rewrite the role table in `docs/STATUS.md`: delete the `scripts/resolvers/` row, replace the
+   `scripts/ijfs/` row with the `scripts/interleaved/` row and its property-based test, and correct the
    `scripts/calc/` row. The two worked examples below it explain a `resolvers/` vs `calc/` boundary
    that will no longer exist — what must survive is **the lesson**: a directory claim can be
    invalidated by a deletion somewhere else, and a measurement can be invalidated by reusing an
@@ -314,15 +394,15 @@ directory and a role-table row rather than only deleting one, and that it ships 
    calls — correct under the intended reading, a flagrant violation under the plain one. Fix the whole
    table to one vocabulary: **writes** = assigns a field directly; **applies** = changes campaign state
    by any route, including through an authority. Every row states which it means.
-6. **Add `tools/validate_authority_call_placement.gd`** with the permission table above, as its own commit
+7. **Add `tools/validate_authority_call_placement.gd`** with the permission table above, as its own commit
    after the moves. Its header states which half of the placement rule it owns and which half it
    cannot. Then **prove it bites**: temporarily add an authority call to a file in `scripts/calc/`,
    confirm the validator fails and names the file, revert. A gate nobody has watched fail is not known
    to work — the repo has already shipped a validator whose pin never matched anything, and it passed
    for weeks.
-7. Point `docs/STATUS.md`'s role table at the validator, so the next reader learns the claims are
+8. Point `docs/STATUS.md`'s role table at the validator, so the next reader learns the claims are
    checked rather than asserted. One line, not a restatement of the table.
-8. `bash tools/run_all_tests.sh` → ALL PHASES GREEN. The moves must not touch a pin.
+9. `bash tools/run_all_tests.sh` → ALL PHASES GREEN. The moves must not touch a pin.
 
 ## Risk
 
