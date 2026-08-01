@@ -79,19 +79,38 @@ earlier note in this plan said otherwise.)
 
 ### Checklist
 
+*(Revised after the 2026-08-01 plan-review round — see "Review findings folded in" below. Four items
+here changed; do not work from an older copy.)*
+
 - [ ] `GameStateData.last_ijfs_air_oob: Dictionary = {}`, cleared in `reset_to_scenario` alongside
-      `last_ijfs_summary` / `last_ijfs_writeback`.
-- [ ] `FiresPhases.resolve_ijfs_turn` stores `ledgers["air_oob_after"]` onto it. Note the ledger value
-      is `null` before any squadron force exists — store `{}` in that case rather than letting `null`
-      reach serialization.
+      `last_ijfs_summary` / `last_ijfs_writeback`. **Do not add a `GameState` façade property for it** —
+      `play_turn` reads `data` directly, so a façade would be pattern-matching the siblings past the
+      point where the pattern applies.
+- [ ] `FiresPhases.resolve_ijfs_turn` stores `ledgers["air_oob_after"]` onto it. **`null` must fail
+      loud, not become `{}`.** `IjfsStateBuilder` unconditionally sets
+      `state.squadron_force = IjfsLoaders.expand_oob_to_squadrons(...)`, so a null force at this
+      boundary is a broken invariant, and quietly recording `{}` would let a research consumer read it
+      as "the force is gone". A legitimately empty force is still a structured payload —
+      `{"model_version": 4, "squadrons": []}` — never `{}`.
 - [ ] `IjfsEngine`'s squadron row gains `"kind"` (manned/unmanned) read from the air-classes table,
       so aircraft and UAVs are separable without the consumer re-deriving the join. **Fail loud on a
       missing class** — no `dict.get(key, default)` across this boundary (non-negotiable #2; the
-      exquisite-intel incident). This bumps `air_oob_after` to `model_version` **5** and moves the pin
-      in `tools/validate_headless_ijfs.gd` again.
+      exquisite-intel incident).
+- [ ] **Keep `model_version` at 4 — do NOT bump to 5.** `kind` is additive and backward-compatible,
+      unlike the 3→4 bump, whose recorded rationale was that `losses_today` *changed meaning*. The
+      decisive point: no v4 `air_oob_after` payload has ever been persisted anywhere (it reaches no
+      fixture, record or API today), so there is no v4 consumer that a silently-widened row could
+      mislead. If the project ever wants "every additive revision bumps", that is a policy to state
+      once, not to invent here.
+- [ ] **There are TWO pins on this version, and the earlier draft named only one:**
+      `tools/validate_headless_ijfs.gd` and `tests/ijfs/ijfs_engine_test.gd`. Since the version stays
+      at 4 neither pin moves — but the GdUnit row-shape assertion in the latter must grow `kind`.
 - [ ] `TurnResult` gains `air_oob: Dictionary` + its `to_dict()` key; `GameState.play_turn` populates
       it from the state field.
-- [ ] `shared_model_policies` entry for the new `GameStateData` field.
+- [ ] **Add `air_oob` to `schemas/llm_action_result.schema.json`** under `turn_result.properties`.
+      Missing this would pass every existing check silently: the top level is
+      `"additionalProperties": true` and `tools/validate_llm_api.gd` only checks top-level result keys.
+- [ ] `shared_model_policies` entry for the new `GameStateData` field, `"classification": "phase_output"`.
 - [ ] GdUnit: the OOB reaches `TurnResult.to_dict()`; `initial`/`alive`/both loss counters/`kind` are
       present; a turn with zero air losses still emits the block (absence must mean "no force", not
       "no losses").
@@ -108,10 +127,41 @@ earlier note in this plan said otherwise.)
 
 ### What step 1 does and does not give the seat
 
-`turn_result` is returned to a seat through `_action_result`, so an LLM seat WILL see the OOB in its
-post-turn feedback. It will NOT appear in the seat's planning observation, which `observation()` builds
-separately via `_ijfs_observation`. If the USER later wants a seat to plan around its own remaining
-airframes, that is a further decision, not something this step silently grants.
+**Corrected by the review round — the first draft of this section was wrong.** It claimed an LLM seat
+would see the OOB in its post-turn feedback "for free". It will not, in this repository:
+
+- `SelfPlayRunner` calls each policy through `_seat_actions`, which passes only
+  `LLMGameAPI.observation(perspective_team)`. The action result is appended to `turn_digests` and
+  **never fed back to a policy**. `LLMPolicy`'s only entry point is `build_actions(observation)`.
+- `LLMGameAPI._action_result` does return `turn_result` to a *direct* API caller, so an external agent
+  driving the API by hand would see it — but no seat in this repo consumes that path.
+
+So step 1 delivers exactly what the USER asked for and nothing more: **the research record**, via
+`turn_digests`. That is coherent for charting a force curve. It is NOT a step toward an LLM seat
+planning around its own attrition — that needs the OOB in `_ijfs_observation`, which is deliberately
+out of scope here.
+
+### Review findings folded in (round 1, 2026-08-01)
+
+Three reviewers, all substantive; agy re-measured all seven premises and returned CONFIRMED on every
+one, so the preflight held. What changed above came from the other two:
+
+1. **The seat-visibility claim was false** (Sol) — corrected in the section above, verified against
+   `SelfPlayRunner._seat_actions` and `LLMPolicy`.
+2. **`null` → `{}` was the wrong design** (Sol) — now fails loud, with the empty-force payload spelled
+   out.
+3. **The action-result schema was missing from the checklist** (Sol) — now a step. Measured further
+   while confirming it: **the schema has ALREADY drifted from `TurnResult`** — `air_insertion_summary`,
+   `mobilization_summary`, `offload_summary`, `game_over` and `winner` are all declared on the model and
+   absent from the schema, and nothing gates the pair. Logged to `docs/plans/BACKLOG.md`; not fixed here,
+   because repairing five pre-existing omissions is not this plan's work.
+4. **`model_version` should stay at 4, and there are two pins not one** (Sol; the second pin
+   independently enumerated by DeepSeek) — both folded into the checklist.
+5. **The seam choice survived** (Sol), with a caveat now recorded: unlike `last_ijfs_summary` and
+   `last_ijfs_writeback`, which later phases genuinely consume, the new field has **no later-phase
+   consumer** — it is transport-only shared state. Sol's stronger alternative was neither this nor
+   threading one value, but a typed turn-resolution outcome carrying *all* phase reports. That is a
+   real improvement and explicitly out of scope for step 1; if it is ever done, this field folds into it.
 
 ## Step 2 — SAM interception and return-to-base (BLOCKED)
 
