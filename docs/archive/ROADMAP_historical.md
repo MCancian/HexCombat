@@ -333,7 +333,7 @@ writing any GDScript. This phase has the most moving parts; expect to split into
 
 **What to build (per-phase template):**
 
-- `scripts/FrontLineService.gd` — pure lib: `polyline_to_hex_sequence()`, `distribute_bns()`;
+- `scripts/calc/FrontLineService.gd` — pure lib: `polyline_to_hex_sequence()`, `distribute_bns()`;
   no scene deps; testable with scripted hex grids
 - `GameState.resolve_frontline_phase(polyline_coords, dice)` — calls FrontLineService, applies
   BN moves via `GameData.set_brigade_hex()`

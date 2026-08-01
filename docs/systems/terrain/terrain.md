@@ -120,8 +120,8 @@ change; not part of the runtime or the gate.
   explicit `blocked` list with every hex whose `TerrainType.impassable` is true (mountains today)
   before calling into `HexMath`.
 
-`HexMath.find_path` (`scripts/HexMath.gd`) is a plain cost-aware Dijkstra shortest path —
-no min-one-step guarantee. `HexMath.find_reachable` (`scripts/HexMath.gd`) computes the
+`HexMath.find_path` (`scripts/calc/HexMath.gd`) is a plain cost-aware Dijkstra shortest path —
+no min-one-step guarantee. `HexMath.find_reachable` (`scripts/calc/HexMath.gd`) computes the
 Dijkstra reachable set (cumulative entry cost ≤ `max_distance`) **plus** every passable direct
 neighbor of the start hex regardless of its cost — the min-one-step guarantee: a unit that has not
 yet moved this turn may always take one step into an adjacent passable hex even if that hex's

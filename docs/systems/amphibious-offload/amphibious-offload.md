@@ -22,7 +22,7 @@ anti-ship crossing model and converts ship losses into BN casualties.
 | `scripts/interleaved/JlsfCargo.gd` | JLSF pseudo pool-entry builder (rides the 0004 sealift pipeline) |
 | `data/infrastructure.json` | 5 ports + 8 main-island airbridges (explicit `hex_id` + `to_number`) |
 | `data/offload_weights.json` | Per-BN-type transport weights + bn_class map + multiplier matrix |
-| `scripts/ShipLoadingModel.gd` | BN-to-ship fleet derivation (forward) and ship-loss-to-BN-casualty (backward) |
+| `scripts/calc/ShipLoadingModel.gd` | BN-to-ship fleet derivation (forward) and ship-loss-to-BN-casualty (backward) |
 | `scripts/phases/ReinforcementPhases.gd` | `resolve_offload_turn()` / `resolve_sealift_turn()` orchestrators (plan 0038); `GameState` forwards to them and owns `ship_reserve` state + `_rebuild_ship_reserve()` expansion |
 | `scripts/model/BeachDef.gd` | Beach `Resource` — offload_rate, floating_piers, jackup_barge, lat/lng, advance_direction |
 | `data/beaches.json` | 9 beach sites with offload_rate in short tons/day and infrastructure counts |
@@ -69,7 +69,7 @@ static func _resolve_day_n(...) -> void
 
 # OffloadRates (scripts/OffloadRates.gd) — pure constants
 
-# ShipLoadingModel (scripts/ShipLoadingModel.gd)
+# ShipLoadingModel (scripts/calc/ShipLoadingModel.gd)
 static func build_sent_snapshots(bn_count, carriers, screen) -> Dictionary
 static func resolve_bn_losses(destroyed_by_ship_type, capacity_by_type,
   bns_at_sea, accumulator, dice) -> Dictionary

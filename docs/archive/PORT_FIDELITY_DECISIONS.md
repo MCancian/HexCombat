@@ -105,8 +105,8 @@ correct adjacent-support aggregation). Full gate **ALL PHASES GREEN**. Details: 
 **HexCombat:** `data/taiwan_hex_grid.json` stores **offset odd-r** `row`/`col` (the TIV generator
 shifts odd rows right by half a hex). `GameData.load_hex_grid` sets `hex.coord = Vector2i(row, col)`
 (`scripts/GameData.gd:79`) with no offset→axial conversion, then `HexMath.neighbor_coords`
-(`scripts/HexMath.gd:14`) applies **fixed axial directions** and `HexMath.distance`
-(`scripts/HexMath.gd:21`) applies the **axial cube-distance formula** to those offset coords.
+(`scripts/calc/HexMath.gd:14`) applies **fixed axial directions** and `HexMath.distance`
+(`scripts/calc/HexMath.gd:21`) applies the **axial cube-distance formula** to those offset coords.
 
 **TIV:** `src/core/hex_grid.py` `get_hex_neighbors` uses **parity-dependent odd-r offsets** (even
 rows: `(-1,-1),(-1,0),(0,-1),(0,1),(1,-1),(1,0)`; odd rows: `(-1,0),(-1,1),(0,-1),(0,1),(1,0),(1,1)`).

@@ -8,10 +8,10 @@ Defines the hex-grid coordinate system, geometric computations (distance, neighb
 
 | File | Responsibility |
 |---|---|
-| `scripts/HexMath.gd` | Axial coordinate math: directions, distance, BFS pathfinding |
+| `scripts/calc/HexMath.gd` | Axial coordinate math: directions, distance, BFS pathfinding |
 | `scripts/ui/MapProjection.gd` | Lat/lon → pixel projection with aspect-correct uniform fit |
 | `scripts/model/Hex.gd` | `Hex` Resource — id, axial coord, center lat/lon, vertex array |
-| `scripts/HexOwner.gd` | Ownership string constants: `RED`, `GREEN`, `CONTESTED`, `NONE` |
+| `scripts/calc/HexOwner.gd` | Ownership string constants: `RED`, `GREEN`, `CONTESTED`, `NONE` |
 | `scripts/GameData.gd` | Loads JSON into `Hex` objects, builds neighbor index, exposes `get_distance`/`find_path`/`find_reachable` wrappers, and the `map` authority façades (`recompute_hex_ownership`, `apply_feba_delta`, `clear_feba`) |
 | `scripts/model/HexState.gd` | `HexState` Resource — per-hex RUNTIME state (`hex_owner`, `feba_km`), the only mutable thing this subsystem has |
 | `scripts/transitions/MapTransitions.gd` | The `map` aggregate's mutation authority — the only writer of `HexState` and of the `hex_states` container |
@@ -27,7 +27,7 @@ Defines the hex-grid coordinate system, geometric computations (distance, neighb
 - `center: Vector2` — `(lat, lon)` of hex center
 - `vertices: PackedVector2Array` — 7 `(lat, lon)` pairs (first == last, closed polygon)
 
-**Coordinate system:** Pointy-top axial (q = row, r = col). `AXIAL_DIRECTIONS` order at `scripts/HexMath.gd`:
+**Coordinate system:** Pointy-top axial (q = row, r = col). `AXIAL_DIRECTIONS` order at `scripts/calc/HexMath.gd`:
 ```
 (0,-1), (1,-1), (1,0), (0,1), (-1,1), (-1,0)
 ```

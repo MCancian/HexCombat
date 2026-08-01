@@ -384,7 +384,7 @@
  * and a "front" view whose viewBox crops to the contested/Red hexes and their neighbors.
  *
  * Map projection is a straight port of scripts/MapProjection.gd (equirectangular fit with a
- * fixed margin) — NOT the odd-r axial math in scripts/HexMath.gd (that file is pure grid/graph
+ * fixed margin) — NOT the odd-r axial math in scripts/calc/HexMath.gd (that file is pure grid/graph
  * logic — neighbor lookups, pathfinding — no pixel coordinates; the game renders hexes from
  * precomputed lat/lon vertices in data/taiwan_hex_grid.json, projected by MapProjection.gd).
  * HexMath.gd's odd-r neighbor offsets ARE ported below (NEIGHBOR_OFFSETS_EVEN/ODD) — needed to
@@ -421,7 +421,7 @@ function makeProjection(viewportW, viewportH) {
 }
 const project = makeProjection(VIEWPORT_W, VIEWPORT_H);
 
-// ---- Hex neighbor offsets — PORT: re-sync with scripts/HexMath.gd odd-r tables --------------
+// ---- Hex neighbor offsets — PORT: re-sync with scripts/calc/HexMath.gd odd-r tables --------------
 const NEIGHBOR_OFFSETS_EVEN = [[-1,-1],[-1,0],[0,-1],[0,1],[1,-1],[1,0]];
 const NEIGHBOR_OFFSETS_ODD  = [[-1,0],[-1,1],[0,-1],[0,1],[1,0],[1,1]];
 function neighborCoords(row, col) {

@@ -44,7 +44,7 @@ Crossing is **100% engine-scheduled** — there is no player "crossing" order (t
   4–30**; ashore census peaks at 31 (turn 2) then attrites to 4 and plateaus. Hulls were NOT the
   binding constraint — the troop reserve was one-shot.
 
-`scripts/ShipLoadingModel.gd` is a **stateless per-turn snapshot** (header cites source oracle
+`scripts/calc/ShipLoadingModel.gd` is a **stateless per-turn snapshot** (header cites source oracle
 `TaiwanInvasionViewer src/services/manifest_allocator.py`). The stateful ship lifecycle that would
 carry sealift across turns was not ported. `docs/archive/port_audit.md` §"Parked/Intentionally
 skipped" is authoritative on what was left out on purpose — **reconcile against it before porting;

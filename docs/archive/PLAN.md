@@ -1040,7 +1040,7 @@ caveat is resolved.
 
 - **2026-06-27 — D5-A FrontLineService ported (pure lib; via two opencode subagents):** Ported the
   polyline→hex-sequence core of TIV `services/front_line_service.py` + `core/hex_grid.point_to_hex`
-  into `scripts/FrontLineService.gd` (pure RefCounted, static funcs). Faithful: `haversine_km`
+  into `scripts/calc/FrontLineService.gd` (pure RefCounted, static funcs). Faithful: `haversine_km`
   (radius 6371, `atan2(√a, √max(1e-12,1-a))`), `polyline_cumulative_lengths`, `interpolate_along_line`,
   `point_to_hex` (nearest hex CENTER by haversine — TIV's actual algorithm, not point-in-polygon),
   `find_hexes_for_polyline` (vertex + 2 km-interval midpoint sampling, dedupe first-seen). Decisions /
@@ -1114,7 +1114,7 @@ caveat is resolved.
   milestone complete):** Wired `GameState.resolve_antiship_turn(dice)` to thread D3-B2 firing plan →
   D3-B3 crossing → D3-C mines, runs after `resolve_ijfs_turn` and before `resolve_offload_turn`
   (IJFS suppresses, then the crossing attrits the wave, then survivors land). Decisions / divergences:
-  **(1) BN↔ship mapping (`scripts/ShipLoadingModel.gd`, new pure lib).** The user chose to derive
+  **(1) BN↔ship mapping (`scripts/calc/ShipLoadingModel.gd`, new pure lib).** The user chose to derive
   the sent ships from BNs at sea (not a reporting-only stub). `build_sent_snapshots` does a **min-lift
   greedy** load — fill highest-capacity carriers first (capacity desc, ties by ship_type),
   `sent = mini(ready, ceil(remaining/cap))` — then appends the full escort+decoy screen (all ready
@@ -2088,7 +2088,7 @@ Red maneuver BNs redistribute along it. Cleanup phase normalizes ownership after
 
 **Sub-tasks** (scope from TIV oracle before writing):
 
-- [x] **D5-A** *(2026-06-27)* — `scripts/FrontLineService.gd` (pure RefCounted, static funcs):
+- [x] **D5-A** *(2026-06-27)* — `scripts/calc/FrontLineService.gd` (pure RefCounted, static funcs):
       `haversine_km` (exact port of TIV `_haversine_km`), `polyline_cumulative_lengths`,
       `interpolate_along_line`, `point_to_hex` (nearest hex CENTER by haversine — faithful to TIV
       `core/hex_grid.point_to_hex`), `sample_polyline` (vertices + 2 km-interval segment midpoints),
@@ -2201,7 +2201,7 @@ end-of-turn cleanup**, counting Chinese (PLA) and Taiwanese (ROC) battalions **o
 - **(d) Precedence.** The two clauses are mutually exclusive (can't have zero Chinese *and* Chinese >
   Taiwanese), so no conflict; check order is immaterial. Recorded for completeness.
 
-**IMPLEMENTED 2026-06-29 (Track 3a + 3b).** `scripts/VictoryConditions.gd` (pure
+**IMPLEMENTED 2026-06-29 (Track 3a + 3b).** `scripts/calc/VictoryConditions.gd` (pure
 `evaluate(china_bn, taiwan_bn, arm, turn_number, china_has_landed)`; opencode-implemented + 9-case
 unit suite) is called at the end of `GameState.resolve_cleanup_phase` after `recompute_hex_ownership`
 (pure board read — **no dice**, golden RNG untouched). `GameState._taiwan_battalion_census()` sums

@@ -14,9 +14,9 @@ Front-line is user-driven (requires a drawn polyline). Cleanup + victory are aut
 
 | File | Role | TIV oracle |
 |---|---|---|
-| `scripts/FrontLineService.gd` | `static func` lib: polyline → hex sequence, even spacing of units along hexes. | `services/front_line_service.py` — `find_hexes_for_polyline`, `distribute_battalions_along_line`, `_interpolate_along_line`, `_polyline_cumulative_lengths` |
-| `scripts/VictoryConditions.gd` | Pure `static func evaluate()`: win if China majority; if armed + 0 China BNs → Taiwan win. | No TIV equivalent (HexCombat design, settled 2026-06-28). |
-| `scripts/HexOwner.gd` | Constants: `RED`, `GREEN`, `CONTESTED`, `NONE`. | TIV `CleanupHexService.OWNER_MAP` maps same four values. (upstream) |
+| `scripts/calc/FrontLineService.gd` | `static func` lib: polyline → hex sequence, even spacing of units along hexes. | `services/front_line_service.py` — `find_hexes_for_polyline`, `distribute_battalions_along_line`, `_interpolate_along_line`, `_polyline_cumulative_lengths` |
+| `scripts/calc/VictoryConditions.gd` | Pure `static func evaluate()`: win if China majority; if armed + 0 China BNs → Taiwan win. | No TIV equivalent (HexCombat design, settled 2026-06-28). |
+| `scripts/calc/HexOwner.gd` | Constants: `RED`, `GREEN`, `CONTESTED`, `NONE`. | TIV `CleanupHexService.OWNER_MAP` maps same four values. (upstream) |
 | `scripts/GameData.gd` | `recompute_hex_ownership()` (a façade onto `MapTransitions`), `hex_states` dict, `victory_config` from scenario. | TIV `cleanup_hex_service.py` — `update_hex_ownership` per hex (DB persistence). |
 | `scripts/GameState.gd` / `scripts/phases/TurnClosure.gd` / `scripts/phases/FrontlinePhase.gd` | `GameState` exposes `resolve_frontline_phase()` / `resolve_cleanup_phase()` and holds `game_over`/`winner`; `FrontlinePhase` and `TurnClosure` own phase application, including `TurnClosure.taiwan_battalion_census()`. | TIV `cleanup_application_service.py` + `cleanup_calculator.py` (system reset). |
 | `scripts/model/TurnResult.gd` | `game_over: bool`, `winner: String` (lines 13–14). | N/A |

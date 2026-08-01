@@ -219,7 +219,7 @@ in-scope suggestions are applied immediately; the rest are deferred with a one-l
 ## 2026-06-23 — M4a: movement logic + allowance/org wiring (pi-implemented)
 
 **(a) What shipped** (orchestrator-verified: full gate green, 16 GdUnit4 tests)
-- `scripts/Movement.gd` (pure RefCounted lib): `FAST_MOBILITY_HINTS = [mechanized, armor, tank]`
+- `scripts/calc/Movement.gd` (pure RefCounted lib): `FAST_MOBILITY_HINTS = [mechanized, armor, tank]`
   (mirrors TIV `infer_green_brigade_speed` — fast if nato_type OR any battalion type matches);
   tactical speed 2/1, administrative 20/10; `move_allowance(brigade, mode)` (fail-loud on unknown mode).
 - `Brigade.moved_admin_this_turn` flag (set on admin move; M5 will bar attacks — inert now).
@@ -296,7 +296,7 @@ in-scope suggestions are applied immediately; the rest are deferred with a one-l
 ## 2026-06-24 — M5b: post-combat retreat + ownership colors + result (pi-implemented)
 
 **(a) What shipped** (orchestrator-verified: full gate green, 29 GdUnit4 tests)
-- `scripts/HexOwner.gd` constants (RED/GREEN/CONTESTED/NONE); `GameData` + `HexMap` now use them
+- `scripts/calc/HexOwner.gd` constants (RED/GREEN/CONTESTED/NONE); `GameData` + `HexMap` now use them
   instead of bare owner-string literals.
 - `GameState`: `FEBA_RETREAT_THRESHOLD_KM = 10.0`; `_apply_feba_retreats()` (after combat, before the
   final ownership recompute) — when a contested hex's cumulative |feba| ≥ 10 km, the FEBA-losing side

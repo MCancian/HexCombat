@@ -124,7 +124,7 @@ Confirm with `git log --oneline -15` + a fresh `pwsh ./tools/run_all_tests.ps1` 
     byte-stable. **D3-B (magazine + firing plan + crossing) COMPLETE.**
   - **D3-D — DONE (2026-06-27, committed). D3 (anti-ship & mine warfare) MILESTONE COMPLETE.**
     `GameState.resolve_antiship_turn(dice)` threads D3-B2 firing → D3-B3 crossing → D3-C mines (runs
-    after `resolve_ijfs_turn`, before `resolve_offload_turn`). New `scripts/ShipLoadingModel.gd` maps
+    after `resolve_ijfs_turn`, before `resolve_offload_turn`). New `scripts/calc/ShipLoadingModel.gd` maps
     BNs-at-sea → a sent fleet (min-lift greedy carrier fill + escort/decoy screen) and converts
     destroyed hulls → BNs lost at sea (fractional accumulator carried across turns), removing them from
     `ship_reserve` and feeding the D0-C `register_ship_losses` seam (D3-D absorbed the formerly-deferred

@@ -17,7 +17,7 @@ Resolves **Green coastal anti-ship missile strikes** against the **Red amphibiou
 | `scripts/AntishipMagazine.gd` | Magazine/ammo reservation + deduction |
 | `scripts/loaders/AntishipLoaders.gd` | Loads all `data/antiship/*.json` |
 | `scripts/calc/MineWarfareService.gd` | D3-C geometric mine danger model |
-| `scripts/ShipLoadingModel.gd` | `resolve_bn_losses` — ship hulls → BN losses |
+| `scripts/calc/ShipLoadingModel.gd` | `resolve_bn_losses` — ship hulls → BN losses |
 | `scripts/model/AntishipCrossingContext.gd` | Typed input bundle for crossing damage; `Dice` stays explicit |
 | `scripts/model/ShipDef.gd` | Ship template (capacity, category, is_decoy) |
 | `scripts/model/ShipState.gd` | Runtime fleet counts (ready/sent/offloading/returning/destroyed) — a projection of `SealiftState`, written only by `SealiftTransitions` |
