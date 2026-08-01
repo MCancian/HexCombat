@@ -76,6 +76,43 @@ precedent against this.
   until exit, so a killed run is indistinguishable from a clean empty return except by its exit code
   (124). Scope the ask to the read/write table alone.
 
+## The edge inventory — traced 2026-08-01 (agy-explore, citations verified)
+
+18 ordering dependencies across the six steps. An edge means the later step READS a field the earlier
+step WRITES, so swapping them changes what the later step sees. Every field name below was checked to
+exist on the class named.
+
+| edge | field(s) | what breaks if reordered |
+|---|---|---|
+| A→B | `destroyed`, `suppressed` | destroyed/suppressed SAMs would still fight in SEAD, inflating Red losses |
+| A→C | `destroyed` | detection rolls against already-dead targets |
+| A→D | `manpads_remaining` | strike targeting sees unexpended MANPADS stock |
+| A→E | `destroyed`, `suppressed`, `manpads_remaining` | MANPADS contest runs on bins already killed or depleted |
+| A→F | `destroyed`, `suppressed` | free shot's AD-health input ignores A's strikes |
+| B→C | `destroyed`, **`alive`** | detection uses ISR airframes already shot down |
+| B→D | `destroyed`, `suppressed`, **`alive`** | strike budget counts aircraft already lost; fires at dead SAMs |
+| B→E | `destroyed`, `suppressed`, `alive` | MANPADS evaluates destroyed bins as functional |
+| B→F | `destroyed`, `suppressed`, `alive` | free shot ignores SEAD results |
+| C→D | `detected_this_turn` | targeting uses phase-1 detection only, not phase-2 |
+| **D→E** | `destroyed`, `suppressed`, `manpads_remaining` | **MANPADS sees an undamaged network — the "more shooters alive" claim in [[0060-air-attrition-before-the-strike]], now specific** |
+| **D→F** | `destroyed`, `suppressed` | **free shot's health input ignores the post-AD strike** |
+| E→F | `alive` | free shot attrits airframes MANPADS already killed |
+
+**Two edges nobody had spotted, both of which enlarge 0060:**
+
+1. **B→C on `IjfsSquadron.alive` — SEAD return fire changes DETECTION.** `_sead_return_fire` iterates
+   every squadron in force order with no role filter, so ISR airframes are shot down alongside strike
+   and SEAD ones, and phase-2 aircraft detection then computes its ISR score from the survivors. So air
+   attrition does not only cost strikes; it costs *sensing*, one step later. Any reordering of attrition
+   moves detection quality with it — a second-order effect 0060 did not account for.
+2. **`manpads_remaining` is expended by the STRIKE phases as well as by the MANPADS contest** (A→D,
+   A→E, D→E). MANPADS stock is therefore a shared resource between two different mechanics, which is a
+   sharper reason than "more shooters alive" for why moving E earlier changes its outcome.
+
+**Note for the design session:** this is the read/write inventory of the CURRENT code, not a proposal.
+It says what the edges ARE, which is exactly what a declared-and-validated DAG would encode — and it is
+the artifact that makes "what breaks if MANPADS moves" answerable instead of arguable.
+
 ## Sequencing
 
 1. **0060's design session first.** It decides whether the ordering should change at all; this plan

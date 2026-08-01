@@ -77,6 +77,15 @@ Bring the two questions the measurement raised, which are arguably bigger than t
 opened with: whether the free shot is worth moving at all given it accounts for 1.6% of air losses,
 and whether the prelanding warmup should attrit Red air at all, since today it does not.
 
+**And a third, from the dependency trace in [[0061-resolution-dag]]: air attrition changes DETECTION,
+not just striking.** `IjfsEngagement._sead_return_fire` iterates every squadron with no role filter, so
+ISR airframes are shot down alongside strike and SEAD ones, and phase-2 aircraft detection then computes
+its ISR score from the survivors. Moving attrition earlier therefore degrades Red's *sensing* a step
+later, on top of the two effects this plan already names. That edge is second-order, was not accounted
+for here, and should be on the table before any ordering is chosen. The full 18-edge inventory is in
+0061; the two that matter most to this plan are D→E and D→F, which are the "more shooters alive" claim
+made specific.
+
 ## Motivation (USER question 2026-08-01, out of plan 0059)
 
 Identifying the third air-attrition source for [[0059-sam-interception-and-rtb]] exposed the phase
