@@ -231,6 +231,24 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   scenario row without a dedup check, so malformed scenario content is the one way in.
   Golden exposure is still real (offload sequencing), so this needs its own gate run and must not ride
   on a path move.
+- [ ] **DeepSeek's strength is narrower than "bounded enumeration" — it needs the material HANDED to
+  it, and times out on multi-module call-chain tracing (measured 2026-08-01, two flakes).** The roster
+  records 3/3 as a bounded enumerator, which is true but under-specified. Measured across four
+  invocations in one session: **succeeded twice** when given material to read — a committed plan file
+  (16.3 KB return) and a frozen diff (23.9 KB, and it caught a second `model_version` pin nobody else
+  did. **Failed twice**, `exit 124` with ZERO bytes at both 15 and 25 minutes, when asked to trace
+  reads/writes through five modules (`IjfsEngagement`, `IjfsManpads`, `IjfsDetection`, `IjfsStrike`,
+  `IjfsTransitions`) — open-ended exploration needing many tool calls. Narrowing the brief between the
+  two attempts changed nothing, so it is the task SHAPE, not the wording. A trivial probe returned `OK`
+  in seconds immediately afterwards, so the route was alive throughout.
+  **So: give DeepSeek a document and ask it to enumerate what is IN it; give `agy-explore` anything
+  that requires finding the material first** — its own contract lists "mapping deps; tracing a flow" as
+  what it is for, and its measured record is 4/4 substantive. Fold this into `.claude/REVIEWERS.md`'s
+  "Use it for" column next time that file is edited; it is a sharpening of an existing row, not a new
+  fact needing its own home.
+  **And note how the failure presents:** `opencode` buffers until exit, so a timeout leaves an empty
+  file and a wrapper that can still report success. The only signal is exit code 124. An empty return
+  read as "reviewed, nothing found" is the exact flake-is-not-a-pass trap.
 - [ ] **Reviewer read-only is still a prompt, not a sandbox — opencode can enforce it (found 2026-07-30,
   plan 0054; USER raised the config route).** `opencode` supports per-agent permissions
   (`opencode.json` → `agent.plan.permission`), so `"edit": "deny"` would make read-only ENFORCED for the
