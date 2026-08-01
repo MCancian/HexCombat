@@ -60,6 +60,7 @@
     "ijfs|owned_models|IjfsSquadron.aircraft_class",
     "ijfs|owned_models|IjfsSquadron.alive",
     "ijfs|owned_models|IjfsSquadron.initial",
+    "ijfs|owned_models|IjfsSquadron.losses_campaign",
     "ijfs|owned_models|IjfsSquadron.losses_today",
     "ijfs|owned_models|IjfsSquadron.role",
     "ijfs|owned_models|IjfsSquadron.rtb_today",

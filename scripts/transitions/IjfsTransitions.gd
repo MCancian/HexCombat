@@ -157,12 +157,22 @@ static func set_manpads_remaining(target: IjfsTarget, value: int) -> void:
 
 ## Roll the persistent target state into the next day: suppression is temporary and the SEAD verdict
 ## belongs to the day that produced it. Destruction, detection continuity (known_to_red /
-## last_detected_day), munition inventory and squadron attrition all carry forward untouched.
+## last_detected_day), munition inventory and squadron STRENGTH all carry forward untouched — an
+## airframe lost yesterday is still lost.
+##
+## What does NOT carry is each squadron's per-day loss COUNT (added 2026-08-01). This runs at the head
+## of every day, before run_daily accumulates, which is what makes losses_today mean "today" in the
+## ledger built at the end of that day. losses_campaign is deliberately not touched. The first warmup
+## day never reaches here (IjfsResolver guards it with `i > 0`) and does not need to: the loader has
+## already zeroed both counters.
 static func carry_to_next_day(daily_state: IjfsDailyState) -> void:
 	for target in daily_state.targets:
 		target.suppressed = false
 		target.suppressed_this_turn = false
 		target.sead_result = ""
+	if daily_state.squadron_force != null:
+		for squadron: IjfsSquadron in (daily_state.squadron_force as Array):
+			squadron.losses_today = 0
 
 
 # ── Squadron strength ───────────────────────────────────────────────────────────────────────────
@@ -170,11 +180,14 @@ static func carry_to_next_day(daily_state: IjfsDailyState) -> void:
 ## Book aircraft losses on one squadron. All three attrition sources — SEAD return fire, the
 ## post-phase-2 free shot, and the island-wide MANPADS contest — land here.
 ##
-## `losses_today` is CAMPAIGN-cumulative despite its name: nothing in the pipeline resets it, and it
-## is serialized into the air_oob_after ledger, so giving it per-day semantics would move golden pins
-## and is out of this plan's scope. `rtb_today` deliberately gets no mutator at all — the pipeline has
-## never written it, and inventing one here would be a mechanic smuggled in under a refactor. Both
-## are pinned by tests/ijfs/ijfs_authority_characterization_test.gd.
+## Books the loss twice, into two fields with two different lifetimes (USER call 2026-08-01): a per-day
+## `losses_today`, reset by carry_to_next_day at the head of each day, and a `losses_campaign` running
+## total that nothing resets. Before that call `losses_today` alone existed and was campaign-cumulative
+## despite its name — a daily-looking number in the air_oob_after ledger that reported the whole
+## campaign. Reporting both was preferred to renaming, so an OOB read shows current damage and
+## accumulated wear at once. `rtb_today` still gets no mutator here: the pipeline has never written it,
+## and the mechanic that would — aircraft driven off rather than shot down — is plan 0059, not a rider
+## on this. All three fields are pinned by tests/ijfs/ijfs_authority_characterization_test.gd.
 static func apply_squadron_losses(squadron: IjfsSquadron, losses: int) -> void:
 	if squadron == null:
 		push_error("IjfsTransitions: apply_squadron_losses called with no squadron")
@@ -187,6 +200,7 @@ static func apply_squadron_losses(squadron: IjfsSquadron, losses: int) -> void:
 		return
 	squadron.alive -= losses
 	squadron.losses_today += losses
+	squadron.losses_campaign += losses
 
 
 # ── Daily-state lifecycle ───────────────────────────────────────────────────────────────────────

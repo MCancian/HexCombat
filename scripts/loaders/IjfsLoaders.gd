@@ -391,6 +391,7 @@ static func expand_oob_to_squadrons(oob) -> Array[IjfsSquadron]:
 			sqn.alive = aircraft_per_sqn
 			sqn.rtb_today = 0
 			sqn.losses_today = 0
+			sqn.losses_campaign = 0
 			squadrons.append(sqn)
 	return squadrons
 

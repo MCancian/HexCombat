@@ -355,8 +355,12 @@ static func _build_ledgers(state: IjfsDailyState, current_day: int, summary: Dic
 				"alive": sq.alive,
 				"rtb_today": sq.rtb_today,
 				"losses_today": sq.losses_today,
+				"losses_campaign": sq.losses_campaign,
 			})
-		air_oob_after = {"model_version": 3, "squadrons": squadrons, "provenance": {}}
+		# model_version 4 (2026-08-01): losses_campaign added, and losses_today changed MEANING from
+		# campaign-cumulative to per-day. A consumer reading v3 semantics off a v4 payload would
+		# silently under-report, which is exactly what the version is for.
+		air_oob_after = {"model_version": 4, "squadrons": squadrons, "provenance": {}}
 
 	return {
 		"metadata": {

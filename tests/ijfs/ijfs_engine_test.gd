@@ -46,13 +46,17 @@ func test_full_run_produces_all_ledgers() -> void:
 	for phase in phases.keys():
 		assert_bool(phase == "phase1" or phase == "phase2").override_failure_message("unexpected detection phase %s" % phase).is_true()
 
-	# Air OOB v3 with the expected role mix (mirrors TestPayloadFields).
+	# Air OOB v4 with the expected role mix (mirrors TestPayloadFields). v4 (2026-08-01) added
+	# losses_campaign and redefined losses_today as per-day; both counters are asserted here so the
+	# payload cannot lose one silently.
 	var oob: Dictionary = ledgers["air_oob_after"]
-	assert_int(oob["model_version"]).is_equal(3)
+	assert_int(oob["model_version"]).is_equal(4)
 	assert_bool((oob["squadrons"] as Array).size() > 0).is_true()
 	var first_sq: Dictionary = oob["squadrons"][0]
-	for f in ["squadron_id", "class", "role", "initial", "alive"]:
-		assert_bool(first_sq.has(f)).is_true()
+	for f in ["squadron_id", "class", "role", "initial", "alive", "losses_today", "losses_campaign"]:
+		assert_bool(first_sq.has(f)).override_failure_message(
+			"air_oob_after squadron row is missing '%s'" % f
+		).is_true()
 
 	# Summary surfaces the documented keys.
 	var summary: Dictionary = ledgers["summary"]

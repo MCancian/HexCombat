@@ -55,7 +55,7 @@ func _validate_day1_run() -> void:
 
 	for key in ["detection_log", "strike_log", "target_status_after", "munition_inventory_after", "engagement_log", "summary", "air_oob_after"]:
 		_assert_true("ledger has %s" % key, ledgers.has(key))
-	_assert_true("air_oob_after model_version 3", int((ledgers["air_oob_after"] as Dictionary).get("model_version", 0)) == 3)
+	_assert_true("air_oob_after model_version 4", int((ledgers["air_oob_after"] as Dictionary).get("model_version", 0)) == 4)
 
 	var summary: Dictionary = GameState.last_ijfs_summary
 	_assert_true("summary not empty", not summary.is_empty())

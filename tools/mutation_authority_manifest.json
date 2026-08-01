@@ -778,7 +778,7 @@
         {
           "class": "IjfsSquadron",
           "path": "res://scripts/model/ijfs/IjfsSquadron.gd",
-          "_doc": "Owned model. losses_today is CAMPAIGN-cumulative despite its name — nothing resets it, and it is serialized into the air_oob_after ledger. rtb_today has no runtime writer at all and must not gain one; both are pinned by tests/ijfs/ijfs_authority_characterization_test.gd.",
+          "_doc": "Owned model. losses_today is genuinely per-day since 2026-08-01 (IjfsTransitions.carry_to_next_day zeroes it at the head of each day); losses_campaign carries the running total it used to hold. Both are serialized into the air_oob_after ledger, which is model_version 4 for that reason. rtb_today still has no runtime writer — the mechanic that would give it one is plan 0059, and until that lands a writer appearing here is a bug. All three are pinned by tests/ijfs/ijfs_authority_characterization_test.gd.",
           "fields": {
             "squadron_id": "identity",
             "aircraft_class": "identity",
@@ -786,6 +786,7 @@
             "initial": "establishment",
             "alive": "campaign",
             "losses_today": "campaign",
+            "losses_campaign": "campaign",
             "rtb_today": "campaign"
           }
         }
@@ -849,6 +850,7 @@
             "IjfsSquadron.initial",
             "IjfsSquadron.alive",
             "IjfsSquadron.losses_today",
+            "IjfsSquadron.losses_campaign",
             "IjfsSquadron.rtb_today"
           ]
         },

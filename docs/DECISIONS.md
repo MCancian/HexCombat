@@ -25,6 +25,20 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-08-01 — The three decided backlog items are implemented; the air OOB ledger is v4 (agent).**
+  `deploy_jlsf` duplicates are refused with `DUPLICATE_JLSF`; the advantage ratios are `sweepable:false`
+  with the correction that they were never inert; `IjfsSquadron.losses_today` is now genuinely per-day
+  (zeroed by `IjfsTransitions.carry_to_next_day`) alongside a new `losses_campaign`, so `air_oob_after`
+  went to `model_version` 4 — the bump is not cosmetic, `losses_today` CHANGED MEANING and a v3 reader
+  would under-report. **Two things the work found.** The characterization test that pinned the old
+  semantics built its `IjfsDailyState` without a `squadron_force`, so it would have passed with or
+  without the reset — rewritten to attach the force. And `air_oob_after` reaches no fixture, record or
+  LLM payload at all (only `tools/validate_headless_ijfs.gd`), which is why a change to it needed no
+  re-baseline — logged as an open question about where that ledger should surface. Facts:
+  `scripts/transitions/IjfsTransitions.gd` (both lifetimes), `docs/systems/ijfs/ijfs.md` (the
+  invariant), `tools/mutation_authority_manifest.json` (the new protected field),
+  `docs/plans/BACKLOG.md` (the reachability question).
+
 - **2026-08-01 — Four backlog design calls settled, and two of them rested on a false premise (USER).**
   A duplicate `deploy_jlsf` will be REFUSED with `DUPLICATE_JLSF` (same outcome, but the seat is told);
   the air ledger will report per-day AND campaign-cumulative squadron losses rather than renaming

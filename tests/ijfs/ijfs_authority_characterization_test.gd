@@ -71,30 +71,45 @@ func test_interception_attempt_drains_manpads_stock_whether_or_not_it_hits() -> 
 
 
 # --- 2. squadron counters: what the names promise vs what the code does --------------------------
-# `losses_today` is never reset anywhere (carry_to_next_day touches targets only), so it is a
-# CAMPAIGN-cumulative total wearing a per-day name — and it is serialized into the air_oob_after
-# ledger, which makes changing it a golden-touching decision rather than a rename. `rtb_today` has no
-# runtime writer at all. Plan 0046 must preserve both exactly; these tests are what say so.
+# Since 2026-08-01 the two loss counters have two lifetimes (USER call): `losses_today` is genuinely
+# per-day, zeroed by carry_to_next_day at the head of each day, and `losses_campaign` is the running
+# total it used to carry under the wrong name. Both ship in the air_oob_after ledger, which is
+# model_version 4 for that reason. `rtb_today` still has no runtime writer — plan 0059 is the mechanic
+# that would give it one, and until that lands a writer appearing here is a bug.
+#
+# NOTE the state below MUST carry the force. An earlier version of this test built an IjfsDailyState
+# with targets only, so carry_to_next_day had no squadrons to touch and the test would have passed
+# whether or not the reset existed.
 
-func test_losses_today_accumulates_across_days_and_is_never_reset() -> void:
+func test_losses_today_resets_each_day_while_losses_campaign_accumulates() -> void:
 	var squadron := _squadron("sq1", 10)
 	var force: Array[IjfsSquadron] = [squadron]
-
-	# Two "days" of free-shot attrition, one guaranteed loss each (p_loss > 0, roll 0.0).
-	IjfsEngagement.apply_post_phase_2_free_shot(force, null, 1.0, _one_hit_then_misses(10))
-	var after_day_1 := squadron.losses_today
-	assert_int(after_day_1).is_greater(0)
-
 	var state := IjfsDailyState.new()
 	state.targets = []
+	state.squadron_force = force
+
+	# Day 1: one guaranteed loss (p_loss > 0, roll 0.0).
+	IjfsEngagement.apply_post_phase_2_free_shot(force, null, 1.0, _one_hit_then_misses(10))
+	var day_1_losses := squadron.losses_today
+	assert_int(day_1_losses).is_greater(0)
+	assert_int(squadron.losses_campaign).is_equal(day_1_losses)
+
+	# The day boundary clears the per-day counter and leaves the campaign total alone.
 	IjfsEngine.carry_to_next_day(state)
-
-	IjfsEngagement.apply_post_phase_2_free_shot(force, null, 1.0, _one_hit_then_misses(squadron.alive))
-
 	assert_int(squadron.losses_today).override_failure_message(
-		"losses_today is cumulative; a reset here would silently rewrite the air_oob_after ledger"
-	).is_greater(after_day_1)
-	assert_int(squadron.alive).is_equal(squadron.initial - squadron.losses_today)
+		"carry_to_next_day must zero losses_today, or the ledger's daily number reports the campaign"
+	).is_equal(0)
+	assert_int(squadron.losses_campaign).override_failure_message(
+		"losses_campaign must survive the day boundary — it is the running total"
+	).is_equal(day_1_losses)
+
+	# Day 2: the per-day counter starts from zero again, the campaign total keeps climbing.
+	IjfsEngagement.apply_post_phase_2_free_shot(force, null, 1.0, _one_hit_then_misses(squadron.alive))
+	assert_int(squadron.losses_today).is_greater(0)
+	assert_int(squadron.losses_today).override_failure_message(
+		"day 2's per-day count must not include day 1's losses"
+	).is_less(squadron.losses_campaign)
+	assert_int(squadron.alive).is_equal(squadron.initial - squadron.losses_campaign)
 
 
 func test_rtb_today_has_no_runtime_writer() -> void:

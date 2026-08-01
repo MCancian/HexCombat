@@ -29,11 +29,11 @@ not — it is now `scripts/interleaved/`, named for the property rather than the
 can clear `destroyed`. There is no guard to argue with or bypass, because there is no way to express
 the operation.
 
-**Three things in this subsystem look like bugs and are not** — check before "fixing":
-`IjfsSquadron.rtb_today` has no runtime writer at all; `losses_today` is never reset, so it is
-campaign-cumulative despite its name, and both are serialized into the `air_oob_after` ledger;
-and `IjfsEngine`'s `will_fly` inventory pre-check is defensive redundancy rather than an RNG gate,
+**Two things in this subsystem look like bugs and are not** — check before "fixing":
+`IjfsSquadron.rtb_today` has no runtime writer at all (the mechanic that would give it one is plan
+0059 — until then a writer appearing is a bug, not a fix); and `IjfsEngine`'s `will_fly` inventory
+pre-check is defensive redundancy rather than an RNG gate,
 because `IjfsTargeting._rule_affordable` already refuses an unaffordable pairing on every selection
-path. The first two are pinned as-is by `tests/ijfs/ijfs_authority_characterization_test.gd` and
-filed in `docs/plans/BACKLOG.md`; the third means the insufficiency contract has to be tested
+path. The first is pinned as-is by `tests/ijfs/ijfs_authority_characterization_test.gd`;
+the second means the insufficiency contract has to be tested
 directly against the authority, since an engine-level test of it would pass while exercising nothing.

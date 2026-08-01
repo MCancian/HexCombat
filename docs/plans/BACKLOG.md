@@ -137,22 +137,17 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   (caught by agy-explore; two other models wrongly agreed it would). That hole is closed separately by
   `--quit-after` in `run_all_tests.py`. So this is deduplication only, worth doing when validators are
   being touched anyway, in slices of 5-6 with the gate green between. Good `opencode` delegation.
-- [ ] **The air ledger should report per-day AND campaign-cumulative squadron losses (USER call
-  2026-08-01 — DECIDED; found 2026-07-30, plan 0046 preflight).** `IjfsSquadron.losses_today` is
-  campaign-cumulative despite its name: `IjfsTransitions.apply_squadron_losses` increments it, and the
-  only reset is at load time in `IjfsLoaders`. `carry_to_next_day` touches targets only.
-  **Premise correction 2026-08-01 — the blast radius is smaller than this item claimed.** It said the
-  field feeds "the `air_oob_after` ledger and the daily summary's `red_air_losses`". The summary half
-  is FALSE: `IjfsEngine` computes `red_air_losses` independently as
-  `_sum_losses(contest_log) + _sum_losses(free_shot_log) + _sum_losses(manpads_contest_log)`, and all
-  three logs are cleared at the start of every day, so that number is correctly per-day and always has
-  been. The cumulative value appears in exactly one place: the per-squadron rows of `air_oob_after`.
-  **The call is to report both** — a true per-day loss count and a campaign-to-date count, rather than
-  renaming or resetting the existing field. Most informative for reading an OOB after a turn; the cost
-  is a wider payload and two numbers that must stay consistent. Needs a golden/fixture re-baseline and
-  goes through `tests/ijfs/ijfs_authority_characterization_test.gd`, which pins today's behaviour
-  deliberately. Do this BEFORE [[0059-sam-interception-and-rtb]] so that plan's re-baseline is the
-  only behavioural one.
+- [ ] **The `air_oob_after` ledger reaches no game record, LLM payload or fixture — only the headless
+  validator (found 2026-08-01 while implementing the per-day/campaign loss split; PRE-EXISTING).**
+  `FiresPhases.resolve_ijfs_turn` keeps `ledgers["summary"]` on `state.last_ijfs_summary` and returns
+  the rest to its caller; the only consumer of the full ledger dict is
+  `tools/validate_headless_ijfs.gd`. So `air_oob_after` — the per-squadron order of battle, now
+  carrying both a per-day and a campaign loss count — cannot actually be READ after a turn by a player,
+  an LLM seat, or a research record. `grep air_oob_after docs/examples/*.json` is empty, which is why
+  the split needed no fixture re-baseline at all. **This is a design question before it is a task:** if
+  the point of an OOB ledger is that someone reads it, it needs a home — the turn record, the LLM
+  observation, or a report exporter. Surfacing it is additive but grows a serialized contract, so it is
+  a USER call on which surface, not a free hygiene fix.
 - [ ] **`rtb_today` is a mechanic that was never built — opened as plan
   [[0059-sam-interception-and-rtb]] (USER call 2026-08-01).** The field has no runtime writer at all
   and is reported as a constant 0 every turn. The USER's call was not to delete it: aircraft should be

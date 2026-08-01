@@ -226,8 +226,11 @@ and of the `ijfs_state` / `_ijfs_day` handles on `GameStateData`.
 - Suppression is per-day and clears at the carry-over; destruction, detection continuity, munition
   inventory and squadron attrition carry forward.
 - An exhausted magazine is a normal skipped attack, reported as `false`, never an error.
-- Squadron strength stays within `0 <= alive <= initial`; `losses_today` is campaign-cumulative
-  despite its name, and `rtb_today` has no runtime writer at all.
+- Squadron strength stays within `0 <= alive <= initial`. Two loss counters with two lifetimes:
+  `losses_today` is per-day (zeroed by `IjfsTransitions.carry_to_next_day` at the head of each day)
+  and `losses_campaign` is the running total, so `alive == initial - losses_campaign`. Both ship in
+  the `air_oob_after` ledger, which is `model_version` 4 for that reason. `rtb_today` has no runtime
+  writer at all — plan 0059 is the mechanic that would give it one.
 - MANPADS stock lives on the typed `IjfsTarget.manpads_remaining`;
   `metadata["systems_remaining"]` is a serialization mirror the authority keeps in step, because
   `metadata` is aliased live into the ledger rows.
