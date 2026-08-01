@@ -2,7 +2,7 @@
 # Run:
 #   godot --headless --path . -s res://tools/validate_llm_policy.gd
 #
-# Exercises scripts/LLMPolicy.gd against the network-free stub sidecar
+# Exercises scripts/policies/LLMPolicy.gd against the network-free stub sidecar
 # (tools/llm_sidecar_stub.py), plus direct unit checks of its parse/strip helpers. This gates the
 # marshalling contract (observation -> sidecar -> actions), the malformed-output fallback, and the
 # obs/action log WITHOUT contacting a real LLM, so it stays green inside run_all_tests.ps1. The

@@ -88,7 +88,7 @@ The complete list (`agy` pass, verbatim): `scripts/JlsfCargo.gd:92,98`; `scripts
 `scripts/resolvers/InfrastructureResolver.gd:24,25,67,68`;
 `tools/validate_headless_infrastructure.gd:46,57,67,79`.
 
-`scripts/AirAssaultPolicy.gd:79` and `scripts/resolvers/OffloadResolver.gd` also declare
+`scripts/policies/AirAssaultPolicy.gd:79` and `scripts/resolvers/OffloadResolver.gd` also declare
 `var node: Dictionary`, but they read an **LLM observation dict** and the `red_offload_nodes`
 throughput array respectively — neither touches live node state, and neither changes.
 

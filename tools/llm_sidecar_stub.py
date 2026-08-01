@@ -2,7 +2,7 @@
 """Network-free STUB sidecar for HexCombat LLM-policy tests.
 
 Stands in for a real model so the deterministic gate (tools/validate_llm_policy.gd) can exercise
-the calling code (scripts/LLMPolicy.gd) without contacting an LLM. Its stdin/stdout contract
+the calling code (scripts/policies/LLMPolicy.gd) without contacting an LLM. Its stdin/stdout contract
 mirrors the real sidecar (tools/llm_sidecar.py): read an observation JSON, print a JSON action
 array to stdout, diagnostics to stderr. Standard library only.
 

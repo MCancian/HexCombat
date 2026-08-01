@@ -6,7 +6,7 @@ orders, validates every returned action against the observation's authoritative 
 the observation/action pair for replay, and prints the validated action array to stdout. Standard
 library only (no pip dependencies) so the engine can shell out to it with nothing installed.
 
-Contract mirrors tools/llm_sidecar_stub.py so both are interchangeable behind scripts/LLMPolicy.gd:
+Contract mirrors tools/llm_sidecar_stub.py so both are interchangeable behind scripts/policies/LLMPolicy.gd:
   stdin/args:  --obs <file>  --perspective Red|Green  [--log <jsonl>]
   stdout:      a JSON array of validated action objects (never any prose)
   exit code:   0 on success (including "model gave nothing usable" -> []),

@@ -848,7 +848,7 @@ caveat is resolved.
 
 - **2026-06-28 — Track E: reusable self-play runner + pluggable policy (via opencode).** Extracted the
   self-play loop into `scripts/SelfPlayRunner.gd` (`static play_game(policy: Callable, turns, base_seed) ->
-  {final_snapshot, turn_digests, all_resolved, final_turn, index_violations}`) and `scripts/SelfPlayPolicy.gd`
+  {final_snapshot, turn_digests, all_resolved, final_turn, index_violations}`) and `scripts/policies/SelfPlayPolicy.gd`
   (RefCounted reference policy with the `build_actions(observation) -> Array` contract a real agent
   implements), and rewrote `tools/validate_headless_selfplay.gd` (133→75 lines) to delegate to them — all
   assertions + behavior preserved (identical PASS, combat in all 4 turns, cross-process deterministic).

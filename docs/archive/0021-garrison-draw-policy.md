@@ -66,7 +66,7 @@ policy parameter, not scenario content — keep the concerns separate; "everythi
 ## Objectives / steps (each its own commit, gated)
 
 1. `data/policies/garrison_draw.json` + registry entry + validator stays green.
-2. `scripts/GarrisonDrawPolicy.gd` + `PolicyCatalog` registration.
+2. `scripts/policies/GarrisonDrawPolicy.gd` + `PolicyCatalog` registration.
 3. GdUnit test with injected synthetic observation + GameData (selection rule honored at 0/0.5/0.8;
    determinism; non-drawn hold). Follow `InlandClearPolicy`'s test pattern.
 4. A real sweep: `run_sweep.py --scenario roc_full_defense --matchup inland_clear:garrison_draw

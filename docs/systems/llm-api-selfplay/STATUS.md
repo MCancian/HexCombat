@@ -4,7 +4,7 @@
 log, `LLMGameAPI` observation/action contract (JSON-schema-gated), headless self-play harness.
 Deterministic scripted policies: `inland_clear`, `garrison_draw`, `noop`, `selfplay_default`,
 `roc_defense` (plan 0029 Tier A — concentrating defender: every Green brigade steps toward the
-nearest red/contested threat, holds pre-landing; shared id-geometry in `scripts/PolicyGeometry.gd`).
+nearest red/contested threat, holds pre-landing; shared id-geometry in `scripts/policies/PolicyGeometry.gd`).
 
 **LLM players (research harness B6)** — policy id `llm_local` (`LLMPolicy`) marshals a seat's
 perspective observation to an out-of-process Python sidecar (`tools/llm_sidecar.py`) that calls a
