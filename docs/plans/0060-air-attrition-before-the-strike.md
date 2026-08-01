@@ -6,6 +6,32 @@ created: "2026-08-01"
 
 # Plan 0060: air attrition before the strike
 
+> **BLOCKED — needs a detailed design session with the USER (their call, 2026-08-01). Do not
+> implement, and do not "clarify" it by choosing an option.** This is a wargame-design decision about
+> how an IJFS day is meant to read, on a mechanic ported from `ijfs_standalone` whose oracle is not on
+> this box. Every option below changes Red's campaign strength, so an agent picking one is making a
+> balance ruling the USER has reserved. The plan-review round does not substitute: reviewers can check
+> whether the consequences are stated correctly, not which consequence is wanted.
+
+## What to bring to that session
+
+The design calls are in "Design calls for the USER" below. What would make the session decide rather
+than speculate is **evidence that does not exist yet**:
+
+- **A sensitivity run over seeds, current order vs MANPADS-on-ingress**, reporting Red's landed combat
+  strength and the crossing outcome — the two numbers the balance is actually judged on. The code
+  change is small; this comparison IS the deliverable, and having it beforehand turns the session from
+  an argument into a reading.
+- **The per-turn air force curve** from [[0059-sam-interception-and-rtb]] step 1 (shipped): every turn
+  record now carries the per-squadron OOB, so "how much air does Red have left by turn N" is now
+  answerable and should be answered for both orderings.
+- **How many airframes currently die AFTER striking** — i.e. the size of the effect being argued
+  about. Countable today from `manpads_contest_log` + `free_shot_log` against `contest_log`, with no
+  code change at all. If it is small, the whole question is moot; nobody has measured it.
+
+The third item is cheap and should be done first: it is the one that can retire the plan without a
+session.
+
 ## Motivation (USER question 2026-08-01, out of plan 0059)
 
 Identifying the third air-attrition source for [[0059-sam-interception-and-rtb]] exposed the phase
