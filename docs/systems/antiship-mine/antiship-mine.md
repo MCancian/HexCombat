@@ -14,7 +14,7 @@ Resolves **Green coastal anti-ship missile strikes** against the **Red amphibiou
 | `scripts/transitions/AntishipTransitions.gd` | The establishment's mutation authority (§10): the only writer of the `AntishipSystem` rows. |
 | `scripts/calc/AntishipCalculator.gd` | D3-B2 firing-plan + launch attrition |
 | `scripts/calc/AntishipCrossing.gd` | D3-B3 6-stage crossing-damage model |
-| `scripts/AntishipMagazine.gd` | Magazine/ammo reservation + deduction |
+| `scripts/model/AntishipMagazine.gd` | Magazine/ammo reservation + deduction |
 | `scripts/loaders/AntishipLoaders.gd` | Loads all `data/antiship/*.json` |
 | `scripts/calc/MineWarfareService.gd` | D3-C geometric mine danger model |
 | `scripts/calc/ShipLoadingModel.gd` | `resolve_bn_losses` — ship hulls → BN losses |

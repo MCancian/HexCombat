@@ -17,7 +17,7 @@ units (like artillery) become immortal in ground combat.
   plateaus at exactly 4 battalions from Turn 11 to Turn 30. Red's ground combat losses drop to 0
   permanently, yet Red continues to initiate combat.
 - **Root cause (verified 2026-07-17):**
-  - `CombatForces.maneuver_units` (`scripts/CombatForces.gd:9`) drops every battalion whose type
+  - `CombatForces.maneuver_units` (`scripts/model/CombatForces.gd:9`) drops every battalion whose type
     is `is_support_type` (tags `artillery` or `rotary_wing`), so support units never enter the
     `attacker_units`/`defender_units` arrays.
   - `CombatCalculator._loss_counts` (`scripts/CombatCalculator.gd:167`) bases casualty counts on
@@ -56,7 +56,7 @@ units (like artillery) become immortal in ground combat.
 
 ## Implementation spec
 
-### 1. `scripts/CombatForces.gd` — new `support_units()`
+### 1. `scripts/model/CombatForces.gd` — new `support_units()`
 Add, mirroring `maneuver_units` exactly but keeping only support battalions:
 
 ```gdscript

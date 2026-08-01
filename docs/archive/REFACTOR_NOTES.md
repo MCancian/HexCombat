@@ -268,7 +268,7 @@ in-scope suggestions are applied immediately; the rest are deferred with a one-l
 ## 2026-06-24 — M5a: headless continuous-combat resolution (pi-implemented)
 
 **(a) What shipped** (orchestrator-verified: full gate green, 25 GdUnit4 tests)
-- `scripts/CombatForces.gd` (pure lib): `is_support_type` (artillery|rotary_wing), `maneuver_units`
+- `scripts/model/CombatForces.gd` (pure lib): `is_support_type` (artillery|rotary_wing), `maneuver_units`
   (non-support battalions expanded per qty), `support_counts` (rocket→rocket_artillery, other
   artillery→artillery, rotary→rotary_wing; cas/crbm=0).
 - `GameState.resolve_turn(dice = SeededDice(turn_number))`: after move-then-fight detection, calls

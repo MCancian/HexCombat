@@ -9,8 +9,8 @@ Resolve ground combat when Red and Green brigades occupy the same hex after move
 | File | Role |
 |---|---|
 | `scripts/calc/CombatCalculator.gd` | Core attack resolver — `resolve_map_attack()`: formula, rolls, loss rates, FEBA, casualty selection. Pure `static func` in `RefCounted`. |
-| `scripts/CombatForces.gd` | Force aggregation — flattens brigades into maneuver-unit arrays and support-count dicts, filtering by tags. |
-| `scripts/UnitStats.gd` | `TYPE_DEFS` strength/tags table + `FALLBACK_CATEGORY_DEFS`. Lookups: `strength_for_type()`, `has_tag()`. |
+| `scripts/model/CombatForces.gd` | Force aggregation — flattens brigades into maneuver-unit arrays and support-count dicts, filtering by tags. |
+| `scripts/model/UnitStats.gd` | `TYPE_DEFS` strength/tags table + `FALLBACK_CATEGORY_DEFS`. Lookups: `strength_for_type()`, `has_tag()`. |
 | `scripts/model/CombatResult.gd` | `Resource` holding strength, ratio, losses, casualties, `feba_movement_km`, and full `combat_detail` dict. |
 | `scripts/model/Brigade.gd` | Brigade resource: composition of `Battalion[]`, plus `landed_qty()` / `landed_battalion_count()` — the single home of the "which battalions are actually ashore" rule (plan 0037). Unit expansion for combat lives in `CombatForces`, which delegates here. |
 | `scripts/model/Battalion.gd` | Single battalion type + qty; `combat_strength` getter delegates to `UnitStats`. |

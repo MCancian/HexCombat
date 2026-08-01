@@ -23,7 +23,7 @@ finding below.
 
 ## Ground combat (Area 2) — unit strength table (original finding)  🟡 (recommend: keep HexCombat's table; ratify)
 
-**HexCombat:** `UnitStats.TYPE_DEFS` (`scripts/UnitStats.gd:6`) gives differentiated maneuver strengths
+**HexCombat:** `UnitStats.TYPE_DEFS` (`scripts/model/UnitStats.gd:6`) gives differentiated maneuver strengths
 keyed by full battalion name — Armor/Tank 2.0, Combined Arms/Mech Inf 1.5, Amphibious 1.2, Air Assault
 1.4, Recon 0.7, Air Defense 0.9, Support/Service Support 0.3, Reserve 0.5; helicopters 0.5.
 

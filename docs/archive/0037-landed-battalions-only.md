@@ -59,7 +59,7 @@ victory census only. Three systems still count phantoms:
 
 | System | Code | Effect today |
 |---|---|---|
-| Ground combat | `CombatForces.maneuver_units` / `support_units` / `support_counts` (`scripts/CombatForces.gd:9`, `:24`, `:40`) | a brigade with 4 of 8 battalions ashore fights with 8 |
+| Ground combat | `CombatForces.maneuver_units` / `support_units` / `support_counts` (`scripts/model/CombatForces.gd:9`, `:24`, `:40`) | a brigade with 4 of 8 battalions ashore fights with 8 |
 | Red supply | `TurnConductor.active_red_battalion_units` (`:556`) | all 8 consume DOS |
 | LLM observation | `LLMGameAPI._brigade_observations` (`:269`) | reports `battalions: 8`; `_ship_reserve_observations` (`:298`) shows the sea queue but never `mainland_pool` |
 

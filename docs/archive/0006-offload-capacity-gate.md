@@ -66,7 +66,7 @@ skipped):**
 
 ### Existing offload code (file:line)
 
-- **`scripts/OffloadRates.gd`** — throughput rate constants ported from TIV
+- **`scripts/model/OffloadRates.gd`** — throughput rate constants ported from TIV
   `defaults/offload_rates.json`, in short tons/day. `TONS_PER_BN = 2200`. Beach `BEACH_BASE 4400`,
   `FLOATING_PIER 2200`, `JACKUP_BARGE 4400`. **`OPERATIONAL_PORT 11000`, `DEGRADED_PORT 2200`,
   `SEIZED_PORT 0`, `OPERATIONAL_AIRBRIDGE 2200`, `DEGRADED_AIRBRIDGE 1100`, `SEIZED_AIRBRIDGE 0` are

@@ -13,7 +13,7 @@ anti-ship crossing model and converts ship losses into BN casualties.
 | File | Responsibility |
 |---|---|
 | `scripts/OffloadCalculator.gd` | Day-1 and Day-N offload resolution; maneuver-BN detection; beach-capacity math; day-N infra routing + carry-over |
-| `scripts/OffloadRates.gd` | Throughput constants (tons/day per infrastructure type); TONS_PER_BN |
+| `scripts/model/OffloadRates.gd` | Throughput constants (tons/day per infrastructure type); TONS_PER_BN |
 | `scripts/calc/OffloadCostModel.gd` | Per-BN day-N offload cost: transport weight × bn_class/ship_category multiplier (plan 0006) |
 | `scripts/model/InfrastructureDef.gd` / `InfrastructureState.gd` | Port/airbridge node defs + per-node lifecycle state |
 | `scripts/calc/InfrastructureResolver.gd` | Pure seizure + JLSF repair CALCULATOR (`plan_tick`, writes nothing); `red_offload_nodes` throughput feed |
@@ -34,7 +34,7 @@ anti-ship crossing model and converts ship losses into BN casualties.
 
 ## 3. Constants
 
-- **`OffloadRates.TONS_PER_BN := 2200.0`** — `scripts/OffloadRates.gd`
+- **`OffloadRates.TONS_PER_BN := 2200.0`** — `scripts/model/OffloadRates.gd`
 - **Maneuver BN whitelist** — `scripts/OffloadCalculator.gd`:
   ```
   "Combined Arms Battalion", "Amphibious Infantry Battalion",
@@ -67,7 +67,7 @@ static func resolve_offload_day(current_day, beach_capacity,
 static func _resolve_day1(...) -> void
 static func _resolve_day_n(...) -> void
 
-# OffloadRates (scripts/OffloadRates.gd) — pure constants
+# OffloadRates (scripts/model/OffloadRates.gd) — pure constants
 
 # ShipLoadingModel (scripts/calc/ShipLoadingModel.gd)
 static func build_sent_snapshots(bn_count, carriers, screen) -> Dictionary

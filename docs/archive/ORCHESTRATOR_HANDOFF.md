@@ -98,7 +98,7 @@ Confirm with `git log --oneline -15` + a fresh `pwsh ./tools/run_all_tests.ps1` 
   650 systems aggregated by (TO,type_id)), `tools/validate_antiship_data.gd` in the gate. ships.json +
   ShipDef/ShipState reused from D0-C.
 - **D3-B split into B1/B2/B3** (dependency order: magazine → firing plan → crossing; ~2,100 src lines):
-  - **D3-B1 — DONE (2026-06-26, committed):** `scripts/AntishipMagazine.gd` (calculator-pure magazine
+  - **D3-B1 — DONE (2026-06-26, committed):** `scripts/model/AntishipMagazine.gd` (calculator-pure magazine
     reservation: `from_defaults`, `cap_launcher_count`, `reserve_full_volley`, `deduct_launcher_kills`)
     + `tests/antiship_magazine_test.gd` (9 cases). DB funcs not ported.
   - **D3-B2 — DONE (2026-06-27, committed):** `scripts/AntishipCalculator.gd` —

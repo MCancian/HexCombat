@@ -1266,7 +1266,7 @@ caveat is resolved.
   tight dependency chain (firing plan needs the magazine reservation context — both firing-plan pytests
   exercise it), so D3-B is split **magazine (B1) → firing plan (B2) → crossing (B3)**, each a
   gated/committed unit. **D3-B1:** ported the *calculator-pure* parts of `antiship_magazine_service.py`
-  into `scripts/AntishipMagazine.gd` — `MagazineReservation`-equivalent state seeded from
+  into `scripts/model/AntishipMagazine.gd` — `MagazineReservation`-equivalent state seeded from
   `data/antiship/antiship_magazine_defaults.json` (single source of truth; the Python `_DEFAULTS`
   mirrors that JSON), `cap_launcher_count`, `reserve_full_volley` (additive / cross_draw / aircraft_pool
   modes, full-volley-or-nothing), `deduct_launcher_kills` (aircraft exempt). **Did NOT port the DB
@@ -1723,7 +1723,7 @@ brigade priority ordering, and the maneuver-first Day 1 landing rule.
 **Architecture** (per-phase template):
 - `scripts/model/BeachDef.gd` — typed Resource: id, name_en, offload_rate_tons, capacity_bns,
   to_number, floating_piers, jackup_barge, advance_direction_deg, lat, lng
-- `scripts/OffloadRates.gd` — const class: all 9 rate keys (beach_base=4400,
+- `scripts/model/OffloadRates.gd` — const class: all 9 rate keys (beach_base=4400,
   floating_pier=2200, jackup_barge=4400, operational_port=11000, etc.), TONS_PER_BN=2200
 - `scripts/OffloadCalculator.gd` — pure RefCounted lib (no Node): beach throughput
   calculation (tons → BN slots), brigade-priority greedy admission, Day 1 maneuver-bypass rule,
@@ -1743,7 +1743,7 @@ brigade priority ordering, and the maneuver-first Day 1 landing rule.
       Gate green (import + smoke + 7 validators + 33 GdUnit4 tests all pass).
 
 - [x] **D1-B** *(2026-06-24)* — Offload rates: `data/offload_rates.json` (9 keys, exact TIV
-      values), `scripts/OffloadRates.gd` (typed const class: TONS_PER_BN=2200, BEACH_BASE=4400,
+      values), `scripts/model/OffloadRates.gd` (typed const class: TONS_PER_BN=2200, BEACH_BASE=4400,
       FLOATING_PIER=2200, JACKUP_BARGE=4400, PORT/AIRBRIDGE rates; REQUIRED_RATE_KEYS list).
       `tools/validate_offload_data.gd` asserts all 9 keys present in JSON and constants match
       JSON values. Gate green.
@@ -1887,7 +1887,7 @@ manifest.
 
 - **D3-B — split** (the original "firing plan + crossing + magazine in one lib" is ~2,100 lines of
   TIV source; dependency order is magazine → firing plan → crossing → calculator orchestration):
-  - [x] **D3-B1** *(2026-06-26)* — Magazine service: `scripts/AntishipMagazine.gd` (calculator-pure
+  - [x] **D3-B1** *(2026-06-26)* — Magazine service: `scripts/model/AntishipMagazine.gd` (calculator-pure
         port of `antiship_magazine_service.py` — `from_defaults`, `cap_launcher_count`,
         `reserve_full_volley` [additive / cross_draw / aircraft_pool], `deduct_launcher_kills`; DB
         seed/persist not ported — seeds from `antiship_magazine_defaults.json`).
