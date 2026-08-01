@@ -160,18 +160,16 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   airframe landing in `apply_squadron_losses`, with no damaged, aborted or mission-killed state
   anywhere. A SAM target has three outcomes (destroyed / suppressed / unengaged); an aircraft has two.
   Design calls and scope are in the plan; this entry stays only until that plan ships.
-- [ ] **`schemas/llm_action_result.schema.json` has silently drifted from `TurnResult` — five fields
-  missing, and nothing gates the pair (measured 2026-08-01 during plan 0059's review round;
-  PRE-EXISTING).** The schema enumerates `turn_result`'s sub-properties, but `air_insertion_summary`,
-  `mobilization_summary`, `offload_summary`, `game_over` and `winner` are declared on `TurnResult` and
-  absent from it. The drift is invisible to every existing check: the top level is
-  `"additionalProperties": true`, the nested properties are not `required`, and
-  `tools/validate_llm_api.gd` only checks top-level result keys. So the published JSON contract for the
-  turn record understates it by five fields, and the next field added will make it six — plan 0059's
-  `air_oob` is a step in that plan precisely because the review caught it. The fix is a gate check that
-  every `@export` on `TurnResult` has a matching schema property and vice versa, which is the same
-  shape as the order-kind dispatch item above. Not fixed inside 0059: repairing five pre-existing
-  omissions is not that plan's work, and each needs its type checked rather than assumed.
+- [ ] **The `turn_result` schema is now gated on KEY PRESENCE only — the nested shapes are still
+  unchecked (opened 2026-08-01, replacing the five-field drift item, which is FIXED).** The drift
+  itself is closed: `air_insertion_summary`, `mobilization_summary`, `offload_summary`, `game_over` and
+  `winner` are declared, and `tests/turn_result_serialization_test.gd` now fails if any `TurnResult`
+  key is absent from the schema. What that check does NOT do is verify the other direction (a schema
+  property with no model field) or any nested shape: `air_oob` is declared as bare
+  `{"type": "object"}`, so a future loss of `model_version`, `squadrons`, `kind` or a counter's type
+  would not register as a contract violation. Worth doing when the turn record is next treated as a
+  durable research contract rather than a convenience payload — and note the same
+  presence-not-shape weakness is what the LLM fixture drift-check item above is about.
 - [ ] **Nothing enforces `sweepable`, so the flag records intent and no more (measured 2026-08-01 while
   marking the combat advantage ratios `false`).** `tools/run_sweep.py` never consults the knob registry;
   the only code that touches the field is `tools/validate_knob_registry.gd`, which checks it is a bool

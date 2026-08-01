@@ -32,6 +32,9 @@
         "ijfs_writeback": {"type": "object"},
         "air_oob": {"type": "object"},
         "antiship_summary": {"type": "object"},
+        "offload_summary": {"type": "object"},
+        "mobilization_summary": {"type": "object"},
+        "air_insertion_summary": {"type": "object"},
         "frontline_summary": {"type": "object"},
         "cleanup_summary": {"type": "object"},
         "events": {
@@ -47,7 +50,9 @@
               "data": {"type": "object"}
             }
           }
-        }
+        },
+        "game_over": {"type": "boolean"},
+        "winner": {"type": "string"}
       }
     }
   },
