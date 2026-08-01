@@ -22,7 +22,7 @@ Six converters, all mapping `GREEN → "Green"`, else `"Red"`:
 | `scripts/GameController.gd:154` | `_team_to_string` | UI |
 | `scripts/InfoPanel.gd:91` | `_team_to_string` | UI |
 | `scripts/api/LLMGameAPI.gd:404` | `_team_to_string` (static) | API |
-| `scripts/TurnEventLog.gd:67` | `_team_str` (static) | event log |
+| `scripts/support/TurnEventLog.gd:67` | `_team_str` (static) | event log |
 
 Inverse (string→Team): `scripts/api/LLMGameAPI.gd:393` `_parse_team_string`.
 

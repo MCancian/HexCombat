@@ -22,7 +22,7 @@ tools that consume game records.
 | `tools/mc_summarize.py` | Batch → Monte Carlo summary JSON |
 | `tools/mc_chart.py` | Summary JSON → deck SVG chart |
 | `tools/research_knobs.py` | Knob-space ledger and sensitivity analysis |
-| `scripts/KnobRegistry.gd` | Knob registry loader + record dump |
+| `scripts/support/KnobRegistry.gd` | Knob registry loader + record dump |
 | `data/knobs/registry.json` | Curated registry of 55 outcome-relevant knobs |
 
 ## 3. Data flow

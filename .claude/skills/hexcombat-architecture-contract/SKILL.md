@@ -165,7 +165,7 @@ next authority; the parts that are the pattern rather than the anti-ship domain:
 
 ## RNG topology (verified; preserve it)
 
-All randomness flows through the injectable `Dice` abstraction (`scripts/Dice.gd` /
+All randomness flows through the injectable `Dice` abstraction (`scripts/support/Dice.gd` /
 `SeededDice.gd`). `tools/validate_no_global_rng.gd` gates it.
 
 - IJFS and anti-ship draw from **independent derived substreams** (`dice.derive("ijfs:…")`,

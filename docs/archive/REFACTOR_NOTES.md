@@ -34,8 +34,8 @@ in-scope suggestions are applied immediately; the rest are deferred with a one-l
 ## 2026-06-23 — M0 items 2 & 4: seedable RNG injection + golden combat test (pi-implemented)
 
 **(a) What pi did** (orchestrator-verified: full gate green, 3/3 tests pass)
-- New `scripts/Dice.gd` (abstract injectable RNG: `roll_d100()`, `choose_indices(n,k)`),
-  `scripts/SeededDice.gd` (production; Godot `RandomNumberGenerator` seeded; deterministic
+- New `scripts/support/Dice.gd` (abstract injectable RNG: `roll_d100()`, `choose_indices(n,k)`),
+  `scripts/support/SeededDice.gd` (production; Godot `RandomNumberGenerator` seeded; deterministic
   partial Fisher-Yates, not `Array.shuffle()`), `tests/helpers/ScriptedDice.gd` (test double).
 - `CombatCalculator.resolve_map_attack` now takes a **required** `dice: Dice` first param (fail
   loud — no default); the three `randi()%100+1` rolls became `dice.roll_d100()` in the same order.

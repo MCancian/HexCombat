@@ -952,7 +952,7 @@ caveat is resolved.
 
 - **2026-06-28 — Track E AI-readiness: per-turn structured event log (`TurnEvent`) (via opencode):**
   Added `scripts/model/TurnEvent.gd` (typed Resource: `seq, kind, hex_id, team, data` + `to_dict()`) and
-  `scripts/TurnEventLog.gd` (pure static `build(state) -> Array[TurnEvent]`), and populated `TurnResult.events`
+  `scripts/support/TurnEventLog.gd` (pure static `build(state) -> Array[TurnEvent]`), and populated `TurnResult.events`
   from it in `play_turn`. The log is an **ordered, turn-execution-order** trace: `ijfs` → `antiship` → `move`
   (Red then Green) → `commit` → `combat` (one per contested hex) → `frontline?` → `cleanup?`, each phase
   rollup emitted only when its `last_*` summary is non-empty. Decisions: (1) **Pure non-invasive derivation
@@ -1575,7 +1575,7 @@ caveat is resolved.
   `Infantry Battalion (Reserve)` (reserve infantry, strength below light infantry; source
   `reserve_structure.combat_power` ≈ 0.5). Keeps `UnitStats` the single source of truth (no separate
   green strength table).
-- **2026-06-23 — RNG abstraction (M0 item 2):** introduced `Dice` (abstract, `scripts/Dice.gd`)
+- **2026-06-23 — RNG abstraction (M0 item 2):** introduced `Dice` (abstract, `scripts/support/Dice.gd`)
   with `roll_d100()` + `choose_indices(n,k)`; `SeededDice` (production, seeded Godot RNG,
   deterministic Fisher-Yates — never `Array.shuffle()`); `ScriptedDice` (test double,
   `tests/helpers/`). `CombatCalculator.resolve_map_attack` and the `BOOTSCalculator` wrapper now

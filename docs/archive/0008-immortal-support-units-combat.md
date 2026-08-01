@@ -114,7 +114,7 @@ minimum-blood rule now fires for support-only forces automatically.
 - Draw **without replacement**: loop `select_count` times; each iteration calls
   `dice.weighted_choice(weights)`, appends `pool[index]` to casualties, then sets
   `weights[index] = 0.0`. Do NOT use `dice.weighted_choices()` — it draws WITH replacement
-  (`scripts/SeededDice.gd:66`) and would double-kill units.
+  (`scripts/support/SeededDice.gd:66`) and would double-kill units.
 - Dice-stream contract: draw order stays attacker-selection then defender-selection, after the
   three d100 rolls. The stream composition changes (one `choose_indices` call per side becomes
   `select_count` × `weighted_choice` calls) — golden re-baseline is expected and required.

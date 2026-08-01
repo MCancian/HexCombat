@@ -572,7 +572,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   `garrison_draw` to `PolicyCatalog`. Golden byte-stable (tests run green). Verified behavior via
   GdUnit tests and a batch parameter sweep. Facts: `docs/STATUS.md` (AI-readiness).
 
-- **2026-07-20 — Legibility refactor: the JSON path/array grammar has one home, `scripts/JsonPath.gd`
+- **2026-07-20 — Legibility refactor: the JSON path/array grammar has one home, `scripts/support/JsonPath.gd`
   (agent, USER-requested reflection).** The array-segment grammar had been reimplemented in two
   places (the read-side `KnobRegistry._extract` dump and the write-side `DataOverrides._set_override`)
   with byte-identical segment parsing — the very seam class plans 0019/0020 removed, re-introduced by
@@ -598,7 +598,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 - **2026-07-20 — Plan 0018 shipped: research-knob tracking so all sweeps are comparable (agent
   implementation; USER design calls).** Curated knob registry `data/knobs/registry.json` (23 knobs);
   every game record now carries the full resolved knob vector `record["knobs"]` (via new pure
-  `scripts/KnobRegistry.gd`, stamped by `run_selfplay_game.gd`), so records from any sweep share one
+  `scripts/support/KnobRegistry.gd`, stamped by `run_selfplay_game.gd`), so records from any sweep share one
   knob-space. `tools/research_knobs.py {ledger,sensitivity}` renders the explored-space table and
   ranks which knobs move outcomes most. LLM `llm_model` + `llm_prompt_hash` captured (sidecar hashes
   its system prompt). USER calls: **curated** registry not auto-dump; prompts **capture-only** now

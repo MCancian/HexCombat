@@ -261,7 +261,7 @@ D5-B (`resolve_frontline_phase`), D5-C (cleanup phase) are committed; the only D
 (AI-readiness) seam also landed: `GameState.play_turn(red_orders, green_orders, dice) -> TurnResult` +
 `GameData.snapshot_state()` (see `PLAN.md` Decisions 2026-06-28 / `RETROSPECTIVES.md 2026-06-28
 play_turn-facade`), followed by the **per-turn structured event log** — `scripts/model/TurnEvent.gd` +
-pure `scripts/TurnEventLog.gd` (`build(state) -> Array[TurnEvent]`) populating `TurnResult.events` in
+pure `scripts/support/TurnEventLog.gd` (`build(state) -> Array[TurnEvent]`) populating `TurnResult.events` in
 `play_turn`; ordered `ijfs→antiship→move→commit→combat→frontline?→cleanup?`, derived non-invasively from
 stored `last_*` state (golden byte-stable). See `PLAN.md`/`RETROSPECTIVES.md 2026-06-28 turn-event-log`.
 The event log is now also **surfaced through `LLMGameAPI`**: `apply_agent_response`'s `end_turn` routes

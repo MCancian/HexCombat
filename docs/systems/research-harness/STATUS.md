@@ -50,7 +50,7 @@ semantics — USER accepted (supersedes the ~25%-of-36-BN target; table:
 
 **Research knob tracking (plan 0018)** — a curated registry `data/knobs/registry.json` (55
 outcome-relevant knobs, IJFS warmup → beach capacity) drives a full resolved-knob dump into every
-game record (`record["knobs"]`, via pure `scripts/KnobRegistry.gd`), so records from any sweep
+game record (`record["knobs"]`, via pure `scripts/support/KnobRegistry.gd`), so records from any sweep
 share one knob-space and are directly comparable. LLM games also record `llm_model` +
 `llm_prompt_hash` (the sidecar hashes its system prompt) so a prompt/model change is never
 invisible. `python3 tools/research_knobs.py ledger --records reports/` renders the explored-space

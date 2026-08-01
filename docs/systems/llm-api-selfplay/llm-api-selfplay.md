@@ -20,7 +20,7 @@ Structured JSON action API so LLM agents (and the self-play harness) can drive H
 | `tools/run_selfplay_game.gd` | Unified entrypoint: creates both seats via `PolicyCatalog` and plays via `play_game_seats`. `--policy` remains the common default; `--red-policy`/`--green-policy` select a matchup. Every seat writes its replay entry (the LLM sidecar writes LLM seats; the wrapper writes deterministic seats). |
 | `tools/run_batch.py` | Cross-platform stdlib batch runner: scenario × explicit matchup × common-seed matrix, artifact-based resume, manifest, and automatic `BatchReport` output. Warns when `llm_local` runs with `--parallel` above one. |
 | `tools/validate_llm_policy.gd` | Deterministic gate (no network): exercises `LLMPolicy` against the stub — marshalling, parse/strip helpers, malformed-output fallback, obs/action log. |
-| `scripts/TurnEventLog.gd` | `build(state) -> Array[TurnEvent]`. Derives an ordered per-turn event log (ijfs, antiship, move, commit, combat, frontline, cleanup) from `GameState`. Called by `play_turn` and included in `turn_result`. |
+| `scripts/support/TurnEventLog.gd` | `build(state) -> Array[TurnEvent]`. Derives an ordered per-turn event log (ijfs, antiship, move, commit, combat, frontline, cleanup) from `GameState`. Called by `play_turn` and included in `turn_result`. |
 | `tools/validate_llm_api.gd` | Headless gate: asserts observation keys, action application, missing-seed rejection, example/schema conformance. |
 | `tools/validate_headless_selfplay.gd` | Runs 4-turn self-play twice with same seed; asserts identical snapshots + index health. |
 | `tools/export_llm_observation.gd` | CLI: writes a fresh observation JSON to disk (`--team=Red --output=reports/obs.json`). |

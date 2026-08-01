@@ -10,7 +10,7 @@ gameplay-relevant cycle:
 | `GameData` | **Static data service** — loads JSON (hexes, OOBs, scenario, beaches, ships, theaters) into typed `Resource` objects once at startup. Holds all lookups (`hex_lookup`, `neighbor_lookup`, `brigades_by_hex`, etc.). | `scripts/GameData.gd` |
 | `GameState` | **Runtime turn/phase state** — a thin autoload shell (plan 0014): the state itself lives in `GameStateData`, the resolution in `TurnConductor` + `FiresPhases` + `ReinforcementPhases` + `TurnClosure`, and this autoload keeps the typed forwarding properties, the delegating wrappers external callers use, and the lifecycle (`reset_to_scenario`, `begin_next_turn`, `play_turn`). | `scripts/GameState.gd` |
 | `EventBus` | **Signal hub** — decouples subsystems via typed Godot signals (`phase_changed`, `turn_resolved`, `combat_resolved`, etc.). | `scripts/EventBus.gd` |
-| `Dice` / `SeededDice` | **Injectable RNG abstraction** — base `Dice` (abstract, `RefCounted`), `SeededDice` (deterministic via `RandomNumberGenerator` with seeded `derive()` sub-streams). | `scripts/Dice.gd`, `scripts/SeededDice.gd` |
+| `Dice` / `SeededDice` | **Injectable RNG abstraction** — base `Dice` (abstract, `RefCounted`), `SeededDice` (deterministic via `RandomNumberGenerator` with seeded `derive()` sub-streams). | `scripts/support/Dice.gd`, `scripts/support/SeededDice.gd` |
 
 ## 2. Files & Responsibilities
 
@@ -23,12 +23,12 @@ gameplay-relevant cycle:
 | `scripts/phases/TurnClosure.gd` | 81 | The end-of-turn accounting pair (plan 0038): supply bills who fought, cleanup censuses who is left and decides victory |
 | `scripts/transitions/ForceTransitions.gd` | current | Force mutation authority (plan 0044): applies Brigade/Battalion roster, placement, destruction, activity, and organization writes through typed requests/receipts; ownership facts live only in `tools/mutation_authority_manifest.json` |
 | `scripts/GameData.gd` | current | Data loading: `load_hex_grid()`, `load_brigades()`, `load_scenario()`, `load_theaters()`, `load_beaches()`, `load_ships()`. Indexes: `brigades`, `brigades_by_hex`, `hex_lookup`, `neighbor_lookup`, `hex_states`, `ship_defs`, `beaches`, `active_tos`, `to_adjacency`, `beach_to_to` |
-| `scripts/Dice.gd` | 37 | Abstract base: `roll_d100()`, `choose_indices()`, `randf()`, `weighted_choice()`, `weighted_choices()`, `shuffle_indices()`, `derive()` |
-| `scripts/SeededDice.gd` | 96 | Concrete: wraps Godot `RandomNumberGenerator` with a fixed seed. `derive(label)` creates an independent sub-stream via `hash(str(seed) + ":" + label)` |
+| `scripts/support/Dice.gd` | 37 | Abstract base: `roll_d100()`, `choose_indices()`, `randf()`, `weighted_choice()`, `weighted_choices()`, `shuffle_indices()`, `derive()` |
+| `scripts/support/SeededDice.gd` | 96 | Concrete: wraps Godot `RandomNumberGenerator` with a fixed seed. `derive(label)` creates an independent sub-stream via `hash(str(seed) + ":" + label)` |
 | `scripts/EventBus.gd` | 21 | Signals: `phase_changed`, `turn_resolved`, `combat_resolved`, `offload_resolved`, `supply_updated`, `ijfs_resolved`, `antiship_resolved`, `frontline_resolved`, `cleanup_resolved` |
 | `scripts/transitions/AntishipTransitions.gd` | 188 | The Green anti-ship establishment's mutation authority (plan 0043): the only writer of the `AntishipSystem` rows — builds/resets the arsenal, applies IJFS effects and one crossing's launch destruction, clears the per-turn flags |
 | `scripts/transitions/SealiftTransitions.gd` | current | The sealift/fleet mutation authority (plan 0045): the only writer of the `ShipState` fleet projection and of `SealiftState`'s hull queues — pipeline/reload ticks, cohort hull losses and legs, escort magazines, and the fleet projection every phase closes with |
-| `scripts/TurnEventLog.gd` | 70 | Pure function `build(state)` → `Array[TurnEvent]` — non-invasive log derived from GameState buffers post-resolve |
+| `scripts/support/TurnEventLog.gd` | 70 | Pure function `build(state)` → `Array[TurnEvent]` — non-invasive log derived from GameState buffers post-resolve |
 | `scripts/model/TurnResult.gd` | 33 | Typed result resource: `turn_number`, `contested_hexes`, `combat_summaries`, `ijfs_summary`, `antiship_summary`, `events`, `game_over`, `winner` |
 | `scripts/model/TurnEvent.gd` | 11 | Single event resource: `seq`, `kind`, `hex_id`, `team`, `data` |
 | `scripts/model/MoveOrder.gd` | 6 | `brigade_id`, `target_hex`, `mode` ("tactical"/"administrative") |
@@ -102,7 +102,7 @@ func play_turn(red_orders: Array, green_orders: Array, dice: Dice = null) -> Tur
 - `game_over` / `winner` — from end-of-turn victory census
 - `to_dict()` for JSON serialization (LLM API output)
 
-**TurnEventLog** (`scripts/TurnEventLog.gd`):
+**TurnEventLog** (`scripts/support/TurnEventLog.gd`):
 - Pure derivation from GameState's post-resolve buffers (reads order buffers, last_* summaries)
 - Ordered sequence: IJFS → anti-ship → moves → commits → combats → frontline → cleanup
 - Events are `TurnEvent` resources with `seq`, `kind`, `hex_id`, `team`, `data`

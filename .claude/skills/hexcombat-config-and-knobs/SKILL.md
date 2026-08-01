@@ -127,7 +127,7 @@ knob-space and be compared. Adding a knob is a deliberate one-line entry here (n
 
 - **Path grammar:** a `path` is a file prefix + a JsonPath. Prefix `scenario:` resolves against the
   *active* scenario file (variants work); `<data/rel/file.json>:` is literal. The dot-path/array
-  grammar after the `:` is **JsonPath's — `scripts/JsonPath.gd` is the canonical spec** (`name[*]` /
+  grammar after the `:` is **JsonPath's — `scripts/support/JsonPath.gd` is the canonical spec** (`name[*]` /
   `name[]` = every array element, `name[N]` = one), shared by the record dump (`KnobRegistry._extract`)
   and `DataOverrides` so read and write can't drift. `kind` (`llm_model` / `prompt_hash`) replaces
   `path` for values not in a data file — model id from `HEXCOMBAT_LLM_MODEL`, prompt hash stamped by
