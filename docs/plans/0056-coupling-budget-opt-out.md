@@ -73,8 +73,16 @@ a file with no entry is seeded at its measured value by a one-time generation st
 
 Three decisions the plan must settle, with recommendations:
 
-**Threshold — recommend 10.** Fifteen files in scope, eleven newly seeded. It sits in a natural gap
-in the distribution (13 files at ≥11, 15 at ≥10, then 19 at ≥8) and it is high enough that ordinary
+**Threshold — 10, because the project already declared it.** Not a number picked from the
+distribution. `.claude/skills/hexcombat-code-quality/SKILL.md:31` has said all along:
+`| File class references (preload/class_name/autoload) | ≤ 8 | 10 | split file or justify in the file
+header comment |` — a target of 8 and a **hard cap of 10**. So the budget was always documented as
+universal at 10; only its *enforcement* was opt-in. That reframes this plan: it is not choosing a new
+threshold, it is making the gate agree with the rule the skill already states. (Round-1 finding; the
+draft argued from a "natural gap" in the distribution, which was a weaker premise for the same number.)
+
+Fifteen files sit at or above it, eleven newly seeded. The distribution is consistent with the cap
+(13 files at ≥11, 15 at ≥10, then 19 at ≥8) and it is high enough that ordinary
 files never acquire an entry, so the ceiling table stays a short list of genuinely coupled files
 rather than a second copy of the file tree. A threshold of 6 would seed 26 and turn the table into
 noise.
@@ -92,12 +100,22 @@ a legibility problem wherever it appears; a dependency count of nineteen is a *s
 where architecture is claimed. **Do not "tidy" `PARAM_CEILINGS` to match the new `DEP_CEILINGS`
 scope** — that would silently drop live grandfather entries and let three trees regress.
 
-**Seeding — recommend generated, then committed, and STRICTLY ADD-ONLY.** Add a `--seed-ceilings` mode
+**Seeding — generated, committed, STRICTLY ADD-ONLY, and then DELETED.** Add a `--seed-ceilings` mode
 that emits entries for files that have none. Hand-transcribing eleven numbers is exactly the kind of
 task that produces one wrong digit which then reads as a deliberate allowance forever.
 
-Two constraints on that mode, both from round 1, and both load-bearing enough that the mode is worse
-than useless without them:
+**The generator is scaffolding and ships removed** (round-1 blocker, tier 1). A permanently available
+seeder is an opt-out for every future high-coupling file, which is precisely what this plan exists to
+close: a new file lands at `ndeps` 30, the gate fails as designed, and the cheapest response becomes
+"run `--seed-ceilings`" rather than "fix the coupling". Add-only prevents laundering an EXISTING
+breach; it does nothing about a new file being born pre-forgiven. So the sequence is add generator →
+seed the baseline → **remove the generator** before closeout, leaving only universal enforcement and
+its tests. Anyone adding a ceiling afterwards writes the entry by hand, next to the prose explaining
+why — which is the moment the reasoning should be demanded. If a future baseline needs reseeding, the
+generator is one `git revert` away in this plan's own history.
+
+Three constraints on that mode while it exists, all load-bearing enough that it is worse than useless
+without them:
 
 **It must never raise or replace an existing entry.** A mode that "rewrites the `DEP_CEILINGS` block
 from measurement" — the original wording here — becomes the sanctioned way to launder a breach: hit a
@@ -142,7 +160,23 @@ that ceiling, which is the moment they actually know it.
      moved. It is the same failure mode this plan's Sequencing section cites, in the same file, still
      live. Do not move anything here.
    (Found by the round-1 enumeration pass and confirmed by reading; the plan previously named neither file.)
-1. Add the threshold constant, the scope filter, and `--seed-ceilings` to `tools/gd_metrics.py`.
+1. **Normalize the path separator FIRST — this is probably an existing bug, not just new risk.**
+   `tools/gd_metrics.py:271` is `rel = os.path.relpath(f, ROOT)` and nothing normalizes it anywhere in
+   the file. On Windows that yields `scripts\GameState.gd`, while every `DEP_CEILINGS` and
+   `PARAM_CEILINGS` key uses `/`. The lookup at `:393` is `result["files"].get(rel)`, so on the Windows
+   box **every one of the five entries should report `not found (ceiling entry stale)` and
+   `--check-ceiling` should fail** — which means either the ceiling gate has never been exercised there,
+   or something outside this file compensates. **Verify on the Windows box before building on it**; if
+   it does fail, that is a separate defect to fix first, and this plan's scope filter would have
+   inherited it. Canonicalize `rel` to forward slashes at the point of measurement, before metrics
+   storage, scope filtering and ceiling lookup, and cover it with a Windows-style path case. Do **not**
+   write a bare `rel.startswith("scripts/")` against OS-native paths. (Round-1 finding, tier 1.)
+2. Add the threshold constant, the scope filter, and `--seed-ceilings` to `tools/gd_metrics.py`.
+   **Make it testable without touching the real table or the real file** (round-1 finding): extract the
+   checking and the source insertion into helpers that take an explicit ceiling mapping and explicit
+   source text, rather than reading the module-level `DEP_CEILINGS` and rewriting `gd_metrics.py` in
+   place. Otherwise a fixture either inherits the production table — every real entry then reporting
+   stale against a fixture tree — or the test edits the live tool.
    Extend the existing `--self-test` to cover the new mode with **four** cases, not one — seeding that
    only proves "seeded values pass" proves nothing interesting:
    - seeding a fixture tree produces entries equal to its measured counts, and `--check-ceiling` passes;
@@ -150,20 +184,34 @@ that ceiling, which is the moment they actually know it.
    - a listed file that has grown past its entry **fails**, and re-running `--seed-ceilings` does NOT
      silence it;
    - existing comments in the block survive seeding byte-identically.
-2. Run the seeding, commit the generated `DEP_CEILINGS` block **on its own**, so the diff of what
+   These must run under `CHECK_CEILING`, not only under `--self-test` — `:264` is
+   `if SELF_TEST or CHECK_CEILING:`, and `--check-ceiling` is the mode the gate actually invokes.
+3. Run the seeding, commit the generated `DEP_CEILINGS` block **on its own**, so the diff of what
    became enforced is reviewable as a list of numbers rather than buried in a logic change.
-3. Verify the ratchet actually bites — **on the NEW code path, which is the one the obvious test
+4. Verify the ratchet actually bites — **on the NEW code path, which is the one the obvious test
    misses** (round-1 finding). Once seeding has run, every `scripts/` file at or above the threshold
    HAS an entry, so pushing a *seeded* file over its ceiling exercises only the pre-existing
    dictionary lookup; the new "unlisted and at/above threshold" branch stays dormant and could be
    broken while the check goes green. Do both, in this order:
-   - take a file currently BELOW the threshold (`ndeps` 8 or 9, and therefore unlisted), add a
-     throwaway dependency to push it to 10, confirm the gate fails naming that file, revert;
+   - take an unlisted file and push it to EXACTLY the threshold. Pick one measured at `ndeps` 9 so a
+     single dependency does it, or add exactly `10 - current_ndeps` **distinct** classes — one
+     `preload` of a class the file already names moves the count by zero, and an `ndeps` 8 file needs
+     two. **Re-measure and confirm the count is 10 before reading the verdict**, then assert the
+     specific missing-ceiling diagnostic rather than "the gate went red": a wrong-reason failure looks
+     identical here. (Round-1 finding — the draft said "8 or 9 … add a throwaway dependency", which
+     silently assumed one dep moves any file to the threshold.)
    - then push a seeded file over its own ceiling, confirm the gate fails with the ndeps message,
      revert.
+   Read the verdict from the direct `python3 tools/gd_metrics.py . /tmp/m.json --check-ceiling`, which
+   is safe to run bare, and run the full gate afterwards.
    **A budget nobody has watched fail is not known to work** — the gate's own history has a validator
    that passed for weeks because its pin never matched anything.
-4. Record the rule in `hexcombat-code-quality`, which currently documents a dependency ceiling
+5. **Remove `--seed-ceilings` and its scaffolding**, in its own commit, keeping the enforcement, the
+   threshold, the scope filter and every test that does not exercise the generator. This is the step
+   that stops the plan from shipping its own opt-out; skipping it leaves the hole open under a new
+   name. The three seeding self-test cases go with it; the "unlisted file at/above threshold fails"
+   case stays, because that one tests enforcement rather than generation.
+6. Record the rule in `hexcombat-code-quality`, which currently documents a dependency ceiling
    without saying that it applies to five files. That gap is why this went unnoticed. State the scope
    explicitly there — `scripts/` only — so that a `tests/` or `tools/` file breaching 10 without a
    warning reads as designed rather than as a hole.
@@ -174,7 +222,7 @@ that ceiling, which is the moment they actually know it.
    agent does not go looking for it. The general lesson stands and is not fixed by this plan —
    `docs/plans/` sits outside the doc-anchor gate, so a live plan CAN carry rotted numbers unflagged;
    that is what preflight is for.)
-5. `bash tools/run_all_tests.sh` → ALL PHASES GREEN.
+7. `bash tools/run_all_tests.sh` → ALL PHASES GREEN.
 
 ## Risk
 
@@ -184,9 +232,30 @@ that ceiling, which is the moment they actually know it.
 own commit, so a reviewer reads eleven numbers rather than diffing them out of a logic change. The
 `ForceTransitions` 30 is the one to argue about, and it should be argued about in that review.
 
-*The threshold turns out wrong in six months.* Cheap to change: it is one constant, and raising it
-only removes entries, which the stale-entry check already reports as `not found (ceiling entry
-stale — file moved/deleted?)`.
+*The threshold turns out wrong in six months.* **This paragraph used to say "cheap to change: it is
+one constant, and raising it only removes entries". That is WRONG** (round-1 finding, verified).
+`tools/gd_metrics.py:393-395` stales an entry only when `result["files"].get(rel)` is `None` — i.e.
+when the FILE is gone. An entry whose file still exists but now sits below a raised threshold is not
+stale, is not reported, and stays enforced at its old value forever. Raising the threshold therefore
+needs a **reviewed pruning migration**, not a constant edit. Cheap mitigation: have `--check-ceiling`
+report listed entries now below the threshold, so the pruning candidates are visible rather than
+inferred. Lowering the threshold remains genuinely cheap — it only adds candidates.
+
+## Round 1 — plan review, 2026-08-01
+
+**Three substantive returns.** A plan needs one; the diff round that follows is quorum-bound at two.
+
+- **Sol (tier 1)** — 10 findings, all verified against the tree before acting. It found the blocker
+  (a permanent seeder is an opt-out for every future high-coupling file), the probable Windows path
+  defect, the untestable-without-injection structure, and **two places this plan was simply wrong**:
+  the Risk section's "raising the threshold only removes entries", and the Sequencing enumeration,
+  which named four candidates and gestured at a non-existent "rest of the `interleaved/` set" instead
+  of `scripts/ui/HexMap.gd`. It also regrounded the threshold on the hard cap the quality skill had
+  declared all along, replacing an argument from the distribution.
+- **agy (tier 2)** — the seeding mechanism, and step 4's wrong code path.
+- **DeepSeek (tier 2, bounded enumeration)** — the missed consumer chain now in step 0. Scored
+  `FLAKE` by `--report` for having no numbered findings, which was a format artefact of its
+  enumeration role; read and counted by hand.
 
 ## Explicitly out of scope (checked — do not re-raise)
 
@@ -223,12 +292,21 @@ the five existing entries moved in either plan. That is why `--check-ceiling` re
 today.
 
 The hazard was real, but it applied to the **files about to be seeded**, not to the ones already
-listed. Five of the eleven seeding candidates received their current path on 2026-07-31:
-`scripts/api/LLMGameAPI.gd` (0057), and `scripts/interleaved/IjfsEngine.gd`,
-`scripts/interleaved/IjfsResolver.gd`, `scripts/loaders/IjfsLoaders.gd` plus the rest of the
-`interleaved/` set (0055). Seeded a day earlier, nearly half the new table would have been dead keys.
-The evidence is stronger than the version this plan shipped with — record it that way rather than
-quietly deleting the wrong sentence.
+listed. Exactly five of the eleven seeding candidates received their current path on 2026-07-31:
+
+| Candidate | `ndeps` | Repathed by |
+|---|---|---|
+| `scripts/api/LLMGameAPI.gd` | 22 | 0057 |
+| `scripts/interleaved/IjfsEngine.gd` | 14 | 0055 |
+| `scripts/interleaved/IjfsResolver.gd` | 12 | 0055 |
+| `scripts/loaders/IjfsLoaders.gd` | 11 | 0055 |
+| `scripts/ui/HexMap.gd` | 10 | 0057 |
+
+Seeded a day earlier, nearly half the new table would have been dead keys. (The count of five was
+right in the preflight draft but its enumeration was not: it named four and gestured at "the rest of
+the `interleaved/` set", which does not exist — only `IjfsEngine` and `IjfsResolver` from that
+directory are candidates, and the actual fifth is `HexMap.gd`. Corrected on a round-1 finding, and
+listed in full here so the next reader can check it rather than trust it.)
 
 Seeding *last* also measures the right thing: the coupling numbers worth freezing are the ones the
 role layout left behind, not the ones it was about to change.
