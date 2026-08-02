@@ -1,15 +1,81 @@
 ---
-title: "0060: Should air attrition happen before Red strikes, instead of after?"
-status: "Sketch"
+title: "0060: Localize MANPADS and SAM air attrition to engagements"
+status: "Ready"
 created: "2026-08-01"
+updated: "2026-08-01"
 ---
 
-# Plan 0060: air attrition before the strike
+# Plan 0060: localize MANPADS and SAM air attrition to engagements
 
-> **DESIGN COMPLETE — the USER design session was held 2026-08-01 and produced twelve rulings (R1-R12
-> below). Nothing here is blocked on a design call any more.** What remains is implementation planning:
-> re-scope and retitle this plan, sequence it against [[0059-sam-interception-and-rtb]], and fit R10's
-> rate to the 10%/day calibration target.
+## Progress
+
+- **Ready for implementation from a clean tree.** No ruling is SHIPPED and no production/data/fixture
+  change is present. Start at stage 1 below; do not reconstruct or preserve the superseded
+  546-airframe prototype described only as historical evidence.
+- Pre-implementation review completed in two rounds. Round 1 forced the 498-airframe/anti-radiation
+  inventory/package/TO redesign; round 2 reached reviewer quorum and its capacity-unit, SEAD-package,
+  suppression, zero-survivor, RNG, Antelope-source, survivability-knob, and ledger findings are folded
+  into the implementation contracts and final rulings below.
+- Transitional code: none. Plan 0059 step 2 is historical only and is implemented here, not separately.
+
+## Dependencies and implementation order
+
+Required reading: `hexcombat-change-control`, `hexcombat-architecture-contract`,
+`hexcombat-code-quality`, `hexcombat-validation-and-qa`, `hexcombat-config-and-knobs`, and
+`hexcombat-docs-and-writing`. Coordinate the RTB field with
+[[0059-sam-interception-and-rtb]] step 2; follow `.claude/REVIEWERS.md` for the plan/diff rounds.
+
+Each stage reaches the full green gate before the next, so every golden movement has one named cause:
+
+1. **R9 + revised R11 + R1:** J-16D 10; remove the 48 pseudo-airframe anti-radiation row; replace the
+   60 Decoys with 60 Attack UCAVs; add the 192-missile anti-radiation inventory and standoff warmup.
+   The final reusable OOB is 498. Build and validate the new SEAD data shape before changing combat.
+2. **R2:** activate role-exposure multipliers on the current SAM/free-shot paths only; prove role and
+   RCS modifiers compose rather than replace one another.
+3. **Revised R5/R6/R7/R8/R12 + 0059 step 2:** delete the island-wide contest; narrow MANPADS to
+   four-aircraft manned packages striking Maneuver Units; add typed package attribution, bounded RTB,
+   and ledger migration. Do not fit final loss rates yet.
+4. **Revised R11 aircraft-SEAD stage:** resolve twelve four-missile anti-radiation salvos, compute
+   weighted IADS health, assign J-16Ds plus 0.25-effect strike backfill, and subtract
+   `sead_assigned_today` before building strike packages.
+5. **R10:** deploy all SAM instances by TO, move return fire to package engagements on a derived
+   substream, then jointly fit SAM and MANPADS attrition against the final 498-airframe force.
+
+R3 now permits the staged SEAD design to change turn-2 SAM survival; it is a measurement/reporting
+requirement rather than a preservation constraint. R4 remains in plan 0061.
+
+## Implementation contracts from plan review
+
+- Add typed air-package / engagement-context objects rather than appending parameters to
+  `roll_strike_interception` or the already-grandfathered `resolve_sead_engagement` signature. A typed
+  strike-resolution context also absorbs phase/doctrine fields plus `survivors / 4.0`; do not append a
+  tenth parameter to `IjfsStrike.resolve_strike`. Pay for any new `IjfsEngine` dependency by moving its
+  air-OOB row builder out; do not raise dependency or parameter ceilings.
+- `IjfsTransitions` remains the one IJFS writer. Add job-shaped operations for SEAD assignment and
+  package abort/loss; do not split a second authority. Update the manifest rationale, add
+  `sead_assigned_today`, remove `manpads_contest_log`, and refresh the real-claims pin.
+- Validate every new JSON key and exact shape at load: `attrition_link`, `package_size`,
+  `to_distribution`, anti-radiation inventory/capacity, and the 0.25 ordinary-aircraft SEAD factor.
+  Unknown classes/TOs, empty links, bad sums, and probability bands above 1 fail loud.
+- The low-level IJFS ledger is public through `GameState.resolve_ijfs_turn`. Define replacement event
+  keys before deleting the old log, update `LLMGameAPI`/`GameNarrative`, regenerate fixtures, and run a
+  repository-wide zero-reference check for `manpads_contest_log`, the old HARM class, and Decoys.
+- Derive and retain one daily child stream for anti-radiation resolution, package assembly, and SAM
+  return fire; never re-derive the same label per package. SAM hit/victim selection uses one draw and
+  the same candidate/fractional-remainder transform as MANPADS. Prove isolation with real SeededDice;
+  ScriptedDice deliberately shares queues across `derive` and cannot prove it.
+- Dedicated tests cover: zero warmup anti-radiation expenditure; 48 missiles on each eligible day with
+  at least 12 targets; exhaustion after four such days/no 49th salvo; slower depletion below 12 targets;
+  weighted-score health; raw-headcount J-16D-first plus 0.25-effect backfill; TO totals; four-member
+  package/airframe-sortie caps; mixed-class RCS; inclusive 1.0 draws; kill-then-degraded strike;
+  all-four-ingress loss with no strike draws; abort-all-survivors; abort then free-shot; day reset;
+  empty linked pools; and SAM destruction results independent of return-fire draw count.
+
+> **DESIGN COMPLETE — the USER design session was held 2026-08-01 and produced twelve rulings (R1-R12),
+> then two same-day follow-ups revised R3/R5/R6/R7/R8/R9/R10/R11/R12 after plan review. Nothing here is
+> blocked on a design call any more.** What remains is implementation and measurement: sequence against
+> [[0059-sam-interception-and-rtb]], measure package engagement volume, and jointly fit the final SAM
+> and MANPADS rates against the 498-airframe force.
 >
 > **Everything BELOW the rulings section is the pre-session document, kept for its evidence and its
 > reasoning trail. Several of its claims were corrected by the session — see "Corrections" — and every
@@ -18,12 +84,15 @@ created: "2026-08-01"
 
 ## USER RULINGS — design session 2026-08-01
 
-Twelve rulings. The plan's headline question — should MANPADS move before the strike — is answered by
-R5, **by replacing the mechanic rather than reordering it**. Every ruling is stated as the rule an
-implementer follows plus what it breaks.
+Twelve rulings, with R3/R5/R6/R7/R8/R9/R10/R11/R12 carrying same-day USER follow-ups after plan review
+exposed missing operation triggers, package geometry, SAM geography, and an expendable munition
+misrepresented as reusable airframes. The plan's headline question —
+should MANPADS move before the strike — is answered by R5, **by replacing the mechanic rather than
+reordering it**. Every ruling below is the final rule an implementer follows plus what it breaks.
 
-**Land R9 and R11 first.** They change the force (J-16D 48 -> 10, OOB 584 -> 546) and a class name, and
-every calibration downstream is fitted against the force they define.
+**Land R9 and revised R11 first.** Together they change J-16D 48 -> 10, remove the 48 expendable
+pseudo-airframes, replace Decoys with Attack UCAVs at the same count, and establish the 498-airframe
+force every downstream calibration uses.
 
 ### R1 — The warmup is a STANDOFF campaign: missiles only, no aircraft exposed
 
@@ -56,145 +125,171 @@ strike-volume and exposure columns.
 ### R2 — `role_exposure_multipliers` means altitude/profile exposure
 
 **Rule.** `isr 0.7 / sead 1.0 / strike 1.2` multiplies each attrition source's **per-airframe
-`p_loss`**, alongside the existing RCS survival modifier. Applies to `IjfsEngagement._sead_return_fire`
-and `apply_post_phase_2_free_shot`. `IjfsManpads.contest_squadrons` already implements a harsher binary
-form of the same idea via `CONTESTED_ROLES` and is not double-modified.
+`p_loss`**, alongside the existing RCS survival modifier. It applies to SAM return fire, the
+post-phase-2 free shot, and the revised MANPADS kill probability for a linked reusable strike platform.
+The deleted island-wide contest and its `CONTESTED_ROLES` filter provide no surviving role logic.
 
 **What it breaks.** Golden re-baseline. Until now the block was **dead data**: `IjfsLoaders` requires
 `red_aircraft_attrition_and_sead` to exist but nothing reads any field in it, so the only role logic in
 the model was MANPADS' include/exclude and the only per-aircraft modifier was RCS. Implementing it
 makes Red's ISR fleet measurably more survivable than its strike fleet for the first time.
 
-**AMENDED 2026-08-01, same session (R6).** This ruling originally said MANPADS was NOT to be
-role-multiplied, because `CONTESTED_ROLES` was already a harsher binary form of the same idea. R6
-deletes that filter, so the multipliers now apply to the MANPADS mechanic too and are the ONLY role
-differentiation in the model. All three attrition surfaces use one mechanism.
+**REVISED 2026-08-01 follow-up (R6/R10).** MANPADS uses the strike multiplier only. Per-engagement
+SAM fire uses SEAD or strike according to the exposed package; ISR has no final SAM/MANPADS engagement
+hook and uses its multiplier only if the post-phase-2 free shot is reachable. Subtract
+`sead_assigned_today` when forming new strike/free-shot pools, but not from R10 return fire against the
+already-formed SEAD package — those assigned aircraft are precisely the exposed victims. Subtract
+`rtb_today` from every later pool so an aircraft already home cannot be killed. Role exposure and RCS are intentionally cumulative:
+profile/altitude and signature are different survival advantages.
 
-### R3 — Turn-2 annihilation of the SAM network is the BASE CASE
+### R3 — Turn-2 SAM annihilation is no longer a preservation constraint
 
-**Rule.** Today's behaviour stands as the default and must be reproducible exactly. Any survivability
-work reproduces it at its knob's default value. This **disqualifies** re-scaling `sam_score` or adding
-a durability term to `p_destroy`, since both change the base case by construction.
+**REVISED USER RULING 2026-08-01 after plan review.** The staged anti-radiation volley in R11 resolves
+before aircraft SEAD and is allowed to change which SAMs survive turn 2. Do not preserve, cap, or
+recreate the old annihilation result by hidden scaling. Keep `sam_score` and the destroy/suppress
+formula itself unchanged, then report the new turn-by-turn survival distribution across seeds. Golden
+and target-level outcomes re-baseline deliberately.
 
 ### R4 — Plan 0061 splits in two
 
 Recorded in [[0061-resolution-dag]]; see its own rulings section.
 
-### R5 — ONE MANPADS mechanic, not two — this plan's headline question, answered by replacement
+### R5 — ONE LOCAL MANPADS mechanic, only when Red strikes Maneuver Units
 
-**The question this plan opened with is resolved, but not by choosing an ordering.** The USER's call
-is to collapse the two MANPADS mechanics into one.
+**REVISED USER RULING 2026-08-01, follow-up.** Delete the island-wide `contest_squadrons` pass. A
+MANPADS engagement now exists only inside the existing pre-strike interception hook, and only when the
+strike target's category is exactly `Maneuver Units`. MANPADS no longer taxes aircraft merely for being
+in the campaign, and it does not protect SAM, radar, infrastructure, anti-ship, or other target
+categories. The launcher must be in the struck target's TO and ready under the existing stock rules.
 
-Today there are two, doing different things with the same launcher stock:
+Only `strike_aircraft_medium` can trigger MANPADS: it is the only vulnerable munition with
+Maneuver-Unit pairings, and the USER explicitly limited this threat to manned strikers. Populate its
+`attrition_link` with the five manned strike classes and `package_size: 4`. Populate
+`attack_uav_small` separately with the new `Attack UCAV` class and package size 4 for R10 SAM fire, but
+mark it MANPADS-ineligible; do not add new Maneuver-Unit pairings merely to create exposure.
 
-| mechanic | when | effect | scope |
-|---|---|---|---|
-| `roll_strike_interception` | inside the strike phase, **before** each strike's own rolls | denies the munition; **never touches the aircraft** | per strike into a defended TO |
-| `contest_squadrons` | after the whole post-AD strike phase | kills aircraft; never denies a munition | island-wide, every alive airframe |
+MANPADS kill probability is `threat_fraction * fitted_attrition_factor *
+munition.manpads_vulnerability * role_exposure * rcs_survival`; abort probability remains the existing
+interception formula. Both use the same vulnerability as a property of exposure but have separate base
+factors. The loader hard-validates the attrition-link keys, class existence, nonempty pool, and package
+size. Package eligibility is `alive - rtb_today - sead_assigned_today`; no path may select an aircraft
+already unavailable today.
+`owa_drone_small` deliberately keeps `attrition_link: null` under R7.
 
-**Rule.** Delete the island-wide contest. Extend interception so a MANPADS engagement can (a) abort the
-mission — the existing "round denied" outcome — or (b) inflict attrition on the airframe, or both.
-Because interception already runs *before* the strike resolves, the USER's "ideally before" is
-satisfied for free on the strike side.
+**Rule (timing).** Build `OrganicStrikeBudget` only after R11 books `sead_assigned_today`, using
+`alive - sead_assigned_today - rtb_today`. The budget remains a package-count snapshot; each actual
+package is assembled from currently available airframes immediately before ingress. A MANPADS kill
+reduces that package now and the OOB tomorrow; a MANPADS abort returns every surviving package member,
+denies today's strike, and excludes those airframes from later package assembly.
 
-**Rule (timing).** Abort is the within-day effect; attrition is the next-day effect. `ctx.organic_budget`
-is a snapshot taken at `IjfsEngine.gd:141`, before any strike resolves, so an airframe killed inside the
-strike phase cannot shrink that same day's budget — but it does shrink every later day, since the budget
-scales `alive/initial` over strike-role squadrons. **This is coherent and should be stated as the
-design's own logic, not worked around:** the abort takes today's sortie away, the kill takes tomorrow's.
+**Calibration correction.** The earlier 139.1-attempt / p≈0.116 argument counted MANPADS attempts
+against every target category and is invalid under this narrower ruling. Re-measure eligible
+Maneuver-Unit attempts at the final 498-airframe force before choosing the attrition factor. The
+deleted island-wide contest's historical losses are a comparison, not a target; do not force a fit by widening
+scope or allowing multiple kills per engagement: if one kill per eligible engagement cannot approach
+that total at `p <= 1`, report the closure to the USER. Kill and abort remain mutually exclusive under
+R8, so attrition is not a rider on a successful abort.
 
-**What it breaks.**
+**Interaction with 0059.** MANPADS is an abort source only for linked reusable strike platforms and
+gives `rtb_today` its first real writer. Fold in 0059 step 2: `IjfsTransitions` gains the bounded abort
+operation, `carry_to_next_day` clears `rtb_today`, and the air-OOB ledger reports it. OWA interception
+never writes `rtb_today`.
 
-- Golden re-baseline, and a much larger balance movement than any reordering. Losses stop being spread
-  island-wide across ~500 airframes and concentrate where Red actually strikes.
-- **Calibration is not a detail here.** Re-measured at R9's settled force (OOB 546): **139.1
-  interception attempts per campaign** (49 / 27 / 24 / 27 / 10 / 1 by turn, then zero — MANPADS runs
-  dry), producing **10.6 actual interceptions**. The island-wide contest being deleted kills **16.2**
-  airframes a game. So to hold the current balance, either most interceptions must ALSO be kills — and
-  10.6 interceptions cannot supply 16.2 kills, so that route is arithmetically closed — or attrition
-  needs its own per-attempt roll at **p = 0.116**. **Attrition must therefore be a separate outcome of
-  the engagement, not a rider on a successful interception.** That is an independent argument for R8's
-  one-roll/three-outcome shape, arrived at from the numbers rather than from the idiom.
-- **Attribution is the hard part, and it is a design question, not an implementation one.** Interception
-  knows which *munition* was denied, not which *squadron* flew it. `red_firing_capacity` maps organic
-  munitions to a `platform_type` (`aircraft` / `uav`) only. Worse, `owa_drone_small` — which carries
-  `manpads_vulnerability: 1.0` and is the most-flown interceptable munition — is category
-  `Inorganic-Slow` and **is flown by no squadron in `red_air_oob.json` at all**. So "shoot down the
-  aircraft" has no referent for it. **Resolved by R7:** OWA drones are a separate expendable pool
-  outside the OOB, so an intercepted drone is destroyed without decrementing any squadron.
-- **The seam already exists and is unwired.** Every `red_firing_capacity` entry carries
-  `attrition_link: null`, and `grep attrition_link --include=*.gd` returns nothing. That is the
-  designed hook for exactly this mapping — second piece of dead scenario data this session found, after
-  `role_exposure_multipliers`.
-- **SEAD aborts have nowhere to attach yet.** The USER wants MANPADS to be able to degrade SEAD as well
-  as strike. But `resolve_sead_engagement` has no per-round loop — it is one aggregate
-  `effective_power` computed from summed `sead_eff` across alive airframes. A SEAD abort must therefore
-  reduce that power (or the alive count feeding it), which is a different shape from denying a round.
-  Needs its own design pass.
+**Ledger/state migration.** `manpads_intercept_log` becomes the single MANPADS event stream. Each row
+carries target/TO/munition, package members before and after, outcome, attributed losses, RTB count,
+and whether the strike executed. Summary keys become explicit `attempts`, `kills`, `aborts`, and
+`unaffected`; `interceptions = kills + aborts` remains as a compatibility total for narrative/API
+consumers. `red_air_losses` sums kills only. Delete `manpads_contest_log` from `IjfsDailyState`, the
+public ledger, summary math, mutation manifest, real-claims pin, tests, and system docs; regenerate the
+LLM result fixture and update `GameNarrative`'s source wording.
 
-**Recommended shape for the abort/kill split, needs the USER's nod.** Mirror the SAM outcome idiom the
-codebase already uses — a target is destroyed / suppressed / unengaged. Give an engaged aircraft the
-same three: **killed / aborted / unaffected**, from one roll rather than two. Plan
-[[0059-sam-interception-and-rtb]] noted precisely this asymmetry ("a SAM target has three outcomes; an
-aircraft has two") and this closes it.
+**What it breaks.** Golden re-baseline and the low-level `resolve_ijfs_turn` ledger shape. It removes
+both prior MANPADS surfaces (all-target interception and island-wide contest) in favor of one local
+Maneuver-Unit-strike surface, concentrating losses on the platform actually exposed. It also
+deliberately supersedes the original same-day R5 scope that tried to keep ISR and SEAD inside MANPADS
+despite having no local operation to attach them to.
 
-**Interaction with 0059.** This ruling makes MANPADS an abort source, which settles part of 0059's open
-"which sources abort" question in the affirmative for MANPADS, and gives `rtb_today` its first real
-writer. 0059 step 2 and this ruling should be planned together or they will collide in the same code.
+### R6 — MANPADS affects the exposed STRIKE platform, not every aircraft in the theater
 
-**Scope note.** With R5 this plan is no longer "should attrition be reordered" — it is "replace the
-MANPADS pair with one mechanic". Re-scope and retitle it when work actually starts.
+**REVISED USER RULING 2026-08-01, follow-up.** Remove `IjfsManpads.CONTESTED_ROLES` together with the
+contest itself; do not replace it with another role filter or all-role pool. Only a manned `strike_aircraft_medium` package can be killed or aborted. Attack UCAV, ISR, SEAD, and
+inorganic munitions receive no MANPADS roll.
+Their altitude/profile multipliers remain live for SAM return fire and the free shot under R2.
 
-### R6 — MANPADS affects ALL aircraft, differentiated by role exposure rather than by a filter
+**Why.** The original all-role ruling had no local trigger for aggregate ISR or SEAD operations. An
+island-wide pass would preserve the mechanic R5 deletes, while attaching ISR losses to unrelated
+strikes or detections would be artificial. Local exposure is cleaner: the MANPADS threat is tied to the
+Maneuver-Unit strike that actually entered its envelope.
 
-**Rule.** Delete `IjfsManpads.CONTESTED_ROLES` entirely. Every role — ISR included — can be engaged, with
-R2's `isr 0.7 / sead 1.0 / strike 1.2` doing the differentiation. One mechanism, no include/exclude list.
+**What it breaks.** This supersedes the original R6 all-aircraft scope and R12's MANPADS-on-SEAD
+requirement. ISR/SEAD loss projections from the old contest are historical, not calibration targets.
 
-**What it breaks.** Golden re-baseline. It also overrides the standing comment in `IjfsManpads`
-("low-altitude attack profiles; ISR flies high"), which was the physical justification for excluding
-ISR — that premise is now retired and the code comment must be rewritten rather than left contradicting
-the behaviour. **Note the multiplier is a modest discount, not immunity:** 0.7 leaves ISR 70% as
-exposed as a SEAD aircraft to a shoulder-launched IR missile. If the intent is "ISR is largely out of
-reach of MANPADS specifically", 0.7 is too generous and MANPADS wants its own ISR exposure value.
-Flagged, not decided.
+### R7 — OWA drones remain an expendable munition pool outside the 498-airframe OOB
 
-Detection is unaffected either way: `aircraft_isr_raw_score` clamps at 1.0 and Red's ISR sum is 56.4, so
-ISR losses do not move phase-2 detection until the fleet is >98% destroyed.
+**Rule.** `owa_drone_small` stays a munition with `attrition_link: null`. It has no Maneuver-Unit
+pairing, so under revised R5 it receives no MANPADS engagement at all; do not add a pairing merely to
+make the old interception path reachable. It remains ordinary expended strike inventory and never
+changes `red_air_losses`, `rtb_today`, or the squadron ledger.
 
-### R7 — OWA drones are a separate expendable pool, NOT part of the 584-airframe OOB
+This is separate from R11's new `anti_radiation_owa` inventory: both are expendable, but only the latter
+runs in the dedicated pre-aircraft SEAD stage.
 
-**Rule.** `owa_drone_small` stays a munition, not an airframe. A MANPADS engagement against it denies
-the round and destroys the drone; **nothing decrements from `red_air_oob.json`**. Red's air order of
-battle stays at 584 and continues to mean manned aircraft plus reusable UAVs only.
+### R8 — Four-airframe packages; one mutually exclusive MANPADS outcome
 
-**What it breaks.** Nothing today — it ratifies the current data model rather than changing it, and it
-dissolves R5's attribution problem for the most-flown interceptable munition. Note the consequence for
-reporting: an OWA drone shot down must NOT appear in `red_air_losses` or the per-squadron OOB ledger, or
-the 584 identity that every measurement in this session was checked against stops holding.
+**Rule (package assembly).** Every Organic strike log entry reserves exactly four available airframes
+from its validated `attrition_link`. Use a typed package object carrying its four squadron references;
+select without replacement on a dedicated derived substream so package composition does not borrow the
+strike-resolution stream. Clamp the rare `randf() == 1.0` boundary to the last eligible index. If four
+linked airframes are unavailable, the strike does not launch and records a named package-unavailable
+skip before consuming capacity.
 
-### R8 — One roll, three outcomes
+**Capacity units.** Existing `firing_units * sorties_per_unit_per_day` values are airframe-sortie seats,
+not package counts. Divide by package size: full-health `strike_aircraft_medium` is
+`floor(36 * 0.8 / 4) = 7` packages/day and `attack_uav_small` is `floor(40 * 2.0 / 4) = 20` packages/day.
+Track seats/packages used so the same OOB may fly multiple daily sorties only within that authored
+capacity; never interpret 80 UCAV seats as 80 four-ship attacks. A package cannot contain the same
+airframe twice.
 
-**Rule.** A MANPADS engagement resolves in a single draw to exactly one of **killed / aborted /
-unaffected**, mirroring the destroyed / suppressed / unengaged idiom `IjfsEngagement._engage_sam_target`
-already uses for SAM targets. Not two independent rolls.
+**Rule (ingress order).** R10 same-TO SAMs engage first, one at a time in stable target-id order, and
+each successful SAM roll kills at most one package member. Stop once all four are dead. If the target
+is a Maneuver Unit and at least one manned package member survives, MANPADS then consumes exactly one
+draw:
 
-**What it breaks.** Closes the asymmetry [[0059-sam-interception-and-rtb]] named — "a SAM target has
-three outcomes; an aircraft has two" — and gives `rtb_today` its first writer. 0059 step 2 and this
-must be planned together; they edit the same code.
+- **killed:** one selected member dies; the survivors press the attack;
+- **aborted:** every survivor returns, each source squadron books RTB, and the strike is denied;
+- **unaffected:** the full surviving package presses.
 
-### R9 — J-16D is 10 airframes, not 48. THIS IS THE NEW BASELINE FORCE.
+Killed and unaffected packages with at least one survivor resolve the strike with final
+destroy/suppress probabilities multiplied by `survivors / 4.0`. If SAM/MANPADS kills all four, record
+an `ingress_destroyed` executed-sortie row (capacity spent, no delivery) and consume no strike
+kill/suppression draws; this is distinct from a package that never launched. A MANPADS candidate is selected from the package, not the global OOB; use the
+`floor(u*N)` / fractional-remainder transform for an unbiased candidate-specific outcome and clamp the
+inclusive-1.0 boundary. Assert each candidate's kill+abort bands are at most 1.0. A killed aircraft can
+never also be RTB, and all later attrition excludes booked RTB/SEAD-assigned airframes.
+
+**What it breaks.** Gives `rtb_today` its first runtime writer and adds `sead_assigned_today` as a
+second per-day availability ledger. Both are owned by `IjfsTransitions`, reset at the day boundary, and
+serialized in `air_oob_after`; update the manifest rationale and replace the old no-writer
+characterization test. This folds in 0059 step 2.
+
+### R9 — J-16D is 10 airframes; revised R11 makes the final reusable OOB 498
 
 **Ruled 2026-08-01.** `red_air_oob.json` carried J-16D at 2 squadrons x 24 = **48**. Twenty is China's
 *entire* J-16D inventory and not all of it would be committed to this theatre, so the figure is **10**.
-Red's OOB becomes **546** (420 strike / 58 SEAD / 68 ISR). Measured, 10 seeds x 12 turns:
+R9 alone produced the transitional 546-airframe force measured below. Revised R11 then removes the 48
+expendable anti-radiation pseudo-airframes and renames the existing 60 Decoys as reusable Attack UCAVs
+without changing their count. **The final baseline is 498: 420 strike / 10 dedicated SEAD / 68 ISR.**
+
+The following 10-seed x 12-turn table is historical evidence for the J-16D decision, not a calibration
+of the final R11/R10 design:
 
 | J-16D | OOB total | SEAD fleet | Red air lost/game | share | sead_return | manpads | free shot | unsuppressed SAMs after turn 2 |
 |---|---|---|---|---|---|---|---|---|
-| **48** (today) | 584 | 96 | 35.8 | 6.1% | 20.2 | 15.6 | 0.0 | 0.50 |
+| **48** (historical) | 584 | 96 | 35.8 | 6.1% | 20.2 | 15.6 | 0.0 | 0.50 |
 | **20** | 556 | 68 | 45.2 | 8.1% | 29.5 | 15.4 | 0.3 | 0.80 |
 | **10** | 546 | 58 | 58.1 | **10.6%** | 41.6 | 16.2 | 0.3 | 1.10 |
 
-**Two findings that matter more than the number itself:**
+**Two historical findings that motivated the follow-up (not claims about the final design):**
 
 1. **The turn-2 annihilation is insensitive to SEAD strength; only its PRICE is sensitive.** Cutting the
    SEAD fleet by 40% (96 -> 58) still leaves 1.9 of 78 SAMs alive after turn 2 — R3's base case holds
@@ -209,11 +304,11 @@ Red's OOB becomes **546** (420 strike / 58 SEAD / 68 ISR). Measured, 10 seeds x 
    or a rate above ~25% is still needed for it to mean anything. At J-16D = 20 it does not bind at all.
 
 **What it breaks.** Golden re-baseline. **Every number elsewhere in this document was measured at
-J-16D = 48 / OOB = 584 unless it says otherwise — treat those as historical.** The load-bearing anchors
-were re-measured at the settled force and are restated here; R5's calibration block carries the new
-figures:
+J-16D = 48 / OOB = 584 unless it says otherwise — treat those as historical.** Even the 546 column below
+is now transitional evidence: it predates R11's removal of the expendable row, the new SEAD sequence,
+and package-local attrition. No final-498 calibration exists yet.
 
-| anchor | at OOB 584 (historical) | **at OOB 546 (baseline)** |
+| anchor | at OOB 584 (historical) | at OOB 546 (transitional) |
 |---|---|---|
 | Red air lost / game | 35.8 (6.1%) | **58.1 (10.6%)** |
 | by source: sead_return / manpads / free | 20.2 / 15.6 / 0.0 | **41.6 / 16.2 / 0.3** |
@@ -226,11 +321,9 @@ figures:
 fleet leaves more SAMs alive and return fire — which is already correctly placed before the strike —
 grows to dominate. The ordering question this plan opened with gets smaller still at the settled force.
 
-**Structural question this raises, not yet answered.** With J-16D at 10, the `HARM` class — 1 squadron
-x 48, `kind: unmanned`, the only other entry with `sead_eff: 1` — supplies **48 of 58**, i.e. 83% of
-Red's entire SEAD capability. If the J-16D figure was wrong, this one deserves the same scrutiny:
-"HARM" is a missile designation being used as an airframe class, and it is now doing almost all the
-work. **USER call needed.**
+**Structural question resolved by revised R11.** The historically named `HARM` row was not an
+airframe class at all. The USER reclassified it as 192 expendable missiles (48 four-missile salvos) in
+the munition inventory, removing it from squadron `alive`/loss/RTB accounting.
 
 **Squadron structure: 1 squadron x 10 — AGENT decision 2026-08-01, no USER call needed.** By inspection
 the choice is RNG-neutral, which is not what was assumed when it was first flagged: every attrition loop
@@ -241,93 +334,149 @@ The only difference is log granularity — one `contest_log` row instead of two.
 simpler record of what is one real-world unit. **Verify the RNG-neutrality when implementing rather
 than trusting this note**; it is an inspection result, not a measurement.
 
-### R10 — SAM return fire becomes PER-ENGAGEMENT, not a per-force tax
+### R10 — SAM return fire becomes package-local and geographically explicit
 
-**Ruled 2026-08-01.** Today `_sead_return_fire` sums the surviving SAM score once, derives one rate, and
-draws against **every alive airframe in Red's inventory** — an aircraft parked in China runs the same
-risk as one over Taipei. That is what produces the knife-edge (rate clamps at 1.0 against an intact
-network, so the whole air force dies in a day).
+**Ruled 2026-08-01.** Delete the pooled `_sead_return_fire` force tax. A SAM may attrit only an aircraft
+actually assigned to the SEAD package or to a four-airframe Organic strike package in its TO.
 
-**Rule.** Return fire attaches to engagements, not to the force. The hook already exists: SEAD has a
-per-target loop (`_engage_sam_target`, called for each SAM in `_sorted_by_id(targets)`), so a SAM that
-survives its engagement and is not suppressed draws there, against the package that engaged it —
-instead of every SAM's score being pooled into one island-wide tax.
+**SAM deployment.** All 78 expanded SAM instances receive exactly one TO. The USER-set theater weights
+are TO2 10% / TO3 50% / TO4 20% / TO5 20%. Because instances are indivisible, use the deterministic
+8 / 39 / 16 / 15 split below; each source row carries an explicit `to_distribution` whose values sum
+to its quantity, and the loader stamps `to_number` on every expanded instance:
 
-**Why this is the right shape and not just the expensive one.** It makes SAM return fire structurally
-identical to R5's MANPADS mechanic: both become per-engagement rolls keyed to something that actually
-happened. And **it dissolves the knife-edge by construction** rather than capping it — total losses
-scale with the NUMBER of surviving SAMs engaged, each shot bounded, so there is no clamp to saturate.
-The cap and the saturating-curve options were rejected as papering over the structure.
+| SAM source | TO2 | TO3 | TO4 | TO5 | total |
+|---|---:|---:|---:|---:|---:|
+| Mobile Antelope | 5 | 25 | 10 | 10 | 50 |
+| Patriot PAC-3 | 1 | 4 | 2 | 2 | 9 |
+| Tien Kung II | 1 | 3 | 1 | 1 | 6 |
+| Tien Kung III | 1 | 3 | 1 | 1 | 6 |
+| NASAMS | 0 | 2 | 1 | 0 | 3 |
+| Static RIM-7/Skyguard | 0 | 2 | 1 | 1 | 4 |
 
-**FULL TIER, ruled 2026-08-01: strike sorties into defended TOs also draw SAM fire.** Not just the SEAD
-package. A SAM engages whatever enters its envelope, and strike sorties already carry a `to_number`
-exactly as MANPADS interception does — so a strike into a TO with surviving unsuppressed SAMs draws a
-SAM engagement in the same place MANPADS interception is rolled. **SAM fire and MANPADS fire become the
-same shape at the same hook**, differing only in which launchers are in range and the role-exposure
-multiplier applied.
+Consolidate the four old TO-named Antelope source rows into one `sam_mobile_antelope` quantity-50 row
+before applying its 5/25/10/10 distribution; otherwise the old source IDs would lie about geography.
+This deliberately changes expanded target IDs/order, so pin the new stable IDs. Validate every per-row
+sum and final TO total. No missing TO may silently mean island-wide, TO0, or immune.
 
-**CALIBRATION TARGET, ruled 2026-08-01: 10% of Red's air force per day against an INTACT IADS.**
-At OOB 546 that is ~55 airframes on the worst day, against 78 unsuppressed SAM targets — roughly
-**0.7 airframes per surviving SAM per day**. Fit the per-engagement rate to that, then let it fall
-naturally as the network is rolled back.
+**SEAD return fire.** Finish the complete sorted SAM destroy/suppress pass first. On a dedicated
+derived `sam_return_fire` substream, each surviving unsuppressed SAM then gets one attrition-only roll
+against the actual R11 aircraft-SEAD package. This keeps return-fire draws from shifting later SAM
+outcomes. A hit selects one available package member proportional to its squadron representation and
+kills at most one.
 
-**Do not port the current rate and expect 10%.** Today's turn 2 costs 41.6 airframes, which is 7.6% of
-546 and looks close to target — but it is produced by ~1.1 surviving SAMs taxing the ENTIRE force. Under
-R10 the same turn has up to 78 SAMs each drawing against the aircraft that actually engaged them, which
-is far more fire from a far smaller per-shot rate. The two numbers are not comparable and the rate must
-be fitted, not carried over.
+**Strike return fire.** Assemble the four-airframe package first. Before MANPADS or strike resolution,
+every surviving unsuppressed SAM in the target's TO engages once in stable target-id order; each hit
+kills at most one survivor and engagement stops when the package is empty. Both
+`strike_aircraft_medium` and `attack_uav_small` have validated class-specific links, so SAM fire can
+attrit manned packages and the renamed 60-airframe Attack UCAV pool without charging UCAV losses to
+Decoys. A SAM may engage multiple distinct packages in one day; casualty count is nevertheless capped
+by each package's four actual members.
 
-**What it breaks.** Golden re-baseline, the largest single behavioural change in this document, and it
-supersedes the "reshape return fire before touching the survivability knob" precondition recorded in
-`docs/plans/BACKLOG.md` — R10 IS that reshape. Note the campaign-level consequence of the target: 10%
-per day sustained against an intact network would cost Red ~72% of its air force over twelve days. That
-is only reachable if the network STAYS intact, which is precisely what the mobile-SAM survivability
-knob controls — so R10 and that knob must be calibrated together, not separately.
+**SAM event contract.** Keep the public `contest_log` key but replace its old per-squadron force-tax
+rows with one row per SAM-package contact: SAM target ID/TO/score, package kind/ID, munition (null for
+SEAD), member count before/after, victim squadron/class or null, p/roll, and losses 0/1. Summary retains
+`contest_losses` as the sum. The end-of-day identity must prove total squadron shrinkage equals SAM
+kills + MANPADS kills + free-shot kills.
 
-### R11 — `HARM` is anti-radiation loitering munitions; rename it, keep the count
+**Probability.** Preserve SAM capability by using `p_loss = fitted_sam_return_factor * sam_score *
+role_exposure * rcs_survival`, asserted in [0,1]. One uniform draw selects a package candidate and uses
+its fractional remainder for the candidate-specific hit, matching R8 and avoiding a second victim draw. Fit the base factor from measured package engagements;
+`0.7 losses per SAM-day` is an aggregate sanity ratio, not a per-roll probability.
 
-**Ruled 2026-08-01.** The 48-airframe `HARM` entry stays at 48 and keeps `sead_eff: 1`; it represents
-anti-radiation loitering munitions / UAVs, not a manned type. **Rename the class to say so** — "HARM" is
-a US missile designation standing in as an aircraft class, and after R9 this entry supplies 48 of 58
-SEAD airframes, 83% of Red's SEAD capability. A name that misdescribes the single most load-bearing
-entry in the air OOB is a legibility defect.
+**Calibration checkpoint.** Against an intact IADS, target about 10% of the final 498-airframe OOB
+(~50 losses/day), but report the full role-specific curve: J-16D/SEAD backfill losses, manned strike
+losses, Attack UCAV losses, SAM survival, strike volume, and crossing outcomes. The USER explicitly
+allows the revised SEAD design to change turn-2 network survival, so the 10% figure is a checkpoint to
+inspect rather than a reason to force the old annihilation result. Jointly fit this factor with the
+MANPADS factor only after R11 and package geometry are live.
 
-**What it breaks.** `aircraft_class` is a key into `data/ijfs/air_classes.json` and appears in
-`contest_log` / `air_oob_after` rows, so a rename touches both data files plus any fixture carrying the
-string. Behaviour is unchanged if the count and stats hold — this should be a byte-stable rename apart
-from the string itself. **Verify that**; if the golden moves, something else was keyed on the name.
+**What it breaks.** Golden and fixture re-baseline, new SAM deployment content, and a much larger draw
+count. The structural gain is that losses scale with real SAM-package contacts while remaining bounded
+by exposed package size, rather than taxing aircraft parked outside the engagement.
 
-### R12 — MANPADS does NOT abort SEAD sorties; attrition only
+### R11 — anti-radiation OWA inventory resolves first, then aircraft are assigned to SEAD
 
-**Ruled 2026-08-01.** SEAD aircraft stay in scope for MANPADS **kills** (per R6, which put all roles in
-scope), but there is no within-day abort effect on SEAD. SEAD keeps its aggregate-power shape — no
-per-sortie loop is added for it — so under R5's split it gets the tomorrow-effect (fewer airframes ->
-less `sead_eff`) and no today-effect.
+**REVISED USER RULING 2026-08-01 after plan review.** The old 48-airframe `HARM` row represented
+expendable one-way anti-radiation munitions and never belonged in squadron `alive`/RTB accounting.
+Delete it from `red_air_oob.json`, `air_classes.json`, and the class allowlist. Add a dedicated
+`anti_radiation_owa` munition with **192 missiles total**, **4 missiles per engagement**, and a daily
+capacity of **48 missiles / 12 engagements** — 48 four-missile salvos across four full-capacity days.
+It is not `owa_drone_small` and does not enter the ordinary strike phase.
 
-**Why.** R5 collapsed MANPADS into a per-strike mechanic, and SEAD is not a strike: it consumes no
-munitions and has no per-sortie hook. Giving it aborts would have required a third MANPADS touchpoint,
-partly undoing the "one mechanic" ruling. This keeps R5 intact.
+**Stage A — expendable SEAD.** Before aircraft SEAD, choose up to 12 active (not destroyed or
+suppressed) SAM emitters in descending `sam_score`, then stable `target_id`, one salvo per target. This
+anti-radiation stage may home on active emitters regardless of `detected_this_turn`; detection gating
+applies to the later aircraft stage, not to a weapon whose target signal is the emission itself. Each salvo has effective power 4 and uses
+the existing target formula: `p_destroy = 4 / (4 + sam_score)`; on survival,
+`p_suppress = p_destroy * 0.4`. Spend all four missiles whether the salvo destroys, suppresses, or
+misses. This stage draws from its retained daily derived substream and writes target outcomes through
+`IjfsTransitions`. Stage C skips both destroyed and currently suppressed Stage-A targets; it never
+clears or overwrites their Stage-A result that day.
 
-**What it breaks.** Nothing structurally. Note the interaction with R10: R10 adds a per-target loop for
-return fire, which is a SAM mechanic, not a MANPADS one — R12 does not license reusing it for MANPADS
-aborts against SEAD.
+**Stage B — weighted IADS health.** After Stage A, compute
+`remaining_unsuppressed_sam_score / initial_sam_score` over all Moveable, Static, and Mobile SAM
+instances. Destroyed and currently suppressed systems contribute zero. This weighted score, not raw
+instance count and not mobile-SAM-only health, drives aircraft assignment.
 
-### Session closed 2026-08-01 — what is left is implementation planning, not design
+**Stage C — aircraft assignment with real effect.** The requirement is raw HEADCOUNT:
+`ceil(0.25 * alive_strike_airframes * weighted_iads_health)`. At full health it is 105 aircraft;
+alive J-16Ds fill 10 places first, then 95 ordinary strike-role airframes fill the rest. Allocate that
+ordinary headcount proportionally across available manned strike and Attack UCAV squadrons by alive
+strength, using largest-remainder rounding and stable squadron-id tie breaks. Each ordinary airframe
+counts as one assigned head but contributes `sead_eff = 0.25`, so the full-health base power is
+`10 + 95 * 0.25 = 33.75`, before WVR/RCS modifiers.
 
-Twelve rulings above. The remaining unknowns are all things measurement answers, not the USER:
+Run the ordinary aircraft-SEAD destroy/suppress pass against SAMs still active after Stage A, using
+only the actual assigned package to compute summed SEAD power and package-average WVR/RCS. Activate
+the already-ruled `sead_undetected_engagement` scenario scalar on this pass only: default 1.0 preserves
+full engagement of undetected SAMs; lower sweep values multiply effective power against targets with
+`detected_this_turn == false`. Assigned strike airframes are unavailable to Organic strikes that day
+but remain exposed to R10 SEAD return fire. Record per-squadron `sead_assigned_today`, reset it with `rtb_today` at the next day boundary,
+serialize both, and build R10's victim package from those same assigned references.
 
-- **Fitting R10's per-engagement rate to the 10%/day target.** A sensitivity run, not a decision.
-- **Re-measuring every anchor after R9 + R11 land**, since the force and a class name both move.
-- **Sequencing.** R10 (return fire) and the mobile-SAM survivability knob calibrate together. R5/R8
-  (one MANPADS mechanic) collides with [[0059-sam-interception-and-rtb]] step 2 and must be planned
-  with it. R9 and R11 are data changes that should land FIRST, because every calibration downstream is
-  fitted against the force they define.
+**Attack UCAV correction.** Rename the existing 60-airframe `Decoys` strike row/class to `Attack UCAV`
+rather than adding force. Its attrition link exclusively backs `attack_uav_small`; the existing
+`firing_units: 40` means 40 of the 60 establish 80 airframe-sortie seats/day, i.e. twenty four-UCAV
+packages; losses scale those seats from the real 60-airframe pool. This avoids charging UCAV losses to a fictitious Decoy
+class.
+
+**What it breaks.** The reusable OOB drops from the transitional 546 to 498 and SEAD changes from one
+aggregate 58-power sweep to a staged munition/assignment sequence. R3 explicitly allows the resulting
+SAM-survival change. Rebaseline every IJFS/campaign golden and regenerate the air-OOB fixture; all old
+546-force loss and interception anchors become historical.
+
+### R12 — SEAD and ISR are outside MANPADS; SAM return fire remains separate
+
+**REVISED USER RULING 2026-08-01, follow-up.** MANPADS neither kills nor aborts SEAD or ISR aircraft.
+Do not add a per-SAM-target MANPADS hook, a detection-triggered hook, an all-role victim pool, or a
+reduced daily contest. SEAD uses R11's explicit assigned package; ISR keeps its aggregate detection
+shape.
+
+R10's per-engagement SAM return fire applies to the assigned SEAD package and four-airframe Organic
+strike packages in defended TOs. That is a different weapon/range model and must not be widened back into an island-wide force tax.
+Thus this revision narrows MANPADS without undoing R10.
+
+**Why.** A shoulder-launched threat belongs to the low-altitude Maneuver-Unit strike that exposed the
+platform. The original R12 demanded SEAD MANPADS attrition but supplied no coherent local trigger; the
+follow-up USER call chose reality and implementation clarity over preserving that scope.
+
+### Follow-up closed 2026-08-01 — what is left is implementation and measurement, not design
+
+The final rulings above include both follow-up rounds. Remaining unknowns are measurement outputs:
+
+- Count four-airframe manned Maneuver-Unit packages and fit the MANPADS kill factor without trying to
+  reproduce the deleted island-wide contest.
+- Measure R11 anti-radiation expenditure, weighted IADS health, assigned SEAD composition, and SAM
+  survival by turn.
+- Jointly fit R10's score-scaled return factor and MANPADS attrition against the final 498-airframe
+  force, using the 10% intact-IADS checkpoint plus role/campaign outcomes.
 
 ### Still open — nothing requiring a design call
 
-- **Nothing is blocked on a USER design call.** The SEAD-allocation mechanic is fully specified
-  (reading (B), priority fill, k = 4) in `docs/plans/BACKLOG.md`; the mobile-SAM survivability knob is
-  specified in the same file and calibrates jointly with R10.
+- Package size/outcomes, MANPADS scope, anti-radiation inventory and salvo, SEAD allocation/effect,
+  SAM deployment, weighted health, undetected-engagement knob, RTB/SEAD-assignment ownership, and R3's
+  survival-change permission are all settled above. The superseded BACKLOG designs now point here and
+  are not a second specification.
 
 ### Corrections to the measurements below, from the same session
 
@@ -348,6 +497,10 @@ Twelve rulings above. The remaining unknowns are all things measurement answers,
    roughly evenly between missiles and aircraft.
 
 ## MEASURED 2026-08-01 — the question is not moot, and it is almost entirely about MANPADS
+
+> **SUPERSEDED PRE-SESSION MEASUREMENT.** Its 54.2% / 253 / four-free-shot-loss headline was produced
+> by the broken repeated-turn substream; the Corrections section above carries the valid historical
+> measurement, and the final rulings replace both old MANPADS surfaces.
 
 The cheapest item below was done first, because it was the one that could retire the plan. It did not.
 

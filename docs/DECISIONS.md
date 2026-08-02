@@ -25,6 +25,12 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-08-01 — Plan 0060 final air-attrition design (USER; two plan-review rounds).** MANPADS becomes
+  local to four-aircraft manned Maneuver-Unit strike packages; SAM return fire becomes package-local;
+  expendable anti-radiation salvos precede a weighted-health aircraft-SEAD assignment; and the reusable
+  baseline becomes 498 with a real Attack UCAV pool. No behavior shipped in this planning commit.
+  Implementation specification: `docs/plans/0060-air-attrition-before-the-strike.md` R1–R12.
+
 - **2026-08-01 — Plan 0059 step 1 shipped: Red's air order of battle reaches the turn record (agent,
   reviewed 2-of-3).** The `air_oob_after` ledger was built by `IjfsEngine` and discarded at every hop;
   it is now retained on `GameStateData.last_ijfs_air_oob` and copied into `TurnResult.air_oob`, so a

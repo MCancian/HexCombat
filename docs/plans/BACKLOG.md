@@ -283,125 +283,16 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   (one reviewer's artifact read off disk and returned verbatim by another as fake corroboration).
   Note an enumeration return is legitimately long even once the noise is stripped, so the 1–10 KB band
   needs a role-aware exception either way.
-- [ ] **Mobile SAMs are invisible and die anyway — a survivability knob was RULED by the USER.**
-  2026-08-01 (design session out of [[0060-air-attrition-before-the-strike]]); ships with a return-fire reshape or not at all. `IjfsEngagement.resolve_sead_engagement` iterates every non-destroyed
-  SAM-category target with **no `detected_this_turn` check**, unlike `IjfsTargeting.targets_to_attack`
-  which requires one. Measured on turn 2, 10 seeds, scenario_default — SAM targets by detection outcome
-  against what SEAD destroyed anyway:
-
-  | class | present | detected | detected share | destroyed by SEAD |
-  |---|---|---|---|---|
-  | Static | 0.3 | 0.3 | 100% | all |
-  | Moveable | 18.5 | 17.3 | 93.5% | all |
-  | Mobile | 48.1 | 1.4 | **2.9%** | **all** |
-
-  So the detection layer ALREADY produces the survivability gradient the USER wants (fixed visible,
-  Patriot-class mostly visible, mobile launchers effectively invisible) and SEAD discards it.
-  **Ruled shape:** a scalar `sead_undetected_engagement`, default **1.0** — which reproduces the
-  turn-2 base case exactly, per R3 in 0060 — scaling SEAD's effect against targets it has not
-  detected. At 0.0 roughly 97% of mobile SAMs survive turn 2. This is why a durability term on
-  `p_destroy` was rejected: it cannot reproduce the base case at any default, and the apparent score
-  inversion (mobile score 1 -> p_destroy 0.991, Patriot score 4 -> 0.967) is a four-point spread and
-  not the cause of anything.
-
-  **It cannot ship alone — and the reshape it needs is now RULED as R10 in
-  [[0060-air-attrition-before-the-strike]].** `_sead_return_fire` computes
-  `loss_rate = surviving_sam_score * 0.02` clamped to 1.0, evaluated AFTER the sweep, against every
-  alive airframe in the inventory. Against an INTACT network the score sums near 170, the rate clamps
-  at **1.0**, and Red's entire air force dies in one day — no stable middle between ~8% and 100%. R10
-  moves return fire into the per-target SEAD loop so it becomes per-engagement, which removes the clamp
-  by construction. **Plan R10 first or with this; do not turn the knob below 1.0 before it lands.**
-- [ ] **SEAD allocation should scale with the surviving mobile-SAM threat.**
-  USER SPEC 2026-08-01, but the numbers as specified CANNOT BITE. Needs one more USER call before it can be planned.
-  Direction: Red must divert airframes to SEAD in proportion to the mobile SAMs alive last turn, so a
-  prolonged mobile-SAM fight costs Red **strike capacity**, not just airframes. This is what gives the
-  survivability knob above its teeth.
-
-  **USER-specified parameters (2026-08-01):** at 100% mobile-SAM health, **25% of alive SEAD+strike
-  aircraft** are allocated to SEAD; **50% of that requirement may be substituted by OWA drones**;
-  scaling is off the mobile-SAM count from the PREVIOUS turn.
-
-  **Measured against R9's settled force (J-16D = 10, OOB 546), the rule barely binds:**
-
-  | quantity | at old OOB 584 | **at settled OOB 546** |
-  |---|---|---|
-  | alive SEAD + strike pool | 516 | **478** |
-  | requirement at 100% health (25%) | 129 | **119.5** |
-  | max OWA substitution (50%) | 64.5 | 59.75 |
-  | manned requirement after substitution | 64.5 | **59.75** |
-  | dedicated SEAD-role fleet available | 96 | **58** (J-16D 10 + HARM 48) |
-  | strike aircraft diverted | **0 — cannot bite at any health** | **1.75** |
-
-  At the old force the tax was absorbed entirely by aircraft that already fly SEAD and never strike; it
-  could not bite until the rate passed ~37%. R9 nearly fixed that by accident, but 1.75 diverted
-  airframes is binding in arithmetic only.
-
-  **USER RULING 2026-08-01 — reading (B), filled in PRIORITY ORDER.** The requirement is
-  `0.25 x 420 x mobile_sam_health` = **105 airframe-equivalents at full health**, measured against the
-  STRIKE fleet. It is met in this order, and strike aircraft are pulled only when the sources above
-  them cannot cover it:
-
-  1. **Dedicated SEAD aircraft** (58 = J-16D 10 + HARM 48), less any destroyed
-  2. **OWA loitering munitions**, capped at 50% of the requirement AND at daily capacity / k
-  3. **Strike aircraft backfill** — whatever remains
-
-  The USER's words: strike aircraft backfill "if SEAD aircraft are destroyed and OWA UAVs depleted
-  before the SAMs are all destroyed". **This is a degradation curve, not a flat tax** — and it is a
-  better mechanic than the flat levy first proposed, because the burden shifts onto the strike fleet
-  exactly as Red's dedicated SEAD assets are ground down. Measured arc at k = 4:
-
-  | phase | SEAD aircraft | OWA covers | **strike backfill** |
-  |---|---|---|---|
-  | full health, drones available | 58 | 43 (capacity-capped, below its 52.5 allowance) | **4** |
-  | after inventory exhausts (1200 / 172 ~ day 7) | 58 | 0 | **47** |
-  | as SEAD aircraft attrit on top of that | <58 | 0 | **47 + losses** |
-
-  Note the fill order makes OWA capacity-capped rather than cap-capped: 172 free sorties/day / 4 = 43,
-  short of the 52.5 the 50% rule would allow. That is the loitering-munition limit biting as a hard
-  ceiling, which is the intent.
-
-  **USER RULING 2026-08-01 — OWA drones do NOT substitute 1:1.** They are loitering munitions: one
-  drone is one shot, where an aircraft sortie carries several weapons and returns. So substitution
-  needs a ratio `k` (OWA sorties per airframe-equivalent), and **`k` is not yet chosen**. What each
-  value binds, against measured capacity (180 sorties/day, of which ~172 are idle — actual campaign use
-  is only 100.7 sorties) and inventory (1200):
-
-  **USER RULING 2026-08-01: k = 4.** Four loitering-munition sorties per aircraft-equivalent. This is
-  the value at which OWA **cannot** fully cover even the half it is allowed, which is the point: daily
-  capacity is 180 sorties (~172 free after existing strike use), so the drones bind on capacity before
-  they bind on the 50% cap. Register it as a named knob, not a literal.
-
-  Under reading (B) — the recommended pool — k = 4 produces a legible campaign arc:
-
-  | phase | OWA covers | strike aircraft diverted |
-  |---|---|---|
-  | requirement at full mobile-SAM health | 105 airframe-equivalents | — |
-  | while drones last (~172 sorties/day / 4) | 43 of the 52.5 allowed | **62** |
-  | after inventory runs out (1200 / 172 ~ day 7) | 0 | **105 — a quarter of Red's strike fleet** |
-
-  So drones absorb ~40% of the SEAD tax for the first week and then Red pays it in strike aircraft.
-
-  **Substitution MUST consume inventory or it is free.** Daily capacity is not binding and never
-  becomes binding at k <= 3, so if the substitution does not draw down `inventory_remaining`, "50%
-  substitutable" just means "half the tax is waived". For contrast `strike_aircraft_medium` runs at 97%
-  of its 29/day capacity on the warmup day and 50-77% after — it is the genuinely scarce platform.
-
-  **In the base case this costs almost nothing, by design.** Mobile SAMs go 48.1 -> 0.3 alive across
-  turn 2, so the requirement is zero from turn 3 and substitution burns ~240 of 1200 drones. The
-  mechanic only bites in the prolonged-mobile-SAM world the survivability knob creates — which is the
-  point of building it.
-
-  **Two further constraints on any design.** Roles are FIXED in `data/ijfs/red_air_oob.json` with no
-  allocation decision anywhere. And **SEAD consumes no munitions** — `resolve_sead_engagement` is a
-  pure aircraft-vs-SAM contest off summed `sead_eff`, where the class table gives sead_eff only to
-  J-16D and HARM. So a diverted 4th-Gen strike aircraft contributes **zero** SEAD power under today's
-  math: decide explicitly whether allocation is a pure TAX on strike capacity (recommended — leaves the
-  sweep untouched, so 0060's R3 base case survives) or also FEEDS SEAD power (which would make the
-  class-based `sead_eff` table meaningless and strengthen an already-total sweep).
-
-  In the base case the tax fires at most once anyway: mobile SAMs go 48.1 -> 0.3 alive across turn 2,
-  so from turn 3 the requirement is zero. The mechanic is built for the prolonged-mobile-SAM world the
-  survivability knob creates. **Do not fold it into 0060.**
+- [x] **Mobile-SAM survivability knob folded into plan 0060.** R11 Stage C now consumes the ruled
+  `sead_undetected_engagement` scalar (default 1.0) while anti-radiation Stage A may home on active
+  emitters regardless of prior detection. R10 supplies the package-local return-fire shape the knob
+  required. Remove this completed pointer when 0060 ships.
+- [x] **SEAD allocation folded into plan 0060 — superseded specification removed.** The final USER
+  ruling is `docs/plans/0060-air-attrition-before-the-strike.md` R11: a dedicated 192-missile
+  anti-radiation inventory resolves twelve four-missile salvos/day first; weighted surviving SAM score
+  then scales a 25% strike-fleet requirement, filled by J-16Ds and 0.25-effect strike backfill. The old
+  mobile-SAM-only / generic-OWA substitution design no longer applies. Remove this completed pointer
+  when 0060 ships.
 
 ## Standing limits & blocked
 

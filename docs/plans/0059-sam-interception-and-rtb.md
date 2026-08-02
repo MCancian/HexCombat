@@ -1,14 +1,17 @@
 ---
 title: "0059: Make Red's air inventory readable, then let SAM interception drive aircraft off rather than only kill them"
-status: "Sketch"
+status: "In progress"
 created: "2026-08-01"
 updated: "2026-08-01"
 ---
 
 # Plan 0059: readable air inventory (step 1), SAM interception and return-to-base (step 2)
 
-**Step 1 is ready to implement. Step 2 is blocked on four USER design calls** and is deliberately left
-as a design section — it must not be started until those are answered.
+**Step 1 shipped in `f7fb1d0`. Step 2 is superseded and folded into plan 0060's revised
+R5/R6/R7/R8/R12 mechanic.** Do not implement the historical SAM/three-source RTB design below:
+the follow-up USER call makes MANPADS the only abort source, only for four-aircraft manned packages
+striking Maneuver Units; R10's SAM return fire remains attrition-only. Plan 0060 also adds
+`sead_assigned_today` as a separate availability ledger. This plan closes when 0060 ships.
 
 ## Preflight (2026-08-01) — four claims in the first draft of this plan are already stale
 
@@ -173,7 +176,11 @@ one, so the preflight held. What changed above came from the other two:
    threading one value, but a typed turn-resolution outcome carrying *all* phase reports. That is a
    real improvement and explicitly out of scope for step 1; if it is ever done, this field folds into it.
 
-## Step 2 — SAM interception and return-to-base (BLOCKED)
+## Step 2 — SAM interception and return-to-base (SUPERSEDED; FOLDED INTO 0060)
+
+> Historical design trail below. The actionable specification is plan 0060 R5/R6/R7/R8/R12. In
+> particular, do not implement its old SEAD-return-fire abort, all-strike+SEAD role filter, or
+> abort-twice-kill factor.
 
 ### The asymmetry that makes this coherent
 
