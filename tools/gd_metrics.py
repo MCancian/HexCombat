@@ -113,7 +113,10 @@ DEP_CEILINGS = {
     "scripts/calc/OrderValidator.gd": 12,
     "scripts/interleaved/IjfsResolver.gd": 12,
     "scripts/calc/AntishipResolver.gd": 11,
-    "scripts/loaders/IjfsLoaders.gd": 11,
+    # 11 -> 8 (plan 0060): four preload consts named the same model classes their `class_name`
+    # already makes global, so deleting them cost nothing and freed three slots that the plan then
+    # spent on IjfsAttritionProfile. LOWERED, so the slack cannot be silently re-spent.
+    "scripts/loaders/IjfsLoaders.gd": 8,
     "scripts/calc/ForceValidationHelper.gd": 10,
     "scripts/ui/HexMap.gd": 10,
 }
@@ -147,8 +150,9 @@ PARAM_CEILINGS = {
     "scripts/interleaved/IjfsDetection.gd::_run_detection_phase": 8,
     "scripts/interleaved/IjfsDetection.gd::aircraft_detect_target_ids": 7,
     "scripts/interleaved/IjfsEngagement.gd::resolve_sead_engagement": 6,
-    "scripts/interleaved/IjfsManpads.gd::intercepted_strike_log": 6,
-    "scripts/interleaved/IjfsStrike.gd::resolve_strike": 9,
+    # 9 -> 6 (plan 0060): the day/phase/doctrine/survivor-fraction arguments collapsed into the
+    # typed IjfsStrikeContext, so the package geometry landed WITHOUT a tenth parameter.
+    "scripts/interleaved/IjfsStrike.gd::resolve_strike": 6,
     "scripts/interleaved/IjfsTargeting.gd::apply_exquisite_intel": 6,
     "scripts/interleaved/IjfsTargeting.gd::select_munition_with_doctrine": 8,
     "scripts/calc/AirInsertionResolver.gd::resolve": 7,

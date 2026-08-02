@@ -228,7 +228,7 @@ func test_organic_munition_routes_to_organic_budget() -> void:
 	ctx.current_day = 1
 	ctx.capacity_budget = capacity_budget
 	ctx.organic_budget = organic_budget
-	IjfsEngine._run_strike_phase(
+	IjfsStrikePhase.run(
 		state, ctx, IjfsEngine.POST_AD_PHASE, ScriptedDice.new([], [], [0.5, 0.5, 0.5]))
 
 	assert_bool(ctx.attacked.has("t1")).override_failure_message("organic munition must consume organic_budget, not be blocked by capacity_budget").is_true()

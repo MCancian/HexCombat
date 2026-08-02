@@ -1,11 +1,6 @@
 class_name IjfsLoaders
 extends RefCounted
 
-const IjfsTargetResource = preload("res://scripts/model/ijfs/IjfsTarget.gd")
-const IjfsMunitionResource = preload("res://scripts/model/ijfs/IjfsMunition.gd")
-const IjfsPairingResource = preload("res://scripts/model/ijfs/IjfsPairing.gd")
-const IjfsSquadronResource = preload("res://scripts/model/ijfs/IjfsSquadron.gd")
-
 const EXPANSION_GUARD := 10000
 const TARGET_CORE_KEYS := {
 	"target_id": true, "source_target_id": true, "instance_index": true, "name": true,
@@ -201,7 +196,7 @@ static func load_munitions(path: String) -> Dictionary:
 	if body is Dictionary and body.has("munitions"):
 		for row_value in body["munitions"]:
 			var row: Dictionary = row_value
-			var munition: IjfsMunition = IjfsMunitionResource.new()
+			var munition: IjfsMunition = IjfsMunition.new()
 			munition.munition_id = String(row["munition_id"])
 			munition.munition_name = String(row.get("name", ""))
 			munition.category = String(row.get("category", ""))
@@ -216,7 +211,7 @@ static func load_munitions(path: String) -> Dictionary:
 		if inventory is Dictionary:
 			for mid in inventory.keys():
 				var value = inventory[mid]
-				var m: IjfsMunition = IjfsMunitionResource.new()
+				var m: IjfsMunition = IjfsMunition.new()
 				m.munition_id = String(mid)
 				if value is Dictionary:
 					m.munition_name = String(value.get("name", ""))
@@ -262,7 +257,7 @@ static func load_pairings(path: String, known_munition_ids: Array = []) -> Array
 		if not known_munition_ids.is_empty() and String(row["munition_id"]) not in known_munition_ids:
 			continue
 		var profile: Dictionary = profiles.get(row.get("target_effect_profile_id", ""), {})
-		var rule: IjfsPairing = IjfsPairingResource.new()
+		var rule: IjfsPairing = IjfsPairing.new()
 		rule.order = order
 		rule.pairing_id = String(row.get("pairing_id", "pairing_%d" % order))
 		rule.munition_id = String(row["munition_id"])
@@ -389,7 +384,7 @@ static func expand_oob_to_squadrons(oob) -> Array[IjfsSquadron]:
 		var aircraft_per_sqn := int(row.get("aircraft_per_sqn", 0))
 		var slug := _class_slug(cls)
 		for i in range(1, count + 1):
-			var sqn: IjfsSquadron = IjfsSquadronResource.new()
+			var sqn: IjfsSquadron = IjfsSquadron.new()
 			sqn.squadron_id = "%s__%s__%03d" % [slug, role, i]
 			sqn.aircraft_class = cls
 			sqn.role = role
@@ -433,7 +428,7 @@ static func _load_runtime_targets(rows: Array) -> Array[IjfsTarget]:
 
 
 static func _runtime_target_from_master(row: Dictionary, target_id: String, source_id: String, index: int, current_day: int) -> IjfsTarget:
-	var target: IjfsTarget = IjfsTargetResource.new()
+	var target: IjfsTarget = IjfsTarget.new()
 	var destroyed := _status_destroyed(row)
 	var mobility := String(row.get("mobility", "static"))
 	var static_alive := mobility == "static" and not destroyed
@@ -459,7 +454,7 @@ static func _runtime_target_from_master(row: Dictionary, target_id: String, sour
 
 
 static func _target_from_dict(data: Dictionary) -> IjfsTarget:
-	var target: IjfsTarget = IjfsTargetResource.new()
+	var target: IjfsTarget = IjfsTarget.new()
 	target.target_id = String(data["target_id"])
 	target.source_target_id = String(data.get("source_target_id", target.target_id.split("#", false, 1)[0]))
 	target.instance_index = int(data.get("instance_index", 1))
@@ -486,7 +481,7 @@ static func _target_from_dict(data: Dictionary) -> IjfsTarget:
 
 
 static func _munition_from_dict(data: Dictionary) -> IjfsMunition:
-	var munition: IjfsMunition = IjfsMunitionResource.new()
+	var munition: IjfsMunition = IjfsMunition.new()
 	munition.munition_id = String(data["munition_id"])
 	munition.munition_name = String(data.get("name", ""))
 	munition.category = String(data.get("category", ""))
@@ -600,6 +595,21 @@ static func _validate_ijfs_config_blocks(scenario: Dictionary) -> void:
 				_fail("STRIKE_MODIFIER_INVALID: unknown match key %s" % key)
 	_validate_attrition_links(scenario.get("red_firing_capacity", {}))
 	_validate_anti_radiation_sead(scenario)
+	_validate_role_exposure(scenario)
+
+
+## Plan 0060 R2: `role_exposure_multipliers` stopped being dead data on 2026-08-01 and now scales
+## every per-airframe loss probability, so a missing or negative entry silently changes how much of
+## Red's air force dies. All three flying roles must be present; "unused" is not a flight profile.
+static func _validate_role_exposure(scenario: Dictionary) -> void:
+	var block: Dictionary = scenario.get(IjfsAttritionProfile.ATTRITION_BLOCK, {})
+	var multipliers: Dictionary = block.get(IjfsAttritionProfile.ROLE_EXPOSURE_KEY, {})
+	for role in ["isr", "sead", "strike"]:
+		if not multipliers.has(role):
+			_fail("ROLE_EXPOSURE_INVALID: %s missing the '%s' multiplier" % [
+				IjfsAttritionProfile.ROLE_EXPOSURE_KEY, role])
+		elif float(multipliers[role]) < 0.0:
+			_fail("ROLE_EXPOSURE_INVALID: '%s' multiplier must be >= 0" % role)
 
 
 ## Plan 0060 R5/R8/R10: an Organic munition's `attrition_link` names the airframe classes its

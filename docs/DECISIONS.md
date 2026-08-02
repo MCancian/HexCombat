@@ -250,8 +250,10 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   named for the property.)
   MANPADS stock moved from a free-form `metadata` key to a typed field first, with the key kept as a
   serialization mirror because `metadata` is aliased live into the ledger rows. Also folded in the
-  `IjfsEngine._run_strike_phase` parameter-ceiling paydown (11 params, plus two more functions), which
-  the BACKLOG flagged as colliding with this plan. Facts: `docs/systems/ijfs/ijfs.md` §9,
+  `IjfsEngine._run_strike_phase` (historical) parameter-ceiling paydown (11 params, plus two more
+  functions), which the BACKLOG flagged as colliding with this plan. (2026-08-01, plan 0060: that
+  function is now `IjfsStrikePhase.run`, extracted into its own file.)
+  Facts: `docs/systems/ijfs/ijfs.md` §9,
   `docs/STATUS.md` (aggregate list + directory table), `tools/mutation_authority_manifest.json`,
   `scripts/transitions/IjfsTransitions.gd` header.
 

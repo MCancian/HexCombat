@@ -93,15 +93,46 @@ static func roll_strike_interception(
 	}
 
 
+## The pre-strike MANPADS hook, for one about-to-execute strike. Rolled BEFORE the strike's own
+## rolls, and only for rounds that will actually fly — the same inventory-sufficiency check
+## resolve_strike makes, so a round that could never launch does not draw a MANPADS die.
+##
+## Returns true when the strike was intercepted and the caller must NOT resolve it; the round is
+## still spent, mirroring resolve_strike's inventory decrement. Both log rows are appended here
+## rather than returned, because the outcome writes to two different ledgers and splitting that
+## across a return value would let a caller record one and forget the other.
+static func resolve_pre_strike(
+	state: IjfsDailyState, target: IjfsTarget, pairing: IjfsPairing,
+	strike_context: IjfsStrikeContext, dice: Dice
+) -> bool:
+	var munition: Variant = state.munitions.get(pairing.munition_id, null)
+	if munition == null:
+		return false
+	var rounds := int(pairing.rounds_expended_per_engagement)
+	var is_organic: bool = munition.category == "Organic"
+	if not is_organic and (munition as IjfsMunition).inventory_remaining < rounds:
+		return false
+	var intercept: Variant = roll_strike_interception(
+		target, munition as IjfsMunition, state.targets, dice)
+	if intercept == null:
+		return false
+	state.manpads_intercept_log.append(intercept)
+	if not intercept["intercepted"]:
+		return false
+	if not is_organic:
+		IjfsTransitions.consume_munition(munition as IjfsMunition, rounds)
+	state.strike_log.append(intercepted_strike_log(target, pairing, strike_context))
+	return true
+
+
 ## Strike-log entry for an intercepted strike: the round is spent (attack_executed, inventory
 ## decremented by the caller's budget/inventory path) but delivers nothing. Key-compatible with
-## IjfsStrike.resolve_strike entries so summarize_run / narratives read it unchanged.
+## IjfsStrike.resolve_strike entries so IjfsLedgers.summarize_run / narratives read it unchanged.
 static func intercepted_strike_log(
-	target: IjfsTarget, pairing: IjfsPairing, current_day: int,
-	phase: Variant, doctrine_rule_name: Variant, doctrine_selection: Variant
+	target: IjfsTarget, pairing: IjfsPairing, context: IjfsStrikeContext
 ) -> Dictionary:
 	return {
-		"current_day": current_day,
+		"current_day": context.current_day,
 		"target_id": target.target_id,
 		"source_target_id": target.source_target_id,
 		"category": target.category,
@@ -109,9 +140,9 @@ static func intercepted_strike_log(
 		"mobility": target.mobility,
 		"posture": target.posture,
 		"metadata": target.metadata,
-		"phase": phase,
-		"doctrine_rule_name": doctrine_rule_name,
-		"doctrine_selection": doctrine_selection,
+		"phase": context.phase,
+		"doctrine_rule_name": context.doctrine_rule_name,
+		"doctrine_selection": context.doctrine_selection,
 		"attack_executed": true,
 		"skip_reason": null,
 		"pairing_id": pairing.pairing_id,
@@ -132,7 +163,7 @@ static func intercepted_strike_log(
 ## modifier. Expends missiles per aircraft engaged. Returns contest-style log entries
 ## (source "manpads"); caller folds losses into red_air_losses.
 static func contest_squadrons(
-	targets: Array[IjfsTarget], squadron_force: Variant, air_classes: Variant, dice: Dice
+	targets: Array[IjfsTarget], squadron_force: Variant, profile: IjfsAttritionProfile, dice: Dice
 ) -> Array:
 	var log: Array = []
 	if squadron_force == null:
@@ -140,18 +171,11 @@ static func contest_squadrons(
 	var ready := int(ready_systems_by_to(targets).get("total", 0))
 	if ready <= 0:
 		return log
-	var classes: Dictionary = {}
-	if air_classes != null:
-		classes = (air_classes as Dictionary).get("classes", {})
 	var threat := threat_fraction(ready)
 	for sq: IjfsSquadron in (squadron_force as Array):
 		if sq.alive <= 0 or sq.role not in CONTESTED_ROLES:
 			continue
-		var cls: Dictionary = classes.get(sq.aircraft_class, {})
-		var rcs := float(cls.get("rcs", 0))
-		var rcs_survival := maxf(
-			IjfsEngagement.MIN_RCS_SURVIVAL_MOD, 1.0 + rcs * IjfsEngagement.RCS_SURVIVAL_FACTOR)
-		var p_loss := clampf(threat * SQUADRON_LOSS_FACTOR * rcs_survival, 0.0, 1.0)
+		var p_loss := profile.p_loss(threat * SQUADRON_LOSS_FACTOR, sq.aircraft_class, sq.role)
 		var engaged := sq.alive
 		var losses := 0
 		for _i in range(engaged):

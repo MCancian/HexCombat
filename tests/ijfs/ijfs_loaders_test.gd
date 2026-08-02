@@ -96,7 +96,9 @@ func _minimal_scenario(extra: Dictionary) -> Dictionary:
 		"schema_version": 1,
 		"detection_model": {},
 		"taiwan_air_defense_health": {},
-		"red_aircraft_attrition_and_sead": {},
+		"red_aircraft_attrition_and_sead": {
+			"role_exposure_multipliers": {"isr": 0.7, "sead": 1.0, "strike": 1.2},
+		},
 		"prelanding": {},
 		"red_firing_capacity": {},
 		"isr_sources": [],

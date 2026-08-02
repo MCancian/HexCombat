@@ -37,9 +37,13 @@ const MAX_TURNS := 40
 # 584 -> 498 and the prelanding warmup becomes a missile-only standoff campaign, so Red flies ~26%
 # fewer warmup strikes and the pre-invasion maneuver-casualty writeback lands differently.
 # Was china=12 / taiwan=76.
+# Re-baselined 2026-08-01 for plan 0060 stage 2 (USER ruling R2): role_exposure_multipliers stopped
+# being dead data. Every per-airframe loss probability now carries altitude/profile exposure
+# (isr 0.7 / sead 1.0 / strike 1.2) on top of the RCS survival modifier, so Red's strike fleet dies
+# faster and its ISR fleet slower than the day before. Was china=11 / taiwan=77.
 const EXPECTED_GAME_OVER := false
 const EXPECTED_CHINA := 11
-const EXPECTED_TAIWAN := 77
+const EXPECTED_TAIWAN := 79
 
 var _failures: Array[String] = []
 var GameData: Node = null

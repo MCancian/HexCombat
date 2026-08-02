@@ -6,6 +6,10 @@ extends RefCounted
 ## SEAD loop iterates targets sorted by target_id (destroy roll, then a suppression roll
 ## whenever the target survives); return-fire / free-shot loops iterate squadrons in force
 ## order, drawing once per alive aircraft.
+##
+## Per-airframe survivability is NOT computed here: it comes from IjfsAttritionProfile, which every
+## path that can kill an aircraft shares. Since 2026-08-01 (plan 0060 R2) that means loss
+## probabilities carry role exposure as well as RCS survival.
 
 const SAM_CATEGORIES := ["Moveable SAMs", "Static SAMs", "Mobile SAMs"]
 const SUPPRESSION_FACTOR := 0.4
@@ -13,29 +17,23 @@ const SEAD_RETURN_FIRE_FACTOR := 0.02
 const FREE_SHOT_FACTOR := 0.05
 const WVR_FACTOR := 0.1
 const RCS_FACTOR := 0.05
-const RCS_SURVIVAL_FACTOR := 0.1
-const MIN_RCS_SURVIVAL_MOD := 0.2
 
 
 static func resolve_sead_engagement(
 	targets: Array[IjfsTarget],
 	squadron_force: Variant,
-	air_classes: Variant,
+	profile: IjfsAttritionProfile,
 	dice: Dice,
 	sead_enabled: bool = true,
 	ad_attrition_enabled: bool = true
 ) -> Dictionary:
-	var classes: Dictionary = {}
-	if air_classes != null:
-		classes = (air_classes as Dictionary).get("classes", {})
-
 	var engagement_log: Array = []
 	var contest_log: Array = []
 	if squadron_force == null:
 		return {"engagement_log": engagement_log, "contest_log": contest_log}
 	var squadrons: Array = squadron_force
 
-	var force := _force_totals(squadrons, classes)
+	var force := _force_totals(squadrons, profile)
 	var total_alive := int(force["alive"])
 
 	for target in targets:
@@ -49,26 +47,25 @@ static func resolve_sead_engagement(
 	for target in _sorted_by_id(targets):
 		if target.destroyed or not (target.category in SAM_CATEGORIES):
 			continue
-		engagement_log.append(_engage_sam_target(target, effective_power, dice))
+		engagement_log.append(engage_sam_target(target, effective_power, dice))
 
 	if ad_attrition_enabled:
-		contest_log = _sead_return_fire(squadrons, classes, targets, total_alive, dice)
+		contest_log = _sead_return_fire(squadrons, profile, targets, dice)
 
 	return {"engagement_log": engagement_log, "contest_log": contest_log}
 
 
 ## Aggregate the alive, non-unused force: summed sead_eff/wvr/rcs weighted by alive airframes.
-static func _force_totals(squadrons: Array, classes: Dictionary) -> Dictionary:
+static func _force_totals(squadrons: Array, profile: IjfsAttritionProfile) -> Dictionary:
 	var total_sead_eff := 0.0
 	var total_wvr := 0.0
 	var total_rcs := 0.0
 	var total_alive := 0
 	for sq: IjfsSquadron in squadrons:
 		if sq.alive > 0 and sq.role != "unused":
-			var cls: Dictionary = classes.get(sq.aircraft_class, {})
-			total_sead_eff += float(sq.alive) * float(cls.get("sead_eff", 0))
-			total_wvr += float(sq.alive) * float(cls.get("wvr", 0))
-			total_rcs += float(sq.alive) * float(cls.get("rcs", 0))
+			total_sead_eff += float(sq.alive) * profile.class_value(sq.aircraft_class, "sead_eff")
+			total_wvr += float(sq.alive) * profile.class_value(sq.aircraft_class, "wvr")
+			total_rcs += float(sq.alive) * profile.class_value(sq.aircraft_class, "rcs")
 			total_alive += sq.alive
 	return {"sead_eff": total_sead_eff, "wvr": total_wvr, "rcs": total_rcs, "alive": total_alive}
 
@@ -83,7 +80,11 @@ static func _effective_sead_power(force: Dictionary) -> float:
 
 ## One SAM target's engagement: destroy roll, then a suppression roll only if it survives
 ## (draw order is the port's contract). Mutates the target's state; returns the log row.
-static func _engage_sam_target(target: IjfsTarget, effective_power: float, dice: Dice) -> Dictionary:
+##
+## Public since 2026-08-01 (plan 0060 R11): the anti-radiation salvo stage and the aircraft-SEAD
+## stage are two different weapons against the same target with the same formula, so they share this
+## rather than each growing a copy of the destroy/suppress pair.
+static func engage_sam_target(target: IjfsTarget, effective_power: float, dice: Dice) -> Dictionary:
 	var score := target.sam_score if target.sam_score != 0 else 1
 	var p_destroy := clampf(effective_power / (effective_power + float(score)), 0.0, 1.0)
 
@@ -118,23 +119,19 @@ static func _engage_sam_target(target: IjfsTarget, effective_power: float, dice:
 ## Surviving unsuppressed SAMs shoot back: one Bernoulli draw per alive airframe, per squadron in
 ## force order (draw order is the port's contract). Mutates squadron alive/losses_today.
 static func _sead_return_fire(
-		squadrons: Array, classes: Dictionary, targets: Array[IjfsTarget],
-		total_alive: int, dice: Dice) -> Array:
+		squadrons: Array, profile: IjfsAttritionProfile, targets: Array[IjfsTarget], dice: Dice) -> Array:
 	var contest_log: Array = []
 	var surviving_sam_score := 0
 	for target in targets:
 		if target.category in SAM_CATEGORIES and not target.destroyed and not target.suppressed:
 			surviving_sam_score += target.sam_score if target.sam_score != 0 else 0
-	if surviving_sam_score <= 0 or total_alive <= 0:
+	if surviving_sam_score <= 0:
 		return contest_log
 	var loss_rate := clampf(float(surviving_sam_score) * SEAD_RETURN_FIRE_FACTOR, 0.0, 1.0)
 	for sq: IjfsSquadron in squadrons:
 		if sq.alive <= 0:
 			continue
-		var cls: Dictionary = classes.get(sq.aircraft_class, {})
-		var rcs := float(cls.get("rcs", 0))
-		var rcs_survival := maxf(MIN_RCS_SURVIVAL_MOD, 1.0 + rcs * RCS_SURVIVAL_FACTOR)
-		var sq_loss_rate := clampf(loss_rate * rcs_survival, 0.0, 1.0)
+		var sq_loss_rate := profile.p_loss(loss_rate, sq.aircraft_class, sq.role)
 		var losses := _bernoulli_count(sq.alive, sq_loss_rate, dice)
 		if losses > 0:
 			IjfsTransitions.apply_squadron_losses(sq, losses)
@@ -150,7 +147,7 @@ static func _sead_return_fire(
 
 static func apply_post_phase_2_free_shot(
 	squadron_force: Variant,
-	air_classes: Variant,
+	profile: IjfsAttritionProfile,
 	raw_sam_health: float,
 	dice: Dice,
 	ad_attrition_enabled: bool = true
@@ -158,17 +155,11 @@ static func apply_post_phase_2_free_shot(
 	var log: Array = []
 	if not ad_attrition_enabled or raw_sam_health <= 0.0 or squadron_force == null:
 		return log
-	var classes: Dictionary = {}
-	if air_classes != null:
-		classes = (air_classes as Dictionary).get("classes", {})
 	var loss_rate := clampf(raw_sam_health * FREE_SHOT_FACTOR, 0.0, 1.0)
 	for sq: IjfsSquadron in (squadron_force as Array):
 		if sq.alive <= 0:
 			continue
-		var cls: Dictionary = classes.get(sq.aircraft_class, {})
-		var rcs := float(cls.get("rcs", 0))
-		var rcs_mod := maxf(MIN_RCS_SURVIVAL_MOD, 1.0 + rcs * RCS_SURVIVAL_FACTOR)
-		var p_loss := clampf(loss_rate * rcs_mod, 0.0, 1.0)
+		var p_loss := profile.p_loss(loss_rate, sq.aircraft_class, sq.role)
 		var losses := _bernoulli_count(sq.alive, p_loss, dice)
 		if losses > 0:
 			IjfsTransitions.apply_squadron_losses(sq, losses)

@@ -89,7 +89,7 @@ func test_losses_today_resets_each_day_while_losses_campaign_accumulates() -> vo
 	state.squadron_force = force
 
 	# Day 1: one guaranteed loss (p_loss > 0, roll 0.0).
-	IjfsEngagement.apply_post_phase_2_free_shot(force, null, 1.0, _one_hit_then_misses(10))
+	IjfsEngagement.apply_post_phase_2_free_shot(force, IjfsAttritionProfile.build(null, null), 1.0, _one_hit_then_misses(10))
 	var day_1_losses := squadron.losses_today
 	assert_int(day_1_losses).is_greater(0)
 	assert_int(squadron.losses_campaign).is_equal(day_1_losses)
@@ -104,7 +104,7 @@ func test_losses_today_resets_each_day_while_losses_campaign_accumulates() -> vo
 	).is_equal(day_1_losses)
 
 	# Day 2: the per-day counter starts from zero again, the campaign total keeps climbing.
-	IjfsEngagement.apply_post_phase_2_free_shot(force, null, 1.0, _one_hit_then_misses(squadron.alive))
+	IjfsEngagement.apply_post_phase_2_free_shot(force, IjfsAttritionProfile.build(null, null), 1.0, _one_hit_then_misses(squadron.alive))
 	assert_int(squadron.losses_today).is_greater(0)
 	assert_int(squadron.losses_today).override_failure_message(
 		"day 2's per-day count must not include day 1's losses"
@@ -116,8 +116,8 @@ func test_rtb_today_has_no_runtime_writer() -> void:
 	var squadron := _squadron("sq1", 10)
 	var force: Array[IjfsSquadron] = [squadron]
 
-	IjfsEngagement.apply_post_phase_2_free_shot(force, null, 1.0, _one_hit_then_misses(10))
-	IjfsManpads.contest_squadrons(_manpads_only_targets(), force, null, _one_hit_then_misses(squadron.alive))
+	IjfsEngagement.apply_post_phase_2_free_shot(force, IjfsAttritionProfile.build(null, null), 1.0, _one_hit_then_misses(10))
+	IjfsManpads.contest_squadrons(_manpads_only_targets(), force, IjfsAttritionProfile.build(null, null), _one_hit_then_misses(squadron.alive))
 
 	assert_int(squadron.rtb_today).override_failure_message(
 		"nothing in the pipeline writes rtb_today; the authority must not grow a mutator for it"
@@ -237,7 +237,7 @@ func _strike_state() -> IjfsDailyState:
 func _run_phase(state: IjfsDailyState, dice: Dice) -> void:
 	var ctx := IjfsStrikePhaseContext.new()
 	ctx.current_day = 1
-	IjfsEngine._run_strike_phase(state, ctx, IjfsEngine.PRE_AD_PHASE, dice)
+	IjfsStrikePhase.run(state, ctx, IjfsEngine.PRE_AD_PHASE, dice)
 
 
 func _munition(state: IjfsDailyState) -> IjfsMunition:

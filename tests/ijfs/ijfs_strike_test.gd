@@ -36,7 +36,7 @@ func test_base_only_path_when_no_modifiers() -> void:
 func test_resolve_strike_inventory_rules_and_destroy_side_effects() -> void:
 	var inorganic := _munition("m1", "Inorganic-Fast", 1)
 	var inventory := {"m1": inorganic}
-	var insufficient := IjfsStrike.resolve_strike(_target("t1", "static", "active"), _pairing(1.0, 0.0, 2), inventory, {}, 3, ScriptedDice.new([], [], []))
+	var insufficient := IjfsStrike.resolve_strike(_target("t1", "static", "active"), _pairing(1.0, 0.0, 2), inventory, {}, _ctx(3), ScriptedDice.new([], [], []))
 	assert_bool(insufficient["attack_executed"]).is_false()
 	assert_str(insufficient["skip_reason"]).is_equal("insufficient_inventory")
 	assert_int(inorganic.inventory_remaining).is_equal(1)
@@ -46,7 +46,7 @@ func test_resolve_strike_inventory_rules_and_destroy_side_effects() -> void:
 	destroyed_target.known_to_red = true
 	destroyed_target.suppressed = true
 	destroyed_target.suppressed_this_turn = true
-	var destroyed := IjfsStrike.resolve_strike(destroyed_target, _pairing(1.0, 1.0, 2), inventory, {}, 3, ScriptedDice.new([], [], [1.0]))
+	var destroyed := IjfsStrike.resolve_strike(destroyed_target, _pairing(1.0, 1.0, 2), inventory, {}, _ctx(3), ScriptedDice.new([], [], [1.0]))
 	assert_bool(destroyed["attack_executed"]).is_true()
 	assert_int(inorganic.inventory_remaining).is_equal(0)
 	assert_bool(destroyed["destroyed"]).is_true()
@@ -57,7 +57,7 @@ func test_resolve_strike_inventory_rules_and_destroy_side_effects() -> void:
 
 	var organic := _munition("air", "Organic", 0)
 	var organic_inventory := {"air": organic}
-	var organic_result := IjfsStrike.resolve_strike(_target("t3", "static", "active"), _pairing(0.0, 0.0, 99, "p", "air"), organic_inventory, {}, 3, ScriptedDice.new([], [], [0.5]))
+	var organic_result := IjfsStrike.resolve_strike(_target("t3", "static", "active"), _pairing(0.0, 0.0, 99, "p", "air"), organic_inventory, {}, _ctx(3), ScriptedDice.new([], [], [0.5]))
 	assert_bool(organic_result["attack_executed"]).is_true()
 	assert_int(organic.inventory_remaining).is_equal(0)
 
@@ -66,7 +66,7 @@ func test_resolve_strike_suppression_rng_order_and_draw_conditions() -> void:
 	var target := _target("t1", "static", "active")
 	var inventory := {"m1": _munition("m1", "Inorganic-Fast", 10)}
 	var dice := ScriptedDice.new([], [], [0.4, 0.2])
-	var result := IjfsStrike.resolve_strike(target, _pairing(0.0, 0.3, 1), inventory, {}, 1, dice)
+	var result := IjfsStrike.resolve_strike(target, _pairing(0.0, 0.3, 1), inventory, {}, _ctx(1), dice)
 	assert_bool(result["destroyed"]).is_false()
 	assert_float(result["roll"]).is_equal_approx(0.4, 0.000001)
 	assert_float(result["suppression_roll"]).is_equal_approx(0.2, 0.000001)
@@ -75,13 +75,13 @@ func test_resolve_strike_suppression_rng_order_and_draw_conditions() -> void:
 	assert_int(dice._floats.size()).is_equal(0)
 
 	var no_suppression_dice := ScriptedDice.new([], [], [0.4])
-	var no_suppression := IjfsStrike.resolve_strike(_target("t2", "static", "active"), _pairing(0.0, 0.0, 1), {"m1": _munition("m1", "Inorganic-Fast", 10)}, {}, 1, no_suppression_dice)
+	var no_suppression := IjfsStrike.resolve_strike(_target("t2", "static", "active"), _pairing(0.0, 0.0, 1), {"m1": _munition("m1", "Inorganic-Fast", 10)}, {}, _ctx(1), no_suppression_dice)
 	assert_bool(no_suppression["destroyed"]).is_false()
 	assert_object(no_suppression["suppression_roll"]).is_null()
 	assert_int(no_suppression_dice._floats.size()).is_equal(0)
 
 	var destroy_dice := ScriptedDice.new([], [], [0.0])
-	var destroyed := IjfsStrike.resolve_strike(_target("t3", "static", "active"), _pairing(1.0, 1.0, 1), {"m1": _munition("m1", "Inorganic-Fast", 10)}, {}, 1, destroy_dice)
+	var destroyed := IjfsStrike.resolve_strike(_target("t3", "static", "active"), _pairing(1.0, 1.0, 1), {"m1": _munition("m1", "Inorganic-Fast", 10)}, {}, _ctx(1), destroy_dice)
 	assert_bool(destroyed["destroyed"]).is_true()
 	assert_object(destroyed["suppression_roll"]).is_null()
 	assert_int(destroy_dice._floats.size()).is_equal(0)
@@ -123,3 +123,9 @@ func _modifier_ids(modifiers: Array) -> Array[String]:
 	for modifier in modifiers:
 		ids.append(String(modifier["modifier_id"]))
 	return ids
+
+
+## Plan 0060 folded the loose day/phase/doctrine arguments into IjfsStrikeContext. A full package is
+## the default here, so these cases keep asserting the unscaled probabilities they always did.
+func _ctx(current_day: int) -> IjfsStrikeContext:
+	return IjfsStrikeContext.for_strike(current_day, null, null, null)

@@ -2,9 +2,14 @@ class_name IjfsEngine
 extends RefCounted
 
 ## Port of ijfs_standalone/run_daily_ijfs.py (the 6-phase daily orchestration) + run_context.py
-## (day-semantics) + logging_utils.summarize_run. Deliberately does NOT port write_outputs file
-## IO: run_daily returns the ledgers dict directly (detection / strike / engagement / contest /
-## free-shot / target-status / inventory / OOB / summary).
+## (day-semantics). Deliberately does NOT port write_outputs file IO: run_daily returns the ledgers
+## dict directly (detection / strike / engagement / contest / free-shot / target-status / inventory /
+## OOB / summary).
+##
+## This file is the ORDER of a day and nothing else. Two halves moved out on 2026-08-01 (plan 0060) —
+## IjfsStrikePhase owns each strike pass, IjfsLedgers owns the summary and the record — which both
+## reads better and pays for the collaborators plan 0060 adds, since the engine was already at its
+## dependency ceiling and that ceiling is paid, never raised.
 ##
 ## RNG fidelity: a single shared `dice: Dice` is threaded into every probabilistic phase, exactly
 ## mirroring the Python single `state.rng`. Draw order across phases:
@@ -123,14 +128,18 @@ static func run_daily(state: IjfsDailyState, dice: Dice, current_day: int, warmu
 	state.detection_log = phase1["log"]
 	IjfsDetection.apply_detection_ids(state.targets, phase1["detected_ids"], ctx.current_day)
 
-	_run_strike_phase(state, ctx, PRE_AD_PHASE, dice)
+	IjfsStrikePhase.run(state, ctx, PRE_AD_PHASE, dice)
 
 	state.taiwan_ad_health_after_missile_phase = IjfsAdHealth.compute_taiwan_ad_health(state.targets, state.scenario)
 
 	var sead_enabled := warmup_context == null or bool((warmup_context as Dictionary).get("sead_enabled", true))
 	var ad_attrition_enabled := warmup_context == null or bool((warmup_context as Dictionary).get("ad_attrition_enabled", true))
 
-	var engagement := IjfsEngagement.resolve_sead_engagement(state.targets, squadron_force, air_classes, dice, sead_enabled, ad_attrition_enabled)
+	# One shared survivability profile per day: RCS signature x role exposure, read by every path
+	# that can kill an aircraft so none of them re-derives a modifier (plan 0060 R2).
+	var attrition := IjfsAttritionProfile.build(state.scenario, air_classes)
+
+	var engagement := IjfsEngagement.resolve_sead_engagement(state.targets, squadron_force, attrition, dice, sead_enabled, ad_attrition_enabled)
 	state.engagement_log = engagement["engagement_log"]
 	state.contest_log = engagement["contest_log"]
 
@@ -145,267 +154,29 @@ static func run_daily(state: IjfsDailyState, dice: Dice, current_day: int, warmu
 	state.detection_log.append_array(phase2["log"])
 	IjfsDetection.apply_detection_ids(state.targets, phase2["detected_ids"], ctx.current_day)
 
-	_run_strike_phase(state, ctx, POST_AD_PHASE, dice)
-	_append_final_skips(state, ctx)
+	IjfsStrikePhase.run(state, ctx, POST_AD_PHASE, dice)
+	IjfsStrikePhase.append_final_skips(state, ctx)
 
 	state.taiwan_ad_health_after = IjfsAdHealth.compute_taiwan_ad_health(state.targets, state.scenario)
 
 	# MANPADS contest low-altitude squadrons (SEAD + strike) island-wide, same attrition gate as
 	# the SAM layers. Draw order: after post-AD strikes, before the free shot.
 	if ad_attrition_enabled:
-		state.manpads_contest_log = IjfsManpads.contest_squadrons(state.targets, squadron_force, air_classes, dice)
+		state.manpads_contest_log = IjfsManpads.contest_squadrons(state.targets, squadron_force, attrition, dice)
 
 	state.free_shot_log = IjfsEngagement.apply_post_phase_2_free_shot(
 		squadron_force,
-		air_classes,
+		attrition,
 		float(state.taiwan_ad_health_after.get("raw_sam_health", 0.0)),
 		dice,
 		ad_attrition_enabled,
 	)
 
-	var summary := summarize_run(state)
+	var summary := IjfsLedgers.summarize_run(state)
 	if ctx.capacity_budget != null:
 		summary["firing_capacity_utilization"] = ctx.capacity_budget.utilization()
 
-	return _build_ledgers(state, current_day, summary)
-
-
-# --- Strike phases (port of run_daily_ijfs._run_strike_phase / _append_final_skips / _skip_log) ---
-
-static func _run_strike_phase(
-	state: IjfsDailyState, ctx: IjfsStrikePhaseContext, phase: String, dice: Dice
-) -> void:
-	for target in IjfsTargeting.targets_to_attack(state.targets, ctx.z_day, ctx.release_rules):
-		if ctx.attacked.has(target.target_id):
-			continue
-		var sel := IjfsTargeting.select_munition_with_doctrine(
-			target, state.pairings, state.munitions, state.scenario, phase, ctx.munition_filter,
-			ctx.capacity_budget, ctx.organic_budget)
-		var pairing: Variant = sel["selected"]
-		var doctrine_name: Variant = sel["doctrine_name"]
-		var doctrine_selection: Variant = sel["selection"]
-		if pairing == null:
-			var reason: Variant = sel["reason"]
-			ctx.skip_reasons[target.target_id] = [reason if reason != null else "no_compatible_pairing", doctrine_name, doctrine_selection]
-			continue
-		var mun: Variant = state.munitions.get(pairing.munition_id, null)
-		var is_organic: bool = mun != null and mun.category == "Organic"
-		var budget: Variant = ctx.organic_budget if is_organic else ctx.capacity_budget
-		var reason_key: String = "organic_capacity_exhausted" if is_organic else "firing_capacity_exhausted"
-		if budget != null and not budget.try_consume(pairing.munition_id):
-			ctx.skip_reasons[target.target_id] = [reason_key, doctrine_name, doctrine_selection]
-			continue
-		# MANPADS interception (see IjfsManpads): rolled BEFORE the strike's own rolls, only for
-		# rounds that will actually fly (mirrors resolve_strike's inventory sufficiency check).
-		if mun != null:
-			var rounds := int(pairing.rounds_expended_per_engagement)
-			var will_fly: bool = is_organic or (mun as IjfsMunition).inventory_remaining >= rounds
-			if will_fly:
-				var intercept: Variant = IjfsManpads.roll_strike_interception(target, mun, state.targets, dice)
-				if intercept != null:
-					state.manpads_intercept_log.append(intercept)
-					if intercept["intercepted"]:
-						# Round spent, nothing delivered — mirror resolve_strike's inventory decrement.
-						if not is_organic:
-							IjfsTransitions.consume_munition(mun as IjfsMunition, rounds)
-						state.strike_log.append(IjfsManpads.intercepted_strike_log(
-							target, pairing, ctx.current_day, phase, doctrine_name, doctrine_selection))
-						ctx.attacked[target.target_id] = true
-						continue
-		state.strike_log.append(IjfsStrike.resolve_strike(
-			target, pairing, state.munitions, state.scenario, ctx.current_day, dice, phase, doctrine_name, doctrine_selection))
-		ctx.attacked[target.target_id] = true
-
-
-static func _append_final_skips(state: IjfsDailyState, ctx: IjfsStrikePhaseContext) -> void:
-	for target in IjfsTargeting.targets_to_attack(state.targets, ctx.z_day, ctx.release_rules):
-		if ctx.attacked.has(target.target_id):
-			continue
-		var entry: Array = ctx.skip_reasons.get(target.target_id, ["no_compatible_pairing", null, null])
-		state.strike_log.append(_skip_log(target, ctx.current_day, entry))
-
-
-## `entry` is the [reason, doctrine_name, doctrine_selection] triple _run_strike_phase recorded.
-## `phase` is always null on this path: a final skip belongs to the day, not to one of the two passes.
-static func _skip_log(target: IjfsTarget, current_day: int, entry: Array) -> Dictionary:
-	var row := target.to_dict()
-	row["current_day"] = current_day
-	row["phase"] = null
-	row["doctrine_rule_name"] = entry[1]
-	row["doctrine_selection"] = entry[2]
-	row["attack_executed"] = false
-	row["skip_reason"] = entry[0]
-	return row
-
-
-# --- Summary (port of logging_utils.summarize_run) ----------------------------------------------
-
-static func summarize_run(state: IjfsDailyState) -> Dictionary:
-	var target_counts: Dictionary = {}
-	for target in state.targets:
-		var counts: Dictionary = target_counts.get(target.category, {"total": 0, "destroyed": 0, "surviving": 0})
-		counts["total"] += 1
-		if target.destroyed:
-			counts["destroyed"] += 1
-		else:
-			counts["surviving"] += 1
-		target_counts[target.category] = counts
-
-	var detections_by_mobility: Dictionary = {}
-	var detections_by_category: Dictionary = {}
-	for entry in state.detection_log:
-		if entry.get("detected"):
-			_inc(detections_by_mobility, entry["mobility"])
-			_inc(detections_by_category, entry["category"])
-
-	var destroyed_by_category: Dictionary = {}
-	var suppressed_by_category: Dictionary = {}
-	for entry in state.strike_log:
-		if entry.get("destroyed"):
-			_inc(destroyed_by_category, entry["category"])
-		if entry.get("suppressed"):
-			_inc(suppressed_by_category, entry["category"])
-	for entry in state.engagement_log:
-		if entry.get("destroyed") and entry.get("category") in IjfsEngagement.SAM_CATEGORIES:
-			_inc(destroyed_by_category, entry["category"])
-		if entry.get("suppressed") and entry.get("category") in IjfsEngagement.SAM_CATEGORIES:
-			_inc(suppressed_by_category, entry["category"])
-
-	var rounds_expended: Dictionary = {}
-	var skipped: Dictionary = {}
-	var executed := 0
-	for entry in state.strike_log:
-		if entry.get("attack_executed"):
-			executed += 1
-			var mid := String(entry.get("munition_id", ""))
-			rounds_expended[mid] = int(rounds_expended.get(mid, 0)) + int(entry.get("rounds_expended", 0))
-		else:
-			_inc(skipped, String(entry.get("skip_reason", "unknown")))
-
-	var skipped_total := 0
-	for key in skipped:
-		skipped_total += int(skipped[key])
-
-	return {
-		"target_counts_by_category_status": target_counts,
-		"detections_by_mobility": detections_by_mobility,
-		"detections_by_category": detections_by_category,
-		"attacks": {
-			"executed": executed,
-			"skipped": skipped_total,
-			"skipped_by_reason": skipped,
-		},
-		"destroyed_targets_by_category": destroyed_by_category,
-		"suppressed_targets_by_category": suppressed_by_category,
-		"rounds_expended_by_munition": rounds_expended,
-		"red_air_losses": _sum_losses(state.contest_log) + _sum_losses(state.free_shot_log) + _sum_losses(state.manpads_contest_log),
-		"manpads": {
-			"ready_systems_by_to": IjfsManpads.ready_systems_by_to(state.targets),
-			"interception_attempts": state.manpads_intercept_log.size(),
-			"interceptions": _count_flag(state.manpads_intercept_log, "intercepted"),
-			"squadron_losses": _sum_losses(state.manpads_contest_log),
-		},
-		"taiwan_ad_health_before": state.taiwan_ad_health_before,
-		"taiwan_ad_health_after_missile_phase": state.taiwan_ad_health_after_missile_phase,
-		"taiwan_ad_health_after_sead": state.taiwan_ad_health_after_sead,
-		"taiwan_ad_health_after": state.taiwan_ad_health_after,
-		"sead_pressure": {},
-		"sead_engagements": state.engagement_log.size(),
-		"sead_destroyed": _count_flag(state.engagement_log, "destroyed"),
-		"sead_suppressed": _count_flag(state.engagement_log, "suppressed"),
-		"contest_losses": _sum_losses(state.contest_log),
-		"free_shot_losses": _sum_losses(state.free_shot_log),
-		"exquisite_intel_overrides": state.exquisite_intel_overrides.duplicate(),
-		"warnings": state.warnings.duplicate(),
-	}
-
-
-# --- Ledgers (in-memory replacement for write_outputs) ------------------------------------------
-
-static func _build_ledgers(state: IjfsDailyState, current_day: int, summary: Dictionary) -> Dictionary:
-	var sorted_targets: Array[IjfsTarget] = state.targets.duplicate()
-	sorted_targets.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id < b.target_id)
-	var target_status: Array = []
-	for target in sorted_targets:
-		target_status.append(target.to_dict())
-
-	var inventory: Dictionary = {}
-	var sorted_mids: Array = state.munitions.keys()
-	sorted_mids.sort()
-	for mid in sorted_mids:
-		var mun: IjfsMunition = state.munitions[mid]
-		inventory[mid] = {
-			"munition_id": mun.munition_id,
-			"name": mun.munition_name,
-			"category": mun.category,
-			"inventory_remaining": mun.inventory_remaining,
-			"rounds_per_engagement_default": mun.rounds_per_engagement_default,
-			"display_label": mun.display_label if mun.display_label != "" else null,
-		}
-
-	var air_oob_after: Variant = null
-	if state.squadron_force != null:
-		# `kind` (manned/unmanned) is stamped here rather than left for the consumer to re-derive by
-		# joining air_classes.json on the class name — the record is read by research tooling that has
-		# no access to the data files.
-		#
-		# Both lookups below are HARD INDEXES, deliberately. An earlier draft used
-		# `classes.get(cls_name, {})` and emitted `kind: ""` when it missed, which is the
-		# get-with-default-across-a-boundary this project forbids (non-negotiable #2, the
-		# exquisite-intel incident) wearing a push_error as a disguise: it logged and then published a
-		# row whose airframes were neither manned nor unmanned. The OOB↔air-classes join is only
-		# checked by tools/validate_ijfs_data.gd, i.e. at gate time and not at load, so a missing class
-		# has to fail HERE rather than be papered over.
-		var classes: Dictionary = {}
-		if state.air_classes != null:
-			classes = (state.air_classes as Dictionary)["classes"]
-		var squadrons: Array = []
-		for sq: IjfsSquadron in (state.squadron_force as Array):
-			if not classes.has(sq.aircraft_class):
-				push_error("IjfsEngine: squadron %s has class '%s' with no air_classes entry" % [
-					sq.squadron_id, sq.aircraft_class])
-				assert(false, "air OOB references a class absent from air_classes")
-			var cls: Dictionary = classes[sq.aircraft_class]
-			squadrons.append({
-				"squadron_id": sq.squadron_id,
-				"class": sq.aircraft_class,
-				"kind": cls["kind"],
-				"role": sq.role,
-				"initial": sq.initial,
-				"alive": sq.alive,
-				"rtb_today": sq.rtb_today,
-				"losses_today": sq.losses_today,
-				"losses_campaign": sq.losses_campaign,
-			})
-		# model_version 4 (2026-08-01): losses_campaign added, and losses_today changed MEANING from
-		# campaign-cumulative to per-day. A consumer reading v3 semantics off a v4 payload would
-		# silently under-report, which is exactly what the version is for.
-		#
-		# `kind` was added later the same day (plan 0059) and deliberately did NOT bump the version:
-		# it is purely additive, and no v4 payload had ever been persisted anywhere — this ledger
-		# reached no fixture, record or API until 0059 surfaced it — so no consumer can be misled by
-		# a widened row. Bump only when a field's MEANING moves, as losses_today's did.
-		air_oob_after = {"model_version": 4, "squadrons": squadrons, "provenance": {}}
-
-	return {
-		"metadata": {
-			"current_day": current_day,
-			"seed": state.seed,
-			"source_files": state.source_files.duplicate(),
-			"created_by": "ijfs_standalone",
-		},
-		"detection_log": state.detection_log,
-		"strike_log": state.strike_log,
-		"target_status_after": target_status,
-		"munition_inventory_after": inventory,
-		"engagement_log": state.engagement_log,
-		"contest_log": state.contest_log,
-		"free_shot_log": state.free_shot_log,
-		"manpads_intercept_log": state.manpads_intercept_log,
-		"manpads_contest_log": state.manpads_contest_log,
-		"air_oob_after": air_oob_after,
-		"summary": summary,
-	}
+	return IjfsLedgers.build_ledgers(state, current_day, summary)
 
 
 # --- Continuity (in-memory equivalent of the loader reload reset) -------------------------------
@@ -415,24 +186,3 @@ static func carry_to_next_day(state: IjfsDailyState) -> void:
 	# day; destroyed / known_to_red / last_detected_day / detected_this_turn persist. Munitions and
 	# squadron_force carry forward unchanged (their attrition is already applied in-place).
 	IjfsTransitions.carry_to_next_day(state)
-
-
-# --- helpers ------------------------------------------------------------------------------------
-
-static func _inc(counter: Dictionary, key: Variant) -> void:
-	counter[key] = int(counter.get(key, 0)) + 1
-
-
-static func _sum_losses(log: Array) -> int:
-	var total := 0
-	for entry in log:
-		total += int(entry.get("losses", 0))
-	return total
-
-
-static func _count_flag(log: Array, flag: String) -> int:
-	var count := 0
-	for entry in log:
-		if entry.get(flag):
-			count += 1
-	return count

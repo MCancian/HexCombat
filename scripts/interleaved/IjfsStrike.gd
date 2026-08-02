@@ -94,16 +94,16 @@ static func evaluate_strike_probability(target: IjfsTarget, pairing: IjfsPairing
 	}
 
 
+## Resolve one strike. `context` carries the day/pass identity, the doctrine provenance, and the
+## share of the delivering package that actually reached the target (plan 0060 R8); see
+## IjfsStrikeContext for why those four fields travel together rather than as loose arguments.
 static func resolve_strike(
 	target: IjfsTarget,
 	pairing: IjfsPairing,
 	inventory: Dictionary,
 	scenario: Dictionary,
-	current_day: int,
-	dice: Dice,
-	phase: Variant = null,
-	doctrine_rule_name: Variant = null,
-	doctrine_selection: Variant = null
+	context: IjfsStrikeContext,
+	dice: Dice
 ) -> Dictionary:
 	var munition: IjfsMunition = inventory[pairing.munition_id]
 	var rounds := int(pairing.rounds_expended_per_engagement)
@@ -112,22 +112,25 @@ static func resolve_strike(
 	# inorganic path spends rounds. The authority both checks and deducts in one step.
 	if not organic and not IjfsTransitions.consume_munition(munition, rounds):
 		return {
-			"current_day": current_day,
+			"current_day": context.current_day,
 			"target_id": target.target_id,
 			"source_target_id": target.source_target_id,
 			"metadata": target.metadata,
 			"attack_executed": false,
 			"skip_reason": "insufficient_inventory",
-			"phase": phase,
-			"doctrine_rule_name": doctrine_rule_name,
-			"doctrine_selection": doctrine_selection,
+			"phase": context.phase,
+			"doctrine_rule_name": context.doctrine_rule_name,
+			"doctrine_selection": context.doctrine_selection,
 		}
 
-	var probability := evaluate_strike_probability(target, pairing, munition, scenario, phase)
-	var p_destroy := float(probability["final"])
+	var probability := evaluate_strike_probability(target, pairing, munition, scenario, context.phase)
+	# A package that lost airframes on ingress delivers proportionally less ordnance. Both
+	# probabilities scale, not just the destroy one: a half-strength package is half as likely to
+	# suppress what it fails to kill.
+	var p_destroy := _clamp01(float(probability["final"]) * context.survivor_fraction)
 	var roll := dice.randf()
 	var destroyed := roll <= p_destroy
-	var p_suppressed := float(pairing.probability_suppressed_if_not_destroyed)
+	var p_suppressed := _clamp01(float(pairing.probability_suppressed_if_not_destroyed) * context.survivor_fraction)
 	var suppression_roll: Variant = null
 	var suppressed := false
 	if destroyed:
@@ -139,7 +142,7 @@ static func resolve_strike(
 			IjfsTransitions.apply_strike_suppression(target)
 
 	return {
-		"current_day": current_day,
+		"current_day": context.current_day,
 		"target_id": target.target_id,
 		"source_target_id": target.source_target_id,
 		"category": target.category,
@@ -147,14 +150,15 @@ static func resolve_strike(
 		"mobility": target.mobility,
 		"posture": target.posture,
 		"metadata": target.metadata,
-		"phase": phase,
-		"doctrine_rule_name": doctrine_rule_name,
-		"doctrine_selection": doctrine_selection,
+		"phase": context.phase,
+		"doctrine_rule_name": context.doctrine_rule_name,
+		"doctrine_selection": context.doctrine_selection,
 		"attack_executed": true,
 		"skip_reason": null,
 		"pairing_id": pairing.pairing_id,
 		"munition_id": munition.munition_id,
 		"rounds_expended": rounds,
+		"package_survivor_fraction": context.survivor_fraction,
 		"probability_destroyed_base": probability["base"],
 		"probability_destroyed_add_sum": probability.get("modifier_add_sum", 0.0),
 		"probability_destroyed_multiplier_product": probability.get("modifier_mult_product", 1.0),

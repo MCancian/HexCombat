@@ -6,6 +6,9 @@ extends GdUnitTestSuite
 # (IjfsResolver.sync_manpads_to_oob). Uses the shared ScriptedDice helper.
 
 const AIR_CLASSES := {"classes": {"4th Gen": {"rcs": 0, "wvr": 0, "isr_value": 0, "sead_eff": 2}}}
+## Neutral exposure, so these cases keep asserting the pre-role-exposure arithmetic.
+const NEUTRAL_PROFILE := {"red_aircraft_attrition_and_sead":
+	{"role_exposure_multipliers": {"isr": 1.0, "sead": 1.0, "strike": 1.0}}}
 
 
 func _bin(id: String, to_number: int, systems: int, destroyed := false, suppressed := false) -> IjfsTarget:
@@ -97,7 +100,8 @@ func test_contest_engages_only_low_altitude_roles() -> void:
 	]
 	# threat 1.0 -> p_loss = 0.01 per aircraft; draws: 2 (sead) + 1 (strike) = 3
 	var dice := ScriptedDice.new([], [], [0.005, 0.5, 0.5])
-	var log := IjfsManpads.contest_squadrons(bins, force, AIR_CLASSES, dice)
+	var log := IjfsManpads.contest_squadrons(
+		bins, force, IjfsAttritionProfile.build(NEUTRAL_PROFILE, AIR_CLASSES), dice)
 	assert_int(log.size()).is_equal(2)
 	assert_int(log[0]["losses"]).is_equal(1)  # sead1: roll 0.005 <= 0.01
 	assert_int(log[1]["losses"]).is_equal(0)
@@ -143,7 +147,9 @@ func test_intercepted_strike_log_is_summary_compatible() -> void:
 	pairing.pairing_id = "p1"
 	pairing.munition_id = "attack_uav_small"
 	pairing.rounds_expended_per_engagement = 1
-	var entry := IjfsManpads.intercepted_strike_log(_strike_target("t1", 2), pairing, 3, "post_ad_recompute", null, null)
+	var entry := IjfsManpads.intercepted_strike_log(
+		_strike_target("t1", 2), pairing,
+		IjfsStrikeContext.for_strike(3, "post_ad_recompute", null, null))
 	assert_bool(entry["attack_executed"]).is_true()
 	assert_bool(entry["destroyed"]).is_false()
 	assert_bool(entry["suppressed"]).is_false()
