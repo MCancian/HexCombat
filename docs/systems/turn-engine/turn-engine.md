@@ -185,3 +185,17 @@ Since plan 0049 the turn loop also owns three aggregates of its own:
 - Order legality lives in `OrderValidator` (`scripts/calc/`), which appends nothing; the authority
   asks it and appends only on accept, so a rejection cannot half-apply.
 - Ownership facts live only in the manifest.
+
+## 10. On-demand resolution maps
+
+Run `python3 tools/generate_resolution_dag.py --validate` from the project root to regenerate
+`docs/presentations/`. `export_resolution_symbols.gd` supplies Godot's reflected class/property/method
+facts; the Python tool conservatively joins statements, resolves typed aliases and call sites,
+propagates transition effects, and labels RAW/WAR/WAW/RNG/CALL relationships separately.
+
+The output has two zoom levels: one page per calculator/interleaved class and lexical call-site pages
+for `TurnConductor`, phase coordinators, and `IjfsEngine.run_daily`. `turn_pipeline.md` is the master
+phase overview; detailed pages state that loops repeat, branches may skip, and nested arguments do not
+follow lexical evaluation order. `state_transitions.md` is a generated view of authority methods. Every page records the
+script/tool hashes and unresolved-analysis count. Missing edges never assert reorderability, and the
+manifest remains the sole ownership record.

@@ -49,6 +49,15 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   prints `path count authority,...` and exits 0, letting the skill call it instead of restating it.
   Not done here because the validator's own commit was already the plan's last step and adding an output
   mode is a separate, testable change.
+- [ ] **`IjfsLedgers` applies MANPADS initialization transitively while living in `scripts/calc/`.**
+  Found by plan 0061's generated effect map. `IjfsLedgers._manpads_totals` calls
+  `IjfsManpads.ready_systems_by_to`; that reaches `systems_remaining`, whose lazy first read calls
+  `set_remaining` and then `IjfsTransitions.set_manpads_remaining`. The direct-call placement gate
+  cannot see this transitive authority path, so the `scripts/calc/` claim (“applies no campaign state
+  by any route”) is false whenever a MANPADS bin has not yet been seeded. Hoist seeding to the IJFS
+  build/day boundary or make the query non-mutating; then pin that a ledger-only call leaves state
+  byte-identical. Do not move the reporter to `interleaved/`: reporting has no draw-point reason to
+  apply state.
 - [ ] **The authority-call detector is blind to an ALIASED receiver.**
   So a FORBIDS file could call an authority under another name (found 2026-07-31 by the Sol diff-review role on plan 0057; a standing
   limit of the detector, NOT a regression). `tools/validate_authority_call_placement.gd` matches the

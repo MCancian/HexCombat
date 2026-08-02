@@ -1,0 +1,39 @@
+{
+  "note": "Current post-plan-0060 call-site oracle. The historical 18-edge/MANPADS-contest inventory is deliberately rejected.",
+  "ordering_method": "IjfsEngine.run_daily",
+  "required_call_counts": {
+    "IjfsAdHealth.compute_taiwan_ad_health": 4,
+    "IjfsDetection.apply_detection_ids": 2,
+    "IjfsStrikePhase.run": 2,
+    "IjfsStrikePhase.append_final_skips": 1,
+    "IjfsSeadStage.resolve": 1,
+    "IjfsEngagement.resolve_package_return_fire": 1,
+    "IjfsEngagement.apply_post_phase_2_free_shot": 1
+  },
+  "forbidden_calls": [
+    "IjfsManpads.contest_squadrons"
+  ],
+  "required_edges": [
+    {"source": ["IjfsDetection.apply_detection_ids", 135], "target": ["IjfsStrikePhase.run", 137], "kind": "RAW", "fields": ["IjfsTarget.detected_this_turn"]},
+    {"source": ["IjfsStrikePhase.run", 137], "target": ["IjfsDetection.aircraft_detect_target_ids", 163], "kind": "RAW", "fields": ["IjfsSquadron.alive", "IjfsTarget.destroyed"]},
+    {"source": ["IjfsSeadStage.resolve", 148], "target": ["IjfsDetection.aircraft_detect_target_ids", 163], "kind": "RAW", "fields": ["IjfsTarget.destroyed"]},
+    {"source": ["IjfsEngagement.resolve_package_return_fire", 153], "target": ["IjfsDetection.aircraft_detect_target_ids", 163], "kind": "RAW", "fields": ["IjfsSquadron.alive"]},
+    {"source": ["IjfsDetection.apply_detection_ids", 165], "target": ["IjfsStrikePhase.run", 167], "kind": "RAW", "fields": ["IjfsTarget.detected_this_turn"]},
+    {"source": ["IjfsStrikePhase.run", 167], "target": ["IjfsAdHealth.compute_taiwan_ad_health", 170], "kind": "RAW", "fields": ["IjfsTarget.destroyed", "IjfsTarget.suppressed"]},
+    {"source": ["IjfsAdHealth.compute_taiwan_ad_health", 170], "target": ["IjfsEngagement.apply_post_phase_2_free_shot", 172], "kind": "RAW", "fields": ["IjfsDailyState.taiwan_ad_health_after"]},
+    {"source": ["IjfsStrikePhase.run", 167], "target": ["IjfsEngagement.apply_post_phase_2_free_shot", 172], "kind": "RNG", "fields": ["dice"]}
+  ],
+  "required_transition_effects": {
+    "IjfsTransitions.set_manpads_remaining": [
+      "IjfsTarget.manpads_remaining",
+      "IjfsTarget.metadata[systems_remaining]"
+    ],
+    "IjfsTransitions.apply_squadron_losses": [
+      "IjfsSquadron.alive",
+      "IjfsSquadron.losses_campaign",
+      "IjfsSquadron.losses_today",
+      "IjfsSquadron.rtb_today",
+      "IjfsSquadron.sead_assigned_today"
+    ]
+  }
+}

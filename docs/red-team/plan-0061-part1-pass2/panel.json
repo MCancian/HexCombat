@@ -1,0 +1,56 @@
+{
+  "featureSlug": "plan-0061-part1-pass2",
+  "cwd": "/var/home/qyfs/Projects/HexCombat",
+  "artifactDir": "docs/red-team/plan-0061-part1-pass2",
+  "manifestPath": "docs/red-team/plan-0061-part1-pass2/panel.json",
+  "updatedAt": "2026-08-02T15:52:34.911Z",
+  "sessions": {
+    "claude": "14aef4d6-7a0c-4c43-853b-8ffc96f14482",
+    "agy": "1b49f152-dbe9-4c7c-b66c-fb575b6ab17a"
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "provider": "claude",
+      "artifactPath": "docs/red-team/plan-0061-part1-pass2/round-1-claude-cli.md",
+      "ok": true,
+      "status": "active",
+      "sessionId": "14aef4d6-7a0c-4c43-853b-8ffc96f14482",
+      "providerSessionId": "f088502b-526b-4cb2-84d4-3faa03416677",
+      "responsePreview": "## Major risks **1. The 18-edge oracle is stale — it describes pre-0060 code, and it is the tool's acceptance test.** The plan's edge table names a node \"E = MA",
+      "error": ""
+    },
+    {
+      "round": 1,
+      "provider": "agy",
+      "artifactPath": "docs/red-team/plan-0061-part1-pass2/round-1-gemini-agy.md",
+      "ok": false,
+      "status": "failed",
+      "sessionId": "1b49f152-dbe9-4c7c-b66c-fb575b6ab17a",
+      "providerSessionId": "0363237f-cb5d-4eab-8e11-ca1e80426ce8",
+      "error": "Error: timeout waiting for response\n"
+    },
+    {
+      "round": 2,
+      "provider": "agy",
+      "artifactPath": "docs/red-team/plan-0061-part1-pass2/round-2-gemini-agy.md",
+      "ok": true,
+      "status": "active",
+      "sessionId": "1b49f152-dbe9-4c7c-b66c-fb575b6ab17a",
+      "providerSessionId": "0363237f-cb5d-4eab-8e11-ca1e80426ce8",
+      "responsePreview": "Remaining must-fix issues 1. **The Contradiction of Python Source-Effect Analysis:** The synthesis correctly admits Godot provides \"no stable statement AST\" and",
+      "error": ""
+    },
+    {
+      "round": 2,
+      "provider": "claude",
+      "artifactPath": "docs/red-team/plan-0061-part1-pass2/round-2-claude-cli.md",
+      "ok": true,
+      "status": "active",
+      "sessionId": "14aef4d6-7a0c-4c43-853b-8ffc96f14482",
+      "providerSessionId": "f088502b-526b-4cb2-84d4-3faa03416677",
+      "responsePreview": "## Remaining must-fix issues **1. The manifest cannot supply effects. Disputed point 1 is not implementable as written.** Synthesis §Disputed says the analyser ",
+      "error": ""
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+class_name ResolutionDagFixture
+extends RefCounted
+
+static func helper(target: FixtureTarget) -> void:
+	target.health += 1
+	target.metadata["status"] = "changed"
+
+static func recursive(target: FixtureTarget, count: int) -> void:
+	if count <= 0:
+		return
+	helper(target)
+	recursive(target, count - 1)
+
+static func ordering(state: FixtureState, dice: Dice) -> void:
+	# Fake.call(state.target) and state.target.health must never be parsed from prose.
+	var fake := "Fake.call(state.target.health)"
+	var alias: FixtureTarget = state.target
+	for row: FixtureTarget in state.targets:
+		helper(row)
+	recursive(alias, 2)
+	helper(
+		alias,
+	)
+	dice.roll_d100()
+	dice.roll_d100()
+
+var property_health: int:
+	set(value):
+		property_health = value
+	get:
+		return property_health
+
+static func index_key_is_read(target: FixtureTarget) -> Dictionary:
+	var counts: Dictionary = {}
+	counts[target.health] = 1
+	return counts
+
+static func nested_write(state: FixtureState) -> void:
+	state.targets[0].health = 0
+
+static func dotted_index_write(state: FixtureState, target: FixtureTarget) -> void:
+	state.targets[target.health].health = 0
+
+static func nested_index_is_loud(
+	state: FixtureState, indexes: Dictionary, target: FixtureTarget
+) -> void:
+	state.targets[indexes[target.health]].health = 0
+
+static func multiline_string_offset(state: FixtureState) -> Array:
+	return [
+		"padding that masking removes",
+		state.target.metadata["status"],
+	]
+
+static func declared_before_assignment(state: FixtureState) -> int:
+	var target: FixtureTarget
+	target = state.target
+	return target.health
+
+var delegated_health: int : set = _set_delegated_health
+
+func _set_delegated_health(value: int) -> void:
+	property_health = value
+
+static func consume_roll(dice: Dice) -> void:
+	dice.roll_d100()
+
+static func independent_streams(dice: Dice) -> void:
+	consume_roll(dice.derive("left"))
+	consume_roll(dice.derive("right"))
+
+static func shared_stream(dice: Dice) -> void:
+	consume_roll(dice)
+	consume_roll(dice)
+
+static func same_label_independent_streams(dice: Dice) -> void:
+	consume_roll(dice.derive("same"))
+	consume_roll(dice.derive("same"))
+
+static func aliased_shared_stream(dice: Dice) -> void:
+	var alias := dice
+	consume_roll(dice)
+	consume_roll(alias)
+
+static func typed_loop_direct(state: FixtureState) -> void:
+	for row in state.targets:
+		row.health += 1
+
+static func mutual_a(target: FixtureTarget) -> void:
+	mutual_b(target)
+
+static func mutual_b(target: FixtureTarget) -> void:
+	mutual_c(target)
+
+static func mutual_c(target: FixtureTarget) -> void:
+	target.metadata["mutual"] = true
+
+static func read_health(target: FixtureTarget) -> int:
+	return target.health
+
+static func passthrough(value: int) -> int:
+	return value
+
+static func nested_assignment(state: FixtureState) -> void:
+	state.target.health = passthrough(read_health(state.target))

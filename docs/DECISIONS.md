@@ -25,6 +25,12 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-08-02 — Resolution maps are generated evidence, not a runtime DAG (USER ruling; agent implementation).**
+  `generate_resolution_dag.py` now builds call-site-specific calculator, coordinator, transition, and
+  turn-pipeline pages on demand, with Godot-reflected symbols, conservative source effects, current
+  IJFS validation, content hashes, and visible uncertainty. No gate requires freshness and no RNG or
+  turn behavior changed. Facts: `docs/systems/turn-engine/turn-engine.md` §10 and `docs/systems/turn-engine/STATUS.md`.
+
 - **2026-08-02 — Agent workflow docs tightened (agent, no USER): four reach-gate costs folded into
   the tools.** (1) `hexcombat-code-quality` gained a "Preflight" recipe (`tools/gd_metrics.py` ndeps
   reader + `--check-ceiling`), a new-file ≤9-deps rule, and the calc/loaders placement rules, the

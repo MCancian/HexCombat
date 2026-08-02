@@ -1,0 +1,47 @@
+{
+  "format_version": 1,
+  "source_hash": "fixture",
+  "script_count": 3,
+  "global_class_count": 3,
+  "autoloads": {},
+  "scripts": [
+    {
+      "path": "tools/fixtures/resolution_dag/source_patterns.gdfixture",
+      "class": "ResolutionDagFixture",
+      "base": "RefCounted",
+      "language": "GDScript",
+      "properties": [
+        {"name": "delegated_health", "type": 2, "type_name": "int", "class_name": "", "hint": 0, "hint_string": "", "usage": 4096},
+        {"name": "property_health", "type": 2, "type_name": "int", "class_name": "", "hint": 0, "hint_string": "", "usage": 4096}
+      ],
+      "methods": [],
+      "constants": [
+        {"name": "InnerBudget", "variant_type": "GDScript", "inner_class": {"properties": [], "methods": [{"name": "consume", "flags": 0, "arguments": [], "return": {"name": "", "type": 0, "type_name": "Nil", "class_name": "", "hint": 0, "hint_string": "", "usage": 0}}]}}
+      ]
+    },
+    {
+      "path": "tools/fixtures/resolution_dag/FixtureState.gdfixture",
+      "class": "FixtureState",
+      "base": "RefCounted",
+      "language": "GDScript",
+      "properties": [
+        {"name": "target", "type": 24, "type_name": "Object", "class_name": "FixtureTarget", "hint": 0, "hint_string": "", "usage": 4096},
+        {"name": "targets", "type": 28, "type_name": "Array", "class_name": "", "hint": 31, "hint_string": "FixtureTarget", "usage": 4096}
+      ],
+      "methods": [],
+      "constants": []
+    },
+    {
+      "path": "tools/fixtures/resolution_dag/FixtureTarget.gdfixture",
+      "class": "FixtureTarget",
+      "base": "Resource",
+      "language": "GDScript",
+      "properties": [
+        {"name": "health", "type": 2, "type_name": "int", "class_name": "", "hint": 0, "hint_string": "", "usage": 4096},
+        {"name": "metadata", "type": 27, "type_name": "Dictionary", "class_name": "", "hint": 0, "hint_string": "", "usage": 4096}
+      ],
+      "methods": [],
+      "constants": []
+    }
+  ]
+}
