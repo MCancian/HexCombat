@@ -6,6 +6,10 @@ landed_in:
 
 # 0026 — Live-play Godot map: camera, HUD, replay screenshotter
 
+## Golden-pin budget
+
+none
+
 **Goal:** The live-operator / projector needs on the Godot scene (as opposed to the headless HTML
 viewer covered by plan 0023): camera fit/zoom/pan and a visual phase/turn HUD; plus, if
 Godot-quality stills of headless replay turns are ever wanted over the viewer's SVG, a

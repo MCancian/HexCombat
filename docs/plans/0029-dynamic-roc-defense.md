@@ -6,6 +6,10 @@ created: "2026-07-23"
 
 # Plan 0029: Dynamic ROC defense
 
+## Golden-pin budget
+
+none
+
 ## Research question (USER 2026-07-23)
 
 The Monte Carlo study ([[2026-07-23-monte-carlo-outcome-distribution]]) found the PLA wins 200/200

@@ -1,5 +1,9 @@
 # 0002 — Per-hull escort magazines (D3-B3)
 
+## Golden-pin budget
+
+none
+
 **Status:** Sketch · **Priority:** Low — tie to a concrete balance need, don't port speculatively
 
 ## Goal

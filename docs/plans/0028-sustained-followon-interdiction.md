@@ -6,6 +6,10 @@ created: "2026-07-23"
 
 # Plan 0028: Sustained follow-on interdiction
 
+## Golden-pin budget
+
+none
+
 ## Research question (USER 2026-07-23)
 
 The Monte Carlo study ([[2026-07-23-monte-carlo-outcome-distribution]]) showed a PLA victory is

@@ -6,6 +6,10 @@ landed_in:
 
 # 0027 — Front-view per-beachhead pager (ocean-spanning fronts)
 
+## Golden-pin budget
+
+none
+
 **Priority:** Low — build only when BOTH conditions hold (see Trigger).
 
 **Context.** Plan 0023 P1 made the viewer's "Front" viewport

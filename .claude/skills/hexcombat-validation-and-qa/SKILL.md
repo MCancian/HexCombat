@@ -97,9 +97,13 @@ change-control event (`hexcombat-change-control`).
 
 Committed under `docs/examples/`, regenerated ONLY via `tools/export_llm_*.gd`. The gate regenerates
 them every run and then `git diff --exit-code docs/examples/`, so drift shows up as an unexpected
-working-tree change rather than as a validator failure. If your change legitimately grows the JSON
-contract: update schema + commit the regenerated fixture + update `REQUIRED_*_KEYS` in
-`validate_llm_api.gd` (the duplication is a deliberate drift cross-check), in the same commit.
+working-tree change rather than as a validator failure. (**Trap:** this phase can NEVER pass green
+before commit — it compares the freshly regenerated files against committed HEAD, so after a real
+JSON-contract change the regenerated files differ from HEAD and the check fails until you git-commit
+them. Commit the regenerated fixtures in the same change that changed the contract; do not burn a
+full gate run chasing it first.) If your change legitimately grows the JSON contract: update schema +
+commit the regenerated fixture + update `REQUIRED_*_KEYS` in `validate_llm_api.gd` (the duplication is
+a deliberate drift cross-check), in the same commit.
 
 `tools/validate_skill_references.gd` keeps this file honest in one narrow respect: every fully
 concrete `` `tools/…gd` `` path a skill cites must exist. Placeholders and globs

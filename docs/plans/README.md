@@ -42,6 +42,14 @@ a plan is done only when its durable facts have landed in their canonical homes 
 entry — and the plan file gets a 3-line closeout header and moves to `docs/archive/`. If a future
 agent would need to read the plan to act, the closeout wasn't done.
 
+**Every active plan carries a `## Golden-pin budget`** (enforced by `tools/validate_plan_docs.gd`):
+right under the title, a line naming the validators the plan will re-baseline — e.g.
+`validate_golden_victory and validate_cleanup` — or `none`. State the *count* and *when* up front
+("expect 2 re-baselines, one per stage; measure X and Y together"), so an agent batches the
+measurement instead of re-baselining one validator at a time. Set it to the real list the moment a
+sketch stops being a sketch (the `none` you seeded at Sketch time is deliberately unproven, not a
+license to forget goldens).
+
 ## Active
 
 | # | Plan | Priority | Status |

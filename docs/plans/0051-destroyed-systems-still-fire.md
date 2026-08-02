@@ -6,6 +6,10 @@ created: "2026-07-27"
 
 # Plan 0051: Destroyed coastal launchers get a last salvo away
 
+## Golden-pin budget
+
+none
+
 ## Goal
 
 Wire up the TIV mechanic HexCombat ports but never runs: a Green coastal launcher destroyed by the

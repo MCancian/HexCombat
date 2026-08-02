@@ -32,6 +32,7 @@ Every fact has exactly one home. Don't hunt for it elsewhere:
 | Exact expected numbers (goldens) | the validator (`tools/validate_*.gd`) — its PASS line is truth |
 | Why something is the way it is | `docs/DECISIONS.md` (changelog → pointers); deep history `docs/archive/` |
 | A problem that feels familiar | `hexcombat-failure-archaeology` |
+| Place/edit code inside an existing subsystem or change its mechanics | `docs/systems/<module>/` system doc + `STATUS.md` → the **preflight** in `hexcombat-code-quality` (new-class `ndeps` ≤ 9; coordinator ceilings paid) → **directory-role check** (`tools/validate_authority_call_placement.gd` for mutations, `tools/validate_tool_script_purity.gd` for the pure/calc layers) — the validators say WHERE a write is allowed before you write it |
 | How to invoke the tooling, and what it can/cannot see | the tool's own header + `.claude/REVIEWERS.md` (reviewers) |
 
 **Prefer making a mistake impossible over documenting it.** A fact that only lives in prose is a

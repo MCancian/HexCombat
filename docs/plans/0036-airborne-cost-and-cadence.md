@@ -6,6 +6,10 @@ created: "2026-07-25"
 
 # Plan 0036: Airborne cost and sortie cadence
 
+## Golden-pin budget
+
+none
+
 **USER call 2026-07-25**, answering the plan-0032 balance question left open in
 `docs/plans/BACKLOG.md`: *"Let's double baseline attrition. We can also gate airborne a little bit
 by transport capacity. I could see China being able to only conduct 1 sortie every 2 days."*

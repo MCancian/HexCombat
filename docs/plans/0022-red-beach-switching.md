@@ -6,6 +6,10 @@ created: "2026-07-20"
 
 # Plan 0022: Red opens a new beach when Green strips its defense
 
+## Golden-pin budget
+
+none
+
 ## Research question (USER 2026-07-20)
 
 The counter-pressure half of the garrison-draw study ([[0021-garrison-draw-policy]]): if Green pulls

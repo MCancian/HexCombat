@@ -27,19 +27,45 @@ many classes (the top test file is at 19) and capping that discourages thorough 
 architectural gain. So a `tests/` file at 15 deps is not a hole — it is the design. **Do not "tidy"
 `PARAM_CEILINGS` to match the narrower scope**; it grandfathers live `tests/` and `tools/` entries.
 
+## Preflight — run this while you are DESIGNING, before any file exists
+
+The reach-gate lesson (plan 0056): four separate red-gate cycles cost ~6 min each to rediscover
+things this command answers instantly — `IjfsEngine` sits near its ceiling,
+`scripts/calc/` forbids authority calls, `scripts/loaders/IjfsLoaders.gd` owns the scenario key names.
+Run all three before you decide who calls whom:
+
+```bash
+python3 tools/gd_metrics.py . /tmp/m.json                 # compute ndeps/CC/params for every file
+python3 -c "import json;d=json.load(open('/tmp/m.json'));[print(f\"{k}: ndeps={v['ndeps']}\") for k,v in d['files'].items() if k.startswith('scripts/')]"
+python3 tools/gd_metrics.py . /tmp/m.json --check-ceiling # dry-run the gate's own ceiling verdict
+```
+
+Then apply two rules, still on paper:
+
+- **Files you will touch:** `ndeps` must stay *below* its `DEP_CEILINGS` entry. Three coordinators
+  sit *exactly* at their ceilings — `scripts/phases/TurnConductor.gd` (18/18),
+  `scripts/phases/FiresPhases.gd` (13/13), `scripts/phases/TurnClosure.gd` (9/9) — and
+  `scripts/interleaved/IjfsEngine.gd` carries a ceiling of 14, close to its measured 13. Naming one
+  new `class_name` in any of them is an instant breach. If you must, budget a paid-for dependency
+  swap (the two shapes are in `hexcombat-architecture-contract` — "the ceiling is paid for, not
+  raised"), never a raise.
+- **Files you will create:** a new `scripts/` file's `ndeps` = the count of distinct
+  `class_name`/autoload/preload names **you** reference in it (+1 self-reference). Keep it **≤ 9**
+  (10 is the hard cap; at/above 10 a file must carry a ceiling it never had). Count while you type
+  the header, not at the gate.
+- **Placement rules the gate teaches at 6 minutes each:** `scripts/calc/` returns outcomes and may
+  make NO authority write; `scripts/loaders/IjfsLoaders.gd` owns the scenario key names resolve the
+  ported source oracle for (`docs/systems/ijfs/`). Both are knowable here, before a validator yells.
+
 Adding an entry is not free forgiveness: seed it at the **measured** value and write, next to it, why
 that file's coupling is legitimate. If you cannot say why, that is the signal to fix the coupling
 instead. Eleven entries seeded in 2026-08-01's baseline carry no rationale yet, deliberately — the
 reasoning belongs to whoever first has cause to move one.
 
-**Check headroom while you are DESIGNING the call shape, not after the gate goes red.** Several
-coordinators sit at *exactly* their ceiling, so naming one new class in them is an instant breach —
-read `ndeps` for the files you will touch out of `/tmp/m.json` before you decide who calls whom.
-(Measured cost of skipping this, plan 0047: a mid-plan red gate, and a step that could not be
-committed on its own because the dependency that pays for the new one cannot leave until a later
-step.) The two shapes that work are in `hexcombat-architecture-contract` — "the ceiling is paid for,
-not raised". `PARAM_CEILINGS` is keyed by `path::function`, so **moving or renaming a file makes its
-entry stale and fails the gate**; re-key it in the same commit as the move.
+Skipping the preflight above has a concrete cost (plan 0047): a mid-plan red gate, plus a step that
+could not be committed on its own because the dependency that pays for the new one cannot leave until
+a later step. `PARAM_CEILINGS` is keyed by `path::function`, so **moving or renaming a file renders
+its entry stale and fails the gate**; re-key it in the same commit as the move.
 
 ## Budgets (touched code)
 

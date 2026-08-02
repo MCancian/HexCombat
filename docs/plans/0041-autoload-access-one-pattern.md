@@ -6,6 +6,10 @@ created: "2026-07-25"
 
 # Plan 0041: One pattern for reaching an autoload from tool-loadable code
 
+## Golden-pin budget
+
+none
+
 ## The problem
 
 A `-s` SceneTree tool script is loaded **before** the autoload singletons are registered as

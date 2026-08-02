@@ -7,6 +7,13 @@ extends SceneTree
 ## `grep '^- \[ \]'` returned wrapped fragments for 20 of 21 items, and README.md's "index, not
 ## reading material" table held rows up to 1328 characters.
 ##
+## Since 2026-08-02 it also requires every ACTIVE plan to carry a `## Golden-pin budget` heading whose
+## first line names the validators it will re-baseline (or `none`). This is plan-0056's re-baseline
+## lesson made structurally impossible: five separate re-baselines were each measured one validator at
+## a time, when a plan that states "expect N re-baselines, one per stage; measure X and Y together"
+## lets an agent batch the measurement. The heading is the contract; the validators named are free
+## text, because only the plan author knows which goldens its mechanics move.
+##
 ## The budgets below are the CONTRACT. The self-test pins them with literal 120/121 and 200/201
 ## rather than reading these constants, deliberately: a test built from the same constant it is
 ## checking cannot notice the constant moving.
@@ -19,6 +26,7 @@ func _initialize() -> void:
 	_self_test()
 	_check_backlog()
 	_check_readme()
+	_check_plans()
 	
 	if _failures.is_empty():
 		print("PASS: plan docs validated")
@@ -131,6 +139,27 @@ func _self_test() -> void:
 	_expect_failure("readme/over-limit", _capture(
 		func() -> void: _check_readme_line(row_over_limit, 10)), "too long")
 
+	# --- Golden-pin budget: cases that must PASS ---
+	_expect_clean("golden/none-decl", _capture(
+		func() -> void: _check_plan_golden_budget_content("## Golden-pin budget\nnone", "plan")))
+	_expect_clean("golden/named-decl", _capture(
+		func() -> void: _check_plan_golden_budget_content(
+			"## Golden-pin budget\nvalidate_golden_victory and validate_cleanup", "plan")))
+	# A blank line after the heading is allowed — the declaration is the next non-empty line.
+	_expect_clean("golden/blank-then-decl", _capture(
+		func() -> void: _check_plan_golden_budget_content("## Golden-pin budget\n\nnone", "plan")))
+
+	# --- Golden-pin budget: cases that must FAIL, each for its own stated reason ---
+	_expect_failure("golden/missing", _capture(
+		func() -> void: _check_plan_golden_budget_content("## Scope\nno budget here", "plan")), "missing")
+	_expect_failure("golden/empty", _capture(
+		func() -> void: _check_plan_golden_budget_content("## Golden-pin budget\n\n", "plan")), "no declaration")
+	_expect_failure("golden/eof", _capture(
+		func() -> void: _check_plan_golden_budget_content("## Golden-pin budget", "plan")), "no declaration")
+	_expect_failure("golden/placeholder", _capture(
+		func() -> void: _check_plan_golden_budget_content(
+			"## Golden-pin budget\n%s" % GOLDEN_BUDGET_PLACEHOLDER, "plan")), "placeholder")
+
 
 func _check_backlog() -> void:
 	var path := "res://docs/plans/BACKLOG.md"
@@ -158,3 +187,57 @@ func _check_readme() -> void:
 	var lines := text.split("\n")
 	for i in range(lines.size()):
 		_check_readme_line(lines[i], i + 1)
+
+
+var GOLDEN_BUDGET_HEADING := "## Golden-pin budget"
+
+
+func _check_plans() -> void:
+	var dir := DirAccess.open("res://docs/plans/")
+	if dir == null:
+		_failures.append("docs/plans/ not openable")
+		return
+	var seen_any := false
+	for file in dir.get_files():
+		if not file.ends_with(".md"):
+			continue
+		if file == "README.md" or file == "ARCHIVE.md" or file == "BACKLOG.md":
+			continue
+		seen_any = true
+		_check_plan_golden_budget("res://docs/plans/" + file, file)
+	if not seen_any:
+		_failures.append("docs/plans/: no active plan docs found to check")
+
+
+## A plan doc fails if the `## Golden-pin budget` heading is missing, is bare (no line beneath it
+## declaring which validators get re-baselined), or its declaration line is the placeholder.
+func _check_plan_golden_budget(path: String, label: String) -> void:
+	if not FileAccess.file_exists(path):
+		return
+	_check_plan_golden_budget_content(FileAccess.get_file_as_string(path), label)
+
+
+func _check_plan_golden_budget_content(text: String, label: String) -> void:
+	var lines := text.split("\n")
+	var heading_no := -1
+	for i in range(lines.size()):
+		if lines[i].strip_edges() == GOLDEN_BUDGET_HEADING:
+			heading_no = i
+			break
+	if heading_no == -1:
+		_failures.append("%s: missing '## Golden-pin budget' heading (name the validators it re-baselines, or 'none')" % label)
+		return
+	var decl := ""
+	for i in range(heading_no + 1, lines.size()):
+		var candidate := lines[i].strip_edges()
+		if not candidate.is_empty():
+			decl = candidate
+			break
+	if decl.is_empty():
+		_failures.append("%s: '## Golden-pin budget' heading has no declaration line beneath it" % label)
+		return
+	if decl == GOLDEN_BUDGET_PLACEHOLDER:
+		_failures.append("%s: '## Golden-pin budget' still uses the placeholder '%s'" % [label, GOLDEN_BUDGET_PLACEHOLDER])
+
+
+const GOLDEN_BUDGET_PLACEHOLDER := "<none — name the validators you will re-baseline>"

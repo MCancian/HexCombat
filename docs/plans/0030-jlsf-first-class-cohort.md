@@ -6,6 +6,10 @@ created: "2026-07-24"
 
 # Plan 0030: JLSF first-class cohort (legibility)
 
+## Golden-pin budget
+
+none
+
 ## Motivation (found 2026-07-24)
 
 Investigating the port-neutralization result ([[0028-sustained-followon-interdiction]] "Q2 re-run")

@@ -6,6 +6,10 @@ landed_in:
 
 # 0024 — Order-entry facilitator flow (live play)
 
+## Golden-pin budget
+
+none
+
 **Goal:** A clean interaction loop for a non-developer facilitator running a live game:
 Select Unit → Issue Move/Commit Order → End Turn. (Draft-0023 component 2.) Deferred behind
 plan 0023 — this is live-facilitator UI, irrelevant to headless LLM-vs-LLM presentation.

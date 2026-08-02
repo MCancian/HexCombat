@@ -6,6 +6,10 @@ created: "2026-07-24"
 
 # Plan 0033: Brigade organization
 
+## Golden-pin budget
+
+none
+
 ## Why now
 
 The USER intends to build on organization (2026-07-24). Before anything is built on it, the field

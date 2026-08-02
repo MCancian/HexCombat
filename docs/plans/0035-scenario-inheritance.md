@@ -6,6 +6,10 @@ created: "2026-07-24"
 
 # Plan 0035: Scenario variant inheritance
 
+## Golden-pin budget
+
+none
+
 ## The problem
 
 A scenario variant is a full copy of its base. `data/scenarios/red_airborne.json` is 43 keys of

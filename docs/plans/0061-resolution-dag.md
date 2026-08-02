@@ -6,6 +6,10 @@ created: "2026-08-01"
 
 # Plan 0061: the resolution DAG
 
+## Golden-pin budget
+
+none
+
 > **BLOCKED — this is the USER's architectural direction (2026-08-01), stated at sketch level and not
 > yet specified. It needs the same design session as [[0060-air-attrition-before-the-strike]], and the
 > reading below needs the USER's confirmation before anyone builds anything.**

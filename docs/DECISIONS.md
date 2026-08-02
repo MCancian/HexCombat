@@ -25,6 +25,19 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-08-02 — Agent workflow docs tightened (agent, no USER): four reach-gate costs folded into
+  the tools.** (1) `hexcombat-code-quality` gained a "Preflight" recipe (`tools/gd_metrics.py` ndeps
+  reader + `--check-ceiling`), a new-file ≤9-deps rule, and the calc/loaders placement rules, the
+  four red-gate discoveries of plan 0056. (2) AGENTS.md routing gained a "changing an existing
+  subsystem's mechanics" row naming the ceilings + `validate_authority_call_placement.gd` /
+  `validate_tool_script_purity.gd`. (3) Traps added where they bite: fixture-drift-never-passes-before-
+  commit in `hexcombat-validation-and-qa`; `DataOverrides` flat-`path:key`-map in
+  `hexcombat-research-runs`. (4) **GATED** (per the plan-0056 re-baseline lesson): `tools/validate_plan_docs.gd`
+  now requires every active plan to carry a `## Golden-pin budget` naming the validators it re-baselines
+  (or `none`); 17 active plans seeded, rule added to `docs/plans/README.md`. Goldens untouched, full
+  gate green. Durable homes: the three skills, AGENTS.md, `tools/validate_plan_docs.gd`,
+  `docs/plans/README.md`, `docs/DECISIONS.md`.
+
 - **2026-08-01 — Plan 0060 SHIPPED: air attrition is local to engagements (USER rulings R1-R12,
   agent implementation).** Red's reusable OOB is 498 airframes and anti-radiation is an expendable
   munition; an Organic strike is a package of four real airframes; MANPADS lost both of its old

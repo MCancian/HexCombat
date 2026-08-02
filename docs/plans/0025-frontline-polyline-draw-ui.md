@@ -6,6 +6,10 @@ landed_in:
 
 # 0025 — Front-line polyline-draw UI (D5-D, live play)
 
+## Golden-pin budget
+
+none
+
 **Goal:** Interactive front-line drawing at battalion granularity — the operator draws a polyline
 and battalions distribute along it. (Draft-0023 component 4.) Deferred behind plan 0023; also
 tracked in `docs/plans/README.md` "Parked refinements" ("Front-line distribution at battalion

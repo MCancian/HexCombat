@@ -1,5 +1,9 @@
 # 0003 — Combat-summary team attribution (attacker↔team seam)
 
+## Golden-pin budget
+
+none
+
 **Status:** Sketch · **Priority:** Low — record-the-constant refactor with no payoff until a
 counterattack mechanic exists; blocked on a USER design call
 

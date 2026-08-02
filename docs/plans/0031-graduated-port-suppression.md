@@ -6,6 +6,10 @@ created: "2026-07-24"
 
 # Plan 0031: Graduated port suppression
 
+## Golden-pin budget
+
+none
+
 ## Design intent (USER 2026-07-24)
 
 This session's 2-D map ([[0028-sustained-followon-interdiction]] "2-D map") showed **beach/port

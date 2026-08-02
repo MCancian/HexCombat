@@ -33,6 +33,10 @@ description: Running HexCombat as a research instrument — Monte Carlo batches 
 > were accepted under), `turns`, optional `run_past_game_over`, `knobs`, `grid`, `seeds`,
 > `metrics`, optional `extra_cells` — e.g. the antiship mines-only floor, now the
 > `disable_antiship_systems` grouping-spec override.
+> `DataOverrides` takes a **flat `path:key` map** (`data/scenarios/<x>.json:knob`), never a nested
+> dict — a nested shape silently UN-APPLIES every override (cost one whole silent sweep). Fail-loud
+> `DataOverrides.unapplied()` reports a typo'd *key*; it does NOT catch a wrong *shape*. Sweep one
+> knob per cell so the flat map is honest about what changed.
 > Typo'd override paths fail loud (`DataOverrides.unapplied()`); reports match cells by override
 > content, not filename; stale cell files are cleared per run. The antiship instrument includes
 > sealift (mandatory post-plan-0004; wave = sent cohort, ~81 BNs). **LLM-player adapter (B6)
