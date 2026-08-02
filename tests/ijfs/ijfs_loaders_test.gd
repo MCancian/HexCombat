@@ -104,13 +104,19 @@ func _minimal_scenario(extra: Dictionary) -> Dictionary:
 		"isr_sources": [],
 		"target_release": [],
 		"strike_probability_modifiers": [],
-		# Plan 0060 R11: the anti-radiation SEAD block is required, so even a "minimal" scenario
-		# carries it. Values mirror the shipped ones; the tests below never read them.
+		# Plan 0060 R11: the anti-radiation and SEAD-assignment blocks are required, so even a
+		# "minimal" scenario carries them. Values mirror the shipped ones; the tests below never
+		# read them.
 		"red_anti_radiation_sead": {
 			"munition_id": "anti_radiation_owa",
 			"missiles_per_salvo": 4,
 			"salvos_per_day": 12,
 			"salvo_effective_power": 4.0,
+		},
+		"red_sead_assignment": {
+			"strike_airframe_fraction": 0.25,
+			"ordinary_aircraft_sead_eff": 0.25,
+			"sead_undetected_engagement": 1.0,
 		},
 	}
 	for k in extra.keys():

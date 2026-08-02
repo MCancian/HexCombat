@@ -32,9 +32,6 @@ const MIN_RCS_SURVIVAL_MOD := 0.2
 ## pre-2026-08-01 behaviour instead of a silently invented one.
 const NEUTRAL_EXPOSURE := 1.0
 
-const ROLE_EXPOSURE_KEY := "role_exposure_multipliers"
-const ATTRITION_BLOCK := "red_aircraft_attrition_and_sead"
-
 var _classes: Dictionary = {}
 var _role_exposure: Dictionary = {}
 
@@ -46,8 +43,8 @@ static func build(scenario: Variant, air_classes: Variant) -> IjfsAttritionProfi
 	if air_classes is Dictionary:
 		profile._classes = (air_classes as Dictionary).get("classes", {})
 	if scenario is Dictionary:
-		var block: Dictionary = (scenario as Dictionary).get(ATTRITION_BLOCK, {})
-		profile._role_exposure = block.get(ROLE_EXPOSURE_KEY, {})
+		var block: Dictionary = (scenario as Dictionary).get(IjfsLoaders.ATTRITION_BLOCK, {})
+		profile._role_exposure = block.get(IjfsLoaders.ROLE_EXPOSURE_KEY, {})
 	return profile
 
 

@@ -46,9 +46,13 @@ const MAX_TURNS := 40
 # firing_units x sorties numbers were always airframe-sortie SEATS, and four seats now buy one
 # four-ship attack instead of four attacks — so Red's Organic strike volume falls by about 4x and far
 # fewer ROC maneuver battalions die in the warmup. Was china=11 / taiwan=79.
+# Re-baselined 2026-08-01 for plan 0060 stage 4 (USER ruling R11): SEAD became a three-stage sequence
+# — expendable anti-radiation salvos, then weighted IADS health, then an aircraft assignment whose
+# effect is the assigned package's rather than the whole air force's. R3 explicitly permits this to
+# change which SAMs survive turn 2. Was china=16 / taiwan=103.
 const EXPECTED_GAME_OVER := false
 const EXPECTED_CHINA := 16
-const EXPECTED_TAIWAN := 103
+const EXPECTED_TAIWAN := 102
 
 var _failures: Array[String] = []
 var GameData: Node = null

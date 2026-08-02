@@ -149,7 +149,6 @@ PARAM_CEILINGS = {
     "scripts/interleaved/IjfsDetection.gd::_log_detection": 7,
     "scripts/interleaved/IjfsDetection.gd::_run_detection_phase": 8,
     "scripts/interleaved/IjfsDetection.gd::aircraft_detect_target_ids": 7,
-    "scripts/interleaved/IjfsEngagement.gd::resolve_sead_engagement": 6,
     # 9 -> 6 (plan 0060): the day/phase/doctrine/survivor-fraction arguments collapsed into the
     # typed IjfsStrikeContext, so the package geometry landed WITHOUT a tenth parameter.
     "scripts/interleaved/IjfsStrike.gd::resolve_strike": 6,

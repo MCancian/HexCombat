@@ -31,6 +31,16 @@ var to_number: int = -1
 ## package that assembled short (never happens today — assembly is all-or-nothing) would still scale
 ## honestly.
 var initial_size: int = 0
+
+## For the SEAD package only (plan 0060 R11 stage C): how many of the leading members are DEDICATED
+## SEAD airframes. `members` is built dedicated-first, so this is the index at which ordinary strike
+## aircraft begin — and the two contribute different SEAD effect, which is the whole reason the split
+## has to be recorded rather than re-derived from squadron roles.
+##
+## Read it BEFORE ingress attrition: `remove_member` shifts indices, and IjfsSeadStage computes the
+## package's power at assignment time for exactly that reason.
+var dedicated_size: int = 0
+
 var members: Array[IjfsSquadron] = []
 
 

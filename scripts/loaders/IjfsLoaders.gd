@@ -27,7 +27,12 @@ const ISR_CURVE_MODES := ["exp_decay", "linear", "weibull", "logistic", "gompert
 const STRIKE_MODIFIER_OPERATIONS := ["add", "multiply"]
 const STRIKE_MODIFIER_MATCH_KEYS := ["category", "subcategory", "mobility", "hardness", "posture", "intel_locked", "munition_id", "munition_category", "phase", "pairing_id", "source_target_id"]
 const SAM_CATEGORIES := ["Moveable SAMs", "Static SAMs", "Mobile SAMs"]
+## Scenario block names live HERE, with the code that validates their shape, and every consumer
+## reads them from this file. A config key spelled in two places is a key that can be renamed in one.
 const ANTI_RADIATION_BLOCK := "red_anti_radiation_sead"
+const SEAD_ASSIGNMENT_BLOCK := "red_sead_assignment"
+const ATTRITION_BLOCK := "red_aircraft_attrition_and_sead"
+const ROLE_EXPOSURE_KEY := "role_exposure_multipliers"
 
 
 # Maps a Green/ROC battalion type → IJFS "Maneuver Units" target profile
@@ -597,18 +602,19 @@ static func _validate_ijfs_config_blocks(scenario: Dictionary) -> void:
 	_validate_attrition_links(scenario.get("red_firing_capacity", {}))
 	_validate_anti_radiation_sead(scenario)
 	_validate_role_exposure(scenario)
+	_validate_sead_assignment(scenario)
 
 
 ## Plan 0060 R2: `role_exposure_multipliers` stopped being dead data on 2026-08-01 and now scales
 ## every per-airframe loss probability, so a missing or negative entry silently changes how much of
 ## Red's air force dies. All three flying roles must be present; "unused" is not a flight profile.
 static func _validate_role_exposure(scenario: Dictionary) -> void:
-	var block: Dictionary = scenario.get(IjfsAttritionProfile.ATTRITION_BLOCK, {})
-	var multipliers: Dictionary = block.get(IjfsAttritionProfile.ROLE_EXPOSURE_KEY, {})
+	var block: Dictionary = scenario.get(ATTRITION_BLOCK, {})
+	var multipliers: Dictionary = block.get(ROLE_EXPOSURE_KEY, {})
 	for role in ["isr", "sead", "strike"]:
 		if not multipliers.has(role):
 			_fail("ROLE_EXPOSURE_INVALID: %s missing the '%s' multiplier" % [
-				IjfsAttritionProfile.ROLE_EXPOSURE_KEY, role])
+				ROLE_EXPOSURE_KEY, role])
 		elif float(multipliers[role]) < 0.0:
 			_fail("ROLE_EXPOSURE_INVALID: '%s' multiplier must be >= 0" % role)
 
@@ -638,6 +644,23 @@ static func _validate_attrition_links(firing_capacity: Dictionary) -> void:
 			_fail("ATTRITION_LINK_INVALID: '%s' needs a package_size > 0" % munition_id)
 		if not entry.has("manpads_eligible") or not (entry["manpads_eligible"] is bool):
 			_fail("ATTRITION_LINK_INVALID: '%s' needs an explicit boolean manpads_eligible" % munition_id)
+
+
+## Plan 0060 R11 stage C. Three numbers decide how much of Red's strike fleet is diverted to SEAD
+## each day and how much good it does there, so each is required and range-checked: a missing
+## fraction would silently assign nobody, and a missing effect would make the assignment free.
+static func _validate_sead_assignment(scenario: Dictionary) -> void:
+	if not scenario.has(SEAD_ASSIGNMENT_BLOCK):
+		_fail("CONFIG_SCHEMA_MISMATCH: missing required block: %s" % SEAD_ASSIGNMENT_BLOCK)
+		return
+	var block: Dictionary = scenario[SEAD_ASSIGNMENT_BLOCK]
+	# All three are PROBABILITY-LIKE fractions: a share of the fleet, a share of a J-16D's effect,
+	# and a multiplier that may only reduce engagement against an undetected emitter.
+	for key in ["strike_airframe_fraction", "ordinary_aircraft_sead_eff", "sead_undetected_engagement"]:
+		if not block.has(key):
+			_fail("SEAD_ASSIGNMENT_INVALID: %s missing '%s'" % [SEAD_ASSIGNMENT_BLOCK, key])
+		elif float(block[key]) < 0.0 or float(block[key]) > 1.0:
+			_fail("SEAD_ASSIGNMENT_INVALID: '%s' must be in [0, 1]" % key)
 
 
 ## Plan 0060 R11 stage A. The salvo geometry lives in the scenario, the stock on the munition, and

@@ -235,6 +235,12 @@
     },
     "uav_attrition_per_day_at_ad_health_1": 0.08
   },
+  "_comment_red_sead_assignment": "Plan 0060 R11 stage C (USER ruling 2026-08-01). Red commits ceil(strike_airframe_fraction x alive_strike_airframes x weighted_iads_health) HEADS to SEAD each day: alive J-16Ds fill the dedicated places first, ordinary strike aircraft make up the rest and each contributes ordinary_aircraft_sead_eff of a J-16D's effect. At full health that is 105 heads = 10 + 95, i.e. base power 10 + 95 x 0.25 = 33.75 before WVR/RCS. Deliberately NOT read off china_isr_pools.*.allocation_default.sead, which happens to also be 0.25: that block is the ISR-capacity model with separate manned and uav allocations, while this is one number over the whole strike pool. sead_undetected_engagement multiplies the aircraft stage's effective power against emitters with detected_this_turn == false; 1.0 preserves full engagement and is the shipped value, lower values are for sweeps. It applies to the aircraft stage ONLY — the anti-radiation salvo homes on the emission itself.",
+  "red_sead_assignment": {
+    "ordinary_aircraft_sead_eff": 0.25,
+    "sead_undetected_engagement": 1.0,
+    "strike_airframe_fraction": 0.25
+  },
   "_comment_red_anti_radiation_sead": "Plan 0060 R11 (USER ruling 2026-08-01). Expendable anti-radiation munitions resolve BEFORE aircraft SEAD, against active emitters, and are not aircraft: the inventory lives on the anti_radiation_owa munition in red_munitions.json and this block holds only the salvo geometry. salvos_per_day x missiles_per_salvo is the daily missile ceiling (12 x 4 = 48), so a full-capacity day spends a quarter of the 192-missile stock and the stage runs dry on day 5.",
   "red_anti_radiation_sead": {
     "missiles_per_salvo": 4,

@@ -16,7 +16,7 @@ extends RefCounted
 ##   1. (warmup only) exquisite-intel auto-detect rolls
 ##   2. satellite (phase1) detection
 ##   3. pre-AD strike phase (resolve_strike per attacked target)
-##   4. SEAD engagement + return-fire
+##   4. SEAD stages A/B/C (on the day's air-engagement substream) + return fire
 ##   5. aircraft (phase2) detection
 ##   6. post-AD strike phase
 ##   7. post-phase-2 free shot
@@ -142,9 +142,14 @@ static func run_daily(state: IjfsDailyState, dice: Dice, current_day: int, warmu
 	var ad_attrition_enabled := warmup_context == null or bool((warmup_context as Dictionary).get("ad_attrition_enabled", true))
 	ctx.ad_attrition_enabled = ad_attrition_enabled
 
-	var engagement := IjfsEngagement.resolve_sead_engagement(state.targets, squadron_force, ctx.attrition, dice, sead_enabled, ad_attrition_enabled)
-	state.engagement_log = engagement["engagement_log"]
-	state.contest_log = engagement["contest_log"]
+	# Three SEAD stages, in order (plan 0060 R11): expendable anti-radiation salvos, the weighted
+	# IADS health they leave behind, and the aircraft Red assigns against it. The assigned package is
+	# what return fire then shoots at — SEAD costs airframes because those airframes were exposed.
+	var sead := IjfsSeadStage.resolve(state, ctx, sead_enabled)
+	state.engagement_log = sead["engagement_log"]
+	if ad_attrition_enabled:
+		state.contest_log = IjfsEngagement.sead_return_fire(
+			squadron_force, ctx.attrition, state.targets, dice)
 
 	state.taiwan_ad_health_after_sead = IjfsAdHealth.compute_taiwan_ad_health(state.targets, state.scenario)
 
