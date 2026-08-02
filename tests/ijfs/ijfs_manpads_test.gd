@@ -64,7 +64,7 @@ func _state(kill_factor: float) -> IjfsDailyState:
 	state.squadron_force = [_squadron("sq1", 24)]
 	state.air_classes = AIR_CLASSES
 	state.scenario = NEUTRAL_ROLES.duplicate(true)
-	state.scenario[IjfsManpads.KILL_FACTOR_KNOB] = kill_factor
+	state.scenario[IjfsLoaders.MANPADS_KILL_FACTOR_KNOB] = kill_factor
 	return state
 
 

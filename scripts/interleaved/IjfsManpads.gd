@@ -38,11 +38,6 @@ const ABORT_FACTOR := 0.15
 ## stock, not the hit.
 const EXPEND_PER_ENGAGEMENT := 3
 
-## Scenario knob holding the fitted per-airframe kill factor (plan 0060 R5). Absent = 0.0 = MANPADS
-## can drive a package off but never shoot one down, which is a legitimate configuration and not a
-## silent default: the shipped scenario sets it.
-const KILL_FACTOR_KNOB := "manpads_attrition_factor"
-
 const OUTCOME_KILLED := "killed"
 const OUTCOME_ABORTED := "aborted"
 const OUTCOME_UNAFFECTED := "unaffected"
@@ -115,7 +110,9 @@ static func engage_package(
 	var ready := _ready_in_to(state.targets, to_number)
 	var munition: IjfsMunition = state.munitions[package.munition_id]
 	var threat := threat_fraction(ready)
-	var kill_factor := float(state.scenario.get(KILL_FACTOR_KNOB, 0.0))
+	# Absent = 0.0 = MANPADS can drive a package off but never shoot one down, a legitimate
+	# configuration and not a silent default. IjfsLoaders owns and range-checks the key.
+	var kill_factor := float(state.scenario.get(IjfsLoaders.MANPADS_KILL_FACTOR_KNOB, 0.0))
 	var members_before := package.size()
 
 	var draw := dice.randf()
@@ -132,14 +129,16 @@ static func engage_package(
 		"MANPADS kill+abort bands exceed 1.0 for %s (%f + %f) — the two outcomes are mutually exclusive and cannot overlap" % [
 			victim.squadron_id, p_kill, p_abort])
 
+	# `p > 0.0 and` guards the zero band: `randf()` can return exactly 0.0, so a bare `roll <= p`
+	# makes a probability-ZERO outcome fire — an attrition factor of 0.0 has to mean "off".
 	var outcome := OUTCOME_UNAFFECTED
 	var losses := 0
 	var returned := 0
-	if outcome_roll <= p_kill:
+	if p_kill > 0.0 and outcome_roll <= p_kill:
 		outcome = OUTCOME_KILLED
 		losses = 1
 		IjfsTransitions.apply_squadron_losses(package.remove_member(candidate), 1)
-	elif outcome_roll <= p_kill + p_abort:
+	elif p_abort > 0.0 and outcome_roll <= p_kill + p_abort:
 		outcome = OUTCOME_ABORTED
 		returned = package.size()
 		for squadron in package.members:
@@ -163,7 +162,8 @@ static func engage_package(
 		"victim_class": victim.aircraft_class if outcome == OUTCOME_KILLED else null,
 		"losses": losses,
 		"rtb": returned,
-		"strike_executed": outcome != OUTCOME_ABORTED,
+		# A kill that takes the LAST survivor denies the strike just as surely as an abort does.
+		"strike_executed": outcome != OUTCOME_ABORTED and not package.is_empty(),
 		"systems_expended": EXPEND_PER_ENGAGEMENT,
 	}
 

@@ -72,4 +72,9 @@ static func fly_in(
 		state.manpads_intercept_log.append(row)
 		if String(row["outcome"]) == IjfsManpads.OUTCOME_ABORTED:
 			return {"outcome": OUTCOME_ABORTED, "survivor_fraction": 0.0}
+		# MANPADS can take the LAST survivor when SAMs already thinned the package. Without this the
+		# strike would resolve at zero effect — spending a draw it must not spend, and destroying the
+		# target on an exact-zero roll (diff review 2026-08-01, reproduced before fixing).
+		if package.is_empty():
+			return {"outcome": OUTCOME_DESTROYED, "survivor_fraction": 0.0}
 	return {"outcome": OUTCOME_PRESSED, "survivor_fraction": package.survivor_fraction()}

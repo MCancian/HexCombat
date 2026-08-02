@@ -87,15 +87,19 @@ class OrganicStrikeBudget extends RefCounted:
 		var init_by_kind: Dictionary = {}
 		var alive_by_kind: Dictionary = {}
 		if squadron_force != null:
+			# AVAILABLE, not merely alive (plan 0060 R5): "build OrganicStrikeBudget only after R11
+			# books sead_assigned_today, using alive - sead_assigned_today - rtb_today". An airframe
+			# flying SEAD today cannot also fill a strike seat today, and a budget built from `alive`
+			# would silently sell the same aircraft twice.
 			for sq: IjfsSquadron in squadron_force:
 				if sq.role != "strike":
 					continue
 				init_any += sq.initial
-				alive_any += sq.alive
+				alive_any += sq.available_today()
 				var kind := String(classes.get(sq.aircraft_class, {}).get("kind", ""))
 				if kind != "":
 					init_by_kind[kind] = int(init_by_kind.get(kind, 0)) + sq.initial
-					alive_by_kind[kind] = int(alive_by_kind.get(kind, 0)) + sq.alive
+					alive_by_kind[kind] = int(alive_by_kind.get(kind, 0)) + sq.available_today()
 
 		for mid_value in firing_config.keys():
 			var mid := String(mid_value)

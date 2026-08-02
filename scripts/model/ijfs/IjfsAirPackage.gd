@@ -131,6 +131,11 @@ func is_empty() -> bool:
 func remove_member(index: int) -> IjfsSquadron:
 	var squadron := members[index]
 	members.remove_at(index)
+	# `dedicated_size` is an INDEX into `members`, so a removal below it has to move it or the
+	# dedicated/ordinary split silently reclassifies an airframe. Production reads the split before
+	# any removal today; this makes that a property of the object rather than of the call order.
+	if index < dedicated_size:
+		dedicated_size -= 1
 	return squadron
 
 

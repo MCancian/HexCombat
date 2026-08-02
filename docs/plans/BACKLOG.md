@@ -138,6 +138,18 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   (caught by agy-explore; two other models wrongly agreed it would). That hole is closed separately by
   `--quit-after` in `run_all_tests.py`. So this is deduplication only, worth doing when validators are
   being touched anyway, in slices of 5-6 with the gate green between. Good `opencode` delegation.
+- [ ] **`data/ijfs/grouped_targets.json` is orphaned AND now factually wrong.**
+  Found 2026-08-01 by the plan-0060 diff review, and confirmed by measurement: a scan of `scripts/`,
+  `tools/` and `tests/` finds ZERO readers, so `docs/systems/ijfs/ijfs.md`'s old "used by validation
+  scripts" claim was false (that line is now corrected). Worse, its `groups[].replaces_target_ids`
+  still names `sam_mobile_antelope_to2`..`_to5` — the four TO-split source rows plan 0060 R10
+  consolidated into one 50-instance row with a `to_distribution`. So the file describes a target
+  topology that no longer exists and nothing would notice.
+  **Not deleted as part of 0060**, deliberately: removing a content file is a USER call about what
+  the project keeps as design record, not an implementation detail of an air-attrition plan. Either
+  delete it, or re-point it at the new source ids and give it a reader that the gate exercises — a
+  data file with no reader is a data file that cannot be wrong out loud.
+
 - [ ] **The `turn_result` schema is now gated on KEY PRESENCE only — the nested shapes are still unchecked.**
   Opened 2026-08-01, replacing the five-field drift item, which is FIXED. The drift
   itself is closed: `air_insertion_summary`, `mobilization_summary`, `offload_summary`, `game_over` and

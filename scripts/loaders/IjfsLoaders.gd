@@ -33,6 +33,9 @@ const ANTI_RADIATION_BLOCK := "red_anti_radiation_sead"
 const SEAD_ASSIGNMENT_BLOCK := "red_sead_assignment"
 const ATTRITION_BLOCK := "red_aircraft_attrition_and_sead"
 const ROLE_EXPOSURE_KEY := "role_exposure_multipliers"
+## The two FITTED attrition factors (plan 0060 R5/R10). Absent = 0.0 = that source never kills.
+const MANPADS_KILL_FACTOR_KNOB := "manpads_attrition_factor"
+const SAM_RETURN_FIRE_KNOB := "sam_package_return_fire_factor"
 
 
 # Maps a Green/ROC battalion type → IJFS "Maneuver Units" target profile
@@ -636,6 +639,18 @@ static func _validate_ijfs_config_blocks(scenario: Dictionary) -> void:
 	_validate_anti_radiation_sead(scenario)
 	_validate_role_exposure(scenario)
 	_validate_sead_assignment(scenario)
+	_validate_attrition_factors(scenario)
+
+
+## Plan 0060 R5/R10: the two FITTED attrition factors. Both are asserted at their draw point, so a
+## mis-set value already fails loudly — but it fails mid-run, after a research batch has started.
+## Checking the domain at load turns that into a typo caught before the first die.
+static func _validate_attrition_factors(scenario: Dictionary) -> void:
+	for knob in [MANPADS_KILL_FACTOR_KNOB, SAM_RETURN_FIRE_KNOB]:
+		if not scenario.has(knob):
+			continue   # absent = 0.0 = that source never kills, which is a legitimate configuration
+		if float(scenario[knob]) < 0.0 or float(scenario[knob]) > 1.0:
+			_fail("ATTRITION_FACTOR_INVALID: '%s' must be in [0, 1]" % knob)
 
 
 ## Plan 0060 R2: `role_exposure_multipliers` stopped being dead data on 2026-08-01 and now scales

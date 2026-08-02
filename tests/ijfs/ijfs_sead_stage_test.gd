@@ -189,15 +189,20 @@ func test_dedicated_sead_fills_its_places_first_then_ordinary_strike_aircraft() 
 
 func test_ordinary_heads_split_across_squadrons_by_alive_strength() -> void:
 	var sead := _squadron("sead1", "J-16D", "sead", 0)
-	var big := _squadron("b_big", "Striker", "strike", 300)
-	var small := _squadron("a_small", "Striker", "strike", 100)
+	# 301 and 99 of 400, NOT 300 and 100: exact thirds would need no remainder handed out at all, so
+	# a naive floor() would pass and the case would prove nothing (diff review 2026-08-01).
+	var big := _squadron("b_big", "Striker", "strike", 301)
+	var small := _squadron("a_small", "Striker", "strike", 99)
 	var force: Array[IjfsSquadron] = [sead, big, small]
 	var state := _state(1, force)
 	IjfsSeadStage.resolve(state, _all_misses(state, 4), true)
 
-	# ceil(0.25 x 400) = 100 heads, none dedicated: 75 from the 300-strong squadron, 25 from the 100.
+	# ceil(0.25 x 400) = 100 heads, none dedicated. Exact shares are 75.25 and 24.75, so the floors
+	# are 75 and 24 and ONE head is left over — it goes to the larger fractional part, `a_small`.
 	assert_int(big.sead_assigned_today).is_equal(75)
-	assert_int(small.sead_assigned_today).is_equal(25)
+	assert_int(small.sead_assigned_today).override_failure_message(
+		"the leftover head goes to the largest fractional part; a naive floor() would leave it at 24"
+	).is_equal(25)
 	assert_int(big.sead_assigned_today + small.sead_assigned_today).override_failure_message(
 		"largest-remainder rounding must hand out the whole requirement, not lose a head to floors"
 	).is_equal(100)

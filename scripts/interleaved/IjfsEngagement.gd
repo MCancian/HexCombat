@@ -22,10 +22,6 @@ const FREE_SHOT_FACTOR := 0.05
 const WVR_FACTOR := 0.1
 const RCS_FACTOR := 0.05
 
-## Scenario knob holding the fitted per-airframe SAM return-fire factor (plan 0060 R10):
-## `p_loss = factor x sam_score x role_exposure x rcs_survival`. Absent = 0.0 = SAMs never shoot
-## back, which is a legitimate configuration and not a silent default; the shipped scenario sets it.
-const SAM_RETURN_FIRE_KNOB := "sam_package_return_fire_factor"
 
 
 ## One SAM target's engagement: destroy roll, then a suppression roll only if it survives
@@ -83,7 +79,9 @@ static func resolve_package_return_fire(
 	package: IjfsAirPackage, state: IjfsDailyState, profile: IjfsAttritionProfile, dice: Dice
 ) -> Array:
 	var log: Array = []
-	var factor := float(state.scenario.get(SAM_RETURN_FIRE_KNOB, 0.0))
+	# `p_loss = factor x sam_score x role_exposure x rcs_survival`. Absent = 0.0 = SAMs never shoot
+	# back, a legitimate configuration and not a silent default. IjfsLoaders owns the key.
+	var factor := float(state.scenario.get(IjfsLoaders.SAM_RETURN_FIRE_KNOB, 0.0))
 	if factor <= 0.0 or package.is_empty():
 		return log
 	for target in _engaging_sams(state.targets, package):
@@ -113,11 +111,18 @@ static func _engage_package_member(
 	var raw := factor * float(score) * profile.role_exposure(victim.role) * profile.rcs_survival(victim.aircraft_class)
 	assert(raw <= 1.0,
 		"SAM return-fire p_loss %f exceeds 1.0 for score %d vs %s — %s is too high to keep the sam_score gradient meaningful" % [
-			raw, score, victim.aircraft_class, SAM_RETURN_FIRE_KNOB])
+			raw, score, victim.aircraft_class, IjfsLoaders.SAM_RETURN_FIRE_KNOB])
 	var p_loss := profile.p_loss(factor * float(score), victim.aircraft_class, victim.role)
-	var hit := roll <= p_loss
+	# `p_loss > 0.0 and` guards the zero band: `randf()` can return exactly 0.0, so a bare
+	# `roll <= p` makes a probability-ZERO outcome fire.
+	var hit := p_loss > 0.0 and roll <= p_loss
 	if hit:
-		IjfsTransitions.apply_squadron_losses(package.remove_member(candidate), 1)
+		var victim_squadron := package.remove_member(candidate)
+		# A killed SEAD-package member stops being ASSIGNED as well as alive; without the release,
+		# `available_today()` would subtract the same casualty twice from the later strike pool.
+		if package.kind == IjfsAirPackage.SEAD:
+			IjfsTransitions.release_sead_assignment(victim_squadron, 1)
+		IjfsTransitions.apply_squadron_losses(victim_squadron, 1)
 	return {
 		"target_id": target.target_id,
 		"to_number": int(target.metadata.get("to_number", -1)),
@@ -165,10 +170,14 @@ static func apply_post_phase_2_free_shot(
 		return log
 	var loss_rate := clampf(raw_sam_health * FREE_SHOT_FACTOR, 0.0, 1.0)
 	for sq: IjfsSquadron in (squadron_force as Array):
-		if sq.alive <= 0:
+		# AVAILABLE, not alive (plan 0060 R2): "subtract rtb_today from every later pool so an
+		# aircraft already home cannot be killed", and the same for airframes booked to SEAD — the
+		# free shot is a parting shot at a departing package, not at the whole ramp.
+		var exposed := sq.available_today()
+		if exposed <= 0:
 			continue
 		var p_loss := profile.p_loss(loss_rate, sq.aircraft_class, sq.role)
-		var losses := _bernoulli_count(sq.alive, p_loss, dice)
+		var losses := _bernoulli_count(exposed, p_loss, dice)
 		if losses > 0:
 			IjfsTransitions.apply_squadron_losses(sq, losses)
 			log.append({

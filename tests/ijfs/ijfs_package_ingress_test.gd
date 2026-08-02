@@ -43,7 +43,7 @@ func _state(kill_factor: float, alive: int) -> IjfsDailyState:
 			"firing_units": 36, "sorties_per_unit_per_day": 0.8, "platform_type": "aircraft",
 			"attrition_link": [CLASS_NAME], "package_size": 4, "manpads_eligible": true}},
 	}
-	state.scenario[IjfsManpads.KILL_FACTOR_KNOB] = kill_factor
+	state.scenario[IjfsLoaders.MANPADS_KILL_FACTOR_KNOB] = kill_factor
 	return state
 
 
@@ -138,6 +138,45 @@ func test_ad_attrition_disabled_flies_the_package_through_untouched() -> void:
 	var ingress := IjfsPackageIngress.fly_in(state, package, target, ctx, dice)
 	assert_str(ingress["outcome"]).is_equal(IjfsPackageIngress.OUTCOME_PRESSED)
 	assert_array(state.manpads_intercept_log).is_empty()
+
+
+func test_manpads_taking_the_last_survivor_is_ingress_destroyed_not_a_pressed_strike() -> void:
+	# Regression, diff review 2026-08-01 (reproduced before fixing): `fly_in` only checked for an
+	# empty package after SAM fire, so a package thinned by SAMs and finished by MANPADS came back
+	# "pressed" with zero survivors. IjfsStrikePhase then resolved the strike, spending a draw the
+	# ruling forbids and destroying the target on an exact-zero roll.
+	var state := _state(0.8, 24)
+	var target := _maneuver("mu1", TO)
+	var squadron: IjfsSquadron = (state.squadron_force as Array)[0]
+	# A single-member package standing in for one SAMs already reduced to its last airframe.
+	var members: Array[IjfsSquadron] = [squadron]
+	var package := IjfsAirPackage.build(IjfsAirPackage.STRIKE, "p1", members)
+	package.munition_id = MUNITION
+	package.to_number = TO
+	package.initial_size = 4
+
+	var dice := ScriptedDice.new([], [], [0.0])
+	var ingress := IjfsPackageIngress.fly_in(state, package, target, _ctx(state, dice), dice)
+	assert_bool(package.is_empty()).is_true()
+	assert_str(ingress["outcome"]).override_failure_message(
+		"a package MANPADS wiped out spent its sortie and delivered nothing"
+	).is_equal(IjfsPackageIngress.OUTCOME_DESTROYED)
+	assert_float(ingress["survivor_fraction"]).is_equal_approx(0.0, 0.000001)
+	assert_bool(state.manpads_intercept_log[0]["strike_executed"]).override_failure_message(
+		"the ledger row must not claim the strike went ahead").is_false()
+
+
+func test_a_zero_kill_factor_cannot_kill_on_a_zero_roll() -> void:
+	# `randf()` can return exactly 0.0, and `roll <= p` made a probability-ZERO band fire. A factor
+	# of 0.0 has to mean the source never kills (diff review 2026-08-01).
+	var state := _state(0.0, 24)
+	var target := _maneuver("mu1", TO)
+	var dice := ScriptedDice.new([], [], [0.0, 0.0, 0.0, 0.0, 0.0])
+	var package: IjfsAirPackage = IjfsPackageIngress.assemble(state, MUNITION, target, 0, dice)
+	IjfsPackageIngress.fly_in(state, package, target, _ctx(state, dice), dice)
+	assert_str(state.manpads_intercept_log[0]["outcome"]).override_failure_message(
+		"a zero kill band must not fire; the abort band still can").is_equal(IjfsManpads.OUTCOME_ABORTED)
+	assert_int((state.squadron_force as Array)[0].alive).is_equal(24)
 
 
 func test_denied_strike_log_records_a_spent_sortie_that_delivered_nothing() -> void:

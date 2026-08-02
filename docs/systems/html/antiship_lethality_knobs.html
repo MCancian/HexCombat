@@ -257,7 +257,7 @@ suppressed  if  not destroyed  and  roll ≤ <span class="lit">pairing.probabili
 <table>
 <tr><th>Knob</th><th>Location</th><th>Value</th><th>Controls</th></tr>
 <tr><td>SUPPRESSION_FACTOR</td><td class="loc">IjfsEngagement.SUPPRESSION_FACTOR</td><td class="val">0.40</td><td>p_suppress = p_destroy × 0.40 for surviving SAMs.</td></tr>
-<tr><td>SEAD_RETURN_FIRE_FACTOR</td><td class="loc">IjfsEngagement.SEAD_RETURN_FIRE_FACTOR</td><td class="val">0.02</td><td>Per-SAM-score loss rate inflicted on the strike package.</td></tr>
+<tr><td>sam_package_return_fire_factor</td><td class="loc">ijfs_scenario.json (read by IjfsEngagement.resolve_package_return_fire)</td><td class="val">0.17</td><td>Per-SAM-score loss rate a surviving SAM inflicts on the exposed package. Replaced the pooled IjfsEngagement.SEAD_RETURN_FIRE_FACTOR force tax (plan 0060 R10).</td></tr>
 <tr><td>FREE_SHOT_FACTOR</td><td class="loc">IjfsEngagement.FREE_SHOT_FACTOR</td><td class="val">0.05</td><td>Post-phase-2 free-shot aircraft loss rate vs raw SAM health.</td></tr>
 <tr><td>WVR / RCS / RCS_SURVIVAL / MIN_RCS_SURVIVAL</td><td class="loc">IjfsEngagement constants</td><td class="val">0.10 / 0.05 / 0.10 / 0.20</td><td>Air-combat modifiers on SEAD effectiveness and survival.</td></tr>
 </table>

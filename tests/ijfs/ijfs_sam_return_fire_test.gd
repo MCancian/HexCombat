@@ -39,7 +39,7 @@ func _state(targets: Array[IjfsTarget], factor := FACTOR) -> IjfsDailyState:
 	state.targets = targets
 	state.air_classes = AIR_CLASSES
 	state.scenario = NEUTRAL_ROLES.duplicate(true)
-	state.scenario[IjfsEngagement.SAM_RETURN_FIRE_KNOB] = factor
+	state.scenario[IjfsLoaders.SAM_RETURN_FIRE_KNOB] = factor
 	return state
 
 

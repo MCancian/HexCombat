@@ -85,6 +85,30 @@ func test_survivor_fraction_reports_what_reached_the_target() -> void:
 
 # --- capacity units: seats, then packages -------------------------------------------------------
 
+func test_capacity_counts_available_airframes_not_merely_alive_ones() -> void:
+	# Plan 0060 R5: "build OrganicStrikeBudget only after R11 books sead_assigned_today, using
+	# alive - sead_assigned_today - rtb_today". Before the diff-review fix it read `alive`, so a
+	# squadron with 90 of 100 airframes flying SEAD still sold a full day of strike seats.
+	var scenario := {"red_firing_capacity": {"strike_aircraft_medium": {
+		"firing_units": 36, "sorties_per_unit_per_day": 0.8, "platform_type": "aircraft",
+		"attrition_link": ["Manned"], "package_size": 4, "manpads_eligible": true}}}
+	var munitions := {"strike_aircraft_medium": _organic("strike_aircraft_medium")}
+
+	var full: Array[IjfsSquadron] = [_squadron("s1", "Manned", 100)]
+	var at_full := IjfsFiringCapacity.OrganicStrikeBudget.new(scenario, full, munitions, CLASSES)
+
+	var committed := _squadron("s1", "Manned", 100)
+	IjfsTransitions.assign_to_sead(committed, 80)
+	IjfsTransitions.book_rtb(committed, 10)
+	var thin: Array[IjfsSquadron] = [committed]
+	var at_ten_percent := IjfsFiringCapacity.OrganicStrikeBudget.new(scenario, thin, munitions, CLASSES)
+
+	assert_int(int(at_full.utilization()["strike_aircraft_medium"]["budget"])).is_equal(7)
+	assert_int(int(at_ten_percent.utilization()["strike_aircraft_medium"]["budget"])).override_failure_message(
+		"10 of 100 airframes available must not buy a full day of packages"
+	).is_less(int(at_full.utilization()["strike_aircraft_medium"]["budget"]))
+
+
 func test_capacity_divides_airframe_sortie_seats_by_package_size() -> void:
 	# The authored numbers are SEATS. R8's worked example: 36 x 0.8 = 28 seats -> 7 four-ship
 	# packages; 40 x 2.0 = 80 seats -> 20 four-UCAV packages, never 80 attacks.

@@ -231,7 +231,7 @@ whole count from the firing plan.
 | `data/ijfs/red_air_oob.json` | `model_version, red_air_oob[]` — 10 rows with class/role/squadrons/aircraft_per_sqn. **498 airframes: 420 strike / 10 dedicated SEAD / 68 ISR** (plan 0060 R9/R11), pinned by `tools/validate_ijfs_data.gd` because every plan-0060 calibration is fitted against exactly this force | 15 | `IjfsLoaders.load_oob` |
 | `data/ijfs/air_classes.json` | `model_version, reference_isr_sum, classes{}` — 10 classes with `kind, rcs, wvr, isr_value, sead_eff` | 16 | `IjfsLoaders.load_air_classes` |
 | `data/ijfs/sam_capabilities.json` | `model_version, fallback_by_category, sam_score_by_subcategory` | 17 | `IjfsLoaders.load_sam_capabilities` |
-| `data/ijfs/grouped_targets.json` | `metadata, groups[]` — mobile SAM relocation grouping | 104 | Used by validation scripts |
+| `data/ijfs/grouped_targets.json` | `metadata, groups[]` — mobile SAM relocation grouping | 104 | **NOTHING** — measured 2026-08-01 (diff review), zero readers in `scripts/`, `tools/` or `tests/`. Its `replaces_target_ids` still names the four TO-split Antelope source rows plan 0060 R10 consolidated, so it now describes a topology that does not exist. See `docs/plans/BACKLOG.md`. |
 
 ## 9. State & authority
 
@@ -376,13 +376,18 @@ shoulder launchers. Instead (`scripts/interleaved/IjfsManpads.gd`, wired in `Ijf
    `systems_represented × alive/total` of that TO's Maneuver-Unit targets — MANPADS ride with the
    infantry; zero dice, idempotent, monotonic).
 
-Summary surface: `ijfs_summary.manpads` (`ready_systems_by_to`, `interception_attempts`,
-`interceptions`, `squadron_losses`); ledgers export `manpads_intercept_log`/`manpads_contest_log`.
-Draw-order note: interception draws sit inside the strike phases; the contest sits between the
-post-AD strike phase and the free shot — re-baselining pins was part of landing this
-(validate_cleanup fingerprint, validate_golden_victory census, llm_result fixture).
-Tests: `tests/ijfs/ijfs_manpads_test.gd`; data guards in `tools/validate_ijfs_data.gd`
-(50 bins / 2,500 launchers / category exclusions). Calibration levers (constants in
-`IjfsManpads.gd`): `SATURATION_SYSTEMS`, `INTERCEPT_FACTOR`, `SQUADRON_LOSS_FACTOR`,
-`EXPEND_PER_INTERCEPT`, `EXPEND_PER_CONTEST_AIRCRAFT` — observed magnitudes on the golden seed:
-~5–9 Red aircraft lost/turn at full threat, pools 2,500→~460 by turn 4.
+Summary surface: `ijfs_summary.manpads` (`ready_systems_by_to`, `attempts`, `kills`, `aborts`,
+`unaffected`, `rtb`, and `interceptions` as the compatibility total `kills + aborts`). The single
+ledger is `manpads_intercept_log`.
+
+Draw-order note: the engagement sits inside the post-AD strike phase, on the day's retained
+air-engagement substream, immediately after the same package's SAM ingress fire and before its
+strike rolls. Tests: `tests/ijfs/ijfs_manpads_test.gd` and
+`tests/ijfs/ijfs_package_ingress_test.gd`; data guards in `tools/validate_ijfs_data.gd` (50 bins /
+2,500 launchers / category exclusions).
+
+Calibration levers: the fitted `manpads_attrition_factor` scenario knob (kill), plus the constants
+`SATURATION_SYSTEMS`, `ABORT_FACTOR` and `EXPEND_PER_ENGAGEMENT` in `IjfsManpads.gd`. The abort
+factor is deliberately NOT a scenario knob: being driven off is a property of the launcher's
+presence, not something the fit needs to move. Measured magnitudes and the calibration closure are
+in `docs/archive/0060-air-attrition-before-the-strike.md`.

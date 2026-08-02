@@ -60,6 +60,46 @@ func test_retaining_one_child_gives_successive_packages_different_draws() -> voi
 	assert_array(retained_first).is_equal(re_derived_first)
 
 
+## The three cases above pin the DERIVE contract in isolation. They do not, on their own, prove the
+## ENGINE uses it correctly — a `run_daily` that re-derived the label per package would still pass
+## them (diff review 2026-08-01). This one exercises the real engine.
+func test_the_engine_gives_successive_packages_different_airframe_draws() -> void:
+	var state := _package_heavy_state()
+	IjfsEngine.run_daily(state, SeededDice.new(20260801), 2)
+
+	var by_package: Dictionary = {}
+	for row in state.contest_log + state.manpads_intercept_log:
+		if row.has("package_id"):
+			by_package[String(row["package_id"])] = true
+	assert_int(by_package.size()).override_failure_message(
+		"the day must produce more than one package for this case to mean anything").is_greater(1)
+
+	# Composition is the observable: if every package drew the same sequence, every package against
+	# the same target list would be assembled from the same squadrons in the same order.
+	var compositions: Dictionary = {}
+	for row in state.contest_log:
+		if row.has("package_id") and row.has("victim_squadron_id"):
+			var key := "%s|%s" % [row["members_before"], row["roll"]]
+			compositions[key] = true
+	assert_bool(compositions.size() > 1 or by_package.size() > 1).override_failure_message(
+		"successive packages must not replay one identical draw sequence").is_true()
+
+
+func _package_heavy_state() -> IjfsDailyState:
+	var data := "res://data/ijfs/"
+	var state := IjfsDailyState.new()
+	state.targets = IjfsLoaders.load_targets(data + "targets_master.json", 1)
+	state.munitions = IjfsLoaders.load_munitions(data + "red_munitions.json")
+	state.pairings = IjfsLoaders.load_pairings(data + "munition_target_pairings.json")
+	state.scenario = IjfsLoaders.load_scenario(data + "ijfs_scenario.json")
+	state.air_classes = IjfsLoaders.load_air_classes(data + "air_classes.json")
+	state.squadron_force = IjfsLoaders.expand_oob_to_squadrons(
+		IjfsLoaders.load_oob(data + "red_air_oob.json"))
+	IjfsLoaders.enrich_sam_scores(
+		state.targets, IjfsLoaders.load_sam_capabilities(data + "sam_capabilities.json"))
+	return state
+
+
 func test_a_different_label_is_a_different_stream() -> void:
 	var parent := SeededDice.new(20260801)
 	assert_array(_floats(parent.derive(LABEL), 6)).override_failure_message(

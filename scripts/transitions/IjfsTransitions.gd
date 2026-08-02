@@ -206,6 +206,11 @@ static func apply_squadron_losses(squadron: IjfsSquadron, losses: int) -> void:
 	squadron.alive -= losses
 	squadron.losses_today += losses
 	squadron.losses_campaign += losses
+	# `rtb_today + sead_assigned_today <= alive` is the invariant every selection path relies on, and
+	# a loss is the one event that can break it from the other side. Clamping here keeps
+	# `available_today()` non-negative and honest whichever order the day's stages fire in.
+	squadron.rtb_today = mini(squadron.rtb_today, squadron.alive)
+	squadron.sead_assigned_today = mini(squadron.sead_assigned_today, squadron.alive - squadron.rtb_today)
 
 
 ## Send airframes home for the rest of the day, alive. MANPADS aborting a package is the only writer
@@ -226,6 +231,19 @@ static func book_rtb(squadron: IjfsSquadron, count: int) -> void:
 			squadron.squadron_id, count, squadron.available_today()])
 		return
 	squadron.rtb_today += count
+
+
+## Release airframes from today's SEAD package. The ONE caller is return fire killing an assigned
+## airframe: without this, `alive` falls by one AND `sead_assigned_today` stays, so
+## `available_today()` double-subtracts the same casualty out of the later strike pool (found by diff
+## review 2026-08-01, reproduced before fixing). A dead aircraft is not an assigned aircraft.
+static func release_sead_assignment(squadron: IjfsSquadron, count: int) -> void:
+	if squadron == null:
+		push_error("IjfsTransitions: release_sead_assignment called with no squadron")
+		return
+	if count <= 0:
+		return
+	squadron.sead_assigned_today = maxi(0, squadron.sead_assigned_today - count)
 
 
 ## Book airframes to today's SEAD package (plan 0060 R11 stage C). They leave the Organic strike pool
