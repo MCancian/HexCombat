@@ -451,6 +451,42 @@
       "inventory_remaining_default": 400,
       "inventory_is_clean_multiple_of_engagement_size": true,
       "manpads_vulnerability": 0.4
+    },
+    {
+      "munition_id": "anti_radiation_owa",
+      "name": "Anti-Radiation One-Way Attack Munition",
+      "display_label": "AR-OWA",
+      "representative_systems": [
+        "Harpy/Harop-like anti-radiation loitering munition",
+        "CM-102-like anti-radiation missile"
+      ],
+      "category": "Anti-Radiation",
+      "warhead_size": "small",
+      "special_effects": [
+        "one_way_attack",
+        "homes_on_emission"
+      ],
+      "inventory_default": 192,
+      "inventory_notes": "Clean multiple of 4. 48 four-missile salvos: four full-capacity days at the scenario's 12 salvos/day.",
+      "rounds_per_engagement_default": 4,
+      "package_label": "Anti-radiation salvo",
+      "best_target_types": [
+        "active SAM emitters",
+        "active radars"
+      ],
+      "poor_target_types": [
+        "anything not radiating",
+        "buried targets",
+        "hard targets"
+      ],
+      "confidence": "low",
+      "source_refs": [
+        "dod_cmp_2024"
+      ],
+      "notes": "Expendable, and deliberately OUTSIDE the ordinary strike phase: it has no munition_target_pairings row, so IjfsTargeting can never select it. Its only consumer is the dedicated pre-aircraft SEAD stage (plan 0060 R11 stage A), whose salvo size and daily capacity live in ijfs_scenario.red_anti_radiation_sead. Historically this capability was mis-modelled as 48 reusable 'HARM' airframes inside red_air_oob.json; the USER reclassified it on 2026-08-01 as 192 expendable missiles, which is why it is a munition and not a squadron.",
+      "inventory_remaining_default": 192,
+      "inventory_is_clean_multiple_of_engagement_size": true,
+      "manpads_vulnerability": 0.0
     }
   ]
 }

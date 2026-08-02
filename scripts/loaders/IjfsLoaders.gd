@@ -19,7 +19,12 @@ const TARGET_CORE_KEYS := {
 }
 const REQUIRED_SCENARIO_TOP := ["detection_model", "taiwan_air_defense_health", "red_aircraft_attrition_and_sead"]
 const REQUIRED_SCENARIO_BLOCKS := ["prelanding", "red_firing_capacity", "isr_sources", "target_release"]
-const VALID_AIR_CLASSES := ["5th Gen", "4.5th Gen", "4th Gen", "J-16D", "JH-7", "H-6", "Stealth", "MALE Armed", "HALE Armed", "Decoys", "HARM"]
+## The complete reusable-airframe roster. Two classes left it on 2026-08-01 (plan 0060 R9 / R11):
+## the anti-radiation one was never an airframe class at all — 48 expendable missiles mis-modelled as
+## squadrons, now the `anti_radiation_owa` munition — and the decoy one was renamed Attack UCAV at the
+## same strength, so its losses stop being charged to a pool that never flew a strike.
+## tools/validate_ijfs_data.gd pins both names to zero references in the IJFS data and code.
+const VALID_AIR_CLASSES := ["5th Gen", "4.5th Gen", "4th Gen", "J-16D", "JH-7", "H-6", "Stealth", "MALE Armed", "HALE Armed", "Attack UCAV"]
 const VALID_KINDS := ["manned", "unmanned"]
 const VALID_ROLES := ["isr", "sead", "strike", "unused"]
 const CLASS_NUMERIC_FIELDS := ["rcs", "wvr", "isr_value", "sead_eff"]
@@ -27,6 +32,7 @@ const ISR_CURVE_MODES := ["exp_decay", "linear", "weibull", "logistic", "gompert
 const STRIKE_MODIFIER_OPERATIONS := ["add", "multiply"]
 const STRIKE_MODIFIER_MATCH_KEYS := ["category", "subcategory", "mobility", "hardness", "posture", "intel_locked", "munition_id", "munition_category", "phase", "pairing_id", "source_target_id"]
 const SAM_CATEGORIES := ["Moveable SAMs", "Static SAMs", "Mobile SAMs"]
+const ANTI_RADIATION_BLOCK := "red_anti_radiation_sead"
 
 
 # Maps a Green/ROC battalion type → IJFS "Maneuver Units" target profile
@@ -592,6 +598,55 @@ static func _validate_ijfs_config_blocks(scenario: Dictionary) -> void:
 		for key in match_dict.keys():
 			if key not in STRIKE_MODIFIER_MATCH_KEYS:
 				_fail("STRIKE_MODIFIER_INVALID: unknown match key %s" % key)
+	_validate_attrition_links(scenario.get("red_firing_capacity", {}))
+	_validate_anti_radiation_sead(scenario)
+
+
+## Plan 0060 R5/R8/R10: an Organic munition's `attrition_link` names the airframe classes its
+## packages are drawn from, so a UCAV loss lands on the UCAV pool and a manned-striker loss on the
+## manned pool. It is load-validated rather than trusted because a typo'd class name would produce a
+## package that can never be assembled — a silent no-strike, not a crash. Absent/null is the normal
+## case for every ground-launched munition and means "this munition costs no airframes".
+static func _validate_attrition_links(firing_capacity: Dictionary) -> void:
+	for munition_id_value in firing_capacity.keys():
+		var munition_id := String(munition_id_value)
+		var entry: Dictionary = firing_capacity[munition_id_value]
+		var link: Variant = entry.get("attrition_link", null)
+		if link == null:
+			for forbidden in ["package_size", "manpads_eligible"]:
+				if entry.has(forbidden):
+					_fail("ATTRITION_LINK_INVALID: '%s' has %s but no attrition_link" % [munition_id, forbidden])
+			continue
+		if not (link is Array) or (link as Array).is_empty():
+			_fail("ATTRITION_LINK_INVALID: '%s' attrition_link must be a non-empty list of air classes" % munition_id)
+			continue
+		for cls_value in (link as Array):
+			if String(cls_value) not in VALID_AIR_CLASSES:
+				_fail("ATTRITION_LINK_INVALID: '%s' links unknown air class '%s'" % [munition_id, cls_value])
+		if not entry.has("package_size") or int(entry["package_size"]) <= 0:
+			_fail("ATTRITION_LINK_INVALID: '%s' needs a package_size > 0" % munition_id)
+		if not entry.has("manpads_eligible") or not (entry["manpads_eligible"] is bool):
+			_fail("ATTRITION_LINK_INVALID: '%s' needs an explicit boolean manpads_eligible" % munition_id)
+
+
+## Plan 0060 R11 stage A. The salvo geometry lives in the scenario, the stock on the munition, and
+## the two must agree: a salvo that is not a whole divisor of the magazine would strand a partial
+## salvo nothing can ever fire.
+static func _validate_anti_radiation_sead(scenario: Dictionary) -> void:
+	if not scenario.has(ANTI_RADIATION_BLOCK):
+		_fail("CONFIG_SCHEMA_MISMATCH: missing required block: %s" % ANTI_RADIATION_BLOCK)
+		return
+	var block: Dictionary = scenario[ANTI_RADIATION_BLOCK]
+	for key in ["munition_id", "missiles_per_salvo", "salvos_per_day", "salvo_effective_power"]:
+		if not block.has(key):
+			_fail("ANTI_RADIATION_INVALID: %s missing '%s'" % [ANTI_RADIATION_BLOCK, key])
+			return
+	if int(block["missiles_per_salvo"]) <= 0:
+		_fail("ANTI_RADIATION_INVALID: missiles_per_salvo must be > 0")
+	if int(block["salvos_per_day"]) <= 0:
+		_fail("ANTI_RADIATION_INVALID: salvos_per_day must be > 0")
+	if float(block["salvo_effective_power"]) <= 0.0:
+		_fail("ANTI_RADIATION_INVALID: salvo_effective_power must be > 0")
 
 
 static func _validate_air_classes(data: Dictionary) -> void:

@@ -209,9 +209,10 @@
     },
     "rules": {
       "ad_attrition_enabled": false,
+      "_comment_munition_filter": "Plan 0060 R1 (USER ruling 2026-08-01): the pre-invasion campaign is a STANDOFF campaign. Blacklisting the two Organic munitions keeps Red's air force out of the warmup entirely, which is what makes its zero warmup air losses correct by construction instead of an unmodelled gap. Was {mode: null, ids: []}, i.e. no filter.",
       "munition_filter": {
-        "ids": [],
-        "mode": null
+        "ids": ["attack_uav_small", "strike_aircraft_medium"],
+        "mode": "blacklist"
       },
       "posture_default_override": "active",
       "sead_enabled": false
@@ -234,10 +235,19 @@
     },
     "uav_attrition_per_day_at_ad_health_1": 0.08
   },
+  "_comment_red_anti_radiation_sead": "Plan 0060 R11 (USER ruling 2026-08-01). Expendable anti-radiation munitions resolve BEFORE aircraft SEAD, against active emitters, and are not aircraft: the inventory lives on the anti_radiation_owa munition in red_munitions.json and this block holds only the salvo geometry. salvos_per_day x missiles_per_salvo is the daily missile ceiling (12 x 4 = 48), so a full-capacity day spends a quarter of the 192-missile stock and the stage runs dry on day 5.",
+  "red_anti_radiation_sead": {
+    "missiles_per_salvo": 4,
+    "munition_id": "anti_radiation_owa",
+    "salvo_effective_power": 4.0,
+    "salvos_per_day": 12
+  },
   "red_firing_capacity": {
     "attack_uav_small": {
-      "attrition_link": null,
+      "attrition_link": ["Attack UCAV"],
       "firing_units": 40,
+      "manpads_eligible": false,
+      "package_size": 4,
       "platform_type": "uav",
       "sorties_per_unit_per_day": 2.0
     },
@@ -296,8 +306,10 @@
       "sorties_per_unit_per_day": 2.0
     },
     "strike_aircraft_medium": {
-      "attrition_link": null,
+      "attrition_link": ["5th Gen", "4.5th Gen", "4th Gen", "JH-7", "H-6"],
       "firing_units": 36,
+      "manpads_eligible": true,
+      "package_size": 4,
       "platform_type": "aircraft",
       "sorties_per_unit_per_day": 0.8
     }

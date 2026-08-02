@@ -31,10 +31,92 @@ func _initialize() -> void:
 	var oob := IjfsLoaders.load_oob(OOB_PATH)
 	_validate_squadrons(oob, IjfsLoaders.expand_oob_to_squadrons(oob), air_classes)
 
+	_validate_air_force_shape(oob, IjfsLoaders.expand_oob_to_squadrons(oob))
+	_validate_anti_radiation_munition(scenario, munitions, pairings)
+	_validate_attrition_links(scenario, oob)
+	_validate_retired_air_classes()
+
 	var sam_caps := IjfsLoaders.load_sam_capabilities(SAM_PATH)
 	IjfsLoaders.enrich_sam_scores(targets, sam_caps)
 	_validate_sam_enrichment(targets)
 	_finish()
+
+
+## Plan 0060 R9 + R11 (USER rulings 2026-08-01): the reusable force is 498 airframes — 420 strike,
+## 10 dedicated SEAD, 68 ISR. Pinned by role and by total because every downstream calibration in
+## plan 0060 is fitted against exactly this force; a silent OOB edit would invalidate the fit
+## without failing anything else.
+func _validate_air_force_shape(oob: Dictionary, squadrons: Array[IjfsSquadron]) -> void:
+	var by_role: Dictionary = {}
+	var total := 0
+	for squadron in squadrons:
+		by_role[squadron.role] = int(by_role.get(squadron.role, 0)) + squadron.initial
+		total += squadron.initial
+	_check(total == 498, "Reusable air OOB expected 498 airframes, got %d" % total)
+	_check(int(by_role.get("strike", 0)) == 420, "Strike airframes expected 420, got %d" % int(by_role.get("strike", 0)))
+	_check(int(by_role.get("sead", 0)) == 10, "Dedicated SEAD airframes expected 10, got %d" % int(by_role.get("sead", 0)))
+	_check(int(by_role.get("isr", 0)) == 68, "ISR airframes expected 68, got %d" % int(by_role.get("isr", 0)))
+	_check(int(oob.get("model_version", 0)) == 4, "red_air_oob model_version expected 4")
+	print("Air OOB: %d airframes (%s)" % [total, str(by_role)])
+
+
+## Plan 0060 R11 stage A: the anti-radiation munition is expendable, has 192 missiles in 4-missile
+## salvos, and must have NO pairings — pairings are the only door into the ordinary strike phase, and
+## this weapon deliberately resolves in its own pre-aircraft stage instead.
+func _validate_anti_radiation_munition(scenario: Dictionary, munitions: Dictionary, pairings: Array[IjfsPairing]) -> void:
+	var block: Dictionary = scenario.get(IjfsLoaders.ANTI_RADIATION_BLOCK, {})
+	var munition_id := String(block.get("munition_id", ""))
+	_check(munitions.has(munition_id), "Anti-radiation munition '%s' is not in red_munitions.json" % munition_id)
+	if not munitions.has(munition_id):
+		return
+	var munition: IjfsMunition = munitions[munition_id]
+	_check(munition.inventory_remaining == 192, "Anti-radiation stock expected 192, got %d" % munition.inventory_remaining)
+	_check(munition.rounds_per_engagement_default == int(block["missiles_per_salvo"]),
+		"Anti-radiation rounds_per_engagement_default must equal missiles_per_salvo")
+	_check(munition.inventory_remaining % int(block["missiles_per_salvo"]) == 0,
+		"Anti-radiation stock must be a whole number of salvos")
+	for pairing in pairings:
+		_check(pairing.munition_id != munition_id,
+			"Anti-radiation munition must have no pairings; found '%s'" % pairing.pairing_id)
+	print("Anti-radiation SEAD: %d missiles, %d per salvo, %d salvos/day" % [
+		munition.inventory_remaining, int(block["missiles_per_salvo"]), int(block["salvos_per_day"])])
+
+
+## Plan 0060 R5/R10: every class an Organic munition draws packages from must actually be fielded.
+## IjfsLoaders already refuses an UNKNOWN class name; this is the other half — a class that is real
+## but absent from the OOB, which would leave the package permanently unassemblable.
+func _validate_attrition_links(scenario: Dictionary, oob: Dictionary) -> void:
+	var fielded: Dictionary = {}
+	for row in oob["red_air_oob"]:
+		fielded[String(row["class"])] = true
+	var linked := 0
+	for munition_id_value in scenario.get("red_firing_capacity", {}).keys():
+		var entry: Dictionary = scenario["red_firing_capacity"][munition_id_value]
+		var link: Variant = entry.get("attrition_link", null)
+		if link == null:
+			continue
+		linked += 1
+		for cls_value in (link as Array):
+			_check(fielded.has(String(cls_value)),
+				"'%s' links air class '%s', which the OOB does not field" % [munition_id_value, cls_value])
+	_check(linked == 2, "Expected exactly 2 attrition-linked Organic munitions, got %d" % linked)
+
+
+## Zero-reference check for the two classes plan 0060 retired. Scoped to the IJFS data + code, on
+## purpose: "Decoys" is ALSO a live ship type in data/ships.json and the anti-ship crossing config,
+## so a repository-wide token scan would fail on unrelated, correct content.
+func _validate_retired_air_classes() -> void:
+	var retired := ["\"HARM\"", "\"Decoys\""]
+	for path in ["res://data/ijfs/red_air_oob.json", "res://data/ijfs/air_classes.json",
+			"res://scripts/loaders/IjfsLoaders.gd", "res://scripts/interleaved/IjfsEngine.gd"]:
+		var file := FileAccess.open(path, FileAccess.READ)
+		if file == null:
+			_fail("Could not open %s for the retired-class scan" % path)
+			continue
+		var text := file.get_as_text()
+		for token in retired:
+			_check(not text.contains(token), "%s still references the retired air class %s" % [path, token])
+	print("Retired air classes (HARM / Decoys): zero references in IJFS data and code")
 
 
 func _validate_target_expansion(raw: Dictionary, targets: Array[IjfsTarget]) -> void:

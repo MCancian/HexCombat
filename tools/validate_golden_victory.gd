@@ -33,9 +33,13 @@ const MAX_TURNS := 40
 # longer ghost-lands drowned BNs of a partially-landed brigade (the census counted
 # get_battalion_count - at_sea, and drowned BNs had left at_sea but not the roster). China's count
 # drops; Taiwan is unchanged (Green never crosses). Was china=25.
+# Re-baselined 2026-08-01 for plan 0060 stage 1 (USER rulings R9/R11/R1): the reusable air OOB drops
+# 584 -> 498 and the prelanding warmup becomes a missile-only standoff campaign, so Red flies ~26%
+# fewer warmup strikes and the pre-invasion maneuver-casualty writeback lands differently.
+# Was china=12 / taiwan=76.
 const EXPECTED_GAME_OVER := false
-const EXPECTED_CHINA := 12
-const EXPECTED_TAIWAN := 76
+const EXPECTED_CHINA := 11
+const EXPECTED_TAIWAN := 77
 
 var _failures: Array[String] = []
 var GameData: Node = null

@@ -44,7 +44,12 @@ const TARGET_HEX := GoldenScript.TARGET_HEX
 # against the attacker. Direction is the expected one: Red is the side with off-map pools, Green has
 # none, so removing not-ashore strength can only make the Red attack worse.
 # Was "casualties=5, feba=-0.72".
-const EXPECTED_COMBAT_FINGERPRINT := "casualties=3, feba=-2.66"
+# Re-baselined 2026-08-01 for plan 0060 stage 1 (USER rulings R9/R11/R1): Red's reusable air OOB drops
+# 584 -> 498 (J-16D 48 -> 10, the 48 anti-radiation pseudo-airframes become a munition, Decoys are
+# renamed Attack UCAV at the same strength) and the prelanding warmup becomes a STANDOFF campaign that
+# flies no aircraft at all. Both move the IJFS draw sequence and the warmup's maneuver-casualty
+# writeback, so the scripted fight starts from a different ROC laydown. Was "casualties=3, feba=-2.66".
+const EXPECTED_COMBAT_FINGERPRINT := "casualties=4, feba=-3.00"
 
 var _failures: Array[String] = []
 var GameData: Node = null
