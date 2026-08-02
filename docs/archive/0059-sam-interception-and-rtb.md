@@ -1,17 +1,19 @@
 ---
 title: "0059: Make Red's air inventory readable, then let SAM interception drive aircraft off rather than only kill them"
-status: "In progress"
+status: "Shipped"
 created: "2026-08-01"
 updated: "2026-08-01"
 ---
 
 # Plan 0059: readable air inventory (step 1), SAM interception and return-to-base (step 2)
 
-**Step 1 shipped in `f7fb1d0`. Step 2 is superseded and folded into plan 0060's revised
-R5/R6/R7/R8/R12 mechanic.** Do not implement the historical SAM/three-source RTB design below:
-the follow-up USER call makes MANPADS the only abort source, only for four-aircraft manned packages
-striking Maneuver Units; R10's SAM return fire remains attrition-only. Plan 0060 also adds
-`sead_assigned_today` as a separate availability ledger. This plan closes when 0060 ships.
+**SHIPPED 2026-08-01. Step 1 shipped in `f7fb1d0`; step 2 shipped inside plan 0060 stage 3.**
+`rtb_today` finally has a runtime writer — `IjfsTransitions.book_rtb`, called when MANPADS aborts a
+four-airframe manned package striking a Maneuver Unit. Everything below about a THREE-SOURCE abort
+design is historical: the follow-up USER call made MANPADS the only abort source, and R10's SAM
+return fire remains attrition-only. Plan 0060 also added `sead_assigned_today` as a second
+availability ledger. Facts: `docs/systems/ijfs/ijfs.md` §9,
+`tools/mutation_authority_manifest.json`, `docs/archive/0060-air-attrition-before-the-strike.md`.
 
 ## Preflight (2026-08-01) — four claims in the first draft of this plan are already stale
 

@@ -18,10 +18,14 @@ extends RefCounted
 
 const SAM_CATEGORIES := ["Moveable SAMs", "Static SAMs", "Mobile SAMs"]
 const SUPPRESSION_FACTOR := 0.4
-const SEAD_RETURN_FIRE_FACTOR := 0.02
 const FREE_SHOT_FACTOR := 0.05
 const WVR_FACTOR := 0.1
 const RCS_FACTOR := 0.05
+
+## Scenario knob holding the fitted per-airframe SAM return-fire factor (plan 0060 R10):
+## `p_loss = factor x sam_score x role_exposure x rcs_survival`. Absent = 0.0 = SAMs never shoot
+## back, which is a legitimate configuration and not a silent default; the shipped scenario sets it.
+const SAM_RETURN_FIRE_KNOB := "sam_package_return_fire_factor"
 
 
 ## One SAM target's engagement: destroy roll, then a suppression roll only if it survives
@@ -62,36 +66,91 @@ static func engage_sam_target(target: IjfsTarget, effective_power: float, dice: 
 	}
 
 
-## Surviving unsuppressed SAMs shoot back: one Bernoulli draw per alive airframe, per squadron in
-## force order (draw order is the port's contract). Mutates squadron alive/losses_today.
-static func sead_return_fire(
-		squadron_force: Variant, profile: IjfsAttritionProfile, targets: Array[IjfsTarget], dice: Dice) -> Array:
-	if squadron_force == null:
-		return []
-	var squadrons: Array = squadron_force
-	var contest_log: Array = []
-	var surviving_sam_score := 0
+## R10 (USER ruling 2026-08-01): a SAM may only attrit an aircraft that actually entered its
+## envelope. This replaced a POOLED force tax that drew once per alive airframe in the whole OOB —
+## `loss_rate = surviving_sam_score * 0.02` applied to every squadron, including aircraft parked
+## outside any engagement. Losses now scale with real SAM-package contacts and are bounded by the
+## exposed package's four actual members.
+##
+## Geography: a strike package is engaged only by SAMs in ITS TO; the day's SEAD package carries
+## `to_number` -1 and is engaged island-wide, because suppressing the network is not a local errand.
+## SAMs fire in stable target-id order and stop once the package is empty.
+##
+## One draw per engaging SAM, doing two jobs exactly as the MANPADS engagement does: `u * N` picks the
+## candidate and the fractional remainder is that candidate's hit roll. A second victim draw would be
+## a second place for draw order to drift, and R10 rules it out for that reason.
+static func resolve_package_return_fire(
+	package: IjfsAirPackage, state: IjfsDailyState, profile: IjfsAttritionProfile, dice: Dice
+) -> Array:
+	var log: Array = []
+	var factor := float(state.scenario.get(SAM_RETURN_FIRE_KNOB, 0.0))
+	if factor <= 0.0 or package.is_empty():
+		return log
+	for target in _engaging_sams(state.targets, package):
+		if package.is_empty():
+			break
+		log.append(_engage_package_member(target, package, profile, factor, dice))
+	return log
+
+
+## One SAM's shot at one package. Mutates the package (a hit removes a member) and the squadron that
+## loses the airframe; returns the ledger row either way, because a miss is a contact that happened.
+static func _engage_package_member(
+	target: IjfsTarget, package: IjfsAirPackage, profile: IjfsAttritionProfile,
+	factor: float, dice: Dice
+) -> Dictionary:
+	var members_before := package.size()
+	var draw := dice.randf()
+	var scaled := draw * float(members_before)
+	var candidate := mini(int(floor(scaled)), members_before - 1)
+	var roll := clampf(scaled - float(candidate), 0.0, 1.0)
+	var victim: IjfsSquadron = package.members[candidate]
+	var score := maxi(1, target.sam_score)
+	# R10 requires this band to be asserted in [0, 1], not merely clamped into it. The difference
+	# matters: `IjfsAttritionProfile.p_loss` clamps, so a factor set too high would SATURATE — every
+	# Patriot killing an airframe with certainty — and the sam_score gradient the formula exists to
+	# express would silently stop meaning anything. The assert is what makes a mis-set knob loud.
+	var raw := factor * float(score) * profile.role_exposure(victim.role) * profile.rcs_survival(victim.aircraft_class)
+	assert(raw <= 1.0,
+		"SAM return-fire p_loss %f exceeds 1.0 for score %d vs %s — %s is too high to keep the sam_score gradient meaningful" % [
+			raw, score, victim.aircraft_class, SAM_RETURN_FIRE_KNOB])
+	var p_loss := profile.p_loss(factor * float(score), victim.aircraft_class, victim.role)
+	var hit := roll <= p_loss
+	if hit:
+		IjfsTransitions.apply_squadron_losses(package.remove_member(candidate), 1)
+	return {
+		"target_id": target.target_id,
+		"to_number": int(target.metadata.get("to_number", -1)),
+		"sam_score": score,
+		"package_kind": package.kind,
+		"package_id": package.package_id,
+		"munition_id": package.munition_id if package.munition_id != "" else null,
+		"members_before": members_before,
+		"members_after": package.size(),
+		"victim_squadron_id": victim.squadron_id if hit else null,
+		"victim_class": victim.aircraft_class if hit else null,
+		"p_loss": p_loss,
+		"roll": roll,
+		"losses": 1 if hit else 0,
+		"source": "sam_return_fire",
+	}
+
+
+## The SAMs entitled to shoot at this package: alive, unsuppressed, and — for a STRIKE package — in
+## the struck target's theatre. A strike against a target in no theatre meets no SAM at all, which is
+## a different thing from the SEAD package: that one is engaged island-wide because suppressing the
+## network is not a local errand. The two cases are told apart by `kind`, never by the TO sentinel.
+static func _engaging_sams(targets: Array[IjfsTarget], package: IjfsAirPackage) -> Array[IjfsTarget]:
+	var engaging: Array[IjfsTarget] = []
+	var island_wide := package.kind == IjfsAirPackage.SEAD
 	for target in targets:
-		if target.category in SAM_CATEGORIES and not target.destroyed and not target.suppressed:
-			surviving_sam_score += target.sam_score if target.sam_score != 0 else 0
-	if surviving_sam_score <= 0:
-		return contest_log
-	var loss_rate := clampf(float(surviving_sam_score) * SEAD_RETURN_FIRE_FACTOR, 0.0, 1.0)
-	for sq: IjfsSquadron in squadrons:
-		if sq.alive <= 0:
+		if not (target.category in SAM_CATEGORIES) or target.destroyed or target.suppressed:
 			continue
-		var sq_loss_rate := profile.p_loss(loss_rate, sq.aircraft_class, sq.role)
-		var losses := _bernoulli_count(sq.alive, sq_loss_rate, dice)
-		if losses > 0:
-			IjfsTransitions.apply_squadron_losses(sq, losses)
-			contest_log.append({
-				"squadron_id": sq.squadron_id,
-				"aircraft_class": sq.aircraft_class,
-				"losses": losses,
-				"p_loss": sq_loss_rate,
-				"source": "sead_return_fire",
-			})
-	return contest_log
+		if not island_wide and int(target.metadata.get("to_number", IjfsAirPackage.NO_THEATRE)) != package.to_number:
+			continue
+		engaging.append(target)
+	engaging.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id < b.target_id)
+	return engaging
 
 
 static func apply_post_phase_2_free_shot(

@@ -50,9 +50,12 @@ const MAX_TURNS := 40
 # — expendable anti-radiation salvos, then weighted IADS health, then an aircraft assignment whose
 # effect is the assigned package's rather than the whole air force's. R3 explicitly permits this to
 # change which SAMs survive turn 2. Was china=16 / taiwan=103.
+# Re-baselined 2026-08-01 for plan 0060 stage 5 (USER ruling R10): SAM return fire became
+# package-local and geographically explicit, all 78 SAM instances were deployed by TO (which changed
+# their stable target ids), and the two fitted attrition factors were set. Was china=16 / taiwan=102.
 const EXPECTED_GAME_OVER := false
 const EXPECTED_CHINA := 16
-const EXPECTED_TAIWAN := 102
+const EXPECTED_TAIWAN := 101
 
 var _failures: Array[String] = []
 var GameData: Node = null

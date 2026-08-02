@@ -18,12 +18,19 @@ via `python3 tools/run_sweep.py --spec tools/sweeps/crbm_maneuver.json` — ~38%
 lethality lever, synthesized into a strike modifier. Both synthesized by `IjfsLoaders`
 (`apply_crbm_maneuver_*`), wired in `IjfsStateBuilder.build`. Detail: `docs/systems/ijfs/ijfs.md`
 §4 Strike.
-**MANPADS layer (USER design call — TIV-oracle divergence):** the ~2,500 Stingers are
-per-TO container bins (category `MANPADS`, excluded from SEAD/AD-health) that intercept
-low-altitude strikes (UAV/OWA/strike-aircraft munitions; ballistic/cruise immune) and contest
-SEAD/strike squadrons island-wide, deteriorating via usage, bombardment, and TO ground losses
-(`IjfsManpads.gd`; spec in `docs/systems/ijfs/ijfs.md` → "MANPADS layer"; surfaced as
-`ijfs_summary.manpads`).
+**Air attrition is LOCAL to engagements (USER rulings, plan 0060 — TIV-oracle divergence).** Red
+fields 498 reusable airframes (420 strike / 10 dedicated SEAD / 68 ISR); anti-radiation capability is
+an expendable 192-missile munition rather than squadrons. An Organic strike is a package of four real
+airframes drawn from the linked squadrons, and only aircraft that entered an envelope can die there:
+same-TO SAMs engage the package on ingress, then MANPADS engages it if — and only if — the target is
+a Maneuver Unit. MANPADS produces one of three mutually exclusive outcomes from one draw (kill /
+abort-and-return-to-base / unaffected); the island-wide daily squadron contest it used to run is
+deleted. SEAD resolves in three stages: expendable anti-radiation salvos, weighted IADS health, then
+an aircraft assignment that costs Red strike airframes for the day. Every per-airframe loss
+probability carries role exposure (altitude/profile) as well as RCS signature, cumulatively.
+The prelanding warmup is a missile-only standoff campaign that exposes no aircraft at all.
+(`IjfsSeadStage.gd`, `IjfsPackageIngress.gd`, `IjfsManpads.gd`, `IjfsAttritionProfile.gd`; spec in
+`docs/systems/ijfs/ijfs.md` §3/§4 and → "MANPADS layer"; surfaced as `ijfs_summary.manpads`.)
 **Mutation authority (plan 0046):** persistent IJFS state has one sanctioned writer,
 `IjfsTransitions` — targets, munition magazines, squadron strength, the three `IjfsDailyState`
 containers that persist across days, and the `ijfs_state`/`_ijfs_day` handles. Zero legacy writers;

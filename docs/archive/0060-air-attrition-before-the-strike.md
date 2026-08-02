@@ -1,22 +1,70 @@
 ---
 title: "0060: Localize MANPADS and SAM air attrition to engagements"
-status: "Ready"
+status: "Shipped"
 created: "2026-08-01"
 updated: "2026-08-01"
 ---
 
 # Plan 0060: localize MANPADS and SAM air attrition to engagements
 
+**SHIPPED 2026-08-01.** All five stages implemented, each reaching a full green gate with one named
+golden cause. Facts landed in `docs/systems/ijfs/ijfs.md` (§2 file table, §3 pipeline, §4 formulas,
+§8 data files, §9 authority, and the rewritten "MANPADS layer" section),
+`docs/systems/ijfs/STATUS.md`, `tools/mutation_authority_manifest.json` and
+`tools/validate_ijfs_data.gd`. Decision changelog: `docs/DECISIONS.md` 2026-08-01. Plan 0059 step 2
+(`rtb_today`'s first runtime writer) is folded in and shipped here, so plan 0059 closes with it.
+
+## What shipped, and the ONE thing that did not
+
+Stage 1 (R9 + revised R11 + R1) · stage 2 (R2) · stage 3 (R5/R6/R7/R8/R12 + 0059 step 2) · stage 4
+(revised R11 staged SEAD) · stage 5 (R10). Golden pins moved five times, each with its cause recorded
+in the validator.
+
+**CLOSURE REPORTED TO THE USER, NOT RESOLVED — R10's calibration checkpoint is unreachable.** R10
+asks for "about 10% of the final 498-airframe OOB (~50 losses/day) against an intact IADS" and tells
+the implementer to report a closure rather than force a fit. Measured, 6 seeds x 6 real turns through
+`GameState.play_turn`:
+
+| `sam_package_return_fire_factor` | turn-2 SAM kills | note |
+|---|---|---|
+| 0.02 | 0.8 | |
+| 0.17 | 3.2 | **shipped** — the largest value keeping `p_loss` a real probability for every SAM/airframe pair |
+| 0.20 | 3.2 | |
+| 1.00 | 7.0 | every contact killing with near-certainty |
+
+**The ceiling is ~7.5 losses on the first defended day, roughly 7x short of the checkpoint, and it is
+STRUCTURAL rather than a knob being too low.** Three ruled constraints multiply:
+
+1. R10 requires return fire to run only after the complete destroy/suppress pass. R11's staged SEAD
+   leaves ~8.7 of 78 SAMs alive by then, so almost nothing is left to shoot back.
+2. Each surviving SAM gets ONE roll per package and kills at most one airframe.
+3. Most strike targets sit in no theatre at all, so no SAM can reach those packages.
+
+The same closure applies to MANPADS: only ~6 eligible Maneuver-Unit package engagements exist per
+turn (`strike_aircraft_medium` is capacity-limited to 7 packages/day), so at the shipped
+`manpads_attrition_factor` 0.4 it produces ~1.5 kills/turn against the deleted island-wide contest's
+15.6 per campaign. Widening the scope or allowing multiple kills per engagement would close the gap
+and is exactly what R5 forbids.
+
+**The USER's call, not the implementer's.** The reachable levers are all design changes: engage
+return fire BEFORE the SEAD pass (contradicts R10), let a SAM engage more than one package member,
+raise the anti-radiation and aircraft-SEAD effect so fewer SAMs die on the first defended day, or
+accept that a 498-airframe force loses ~14 airframes per campaign rather than ~50 per day.
+
+## Shipped values
+
+| Knob | Value | Why |
+|---|---|---|
+| `manpads_attrition_factor` | 0.4 | keeps `p_kill + p_abort` well inside 1 for every class |
+| `sam_package_return_fire_factor` | 0.17 | the largest value keeping `factor x sam_score x role_exposure x rcs_survival <= 1` for a Patriot against the least survivable airframe — above it the `sam_score` gradient saturates and stops meaning anything, which the engagement now ASSERTS rather than clamps |
+
 ## Progress
 
-- **Ready for implementation from a clean tree.** No ruling is SHIPPED and no production/data/fixture
-  change is present. Start at stage 1 below; do not reconstruct or preserve the superseded
-  546-airframe prototype described only as historical evidence.
+- **SHIPPED.** Every stage is implemented and gated. Transitional code: none.
 - Pre-implementation review completed in two rounds. Round 1 forced the 498-airframe/anti-radiation
   inventory/package/TO redesign; round 2 reached reviewer quorum and its capacity-unit, SEAD-package,
   suppression, zero-survivor, RNG, Antelope-source, survivability-knob, and ledger findings are folded
   into the implementation contracts and final rulings below.
-- Transitional code: none. Plan 0059 step 2 is historical only and is implemented here, not separately.
 
 ## Dependencies and implementation order
 

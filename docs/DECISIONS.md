@@ -25,11 +25,22 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-08-01 — Plan 0060 SHIPPED: air attrition is local to engagements (USER rulings R1-R12,
+  agent implementation).** Red's reusable OOB is 498 airframes and anti-radiation is an expendable
+  munition; an Organic strike is a package of four real airframes; MANPADS lost both of its old
+  surfaces for one local Maneuver-Unit trigger; SEAD resolves in three stages; SAM return fire is
+  package-local and geographically explicit; role exposure stopped being dead data; and the warmup
+  became a missile-only standoff campaign. Five golden re-baselines, one per named cause. Facts:
+  `docs/systems/ijfs/ijfs.md` §2/§3/§4/§9 and → "MANPADS layer", `docs/systems/ijfs/STATUS.md`,
+  `tools/mutation_authority_manifest.json` (`rtb_today` finally has a writer; `sead_assigned_today`
+  is new). Closure reported to the USER, NOT resolved: R10's 10%-per-day calibration checkpoint is
+  unreachable by roughly 10x under the ruled geometry — see the archived plan's closeout.
+
 - **2026-08-01 — Plan 0060 final air-attrition design (USER; two plan-review rounds).** MANPADS becomes
   local to four-aircraft manned Maneuver-Unit strike packages; SAM return fire becomes package-local;
   expendable anti-radiation salvos precede a weighted-health aircraft-SEAD assignment; and the reusable
   baseline becomes 498 with a real Attack UCAV pool. No behavior shipped in this planning commit.
-  Implementation specification: `docs/plans/0060-air-attrition-before-the-strike.md` R1–R12.
+  Implementation specification: `docs/archive/0060-air-attrition-before-the-strike.md` R1–R12.
 
 - **2026-08-01 — Plan 0059 step 1 shipped: Red's air order of battle reaches the turn record (agent,
   reviewed 2-of-3).** The `air_oob_after` ledger was built by `IjfsEngine` and discarded at every hop;
@@ -43,7 +54,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   mutate record state through it. **Three comments and the plan claimed a wiped-out force serializes as
   `squadrons: []`; that is false** — attrition only decrements, so it is rows with `alive: 0`. No golden
   movement, no new RNG; the fixture grew 281 lines with 0 deletions. Facts:
-  `docs/plans/0059-sam-interception-and-rtb.md` (step 1 checklist + both review rounds),
+  `docs/archive/0059-sam-interception-and-rtb.md` (step 1 checklist + both review rounds),
   `scripts/model/GameStateData.gd` (the lifecycle rules), `tools/mutation_authority_manifest.json`.
 
 - **2026-08-01 — The three decided backlog items are implemented; the air OOB ledger is v4 (agent).**
@@ -70,7 +81,7 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   or FEBA. And `losses_today` does not corrupt the daily summary — `red_air_losses` is summed fresh
   from three logs that clear every day. Corrections are recorded in the items themselves, since a
   backlog entry is what a future agent acts on. Facts: `docs/plans/BACKLOG.md` (all four items),
-  `docs/plans/0059-sam-interception-and-rtb.md` (the RTB mechanic and its four open design calls).
+  `docs/archive/0059-sam-interception-and-rtb.md` (the RTB mechanic and its four open design calls).
 
 - **2026-08-01 — `docs/plans/BACKLOG.md` triaged: the index grep undercounted, and 6 items were notes
   wearing checkboxes (agent).** The stated read budget claimed `grep '^- \[ \]'` lists every open item;

@@ -13,10 +13,17 @@ fires) and ground-casualty accumulation (open half).
 
 | HexCombat file | Role | TIV oracle counterpart |
 |---|---|---|
-| `scripts/interleaved/IjfsEngine.gd` | Daily orchestration (6-phase pipeline), run context, ledgers, continuity | `run_daily_ijfs.py`, `run_context.py`, `logging_utils.py` |
+| `scripts/interleaved/IjfsEngine.gd` | Daily orchestration: the ORDER of a day, run context, continuity | `run_daily_ijfs.py`, `run_context.py` |
+| `scripts/calc/IjfsLedgers.gd` | The day's summary and the ledger bundle (plan 0060) | `logging_utils.py` |
+| `scripts/calc/IjfsStrikePhase.gd` | One strike pass, both times it runs: selection, budget, package, strike-log rows (plan 0060) | part of `run_daily_ijfs.py` |
+| `scripts/calc/IjfsPackageIngress.gd` | Assembles a four-airframe Organic package and flies it in past SAMs and MANPADS (plan 0060 R8) | — (HexCombat divergence) |
+| `scripts/calc/IjfsAttritionProfile.gd` | Per-airframe survivability: RCS signature x role exposure, shared by every path that can kill an aircraft (plan 0060 R2) | — |
+| `scripts/interleaved/IjfsSeadStage.gd` | SEAD in three stages: anti-radiation salvos, weighted IADS health, aircraft assignment (plan 0060 R11) | — (HexCombat divergence) |
+| `scripts/model/ijfs/IjfsAirPackage.gd` | The airframes flying one strike, or assigned to the day's SEAD | — |
+| `scripts/model/ijfs/IjfsStrikeContext.gd` | One strike's day/phase/doctrine identity plus its package survivor fraction | — |
 | `scripts/interleaved/IjfsDetection.gd` | Satellite (phase1) + aircraft (phase2) ISR detection | `detection.py`, `isr_sources.py`, `antiship_exposure.py`, `math_utils.py` |
 | `scripts/interleaved/IjfsTargeting.gd` | Target filtering, pairing matching, doctrine priority, munition filter, exquisite intel | `targeting.py` |
-| `scripts/interleaved/IjfsEngagement.gd` | SEAD engagement + return-fire (contest) + post-phase-2 free shot | `engagement.py` |
+| `scripts/interleaved/IjfsEngagement.gd` | One SAM being engaged; SAMs shooting back at a package; the post-phase-2 free shot | `engagement.py` |
 | `scripts/interleaved/IjfsStrike.gd` | Strike probability (modifier system) and hit resolution | `strike_probability.py`, `strike_resolution.py` |
 | `scripts/calc/IjfsFiringCapacity.gd` | `FiringCapacityBudget` (inorganic daily sortie cap) + `OrganicStrikeBudget` (strike-aircraft scaled) | `firing_capacity.py` |
 | `scripts/calc/IjfsAdHealth.gd` | Taiwan AD health: per-category alive+unsuppressed fraction, SAM×radar effective health | `ad_health.py` |
@@ -43,16 +50,20 @@ in `IjfsEngine.run_daily`'s header comment — read it for the authoritative dra
 4. **Pre-AD strike phase**: iterate `targets_to_attack`, select munition via doctrine, resolve
    strike, consume firing capacity
 5. **AD health snapshot 2** (`taiwan_ad_health_after_missile_phase`)
-6. **SEAD engagement**: resolve SAM destruction/suppression + return-fire contest
+6. **SEAD (three stages, on the day's air-engagement substream)**: expendable anti-radiation salvos
+   against the richest active emitters -> weighted IADS health -> aircraft assignment and its
+   destroy/suppress pass. Then, only once that pass is complete, per-SAM return fire against the
+   assigned package.
 7. **AD health snapshot 3** (`taiwan_ad_health_after_sead`)
 8. **Aircraft detection (phase 2)**: ISR score = non-air sources + alive ISR aircraft ISR value /
    reference, clamped
-9. **Post-AD strike phase**: repeat targeting with organic (strike-aircraft) budget added
+9. **Post-AD strike phase**: repeat targeting with the organic (strike-aircraft) budget added. Each
+   Organic strike assembles a four-airframe package, which same-TO SAMs and then MANPADS engage on
+   ingress before it delivers at `survivors / package_size` effect
 10. **Append final skips**: targets not attacked get a skip-log entry
 11. **AD health snapshot 4** (`taiwan_ad_health_after`)
-12. **MANPADS squadron contest**
-13. **Free shot**: remaining SAM health inflicts post-phase-2 attrition
-14. **Summarize + build ledgers**
+12. **Free shot**: remaining SAM health inflicts post-phase-2 attrition
+13. **Summarize + build ledgers**
 
 ## 4. Detection / Targeting / Engagement / Strike — Key Formulas
 
@@ -95,13 +106,27 @@ in `IjfsEngine.run_daily`'s header comment — read it for the authoritative dra
 
 ### Engagement / SEAD (`IjfsEngagement.gd`)
 
-- **SEAD power**: `total_sead_eff * (1 + avg_wvr * 0.1) * (1 - avg_rcs * 0.05)`
 - **SAM destroy**: `p_destroy = clamp(effective_power / (effective_power + sam_score), 0, 1)`
 - **SAM suppress** (if not destroyed): `p_suppress = p_destroy * 0.4`
-- **Return fire**: `loss_rate = clamp(surviving_sam_score * 0.02, 0, 1)` per squadron with RCS
-  survival mod `max(0.2, 1 + rcs * 0.1)`
-- **Free shot** (post-phase-2): `loss_rate = clamp(raw_sam_health * 0.05, 0, 1)` with same RCS
-  survival mod
+- **Anti-radiation salvo power** (`IjfsSeadStage` stage A): a flat `salvo_effective_power` of 4,
+  against up to `salvos_per_day` active emitters in descending `sam_score`. It may home on an
+  undetected emitter — the target signal is the emission.
+- **Weighted IADS health** (stage B): `remaining_unsuppressed_sam_score / initial_sam_score` over
+  every SAM instance. Weighted by capability, not by instance count.
+- **Aircraft SEAD power** (stage C): `summed_sead_eff * (1 + avg_wvr * 0.1) * (1 - avg_rcs * 0.05)`
+  over the ASSIGNED package only — dedicated airframes at their class `sead_eff`, ordinary strike
+  aircraft at `ordinary_aircraft_sead_eff`. Multiplied by `sead_undetected_engagement` against
+  emitters with `detected_this_turn == false`.
+- **SAM return fire** (`resolve_package_return_fire`): one draw per surviving unsuppressed SAM
+  against the exposed package; `u * N` picks the candidate and its fractional remainder is the hit
+  roll. `p_loss = sam_package_return_fire_factor * sam_score * role_exposure * rcs_survival`,
+  ASSERTED in [0, 1] rather than merely clamped, so a factor that would saturate the strongest SAMs
+  fails loud instead of flattening the `sam_score` gradient.
+- **Free shot** (post-phase-2): `loss_rate = clamp(raw_sam_health * 0.05, 0, 1)`, then the shared
+  per-airframe modifiers.
+- **Per-airframe modifiers** (`IjfsAttritionProfile`, every attrition path): role exposure
+  (`isr 0.7 / sead 1.0 / strike 1.2`) x RCS survival `max(0.2, 1 + rcs * 0.1)`. CUMULATIVE — signature
+  and flight profile are different survival advantages.
 
 ### Strike (`IjfsStrike.gd`)
 
@@ -189,7 +214,7 @@ these to reduce `system.quantity` and `fire_pct`.
 | `antiship_destroyed_by_type` | Cumulative `target.destroyed` on Anti-Ship Systems targets | D3 `AntishipResolver.resolve`: reduces system quantity |
 | `antiship_suppressed_by_type` | Cumulative `target.suppressed` on Anti-Ship Systems targets | D3 `AntishipResolver.resolve`: reduces fire percentage proportional to suppressed/available |
 | `maneuver_casualties` | Strike log entries for "Maneuver Units" with `destroyed = true` (carry `brigade_id`/`battalion_id`/`unit_type` from target metadata) | **CLOSED (D4-H)** — `ForceTransitions.apply_battalion_casualties` (called by `FiresPhases.apply_ijfs_maneuver_casualties`) decrements the struck battalions' `qty` in the OOB before ground combat |
-| `sam_destroyed` / `sam_suppressed` | Engagement log SEAD outcomes | Summary only |
+| `sam_destroyed` / `sam_suppressed` | Engagement log SEAD outcomes, both stages (each row carries its `stage`) | Summary only |
 
 Anti-ship writeback keys use `AntishipCalculator.encode_key(to_number, type_id)` —
 container-level targets carry `systems_represented` in metadata, so destroying one bin removes its
@@ -202,9 +227,9 @@ whole count from the firing plan.
 | `data/ijfs/targets_master.json` | Top-level `metadata` + `targets[]` array of target rows with `target_id, category, subcategory, quantity, mobility, detectability_*` | 2489 | `IjfsLoaders.load_targets` |
 | `data/ijfs/red_munitions.json` | `metadata` + `munitions[]` with `munition_id, category, inventory_remaining_default, rounds_per_engagement_default` | 453 | `IjfsLoaders.load_munitions` |
 | `data/ijfs/munition_target_pairings.json` | `metadata, target_effect_profiles[], pairings[]` — 52 profiles, 8 munitions, 333 pairings with `probability_destroyed, rounds_expended_per_engagement` | 10183 | `IjfsLoaders.load_pairings` |
-| `data/ijfs/ijfs_scenario.json` | `schema_version: 1, china_isr_pools, detection_model, taiwan_air_defense_health, prelanding, red_firing_capacity, isr_sources, target_release, strike_probability_modifiers, targeting_doctrine` | 566 | `IjfsLoaders.load_scenario` |
-| `data/ijfs/red_air_oob.json` | `model_version, red_air_oob[]` — 11 rows with class/role/squadrons/aircraft_per_sqn | 16 | `IjfsLoaders.load_oob` |
-| `data/ijfs/air_classes.json` | `model_version, reference_isr_sum, classes{}` — 11 classes with `kind, rcs, wvr, isr_value, sead_eff` | 17 | `IjfsLoaders.load_air_classes` |
+| `data/ijfs/ijfs_scenario.json` | `schema_version: 1, china_isr_pools, detection_model, taiwan_air_defense_health, prelanding, red_firing_capacity, red_anti_radiation_sead, red_sead_assignment, isr_sources, target_release, strike_probability_modifiers, targeting_doctrine` | 574 | `IjfsLoaders.load_scenario` |
+| `data/ijfs/red_air_oob.json` | `model_version, red_air_oob[]` — 10 rows with class/role/squadrons/aircraft_per_sqn. **498 airframes: 420 strike / 10 dedicated SEAD / 68 ISR** (plan 0060 R9/R11), pinned by `tools/validate_ijfs_data.gd` because every plan-0060 calibration is fitted against exactly this force | 15 | `IjfsLoaders.load_oob` |
+| `data/ijfs/air_classes.json` | `model_version, reference_isr_sum, classes{}` — 10 classes with `kind, rcs, wvr, isr_value, sead_eff` | 16 | `IjfsLoaders.load_air_classes` |
 | `data/ijfs/sam_capabilities.json` | `model_version, fallback_by_category, sam_score_by_subcategory` | 17 | `IjfsLoaders.load_sam_capabilities` |
 | `data/ijfs/grouped_targets.json` | `metadata, groups[]` — mobile SAM relocation grouping | 104 | Used by validation scripts |
 
@@ -229,8 +254,14 @@ and of the `ijfs_state` / `_ijfs_day` handles on `GameStateData`.
 - Squadron strength stays within `0 <= alive <= initial`. Two loss counters with two lifetimes:
   `losses_today` is per-day (zeroed by `IjfsTransitions.carry_to_next_day` at the head of each day)
   and `losses_campaign` is the running total, so `alive == initial - losses_campaign`. Both ship in
-  the `air_oob_after` ledger, which is `model_version` 4 for that reason. `rtb_today` has no runtime
-  writer at all — plan 0059 is the mechanic that would give it one.
+  the `air_oob_after` ledger, which is `model_version` 4 for that reason.
+- Two per-day AVAILABILITY ledgers, both reset at the day boundary and both serialized in
+  `air_oob_after`: `rtb_today` (airframes a MANPADS abort drove home alive — its first runtime writer
+  since the field was introduced, plan 0059 step 2 folded into plan 0060 R5) and
+  `sead_assigned_today` (airframes booked to today's SEAD package, plan 0060 R11). Neither is a loss;
+  both are bounded against `IjfsSquadron.available_today()`, which is `alive - rtb_today -
+  sead_assigned_today` and is what every selection path must respect so an airframe cannot be
+  committed twice in one day.
 - MANPADS stock lives on the typed `IjfsTarget.manpads_remaining`;
   `metadata["systems_remaining"]` is a serialization mirror the authority keeps in step, because
   `metadata` is aliased live into the ledger rows.
@@ -248,11 +279,13 @@ checked, single-file writer — not a deferred one. That is also why the stage f
 
 | Stage | HexCombat file | TIV file | Fidelity |
 |---|---|---|---|
-| **Orchestrator** | `IjfsEngine.gd` | `run_daily_ijfs.py` | **1:1** — identical 6-phase pipeline, same draw-order comment block at the top of the file. Replaces file `write_outputs` with in-memory `_build_ledgers` returning dict. `summarize_run` is explicit (not delegated to logging_utils). `EXQUISITE_INTEL_CATEGORIES` changed from dict to Array of pairs to preserve insertion order (RNG draw-order guarantee). |
+| **Orchestrator** | `IjfsEngine.gd` | `run_daily_ijfs.py` | **Close** — same phase order and the same draw-order comment block at the top of the file. Replaces file `write_outputs` with `IjfsLedgers.build_ledgers` returning a dict. Since plan 0060 the engine is the ORDER of a day only: the strike passes live in `IjfsStrikePhase` and the summary/record in `IjfsLedgers`. `EXQUISITE_INTEL_CATEGORIES` changed from dict to Array of pairs to preserve insertion order (RNG draw-order guarantee). |
 | **Run context** | `IjfsEngine.make_run_context` | `run_context.IJFSRunContext.from_run_args` | **1:1** — same field logic (current_day, isr_day, z_day, x_day, is_warmup). |
 | **Detection** | `IjfsDetection.gd` | `detection.py` + `isr_sources.py` | **1:1** — every `evaluate_isr_source` curve mode (exp_decay, linear, weibull, logistic, gompertz, from_attrition, piecewise) matches; `_apply_antiship_exposure_modifier` inlined rather than importing from `antiship_exposure.py`. |
 | **Targeting** | `IjfsTargeting.gd` | `targeting.py` | **1:1** — `targets_to_attack`, `pairing_matches_target`, `select_munition_with_doctrine`, doctrine matching, `apply_exquisite_intel` all match signature-for-signature. |
-| **Engagement** | `IjfsEngagement.gd` | `engagement.py` | **1:1** — constants, SEAD power formula, p_destroy, suppression factor, return-fire, free shot all identical. Returns dict instead of tuple. |
+| **Engagement** | `IjfsEngagement.gd` | `engagement.py` | **Diverged 2026-08-01 (plan 0060 R10/R11).** `p_destroy`, the suppression factor and the free shot still match. What no longer does: SEAD orchestration moved to `IjfsSeadStage` (three stages instead of one aggregate sweep), and the oracle's POOLED return-fire force tax — one draw per alive airframe in the whole OOB — was replaced by per-SAM fire against the exposed package only. |
+| **SEAD stages** | `IjfsSeadStage.gd` | — | **HexCombat divergence** (plan 0060 R11): expendable anti-radiation salvos, weighted IADS health, then aircraft assigned in proportion to that health. No oracle counterpart. |
+| **Air packages** | `IjfsAirPackage.gd`, `IjfsPackageIngress.gd` | — | **HexCombat divergence** (plan 0060 R8): an Organic strike is four real airframes drawn from real squadrons, so attrition is local and losses land on the squadron that supplied the airframe. No oracle counterpart. |
 | **Strike Pk** | `IjfsStrike.gd` | `strike_probability.py` | modifier matching, `probability_context`, `evaluate_strike_probability` match. The TIV `_legacy_cap_probability` / `mobile_target_destroy_caps` path was dropped 2026-07-17 (never consumed once the scenario carries `strike_probability_modifiers`; see DECISIONS). |
 | **Strike resolution** | `IjfsStrike.resolve_strike` | `strike_resolution.py` | **1:1** — inventory decrement, destruction roll, suppression roll, log shape identical. |
 | **Firing capacity** | `IjfsFiringCapacity.gd` | `firing_capacity.py` | **1:1** — `FiringCapacityBudget` and `OrganicStrikeBudget` logic matches (floor, platform-kind health ratio). |
@@ -303,18 +336,41 @@ return fire).
 `IjfsEngagement.SAM_CATEGORIES` and `IjfsAdHealth.AD_CATEGORIES`: SEAD cannot hunt passive-IR
 shoulder launchers. Instead (`scripts/interleaved/IjfsManpads.gd`, wired in `IjfsEngine.run_daily`):
 
-1. **Strike interception** — each about-to-execute strike whose munition has
-   `manpads_vulnerability > 0` (`red_munitions.json`: attack UAV 1.0, OWA drone 1.0, strike
-   aircraft 0.4; ballistic/cruise 0 — they fly above MANPADS) rolls interception against the
-   ready launchers in the TARGET's TO before its own strike rolls: `p = threat × 0.15 × vuln`,
-   `threat = clamp(ready/500)` (saturating — coverage, not headcount). An intercepted strike
-   spends its round and delivers nothing (`intercepted_by_manpads` in the strike log).
-2. **Squadron contest** — SEAD + strike squadrons (ISR flies high) take island-wide per-aircraft
-   bernoulli losses after the post-AD strike phase (`p = threat × 0.01 × rcs_survival`), folded
-   into `red_air_losses` (`source: "manpads"` in `manpads_contest_log`); gated by
-   `ad_attrition_enabled` like the SAM layers.
-3. **Deterioration** — three drains: usage (3 missiles per interception attempt, 1 per contested
-   aircraft, lowest `target_id` bins first), bombardment (bins stay strikeable through the normal
+1. **Package engagement** (plan 0060 R5/R6/R12, USER rulings 2026-08-01) — the ONE surface. A
+   MANPADS engagement exists only when a four-airframe MANNED package strikes a target whose
+   category is exactly `Maneuver Units`, in a TO that still holds ready launchers, flying a munition
+   its capacity row marks `manpads_eligible`. In practice that is `strike_aircraft_medium` alone:
+   Attack UCAV packages are marked ineligible, and `owa_drone_small` has no Maneuver-Unit pairing.
+   MANPADS therefore protects no SAM, radar, infrastructure or anti-ship target, and never touches
+   ISR, SEAD or unmanned strike aircraft.
+
+   The engagement consumes EXACTLY ONE draw and produces exactly one outcome. `u * N` picks the
+   candidate from the surviving package and the fractional remainder of the same product is that
+   candidate's outcome roll, clamped at the inclusive-1.0 boundary:
+   - **killed** — `p = threat x manpads_attrition_factor x vuln x role_exposure x rcs_survival`;
+     one member dies and the survivors press at reduced effect;
+   - **aborted** — `p = threat x 0.15 x vuln` (no per-airframe modifier: being driven off is about
+     the launcher's presence, not the airframe's signature); every survivor books `rtb_today` and
+     today's strike is denied;
+   - **unaffected** — the package presses at full strength.
+
+   Kill and abort are mutually exclusive, so attrition is not a rider on a successful abort, and
+   their bands are asserted to sum to at most 1.
+
+   **What this replaced.** Until 2026-08-01 MANPADS had TWO surfaces: an interception roll against
+   every low-altitude strike on any target, and an island-wide daily contest that taxed every SEAD
+   and strike squadron for being in the campaign at all. Both are deleted; `CONTESTED_ROLES` and the
+   `manpads_contest_log` ledger went with them, and `tools/validate_ijfs_data.gd` sweeps `scripts/`
+   and `tools/` to keep the ledger key at zero references.
+
+2. **Ledger** — `manpads_intercept_log` is the single MANPADS event stream, one row per engagement
+   carrying target/TO/munition, the package before and after, the outcome, attributed losses, the
+   RTB count and whether the strike executed. The summary reports `attempts` / `kills` / `aborts` /
+   `unaffected` explicitly, and keeps `interceptions = kills + aborts` as the compatibility total
+   the narrative reads.
+
+3. **Deterioration** — three drains: usage (3 missiles per engagement, whatever the outcome, lowest
+   `target_id` bins first), bombardment (bins stay strikeable through the normal
    pairing path — 6 pairings retargeted to category `MANPADS`), and ground losses
    (`IjfsResolver.sync_manpads_to_oob`: each TO's pool is capped at
    `systems_represented × alive/total` of that TO's Maneuver-Unit targets — MANPADS ride with the

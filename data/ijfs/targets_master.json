@@ -1429,7 +1429,13 @@
           "claim_supported": "4th Patriot battalion being established; NASAMS also on order"
         }
       ],
-      "notes": "Quantity of 9 represents batteries (fire units), not launchers. IISS lists 72+ M902 launchers; standard Patriot battery has ~8 launchers, implying ~9 batteries. Radar (AN/MPQ-65), launchers, and C2 should be modeled separately if desired by simulation. All elements are moveable (vehicle-mounted) but require hours-to-days for relocation. Radar emits when active (high detectability_active); silent when hiding (low). PAC-3 MSE deliveries expected by end 2025/early 2026 per recent reporting."
+      "notes": "Quantity of 9 represents batteries (fire units), not launchers. IISS lists 72+ M902 launchers; standard Patriot battery has ~8 launchers, implying ~9 batteries. Radar (AN/MPQ-65), launchers, and C2 should be modeled separately if desired by simulation. All elements are moveable (vehicle-mounted) but require hours-to-days for relocation. Radar emits when active (high detectability_active); silent when hiding (low). PAC-3 MSE deliveries expected by end 2025/early 2026 per recent reporting.",
+      "to_distribution": {
+        "2": 1,
+        "3": 4,
+        "4": 2,
+        "5": 2
+      }
     },
     {
       "target_id": "sam_002",
@@ -1486,7 +1492,13 @@
           "claim_supported": "432 TK-2 silos constructed; sufficient missiles to arm all silos"
         }
       ],
-      "notes": "Quantity of ~6 batteries is estimated from IISS ~50 launchers (standard TK-2 battery has 8 launchers). Fixed silo infrastructure exists at many sites but launchers themselves are mobile transporter-erector-launchers. Hardness set HARD due to silo infrastructure where applicable. Confidence medium given site-count uncertainty. HAWK replacement completed Dec 2022."
+      "notes": "Quantity of ~6 batteries is estimated from IISS ~50 launchers (standard TK-2 battery has 8 launchers). Fixed silo infrastructure exists at many sites but launchers themselves are mobile transporter-erector-launchers. Hardness set HARD due to silo infrastructure where applicable. Confidence medium given site-count uncertainty. HAWK replacement completed Dec 2022.",
+      "to_distribution": {
+        "2": 1,
+        "3": 3,
+        "4": 1,
+        "5": 1
+      }
     },
     {
       "target_id": "sam_003",
@@ -1536,7 +1548,13 @@
           "claim_supported": "12 batteries planned; production 2015-2026; TK-3 battery with AESA radar observed at Taitung March 2024"
         }
       ],
-      "notes": "Quantity = 6 batteries estimated (partial production run as of 2025; 12 total planned by 2026). Interception altitude ~24-30 km. AESA fire control radar confirmed in public imagery. TK-4 (Tien Kung IV / Strong Bow) entering production 2025 per reporting but not yet in IISS 2025 inventory."
+      "notes": "Quantity = 6 batteries estimated (partial production run as of 2025; 12 total planned by 2026). Interception altitude ~24-30 km. AESA fire control radar confirmed in public imagery. TK-4 (Tien Kung IV / Strong Bow) entering production 2025 per reporting but not yet in IISS 2025 inventory.",
+      "to_distribution": {
+        "2": 1,
+        "3": 3,
+        "4": 1,
+        "5": 1
+      }
     },
     {
       "target_id": "sam_004",
@@ -1579,7 +1597,13 @@
           "claim_supported": "3 NASAMS batteries ordered October 2024 ($1.16B); new battalion to be formed; range 50 km; counters drones, missiles, helicopters, aircraft"
         }
       ],
-      "notes": "Not in IISS 2025 equipment list; order confirmed October 2024. Confidence medium: procurement confirmed but delivery/operational timeline uncertain. Simulation may hold as 'on order' pending confirmation of delivery."
+      "notes": "Not in IISS 2025 equipment list; order confirmed October 2024. Confidence medium: procurement confirmed but delivery/operational timeline uncertain. Simulation may hold as 'on order' pending confirmation of delivery.",
+      "to_distribution": {
+        "2": 0,
+        "3": 2,
+        "4": 1,
+        "5": 0
+      }
     },
     {
       "target_id": "sam_005",
@@ -1621,7 +1645,13 @@
           "claim_supported": "30 RIM-7M Sparrow with Skyguard; 20+ GDF-006 35mm with Skyguard"
         }
       ],
-      "notes": "Point-defense systems protecting key installations. Quantity of 4 = estimated site clusters based on 30 launchers (~8 per site). Exact siting not public. Model as site clusters per airbase if desired."
+      "notes": "Point-defense systems protecting key installations. Quantity of 4 = estimated site clusters based on 30 launchers (~8 per site). Exact siting not public. Model as site clusters per airbase if desired.",
+      "to_distribution": {
+        "2": 0,
+        "3": 2,
+        "4": 1,
+        "5": 1
+      }
     },
     {
       "target_id": "radar_001",
@@ -2142,12 +2172,11 @@
       "notes": "F-16V and P-3C are the primary air-launched anti-ship platforms. Quantity = 140 F-16V + 12 P-3C = 152 platforms potentially capable; not all will be armed with Harpoon simultaneously. Ground-based when not airborne; survivability depends on airbase hardening and dispersal. Modeled as platform category; survivability linked to airbase targets."
     },
     {
-      "target_id": "sam_mobile_antelope_to2",
+      "target_id": "sam_mobile_antelope",
       "name": "TC-1 Antelope Short-Range SAM – TO 2",
       "category": "Mobile SAMs",
       "subcategory": "Short-Range Mobile SAM – Antelope",
-      "quantity": 10,
-      "to_number": 2,
+      "quantity": 50,
       "country": "Taiwan",
       "service_or_agency": "ROC Army Air Defense",
       "location_public": {
@@ -2182,136 +2211,13 @@
           "claim_supported": "TC-1 Antelope short-range mobile SAM system in ROC Army air defense inventory"
         }
       ],
-      "notes": "TC-1 Antelope is a domestically produced short-range mobile SAM for point defense. Quantity 10 represents estimated launchers/fire units in TO 2. Highly mobile; quantity count varies by TO based on assessed deployment density."
-    },
-    {
-      "target_id": "sam_mobile_antelope_to3",
-      "name": "TC-1 Antelope Short-Range SAM – TO 3",
-      "category": "Mobile SAMs",
-      "subcategory": "Short-Range Mobile SAM – Antelope",
-      "quantity": 20,
-      "to_number": 3,
-      "country": "Taiwan",
-      "service_or_agency": "ROC Army Air Defense",
-      "location_public": {
-        "city": null,
-        "county": null,
-        "region": "Theater of Operations 3",
-        "description": "TC-1 Antelope mobile SAM system operated by ROC Army air defense units. Vehicle-mounted, towed, or man-portable configuration depending on unit. IISS 2025 lists TC-1 Antelope in ROC Army inventory."
-      },
-      "geolocation_public": {
-        "lat": null,
-        "lon": null,
-        "source": null
-      },
-      "geolocation_precision": "none",
-      "mobility": "mobile",
-      "hardness": "soft",
-      "detectability_active": "medium",
-      "detectability_hiding": "low",
-      "posture_default": "active",
-      "status_default": {
-        "destroyed": false,
-        "suppressed": false
-      },
-      "target_modeling_level": "platform_category",
-      "confidence": "medium",
-      "sources": [
-        {
-          "title": "IISS Military Balance 2025 – Taiwan entry",
-          "publisher": "IISS",
-          "url": null,
-          "date": "2025",
-          "claim_supported": "TC-1 Antelope short-range mobile SAM system in ROC Army air defense inventory"
-        }
-      ],
-      "notes": "TC-1 Antelope is a domestically produced short-range mobile SAM for point defense. Quantity 20 represents estimated launchers/fire units in TO 3. Highly mobile; quantity count varies by TO based on assessed deployment density."
-    },
-    {
-      "target_id": "sam_mobile_antelope_to4",
-      "name": "TC-1 Antelope Short-Range SAM – TO 4",
-      "category": "Mobile SAMs",
-      "subcategory": "Short-Range Mobile SAM – Antelope",
-      "quantity": 10,
-      "to_number": 4,
-      "country": "Taiwan",
-      "service_or_agency": "ROC Army Air Defense",
-      "location_public": {
-        "city": null,
-        "county": null,
-        "region": "Theater of Operations 4",
-        "description": "TC-1 Antelope mobile SAM system operated by ROC Army air defense units. Vehicle-mounted, towed, or man-portable configuration depending on unit. IISS 2025 lists TC-1 Antelope in ROC Army inventory."
-      },
-      "geolocation_public": {
-        "lat": null,
-        "lon": null,
-        "source": null
-      },
-      "geolocation_precision": "none",
-      "mobility": "mobile",
-      "hardness": "soft",
-      "detectability_active": "medium",
-      "detectability_hiding": "low",
-      "posture_default": "active",
-      "status_default": {
-        "destroyed": false,
-        "suppressed": false
-      },
-      "target_modeling_level": "platform_category",
-      "confidence": "medium",
-      "sources": [
-        {
-          "title": "IISS Military Balance 2025 – Taiwan entry",
-          "publisher": "IISS",
-          "url": null,
-          "date": "2025",
-          "claim_supported": "TC-1 Antelope short-range mobile SAM system in ROC Army air defense inventory"
-        }
-      ],
-      "notes": "TC-1 Antelope is a domestically produced short-range mobile SAM for point defense. Quantity 10 represents estimated launchers/fire units in TO 4. Highly mobile; quantity count varies by TO based on assessed deployment density."
-    },
-    {
-      "target_id": "sam_mobile_antelope_to5",
-      "name": "TC-1 Antelope Short-Range SAM – TO 5",
-      "category": "Mobile SAMs",
-      "subcategory": "Short-Range Mobile SAM – Antelope",
-      "quantity": 10,
-      "to_number": 5,
-      "country": "Taiwan",
-      "service_or_agency": "ROC Army Air Defense",
-      "location_public": {
-        "city": null,
-        "county": null,
-        "region": "Theater of Operations 5",
-        "description": "TC-1 Antelope mobile SAM system operated by ROC Army air defense units. Vehicle-mounted, towed, or man-portable configuration depending on unit. IISS 2025 lists TC-1 Antelope in ROC Army inventory."
-      },
-      "geolocation_public": {
-        "lat": null,
-        "lon": null,
-        "source": null
-      },
-      "geolocation_precision": "none",
-      "mobility": "mobile",
-      "hardness": "soft",
-      "detectability_active": "medium",
-      "detectability_hiding": "low",
-      "posture_default": "active",
-      "status_default": {
-        "destroyed": false,
-        "suppressed": false
-      },
-      "target_modeling_level": "platform_category",
-      "confidence": "medium",
-      "sources": [
-        {
-          "title": "IISS Military Balance 2025 – Taiwan entry",
-          "publisher": "IISS",
-          "url": null,
-          "date": "2025",
-          "claim_supported": "TC-1 Antelope short-range mobile SAM system in ROC Army air defense inventory"
-        }
-      ],
-      "notes": "TC-1 Antelope is a domestically produced short-range mobile SAM for point defense. Quantity 10 represents estimated launchers/fire units in TO 5. Highly mobile; quantity count varies by TO based on assessed deployment density."
+      "notes": "TC-1 Antelope is a domestically produced short-range mobile SAM for point defense. Quantity 10 represents estimated launchers/fire units in TO 2. Highly mobile; quantity count varies by TO based on assessed deployment density. Consolidated 2026-08-01 (plan 0060 R10): the four TO-named source rows became one 50-instance row with an explicit to_distribution, because keeping per-TO source ids would have made the SOURCE id the geography and the distribution a lie.",
+      "to_distribution": {
+        "2": 5,
+        "3": 25,
+        "4": 10,
+        "5": 10
+      }
     },
     {
       "target_id": "sam_mobile_stinger_to2",

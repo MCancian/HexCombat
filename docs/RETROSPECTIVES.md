@@ -27,6 +27,45 @@ entry to `docs/archive/RETROSPECTIVES_history.md`**.
 | Amphibious offload | `docs/systems/amphibious-offload/RETRO.md` |
 | Research harness | `docs/systems/research-harness/RETRO.md` |
 
+## 2026-08-01 — plan 0060: localize MANPADS and SAM air attrition to engagements   (implementer: direct)
+
+**What would you do differently (implementer):**
+- **The probe I wrote first measured a mechanic that could not fire.** Driving `IjfsEngine.run_daily`
+  directly against `targets_master.json` reported ZERO MANPADS engagements at every factor I tried,
+  and the honest reading of that would have been "the mechanic is broken". It was not: maneuver
+  targets are built from the LIVE brigade OOB by `IjfsLoaders.build_maneuver_targets`, so a probe
+  that skips `GameState.play_turn` has no Maneuver Units, and MANPADS' only trigger is a Maneuver-Unit
+  strike. **The instrument answered a different question than the one I asked it** — the exact failure
+  the plan's own Corrections section records against its predecessor, repeated one plan later. Drive
+  the real pipeline when the mechanic depends on state the real pipeline builds.
+- **The second probe silently applied no overrides at all**, and I only noticed because three
+  different factor values produced byte-identical output. `DataOverrides` takes a FLAT map keyed
+  `"path/file.json:dotted.key"`; I passed a nested dict, which matched nothing. Identical output
+  across a swept parameter is the cheapest possible tell, and it is worth looking for deliberately
+  rather than by luck — a sweep whose knob does nothing looks exactly like a knob with no effect.
+- **A ceiling measurement is what turns "the fit is low" into "the fit is impossible".** Running the
+  SAM factor up to 1.0 — every contact killing with near-certainty — produced 7.5 losses against a
+  checkpoint of ~50. That single run converted an open calibration task into a reportable structural
+  closure with a cause, which is what the plan asked for and what the USER can actually act on.
+- **`git stash push` failing on an untracked file left `&&` short-circuited and popped SOMEONE
+  ELSE'S stash**, conflicting four unrelated docs into my tree. Restoring the four paths from HEAD
+  was easy; noticing was luck. Move the file aside instead of stashing when the goal is just to keep
+  one new file out of a commit.
+- **Extracting first paid for itself immediately.** `IjfsEngine` sat at exactly its dependency
+  ceiling of 14 while this plan added three collaborators, so the extraction was forced — but doing
+  it as its OWN commit, and proving it byte-neutral against the golden pins and the LLM fixture, meant
+  every later red gate had one candidate cause instead of two.
+
+**Orchestrator triage:**
+- "Drive the real pipeline when the mechanic depends on state only it builds" → act now — this is the
+  third instance of the measurement-inherits-its-question family and is recorded here with its cause.
+- "Identical output across a swept parameter means the knob is not connected" → act now — recorded
+  here; the sweep harnesses already assert unapplied override keys, which is the mechanical version.
+- R10's 10%-per-day calibration checkpoint being unreachable → **reported to the USER, not fixed** —
+  the closure and its four possible design responses are in
+  `docs/archive/0060-air-attrition-before-the-strike.md`. Every reachable lever is a design change,
+  which is the USER's call and not the implementer's.
+
 ## 2026-07-31 — plan 0049: accounting + turn-lifecycle mutation authorities   (implementer: direct)
 
 **What would you do differently (implementer):**

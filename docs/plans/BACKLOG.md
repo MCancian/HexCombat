@@ -138,29 +138,6 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   (caught by agy-explore; two other models wrongly agreed it would). That hole is closed separately by
   `--quit-after` in `run_all_tests.py`. So this is deduplication only, worth doing when validators are
   being touched anyway, in slices of 5-6 with the gate green between. Good `opencode` delegation.
-- [ ] **The `air_oob_after` ledger reaches only the headless validator.**
-  It reaches no game record, LLM payload or fixture (found 2026-08-01 while implementing the per-day/campaign loss split; PRE-EXISTING).
-  `FiresPhases.resolve_ijfs_turn` keeps `ledgers["summary"]` on `state.last_ijfs_summary` and returns
-  the rest to its caller; the only consumer of the full ledger dict is
-  `tools/validate_headless_ijfs.gd`. So `air_oob_after` — the per-squadron order of battle, now
-  carrying both a per-day and a campaign loss count — cannot actually be READ after a turn by a player,
-  an LLM seat, or a research record. `grep air_oob_after docs/examples/*.json` is empty, which is why
-  the split needed no fixture re-baseline at all. Note the AGGREGATE is fine —
-  `red_air_losses` (this turn's total from all three sources) does reach the LLM payload and
-  `GameNarrative`; it is the per-squadron breakdown that is lost.
-  **Absorbed into [[0059-sam-interception-and-rtb]] as its step 1 (USER 2026-08-01)**, because the
-  USER wants to watch Red's fixed air inventory tick down and because RTB adds a third number to this
-  same ledger — a mechanic whose effect cannot be observed cannot be dialled. Which surface carries it
-  (LLM observation / turn record / report exporter) is an open USER call in that plan.
-- [ ] **`rtb_today` is a mechanic that was never built.**
-  Opened as plan [[0059-sam-interception-and-rtb]] (USER call 2026-08-01). The field has no runtime writer at all
-  and is reported as a constant 0 every turn. The USER's call was not to delete it: aircraft should be
-  driven off by SAM interception rather than only shot down. **Measured while opening the plan: the SAM
-  side is not involved and has to be built.** All three air-attrition paths — SEAD return fire, the
-  post-phase-2 free shot, and the island-wide MANPADS contest — are binary Bernoulli draws per alive
-  airframe landing in `apply_squadron_losses`, with no damaged, aborted or mission-killed state
-  anywhere. A SAM target has three outcomes (destroyed / suppressed / unengaged); an aircraft has two.
-  Design calls and scope are in the plan; this entry stays only until that plan ships.
 - [ ] **The `turn_result` schema is now gated on KEY PRESENCE only — the nested shapes are still unchecked.**
   Opened 2026-08-01, replacing the five-field drift item, which is FIXED. The drift
   itself is closed: `air_insertion_summary`, `mobilization_summary`, `offload_summary`, `game_over` and
@@ -283,23 +260,6 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   (one reviewer's artifact read off disk and returned verbatim by another as fake corroboration).
   Note an enumeration return is legitimately long even once the noise is stripped, so the 1–10 KB band
   needs a role-aware exception either way.
-- [x] **Mobile-SAM survivability knob folded into plan 0060.** R11 Stage C now consumes the ruled
-  `sead_undetected_engagement` scalar (default 1.0) while anti-radiation Stage A may home on active
-  emitters regardless of prior detection. R10 supplies the package-local return-fire shape the knob
-  required. Remove this completed pointer when 0060 ships.
-- [x] **SEAD allocation folded into plan 0060 — superseded specification removed.** The final USER
-  ruling is `docs/plans/0060-air-attrition-before-the-strike.md` R11: a dedicated 192-missile
-  anti-radiation inventory resolves twelve four-missile salvos/day first; weighted surviving SAM score
-  then scales a 25% strike-fleet requirement, filled by J-16Ds and 0.25-effect strike backfill. The old
-  mobile-SAM-only / generic-OWA substitution design no longer applies. Remove this completed pointer
-  when 0060 ships.
-
-## Standing limits & blocked
-
-*(No checkboxes here on purpose — see the read budget. These are not queued work. Each names the
-precondition that would move it up into the open list; without that precondition, opening a plan for
-one means scheduling an unbounded refactor or re-litigating a decision that was already made.)*
-
 - **A typed turn-resolution outcome carrying all phase reports — proposed by the tier-1 reviewer during
   plan 0059's review, and MEASURED DOWN rather than adopted (2026-08-01).** The idea: instead of each
   phase writing a report onto `GameStateData` and `GameState.play_turn` reading eleven fields back out,

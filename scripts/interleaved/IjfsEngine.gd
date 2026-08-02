@@ -147,9 +147,11 @@ static func run_daily(state: IjfsDailyState, dice: Dice, current_day: int, warmu
 	# what return fire then shoots at — SEAD costs airframes because those airframes were exposed.
 	var sead := IjfsSeadStage.resolve(state, ctx, sead_enabled)
 	state.engagement_log = sead["engagement_log"]
+	# R10 return fire runs only AFTER the whole destroy/suppress pass, so its draws cannot shift which
+	# SAMs survived it, and only against the aircraft actually assigned to SEAD.
 	if ad_attrition_enabled:
-		state.contest_log = IjfsEngagement.sead_return_fire(
-			squadron_force, ctx.attrition, state.targets, dice)
+		state.contest_log = IjfsEngagement.resolve_package_return_fire(
+			sead["package"], state, ctx.attrition, ctx.air_engagement_dice)
 
 	state.taiwan_ad_health_after_sead = IjfsAdHealth.compute_taiwan_ad_health(state.targets, state.scenario)
 

@@ -73,41 +73,6 @@ func test_a_missed_target_is_marked_unengaged() -> void:
 	assert_str(target.sead_result).is_equal("unengaged")
 
 
-# --- surviving SAMs shooting back ---------------------------------------------------------------
-
-func test_unsuppressed_survivors_return_fire_on_every_alive_airframe() -> void:
-	var targets: Array[IjfsTarget] = [_sam("t1", 10)]
-	var squadron := _squadron("sq1", 10)
-	var force: Array[IjfsSquadron] = [squadron]
-	# surviving_sam_score 10 -> loss_rate clamp(10 * 0.02) = 0.2; rcs 0 -> no modifier.
-	# Ten draws, one per airframe; the first two are hits.
-	var dice := ScriptedDice.new([], [], [0.1, 0.1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
-	var log := IjfsEngagement.sead_return_fire(force, _profile(), targets, dice)
-	assert_int(log.size()).is_equal(1)
-	assert_int(log[0]["losses"]).is_equal(2)
-	assert_str(log[0]["source"]).is_equal("sead_return_fire")
-	assert_int(squadron.alive).is_equal(8)
-	assert_int(squadron.losses_today).is_equal(2)
-	assert_int(dice._floats.size()).is_equal(0)
-
-
-func test_a_destroyed_or_suppressed_network_shoots_at_nothing() -> void:
-	var destroyed := _sam("t1", 10)
-	destroyed.destroyed = true
-	var suppressed := _sam("t2", 10)
-	suppressed.suppressed = true
-	var targets: Array[IjfsTarget] = [destroyed, suppressed]
-	var force: Array[IjfsSquadron] = [_squadron("sq1", 10)]
-	assert_array(IjfsEngagement.sead_return_fire(
-		force, _profile(), targets, ScriptedDice.new([], [], []))).is_empty()
-
-
-func test_null_force_returns_no_return_fire() -> void:
-	var targets: Array[IjfsTarget] = [_sam("t1", 10)]
-	assert_array(IjfsEngagement.sead_return_fire(
-		null, _profile(), targets, ScriptedDice.new([], [], []))).is_empty()
-
-
 # --- the post-phase-2 free shot -----------------------------------------------------------------
 
 func test_free_shot_attrition() -> void:

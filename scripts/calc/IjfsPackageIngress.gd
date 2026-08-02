@@ -7,7 +7,7 @@ extends RefCounted
 ## Plan 0060 R8 fixes the ORDER, and the order is the mechanic:
 ##   1. assemble the package from the linked squadrons' currently available airframes;
 ##   2. same-TO SAMs engage, one at a time in stable target-id order, each hit killing at most one
-##      member — plan 0060 R10, which needs SAMs deployed by TO and therefore lands in a later stage;
+##      member (plan 0060 R10);
 ##   3. if the target is a Maneuver Unit and at least one member survives, MANPADS takes exactly one
 ##      draw and produces exactly one outcome.
 ##
@@ -49,7 +49,7 @@ static func assemble(
 		IjfsAirPackage.STRIKE, "%s#%s#%03d" % [munition_id, strike_target.target_id, package_index], members)
 	package.munition_id = munition_id
 	package.target_id = strike_target.target_id
-	package.to_number = int(strike_target.metadata.get("to_number", -1))
+	package.to_number = int(strike_target.metadata.get("to_number", IjfsAirPackage.NO_THEATRE))
 	return package
 
 
@@ -61,6 +61,10 @@ static func fly_in(
 ) -> Dictionary:
 	if not ctx.ad_attrition_enabled:
 		return {"outcome": OUTCOME_PRESSED, "survivor_fraction": package.survivor_fraction()}
+	state.contest_log.append_array(
+		IjfsEngagement.resolve_package_return_fire(package, state, ctx.attrition, dice))
+	if package.is_empty():
+		return {"outcome": OUTCOME_DESTROYED, "survivor_fraction": 0.0}
 	var link := IjfsAirPackage.link_config(state.scenario, package.munition_id)
 	var munition: IjfsMunition = state.munitions[package.munition_id]
 	if IjfsManpads.engages(strike_target, munition, bool(link["manpads_eligible"]), state.targets):

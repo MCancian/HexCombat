@@ -124,11 +124,44 @@ static func load_targets(path: String, current_day: int = -1) -> Array[IjfsTarge
 		var row: Dictionary = row_value
 		var qty := int(row.get("quantity", 1))
 		var source_id := String(row["target_id"])
+		var theaters := _expand_to_distribution(row, qty)
 		for idx in range(1, qty + 1):
 			var target_id := source_id if qty == 1 else "%s#%03d" % [source_id, idx]
-			targets.append(_runtime_target_from_master(row, target_id, source_id, idx, current_day))
+			var target := _runtime_target_from_master(row, target_id, source_id, idx, current_day)
+			if not theaters.is_empty():
+				target.metadata["to_number"] = theaters[idx - 1]
+			targets.append(target)
 	targets.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id < b.target_id)
 	return targets
+
+
+## Plan 0060 R10: a source row may declare WHERE its instances are, as `{"<to>": count}`. Returns one
+## TO number per instance, in ascending TO order, so instance #001..#005 of a 5/25/10/10 Antelope row
+## are the TO2 ones and the ids stay stable across runs.
+##
+## Validated hard, because a distribution that does not sum to the quantity would leave some
+## instances with NO theatre — and a SAM with no TO is a SAM that defends nothing while still
+## counting toward the network's health. Empty when the row declares none, which is every non-SAM row.
+static func _expand_to_distribution(row: Dictionary, quantity: int) -> Array[int]:
+	var theaters: Array[int] = []
+	var distribution: Variant = row.get("to_distribution", null)
+	if distribution == null:
+		return theaters
+	var keys: Array = (distribution as Dictionary).keys()
+	keys.sort()
+	for key in keys:
+		var to_number := int(key)
+		if to_number <= 0:
+			_fail("TO_DISTRIBUTION_INVALID: '%s' names a non-positive TO '%s'" % [row["target_id"], key])
+		var count := int((distribution as Dictionary)[key])
+		if count < 0:
+			_fail("TO_DISTRIBUTION_INVALID: '%s' TO %d count must be >= 0" % [row["target_id"], to_number])
+		for _i in range(count):
+			theaters.append(to_number)
+	if theaters.size() != quantity:
+		_fail("TO_DISTRIBUTION_INVALID: '%s' distributes %d instance(s) but declares quantity %d" % [
+			row["target_id"], theaters.size(), quantity])
+	return theaters
 
 
 ## D3-D (decision 1-A): build IJFS anti-ship targets dynamically from the grouping-spec containers,

@@ -35,6 +35,7 @@ func _initialize() -> void:
 	_validate_anti_radiation_munition(scenario, munitions, pairings)
 	_validate_attrition_links(scenario, oob)
 	_validate_retired_air_classes()
+	_validate_sam_deployment(target_json, targets)
 
 	var sam_caps := IjfsLoaders.load_sam_capabilities(SAM_PATH)
 	IjfsLoaders.enrich_sam_scores(targets, sam_caps)
@@ -102,6 +103,43 @@ func _validate_attrition_links(scenario: Dictionary, oob: Dictionary) -> void:
 	_check(linked == 2, "Expected exactly 2 attrition-linked Organic munitions, got %d" % linked)
 
 
+## Plan 0060 R10: EVERY SAM instance carries exactly one TO, and the per-row distributions add up to
+## the USER-set theatre weights. A missing TO must never silently mean island-wide, TO0, or immune —
+## a SAM with no theatre would defend nothing while still counting toward the network's health.
+func _validate_sam_deployment(raw: Dictionary, targets: Array[IjfsTarget]) -> void:
+	for row in raw.get("targets", []):
+		if String(row.get("category", "")) not in IjfsEngagement.SAM_CATEGORIES:
+			continue
+		_check(row.has("to_distribution"), "SAM source row '%s' has no to_distribution" % row["target_id"])
+		if not row.has("to_distribution"):
+			continue
+		var declared := 0
+		for key in (row["to_distribution"] as Dictionary):
+			declared += int(row["to_distribution"][key])
+		_check(declared == int(row["quantity"]),
+			"'%s' distributes %d instance(s) but declares quantity %d" % [row["target_id"], declared, int(row["quantity"])])
+
+	var by_to: Dictionary = {}
+	var instances := 0
+	for target in targets:
+		if not (target.category in IjfsEngagement.SAM_CATEGORIES):
+			continue
+		instances += 1
+		_check(target.metadata.has("to_number"), "SAM instance %s has no to_number" % target.target_id)
+		var to_number := int(target.metadata.get("to_number", 0))
+		_check(to_number > 0, "SAM instance %s has a non-positive TO %d" % [target.target_id, to_number])
+		by_to[to_number] = int(by_to.get(to_number, 0)) + 1
+	_check(instances == 78, "SAM instance total expected 78, got %d" % instances)
+	# The deterministic split of the USER's 10 / 50 / 20 / 20 theatre weights over indivisible
+	# instances (plan 0060 R10's table).
+	var expected_by_to := {2: 8, 3: 39, 4: 16, 5: 15}
+	for to_number in expected_by_to:
+		var expected := int(expected_by_to[to_number])
+		_check(int(by_to.get(to_number, 0)) == expected,
+			"TO%d SAM count expected %d, got %d" % [to_number, expected, int(by_to.get(to_number, 0))])
+	print("SAM deployment: %d instances across TOs %s" % [instances, str(by_to)])
+
+
 ## Zero-reference check for what plan 0060 retired.
 ##
 ## The two AIR CLASSES are checked only against the IJFS data and code, on purpose: "Decoys" is ALSO
@@ -162,7 +200,10 @@ func _validate_target_expansion(raw: Dictionary, targets: Array[IjfsTarget]) -> 
 	var expected_instances := 0
 	for row in raw_targets:
 		expected_instances += int(row.get("quantity", 1))
-	_check(raw_targets.size() == 54, "Source target count expected 54, got %d" % raw_targets.size())
+	# 51 since 2026-08-01 (plan 0060 R10): the four TO-named Antelope source rows became one
+	# 50-instance row carrying an explicit to_distribution, because keeping per-TO source ids would
+	# have made the SOURCE id the geography and the distribution a lie.
+	_check(raw_targets.size() == 51, "Source target count expected 51, got %d" % raw_targets.size())
 	_check(targets.size() == expected_instances, "Expanded target count expected %d, got %d" % [expected_instances, targets.size()])
 	# 412, not the oracle's 2862: the 2,500 individual Stinger instances became 50 MANPADS bins of
 	# 50 launchers (2026-07-10 USER design call — deliberate divergence; see PLAN.md Decisions).

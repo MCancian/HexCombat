@@ -69,8 +69,8 @@ agent would need to read the plan to act, the closeout wasn't done.
 | 0047 | [Map/infrastructure mutation authority](../archive/0047-map-infrastructure-mutation-authority.md) | High — ownership, FEBA, seizure, repair | **✅ Shipped 2026-07-30** |
 | 0051 | [Destroyed coastal launchers get a last salvo away](0051-destroyed-systems-still-fire.md) | Medium (balance) | Sketch |
 | 0061 | [Model a resolution day as an explicit DAG, substream per node](0061-resolution-dag.md) | Medium (**SPLIT by USER ruling 2026-08-01**) | Part 1 ready to plan; Part 2 deferred |
-| 0060 | [Localize MANPADS and SAM air attrition to engagements](0060-air-attrition-before-the-strike.md) | Medium-Large (balance + mechanic) | **Ready — reviewed design** |
-| 0059 | [Readable air inventory; RTB folded into 0060](0059-sam-interception-and-rtb.md) | Medium | **In progress — step 1 shipped; step 2 superseded by 0060** |
+| 0060 | [Localize air attrition to engagements](../archive/0060-air-attrition-before-the-strike.md) | Medium-Large | **SHIPPED 2026-08-01** — R10's checkpoint is UNREACHABLE; closure in the plan |
+| 0059 | [Readable air inventory; RTB folded into 0060](../archive/0059-sam-interception-and-rtb.md) | Medium | **SHIPPED 2026-08-01** — step 2 shipped inside plan 0060 stage 3 |
 | 0052 | [Legibility sweep: unenforced budget, dead seams, half-finished role layout](../archive/0052-legibility-and-dead-seams.md) | Medium (hygiene) | **Complete 2026-07-27** |
 | 0036 | [Airborne cost and sortie cadence](0036-airborne-cost-and-cadence.md) | Medium (balance) | Sketch |
 | 0053 | [Documentation hierarchy refactor (hub-and-spoke)](../archive/0053-doc-hierarchy-refactor.md) | Medium (developer experience) | **✅ Shipped 2026-07-29** |

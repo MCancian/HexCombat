@@ -19,13 +19,21 @@ extends RefCounted
 const STRIKE := "strike"
 const SEAD := "sead"
 
+## A target that belongs to no theatre. Distinct from "island-wide" on purpose: see `to_number`.
+const NO_THEATRE := -1
+
 ## Which authored capacity row this package was drawn against, and what it is flying at. `munition_id`
 ## and `target_id` are empty for the SEAD package: it is assigned to the day, not to one target.
 var kind: String = ""
 var package_id: String = ""
 var munition_id: String = ""
 var target_id: String = ""
-var to_number: int = -1
+
+## The theatre the package flew into, or NO_THEATRE for a target that sits in none. A strike package
+## is engaged only by SAMs in its TO, so NO_THEATRE means no SAM can reach it — which is right, and
+## is NOT the same as the SEAD package, whose whole job is island-wide and which is engaged by every
+## live SAM regardless. The two are told apart by `kind`, never by this sentinel.
+var to_number: int = NO_THEATRE
 
 ## Airframes at assembly, before any ingress attrition. `survivor_fraction` divides by this, so a
 ## package that assembled short (never happens today — assembly is all-or-nothing) would still scale
