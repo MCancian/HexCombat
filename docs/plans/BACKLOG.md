@@ -23,13 +23,10 @@ means writing prose you then have to un-write.
 
 | Bundle | Items | Why together |
 |---|---|---|
-| **LLM action vocabulary** | JLSF team, duplicate `deploy_jlsf`, order-kind dispatch | All three edit `schemas/llm_action_response.schema.json` + `LLMGameAPI` + `GameState._apply_order`. The dispatch item's proposed gate check is exactly what would have caught the JLSF-team hole. |
 | **LLM fixture byte-stability** | seven summary headers, fixture drift check | **Order matters.** The headers item proposes weakening seven headers to admit the gate only checks key presence; the drift item (USER-approved) makes the gate actually check drift. Do the drift check FIRST and the headers item collapses to naming a now-true witness. |
 | **Review tooling** | opencode read-only, numbered findings, `--format json` | All touch `tools/review_fanout.sh` / `.claude/REVIEWERS.md` / opencode config, and `tools/validate_reviewer_facts.gd` gates roster edits — one commit is cheaper than three. The last two already say "do them together". |
 | **Validator proof surfaces** | `--census` flag, preload-alias blindness, `E_STALE_ALLOWANCE` | The first two both modify `tools/validate_authority_call_placement.gd` and both need a self-test case in the same commit. The third is the same shape (a check nothing exercises) on a different validator. **Keep the validator-harness dedup OUT** — a 30-file sweep riding on a capability change is how scope drifts. |
 
-Three open items are blocked only on a USER design call and can be answered in one sitting: duplicate
-`deploy_jlsf`, which number `losses_today` should carry, and wire-or-drop the combat advantage ratios.
 
 ## Deferred Debt & Hygiene Items
 
@@ -83,22 +80,7 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   — `_check_manifest_error_fixtures` runs only `_check_manifest` + `_build_ownership`, never `_scan`,
   and a stale allowance is only visible after a scan produces a Verdict. It needs the same treatment
   `_check_inert_authority_fixture` got: re-judge the fixture findings against a doctored usage record.
-- [ ] **A Green LLM seat can deploy Red JLSF cargo.**
-  Found 2026-07-31 by the Sol diff-review role on plan 0049 commit 3; PRE-EXISTING, not a regression. `deploy_jlsf` has no team in the action
-  schema (`schemas/llm_action_response.schema.json`), `LLMGameAPI._apply_deploy_jlsf_action` parses
-  none, and the façade `GameState.add_jlsf_order` hardcodes `Brigade.Team.RED` — exactly as the
-  pre-0049 code hardcoded it when calling the private `_apply_order`. `OrderValidator.check_jlsf_order`
-  now HAS a `TEAM_MISMATCH` arm, but nothing on the LLM path can ever reach it, and both seats buffer
-  through the same unlabelled path in `SelfPlayRunner`. Plan 0049 deliberately did not fix it: the fix
-  requires adding `"team"` to the action schema, which is "new action-schema vocabulary" and explicitly
-  out of that plan's scope. Fixing it means threading seat identity through `SelfPlayRunner` so a Green
-  seat cannot claim Red. Worth doing before any research run where both seats are live LLMs.
-- [ ] **Order-kind dispatch lives in three places.**
-  `GameState._apply_order`, `LLMGameAPI.apply_agent_response`
-  and `schemas/llm_action_response.schema.json` each enumerate the order kinds independently. Adding
-  `air_insert` (plan 0032) meant editing all three, and the duplication had already rotted: `deploy_jlsf`
-  was missing from the schema until 2026-07-24. Give the kinds one home and derive the dispatch (or at
-  minimum add a gate check that every dispatch arm has a schema variant and vice versa).
+
 - [ ] **The LLM result fixture is key-presence-checked, not drift-checked (found 2026-07-29).**
   `tools/LLMFixtures.gd:7` records "the rot that left `llm_result_after_turn.json` stale" as the reason
   that generator exists — but the current check (`validate_llm_api.gd:271-277`) cannot catch that rot
@@ -147,7 +129,7 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   (caught by agy-explore; two other models wrongly agreed it would). That hole is closed separately by
   `--quit-after` in `run_all_tests.py`. So this is deduplication only, worth doing when validators are
   being touched anyway, in slices of 5-6 with the gate green between. Good `opencode` delegation.
-- [ ] **`data/ijfs/grouped_targets.json` is orphaned AND now factually wrong.**
+- [x] **`data/ijfs/grouped_targets.json` is orphaned AND now factually wrong.**
   Found 2026-08-01 by the plan-0060 diff review, and confirmed by measurement: a scan of `scripts/`,
   `tools/` and `tests/` finds ZERO readers, so `docs/systems/ijfs/ijfs.md`'s old "used by validation
   scripts" claim was false (that line is now corrected). Worse, its `groups[].replaces_target_ids`
@@ -228,7 +210,7 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   scenario row without a dedup check, so malformed scenario content is the one way in.
   Golden exposure is still real (offload sequencing), so this needs its own gate run and must not ride
   on a path move.
-- [ ] **DeepSeek's strength is narrower than "bounded enumeration" — it needs the material HANDED to it.**
+- [x] **DeepSeek's strength is narrower than "bounded enumeration" — it needs the material HANDED to it.**
   It times out on multi-module call-chain tracing (measured 2026-08-01, two flakes). The roster
   records 3/3 as a bounded enumerator, which is true but under-specified. Measured across four
   invocations in one session: **succeeded twice** when given material to read — a committed plan file
@@ -246,7 +228,7 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   **And note how the failure presents:** `opencode` buffers until exit, so a timeout leaves an empty
   file and a wrapper that can still report success. The only signal is exit code 124. An empty return
   read as "reviewed, nothing found" is the exact flake-is-not-a-pass trap.
-- [ ] **Reviewer read-only is still a prompt, not a sandbox — opencode can enforce it.**
+- [x] **Reviewer read-only is still a prompt, not a sandbox — opencode can enforce it.**
   Found 2026-07-30, plan 0054; USER raised the config route. `opencode` supports per-agent permissions
   (`opencode.json` → `agent.plan.permission`), so `"edit": "deny"` would make read-only ENFORCED for the
   DeepSeek route instead of merely requested in prose — the hole `.claude/REVIEWERS.md` § Safety
@@ -255,8 +237,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   four rounds. **Do NOT use opencode's `--auto` flag** as the fix: it approves everything not explicitly denied,
   including `edit`, and these models have been measured announcing a fallback from the read-only agent to
   the writing `build` agent. Verify any change by having the `plan` agent attempt an edit and watching it
-  be denied. Global `~/.config/opencode/opencode.json` currently has no `permission` block at all.
-- [ ] **A reviewer brief should demand NUMBERED findings from every role, including nil returns.**
+  be denied. Before this fix, global `~/.config/opencode/opencode.json` had no `permission` block at all.
+- [x] **A reviewer brief should demand NUMBERED findings from every role, including nil returns.**
   Found 2026-07-30, plan 0047 steps 4-7 round. `tools/review_fanout.sh --report` scores a return
   `FLAKE` on "no numbered findings", which is right as a default — a died-early route is
   indistinguishable from approval. But that round produced two genuine returns it could not count: the

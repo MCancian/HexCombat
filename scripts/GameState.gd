@@ -213,8 +213,8 @@ func add_air_insert_order(team: Brigade.Team, brigade_id: String, target_hex: St
 
 ## Public entry for the JLSF deployment order (plan 0049). It previously had none: the LLM boundary
 ## reached the buffer through the private `_apply_order`, which validated nothing.
-func add_jlsf_order(port_id: String) -> OrderResult:
-	return OrderTransitions.add_jlsf_order(data, GameData, Brigade.Team.RED, port_id)
+func add_jlsf_order(team: Brigade.Team, port_id: String) -> OrderResult:
+	return OrderTransitions.add_jlsf_order(data, GameData, team, port_id)
 
 
 ## Full WeGo turn resolution — delegates to TurnConductor (plan 0014 P3); see that class's header

@@ -61,8 +61,8 @@ static func play_game_seats(red_policy: Callable, green_policy: Callable, turns:
 		# other's legal set. Buffer both sides' move/commit orders before the single resolve.
 		var red_actions: Array = _seat_actions(red_policy, "Red")
 		var green_actions: Array = _seat_actions(green_policy, "Green")
-		_buffer_actions(red_actions)
-		_buffer_actions(green_actions)
+		_buffer_actions(red_actions, "Red")
+		_buffer_actions(green_actions, "Green")
 		var result: Dictionary = _resolve_turn([], base_seed + t)
 		if not bool(result.get("resolved", false)):
 			all_resolved = false
@@ -88,10 +88,10 @@ static func _seat_actions(policy: Callable, perspective_team: String) -> Array:
 
 ## Buffer move/commit actions without resolving (no end_turn in the batch). Errors are non-fatal:
 ## a rejected order simply doesn't buffer, and the game still resolves whatever is valid.
-static func _buffer_actions(actions: Array) -> void:
+static func _buffer_actions(actions: Array, perspective_team: String) -> void:
 	if actions.is_empty():
 		return
-	LLMGameAPI.apply_agent_response(_response(actions))
+	LLMGameAPI.apply_agent_response(_response(actions, perspective_team))
 
 
 ## Apply `actions` (may be empty) then an end_turn with `seed`, resolving the turn. Returns the
@@ -99,14 +99,14 @@ static func _buffer_actions(actions: Array) -> void:
 static func _resolve_turn(actions: Array, seed: int) -> Dictionary:
 	var batch: Array = actions.duplicate()
 	batch.append({"type": "end_turn", "seed": seed})
-	return LLMGameAPI.apply_agent_response(_response(batch))
+	return LLMGameAPI.apply_agent_response(_response(batch, ""))
 
 
-static func _response(actions: Array) -> Dictionary:
+static func _response(actions: Array, perspective_team: String) -> Dictionary:
 	return {
 		"protocol_version": LLMGameAPI.PROTOCOL_VERSION,
 		"schema": LLMGameAPI.ACTION_RESPONSE_SCHEMA,
-		"perspective_team": "",
+		"perspective_team": perspective_team,
 		"actions": actions
 	}
 

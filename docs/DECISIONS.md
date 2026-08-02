@@ -25,6 +25,17 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-08-02 — The three LLM action vocabulary backlog items are implemented (agent).**
+  `deploy_jlsf` cross-team hole: `"team"` added to the action schema, `GameState.add_jlsf_order`
+  takes an explicit team parameter, `_parse_action_team` rejects cross-team spoofing outright (fail
+  loud) and defaults a missing team to the seat's `perspective_team`. The validator proves both
+  paths: spoof rejection at the API boundary AND `OrderValidator.check_jlsf_order`'s TEAM_MISMATCH
+  arm for an honest Green-seat deploy_jlsf. Order-kind dispatch gated by a structural check in
+  `tools/validate_llm_api.gd` ensuring `LLMGameAPI` and `OrderTransitions` arms match the schema.
+  Stale design-call paragraph removed from backlog. Facts: `schemas/llm_action_response.schema.json`,
+  `scripts/api/LLMGameAPI.gd`, `scripts/api/SelfPlayRunner.gd`, `tools/validate_llm_api.gd`,
+  `docs/plans/BACKLOG.md`.
+
 - **2026-08-02 — Resolution maps are generated evidence, not a runtime DAG (USER ruling; agent implementation).**
   `generate_resolution_dag.py` now builds call-site-specific calculator, coordinator, transition, and
   turn-pipeline pages on demand, with Godot-reflected symbols, conservative source effects, current

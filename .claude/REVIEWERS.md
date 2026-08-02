@@ -104,7 +104,7 @@ route is exactly why the quorum is 2-of-3 rather than 3-of-3.
 | **GPT-5.6 Sol** | **1 — peer** | yes | untested by me; the USER has run it | Both rounds, every time. The one reviewer expected to reason about the change rather than pattern-match it. |
 | **agy-explore** | 2 — mid | yes | **4/4 substantive** (plans 0043/0051); real reviews land 2.7–4.5 KB | Both rounds; oracle checks against TIV; large-file sweeps |
 | **agy-verify** | 2 — mid | no (extra) | the only method check there is | "Reproduce my measurement; is the conclusion supported?" — **sees COMMITTED state only** |
-| **DeepSeek V4 Flash** | 2 — mid | yes | **0/3 as a reviewer, 3/3 as a bounded enumerator**; returned zero bytes twice on 2026-07-29, then two substantive enumerations on 2026-07-30 (plan 0047, both rounds) | Quorum slot; strongest at bounded mechanical enumeration ("every read/write of these 8 fields, with file:line") |
+| **DeepSeek V4 Flash** | 2 — mid | yes | **0/3 as a reviewer, 3/3 as a bounded enumerator**; returned zero bytes twice on 2026-07-29, then two substantive enumerations on 2026-07-30 (plan 0047, both rounds) | Quorum slot; strongest at bounded mechanical enumeration ("every read/write of these 8 fields, with file:line"). Requires the material to be handed to it (bounded enumeration of a document) rather than being asked to explore or trace flows. |
 | **MiniMax M3** | 3 — sometimes helpful, occasionally dangerous | **no** | unmeasured — record the first result here | Bonus roles only: breadth sweeps, "what did I miss" |
 | **Nemotron Ultra** | 3 — sometimes helpful, occasionally dangerous | **no** | 1/3, then 1/1 (0045); counts and line numbers frequently wrong | Bonus roles only |
 

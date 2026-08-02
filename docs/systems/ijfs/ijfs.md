@@ -231,7 +231,6 @@ whole count from the firing plan.
 | `data/ijfs/red_air_oob.json` | `model_version, red_air_oob[]` — 10 rows with class/role/squadrons/aircraft_per_sqn. **498 airframes: 420 strike / 10 dedicated SEAD / 68 ISR** (plan 0060 R9/R11), pinned by `tools/validate_ijfs_data.gd` because every plan-0060 calibration is fitted against exactly this force | 15 | `IjfsLoaders.load_oob` |
 | `data/ijfs/air_classes.json` | `model_version, reference_isr_sum, classes{}` — 10 classes with `kind, rcs, wvr, isr_value, sead_eff` | 16 | `IjfsLoaders.load_air_classes` |
 | `data/ijfs/sam_capabilities.json` | `model_version, fallback_by_category, sam_score_by_subcategory` | 17 | `IjfsLoaders.load_sam_capabilities` |
-| `data/ijfs/grouped_targets.json` | `metadata, groups[]` — mobile SAM relocation grouping | 104 | **NOTHING** — measured 2026-08-01 (diff review), zero readers in `scripts/`, `tools/` or `tests/`. Its `replaces_target_ids` still names the four TO-split Antelope source rows plan 0060 R10 consolidated, so it now describes a topology that does not exist. See `docs/plans/BACKLOG.md`. |
 
 ## 9. State & authority
 

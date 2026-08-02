@@ -91,13 +91,13 @@ static func apply_agent_response(response: Dictionary) -> Dictionary:
 		var action_type := String(action.get("type", ""))
 		match action_type:
 			"move":
-				_apply_move_action(action, errors)
+				_apply_move_action(action, errors, String(response.get("perspective_team", "")))
 			"commit":
-				_apply_commit_action(action, errors)
+				_apply_commit_action(action, errors, String(response.get("perspective_team", "")))
 			"deploy_jlsf":
-				_apply_deploy_jlsf_action(action, errors)
+				_apply_deploy_jlsf_action(action, errors, String(response.get("perspective_team", "")))
 			"air_insert":
-				_apply_air_insert_action(action, errors)
+				_apply_air_insert_action(action, errors, String(response.get("perspective_team", "")))
 			"end_turn":
 				if not action.has("seed"):
 					errors.append("end_turn action requires an explicit seed for reproducibility")
@@ -163,16 +163,25 @@ static func _action_result(ok: bool, errors: Array[String], resolved: bool, seed
 ## Parses an action's "team" field, appending an error and returning null when it is
 ## missing/unknown (callers bail on null). Centralizes the errors-count guard both order
 ## handlers relied on, since _parse_team_string returns RED on failure rather than a sentinel.
-static func _parse_action_team(action: Dictionary, errors: Array[String]) -> Variant:
+## When perspective_team is non-empty (seated game), a missing team defaults to the seat's own
+## team, and a MISMATCHED team is rejected outright — fail loud, not silent overwrite.
+static func _parse_action_team(action: Dictionary, errors: Array[String], perspective_team: String = "") -> Variant:
 	var errors_before := errors.size()
-	var team := _parse_team_string(String(action.get("team", "")), errors)
+	var team_str := String(action.get("team", ""))
+	if perspective_team != "":
+		if team_str == "":
+			team_str = perspective_team
+		elif team_str != perspective_team:
+			errors.append("action team '%s' does not match seat '%s'" % [team_str, perspective_team])
+			return null
+	var team := _parse_team_string(team_str, errors)
 	if errors.size() != errors_before:
 		return null
 	return team
 
 
-static func _apply_move_action(action: Dictionary, errors: Array[String]) -> void:
-	var team_value: Variant = _parse_action_team(action, errors)
+static func _apply_move_action(action: Dictionary, errors: Array[String], perspective_team: String = "") -> void:
+	var team_value: Variant = _parse_action_team(action, errors, perspective_team)
 	if team_value == null:
 		return
 	var team: Brigade.Team = team_value
@@ -184,8 +193,8 @@ static func _apply_move_action(action: Dictionary, errors: Array[String]) -> voi
 		errors.append("move rejected: %s -> %s (%s): %s" % [brigade_id, target_hex, mode, result.message])
 
 
-static func _apply_commit_action(action: Dictionary, errors: Array[String]) -> void:
-	var team_value: Variant = _parse_action_team(action, errors)
+static func _apply_commit_action(action: Dictionary, errors: Array[String], perspective_team: String = "") -> void:
+	var team_value: Variant = _parse_action_team(action, errors, perspective_team)
 	if team_value == null:
 		return
 	var team: Brigade.Team = team_value
@@ -196,8 +205,8 @@ static func _apply_commit_action(action: Dictionary, errors: Array[String]) -> v
 		errors.append("commit rejected: %s -> %s: %s" % [brigade_id, target_hex, result.message])
 
 
-static func _apply_air_insert_action(action: Dictionary, errors: Array[String]) -> void:
-	var team_value: Variant = _parse_action_team(action, errors)
+static func _apply_air_insert_action(action: Dictionary, errors: Array[String], perspective_team: String = "") -> void:
+	var team_value: Variant = _parse_action_team(action, errors, perspective_team)
 	if team_value == null:
 		return
 	var team: Brigade.Team = team_value
@@ -211,9 +220,13 @@ static func _apply_air_insert_action(action: Dictionary, errors: Array[String]) 
 ## deploy_jlsf now goes through a real validation API like the other three orders (plan 0049). This
 ## used to call the PRIVATE `_apply_order`, which appended the port id with no phase or id check; the
 ## unknown-id guard below was the only validation the order ever had, and it lived out here.
-static func _apply_deploy_jlsf_action(action: Dictionary, errors: Array[String]) -> void:
+static func _apply_deploy_jlsf_action(action: Dictionary, errors: Array[String], perspective_team: String = "") -> void:
+	var team_value: Variant = _parse_action_team(action, errors, perspective_team)
+	if team_value == null:
+		return
+	var team: Brigade.Team = team_value
 	var port_id := String(action.get("port_id", ""))
-	var result: OrderResult = _game_state().add_jlsf_order(port_id)
+	var result: OrderResult = _game_state().add_jlsf_order(team, port_id)
 	if not result.ok:
 		errors.append("deploy_jlsf rejected: %s" % result.message)
 

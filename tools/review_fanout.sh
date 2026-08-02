@@ -310,6 +310,7 @@ fi
 
 {
 	echo "$REVIEW_ONLY_LINE"
+	echo "REQUIREMENT: You must answer as a numbered list. Include \"1. No defect found — here is what I checked and what I concluded\" as a legal entry if you find nothing. Enumeration roles must number their lists."
 	echo
 	if [[ -n "$snapshot" ]]; then
 		echo "THE FROZEN ARTIFACT UNDER REVIEW is the snapshot at $snapshot. Read that file."

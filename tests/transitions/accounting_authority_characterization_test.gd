@@ -185,7 +185,7 @@ func test_a_jlsf_order_outside_planning_is_rejected_and_appends_nothing() -> voi
 	GameState.resolve_turn(SeededDice.new(1))
 	assert_int(GameState.phase).is_equal(GameStateData.Phase.END)
 
-	var result := GameState.add_jlsf_order(_a_real_port_id())
+	var result := GameState.add_jlsf_order(Brigade.Team.RED, _a_real_port_id())
 
 	assert_bool(result.ok).is_false()
 	assert_int(result.code).is_equal(OrderResult.Code.WRONG_PHASE)
@@ -193,7 +193,7 @@ func test_a_jlsf_order_outside_planning_is_rejected_and_appends_nothing() -> voi
 
 
 func test_a_jlsf_order_with_an_unknown_port_is_rejected_and_appends_nothing() -> void:
-	var result := GameState.add_jlsf_order("NO-SUCH-PORT")
+	var result := GameState.add_jlsf_order(Brigade.Team.RED, "NO-SUCH-PORT")
 
 	assert_bool(result.ok).is_false()
 	assert_int(result.code).is_equal(OrderResult.Code.UNKNOWN_INFRASTRUCTURE)
@@ -201,7 +201,7 @@ func test_a_jlsf_order_with_an_unknown_port_is_rejected_and_appends_nothing() ->
 
 
 func test_a_valid_jlsf_order_is_accepted() -> void:
-	var result := GameState.add_jlsf_order(_a_real_port_id())
+	var result := GameState.add_jlsf_order(Brigade.Team.RED, _a_real_port_id())
 
 	assert_bool(result.ok).is_true()
 	assert_array(GameState.jlsf_orders).contains([_a_real_port_id()])
@@ -214,8 +214,8 @@ func test_a_valid_jlsf_order_is_accepted() -> void:
 ## refuses the second occurrence. That equivalence is precisely what makes refusing safe here: the
 ## pool is unchanged, so only the feedback to the seat differs.
 func test_a_duplicate_jlsf_order_is_refused() -> void:
-	var first := GameState.add_jlsf_order(_a_real_port_id())
-	var second := GameState.add_jlsf_order(_a_real_port_id())
+	var first := GameState.add_jlsf_order(Brigade.Team.RED, _a_real_port_id())
+	var second := GameState.add_jlsf_order(Brigade.Team.RED, _a_real_port_id())
 
 	assert_bool(first.ok).is_true()
 	assert_bool(second.ok).override_failure_message(

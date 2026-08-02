@@ -53,9 +53,71 @@ func _initialize() -> void:
 	_validate_observation_shape()
 	_validate_action_application()
 	_validate_missing_seed_rejected()
+	_validate_deploy_jlsf_cross_team_rejected()
 	_validate_examples_parse_and_apply()
 	_validate_result_schema_conformance()
+	_validate_dispatch_arms()
 	_finish()
+
+
+func _validate_dispatch_arms() -> void:
+	var schema_data = _read_json("res://schemas/llm_action_response.schema.json")
+	var items = schema_data.get("properties", {}).get("actions", {}).get("items", {}).get("oneOf", [])
+	var schema_types := []
+	for item in items:
+		schema_types.append(String(item.get("properties", {}).get("type", {}).get("const", "")))
+	schema_types.sort()
+
+	var api_arms := _extract_dispatch_arms("res://scripts/api/LLMGameAPI.gd", "match action_type:")
+	if schema_types != api_arms:
+		_fail("LLMGameAPI action_type dispatch arms %s do not match schema variants %s" % [api_arms, schema_types])
+
+	var order_arms := _extract_dispatch_arms("res://scripts/transitions/OrderTransitions.gd", "match kind:")
+	var expected_order_arms := schema_types.duplicate()
+	expected_order_arms.erase("end_turn")
+	if order_arms != expected_order_arms:
+		_fail("OrderTransitions order kind dispatch arms %s do not match schema variants minus end_turn %s" % [order_arms, expected_order_arms])
+
+
+func _extract_dispatch_arms(path: String, match_statement: String) -> Array:
+	if not FileAccess.file_exists(path):
+		_fail("Could not read %s" % path)
+		return []
+	var text := FileAccess.get_file_as_string(path)
+
+	var lines := text.split("\n")
+	var arms := []
+	var match_indent := -1
+	for line in lines:
+		if match_indent == -1:
+			if line.find(match_statement) != -1:
+				match_indent = 0
+				for i in line.length():
+					if line[i] == '\t':
+						match_indent += 1
+					else:
+						break
+			continue
+
+		var s := line.strip_edges()
+		if s == "" or s.begins_with("#"):
+			continue
+
+		var indent := 0
+		for i in line.length():
+			if line[i] == '\t':
+				indent += 1
+			else:
+				break
+
+		if indent <= match_indent and s != "":
+			break
+
+		if indent == match_indent + 1 and s.begins_with('"') and s.ends_with('":'):
+			arms.append(s.trim_prefix('"').trim_suffix('":'))
+
+	arms.sort()
+	return arms
 
 
 func _validate_observation_shape() -> void:
@@ -132,6 +194,54 @@ func _validate_missing_seed_rejected() -> void:
 	if result.has("turn_result") and result["turn_result"] is Dictionary:
 		tr_empty = (result["turn_result"] as Dictionary).is_empty()
 	_assert_true("turn_result empty when not resolved", tr_empty)
+
+
+func _validate_deploy_jlsf_cross_team_rejected() -> void:
+	_game_data().load_all()
+	_game_state().reset_to_scenario()
+
+	var port_id := ""
+	for id in _game_data().infrastructure.keys():
+		port_id = id
+		break
+
+	# Case 1: Green seat sends team=Red — caught at the API boundary (spoofing).
+	var spoof_result := LLMGameAPI.apply_agent_response({
+		"protocol_version": LLMGameAPI.PROTOCOL_VERSION,
+		"schema": LLMGameAPI.ACTION_RESPONSE_SCHEMA,
+		"perspective_team": "Green",
+		"actions": [
+			{"type": "deploy_jlsf", "team": "Red", "port_id": port_id}
+		]
+	})
+
+	_assert_true("cross-team spoof is rejected", not bool(spoof_result["ok"]))
+	var found_spoof := false
+	for err in spoof_result.get("errors", []):
+		if "does not match seat" in String(err):
+			found_spoof = true
+			break
+	_assert_true("error describes seat mismatch", found_spoof)
+	_assert_true("jlsf orders remain empty after spoof", _game_state().jlsf_orders.is_empty())
+
+	# Case 2: Green seat honestly sends team=Green — reaches OrderValidator TEAM_MISMATCH.
+	var honest_result := LLMGameAPI.apply_agent_response({
+		"protocol_version": LLMGameAPI.PROTOCOL_VERSION,
+		"schema": LLMGameAPI.ACTION_RESPONSE_SCHEMA,
+		"perspective_team": "Green",
+		"actions": [
+			{"type": "deploy_jlsf", "team": "Green", "port_id": port_id}
+		]
+	})
+
+	_assert_true("honest Green deploy_jlsf is rejected", not bool(honest_result["ok"]))
+	var found_domain_mismatch := false
+	for err in honest_result.get("errors", []):
+		if "is a red order" in String(err).to_lower():
+			found_domain_mismatch = true
+			break
+	_assert_true("error reaches TEAM_MISMATCH in OrderValidator", found_domain_mismatch)
+	_assert_true("jlsf orders remain empty after honest Green", _game_state().jlsf_orders.is_empty())
 
 
 func _validate_examples_parse_and_apply() -> void:
