@@ -107,7 +107,8 @@ fixture and game record moves.
   not-yet-migrated writer.
 - **Dependency ceilings are paid for, not raised** (`hexcombat-architecture-contract`). Naming a new
   authority from a coordinator costs it a dependency, and several coordinators sit at exactly their
-  ceiling. Check headroom while DESIGNING the call shape — `hexcombat-code-quality` has the command.
+  ceiling. Run `hexcombat-code-quality`'s Preflight — it has the headroom command — while you are
+  DESIGNING the call shape, before any file exists.
   The two shapes that work: route through an existing façade (the
   `GameData.set_brigade_hex → ForceTransitions` pattern), or find a dependency that genuinely leaves
   (plan 0043 held `FiresPhases` at 14 by a one-for-one swap).

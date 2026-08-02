@@ -14,9 +14,9 @@ extends SceneTree
 ## lets an agent batch the measurement. The heading is the contract; the validators named are free
 ## text, because only the plan author knows which goldens its mechanics move.
 ##
-## The budgets below are the CONTRACT. The self-test pins them with literal 120/121 and 200/201
-## rather than reading these constants, deliberately: a test built from the same constant it is
-## checking cannot notice the constant moving.
+## The budgets below are the CONTRACT. The self-test pins them with literal 120/121 and 200/201 —
+## and pins the placeholder with its literal text — rather than reading these constants,
+## deliberately: a test built from the same constant it is checking cannot notice the constant moving.
 const MAX_BACKLOG_LINE := 120
 const MAX_README_ROW := 200
 
@@ -156,9 +156,11 @@ func _self_test() -> void:
 		func() -> void: _check_plan_golden_budget_content("## Golden-pin budget\n\n", "plan")), "no declaration")
 	_expect_failure("golden/eof", _capture(
 		func() -> void: _check_plan_golden_budget_content("## Golden-pin budget", "plan")), "no declaration")
+	# The placeholder is spelled out, not formatted from GOLDEN_BUDGET_PLACEHOLDER: a test built from
+	# the same constant it is checking cannot notice the constant moving out from under the docs.
 	_expect_failure("golden/placeholder", _capture(
 		func() -> void: _check_plan_golden_budget_content(
-			"## Golden-pin budget\n%s" % GOLDEN_BUDGET_PLACEHOLDER, "plan")), "placeholder")
+			"## Golden-pin budget\n<none — name the validators you will re-baseline>", "plan")), "placeholder")
 
 
 func _check_backlog() -> void:
