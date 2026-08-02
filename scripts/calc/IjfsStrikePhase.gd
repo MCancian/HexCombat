@@ -26,30 +26,69 @@ static func run(state: IjfsDailyState, ctx: IjfsStrikePhaseContext, phase: Strin
 	for target in IjfsTargeting.targets_to_attack(state.targets, ctx.z_day, ctx.release_rules):
 		if ctx.attacked.has(target.target_id):
 			continue
-		var selection := IjfsTargeting.select_munition_with_doctrine(
-			target, state.pairings, state.munitions, state.scenario, phase, ctx.munition_filter,
-			ctx.capacity_budget, ctx.organic_budget)
-		var pairing: Variant = selection["selected"]
-		var strike_ctx := IjfsStrikeContext.for_strike(
-			ctx.current_day, phase, selection["doctrine_name"], selection["selection"])
-		if pairing == null:
-			var reason: Variant = selection["reason"]
-			ctx.skip_reasons[target.target_id] = [
-				reason if reason != null else "no_compatible_pairing",
-				strike_ctx.doctrine_rule_name, strike_ctx.doctrine_selection]
-			continue
-		var munition: Variant = state.munitions.get(pairing.munition_id, null)
-		var is_organic: bool = munition != null and munition.category == "Organic"
-		var budget: Variant = ctx.organic_budget if is_organic else ctx.capacity_budget
-		var reason_key: String = "organic_capacity_exhausted" if is_organic else "firing_capacity_exhausted"
-		if budget != null and not budget.try_consume(pairing.munition_id):
-			ctx.skip_reasons[target.target_id] = [
-				reason_key, strike_ctx.doctrine_rule_name, strike_ctx.doctrine_selection]
-			continue
-		if not IjfsManpads.resolve_pre_strike(state, target, pairing, strike_ctx, dice):
-			state.strike_log.append(IjfsStrike.resolve_strike(
-				target, pairing, state.munitions, state.scenario, strike_ctx, dice))
-		ctx.attacked[target.target_id] = true
+		if _resolve_target(state, ctx, target, phase, dice):
+			ctx.attacked[target.target_id] = true
+
+
+## One target's whole story for this pass: pick a munition, prove the capacity and the airframes
+## exist, fly the package in if there is one, and record what happened. Returns false when the target
+## was SKIPPED and stays eligible for the next pass; true once a sortie has been spent on it, whether
+## or not that sortie delivered anything.
+static func _resolve_target(
+	state: IjfsDailyState, ctx: IjfsStrikePhaseContext, target: IjfsTarget, phase: String, dice: Dice
+) -> bool:
+	var selection := IjfsTargeting.select_munition_with_doctrine(
+		target, state.pairings, state.munitions, state.scenario, phase, ctx.munition_filter,
+		ctx.capacity_budget, ctx.organic_budget)
+	var pairing: Variant = selection["selected"]
+	var strike_ctx := IjfsStrikeContext.for_strike(
+		ctx.current_day, phase, selection["doctrine_name"], selection["selection"])
+	if pairing == null:
+		var reason: Variant = selection["reason"]
+		return _skip(ctx, target, strike_ctx, reason if reason != null else "no_compatible_pairing")
+
+	var munition: Variant = state.munitions.get(pairing.munition_id, null)
+	var is_organic: bool = munition != null and munition.category == "Organic"
+	var budget: Variant = ctx.organic_budget if is_organic else ctx.capacity_budget
+	if budget != null and not budget.has_capacity(pairing.munition_id):
+		return _skip(ctx, target, strike_ctx,
+			"organic_capacity_exhausted" if is_organic else "firing_capacity_exhausted")
+
+	# Assembly comes BEFORE the capacity seat is spent (plan 0060 R8): a package that cannot be manned
+	# did not consume a sortie. `has_capacity` above is the non-consuming half of the same check the
+	# selection stage already made, so the airframe draws below are never wasted on a strike the
+	# budget would then have refused.
+	var package: Variant = null
+	if is_organic:
+		package = IjfsPackageIngress.assemble(
+			state, pairing.munition_id, target, ctx.packages_launched, ctx.air_engagement_dice)
+		if package == null:
+			return _skip(ctx, target, strike_ctx, "package_unavailable")
+		ctx.packages_launched += 1
+	if budget != null:
+		budget.try_consume(pairing.munition_id)
+
+	if package != null:
+		# A denied package consumes NO strike kill/suppression draws — the ordnance never left the rail.
+		var ingress := IjfsPackageIngress.fly_in(state, package, target, ctx, ctx.air_engagement_dice)
+		var outcome := String(ingress["outcome"])
+		if outcome != IjfsPackageIngress.OUTCOME_PRESSED:
+			state.strike_log.append(
+				denied_strike_log(target, pairing, strike_ctx, outcome))
+			return true
+		strike_ctx.survivor_fraction = float(ingress["survivor_fraction"])
+	state.strike_log.append(IjfsStrike.resolve_strike(
+		target, pairing, state.munitions, state.scenario, strike_ctx, dice))
+	return true
+
+
+## Record why this target was passed over, and report "not attacked" so the caller leaves it eligible.
+static func _skip(
+	ctx: IjfsStrikePhaseContext, target: IjfsTarget, strike_ctx: IjfsStrikeContext, reason: String
+) -> bool:
+	ctx.skip_reasons[target.target_id] = [
+		reason, strike_ctx.doctrine_rule_name, strike_ctx.doctrine_selection]
+	return false
 
 
 ## Every still-eligible target that neither pass attacked gets one skip row, so the day's strike log
@@ -73,3 +112,40 @@ static func _skip_log(target: IjfsTarget, current_day: int, entry: Array) -> Dic
 	row["attack_executed"] = false
 	row["skip_reason"] = entry[0]
 	return row
+
+
+## Strike-log row for a sortie that flew and delivered nothing: capacity is spent, the target is
+## untouched, and NO strike kill/suppression draws were consumed. Key-compatible with
+## IjfsStrike.resolve_strike so IjfsLedgers.summarize_run and the narratives read it unchanged.
+##
+## `denial` separates the two ways that happens — MANPADS drove the survivors home, or the package
+## was wiped out on ingress — which a single boolean could not.
+static func denied_strike_log(
+	strike_target: IjfsTarget, pairing: IjfsPairing, context: IjfsStrikeContext, denial: String
+) -> Dictionary:
+	return {
+		"current_day": context.current_day,
+		"target_id": strike_target.target_id,
+		"source_target_id": strike_target.source_target_id,
+		"category": strike_target.category,
+		"subcategory": strike_target.subcategory,
+		"mobility": strike_target.mobility,
+		"posture": strike_target.posture,
+		"metadata": strike_target.metadata,
+		"phase": context.phase,
+		"doctrine_rule_name": context.doctrine_rule_name,
+		"doctrine_selection": context.doctrine_selection,
+		"attack_executed": true,
+		"skip_reason": null,
+		"pairing_id": pairing.pairing_id,
+		"munition_id": pairing.munition_id,
+		"rounds_expended": int(pairing.rounds_expended_per_engagement),
+		"package_survivor_fraction": 0.0,
+		"package_denial": denial,
+		"probability_destroyed": 0.0,
+		"roll": null,
+		"destroyed": false,
+		"probability_suppressed_if_not_destroyed": 0.0,
+		"suppression_roll": null,
+		"suppressed": false,
+	}

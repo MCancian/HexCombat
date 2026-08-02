@@ -34,3 +34,24 @@ var release_rules: Variant = null
 
 # Warmup munition restriction, or null when every munition is available.
 var munition_filter: Variant = null
+
+## Whether Taiwan's air defences may kill Red aircraft at all. False during a prelanding warmup that
+## declares no AD attrition, and it gates the package's ingress engagements for the same reason it
+## gates SAM return fire and the free shot. Only known after the warmup context is read, so the engine
+## sets it after construction.
+var ad_attrition_enabled: bool = true
+
+# How survivable each airframe is today (IjfsAttritionProfile): RCS signature x role exposure,
+# shared by every path that can kill an aircraft.
+var attrition: IjfsAttritionProfile = null
+
+## The day's ONE derived child stream for air-engagement rolls: package assembly, MANPADS, SAM
+## return fire and the anti-radiation salvos (plan 0060). Derived once per day and RETAINED — a
+## per-package `derive` of the same label would hand every package an identical sequence, which is
+## the failure mode the plan calls out by name. Kept off the main phase stream so package geometry
+## cannot shift the strike, detection or SEAD draws that surround it.
+var air_engagement_dice: Dice = null
+
+## How many Organic packages have launched today. Only makes package ids unique in the ledger, so a
+## reader can tell two packages against the same target apart.
+var packages_launched: int = 0

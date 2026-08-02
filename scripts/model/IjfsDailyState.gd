@@ -23,8 +23,11 @@ var strike_log: Array = []
 var engagement_log: Array = []
 var contest_log: Array = []
 var free_shot_log: Array = []
-var manpads_intercept_log: Array = []   # one entry per MANPADS interception attempt vs a strike
-var manpads_contest_log: Array = []     # squadron losses to MANPADS (source "manpads")
+## THE MANPADS event stream — one row per package engagement, carrying the package before/after, the
+## outcome (killed / aborted / unaffected), the attributed loss and RTB counts, and whether the strike
+## went ahead. Plan 0060 R5 collapsed two MANPADS surfaces into this one; the second ledger, which
+## held the island-wide daily squadron tax, is gone with the contest that produced it.
+var manpads_intercept_log: Array = []
 var taiwan_ad_health_before: Dictionary = {}
 var taiwan_ad_health_after_missile_phase: Dictionary = {}
 var taiwan_ad_health_after_sead: Dictionary = {}

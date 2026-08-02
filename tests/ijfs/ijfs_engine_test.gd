@@ -220,14 +220,23 @@ func test_organic_munition_routes_to_organic_budget() -> void:
 	capacity_budget._daily_budget[mid] = 0
 	capacity_budget._used[mid] = 0
 
-	state.scenario["red_firing_capacity"] = {mid: {"firing_units": 36, "sorties_per_unit_per_day": 1.0, "platform_type": "aircraft"}}
+	# Organic munitions fly as four-airframe packages since plan 0060 R8, so the capacity row needs
+	# the attrition link the assembly reads. The target is an Air Defense System, so MANPADS — which
+	# only engages Maneuver Units — never fires and the ingress is a pure pass-through.
+	state.scenario["red_firing_capacity"] = {mid: {
+		"firing_units": 36, "sorties_per_unit_per_day": 1.0, "platform_type": "aircraft",
+		"attrition_link": ["4.5th Gen"], "package_size": 4, "manpads_eligible": false}}
 	var force: Array[IjfsSquadron] = [_strike_squadron("s1", "4.5th Gen", 24)]
+	state.squadron_force = force
 	var organic_budget := IjfsFiringCapacity.OrganicStrikeBudget.new(state.scenario, force, state.munitions, null)
 
 	var ctx := IjfsStrikePhaseContext.new()
 	ctx.current_day = 1
 	ctx.capacity_budget = capacity_budget
 	ctx.organic_budget = organic_budget
+	ctx.attrition = IjfsAttritionProfile.build(state.scenario, null)
+	# Four draws assemble the package; the fifth is the strike's destroy roll on the main stream.
+	ctx.air_engagement_dice = ScriptedDice.new([], [], [0.0, 0.0, 0.0, 0.0])
 	IjfsStrikePhase.run(
 		state, ctx, IjfsEngine.POST_AD_PHASE, ScriptedDice.new([], [], [0.5, 0.5, 0.5]))
 

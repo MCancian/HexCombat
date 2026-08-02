@@ -49,7 +49,11 @@ const TARGET_HEX := GoldenScript.TARGET_HEX
 # renamed Attack UCAV at the same strength) and the prelanding warmup becomes a STANDOFF campaign that
 # flies no aircraft at all. Both move the IJFS draw sequence and the warmup's maneuver-casualty
 # writeback, so the scripted fight starts from a different ROC laydown. Was "casualties=3, feba=-2.66".
-const EXPECTED_COMBAT_FINGERPRINT := "casualties=4, feba=-3.00"
+# Re-baselined 2026-08-01 for plan 0060 stage 3 (USER rulings R5/R6/R8/R12): four-airframe packages,
+# and with them R8's capacity-unit correction — four airframe-sortie seats now buy ONE four-ship
+# attack rather than four attacks. Red's warmup strike volume falls sharply, so the scripted fight
+# meets a much less damaged ROC. Was "casualties=4, feba=-3.00".
+const EXPECTED_COMBAT_FINGERPRINT := "casualties=3, feba=-2.27"
 
 var _failures: Array[String] = []
 var GameData: Node = null

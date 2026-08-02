@@ -107,12 +107,18 @@ class OrganicStrikeBudget extends RefCounted:
 			var munition: Variant = munitions.get(mid, null)
 			if munition == null or munition.category != "Organic":
 				continue
+			# `firing_units * sorties_per_unit_per_day` counts AIRFRAME-SORTIE SEATS, not packages
+			# (plan 0060 R8). Health scales the seats — losses thin the ramp — and the package size
+			# then divides them into four-ship attacks, so 80 UCAV seats are twenty four-UCAV
+			# packages and never eighty attacks.
 			var units := int(cfg["firing_units"])
 			var sorties := float(cfg["sorties_per_unit_per_day"])
-			var base := floori(float(units) * sorties)
+			var seats := floori(float(units) * sorties)
 			var expected_kind: Variant = _PLATFORM_KIND.get(String(cfg.get("platform_type", "")), null)
 			var health: Variant = _strike_health(expected_kind, init_by_kind, alive_by_kind, init_any, alive_any)
-			_budgets[mid] = base if health == null else max(0, floori(float(base) * float(health)))
+			if health != null:
+				seats = max(0, floori(float(seats) * float(health)))
+			_budgets[mid] = seats / maxi(1, int(cfg.get("package_size", 1)))
 			_used[mid] = 0
 
 	func has_capacity(munition_id: String) -> bool:

@@ -86,7 +86,6 @@ static func run_daily(state: IjfsDailyState, dice: Dice, current_day: int, warmu
 	state.contest_log = []
 	state.free_shot_log = []
 	state.manpads_intercept_log = []
-	state.manpads_contest_log = []
 	state.exquisite_intel_overrides = []
 
 	var run_ctx := make_run_context(current_day, warmup_context)
@@ -99,6 +98,13 @@ static func run_daily(state: IjfsDailyState, dice: Dice, current_day: int, warmu
 	var ctx := IjfsStrikePhaseContext.new()
 	ctx.current_day = int(run_ctx["current_day"])
 	ctx.z_day = run_ctx["z_day"]
+	# One shared survivability profile per day: RCS signature x role exposure, read by every path
+	# that can kill an aircraft so none of them re-derives a modifier (plan 0060 R2).
+	ctx.attrition = IjfsAttritionProfile.build(state.scenario, air_classes)
+	# One RETAINED child stream for every air-engagement roll of the day (plan 0060). Deriving it per
+	# package would hand each package the same sequence; deriving it here keeps package geometry from
+	# shifting the strike, detection and SEAD draws it sits between.
+	ctx.air_engagement_dice = dice.derive("ijfs_air_engagements")
 
 	if warmup_context != null:
 		var wc: Dictionary = warmup_context
@@ -134,12 +140,9 @@ static func run_daily(state: IjfsDailyState, dice: Dice, current_day: int, warmu
 
 	var sead_enabled := warmup_context == null or bool((warmup_context as Dictionary).get("sead_enabled", true))
 	var ad_attrition_enabled := warmup_context == null or bool((warmup_context as Dictionary).get("ad_attrition_enabled", true))
+	ctx.ad_attrition_enabled = ad_attrition_enabled
 
-	# One shared survivability profile per day: RCS signature x role exposure, read by every path
-	# that can kill an aircraft so none of them re-derives a modifier (plan 0060 R2).
-	var attrition := IjfsAttritionProfile.build(state.scenario, air_classes)
-
-	var engagement := IjfsEngagement.resolve_sead_engagement(state.targets, squadron_force, attrition, dice, sead_enabled, ad_attrition_enabled)
+	var engagement := IjfsEngagement.resolve_sead_engagement(state.targets, squadron_force, ctx.attrition, dice, sead_enabled, ad_attrition_enabled)
 	state.engagement_log = engagement["engagement_log"]
 	state.contest_log = engagement["contest_log"]
 
@@ -159,14 +162,9 @@ static func run_daily(state: IjfsDailyState, dice: Dice, current_day: int, warmu
 
 	state.taiwan_ad_health_after = IjfsAdHealth.compute_taiwan_ad_health(state.targets, state.scenario)
 
-	# MANPADS contest low-altitude squadrons (SEAD + strike) island-wide, same attrition gate as
-	# the SAM layers. Draw order: after post-AD strikes, before the free shot.
-	if ad_attrition_enabled:
-		state.manpads_contest_log = IjfsManpads.contest_squadrons(state.targets, squadron_force, attrition, dice)
-
 	state.free_shot_log = IjfsEngagement.apply_post_phase_2_free_shot(
 		squadron_force,
-		attrition,
+		ctx.attrition,
 		float(state.taiwan_ad_health_after.get("raw_sam_health", 0.0)),
 		dice,
 		ad_attrition_enabled,

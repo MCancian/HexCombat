@@ -55,13 +55,8 @@ static func summarize_run(state: IjfsDailyState) -> Dictionary:
 		"destroyed_targets_by_category": destroyed_by_category,
 		"suppressed_targets_by_category": suppressed_by_category,
 		"rounds_expended_by_munition": attacks["rounds_expended"],
-		"red_air_losses": _sum_losses(state.contest_log) + _sum_losses(state.free_shot_log) + _sum_losses(state.manpads_contest_log),
-		"manpads": {
-			"ready_systems_by_to": IjfsManpads.ready_systems_by_to(state.targets),
-			"interception_attempts": state.manpads_intercept_log.size(),
-			"interceptions": _count_flag(state.manpads_intercept_log, "intercepted"),
-			"squadron_losses": _sum_losses(state.manpads_contest_log),
-		},
+		"red_air_losses": _sum_losses(state.contest_log) + _sum_losses(state.free_shot_log) + _sum_losses(state.manpads_intercept_log),
+		"manpads": _manpads_totals(state),
 		"taiwan_ad_health_before": state.taiwan_ad_health_before,
 		"taiwan_ad_health_after_missile_phase": state.taiwan_ad_health_after_missile_phase,
 		"taiwan_ad_health_after_sead": state.taiwan_ad_health_after_sead,
@@ -100,6 +95,30 @@ static func _attack_totals(strike_log: Array) -> Dictionary:
 	}
 
 
+## MANPADS totals for the day. The three outcomes are reported EXPLICITLY (plan 0060 R5) because they
+## mean different things to a reader: a kill costs Red an airframe, an abort costs it a sortie, and
+## "unaffected" is the engagement that happened and changed nothing. `interceptions` survives as a
+## compatibility total for the narrative and API consumers that were counting strikes denied — under
+## the old mechanic that was the only number MANPADS produced against a strike.
+static func _manpads_totals(state: IjfsDailyState) -> Dictionary:
+	var by_outcome: Dictionary = {
+		IjfsManpads.OUTCOME_KILLED: 0, IjfsManpads.OUTCOME_ABORTED: 0, IjfsManpads.OUTCOME_UNAFFECTED: 0}
+	for entry in state.manpads_intercept_log:
+		var outcome := String(entry.get("outcome", ""))
+		by_outcome[outcome] = int(by_outcome.get(outcome, 0)) + 1
+	var kills := int(by_outcome[IjfsManpads.OUTCOME_KILLED])
+	var aborts := int(by_outcome[IjfsManpads.OUTCOME_ABORTED])
+	return {
+		"ready_systems_by_to": IjfsManpads.ready_systems_by_to(state.targets),
+		"attempts": state.manpads_intercept_log.size(),
+		"kills": kills,
+		"aborts": aborts,
+		"unaffected": int(by_outcome[IjfsManpads.OUTCOME_UNAFFECTED]),
+		"interceptions": kills + aborts,
+		"rtb": _sum_field(state.manpads_intercept_log, "rtb"),
+	}
+
+
 # --- Ledgers (in-memory replacement for write_outputs) ------------------------------------------
 
 static func build_ledgers(state: IjfsDailyState, current_day: int, summary: Dictionary) -> Dictionary:
@@ -124,7 +143,6 @@ static func build_ledgers(state: IjfsDailyState, current_day: int, summary: Dict
 		"contest_log": state.contest_log,
 		"free_shot_log": state.free_shot_log,
 		"manpads_intercept_log": state.manpads_intercept_log,
-		"manpads_contest_log": state.manpads_contest_log,
 		"air_oob_after": build_air_oob(state),
 		"summary": summary,
 	}
@@ -169,6 +187,9 @@ static func _munition_inventory(munitions: Dictionary) -> Dictionary:
 ## purely additive, and no v4 payload had ever been persisted anywhere — this ledger reached no
 ## fixture, record or API until 0059 surfaced it — so no consumer can be misled by a widened row. Bump
 ## only when a field's MEANING moves, as losses_today's did.
+##
+## `sead_assigned_today` joined on the same terms (plan 0060 R8/R11): purely additive, and its sibling
+## `rtb_today` acquired a runtime writer at last without changing what the field claims to mean.
 static func build_air_oob(state: IjfsDailyState) -> Variant:
 	if state.squadron_force == null:
 		return null
@@ -190,6 +211,7 @@ static func build_air_oob(state: IjfsDailyState) -> Variant:
 			"initial": squadron.initial,
 			"alive": squadron.alive,
 			"rtb_today": squadron.rtb_today,
+			"sead_assigned_today": squadron.sead_assigned_today,
 			"losses_today": squadron.losses_today,
 			"losses_campaign": squadron.losses_campaign,
 		})
@@ -203,9 +225,13 @@ static func _inc(counter: Dictionary, key: Variant) -> void:
 
 
 static func _sum_losses(log: Array) -> int:
+	return _sum_field(log, "losses")
+
+
+static func _sum_field(log: Array, field: String) -> int:
 	var total := 0
 	for entry in log:
-		total += int(entry.get("losses", 0))
+		total += int(entry.get(field, 0))
 	return total
 
 

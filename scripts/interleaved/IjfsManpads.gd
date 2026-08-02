@@ -1,15 +1,26 @@
 class_name IjfsManpads
 extends RefCounted
 
-## MANPADS layer (2026-07-10, USER-approved divergence from the TIV oracle — see PLAN.md
-## Decisions). Stinger MANPADS are per-TO container bins (category "MANPADS", stock held in the
-## typed `IjfsTarget.manpads_remaining`) deliberately OUTSIDE the SEAD / AD-health SAM categories:
-## passive-IR shoulder launchers are not SEAD-targetable, but they contest low-altitude air
-## operations. Effects: (1) each low-altitude strike into a TO with ready launchers risks
-## interception (roll BEFORE the strike's own rolls); (2) SEAD/strike squadrons take island-wide
-## contest losses each day. Drains: usage (missiles expended per engagement, here), bombardment
-## (bins stay strikeable through the normal strike path), ground losses
-## (IjfsResolver.sync_manpads_to_oob scales bins with TO infantry survival).
+## MANPADS layer (2026-07-10, USER-approved divergence from the TIV oracle). Stinger MANPADS are
+## per-TO container bins (category "MANPADS", stock held in the typed `IjfsTarget.manpads_remaining`)
+## deliberately OUTSIDE the SEAD / AD-health SAM categories: passive-IR shoulder launchers are not
+## SEAD-targetable, but they contest low-altitude air operations. Drains: usage (missiles expended
+## per engagement, here), bombardment (bins stay strikeable through the normal strike path), ground
+## losses (IjfsResolver.sync_manpads_to_oob scales bins with TO infantry survival).
+##
+## ONE MECHANIC, ONE TRIGGER (plan 0060 R5/R6/R12, USER rulings 2026-08-01). MANPADS used to have two
+## surfaces: an interception roll against every low-altitude strike, and an island-wide daily contest
+## that taxed SEAD and strike squadrons for being in the campaign at all. BOTH are gone. A MANPADS
+## engagement now exists only when a four-airframe manned package strikes a **Maneuver Unit** whose
+## TO holds ready launchers — the shoulder-launched threat belongs to the low-altitude strike that
+## actually flew into its envelope, and to nothing else. MANPADS does not protect SAM, radar,
+## infrastructure or anti-ship targets, and it never touches ISR, SEAD or Attack UCAV aircraft.
+##
+## Kill and abort are MUTUALLY EXCLUSIVE and share ONE draw, so attrition is not a rider on a
+## successful abort:
+##   * **killed** — one selected member dies; the survivors press the attack at reduced effect;
+##   * **aborted** — every survivor returns and books RTB; today's strike is denied;
+##   * **unaffected** — the full surviving package presses.
 
 const CATEGORY := "MANPADS"
 
@@ -17,11 +28,24 @@ const CATEGORY := "MANPADS"
 ## environment; below that, coverage thins linearly. 2,500 launchers are not 5x deadlier than 500
 ## (only so many approach corridors), but the last teams still matter.
 const SATURATION_SYSTEMS := 500.0
-const INTERCEPT_FACTOR := 0.15          # p(intercept) at full threat x munition manpads_vulnerability
-const SQUADRON_LOSS_FACTOR := 0.01      # per-aircraft p(loss) at full island-wide threat
-const EXPEND_PER_INTERCEPT := 3         # missiles fired per interception attempt (usage drain)
-const EXPEND_PER_CONTEST_AIRCRAFT := 1  # missiles fired per aircraft engaged in the day's contest
-const CONTESTED_ROLES := ["sead", "strike"]  # low-altitude attack profiles; ISR flies high
+
+## p(abort) at full threat x munition manpads_vulnerability. Unchanged from the interception formula
+## this mechanic grew out of, and deliberately carries no role/RCS modifier: being driven off is
+## about the launcher's presence, not the airframe's signature.
+const ABORT_FACTOR := 0.15
+
+## Missiles fired per engagement, whatever the outcome — the attempt is what expends the launcher's
+## stock, not the hit.
+const EXPEND_PER_ENGAGEMENT := 3
+
+## Scenario knob holding the fitted per-airframe kill factor (plan 0060 R5). Absent = 0.0 = MANPADS
+## can drive a package off but never shoot one down, which is a legitimate configuration and not a
+## silent default: the shipped scenario sets it.
+const KILL_FACTOR_KNOB := "manpads_attrition_factor"
+
+const OUTCOME_KILLED := "killed"
+const OUTCOME_ABORTED := "aborted"
+const OUTCOME_UNAFFECTED := "unaffected"
 
 
 ## Ready (alive, unsuppressed) launcher count per TO plus "total". Suppressed bins keep their
@@ -52,7 +76,7 @@ static func systems_remaining(target: IjfsTarget) -> int:
 
 
 ## The ONE place the stock changes: the typed field and its serialization mirror move together, so
-## they cannot describe different stocks. Plan 0046 commit 6 moves this body into IjfsTransitions.
+## they cannot describe different stocks.
 static func set_remaining(target: IjfsTarget, value: int) -> void:
 	IjfsTransitions.set_manpads_remaining(target, value)
 
@@ -61,157 +85,93 @@ static func threat_fraction(ready_systems: int) -> float:
 	return clampf(float(ready_systems) / SATURATION_SYSTEMS, 0.0, 1.0)
 
 
-## Roll interception for one about-to-execute strike. Returns null when MANPADS cannot engage
-## (invulnerable munition, target outside any TO, no ready launchers there) — in that case NO
-## dice are consumed. Otherwise consumes exactly one draw, expends missiles from the TO's bins
-## (attempt fired whether or not it hits), and returns the log entry with "intercepted" set.
-static func roll_strike_interception(
-	strike_target: IjfsTarget, munition: IjfsMunition, targets: Array[IjfsTarget], dice: Dice
-) -> Variant:
-	if munition.manpads_vulnerability <= 0.0:
-		return null
+## True when this strike is the one shape MANPADS engages: a Maneuver Unit, in a TO with ready
+## launchers, struck by a munition whose package the USER ruled MANPADS-eligible. Checked before any
+## die is drawn, so an ineligible strike costs nothing.
+static func engages(strike_target: IjfsTarget, munition: IjfsMunition, eligible: bool, targets: Array[IjfsTarget]) -> bool:
+	if not eligible or munition.manpads_vulnerability <= 0.0:
+		return false
+	if strike_target.category != "Maneuver Units":
+		return false
 	if not strike_target.metadata.has("to_number"):
-		return null
+		return false
+	return _ready_in_to(targets, int(strike_target.metadata["to_number"])) > 0
+
+
+## Resolve the MANPADS engagement against one surviving package, consuming EXACTLY ONE draw.
+##
+## That single draw does two jobs, which is the transform R8 asks for and R10 reuses: `u * N` picks
+## which of the N survivors is the candidate, and the FRACTIONAL REMAINDER of the same product is the
+## candidate-specific outcome roll. A second draw for victim selection would be both wasteful and a
+## second place for draw order to drift.
+##
+## Mutates the package (a kill removes a member), the squadrons (loss or RTB), and the TO's launcher
+## stock. Returns the ledger row; the caller decides what the strike log says.
+static func engage_package(
+	package: IjfsAirPackage, strike_target: IjfsTarget, state: IjfsDailyState,
+	profile: IjfsAttritionProfile, dice: Dice
+) -> Dictionary:
 	var to_number := int(strike_target.metadata["to_number"])
-	var ready := _ready_in_to(targets, to_number)
-	if ready <= 0:
-		return null
-	var p_intercept := clampf(
-		threat_fraction(ready) * INTERCEPT_FACTOR * munition.manpads_vulnerability, 0.0, 1.0)
-	var roll := dice.randf()
-	var intercepted := roll <= p_intercept
-	expend(targets, to_number, EXPEND_PER_INTERCEPT)
+	var ready := _ready_in_to(state.targets, to_number)
+	var munition: IjfsMunition = state.munitions[package.munition_id]
+	var threat := threat_fraction(ready)
+	var kill_factor := float(state.scenario.get(KILL_FACTOR_KNOB, 0.0))
+	var members_before := package.size()
+
+	var draw := dice.randf()
+	var scaled := draw * float(members_before)
+	var candidate := mini(int(floor(scaled)), members_before - 1)
+	var outcome_roll := clampf(scaled - float(candidate), 0.0, 1.0)
+	var victim: IjfsSquadron = package.members[candidate]
+
+	# Kill carries the airframe's own survivability (role exposure x RCS); abort does not.
+	var p_kill := profile.p_loss(
+		threat * kill_factor * munition.manpads_vulnerability, victim.aircraft_class, victim.role)
+	var p_abort := clampf(threat * ABORT_FACTOR * munition.manpads_vulnerability, 0.0, 1.0)
+	assert(p_kill + p_abort <= 1.0,
+		"MANPADS kill+abort bands exceed 1.0 for %s (%f + %f) — the two outcomes are mutually exclusive and cannot overlap" % [
+			victim.squadron_id, p_kill, p_abort])
+
+	var outcome := OUTCOME_UNAFFECTED
+	var losses := 0
+	var returned := 0
+	if outcome_roll <= p_kill:
+		outcome = OUTCOME_KILLED
+		losses = 1
+		IjfsTransitions.apply_squadron_losses(package.remove_member(candidate), 1)
+	elif outcome_roll <= p_kill + p_abort:
+		outcome = OUTCOME_ABORTED
+		returned = package.size()
+		for squadron in package.members:
+			IjfsTransitions.book_rtb(squadron, 1)
+
+	expend(state.targets, to_number, EXPEND_PER_ENGAGEMENT)
 	return {
 		"target_id": strike_target.target_id,
 		"to_number": to_number,
 		"munition_id": munition.munition_id,
+		"package_id": package.package_id,
+		"members_before": members_before,
+		"members_after": package.size(),
+		"members_by_squadron": package.members_by_squadron(),
 		"ready_systems": ready,
-		"p_intercept": p_intercept,
-		"roll": roll,
-		"intercepted": intercepted,
-		"systems_expended": EXPEND_PER_INTERCEPT,
+		"p_kill": p_kill,
+		"p_abort": p_abort,
+		"roll": outcome_roll,
+		"outcome": outcome,
+		"victim_squadron_id": victim.squadron_id if outcome == OUTCOME_KILLED else null,
+		"victim_class": victim.aircraft_class if outcome == OUTCOME_KILLED else null,
+		"losses": losses,
+		"rtb": returned,
+		"strike_executed": outcome != OUTCOME_ABORTED,
+		"systems_expended": EXPEND_PER_ENGAGEMENT,
 	}
-
-
-## The pre-strike MANPADS hook, for one about-to-execute strike. Rolled BEFORE the strike's own
-## rolls, and only for rounds that will actually fly — the same inventory-sufficiency check
-## resolve_strike makes, so a round that could never launch does not draw a MANPADS die.
-##
-## Returns true when the strike was intercepted and the caller must NOT resolve it; the round is
-## still spent, mirroring resolve_strike's inventory decrement. Both log rows are appended here
-## rather than returned, because the outcome writes to two different ledgers and splitting that
-## across a return value would let a caller record one and forget the other.
-static func resolve_pre_strike(
-	state: IjfsDailyState, target: IjfsTarget, pairing: IjfsPairing,
-	strike_context: IjfsStrikeContext, dice: Dice
-) -> bool:
-	var munition: Variant = state.munitions.get(pairing.munition_id, null)
-	if munition == null:
-		return false
-	var rounds := int(pairing.rounds_expended_per_engagement)
-	var is_organic: bool = munition.category == "Organic"
-	if not is_organic and (munition as IjfsMunition).inventory_remaining < rounds:
-		return false
-	var intercept: Variant = roll_strike_interception(
-		target, munition as IjfsMunition, state.targets, dice)
-	if intercept == null:
-		return false
-	state.manpads_intercept_log.append(intercept)
-	if not intercept["intercepted"]:
-		return false
-	if not is_organic:
-		IjfsTransitions.consume_munition(munition as IjfsMunition, rounds)
-	state.strike_log.append(intercepted_strike_log(target, pairing, strike_context))
-	return true
-
-
-## Strike-log entry for an intercepted strike: the round is spent (attack_executed, inventory
-## decremented by the caller's budget/inventory path) but delivers nothing. Key-compatible with
-## IjfsStrike.resolve_strike entries so IjfsLedgers.summarize_run / narratives read it unchanged.
-static func intercepted_strike_log(
-	target: IjfsTarget, pairing: IjfsPairing, context: IjfsStrikeContext
-) -> Dictionary:
-	return {
-		"current_day": context.current_day,
-		"target_id": target.target_id,
-		"source_target_id": target.source_target_id,
-		"category": target.category,
-		"subcategory": target.subcategory,
-		"mobility": target.mobility,
-		"posture": target.posture,
-		"metadata": target.metadata,
-		"phase": context.phase,
-		"doctrine_rule_name": context.doctrine_rule_name,
-		"doctrine_selection": context.doctrine_selection,
-		"attack_executed": true,
-		"skip_reason": null,
-		"pairing_id": pairing.pairing_id,
-		"munition_id": pairing.munition_id,
-		"rounds_expended": int(pairing.rounds_expended_per_engagement),
-		"probability_destroyed": 0.0,
-		"roll": null,
-		"destroyed": false,
-		"probability_suppressed_if_not_destroyed": 0.0,
-		"suppression_roll": null,
-		"suppressed": false,
-		"intercepted_by_manpads": true,
-	}
-
-
-## Island-wide contest of low-altitude squadrons (SEAD + strike roles), one bernoulli draw per
-## alive aircraft — the IjfsEngagement return-fire/free-shot shape, with the same RCS survival
-## modifier. Expends missiles per aircraft engaged. Returns contest-style log entries
-## (source "manpads"); caller folds losses into red_air_losses.
-static func contest_squadrons(
-	targets: Array[IjfsTarget], squadron_force: Variant, profile: IjfsAttritionProfile, dice: Dice
-) -> Array:
-	var log: Array = []
-	if squadron_force == null:
-		return log
-	var ready := int(ready_systems_by_to(targets).get("total", 0))
-	if ready <= 0:
-		return log
-	var threat := threat_fraction(ready)
-	for sq: IjfsSquadron in (squadron_force as Array):
-		if sq.alive <= 0 or sq.role not in CONTESTED_ROLES:
-			continue
-		var p_loss := profile.p_loss(threat * SQUADRON_LOSS_FACTOR, sq.aircraft_class, sq.role)
-		var engaged := sq.alive
-		var losses := 0
-		for _i in range(engaged):
-			if dice.randf() <= p_loss:
-				losses += 1
-		_expend_island_wide(targets, engaged * EXPEND_PER_CONTEST_AIRCRAFT)
-		if losses > 0:
-			IjfsTransitions.apply_squadron_losses(sq, losses)
-		log.append({
-			"squadron_id": sq.squadron_id,
-			"aircraft_class": sq.aircraft_class,
-			"engaged": engaged,
-			"losses": losses,
-			"p_loss": p_loss,
-			"source": "manpads",
-		})
-	return log
 
 
 ## Drain `count` missiles from a TO's ready bins, lowest target_id first (deterministic).
 static func expend(targets: Array[IjfsTarget], to_number: int, count: int) -> void:
 	var remaining := count
 	for target in _sorted_ready_bins(targets, to_number):
-		if remaining <= 0:
-			return
-		var stock := systems_remaining(target)
-		var spent := mini(stock, remaining)
-		set_remaining(target, stock - spent)
-		remaining -= spent
-
-
-static func _expend_island_wide(targets: Array[IjfsTarget], count: int) -> void:
-	# Spread usage across TOs proportionally is over-modeling; drain lowest target_id first
-	# island-wide (bins sort TO2 < TO3 < ... by id, so forward TOs deplete first — acceptable).
-	var remaining := count
-	for target in _sorted_ready_bins(targets, -1):
 		if remaining <= 0:
 			return
 		var stock := systems_remaining(target)
@@ -231,13 +191,13 @@ static func _ready_in_to(targets: Array[IjfsTarget], to_number: int) -> int:
 	return ready
 
 
-## Ready bins (alive, unsuppressed, stock > 0), sorted by target_id; to_number -1 = all TOs.
+## Ready bins (alive, unsuppressed, stock > 0) in one TO, sorted by target_id.
 static func _sorted_ready_bins(targets: Array[IjfsTarget], to_number: int) -> Array[IjfsTarget]:
 	var bins: Array[IjfsTarget] = []
 	for target in targets:
 		if target.category != CATEGORY or target.destroyed or target.suppressed:
 			continue
-		if to_number != -1 and int(target.metadata.get("to_number", 0)) != to_number:
+		if int(target.metadata.get("to_number", 0)) != to_number:
 			continue
 		if systems_remaining(target) > 0:
 			bins.append(target)

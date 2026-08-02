@@ -64,6 +64,7 @@
     "ijfs|owned_models|IjfsSquadron.losses_today",
     "ijfs|owned_models|IjfsSquadron.role",
     "ijfs|owned_models|IjfsSquadron.rtb_today",
+    "ijfs|owned_models|IjfsSquadron.sead_assigned_today",
     "ijfs|owned_models|IjfsSquadron.squadron_id",
     "ijfs|owned_models|IjfsTarget.category",
     "ijfs|owned_models|IjfsTarget.destroyed",

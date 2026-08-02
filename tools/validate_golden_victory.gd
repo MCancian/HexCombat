@@ -41,9 +41,14 @@ const MAX_TURNS := 40
 # being dead data. Every per-airframe loss probability now carries altitude/profile exposure
 # (isr 0.7 / sead 1.0 / strike 1.2) on top of the RCS survival modifier, so Red's strike fleet dies
 # faster and its ISR fleet slower than the day before. Was china=11 / taiwan=77.
+# Re-baselined 2026-08-01 for plan 0060 stage 3 (USER rulings R5/R6/R8/R12): an Organic strike became
+# a FOUR-AIRFRAME PACKAGE. The dominant term is R8's capacity-unit correction — the authored
+# firing_units x sorties numbers were always airframe-sortie SEATS, and four seats now buy one
+# four-ship attack instead of four attacks — so Red's Organic strike volume falls by about 4x and far
+# fewer ROC maneuver battalions die in the warmup. Was china=11 / taiwan=79.
 const EXPECTED_GAME_OVER := false
-const EXPECTED_CHINA := 11
-const EXPECTED_TAIWAN := 79
+const EXPECTED_CHINA := 16
+const EXPECTED_TAIWAN := 103
 
 var _failures: Array[String] = []
 var GameData: Node = null

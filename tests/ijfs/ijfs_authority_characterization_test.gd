@@ -9,65 +9,57 @@ extends GdUnitTestSuite
 ## covers only the seams those suites leave open — the ones the authority is about to own.
 
 
-# --- 1. the SECOND munition decrement path -------------------------------------------------------
-# IjfsStrike.gd:124 is the well-covered one. IjfsEngine.gd:218 — the round spent on a strike MANPADS
-# intercepted, which delivers nothing — has no test at all, and plan 0046 routes both through one
-# authority method. The invariant that must survive that: exactly `rounds` leave the magazine per
-# engagement, intercepted or not.
+# --- 1. the strike package's availability arithmetic ---------------------------------------------
+# Plan 0060 R8 made an Organic strike cost four REAL airframes drawn from real squadrons, and gave
+# `rtb_today` its first runtime writer after a year with none. The invariant that has to survive: an
+# airframe is committed at most once a day, by exactly one route.
 
 const MANPADS_TO := 2
 const STOCK := 500          # == IjfsManpads.SATURATION_SYSTEMS, so threat_fraction is exactly 1.0
-const ROUNDS := 4
-const START_INVENTORY := 40
-
-## p_intercept = threat_fraction(500) * INTERCEPT_FACTOR * vulnerability = 1.0 * 0.15 * 1.0.
-const P_INTERCEPT := 0.15
 
 
-func test_intercepted_strike_spends_the_round_and_delivers_nothing() -> void:
-	var state := _strike_state()
-	var dice := ScriptedDice.new([], [], [P_INTERCEPT - 0.05])   # <= p_intercept -> intercepted
+func test_availability_subtracts_both_per_day_ledgers() -> void:
+	var squadron := _squadron("sq1", 10)
+	assert_int(squadron.available_today()).is_equal(10)
 
-	_run_phase(state, dice)
-
-	assert_int(_munition(state).inventory_remaining).override_failure_message(
-		"an intercepted strike must still spend its rounds").is_equal(START_INVENTORY - ROUNDS)
-	assert_int(dice._floats.size()).override_failure_message(
-		"interception must consume exactly one draw and then stop").is_equal(0)
-
-	assert_int(state.manpads_intercept_log.size()).is_equal(1)
-	assert_bool(state.manpads_intercept_log[0]["intercepted"]).is_true()
-
-	assert_int(state.strike_log.size()).is_equal(1)
-	var row: Dictionary = state.strike_log[0]
-	assert_bool(row["attack_executed"]).is_true()
-	assert_bool(row["destroyed"]).is_false()
-	assert_bool(row["intercepted_by_manpads"]).is_true()
-	assert_int(row["rounds_expended"]).is_equal(ROUNDS)
+	IjfsTransitions.book_rtb(squadron, 3)
+	assert_int(squadron.available_today()).is_equal(7)
+	IjfsTransitions.assign_to_sead(squadron, 2)
+	assert_int(squadron.available_today()).override_failure_message(
+		"an airframe home for the day and one booked to SEAD are both unavailable"
+	).is_equal(5)
+	assert_int(squadron.alive).override_failure_message(
+		"neither ledger is a loss — the airframes are alive").is_equal(10)
 
 
-func test_surviving_strike_spends_the_same_round_exactly_once() -> void:
-	var state := _strike_state()
-	# 0.9 > p_intercept -> not intercepted; then resolve_strike's destroy roll (p_destroy 1.0 always
-	# destroys, so no suppression roll follows).
-	var dice := ScriptedDice.new([], [], [0.9, 0.5])
-
-	_run_phase(state, dice)
-
-	assert_int(_munition(state).inventory_remaining).override_failure_message(
-		"the round must be deducted exactly once, by resolve_strike rather than the engine"
-	).is_equal(START_INVENTORY - ROUNDS)
-	assert_int(dice._floats.size()).is_equal(0)
-	assert_bool(state.strike_log[0]["destroyed"]).is_true()
+func test_neither_availability_ledger_can_overcommit_a_squadron() -> void:
+	var squadron := _squadron("sq1", 4)
+	IjfsTransitions.book_rtb(squadron, 4)
+	assert_error(func() -> void: IjfsTransitions.book_rtb(squadron, 1)).is_push_error(
+		"IjfsTransitions: sq1 sent 1 home with only 0 available today")
+	assert_error(func() -> void: IjfsTransitions.assign_to_sead(squadron, 1)).is_push_error(
+		"IjfsTransitions: sq1 assigned 1 to SEAD with only 0 available today")
+	assert_int(squadron.rtb_today).is_equal(4)
+	assert_int(squadron.sead_assigned_today).is_equal(0)
 
 
-func test_interception_attempt_drains_manpads_stock_whether_or_not_it_hits() -> void:
-	for roll in [P_INTERCEPT - 0.05, 0.9]:
-		var state := _strike_state()
-		_run_phase(state, ScriptedDice.new([], [], [roll, 0.5]))
-		assert_int(IjfsManpads.systems_remaining(_manpads_bin(state))).override_failure_message(
-			"launchers are expended on the attempt, not on the hit (roll %s)" % roll
-		).is_equal(STOCK - IjfsManpads.EXPEND_PER_INTERCEPT)
+func test_package_assembly_never_reuses_an_airframe_or_overdraws_the_pool() -> void:
+	var small := _squadron("sq_small", 1)
+	var big := _squadron("sq_big", 3)
+	# Exactly four available airframes, so the package must take BOTH of sq_small's... it has one.
+	var members := IjfsAirPackage.reserve([small, big], 4, ScriptedDice.new([], [], [0.0, 0.0, 0.0, 0.0]))
+	assert_int(members.size()).is_equal(4)
+	var counts: Dictionary = {}
+	for squadron in members:
+		counts[squadron.squadron_id] = int(counts.get(squadron.squadron_id, 0)) + 1
+	assert_int(int(counts["sq_small"])).override_failure_message(
+		"a 1-airframe squadron cannot supply two slots of one package").is_equal(1)
+	assert_int(int(counts["sq_big"])).is_equal(3)
+
+	# One airframe home for the day leaves three, and three cannot man a four-ship package.
+	IjfsTransitions.book_rtb(big, 1)
+	assert_array(IjfsAirPackage.reserve([small, big], 4, ScriptedDice.new([], [], [0.0, 0.0, 0.0]))
+		).override_failure_message("a short package must not launch at all").is_empty()
 
 
 # --- 2. squadron counters: what the names promise vs what the code does --------------------------
@@ -112,16 +104,23 @@ func test_losses_today_resets_each_day_while_losses_campaign_accumulates() -> vo
 	assert_int(squadron.alive).is_equal(squadron.initial - squadron.losses_campaign)
 
 
-func test_rtb_today_has_no_runtime_writer() -> void:
+func test_the_day_boundary_clears_both_availability_ledgers() -> void:
 	var squadron := _squadron("sq1", 10)
 	var force: Array[IjfsSquadron] = [squadron]
+	var state := IjfsDailyState.new()
+	state.targets = []
+	state.squadron_force = force
 
-	IjfsEngagement.apply_post_phase_2_free_shot(force, IjfsAttritionProfile.build(null, null), 1.0, _one_hit_then_misses(10))
-	IjfsManpads.contest_squadrons(_manpads_only_targets(), force, IjfsAttritionProfile.build(null, null), _one_hit_then_misses(squadron.alive))
+	IjfsTransitions.book_rtb(squadron, 2)
+	IjfsTransitions.assign_to_sead(squadron, 3)
+
+	IjfsEngine.carry_to_next_day(state)
 
 	assert_int(squadron.rtb_today).override_failure_message(
-		"nothing in the pipeline writes rtb_today; the authority must not grow a mutator for it"
-	).is_equal(0)
+		"an airframe driven home yesterday flies again today").is_equal(0)
+	assert_int(squadron.sead_assigned_today).override_failure_message(
+		"leaving SEAD assignments set would retire the whole air force over a campaign").is_equal(0)
+	assert_int(squadron.available_today()).is_equal(10)
 
 
 # --- 3. the typed MANPADS stock and its serialization mirror ------------------------------------
@@ -201,62 +200,6 @@ func test_destruction_survives_carry_over_and_maneuver_sync() -> void:
 
 
 # --- helpers ------------------------------------------------------------------------------------
-
-## One attackable AD target in TO 2, one MANPADS bin in the same TO, and a vulnerable munition —
-## the minimum state that reaches IjfsEngine's interception branch.
-func _strike_state() -> IjfsDailyState:
-	var state := IjfsDailyState.new()
-	state.scenario = {"strike_probability_modifiers": [], "targeting_doctrine": []}
-
-	var victim := _target("t1", "Air Defense Systems")
-	victim.metadata = {"to_number": MANPADS_TO}
-	var bin := _target("z_manpads1", IjfsManpads.CATEGORY)
-	bin.metadata = {"to_number": MANPADS_TO, "systems_represented": STOCK}
-	state.targets = [victim, bin]
-
-	var munition := IjfsMunition.new()
-	munition.munition_id = "owa"
-	munition.category = "Inorganic-Slow"
-	munition.inventory_remaining = START_INVENTORY
-	munition.rounds_per_engagement_default = ROUNDS
-	munition.manpads_vulnerability = 1.0
-	state.munitions = {"owa": munition}
-
-	var pairing := IjfsPairing.new()
-	pairing.pairing_id = "owa_vs_ad"
-	pairing.munition_id = "owa"
-	pairing.target_category = "Air Defense Systems"   # deliberately does NOT match the MANPADS bin
-	pairing.rounds_expended_per_engagement = ROUNDS
-	pairing.probability_destroyed = 1.0
-	pairing.probability_suppressed_if_not_destroyed = 0.0
-	var pairings: Array[IjfsPairing] = [pairing]
-	state.pairings = pairings
-	return state
-
-
-func _run_phase(state: IjfsDailyState, dice: Dice) -> void:
-	var ctx := IjfsStrikePhaseContext.new()
-	ctx.current_day = 1
-	IjfsStrikePhase.run(state, ctx, IjfsEngine.PRE_AD_PHASE, dice)
-
-
-func _munition(state: IjfsDailyState) -> IjfsMunition:
-	return state.munitions["owa"]
-
-
-func _manpads_bin(state: IjfsDailyState) -> IjfsTarget:
-	for target in state.targets:
-		if target.category == IjfsManpads.CATEGORY:
-			return target
-	return null
-
-
-func _manpads_only_targets() -> Array[IjfsTarget]:
-	var bin := _target("m1", IjfsManpads.CATEGORY)
-	bin.metadata = {"to_number": MANPADS_TO, "systems_represented": STOCK}
-	var targets: Array[IjfsTarget] = [bin]
-	return targets
-
 
 func _target(id: String, category: String) -> IjfsTarget:
 	var target := IjfsTarget.new()

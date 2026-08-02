@@ -102,10 +102,13 @@ static func _render_ijfs(lines: Array[String], data: Dictionary) -> void:
 	if interceptions > 0 or air_losses > 0:
 		var pieces: Array[String] = []
 		if air_losses > 0:
-			# All channels: SEAD return fire + SAM free shot + MANPADS contest.
+			# All channels: SAM return fire + SAM free shot + MANPADS package engagements.
 			pieces.append("%d Red aircraft lost to air defenses" % air_losses)
 		if interceptions > 0:
-			pieces.append("%d strike(s) intercepted by MANPADS" % interceptions)
+			# `interceptions` is the compatibility total kills + aborts (plan 0060 R5): the strikes
+			# MANPADS denied outright plus the packages it bloodied, which is what this line always
+			# meant when interception was the only outcome MANPADS could produce.
+			pieces.append("%d strike package(s) engaged by MANPADS" % interceptions)
 		manpads_bit = " %s (%d MANPADS ready)." % [
 			"; ".join(pieces), int(manpads.get("ready_systems_by_to", {}).get("total", 0))]
 	lines.append("- **Red joint fires (IJFS)**: %d strike(s) executed (%d skipped)%s.%s%s" % [

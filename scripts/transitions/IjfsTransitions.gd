@@ -165,6 +165,10 @@ static func set_manpads_remaining(target: IjfsTarget, value: int) -> void:
 ## ledger built at the end of that day. losses_campaign is deliberately not touched. The first warmup
 ## day never reaches here (IjfsResolver guards it with `i > 0`) and does not need to: the loader has
 ## already zeroed both counters.
+##
+## The two AVAILABILITY ledgers reset here for the same reason (plan 0060 R8/R11): an airframe driven
+## home by a MANPADS abort, or booked to yesterday's SEAD package, flies again today. Leaving either
+## set would silently retire the whole air force over a campaign.
 static func carry_to_next_day(daily_state: IjfsDailyState) -> void:
 	for target in daily_state.targets:
 		target.suppressed = false
@@ -173,21 +177,22 @@ static func carry_to_next_day(daily_state: IjfsDailyState) -> void:
 	if daily_state.squadron_force != null:
 		for squadron: IjfsSquadron in (daily_state.squadron_force as Array):
 			squadron.losses_today = 0
+			squadron.rtb_today = 0
+			squadron.sead_assigned_today = 0
 
 
 # ── Squadron strength ───────────────────────────────────────────────────────────────────────────
 
-## Book aircraft losses on one squadron. All three attrition sources — SEAD return fire, the
-## post-phase-2 free shot, and the island-wide MANPADS contest — land here.
+## Book aircraft losses on one squadron. Every attrition source lands here: SAM return fire, the
+## post-phase-2 free shot, and the MANPADS engagement against a four-airframe package.
 ##
 ## Books the loss twice, into two fields with two different lifetimes (USER call 2026-08-01): a per-day
 ## `losses_today`, reset by carry_to_next_day at the head of each day, and a `losses_campaign` running
 ## total that nothing resets. Before that call `losses_today` alone existed and was campaign-cumulative
 ## despite its name — a daily-looking number in the air_oob_after ledger that reported the whole
 ## campaign. Reporting both was preferred to renaming, so an OOB read shows current damage and
-## accumulated wear at once. `rtb_today` still gets no mutator here: the pipeline has never written it,
-## and the mechanic that would — aircraft driven off rather than shot down — is plan 0059, not a rider
-## on this. All three fields are pinned by tests/ijfs/ijfs_authority_characterization_test.gd.
+## accumulated wear at once. Before 2026-08-01 `losses_today` alone existed and was campaign-cumulative
+## despite its name. All four counters are pinned by tests/ijfs/ijfs_authority_characterization_test.gd.
 static func apply_squadron_losses(squadron: IjfsSquadron, losses: int) -> void:
 	if squadron == null:
 		push_error("IjfsTransitions: apply_squadron_losses called with no squadron")
@@ -201,6 +206,41 @@ static func apply_squadron_losses(squadron: IjfsSquadron, losses: int) -> void:
 	squadron.alive -= losses
 	squadron.losses_today += losses
 	squadron.losses_campaign += losses
+
+
+## Send airframes home for the rest of the day, alive. MANPADS aborting a package is the only writer
+## (plan 0059 step 2, folded into plan 0060 R5): the aircraft was driven off, not shot down, so it
+## costs Red today's sortie and nothing more.
+##
+## Bounded against `available_today()` rather than `alive`, which is what makes an airframe unable to
+## be booked home twice, or booked home while it is assigned to the SEAD package. An aircraft can
+## never be both RTB and killed, because a MANPADS engagement produces exactly one outcome.
+static func book_rtb(squadron: IjfsSquadron, count: int) -> void:
+	if squadron == null:
+		push_error("IjfsTransitions: book_rtb called with no squadron")
+		return
+	if count <= 0:
+		return
+	if count > squadron.available_today():
+		push_error("IjfsTransitions: %s sent %d home with only %d available today" % [
+			squadron.squadron_id, count, squadron.available_today()])
+		return
+	squadron.rtb_today += count
+
+
+## Book airframes to today's SEAD package (plan 0060 R11 stage C). They leave the Organic strike pool
+## for the day but stay exposed to SAM return fire, so this is an availability transfer and not a loss.
+static func assign_to_sead(squadron: IjfsSquadron, count: int) -> void:
+	if squadron == null:
+		push_error("IjfsTransitions: assign_to_sead called with no squadron")
+		return
+	if count <= 0:
+		return
+	if count > squadron.available_today():
+		push_error("IjfsTransitions: %s assigned %d to SEAD with only %d available today" % [
+			squadron.squadron_id, count, squadron.available_today()])
+		return
+	squadron.sead_assigned_today += count
 
 
 # ── Daily-state lifecycle ───────────────────────────────────────────────────────────────────────

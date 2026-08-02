@@ -414,10 +414,6 @@
           "classification": "phase_output",
           "why": "Per-run IJFS ledger. IjfsDailyState's own header divides its fields into inputs that persist across days (the three the ijfs aggregate claims) and per-run outputs reset at the top of every run_daily; this is one of the outputs."
         },
-        "manpads_contest_log": {
-          "classification": "phase_output",
-          "why": "Per-run IJFS ledger. IjfsDailyState's own header divides its fields into inputs that persist across days (the three the ijfs aggregate claims) and per-run outputs reset at the top of every run_daily; this is one of the outputs."
-        },
         "taiwan_ad_health_before": {
           "classification": "phase_output",
           "why": "Air-defence health snapshot taken during a run and rewritten by the next one; an observation of the targets the ijfs aggregate protects, not a second copy of them."
@@ -782,7 +778,7 @@
         {
           "class": "IjfsSquadron",
           "path": "res://scripts/model/ijfs/IjfsSquadron.gd",
-          "_doc": "Owned model. losses_today is genuinely per-day since 2026-08-01 (IjfsTransitions.carry_to_next_day zeroes it at the head of each day); losses_campaign carries the running total it used to hold. Both are serialized into the air_oob_after ledger, which is model_version 4 for that reason. rtb_today still has no runtime writer — the mechanic that would give it one is plan 0059, and until that lands a writer appearing here is a bug. All three are pinned by tests/ijfs/ijfs_authority_characterization_test.gd.",
+          "_doc": "Owned model. losses_today is genuinely per-day since 2026-08-01 (IjfsTransitions.carry_to_next_day zeroes it at the head of each day); losses_campaign carries the running total it used to hold. Both are serialized into the air_oob_after ledger, which is model_version 4 for that reason. rtb_today FINALLY has a runtime writer as of 2026-08-01 (plan 0059 step 2, folded into plan 0060 R5): a MANPADS abort sends a package's survivors home alive, and IjfsTransitions.book_rtb is the only route. sead_assigned_today arrived with it (plan 0060 R11 stage C) as the second per-day availability ledger. Both reset at the day boundary alongside losses_today, and both are bounded against IjfsSquadron.available_today() so an airframe cannot be committed twice. All five are pinned by tests/ijfs/ijfs_authority_characterization_test.gd.",
           "fields": {
             "squadron_id": "identity",
             "aircraft_class": "identity",
@@ -791,7 +787,8 @@
             "alive": "campaign",
             "losses_today": "campaign",
             "losses_campaign": "campaign",
-            "rtb_today": "campaign"
+            "rtb_today": "campaign",
+            "sead_assigned_today": "campaign"
           }
         }
       ],
@@ -855,7 +852,8 @@
             "IjfsSquadron.alive",
             "IjfsSquadron.losses_today",
             "IjfsSquadron.losses_campaign",
-            "IjfsSquadron.rtb_today"
+            "IjfsSquadron.rtb_today",
+            "IjfsSquadron.sead_assigned_today"
           ]
         },
         {

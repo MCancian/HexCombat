@@ -102,21 +102,59 @@ func _validate_attrition_links(scenario: Dictionary, oob: Dictionary) -> void:
 	_check(linked == 2, "Expected exactly 2 attrition-linked Organic munitions, got %d" % linked)
 
 
-## Zero-reference check for the two classes plan 0060 retired. Scoped to the IJFS data + code, on
-## purpose: "Decoys" is ALSO a live ship type in data/ships.json and the anti-ship crossing config,
-## so a repository-wide token scan would fail on unrelated, correct content.
+## Zero-reference check for what plan 0060 retired.
+##
+## The two AIR CLASSES are checked only against the IJFS data and code, on purpose: "Decoys" is ALSO
+## a live ship type in data/ships.json and the anti-ship crossing config, so a repository-wide token
+## scan would fail on unrelated, correct content.
+##
+## The deleted MANPADS contest ledger has no such ambiguity — the island-wide contest it recorded is
+## gone, and the key naming it must not survive anywhere a consumer could still read it. It is
+## therefore swept across all of scripts/ and tools/. Prose in docs/ and docs/archive/ is deliberately
+## out of scope: a retrospective describing a mechanic that used to exist is correct, not stale.
+##
+## RETIRED_LEDGER_KEY is assembled from two halves so this file does not match its own scan. Spelling
+## it out here would make the validator fail on itself, which is the sort of "fix" that ends with the
+## scan being narrowed until it catches nothing.
+const RETIRED_LEDGER_KEY := "manpads_contest" + "_log"
+
+
 func _validate_retired_air_classes() -> void:
 	var retired := ["\"HARM\"", "\"Decoys\""]
 	for path in ["res://data/ijfs/red_air_oob.json", "res://data/ijfs/air_classes.json",
 			"res://scripts/loaders/IjfsLoaders.gd", "res://scripts/interleaved/IjfsEngine.gd"]:
-		var file := FileAccess.open(path, FileAccess.READ)
-		if file == null:
-			_fail("Could not open %s for the retired-class scan" % path)
-			continue
-		var text := file.get_as_text()
+		var text := _read_text(path)
 		for token in retired:
 			_check(not text.contains(token), "%s still references the retired air class %s" % [path, token])
-	print("Retired air classes (HARM / Decoys): zero references in IJFS data and code")
+	var live_references := 0
+	for path in _gd_files("res://scripts") + _gd_files("res://tools"):
+		if _read_text(path).contains(RETIRED_LEDGER_KEY):
+			_fail("%s still references the deleted %s ledger" % [path, RETIRED_LEDGER_KEY])
+			live_references += 1
+	_check(live_references == 0, "%s must have zero live references" % RETIRED_LEDGER_KEY)
+	print("Retired surfaces (HARM / Decoys / %s): zero live references" % RETIRED_LEDGER_KEY)
+
+
+func _read_text(path: String) -> String:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		_fail("Could not open %s for the retired-surface scan" % path)
+		return ""
+	return file.get_as_text()
+
+
+func _gd_files(root: String) -> Array[String]:
+	var found: Array[String] = []
+	var directory := DirAccess.open(root)
+	if directory == null:
+		_fail("Could not open %s for the retired-surface scan" % root)
+		return found
+	for name in directory.get_directories():
+		found.append_array(_gd_files("%s/%s" % [root, name]))
+	for name in directory.get_files():
+		if name.ends_with(".gd"):
+			found.append("%s/%s" % [root, name])
+	return found
 
 
 func _validate_target_expansion(raw: Dictionary, targets: Array[IjfsTarget]) -> void:
