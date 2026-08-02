@@ -233,17 +233,23 @@ static func book_rtb(squadron: IjfsSquadron, count: int) -> void:
 	squadron.rtb_today += count
 
 
-## Release airframes from today's SEAD package. The ONE caller is return fire killing an assigned
-## airframe: without this, `alive` falls by one AND `sead_assigned_today` stays, so
-## `available_today()` double-subtracts the same casualty out of the later strike pool (found by diff
-## review 2026-08-01, reproduced before fixing). A dead aircraft is not an assigned aircraft.
-static func release_sead_assignment(squadron: IjfsSquadron, count: int) -> void:
+## One airframe of an engaged package dies. ONE operation rather than two calls at the call site,
+## deliberately (diff review round 2, 2026-08-01): a dead SEAD-package member must be RELEASED from
+## `sead_assigned_today` before the loss is booked, or `available_today()` double-subtracts the same
+## casualty out of the later strike pool — and the correct order is not guessable from the call site.
+##
+## The order is load-bearing and only works one way. `apply_squadron_losses` clamps the bookings
+## against the new, smaller `alive`; if the loss went first that clamp would already have reduced the
+## assignment, and the release would then subtract a SECOND time, fabricating an available airframe.
+## Sequencing it here means a caller cannot get it wrong, and the generic clamp can no longer mask a
+## release someone forgot.
+static func apply_package_member_loss(squadron: IjfsSquadron, from_sead_package: bool) -> void:
 	if squadron == null:
-		push_error("IjfsTransitions: release_sead_assignment called with no squadron")
+		push_error("IjfsTransitions: apply_package_member_loss called with no squadron")
 		return
-	if count <= 0:
-		return
-	squadron.sead_assigned_today = maxi(0, squadron.sead_assigned_today - count)
+	if from_sead_package:
+		squadron.sead_assigned_today = maxi(0, squadron.sead_assigned_today - 1)
+	apply_squadron_losses(squadron, 1)
 
 
 ## Book airframes to today's SEAD package (plan 0060 R11 stage C). They leave the Organic strike pool

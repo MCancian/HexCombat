@@ -61,31 +61,49 @@ func test_retaining_one_child_gives_successive_packages_different_draws() -> voi
 
 
 ## The three cases above pin the DERIVE contract in isolation. They do not, on their own, prove the
-## ENGINE uses it correctly — a `run_daily` that re-derived the label per package would still pass
-## them (diff review 2026-08-01). This one exercises the real engine.
-func test_the_engine_gives_successive_packages_different_airframe_draws() -> void:
-	var state := _package_heavy_state()
-	IjfsEngine.run_daily(state, SeededDice.new(20260801), 2)
+## ENGINE uses it — a `run_daily` that re-derived the label per package would pass every one of them.
+##
+## Round 1 of the diff review caught that gap; round 2 caught my FIRST replacement for it, which
+## asserted a disjunction whose left operand an earlier assertion had already made true. The SECOND
+## attempt counted derives on the day's dice only — and the regression it exists to catch re-derives
+## off the CHILD, so it sailed through a deliberately broken build. This version hands its label list
+## down the chain, so a derive anywhere below the day's dice is recorded. Verified by injecting the
+## regression and watching it go red before restoring.
+class RecordingDice extends SeededDice:
+	var derive_labels: Array[String] = []
 
-	var by_package: Dictionary = {}
+	func derive(label: String) -> Dice:
+		derive_labels.append(label)
+		var child := RecordingDice.new(hash(str(label)))
+		# The list is SHARED, not copied: the point is to see every derive in the whole tree.
+		child.derive_labels = derive_labels
+		return child
+
+
+func test_the_engine_derives_the_air_engagement_stream_exactly_once_a_day() -> void:
+	var state := _shipped_state()
+	var dice := RecordingDice.new(20260801)
+	IjfsEngine.run_daily(state, dice, 2)
+
+	var air_engagement_derives := 0
+	for label in dice.derive_labels:
+		if label == LABEL:
+			air_engagement_derives += 1
+
+	# The day must actually have flown packages, or "derived once" is vacuously true.
+	var packages: Dictionary = {}
 	for row in state.contest_log + state.manpads_intercept_log:
 		if row.has("package_id"):
-			by_package[String(row["package_id"])] = true
-	assert_int(by_package.size()).override_failure_message(
-		"the day must produce more than one package for this case to mean anything").is_greater(1)
+			packages[String(row["package_id"])] = true
+	assert_int(packages.size()).override_failure_message(
+		"the day flew no packages, so this case would prove nothing").is_greater(1)
 
-	# Composition is the observable: if every package drew the same sequence, every package against
-	# the same target list would be assembled from the same squadrons in the same order.
-	var compositions: Dictionary = {}
-	for row in state.contest_log:
-		if row.has("package_id") and row.has("victim_squadron_id"):
-			var key := "%s|%s" % [row["members_before"], row["roll"]]
-			compositions[key] = true
-	assert_bool(compositions.size() > 1 or by_package.size() > 1).override_failure_message(
-		"successive packages must not replay one identical draw sequence").is_true()
+	assert_int(air_engagement_derives).override_failure_message(
+		"the day derived '%s' %d time(s); re-deriving per package hands every package an identical sequence"
+		% [LABEL, air_engagement_derives]).is_equal(1)
 
 
-func _package_heavy_state() -> IjfsDailyState:
+func _shipped_state() -> IjfsDailyState:
 	var data := "res://data/ijfs/"
 	var state := IjfsDailyState.new()
 	state.targets = IjfsLoaders.load_targets(data + "targets_master.json", 1)

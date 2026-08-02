@@ -56,6 +56,23 @@ entry to `docs/archive/RETROSPECTIVES_history.md`**.
   it as its OWN commit, and proving it byte-neutral against the golden pins and the LLM fixture, meant
   every later red gate had one candidate cause instead of two.
 
+- **My replacement for a dishonest test was dishonest twice more, and only an injected regression
+  settled it.** Review round 1 caught that the RNG-contract suite tested `SeededDice.derive` in
+  isolation, so an engine that re-derived per package would still pass. My first replacement asserted
+  `a or b` where an earlier assertion had already made `a` true. My second counted derives on the
+  day's dice — and the regression it exists to catch re-derives off the CHILD, so it sailed straight
+  through a deliberately broken build. Only the third works, and I know that because I injected the
+  regression and watched it go red. **A test written to pin an absence is not believable until you
+  have seen it fail.** Same lesson as plan 0049's `_advance` test; the difference is that here it
+  took three attempts, and attempts one and two both LOOKED like they exercised the right thing.
+- **Two reviewers contradicted each other, and the ruling broke the tie.** agy called excluding
+  SEAD-assigned airframes from the post-phase-2 free shot a High-severity new defect, reasoning from
+  my own code comment that assigned aircraft "stay exposed to SAM return fire". Sol called the same
+  category clean, citing the ruling. R2's follow-up says literally: "Subtract `sead_assigned_today`
+  when forming new strike/free-shot pools, but not from R10 return fire against the already-formed
+  SEAD package." agy had generalised a comment about R10 fire to a different mechanic. Rejected on
+  the ruling's own words — not on the vote.
+
 **Orchestrator triage:**
 - "Drive the real pipeline when the mechanic depends on state only it builds" → act now — this is the
   third instance of the measurement-inherits-its-question family and is recorded here with its cause.

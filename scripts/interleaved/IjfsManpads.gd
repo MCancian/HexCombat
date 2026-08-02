@@ -137,7 +137,9 @@ static func engage_package(
 	if p_kill > 0.0 and outcome_roll <= p_kill:
 		outcome = OUTCOME_KILLED
 		losses = 1
-		IjfsTransitions.apply_squadron_losses(package.remove_member(candidate), 1)
+		# MANPADS only ever engages a STRIKE package, so nothing is released — but it goes through
+		# the same authority operation, so there is one way for a package member to die.
+		IjfsTransitions.apply_package_member_loss(package.remove_member(candidate), false)
 	elif p_abort > 0.0 and outcome_roll <= p_kill + p_abort:
 		outcome = OUTCOME_ABORTED
 		returned = package.size()

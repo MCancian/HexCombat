@@ -117,12 +117,10 @@ static func _engage_package_member(
 	# `roll <= p` makes a probability-ZERO outcome fire.
 	var hit := p_loss > 0.0 and roll <= p_loss
 	if hit:
-		var victim_squadron := package.remove_member(candidate)
-		# A killed SEAD-package member stops being ASSIGNED as well as alive; without the release,
-		# `available_today()` would subtract the same casualty twice from the later strike pool.
-		if package.kind == IjfsAirPackage.SEAD:
-			IjfsTransitions.release_sead_assignment(victim_squadron, 1)
-		IjfsTransitions.apply_squadron_losses(victim_squadron, 1)
+		# A killed SEAD-package member stops being ASSIGNED as well as alive; the authority sequences
+		# the release and the loss, because the two only compose in one order.
+		IjfsTransitions.apply_package_member_loss(
+			package.remove_member(candidate), package.kind == IjfsAirPackage.SEAD)
 	return {
 		"target_id": target.target_id,
 		"to_number": int(target.metadata.get("to_number", -1)),
