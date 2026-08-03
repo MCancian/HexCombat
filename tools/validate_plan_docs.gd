@@ -2,7 +2,7 @@
 # godot --headless --path . -s res://tools/validate_plan_docs.gd
 extends SceneTree
 
-## Keeps the two plan-tracking indexes cheap to scan, which is what both files promise in their own
+## Keeps the three plan-tracking indexes cheap to scan, which is what both files promise in their own
 ## headers and neither delivered before 2026-08-01: BACKLOG.md's documented
 ## `grep '^- \[ \]'` returned wrapped fragments for 20 of 21 items, and README.md's "index, not
 ## reading material" table held rows up to 1328 characters.
@@ -14,11 +14,21 @@ extends SceneTree
 ## lets an agent batch the measurement. The heading is the contract; the validators named are free
 ## text, because only the plan author knows which goldens its mechanics move.
 ##
+## Since 2026-08-03 it also enforces docs/DECISIONS.md's own "3–5 lines" header promise: every entry
+## dated after DECISIONS_GRANDFATHER_DATE must be at most MAX_DECISIONS_ENTRY_LINES (bullet + non-blank
+## continuation lines). The cutoff is load-bearing and deliberate: measured 2026-08-03, 76 of 94
+## historical entries exceed 5 lines, so the file's past is exempt BY DESIGN (DECISIONS is append-only)
+## and this check is strictly forward-looking. Do not lower the cutoff to "help" clean history — an
+## entry over the cap belongs in a canonical home (STATUS, a validator PASS line, a system doc,
+## hexcombat-failure-archaeology) with only what/who/pointer in DECISIONS.
+##
 ## The budgets below are the CONTRACT. The self-test pins them with literal 120/121 and 200/201 —
 ## and pins the placeholder with its literal text — rather than reading these constants,
 ## deliberately: a test built from the same constant it is checking cannot notice the constant moving.
 const MAX_BACKLOG_LINE := 120
 const MAX_README_ROW := 200
+const MAX_DECISIONS_ENTRY_LINES := 5
+const DECISIONS_GRANDFATHER_DATE := "2026-08-03"
 
 var _failures: Array[String] = []
 
@@ -26,6 +36,7 @@ func _initialize() -> void:
 	_self_test()
 	_check_backlog()
 	_check_readme()
+	_check_decisions()
 	_check_plans()
 	
 	if _failures.is_empty():
@@ -162,6 +173,36 @@ func _self_test() -> void:
 		func() -> void: _check_plan_golden_budget_content(
 			"## Golden-pin budget\n<none — name the validators you will re-baseline>", "plan")), "placeholder")
 
+	# --- DECISIONS: cases that must PASS ---
+	# Exactly at the 5-line cap: bullet + four indented continuations.
+	_expect_clean("decisions/short", _capture(
+		func() -> void: _check_decisions_text("---\n- **2026-08-04 — Short.\n  a\n  b\n  c\n  d\n")))
+	# Date on or before the grandfather cutoff is exempt however long it is — measured 2026-08-03,
+	# 76 of 94 historical entries exceed the cap, and DECISIONS is append-only.
+	_expect_clean("decisions/grandfathered", _capture(
+		func() -> void: _check_decisions_text(
+			"---\n- **2026-08-03 — Old.\n  a\n  b\n  c\n  d\n  e\n  f\n  g\n")))
+	# A blank line between entries is not a continuation of the entry above it.
+	_expect_clean("decisions/blank-between", _capture(
+		func() -> void: _check_decisions_text(
+			"---\n- **2026-08-04 — A.\n  a\n  b\n  c\n\n- **2026-08-04 — B.\n  d\n")))
+	# Anything before the single '---' separator is the preamble and is skipped — a bullet-looking
+	# line in it must not be treated as an entry.
+	_expect_clean("decisions/preamble-skipped", _capture(
+		func() -> void: _check_decisions_text(
+			"## Decided\n- **2020-01-01 — Fake.\n---\n- **2026-08-04 — Real.\n")))
+
+	# --- DECISIONS: cases that must FAIL, each for its own stated reason ---
+	# One over the cap, with the message naming the count: counting alone lets a case pass for the
+	# wrong reason.
+	_expect_failure("decisions/over-limit", _capture(
+		func() -> void: _check_decisions_text("---\n- **2026-08-04 — Long.\n  a\n  b\n  c\n  d\n  e\n")),
+		"is 6 lines")
+	_expect_failure("decisions/no-separator", _capture(
+		func() -> void: _check_decisions_text("- **2026-08-04 — A.\n")), "preamble separator")
+	_expect_failure("decisions/no-entries", _capture(
+		func() -> void: _check_decisions_text("---\n")), "no entries found")
+
 
 func _check_backlog() -> void:
 	var path := "res://docs/plans/BACKLOG.md"
@@ -189,6 +230,63 @@ func _check_readme() -> void:
 	var lines := text.split("\n")
 	for i in range(lines.size()):
 		_check_readme_line(lines[i], i + 1)
+
+
+## Enforces the "3–5 lines" promise in docs/DECISIONS.md's own header for entries dated after
+## DECISIONS_GRANDFATHER_DATE. Everything before the single `---` preamble separator is skipped
+## (its "Fact type | Only home" table is not an entry). An entry is its bullet plus the non-blank
+## continuation lines up to the next entry bullet or EOF; blank lines between entries never count.
+func _check_decisions() -> void:
+	var path := "res://docs/DECISIONS.md"
+	if not FileAccess.file_exists(path):
+		_failures.append("DECISIONS.md not found")
+		return
+	_check_decisions_text(FileAccess.get_file_as_string(path))
+
+
+func _check_decisions_text(text: String) -> void:
+	var lines := text.split("\n")
+	var body_start := -1
+	for i in range(lines.size()):
+		if lines[i].strip_edges() == "---":
+			body_start = i + 1
+			break
+	if body_start == -1:
+		_failures.append("DECISIONS.md: no '---' preamble separator found")
+		return
+	var first_entry := -1
+	for i in range(body_start, lines.size()):
+		if not _decisions_entry_date(lines[i]).is_empty():
+			first_entry = i
+			break
+	if first_entry == -1:
+		_failures.append("DECISIONS.md: no entries found after the preamble separator")
+		return
+	var i := first_entry
+	while i < lines.size():
+		var date := _decisions_entry_date(lines[i])
+		var block_end := i + 1
+		while block_end < lines.size() and _decisions_entry_date(lines[block_end]).is_empty():
+			block_end += 1
+		var count := 0
+		for j in range(i, block_end):
+			if not lines[j].strip_edges().is_empty():
+				count += 1
+		if not date.is_empty() and date > DECISIONS_GRANDFATHER_DATE and count > MAX_DECISIONS_ENTRY_LINES:
+			_failures.append("DECISIONS.md:%d: %s entry is %d lines (> %d)" % [
+				i + 1, date, count, MAX_DECISIONS_ENTRY_LINES])
+		i = block_end
+
+
+## Returns the bullet's ISO date (`2026-08-03` in `- **2026-08-03 — text`) or "" if the line is not
+## an entry bullet. Non-bullet lines always return "" so they read as continuation content.
+func _decisions_entry_date(line: String) -> String:
+	if not line.begins_with("- **20"):
+		return ""
+	var date := line.substr(4, 10)
+	if date.length() != 10 or date[4] != "-" or date[7] != "-":
+		return ""
+	return date
 
 
 var GOLDEN_BUDGET_HEADING := "## Golden-pin budget"

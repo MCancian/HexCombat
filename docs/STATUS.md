@@ -222,6 +222,12 @@ declared default silently — combat ran, the gate stayed green, and the knob di
 is derived from the source rather than hand-listed, and the validator fails if its own anchors stop
 resolving, so a refactor cannot turn it into a vacuous PASS.
 
+**LLM fixture drift is closed by the gate's fixture phase, not by the validator.** `tools/run_all_tests.py`
+regenerates the `docs/examples/` JSON fixtures through the `tools/LLMFixtures.gd` builders, then
+`git diff --exit-code`s them against the committed files — that is the binding guard. The
+`tools/validate_llm_api.gd` JSON compare is a same-builder diagnostic, not an independent witness.
+Incident: `docs/DECISIONS.md` 2026-08-03.
+
 **Mutation authority (plan 0042 foundation).** `tools/validate_mutation_authority.gd` enforces that a
 registered aggregate has exactly one writer. It resolves each write's RECEIVER TYPE (annotations,
 `:= T.new()`, declared return types, `Array[T]` element types, dotted chains — scoped per function)

@@ -36,7 +36,24 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
   `parse_string(stringify())` round-trip REGRESSED the gate and was reverted: the round-trip
   normalizes the live result's ints to the fixture's float representation and is load-bearing.
   Facts: `schemas/llm_action_result.schema.json`, `tests/turn_result_serialization_test.gd`,
-  `tools/validate_llm_api.gd`, `scripts/model/FrontlineSummary.gd`, `docs/plans/BACKLOG.md`.
+  `tools/validate_llm_api.gd`, `scripts/model/FrontlineSummary.gd`.
+
+- **2026-08-03 — Round-2 diff review of the LLM fixture closeout: no code defects; the drift witness claim was corrected (agent; review 6765846).**
+  The pre-commit review of commit 6765846 returned no blockers — the gate is sound. Two corrections,
+  both documentation:
+  (1) **`validate_llm_api.gd`'s deep JSON compare is NOT an independent drift witness.** The reviewer
+  called it a tautology; the accurate mechanism is same-builder redundancy: the validator and the
+  fixture regenerator (`tools/export_llm_result.gd`) both call `LLMFixtures.build_result()` with the
+  same seed, so they can never disagree. The BINDING drift guard is the pre-existing fixture phase in
+  `tools/run_all_tests.py` (regenerate `docs/examples/*.json`, then `git diff --exit-code`), which
+  pins the committed fixture to a re-baseline event. The validator compare adds only a diagnostic.
+  Earlier entries' phrasing ("deep-drift-checked by validate_llm_api.gd") overstates it; the witness
+  is the gate's fixture-diff phase.
+  (2) **The `attrition_by_class` `integer`→`number` fix has no payload-pinned test** — the fixture's
+  field is `{}` (the scenario never fires air insertion), so the schema line is guarded only by the
+  handcrafted checker test, not by a real serialized value. Accepted gap.
+  Facts: `tools/validate_llm_api.gd`, `tools/run_all_tests.py`, `tools/export_llm_result.gd`,
+  `tools/LLMFixtures.gd`.
 
 - **2026-08-03 — LLM / turn-result fixture contract drift and schema verification closed out (agent; USER-approved re-baseline).**
   The `docs/examples/llm_result_after_turn.json` fixture is now deep-drift-checked by `validate_llm_api.gd` via exact JSON value string-matching instead of key presence, fulfilling the USER call from 2026-07-29. Seven model summary headers were updated to cite the real drift witness. The turn_result serialization check was extended to enforce two-way schema correspondence against nested objects by recursively traversing the fixture. Facts: `tools/validate_llm_api.gd`, `tests/turn_result_serialization_test.gd`, `schemas/llm_action_result.schema.json`, `docs/plans/BACKLOG.md`.

@@ -2,13 +2,14 @@ extends RefCounted
 class_name LLMFixtures
 
 ## Single source of truth for the committed docs/examples/*.json LLM fixtures.
-## BOTH the export tools (tools/export_llm_*.gd) and the drift gate (tools/validate_fixtures.gd)
-## build through here, so a committed fixture and its regenerator can never silently diverge
-## (refactor_audit item 8 — the rot that left llm_result_after_turn.json stale through the
-## 2026-06-29/30 balance work). Each builder resets to a fresh scenario first, so calls are
-## order-independent.
+## BOTH the export tools (tools/export_llm_*.gd) and the validator build through here, so a
+## committed fixture and its regenerator can never silently diverge (refactor_audit item 8 — the
+## rot that left llm_result_after_turn.json stale through the 2026-06-29/30 balance work). The
+## binding drift guard is the fixture phase in tools/run_all_tests.py: it regenerates
+## docs/examples/*.json through these builders, then git-diffs them against the committed files.
+## Each builder resets to a fresh scenario first, so calls are order-independent.
 
-const RESULT_SEED := 20260624
+const RESULT_SEED := GoldenScript.SEED
 
 ## The canonical action sequence the result fixture records: Red lands (offload), moves one
 static func result_response() -> Dictionary:

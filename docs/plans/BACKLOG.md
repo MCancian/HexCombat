@@ -23,9 +23,7 @@ means writing prose you then have to un-write.
 
 | Bundle | Items | Why together |
 |---|---|---|
-| **LLM fixture byte-stability** | seven summary headers, fixture drift check | **Order matters.** The headers item proposes weakening seven headers to admit the gate only checks key presence; the drift item (USER-approved) makes the gate actually check drift. Do the drift check FIRST and the headers item collapses to naming a now-true witness. |
 | **Review tooling** | opencode read-only, numbered findings, `--format json` | All touch `tools/review_fanout.sh` / `.claude/REVIEWERS.md` / opencode config, and `tools/validate_reviewer_facts.gd` gates roster edits — one commit is cheaper than three. The last two already say "do them together". |
-| **Validator proof surfaces** | `--census` flag, preload-alias blindness, `E_STALE_ALLOWANCE` | The first two both modify `tools/validate_authority_call_placement.gd` and both need a self-test case in the same commit. The third is the same shape (a check nothing exercises) on a different validator. **Keep the validator-harness dedup OUT** — a 30-file sweep riding on a capability change is how scope drifts. |
 
 
 ## Deferred Debt & Hygiene Items
@@ -34,35 +32,6 @@ means writing prose you then have to un-write.
 budget above depends on it. If the observation is a standing rule or is blocked on something absent,
 put it in the section below WITHOUT a checkbox and say what would unblock it.)*
 
-- [x] **The LLM result fixture is key-presence-checked, not drift-checked (found 2026-07-29).**
-  `tools/LLMFixtures.gd:7` records "the rot that left `llm_result_after_turn.json` stale" as the reason
-  that generator exists — but the current check (`validate_llm_api.gd:271-277`) cannot catch that rot
-  returning: a fixture with all the right keys and stale VALUES passes. Adding a real drift comparison
-  is a gate change with a re-baseline decision attached (the fixture would then move whenever any
-  summary's payload legitimately changes). **USER call 2026-07-29: re-baselining is acceptable — build
-  the real drift comparison.** So the trade is settled; what remains is implementation, and the fixture
-  regenerator (`tools/LLMFixtures.gd`) is the intended way to move it rather than hand-editing. Closeout: true drift comparison implemented.
-  **Correction 2026-08-03 (diff review):** the validator's pre-existing `parse_string(stringify(result))`
-  round-trip is LOAD-BEARING, not redundant — `JSON.parse_string` returns every number as float, so the
-  round-trip normalizes the live result's ints to the same representation the parsed fixture holds. A
-  reviewer-requested removal regressed the gate (int/float byte drift) and was reverted with an inline
-  comment so it is not "simplified" away again.
-- [x] **Seven summary headers promise byte-stability the gate does not check.**
-  Found 2026-07-29, witness sweep. `CleanupSummary`, `CombatSummary`, `FrontlineSummary`, `AntishipSummary`,
-  `MobilizationSummary`, `AirInsertionSummary` and `IjfsWriteback` each say `to_dict()` is "the
-  JSON-serialization boundary … so golden/observation fixtures stay byte-stable". The boundary half is
-  TRUE — all seven land in `turn_result` in `docs/examples/llm_result_after_turn.json` (verified: that
-  fixture's `turn_result` holds `air_insertion_summary`, `antiship_summary`, `cleanup_summary`,
-  `combat_summaries`, `frontline_summary`, `ijfs_summary`, `ijfs_writeback`, `mobilization_summary`,
-  `offload_summary`). The byte-stability half is NOT: `tools/validate_llm_api.gd:271-277` only checks the
-  fixture HAS the required top-level keys — no value or key-order comparison. Fix: name the witness in
-  each header per `hexcombat-docs-and-writing` ("pinned by: …, which checks key presence only").
-  **Do the drift-check item above FIRST** — if the gate gains a real value comparison, these headers
-  become true as written and this item reduces to naming the real witness instead of documenting a hole. Closeout: updated all 7 headers to use pinned by convention.
-  **Correction 2026-08-03 (diff review):** `FrontlineSummary.gd`'s header was further reworded — the fixture
-  never resolves the frontline phase, so its model fields are not exercised by the fixture and a null
-  summary serializes as `{}`. The header now says so instead of claiming the fixture pins the summary's
-  shape.
 - [ ] **`docs/plans/` is excluded from the doc-anchor gate, so an ACTIVE plan's code references rot silently.**
   Found 2026-07-31 while widening the gate; accepted trade-off, not an oversight. Plans are
   excluded because a proposal legitimately names classes it intends to CREATE — failing a plan for
@@ -92,23 +61,6 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   `--quit-after` in `run_all_tests.py`. So this is deduplication only, worth doing when validators are
   being touched anyway, in slices of 5-6 with the gate green between. Good `opencode` delegation.
 
-- [x] **The `turn_result` schema is now gated on KEY PRESENCE only — the nested shapes are still unchecked.**
-  Opened 2026-08-01, replacing the five-field drift item, which is FIXED. The drift
-  itself is closed: `air_insertion_summary`, `mobilization_summary`, `offload_summary`, `game_over` and
-  `winner` are declared, and `tests/turn_result_serialization_test.gd` now fails if any `TurnResult`
-  key is absent from the schema. What that check does NOT do is verify the other direction (a schema
-  property with no model field) or any nested shape: `air_oob` is declared as bare
-  `{"type": "object"}`, so a future loss of `model_version`, `squadrons`, `kind` or a counter's type
-  would not register as a contract violation. Worth doing when the turn record is next treated as a
-  durable research contract rather than a convenience payload — and note the same
-  presence-not-shape weakness is what the LLM fixture drift-check item above is about. Closeout: nested shapes fully verified bi-directionally in serialization test against fixture.
-  **Correction 2026-08-03 (diff review):** the serialization test's recursion was hardened while closing
-  this out — it now also TYPE-checks every element of scalar-typed arrays, every `additionalProperties`
-  map value, and enum-typed fields. Finding A of that review (`air_insertion_summary.attrition_by_class`
-  declared `integer` where the payload ships a rate) forced widening `_assert_scalar` to accept integral
-  floats under `"integer"` (JSON Schema semantics; `parse_string` returns floats) and the schema to
-  `"number"`. Two regression tests pin both directions: an integral float and an enum pass; a fractional
-  value in an `"integer"` field fails.
 - [ ] **Nothing enforces `sweepable`, so the flag records intent and no more.**
   Measured 2026-08-01 while marking the combat advantage ratios `false`. `tools/run_sweep.py` never consults the knob registry;
   the only code that touches the field is `tools/validate_knob_registry.gd`, which checks it is a bool

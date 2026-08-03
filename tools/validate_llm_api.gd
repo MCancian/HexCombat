@@ -151,7 +151,7 @@ func _validate_action_application() -> void:
 	_game_data().load_all()
 	_game_state().reset_to_scenario()
 	_provision_red_mover_for_validation()
-	var result := LLMGameAPI.apply_agent_response(_sample_action_response())
+	var result := LLMGameAPI.apply_agent_response(LLMFixtures.result_response())
 	_assert_true("agent response ok", bool(result["ok"]))
 	_assert_true("turn resolved", bool(result["resolved"]))
 	_assert_equal_int("result seed", int(result["seed"]), DICE_SEED)
@@ -281,19 +281,6 @@ func _provision_red_mover_for_validation() -> void:
 	_game_state().resolve_offload_turn(SeededDice.new(DICE_SEED))
 
 
-func _sample_action_response() -> Dictionary:
-	return {
-		"protocol_version": LLMGameAPI.PROTOCOL_VERSION,
-		"schema": LLMGameAPI.ACTION_RESPONSE_SCHEMA,
-		"perspective_team": "Red",
-		"actions": [
-			{"type": "move", "team": "Red", "brigade_id": RED_MOVER_ID, "target_hex": TARGET_HEX, "mode": Movement.MODE_TACTICAL},
-			{"type": "end_turn", "seed": DICE_SEED}
-		],
-		"notes": "Validation fixture: move one Red brigade into combat and resolve."
-	}
-
-
 func _read_json(path: String):
 	if not FileAccess.file_exists(path):
 		_fail("JSON file missing: %s" % path)
@@ -381,17 +368,17 @@ func _validate_result_schema_conformance() -> void:
 		var expected_json = JSON.stringify(fixture, "\t", true, false)
 		var actual_json = JSON.stringify(normalized_result, "\t", true, false)
 		if expected_json != actual_json:
-			var ef = FileAccess.open("res://debug_expected.json", FileAccess.WRITE)
+			var ef = FileAccess.open("res://scratch/debug_expected.json", FileAccess.WRITE)
 			ef.store_string(expected_json)
 			ef.close()
-			var af = FileAccess.open("res://debug_actual.json", FileAccess.WRITE)
+			var af = FileAccess.open("res://scratch/debug_actual.json", FileAccess.WRITE)
 			af.store_string(actual_json)
 			af.close()
 			_fail("result fixture drifted. Compare JSON to see differences, or regenerate via LLMFixtures.gd")
 
 func _finish() -> void:
 	if _failures.is_empty():
-		print("PASS: LLM playtesting API validation succeeded")
+		print("PASS: LLM playtesting API validation succeeded (drift compare uses parse_string(stringify()) round-trip)")
 		quit(0)
 		return
 

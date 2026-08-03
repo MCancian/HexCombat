@@ -27,6 +27,41 @@ Godot binary: `C:\Godot_v4.7-stable_win64.exe` (below: `$G`). Project: this repo
 Artifacts land in `reports/` (git-ignored working output) and `docs/examples/` (committed,
 gate-byte-compared fixtures — regenerate only via the exporters below).
 
+## Fast iteration loop (one subsystem)
+
+The full gate (`tools/run_all_tests.sh`) takes minutes and is the END-of-work check, not the loop.
+For a change inside one subsystem, iterate on the cheap validators for it, then run the full gate once
+at the end. **Every bare validator run MUST carry the scenario env var** — without it the validator
+resolves the research default while its pins were taken under the gate's `scenario_golden`; that
+mismatch has been misread as a code regression three separate times:
+
+```powershell
+$env:HEXCOMBAT_SCENARIO="scenario_golden"; & $G --headless --path $P -s "res://tools/validate_<x>.gd"
+# Linux box:  HEXCOMBAT_SCENARIO=scenario_golden godot --headless --path . -s res://tools/validate_<x>.gd
+```
+
+Subsystem → the validators to iterate on. This is an INDEX; the gate runs every `tools/validate_*.gd`,
+so anything not listed is still covered there.
+
+| Touch | Iterate on |
+|---|---|
+| turn engine / move-commit-resolve | `validate_headless_turn.gd`, `validate_play_turn.gd` |
+| IJFS | `validate_headless_ijfs.gd`, `validate_ijfs_data.gd` |
+| anti-ship / mines | `validate_headless_antiship.gd`, `validate_antiship_data.gd` |
+| amphibious offload | `validate_headless_offload.gd`, `validate_offload_data.gd`, `validate_offload_weights.gd`, `validate_beaches_data.gd` |
+| ground combat | `validate_combat_rules_threading.gd`, `validate_combat_data.gd` |
+| air insertion | `validate_air_insertion.gd` |
+| ROC mobilization | `validate_mobilization.gd` |
+| supply / DOS | `validate_dos_consumption.gd` |
+| frontline / cleanup / victory | `validate_frontline.gd`, `validate_cleanup.gd`, `validate_victory_hexes.gd`, `validate_golden_victory.gd` |
+| data files (data/*.json) | the matching `validate_*_data.gd` |
+| LLM API / fixtures / self-play | `validate_llm_api.gd`, `validate_llm_policy.gd`, `validate_headless_selfplay.gd`, `validate_pool_enumeration.gd` |
+| model writes / mutation authority | `validate_mutation_authority.gd`, `validate_authority_call_placement.gd`, `validate_tool_script_purity.gd` |
+| docs / skills | `validate_doc_anchors.gd`, `validate_skill_references.gd`, `validate_plan_docs.gd` |
+
+A GdUnit change: run just that suite (invocation in `hexcombat-build-and-env`) instead of the whole
+test set. Full gate last — it is the verdict, not the loop.
+
 ## Driving turns headlessly (the research path)
 
 The whole game is drivable with no UI through `LLMGameAPI` (autoload) — observation in, action in,

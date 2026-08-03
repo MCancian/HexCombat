@@ -59,7 +59,11 @@ code headers were correct.
    cite dead names on purpose: mark the line `(historical)`.
 3. Append 3–5 lines to `docs/DECISIONS.md` — what + who decided + POINTERS to where the facts
    landed. **A DECISIONS entry is a changelog, never a reference**: if a future agent would need
-   the entry to act, the fact is filed in the wrong place — move it, then point.
+   the entry to act, the fact is filed in the wrong place — move it, then point. **3–5 lines is a
+   HARD cap, not a guideline**: an entry that needs more has facts that belong in a canonical home
+   (STATUS, a validator PASS line, a system doc, `hexcombat-failure-archaeology`) — move them, then
+   point. Long entries defeat the read-budget; if you find yourself writing a tenth line, stop and
+   relocate.
 4. Lessons → `docs/RETROSPECTIVES.md` with triage.
    - **act now**: Fix it immediately.
    - **act later**: Formally log the issue into `docs/plans/BACKLOG.md`.
@@ -94,7 +98,7 @@ The plan keeps status `Ready`/`In progress` until closeout; do not archive it.
 
 ## Templates
 
-**DECISIONS entry** (`docs/DECISIONS.md`, newest first, 3–5 lines):
+**DECISIONS entry** (`docs/DECISIONS.md`, newest first, 3–5 lines — HARD cap, bullet + continuations):
 ```markdown
 - **YYYY-MM-DD — <Title> (USER | agent judgment).** <One-sentence what.> Spec/facts:
   <docs/systems/x.md → §>. Incident: <archaeology entry> (if any). Evidence: <batch/gate>.
