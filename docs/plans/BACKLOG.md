@@ -46,14 +46,6 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   prints `path count authority,...` and exits 0, letting the skill call it instead of restating it.
   Not done here because the validator's own commit was already the plan's last step and adding an output
   mode is a separate, testable change.
-- [x] **`IjfsLedgers` no longer applies MANPADS initialization transitively while living in
-  `scripts/calc/`.** `IjfsResolver` now seeds unseeded bins at the IJFS day boundary through
-  `IjfsTransitions`; `IjfsManpads.systems_remaining` is a pure read, and its tests pin that a
-  ledger query leaves both the typed field and serialization mirror unchanged.
-- [x] **The authority-call detector recognizes an ALIASED receiver.** The bounded implementation
-  maps `const X = preload("<authority_path>")` to the manifest authority and reports calls through
-  `X` under the canonical class name. Its self-test covers the supported preload forms, direct calls,
-  comments, and unrelated preloads; general local-alias analysis remains deliberately out of scope.
 - [ ] **`E_STALE_ALLOWANCE` is the one mutation-manifest check with no proof surface.**
   Found 2026-07-30 by the DeepSeek enumeration role; pre-existing, not a regression. Every other manifest-check code
   is either declared by a `bad_manifest_*.json` fixture or perturbed by a `_capture_failures`
