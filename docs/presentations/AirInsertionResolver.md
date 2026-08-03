@@ -6,8 +6,8 @@
 > instances or conditional branches.
 
 Generator format v1; scan scope `scripts/**/*.gd` plus `project.godot` autoload aliases.
-Generated from commit `8829181ae4b6`; input SHA-256 `1c5ff5483615f0cca5b2767540c56e9a13e1387c4c1a3c66db909a97ad2e94fb`;
-tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T09:03:12-04:00`.
+Generated from commit `7bbf08693b44`; input SHA-256 `c879af92cf7693c7df1119a11083764377c92a9410144e7b95f361f509613378`;
+tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T17:09:31-04:00`.
 Unresolved-analysis diagnostics on this page: **10**.
 
 ## Source summary
@@ -31,8 +31,8 @@ Source: `scripts/calc/AirInsertionResolver.gd`
 | [`AirInsertionResolver.resolve`](AirInsertionResolver.md) | `AirInsertionResolver._projected_finish` at `131` |
 | [`AirInsertionResolver.resolve`](AirInsertionResolver.md) | `AirInsertionResolver._resolve_orders` at `146` |
 | [`AirInsertionResolver.resolve`](AirInsertionResolver.md) | `AirInsertionResolver._projected_finish` at `148` |
-| `LLMGameAPI._estimated_insertion_attrition` | `AirInsertionResolver.threat_from_ijfs_summary` at `407` |
-| `LLMGameAPI._estimated_insertion_attrition` | `AirInsertionResolver.attrition_rate` at `411` |
+| `LLMGameAPI._estimated_insertion_attrition` | `AirInsertionResolver.threat_from_ijfs_summary` at `420` |
+| `LLMGameAPI._estimated_insertion_attrition` | `AirInsertionResolver.attrition_rate` at `424` |
 | [`ReinforcementPhases.isolated_air_landed_brigades`](ordering_ReinforcementPhases_isolated_air_landed_brigades.md) | `AirInsertionResolver.isolated_brigades` at `355` |
 | [`ReinforcementPhases.resolve_air_insertion_turn`](ordering_ReinforcementPhases_resolve_air_insertion_turn.md) | `AirInsertionResolver.resolve` at `300` |
 | [`ReinforcementPhases.resolve_air_insertion_turn`](ordering_ReinforcementPhases_resolve_air_insertion_turn.md) | `AirInsertionResolver.threat_from_ijfs_summary` at `300` |

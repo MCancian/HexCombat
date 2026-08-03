@@ -70,7 +70,7 @@ assignment.
 | `scripts/policies/` | Turns a game state into a list of actions for one seat | Does it decide moves for a player, rather than resolve them? |
 | `scripts/api/` | The outward-facing surface | Is its consumer outside the engine — an LLM, a batch run, a reader? |
 | `scripts/support/` | Cross-cutting utility owned by no phase | Would more than one unrelated phase use it, and does it belong to none? |
-| `scripts/` **root** | **An exact allowlist of 4 files, not a category** | Is it one of `GameState.gd`, `GameData.gd`, `EventBus.gd`, `OffloadCalculator.gd`? If not, it does not belong at root. |
+| `scripts/` **root** | **An exact allowlist of 3 files, not a category** | Is it one of `GameState.gd`, `GameData.gd`, `EventBus.gd`? If not, it does not belong at root. |
 
 **`scripts/model/` admits BOTH base types.** 64 members extend `Resource` and 8 extend `RefCounted`,
 and the split is not a convention anyone should preserve: the `RefCounted` members (`GameStateData`,
@@ -80,11 +80,9 @@ enough to stall the question once — a reviewer had to go read all three origin
 there was no unstated "serializable `Resource` only" rule.
 
 **Root's row is an allowlist because a category would reopen the hole.** `GameState.gd` and
-`GameData.gd` call authorities as the façade layer; `EventBus.gd` does not; `OffloadCalculator.gd` is
-there for one stated reason — it applies campaign state by writing BN dicts it was handed, so it
-cannot go to `calc/` until plan 0058 hoists that write. A row saying "root may call authorities"
-would license any future root file to do so, which is exactly how 40 unclaimed files accumulated
-there in the first place.
+`GameData.gd` call authorities as the façade layer; `EventBus.gd` does not. A row saying "root may
+call authorities" would license any future root file to do so, which is exactly how 40 unclaimed
+files accumulated there in the first place.
 
 **The `*Resolver` suffix is orthogonal to all of this.** It names a *phase endpoint* — the thing that
 decides what happens in a phase — and it never encoded purity. Nine resolvers sit in `calc/` and one in
@@ -110,15 +108,12 @@ root is an exact file allowlist, and a policy entry naming a directory or file t
 fails as stale. Within that, it checks that no FORBIDS directory makes a DIRECT authority call and
 that every `scripts/interleaved/` file makes at least one.
 
-**What it still cannot see, and one live instance.** It cannot see application through a helper, it
-cannot judge the draw-point question, and — the one that bites — **it cannot see a write into a
-Dictionary or Array a file was handed.** `scripts/OffloadCalculator.gd` does exactly that with
-`offload_progress_tons` on `state.ship_reserve`, and reads as clean. That is why it sits at root
-rather than in `calc/`, and why `scripts/calc/OffloadResolver.gd` — which passes those live dicts
-down — carries a header caveat saying its own directory's claim is not currently true for that path.
-Plan 0058 closes both. So a green run means "everything is classified and nobody CALLS an authority
-from a forbidding place", never "nothing here applies". Read the validator's header before trusting
-it past that line.
+**What it still cannot see.** It cannot see application through a helper, it cannot judge the
+draw-point question, and it cannot see a write into a Dictionary or Array a file was handed. Plan
+0058 removed the known offload instance by making `OffloadCalculator` return an outcome and routing
+the write through `ForceTransitions`; the general blind spot remains. So a green run means
+"everything is classified and nobody CALLS an authority from a forbidding place", never "nothing here
+applies". Read the validator's header before trusting it past that line.
 
 Two worked examples, kept because the *lessons* outlive the directories they happened in.
 **A claim can go stale with nobody editing the file.** `AntishipResolver` sat in the old

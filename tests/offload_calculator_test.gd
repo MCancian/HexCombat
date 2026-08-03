@@ -563,11 +563,19 @@ func test_plan0006_carryover_heavy_bn_lands_across_turns() -> void:
 	var day2 := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], [], cfg)
 	assert_int(day2["bns_landed"]).is_equal(0)
 	assert_str(String(day2["manifest_deferred"][0]["reason"])).is_equal(OffloadCalculator.REASON_OFFLOAD_IN_PROGRESS)
-	assert_float(float((bns[0] as Dictionary)["offload_progress_tons"])).is_equal(4400.0)
+	var progress_update: Dictionary = day2["progress_updates"][0]
+	assert_float(float(progress_update["previous_progress_tons"])).is_equal(0.0)
+	assert_float(float(progress_update["offload_progress_tons"])).is_equal(4400.0)
+	assert_bool((bns[0] as Dictionary).has("offload_progress_tons")).override_failure_message(
+		"the calculator returns a progress plan without mutating its handed BN"
+	).is_false()
 
+	# Simulate ForceTransitions applying the calculator's absolute target before the next day.
+	(bns[0] as Dictionary)["offload_progress_tons"] = progress_update["offload_progress_tons"]
 	var day3 := OffloadCalculator.resolve_offload_day(3, cap, brigades, ["BDE-1"], [], cfg)
 	assert_int(day3["bns_landed"]).is_equal(1)
-	assert_bool((bns[0] as Dictionary).has("offload_progress_tons")).is_false()
+	assert_array(day3["progress_updates"]).is_empty()
+	assert_float(float((bns[0] as Dictionary)["offload_progress_tons"])).is_equal(4400.0)
 
 
 # Cheaper BNs land first; the heavy BN banks only the beach's leftover tons.
@@ -583,8 +591,11 @@ func test_plan0006_carryover_banks_leftover_after_cheaper_landings() -> void:
 
 	var day2 := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], [], cfg)
 	assert_int(day2["bns_landed"]).is_equal(1)  # S1 at 2200
-	assert_float(float((bns[1] as Dictionary)["offload_progress_tons"])).is_equal(2200.0)
+	var progress_update: Dictionary = day2["progress_updates"][0]
+	assert_float(float(progress_update["offload_progress_tons"])).is_equal(2200.0)
+	assert_bool((bns[1] as Dictionary).has("offload_progress_tons")).is_false()
 
+	(bns[1] as Dictionary)["offload_progress_tons"] = progress_update["offload_progress_tons"]
 	var day3 := OffloadCalculator.resolve_offload_day(3, cap, brigades, ["BDE-1"], [], cfg)
 	assert_int(day3["bns_landed"]).is_equal(1)  # H1 needs 6600-2200=4400
 
@@ -599,6 +610,7 @@ func test_plan0006_carryover_none_at_closed_beach() -> void:
 
 	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], [], cfg, {1: 2}, {1: 2})
 	assert_str(String(result["manifest_deferred"][0]["reason"])).is_equal(OffloadCalculator.REASON_THROUGHPUT_LIMITED)
+	assert_array(result["progress_updates"]).is_empty()
 	assert_bool((bns[0] as Dictionary).has("offload_progress_tons")).is_false()
 
 
@@ -607,12 +619,26 @@ func test_plan0006_carryover_none_at_closed_beach() -> void:
 func test_plan0006_carryover_port_preferred_over_banking() -> void:
 	var cfg := _weights_config()
 	var bns := [{"id": "H1", "type": "Mechanized Artillery Battalion", "ship_category": "Civilian_Amphibious"}]
+	(bns[0] as Dictionary)["offload_progress_tons"] = 2200.0
 	var brigades := [_make_brigade("BDE-1", bns, 1)]
-	var lookup := _make_beach_lookup({1: 4400.0})
+	var lookup := _make_beach_lookup({1: 2200.0})
 	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
 	var infra := [{"id": "port1", "kind": "port", "to_number": 42, "rate_tons": 11000.0}]
 
 	var result := OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1"], infra, cfg, {}, {}, {1: 42})
 	assert_int(result["bns_landed"]).is_equal(1)
 	assert_str(String(result["manifest_landed"][0]["node_id"])).is_equal("port1")
+	assert_array(result["progress_updates"]).is_empty()
+	assert_float(float((bns[0] as Dictionary)["offload_progress_tons"])).is_equal(2200.0)
+
+
+func test_duplicate_priority_brigade_is_rejected_without_double_processing() -> void:
+	var bns := [_make_bn("S1", "Support Battalion")]
+	var brigades := [_make_brigade("BDE-1", bns, 1)]
+	var lookup := _make_beach_lookup({1: 2200.0})
+	var cap := OffloadCalculator.beach_capacity_bns([1], lookup)
+
+	assert_error(func() -> void:
+		OffloadCalculator.resolve_offload_day(2, cap, brigades, ["BDE-1", "BDE-1"])
+	).is_push_error("OffloadCalculator: priority order repeats brigade_id: BDE-1")
 	assert_bool((bns[0] as Dictionary).has("offload_progress_tons")).is_false()

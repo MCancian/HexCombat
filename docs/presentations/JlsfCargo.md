@@ -6,8 +6,8 @@
 > instances or conditional branches.
 
 Generator format v1; scan scope `scripts/**/*.gd` plus `project.godot` autoload aliases.
-Generated from commit `8829181ae4b6`; input SHA-256 `1c5ff5483615f0cca5b2767540c56e9a13e1387c4c1a3c66db909a97ad2e94fb`;
-tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T09:03:12-04:00`.
+Generated from commit `7bbf08693b44`; input SHA-256 `c879af92cf7693c7df1119a11083764377c92a9410144e7b95f361f509613378`;
+tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T17:09:31-04:00`.
 Unresolved-analysis diagnostics on this page: **2**.
 
 ## Source summary
@@ -20,13 +20,14 @@ Source: `scripts/interleaved/JlsfCargo.gd`
 
 | Caller | Call-site instance |
 |---|---|
-| `ForceTransitions._cargo_bn_ids` | `JlsfCargo.is_jlsf_entry` at `659` |
-| `ForceTransitions._reserve_rows_by_lost_id` | `JlsfCargo.is_jlsf_entry` at `670` |
-| [`ForceValidationHelper._validate_cargo_offload`](ForceValidationHelper.md) | `JlsfCargo.brigade_id_for` at `165` |
-| [`ForceValidationHelper._validate_offload_id`](ForceValidationHelper.md) | `JlsfCargo.is_jlsf_entry` at `186` |
+| `ForceTransitions._cargo_bn_ids` | `JlsfCargo.is_jlsf_entry` at `677` |
+| `ForceTransitions._reserve_rows_by_lost_id` | `JlsfCargo.is_jlsf_entry` at `688` |
+| [`ForceValidationHelper._offload_progress_source`](ForceValidationHelper.md) | `JlsfCargo.is_jlsf_entry` at `216` |
+| [`ForceValidationHelper._validate_cargo_offload`](ForceValidationHelper.md) | `JlsfCargo.brigade_id_for` at `169` |
+| [`ForceValidationHelper._validate_offload_id`](ForceValidationHelper.md) | `JlsfCargo.is_jlsf_entry` at `240` |
 | [`JlsfCargo.build_pool_entry`](JlsfCargo.md) | `JlsfCargo.brigade_id_for` at `55` |
 | [`JlsfCargo.queue_deployments`](JlsfCargo.md) | `JlsfCargo.build_pool_entry` at `105` |
-| [`OffloadResolver.resolve`](OffloadResolver.md) | `JlsfCargo.is_jlsf_entry` at `70` |
+| [`OffloadResolver.resolve`](OffloadResolver.md) | `JlsfCargo.is_jlsf_entry` at `60` |
 | [`ReinforcementPhases.consume_jlsf_orders`](ordering_ReinforcementPhases_consume_jlsf_orders.md) | `JlsfCargo.queue_deployments` at `119` |
 | [`ReinforcementPhases.reconcile_lost_jlsf`](ordering_ReinforcementPhases_reconcile_lost_jlsf.md) | `JlsfCargo.brigade_id_for` at `214` |
 | [`ReinforcementPhases.resolve_sealift_turn`](ordering_ReinforcementPhases_resolve_sealift_turn.md) | `JlsfCargo.is_jlsf_entry` at `103` |
@@ -38,6 +39,7 @@ flowchart LR
   n_9381f3738995["JlsfCargo"]
   n_9d4aca6db103["ForceTransitions._cargo_bn_ids"] --> n_9381f3738995
   n_c4bbc2bd8619["ForceTransitions._reserve_rows_by_lost_id"] --> n_9381f3738995
+  n_a28c5fd26c26["ForceValidationHelper._offload_progress_source"] --> n_9381f3738995
   n_cb9af4b0f672["ForceValidationHelper._validate_cargo_offload"] --> n_9381f3738995
   n_a51ff7ebde49["ForceValidationHelper._validate_offload_id"] --> n_9381f3738995
   n_6b6a8bf0d32f["JlsfCargo.build_pool_entry"] --> n_9381f3738995

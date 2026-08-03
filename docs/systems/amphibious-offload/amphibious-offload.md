@@ -12,7 +12,7 @@ anti-ship crossing model and converts ship losses into BN casualties.
 
 | File | Responsibility |
 |---|---|
-| `scripts/OffloadCalculator.gd` | Day-1 and Day-N offload resolution; maneuver-BN detection; beach-capacity math; day-N infra routing + carry-over |
+| `scripts/calc/OffloadCalculator.gd` | Pure Day-1 and Day-N offload calculation; maneuver-BN detection; beach-capacity math; day-N infra routing + carry-over plan |
 | `scripts/model/OffloadRates.gd` | Throughput constants (tons/day per infrastructure type); TONS_PER_BN |
 | `scripts/calc/OffloadCostModel.gd` | Per-BN day-N offload cost: transport weight × bn_class/ship_category multiplier (plan 0006) |
 | `scripts/model/InfrastructureDef.gd` / `InfrastructureState.gd` | Port/airbridge node defs + per-node lifecycle state |
@@ -30,12 +30,12 @@ anti-ship crossing model and converts ship losses into BN casualties.
 | `data/scenarios/scenario_default.json` | `red_ship_reserve` block mapping 4 PLA brigades to their locked beaches |
 | `tools/validate_offload_data.gd` | Asserts JSON keys match `OffloadRates.REQUIRED_RATE_KEYS` and constants agree |
 | `tools/validate_headless_offload.gd` | Headless gate: runs one offload turn, asserts >=1 brigade lands |
-| `tests/offload_calculator_test.gd` | 54 GdUnit4 tests for day-1, day-N, edge cases |
+| `tests/offload_calculator_test.gd` | 42 GdUnit4 tests for day-1, day-N, edge cases |
 
 ## 3. Constants
 
 - **`OffloadRates.TONS_PER_BN := 2200.0`** — `scripts/model/OffloadRates.gd`
-- **Maneuver BN whitelist** — `scripts/OffloadCalculator.gd`:
+- **Maneuver BN whitelist** — `scripts/calc/OffloadCalculator.gd`:
   ```
   "Combined Arms Battalion", "Amphibious Infantry Battalion",
   "Mechanized Infantry Battalion", "Air Assault Infantry Battalion",
@@ -58,7 +58,7 @@ All BNs counted as "sent" (`bns_sent = sum of all bn entries`).
 ## 5. Key functions
 
 ```gdscript
-# OffloadCalculator (scripts/OffloadCalculator.gd)
+# OffloadCalculator (scripts/calc/OffloadCalculator.gd)
 static func is_maneuver_bn(bn_type: String) -> bool
 static func beach_capacity_bns(active_beach_ids, beach_lookup,
   floating_pier_rate, jackup_barge_rate) -> Dictionary
@@ -97,11 +97,12 @@ func _rebuild_fleet() -> void
    `{brigade_id, locked_beach, beach_hex, offset_bearing}`).
 4. `GameState._rebuild_ship_reserve()` expands each brigade's OOB `composition` into
    per-BN entries: `{brigade_id, locked_beach, beach_hex, offset_bearing, bns: [{id, type}]}`.
-5. `GameState.resolve_offload_turn(dice)`:
-   - Collects `active_beach_ids` from `ship_reserve` locked_beach values.
-   - Calls `OffloadCalculator.beach_capacity_bns()` → tonnage-derived BN slots.
-   - Calls `OffloadCalculator.resolve_offload_day(turn_number, ...)` → manifest dict.
-   - For each landed BN in `manifest["manifest_landed"]`: removes the BN from its ship_reserve entry.
+5. `GameState.resolve_offload_turn(dice)` delegates to `ReinforcementPhases`, which calls
+   `OffloadResolver` to calculate the public manifest and a private `ForceOffloadRequest`.
+   - `OffloadCalculator` calculates tonnage-derived BN slots, landing/deferred rows, and any
+     absolute cross-turn progress targets without mutating `ship_reserve`.
+   - `ForceTransitions.apply_offload()` validates and applies those progress targets, then removes
+     each landed BN from its ship_reserve entry in the same force transaction.
    - When a brigade's first BN lands: calls `GameData.set_brigade_hex(brigade_id, beach_hex)` and
      sets `brigade.entry_bearing` from `offset_bearing`.
     - Brigade leaves `ship_reserve` only when all its BNs have landed (`bns` array empty).
@@ -117,7 +118,7 @@ func _rebuild_fleet() -> void
 `TONS_PER_BN = 2200.0` matches `src/contracts/units.py`; the beach-throughput formula (base +
 `floating_pier` + `jackup_barge` contributions) matches `BeachThroughputService`; and the maneuver-BN
 whitelist is **identical** to TIV's `maneuver_bn_types` set in `beach_throughput_factory.py` (same 5
-types). The day-1 redesign behavior is mirrored by 54 GdUnit4 tests against the TIV pytests. Only the
+types). The day-1 redesign behavior is mirrored by 42 GdUnit4 tests against the TIV pytests. Only the
 two `ShipLoadingModel` simplifications below diverge, and both are intentional/code-documented (→
 `docs/archive/port_audit.md`), not bugs.
 
@@ -127,7 +128,7 @@ two `ShipLoadingModel` simplifications below diverge, and both are intentional/c
   `defaults/offload_rates.json`, `defaults/beaches.json`.
 - **Tests mirrored:** `test_offload_day1_redesign.py`, `test_offload_brigade_priority.py`,
   `test_offload_brigade_spacing.py`, `test_offload_calculator_init.py`.
-- **Status per ROADMAP.md:143:** D1 is **COMPLETE** (2026-06-24) with 8 validators + 54 GdUnit4 tests.
+- **Status per ROADMAP.md:143:** D1 is **COMPLETE** (2026-06-24) with 8 validators + 42 GdUnit4 tests.
 - **Known simplifications (logged in PLAN.md):**
   - `ShipLoadingModel` ignores per-type transport weight for **lift packing** (every BN = 1.0
     BN-equiv aboard ship; TIV uses `configurator.get_unit_transport_weight()`). Documented at
@@ -291,12 +292,13 @@ per-cohort hull binding from §8 makes it derivable. New ship categories or carg
 data additions (USER flexibility requirement 2026-07-15).
 
 **Carry-over (TIV fractional flow).** A BN whose beach cost exceeds its locked beach's leftover
-tons banks those tons (`offload_progress_tons` on the bn dict, deferred reason
-`offload_in_progress`) and lands once banked progress covers the cost. Port/airbridge routing is
-tried at full price first; progress never subsidizes a node landing; a valve-closed beach banks
-nothing. Without this, a heavy BN on civilian lift (e.g. 3300 t × 2.0 = 6600 t vs a 4400 t/d
-beach) deferred forever and its cohort's hulls never returned — freezing ALL sealift
-(see `hexcombat-failure-archaeology`, sealift livelock).
+tons receives an absolute `offload_progress_tons` target (deferred reason `offload_in_progress`);
+`ForceTransitions` applies that target only after validating the complete offload transaction. The
+BN lands once banked progress covers the cost. Port/airbridge routing is tried at full price first;
+progress never subsidizes a node landing; a valve-closed beach banks nothing. Without this, a heavy
+BN on civilian lift (e.g. 3300 t × 2.0 = 6600 t vs a 4400 t/d beach) deferred forever and its
+cohort's hulls never returned — freezing ALL sealift (see `hexcombat-failure-archaeology`, sealift
+livelock).
 
 **Beach occupancy valve.** Per-beach `depth` in `data/beaches.json` (`BeachDef.depth`, default
 2): when ≥depth landed RED brigades stand on the beach hex, that beach contributes 0 tons until

@@ -59,15 +59,28 @@ static func ready_systems_by_to(targets: Array[IjfsTarget]) -> Dictionary:
 	return by_to
 
 
-## The bin's authoritative launcher stock, seeded lazily on first read so data files stay
-## declarative. A target rebuilt from a saved dict carries its stock in `metadata`, so that value
-## wins over the declarative `systems_represented` when present — otherwise a mid-campaign
-## round-trip would silently refill every bin.
+## The bin's authoritative launcher stock, read-only. Returns the typed field if it has been seeded
+## (>= 0), otherwise falls back to the metadata's declarative value. DOES NOT write — the seeding
+## call lives in `seed_manpads` and is invoked once at the IJFS day boundary (IjfsResolver), so
+## reporters like IjfsLedgers can query freely without triggering a transitive authority write.
 static func systems_remaining(target: IjfsTarget) -> int:
-	if target.manpads_remaining < 0:
-		set_remaining(target, int(target.metadata.get(
-			"systems_remaining", target.metadata.get("systems_represented", 0))))
-	return target.manpads_remaining
+	if target.manpads_remaining >= 0:
+		return target.manpads_remaining
+	return int(target.metadata.get(
+		"systems_remaining", target.metadata.get("systems_represented", 0)))
+
+
+## Eagerly seed every unseeded MANPADS bin through the mutation authority. Called ONCE at the
+## IJFS day boundary (IjfsResolver.resolve), before any draw or report, so that `systems_remaining`
+## never needs to write.
+static func seed_manpads(targets: Array[IjfsTarget]) -> void:
+	for target in targets:
+		if target.category != CATEGORY:
+			continue
+		if target.manpads_remaining < 0:
+			IjfsTransitions.set_manpads_remaining(
+				target, int(target.metadata.get(
+					"systems_remaining", target.metadata.get("systems_represented", 0))))
 
 
 ## The ONE place the stock changes: the typed field and its serialization mirror move together, so

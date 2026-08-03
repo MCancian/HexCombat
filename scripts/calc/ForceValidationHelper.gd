@@ -129,6 +129,10 @@ static func preflight_offload(
 			arrival_value as Dictionary, ship_reserve, sealift_state, requested_ids)
 		if error != null:
 			return error
+	var progress_error := _validate_offload_progress_updates(
+		request.progress_updates, ship_reserve, sealift_state, requested_ids)
+	if progress_error != null:
+		return progress_error
 	return null
 
 
@@ -169,6 +173,56 @@ static func _validate_cargo_offload(
 		if error != null:
 			return error
 	return null
+
+
+## Validate calculator-produced absolute bank targets before ForceTransitions writes any reserve BN.
+static func _validate_offload_progress_updates(
+		updates: Array, ship_reserve: Array, sealift_state: SealiftState,
+		requested_ids: Dictionary) -> ForceValidationResult:
+	var update_ids: Dictionary = {}
+	for update_value in updates:
+		if not (update_value is Dictionary):
+			return _refused("ForceTransitions: offload progress update is not a dictionary")
+		var update: Dictionary = update_value
+		if not update.has("brigade_id") or not update.has("bn_id") \
+				or not update.has("previous_progress_tons") or not update.has("offload_progress_tons"):
+			return _refused("ForceTransitions: offload progress update is missing a required field")
+		var brigade_id := String(update["brigade_id"])
+		var bn_id := String(update["bn_id"])
+		var previous := float(update["previous_progress_tons"])
+		var target := float(update["offload_progress_tons"])
+		if brigade_id.is_empty() or bn_id.is_empty() or update_ids.has(bn_id):
+			return _refused("ForceTransitions: duplicate or empty offload progress BN id %s" % bn_id)
+		if requested_ids.has(bn_id):
+			return _refused("ForceTransitions: offload progress BN id %s also lands this turn" % bn_id)
+		if not is_finite(previous) or not is_finite(target) or previous < 0.0 or target <= previous:
+			return _refused("ForceTransitions: offload progress for BN id %s is not a positive increase" % bn_id)
+		var source := _offload_progress_source(ship_reserve, brigade_id, bn_id)
+		if source.is_empty() or _cohort_id_count(
+				sealift_state, bn_id, SealiftState.STATE_OFFLOADING) != 1:
+			return _refused("ForceTransitions: offload progress BN id %s is not unique at source" % bn_id)
+		var current := float(source["offload_progress_tons"]) if source.has("offload_progress_tons") else 0.0
+		if current != previous:
+			return _refused("ForceTransitions: offload progress BN id %s is stale or replayed" % bn_id)
+		update_ids[bn_id] = true
+	return null
+
+
+## One non-cargo reserve BN, or {} if the brigade/id pair is absent or ambiguous.
+static func _offload_progress_source(ship_reserve: Array, brigade_id: String, bn_id: String) -> Dictionary:
+	var source: Dictionary = {}
+	for entry_value in ship_reserve:
+		var entry: Dictionary = entry_value
+		if String(entry.get("brigade_id", "")) != brigade_id or JlsfCargo.is_jlsf_entry(entry):
+			continue
+		for bn_value in entry.get("bns", []):
+			var bn: Dictionary = bn_value
+			if String(bn.get("id", "")) != bn_id:
+				continue
+			if not source.is_empty():
+				return {}
+			source = bn
+	return source
 
 
 static func _validate_offload_id(

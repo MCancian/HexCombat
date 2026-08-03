@@ -8,22 +8,9 @@ extends RefCounted
 #   tests/python/unit/test_offload_day1_redesign.py
 #   tests/python/unit/test_offload_brigade_priority.py
 #
-# Pure RefCounted lib — no Node dependency, headless-testable.
-#
-# "Pure" above means NO NODE DEPENDENCY. It does NOT mean this file applies no campaign state, and
-# in this repo's role vocabulary that is the reading you would expect — so, explicitly:
-#
-#   THIS FILE APPLIES CAMPAIGN STATE, which is why it is still at scripts/ root and not in
-#   scripts/calc/. `_resolve_day_n` writes `offload_progress_tons` into the BN dictionaries it is
-#   handed (:259 banks, :244 erases on landing, :241 reads it back a turn later). Those dicts are
-#   `state.ship_reserve`, aliased the whole way down with no duplicate(): ReinforcementPhases ->
-#   OffloadResolver.resolve -> resolve_offload_day. The field is cross-turn persistent BY DESIGN —
-#   it is the plan 0006 C8 fractional-flow carry-over — so the fix is to hoist the write, not delete
-#   it. tools/validate_authority_call_placement.gd cannot see this: it detects direct authority
-#   calls and this is a bare dictionary write.
-#
-# Plan 0058 hoists the write into ForceTransitions.apply_offload, after which this file becomes
-# genuinely non-applying and moves to scripts/calc/. Until then, do not "tidy" it into calc/.
+# Pure RefCounted calculator — no Node dependency, headless-testable, and applies NO campaign state.
+# Day-N carry-over returns a progress-update plan; ForceTransitions applies it to ship_reserve after
+# validating the full offload transaction. This keeps fractional flow while preserving calc purity.
 
 # BN types whose landing counts as "maneuver" — bypass beach throughput on Day 1.
 # Source: TaiwanInvasionViewer src/services/offload/beach_throughput_factory.py maneuver_bn_types.
@@ -104,14 +91,20 @@ static func resolve_offload_day(
 	beach_depth: Dictionary = {},
 	beach_to_to: Dictionary = {},
 ) -> Dictionary:
-	var manifest_landed: Array = []
-	var manifest_deferred: Array = []
+	var outcome := {
+		"manifest_landed": [],
+		"manifest_deferred": [],
+		"progress_updates": [],
+	}
 
 	# Index brigades by id for quick lookup.
 	var brigade_map: Dictionary = {}
 	for brigade in brigades_at_sea:
 		var bid := String(brigade.get("brigade_id", ""))
 		if bid != "":
+			if brigade_map.has(bid):
+				push_error("OffloadCalculator: duplicate brigade_id in reserve: %s" % bid)
+				continue
 			brigade_map[bid] = brigade
 
 	# Build the ordered list (priority_order may not include all; extras go last).
@@ -119,6 +112,9 @@ static func resolve_offload_day(
 	for bid_var in priority_order:
 		var bid := String(bid_var)
 		if bid in brigade_map:
+			if ordered_ids.has(bid):
+				push_error("OffloadCalculator: priority order repeats brigade_id: %s" % bid)
+				continue
 			ordered_ids.append(bid)
 	for brigade in brigades_at_sea:
 		var bid := String(brigade.get("brigade_id", ""))
@@ -126,10 +122,14 @@ static func resolve_offload_day(
 			ordered_ids.append(bid)
 
 	if current_day == 1:
-		_resolve_day1(ordered_ids, brigade_map, beach_capacity, manifest_landed, manifest_deferred)
+		_resolve_day1(ordered_ids, brigade_map, beach_capacity, outcome)
 	else:
-		_resolve_day_n(ordered_ids, brigade_map, beach_capacity, manifest_landed, manifest_deferred, infra_nodes, cost_config, beach_occupancy, beach_depth, beach_to_to)
+		_resolve_day_n(
+			ordered_ids, brigade_map, beach_capacity, outcome, infra_nodes, cost_config,
+			beach_occupancy, beach_depth, beach_to_to)
 
+	var manifest_landed: Array = outcome["manifest_landed"]
+	var manifest_deferred: Array = outcome["manifest_deferred"]
 	var bns_sent := manifest_landed.size() + manifest_deferred.size()
 	var bns_landed := manifest_landed.size()
 	var lost_at_sea := 0  # ship loss mechanic not yet wired
@@ -142,6 +142,7 @@ static func resolve_offload_day(
 		"lost_at_sea": lost_at_sea,
 		"manifest_landed": manifest_landed,
 		"manifest_deferred": manifest_deferred,
+		"progress_updates": outcome["progress_updates"],
 	}
 
 
@@ -152,9 +153,10 @@ static func _resolve_day1(
 	ordered_ids: Array[String],
 	brigade_map: Dictionary,
 	beach_capacity: Dictionary,
-	manifest_landed: Array,
-	manifest_deferred: Array,
+	outcome: Dictionary,
 ) -> void:
+	var manifest_landed: Array = outcome["manifest_landed"]
+	var manifest_deferred: Array = outcome["manifest_deferred"]
 	# Brigade slots per beach = floor(BN-slot capacity).
 	# One brigade consumes one slot on Day 1 (it lands as a unit).
 	var beach_slots: Dictionary = {}
@@ -229,14 +231,16 @@ static func _resolve_day_n(
 	ordered_ids: Array[String],
 	brigade_map: Dictionary,
 	beach_capacity: Dictionary,
-	manifest_landed: Array,
-	manifest_deferred: Array,
+	outcome: Dictionary,
 	infra_nodes: Array = [],
 	cost_config: Dictionary = {},
 	beach_occupancy: Dictionary = {},
 	beach_depth: Dictionary = {},
 	beach_to_to: Dictionary = {},
 ) -> void:
+	var manifest_landed: Array = outcome["manifest_landed"]
+	var manifest_deferred: Array = outcome["manifest_deferred"]
+	var progress_updates: Array = outcome["progress_updates"]
 	var remaining_tons := _beach_budgets(beach_capacity, beach_occupancy, beach_depth)
 	var infra_remaining := _infra_budgets(infra_nodes)
 
@@ -256,7 +260,6 @@ static func _resolve_day_n(
 			var beach_need: float = maxf(beach_cost - float(bn.get("offload_progress_tons", 0.0)), 0.0)
 			if target_beach >= 0 and remaining_tons.get(target_beach, 0.0) >= beach_need:
 				remaining_tons[target_beach] -= beach_need
-				bn.erase("offload_progress_tons")
 				manifest_landed.append(_beach_landing(bid, bn, target_beach))
 				continue
 
@@ -271,7 +274,13 @@ static func _resolve_day_n(
 			# a dry (or valve-closed) beach banks nothing.
 			var leftover: float = remaining_tons.get(target_beach, 0.0) if target_beach >= 0 else 0.0
 			if leftover > 0.0:
-				bn["offload_progress_tons"] = float(bn.get("offload_progress_tons", 0.0)) + leftover
+				var previous_progress: float = float(bn.get("offload_progress_tons", 0.0))
+				progress_updates.append({
+					"brigade_id": bid,
+					"bn_id": String(bn.get("id", "")),
+					"previous_progress_tons": previous_progress,
+					"offload_progress_tons": previous_progress + leftover,
+				})
 				remaining_tons[target_beach] = 0.0
 				manifest_deferred.append(_deferral(bid, bn, REASON_OFFLOAD_IN_PROGRESS))
 			else:

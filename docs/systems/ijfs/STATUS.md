@@ -38,4 +38,5 @@ no behaviour, RNG or golden change. MANPADS stock now lives on the typed
 `IjfsTarget.manpads_remaining` (the `metadata` key is a serialization mirror). Unlike the other
 aggregates the authority is called from INSIDE the pipeline stages, because IJFS draws dice
 conditionally on state an earlier stage just wrote — rationale and rules in
-`docs/systems/ijfs/ijfs.md` §9.
+`docs/systems/ijfs/ijfs.md` §9. `IjfsResolver` seeds unseeded MANPADS bins at the IJFS day boundary;
+thereafter `IjfsManpads.systems_remaining` and `IjfsLedgers` report stock without applying state.

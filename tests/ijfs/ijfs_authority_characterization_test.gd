@@ -134,8 +134,13 @@ func test_typed_stock_and_metadata_mirror_never_disagree() -> void:
 	var targets: Array[IjfsTarget] = [bin]
 
 	assert_int(bin.manpads_remaining).override_failure_message(
-		"stock is seeded lazily, so an untouched bin carries the sentinel").is_equal(-1)
+		"stock is unseeded until seed_manpads runs — the sentinel survives a pure read").is_equal(-1)
 	assert_int(IjfsManpads.systems_remaining(bin)).is_equal(STOCK)
+	assert_int(bin.manpads_remaining).override_failure_message(
+		"systems_remaining is now a pure read — it must NOT write the field").is_equal(-1)
+
+	# seed_manpads is the day-boundary call that stamps the typed field.
+	IjfsManpads.seed_manpads(targets)
 	assert_int(bin.manpads_remaining).is_equal(STOCK)
 	assert_int(bin.metadata["systems_remaining"]).is_equal(STOCK)
 

@@ -7,14 +7,18 @@ extends Resource
 ## JLSF rows delivered in the same physical offload transaction. They are cargo, not force, and do
 ## not acquire a ForceLocation; the authority only removes their ids from shared transport storage.
 @export var cargo_arrivals: Array = []
+## Banked beach throughput, calculated without state mutation and applied by ForceTransitions.
+@export var progress_updates: Array = []
 
 
 static func from_landings(p_landings: Array) -> ForceOffloadRequest:
-	return from_resolution(p_landings, [])
+	return from_resolution(p_landings, [], [])
 
 
-static func from_resolution(p_landings: Array, p_cargo_arrivals: Array) -> ForceOffloadRequest:
+static func from_resolution(
+		p_landings: Array, p_cargo_arrivals: Array, p_progress_updates: Array = []) -> ForceOffloadRequest:
 	var request := ForceOffloadRequest.new()
 	request.landings = p_landings.duplicate(true)
 	request.cargo_arrivals = p_cargo_arrivals.duplicate(true)
+	request.progress_updates = p_progress_updates.duplicate(true)
 	return request

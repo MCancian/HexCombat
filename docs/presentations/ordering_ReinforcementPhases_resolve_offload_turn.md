@@ -6,8 +6,8 @@
 > instances or conditional branches.
 
 Generator format v1; scan scope `scripts/**/*.gd` plus `project.godot` autoload aliases.
-Generated from commit `8829181ae4b6`; input SHA-256 `1c5ff5483615f0cca5b2767540c56e9a13e1387c4c1a3c66db909a97ad2e94fb`;
-tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T09:03:12-04:00`.
+Generated from commit `7bbf08693b44`; input SHA-256 `c879af92cf7693c7df1119a11083764377c92a9410144e7b95f361f509613378`;
+tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T17:09:31-04:00`.
 Unresolved-analysis diagnostics on this page: **56**.
 
 Source: `scripts/phases/ReinforcementPhases.gd:139`
@@ -64,7 +64,7 @@ flowchart TD
 | `InfrastructureTransitions.apply_node_plan` (L152) | `InfrastructureTransitions.mark_jlsf_arrived` (L182) | **RAW**, **WAR** | `InfrastructureNodeState.jlsf`, `InfrastructureNodeState.node_status`, `InfrastructureNodeState.repair_turns_remaining` |
 | `InfrastructureTransitions.apply_node_plan` (L152) | `ReinforcementPhases.reconcile_lost_jlsf` (L188) | **RAW**, **WAR** | `InfrastructureNodeState.jlsf`, `InfrastructureNodeState.node_status`, `InfrastructureNodeState.repair_turns_remaining` |
 | `SealiftTransitions.consume_ship_losses` (L159) | `SealiftTransitions.consume_ship_losses` (L190) | **RAW**, **WAR**, **WAW** | `GameStateData.pending_lost_at_sea` |
-| `OffloadResolver.resolve` (L164) | `ForceTransitions.apply_offload` (L169) | **RAW**, **WAR** | `Brigade.hex_id`, `ForceOffloadRequest.cargo_arrivals`, `ForceOffloadRequest.landings` |
+| `OffloadResolver.resolve` (L164) | `ForceTransitions.apply_offload` (L169) | **RAW**, **WAR** | `Brigade.hex_id`, `ForceOffloadRequest.cargo_arrivals`, `ForceOffloadRequest.landings`, `ForceOffloadRequest.progress_updates` |
 | `ReinforcementPhases.owner_by_hex` (L164) | `GameDataStore.recompute_hex_ownership` (L175) | **WAR** | `HexState.hex_owner` |
 | `ForceTransitions.apply_offload` (L169) | `GameDataStore.recompute_hex_ownership` (L175) | **RAW** | `GameDataStore.brigades_by_hex` |
 | `ForceTransitions.apply_offload` (L169) | `ForceTransitions.free_emptied_cohorts` (L184) | **WAR** | `SealiftState.cohorts` |
@@ -129,9 +129,9 @@ Effects include the called method and every statically resolved helper beneath i
 | 4 | `InfrastructureResolver.red_offload_nodes` at `scripts/phases/ReinforcementPhases.gd:153` | `GameDataStore.infrastructure`, `GameStateData.infrastructure_state`, `InfrastructureDef.hex_id`, `InfrastructureDef.kind`, `InfrastructureDef.to_number`, `InfrastructureNodeState.node_status`, `InfrastructureState.nodes` | — | — |
 | 5 | `OffloadResolver.empty_manifest` at `scripts/phases/ReinforcementPhases.gd:156` | — | — | — |
 | 6 | `SealiftTransitions.consume_ship_losses` at `scripts/phases/ReinforcementPhases.gd:159` | `GameStateData.pending_lost_at_sea` | `GameStateData.pending_lost_at_sea` | — |
-| 7 | `OffloadResolver.resolve` at `scripts/phases/ReinforcementPhases.gd:164` | `BeachDef.depth`, `BeachDef.floating_piers`, `BeachDef.hex_id`, `BeachDef.jackup_barge`, `BeachDef.offload_rate`, `Brigade.destroyed`, `Brigade.hex_id`, `Brigade.team`, `GameDataStore.beach_to_to`, `GameDataStore.beaches`; _+3 more_ | `ForceOffloadRequest.cargo_arrivals`, `ForceOffloadRequest.landings` | — |
+| 7 | `OffloadResolver.resolve` at `scripts/phases/ReinforcementPhases.gd:164` | `BeachDef.depth`, `BeachDef.floating_piers`, `BeachDef.hex_id`, `BeachDef.jackup_barge`, `BeachDef.offload_rate`, `Brigade.destroyed`, `Brigade.hex_id`, `Brigade.team`, `GameDataStore.beach_to_to`, `GameDataStore.beaches`; _+3 more_ | `ForceOffloadRequest.cargo_arrivals`, `ForceOffloadRequest.landings`, `ForceOffloadRequest.progress_updates` | — |
 | 8 | `ReinforcementPhases.owner_by_hex` at `scripts/phases/ReinforcementPhases.gd:164` | `GameDataStore.hex_states`, `HexState.hex_owner` | — | — |
-| 9 | `ForceTransitions.apply_offload` at `scripts/phases/ReinforcementPhases.gd:169` | `Brigade.composition`, `Brigade.destroyed`, `Brigade.hex_id`, `Brigade.id`, `ForceOffloadRequest.cargo_arrivals`, `ForceOffloadRequest.destination`, `ForceOffloadRequest.landings`, `ForceOffloadRequest.source`, `ForcePlacementRequest.brigade_id`, `ForcePlacementRequest.destination`; _+11 more_ | `Brigade.entry_bearing`, `Brigade.hex_id`, `ForceOffloadReceipt.bn_ids_landed`, `ForceOffloadReceipt.error`, `ForceOffloadReceipt.landed_brigade_ids`, `ForceOffloadReceipt.landings`, `ForceOffloadReceipt.placement_receipts`, `ForceOffloadReceipt.success`, `ForcePlacementReceipt.brigade_id`, `ForcePlacementReceipt.destination`; _+9 more_ | — |
+| 9 | `ForceTransitions.apply_offload` at `scripts/phases/ReinforcementPhases.gd:169` | `Brigade.composition`, `Brigade.destroyed`, `Brigade.hex_id`, `Brigade.id`, `ForceOffloadRequest.cargo_arrivals`, `ForceOffloadRequest.destination`, `ForceOffloadRequest.landings`, `ForceOffloadRequest.progress_updates`, `ForceOffloadRequest.source`, `ForcePlacementRequest.brigade_id`; _+12 more_ | `Brigade.entry_bearing`, `Brigade.hex_id`, `ForceOffloadReceipt.bn_ids_landed`, `ForceOffloadReceipt.error`, `ForceOffloadReceipt.landed_brigade_ids`, `ForceOffloadReceipt.landings`, `ForceOffloadReceipt.placement_receipts`, `ForceOffloadReceipt.success`, `ForcePlacementReceipt.brigade_id`, `ForcePlacementReceipt.destination`; _+9 more_ | — |
 | 10 | `GameDataStore.recompute_hex_ownership` at `scripts/phases/ReinforcementPhases.gd:175` | `Brigade.destroyed`, `Brigade.team`, `GameDataStore.brigades`, `GameDataStore.brigades_by_hex`, `GameDataStore.hex_lookup`, `GameDataStore.hex_states` | `HexState.hex_owner` | — |
 | 11 | `InfrastructureTransitions.mark_jlsf_arrived` at `scripts/phases/ReinforcementPhases.gd:182` | `GameStateData.infrastructure_state`, `InfrastructureNodeState.jlsf`, `InfrastructureNodeState.node_status`, `InfrastructureNodeState.repair_turns_remaining`, `InfrastructureState.nodes` | `InfrastructureNodeState.jlsf` | — |
 | 12 | `SealiftTransitions.release_hulls` at `scripts/phases/ReinforcementPhases.gd:184` | `GameDataStore.amphibious_return_time_turns`, `GameStateData.sealift_state`, `SealiftHullReleasePlan.batches`, `SealiftState.cohorts`, `SealiftState.escort_reload`, `SealiftState.escort_sam`, `SealiftState.escort_sam_max`, `SealiftState.escort_sam_threshold`, `SealiftState.mainland_pool`, `SealiftState.return_pipeline` | `SealiftState.return_pipeline` | — |
@@ -146,23 +146,23 @@ Showing 30 of 56 diagnostics; class pages provide the narrower context.
 
 | Kind | Source | Why it matters |
 |---|---|---|
-| `untyped_alias` | `scripts/OffloadCalculator.gd:113` `var bid := String(brigade.get("brigade_id", ""))` | The receiver type could not be proven. |
-| `untyped_alias` | `scripts/OffloadCalculator.gd:124` `var bid := String(brigade.get("brigade_id", ""))` | The receiver type could not be proven. |
-| `untyped_alias` | `scripts/OffloadCalculator.gd:170` `var locked := int(brigade.get("locked_beach", 0))` | The receiver type could not be proven. |
-| `untyped_alias` | `scripts/OffloadCalculator.gd:180` `var locked := int(brigade.get("locked_beach", 0))` | The receiver type could not be proven. |
-| `untyped_iteration` | `scripts/OffloadCalculator.gd:248` `for bn in brigade.get("bns", []):` | The collection element type could not be proven. |
 | `untyped_iteration` | `scripts/calc/ForceValidationHelper.gd:122` `for landing_value in request.landings:` | The collection element type could not be proven. |
 | `untyped_iteration` | `scripts/calc/ForceValidationHelper.gd:127` `for arrival_value in request.cargo_arrivals:` | The collection element type could not be proven. |
-| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:232` `if String(battalion_value.type) == battalion_type and int(battalion_value.qty) > 0:` | A protected field name appeared on an unresolved receiver. |
-| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:253` `if cohort.cohort_state != state_label:` | A protected field name appeared on an unresolved receiver. |
-| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:255` `for id_value in cohort.bn_ids:` | A protected field name appeared on an unresolved receiver. |
-| `untyped_iteration` | `scripts/calc/ForceValidationHelper.gd:255` `for id_value in cohort.bn_ids:` | The collection element type could not be proven. |
+| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:286` `if String(battalion_value.type) == battalion_type and int(battalion_value.qty) > 0:` | A protected field name appeared on an unresolved receiver. |
+| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:307` `if cohort.cohort_state != state_label:` | A protected field name appeared on an unresolved receiver. |
+| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:309` `for id_value in cohort.bn_ids:` | A protected field name appeared on an unresolved receiver. |
+| `untyped_iteration` | `scripts/calc/ForceValidationHelper.gd:309` `for id_value in cohort.bn_ids:` | The collection element type could not be proven. |
 | `untyped_iteration` | `scripts/calc/HexOwnershipCalculator.gd:27` `for brigade_id_value in data_store.get_brigades_in_hex(hex_id):` | The collection element type could not be proven. |
 | `untyped_alias` | `scripts/calc/InfrastructureResolver.gd:38` `var def_val: Variant = infra_defs.get(id)` | The receiver type could not be proven. |
 | `untyped_alias` | `scripts/calc/InfrastructureResolver.gd:44` `var is_red := String(owner_by_hex.get(def_data.hex_id, "")) == HexOwner.RED` | The receiver type could not be proven. |
 | `untyped_alias` | `scripts/calc/InfrastructureResolver.gd:86` `var def_val: Variant = infra_defs.get(id)` | The receiver type could not be proven. |
-| `multi_call_statement` | `scripts/calc/OffloadResolver.gd:78` `var manifest := OffloadCalculator.resolve_offload_day( turn_number, beach_capacity, troop_reserve, priority_order(troop_reserve), infra_nodes, cost_config, valve["occupancy"], v…` | Multiple calls share one statement; the map preserves lexical sites, not nested evaluation order. |
-| `nested_index_unanalysed` | `scripts/calc/OffloadResolver.gd:191` `ids[brigade_id][String(landed["bn_id"])] = true` | Nested collection indexes exceed the balanced-chain subset; this statement contributes no field effects. |
+| `untyped_alias` | `scripts/calc/OffloadCalculator.gd:103` `var bid := String(brigade.get("brigade_id", ""))` | The receiver type could not be proven. |
+| `untyped_alias` | `scripts/calc/OffloadCalculator.gd:120` `var bid := String(brigade.get("brigade_id", ""))` | The receiver type could not be proven. |
+| `untyped_alias` | `scripts/calc/OffloadCalculator.gd:172` `var locked := int(brigade.get("locked_beach", 0))` | The receiver type could not be proven. |
+| `untyped_alias` | `scripts/calc/OffloadCalculator.gd:182` `var locked := int(brigade.get("locked_beach", 0))` | The receiver type could not be proven. |
+| `untyped_iteration` | `scripts/calc/OffloadCalculator.gd:252` `for bn in brigade.get("bns", []):` | The collection element type could not be proven. |
+| `multi_call_statement` | `scripts/calc/OffloadResolver.gd:68` `var calculation := OffloadCalculator.resolve_offload_day( turn_number, beach_capacity, troop_reserve, priority_order(troop_reserve), infra_nodes, cost_config, valve["occupancy"]…` | Multiple calls share one statement; the map preserves lexical sites, not nested evaluation order. |
+| `nested_index_unanalysed` | `scripts/calc/OffloadResolver.gd:185` `ids[brigade_id][String(landed["bn_id"])] = true` | Nested collection indexes exceed the balanced-chain subset; this statement contributes no field effects. |
 | `untyped_alias` | `scripts/model/InfrastructureState.gd:43` `var node_val: Variant = nodes[id]` | The receiver type could not be proven. |
 | `unresolved_receiver` | `scripts/model/SealiftState.gd:101` `if cohort.cohort_state != STATE_SENT and cohort.cohort_state != STATE_OFFLOADING:` | A protected field name appeared on an unresolved receiver. |
 | `unresolved_receiver` | `scripts/model/SealiftState.gd:102` `push_error("SealiftState: cohort has illegal state %s" % cohort.cohort_state)` | A protected field name appeared on an unresolved receiver. |
@@ -175,5 +175,5 @@ Showing 30 of 56 diagnostics; class pages provide the narrower context.
 | `untyped_iteration` | `scripts/phases/ReinforcementPhases.gd:219` `for entry_value in state.ship_reserve:` | The collection element type could not be proven. |
 | `untyped_iteration` | `scripts/phases/ReinforcementPhases.gd:223` `for entry_value in state.sealift_state.mainland_pool:` | The collection element type could not be proven. |
 | `untyped_iteration` | `scripts/transitions/ForceTransitions.gd:438` `for arrival_value in request.cargo_arrivals:` | The collection element type could not be proven. |
-| `multi_call_statement` | `scripts/transitions/ForceTransitions.gd:444` `return ForceOffloadReceipt.ok( placement_result["brigade_ids"], placement_result["landings"], _typed_string_array(troop_ids.keys()), placement_result["receipts"])` | Multiple calls share one statement; the map preserves lexical sites, not nested evaluation order. |
+| `multi_call_statement` | `scripts/transitions/ForceTransitions.gd:445` `return ForceOffloadReceipt.ok( placement_result["brigade_ids"], placement_result["landings"], _typed_string_array(troop_ids.keys()), placement_result["receipts"])` | Multiple calls share one statement; the map preserves lexical sites, not nested evaluation order. |
 | _…_ | _26 additional diagnostics omitted from this page_ | See the called class pages. |

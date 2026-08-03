@@ -438,12 +438,30 @@ static func apply_offload(
 	for arrival_value in request.cargo_arrivals:
 		for id_value in (arrival_value as Dictionary).get("bn_ids", []):
 			all_ids[String(id_value)] = true
+	_apply_offload_progress_updates(ship_reserve, request.progress_updates)
 	var placement_result := _apply_first_offload_placements(data_store, request)
 	_remove_from_reserve_ids(ship_reserve, all_ids)
 	_remove_from_cohort_ids(sealift_state, all_ids.keys())
 	return ForceOffloadReceipt.ok(
 		placement_result["brigade_ids"], placement_result["landings"],
 		_typed_string_array(troop_ids.keys()), placement_result["receipts"])
+
+
+## Apply validated absolute beach-progress targets to the force aggregate's live reserve.
+static func _apply_offload_progress_updates(ship_reserve: Array, updates: Array) -> void:
+	for update_value in updates:
+		var update: Dictionary = update_value
+		var brigade_id := String(update["brigade_id"])
+		var bn_id := String(update["bn_id"])
+		for entry_value in ship_reserve:
+			var entry: Dictionary = entry_value
+			if String(entry.get("brigade_id", "")) != brigade_id:
+				continue
+			for bn_value in entry.get("bns", []):
+				var bn: Dictionary = bn_value
+				if String(bn.get("id", "")) == bn_id:
+					bn["offload_progress_tons"] = float(update["offload_progress_tons"])
+					break
 
 
 static func _offload_troop_ids(request: ForceOffloadRequest) -> Dictionary:

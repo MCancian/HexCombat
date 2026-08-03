@@ -20,6 +20,10 @@ const PRE_INVASION_DAYS_FALLBACK := 4
 static func resolve(ijfs_state: IjfsDailyState, brigades: Dictionary, turn_number: int, ijfs_day: int, dice: Dice) -> Dictionary:
 	# D4-H (2d follow-up): retire maneuver targets whose battalions died (IJFS or ground combat).
 	sync_maneuver_targets_to_oob(ijfs_state, brigades)
+	# Eagerly seed every unseeded MANPADS bin through the authority, so `systems_remaining` is a
+	# pure read from here on. This closes the transitive mutation path that made IjfsLedgers
+	# (scripts/calc/) trigger an authority write through IjfsManpads.ready_systems_by_to.
+	IjfsManpads.seed_manpads(ijfs_state.targets)
 	# MANPADS ride with the infantry: ground losses in a TO shrink its MANPADS pools (after the
 	# maneuver sync so this turn's ground casualties are already reflected). Zero dice.
 	sync_manpads_to_oob(ijfs_state)

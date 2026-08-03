@@ -25,6 +25,20 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-08-02 — Plan 0058 makes OffloadCalculator genuinely pure (agent; reviewed).**
+  Banked beach throughput is now a replay-safe outcome plan, applied only by `ForceTransitions` in
+  the validated offload transaction; the calculator moves to `scripts/calc/` and public offload
+  manifests remain unchanged. No RNG, formula, or golden change. Facts:
+  `docs/systems/amphibious-offload/amphibious-offload.md` §6/§9,
+  `scripts/calc/OffloadCalculator.gd`, and `scripts/transitions/ForceTransitions.gd`.
+
+- **2026-08-02 — Authority aliases are gated and IJFS ledger reads are pure (agent).**
+  The placement validator now recognizes bounded `const` preload aliases of manifest authorities;
+  it deliberately does not attempt general local-alias analysis. IJFS instead seeds MANPADS at its
+  resolver day boundary, making ledger reads non-mutating. Facts: `tools/validate_authority_call_placement.gd`,
+  `scripts/interleaved/IjfsResolver.gd`, `scripts/interleaved/IjfsManpads.gd`, and
+  `docs/systems/ijfs/ijfs.md`.
+
 - **2026-08-02 — The three LLM action vocabulary backlog items are implemented (agent).**
   `deploy_jlsf` cross-team hole: `"team"` added to the action schema, `GameState.add_jlsf_order`
   takes an explicit team parameter, `_parse_action_team` rejects cross-team spoofing outright (fail

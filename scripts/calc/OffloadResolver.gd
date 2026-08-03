@@ -3,18 +3,8 @@ extends RefCounted
 
 ## Pure resolver for the D1 amphibious offload phase: runs the OffloadCalculator day and reports
 ## exact troop/cargo landing plans without changing reserve or cohort membership. Consumes NO dice.
-## ReinforcementPhases passes the typed request to ForceTransitions, then owns infrastructure,
-## ownership, pending_lost_at_sea, fleet projection, and the EventBus emit.
-##
-## CAVEAT, and it is the reason this file is named in plan 0058. "Without changing reserve or cohort
-## MEMBERSHIP" is accurate and is not the whole story: this file appends the caller's live
-## `ship_reserve` entries into `troop_reserve` (:63) and hands them to `OffloadCalculator` (:68),
-## which writes `offload_progress_tons` into their BN dicts. So campaign state IS changed on this
-## call path, transitively, through a helper. That makes this file a live instance of the blind spot
-## `tools/validate_authority_call_placement.gd` documents — it sees direct authority calls, so this
-## reads as clean and `scripts/calc/`'s claim is not actually true here today. Plan 0058 hoists the
-## write into `ForceTransitions.apply_offload`; do not treat a green placement run as proof that this
-## path applies nothing.
+## It extracts calculator progress outcomes into the typed ForceOffloadRequest before returning the
+## existing public manifest. ReinforcementPhases applies that request through ForceTransitions.
 
 
 static func empty_manifest() -> Dictionary:
@@ -75,9 +65,12 @@ static func resolve(
 	var active_beach_ids := _active_beach_ids(troop_reserve)
 	var valve := _occupancy_valve_inputs(active_beach_ids, beaches, brigades)
 	var beach_capacity := OffloadCalculator.beach_capacity_bns(active_beach_ids, beaches)
-	var manifest := OffloadCalculator.resolve_offload_day(
+	var calculation := OffloadCalculator.resolve_offload_day(
 		turn_number, beach_capacity, troop_reserve, priority_order(troop_reserve),
 		infra_nodes, cost_config, valve["occupancy"], valve["depth"], beach_to_to)
+	var progress_updates: Array = calculation["progress_updates"]
+	calculation.erase("progress_updates")
+	var manifest: Dictionary = calculation
 
 	var plan := _plan_landings(manifest, troop_reserve, brigades, infra_nodes)
 
@@ -103,7 +96,8 @@ static func resolve(
 		"jlsf_arrivals": jlsf_arrivals,
 		"landed_bn_ids_by_brigade": plan["landed_bn_ids_by_brigade"],
 		"troop_landing_plan": plan["landing_plan"],
-		"force_request": ForceOffloadRequest.from_resolution(plan["landing_plan"], jlsf_arrivals),
+		"force_request": ForceOffloadRequest.from_resolution(
+			plan["landing_plan"], jlsf_arrivals, progress_updates),
 	}
 
 

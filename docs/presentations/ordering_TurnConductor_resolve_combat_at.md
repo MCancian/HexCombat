@@ -6,8 +6,8 @@
 > instances or conditional branches.
 
 Generator format v1; scan scope `scripts/**/*.gd` plus `project.godot` autoload aliases.
-Generated from commit `8829181ae4b6`; input SHA-256 `1c5ff5483615f0cca5b2767540c56e9a13e1387c4c1a3c66db909a97ad2e94fb`;
-tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T09:03:12-04:00`.
+Generated from commit `7bbf08693b44`; input SHA-256 `c879af92cf7693c7df1119a11083764377c92a9410144e7b95f361f509613378`;
+tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T17:09:31-04:00`.
 Unresolved-analysis diagnostics on this page: **21**.
 
 Source: `scripts/phases/TurnConductor.gd:173`
@@ -127,8 +127,8 @@ Showing 21 of 21 diagnostics; class pages provide the narrower context.
 | `untyped_iteration` | `scripts/phases/TurnConductor.gd:222` `for casualty in result.defender_casualties:` | The collection element type could not be proven. |
 | `multi_call_statement` | `scripts/phases/TurnConductor.gd:223` `ForceTransitions.apply_battalion_casualties( GameData, ForceTransitions.ground_combat_casualty_request(casualty))` | Multiple calls share one statement; the map preserves lexical sites, not nested evaluation order. |
 | `untyped_iteration` | `scripts/phases/TurnConductor.gd:255` `for commitment_value in state.commitments[team]:` | The collection element type could not be proven. |
-| `callable_or_lambda` | `scripts/transitions/ForceTransitions.gd:587` `data_store.brigades_by_hex[old_hex] = (data_store.brigades_by_hex[old_hex] as Array).filter( func(id: String) -> bool: return id != brigade.id)` | Callable/lambda dataflow is outside this analyser. |
-| `untyped_alias` | `scripts/transitions/ForceTransitions.gd:601` `var violations := data_store.validate_runtime_indexes()` | The receiver type could not be proven. |
-| `untyped_iteration` | `scripts/transitions/ForceTransitions.gd:618` `for index in range(brigade.composition.size() - 1, -1, -1):` | The collection element type could not be proven. |
-| `untyped_alias` | `scripts/transitions/ForceTransitions.gd:622` `var take := mini(battalion.qty, remaining)` | The receiver type could not be proven. |
+| `callable_or_lambda` | `scripts/transitions/ForceTransitions.gd:605` `data_store.brigades_by_hex[old_hex] = (data_store.brigades_by_hex[old_hex] as Array).filter( func(id: String) -> bool: return id != brigade.id)` | Callable/lambda dataflow is outside this analyser. |
+| `untyped_alias` | `scripts/transitions/ForceTransitions.gd:619` `var violations := data_store.validate_runtime_indexes()` | The receiver type could not be proven. |
+| `untyped_iteration` | `scripts/transitions/ForceTransitions.gd:636` `for index in range(brigade.composition.size() - 1, -1, -1):` | The collection element type could not be proven. |
+| `untyped_alias` | `scripts/transitions/ForceTransitions.gd:640` `var take := mini(battalion.qty, remaining)` | The receiver type could not be proven. |
 | `untyped_alias` | `scripts/transitions/MapTransitions.gd:98` `var state_value: Variant = data_store.hex_states.get(hex_id)` | The receiver type could not be proven. |

@@ -6,8 +6,8 @@
 > instances or conditional branches.
 
 Generator format v1; scan scope `scripts/**/*.gd` plus `project.godot` autoload aliases.
-Generated from commit `8829181ae4b6`; input SHA-256 `1c5ff5483615f0cca5b2767540c56e9a13e1387c4c1a3c66db909a97ad2e94fb`;
-tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T09:03:12-04:00`.
+Generated from commit `7bbf08693b44`; input SHA-256 `c879af92cf7693c7df1119a11083764377c92a9410144e7b95f361f509613378`;
+tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T17:09:31-04:00`.
 Unresolved-analysis diagnostics on this page: **102**.
 
 Source: `scripts/interleaved/IjfsEngine.gd:82`
@@ -128,7 +128,7 @@ flowchart TD
 | `IjfsStrikePhase.run` (L137) | `IjfsStrikePhase.append_final_skips` (L168) | **RAW**, **WAR**, **WAW** | `IjfsDailyState.strike_log`, `IjfsStrikePhaseContext.attacked`, `IjfsStrikePhaseContext.skip_reasons`, `IjfsTarget.destroyed`, `IjfsTarget.known_to_red`, `IjfsTarget.suppressed`, `IjfsTarget.suppressed_this_turn` |
 | `IjfsStrikePhase.run` (L137) | `IjfsAdHealth.compute_taiwan_ad_health` (L170) | **RAW** | `IjfsTarget.destroyed`, `IjfsTarget.suppressed` |
 | `IjfsStrikePhase.run` (L137) | `IjfsEngagement.apply_post_phase_2_free_shot` (L172) | **RAW**, **WAR**, **WAW** | `IjfsSquadron.alive`, `IjfsSquadron.losses_campaign`, `IjfsSquadron.losses_today`, `IjfsSquadron.rtb_today`, `IjfsSquadron.sead_assigned_today` |
-| `IjfsStrikePhase.run` (L137) | `IjfsLedgers.summarize_run` (L180) | **RAW**, **WAR**, **WAW** | `IjfsDailyState.contest_log`, `IjfsDailyState.manpads_intercept_log`, `IjfsDailyState.strike_log`, `IjfsTarget.destroyed`, `IjfsTarget.manpads_remaining`, `IjfsTarget.metadata[systems_remaining]`, `IjfsTarget.suppressed` |
+| `IjfsStrikePhase.run` (L137) | `IjfsLedgers.summarize_run` (L180) | **RAW** | `IjfsDailyState.contest_log`, `IjfsDailyState.manpads_intercept_log`, `IjfsDailyState.strike_log`, `IjfsTarget.destroyed`, `IjfsTarget.manpads_remaining`, `IjfsTarget.suppressed` |
 | `IjfsStrikePhase.run` (L137) | `IjfsLedgers.build_ledgers` (L184) | **RAW** | `IjfsDailyState.contest_log`, `IjfsDailyState.manpads_intercept_log`, `IjfsDailyState.strike_log`, `IjfsMunition.inventory_remaining`, `IjfsSquadron.alive`, `IjfsSquadron.losses_campaign`, `IjfsSquadron.losses_today`, `IjfsSquadron.rtb_today`; _+5 more_ |
 | `IjfsAdHealth.compute_taiwan_ad_health` (L139) | `IjfsSeadStage.resolve` (L148) | **WAR** | `IjfsTarget.destroyed`, `IjfsTarget.suppressed` |
 | `IjfsAdHealth.compute_taiwan_ad_health` (L139) | `IjfsStrikePhase.run` (L167) | **WAR** | `IjfsTarget.destroyed`, `IjfsTarget.suppressed` |
@@ -159,7 +159,7 @@ flowchart TD
 | `IjfsStrikePhase.run` (L167) | `IjfsStrikePhase.append_final_skips` (L168) | **RAW**, **WAR**, **WAW** | `IjfsDailyState.strike_log`, `IjfsStrikePhaseContext.attacked`, `IjfsStrikePhaseContext.skip_reasons`, `IjfsTarget.destroyed`, `IjfsTarget.known_to_red`, `IjfsTarget.suppressed`, `IjfsTarget.suppressed_this_turn` |
 | `IjfsStrikePhase.run` (L167) | `IjfsAdHealth.compute_taiwan_ad_health` (L170) | **RAW** | `IjfsTarget.destroyed`, `IjfsTarget.suppressed` |
 | `IjfsStrikePhase.run` (L167) | `IjfsEngagement.apply_post_phase_2_free_shot` (L172) | **RAW**, **RNG**, **WAR**, **WAW** | `IjfsSquadron.alive`, `IjfsSquadron.losses_campaign`, `IjfsSquadron.losses_today`, `IjfsSquadron.rtb_today`, `IjfsSquadron.sead_assigned_today`, `dice` |
-| `IjfsStrikePhase.run` (L167) | `IjfsLedgers.summarize_run` (L180) | **RAW**, **WAR**, **WAW** | `IjfsDailyState.contest_log`, `IjfsDailyState.manpads_intercept_log`, `IjfsDailyState.strike_log`, `IjfsTarget.destroyed`, `IjfsTarget.manpads_remaining`, `IjfsTarget.metadata[systems_remaining]`, `IjfsTarget.suppressed` |
+| `IjfsStrikePhase.run` (L167) | `IjfsLedgers.summarize_run` (L180) | **RAW** | `IjfsDailyState.contest_log`, `IjfsDailyState.manpads_intercept_log`, `IjfsDailyState.strike_log`, `IjfsTarget.destroyed`, `IjfsTarget.manpads_remaining`, `IjfsTarget.suppressed` |
 | `IjfsStrikePhase.run` (L167) | `IjfsLedgers.build_ledgers` (L184) | **RAW** | `IjfsDailyState.contest_log`, `IjfsDailyState.manpads_intercept_log`, `IjfsDailyState.strike_log`, `IjfsMunition.inventory_remaining`, `IjfsSquadron.alive`, `IjfsSquadron.losses_campaign`, `IjfsSquadron.losses_today`, `IjfsSquadron.rtb_today`; _+5 more_ |
 | `IjfsStrikePhase.append_final_skips` (L168) | `IjfsLedgers.summarize_run` (L180) | **RAW** | `IjfsDailyState.strike_log` |
 | `IjfsStrikePhase.append_final_skips` (L168) | `IjfsLedgers.build_ledgers` (L184) | **RAW** | `IjfsDailyState.strike_log` |
@@ -230,7 +230,7 @@ flowchart LR
   n_c06327bc9d6f -->|RAW| n_c7e8eea32635
 ```
 
-_74 additional visual edges are kept in the table above._
+_70 additional visual edges are kept in the table above._
 
 ## Call-site detail
 
@@ -262,7 +262,7 @@ Effects include the called method and every statically resolved helper beneath i
 | 22 | `IjfsStrikePhase.append_final_skips` at `scripts/interleaved/IjfsEngine.gd:168` | `IjfsDailyState.strike_log`, `IjfsDailyState.targets`, `IjfsStrikePhaseContext.attacked`, `IjfsStrikePhaseContext.current_day`, `IjfsStrikePhaseContext.release_rules`, `IjfsStrikePhaseContext.skip_reasons`, `IjfsStrikePhaseContext.z_day`, `IjfsTarget.category`, `IjfsTarget.destroyed`, `IjfsTarget.detectability_active`; _+18 more_ | `IjfsDailyState.strike_log` | — |
 | 23 | `IjfsAdHealth.compute_taiwan_ad_health` at `scripts/interleaved/IjfsEngine.gd:170` | `IjfsDailyState.scenario`, `IjfsDailyState.targets`, `IjfsTarget.category`, `IjfsTarget.destroyed`, `IjfsTarget.suppressed` | `IjfsDailyState.taiwan_ad_health_after` | — |
 | 24 | `IjfsEngagement.apply_post_phase_2_free_shot` at `scripts/interleaved/IjfsEngine.gd:172` | `IjfsDailyState.taiwan_ad_health_after`, `IjfsSquadron.aircraft_class`, `IjfsSquadron.alive`, `IjfsSquadron.losses_campaign`, `IjfsSquadron.losses_today`, `IjfsSquadron.role`, `IjfsSquadron.rtb_today`, `IjfsSquadron.sead_assigned_today`, `IjfsSquadron.squadron_id`, `IjfsStrikePhaseContext.attrition` | `IjfsDailyState.free_shot_log`, `IjfsSquadron.alive`, `IjfsSquadron.losses_campaign`, `IjfsSquadron.losses_today`, `IjfsSquadron.rtb_today`, `IjfsSquadron.sead_assigned_today` | `dice` |
-| 25 | `IjfsLedgers.summarize_run` at `scripts/interleaved/IjfsEngine.gd:180` | `IjfsDailyState.contest_log`, `IjfsDailyState.detection_log`, `IjfsDailyState.engagement_log`, `IjfsDailyState.exquisite_intel_overrides`, `IjfsDailyState.free_shot_log`, `IjfsDailyState.manpads_intercept_log`, `IjfsDailyState.strike_log`, `IjfsDailyState.taiwan_ad_health_after`, `IjfsDailyState.taiwan_ad_health_after_missile_phase`, `IjfsDailyState.taiwan_ad_health_after_sead`; _+9 more_ | `IjfsTarget.manpads_remaining`, `IjfsTarget.metadata[systems_remaining]` | — |
+| 25 | `IjfsLedgers.summarize_run` at `scripts/interleaved/IjfsEngine.gd:180` | `IjfsDailyState.contest_log`, `IjfsDailyState.detection_log`, `IjfsDailyState.engagement_log`, `IjfsDailyState.exquisite_intel_overrides`, `IjfsDailyState.free_shot_log`, `IjfsDailyState.manpads_intercept_log`, `IjfsDailyState.strike_log`, `IjfsDailyState.taiwan_ad_health_after`, `IjfsDailyState.taiwan_ad_health_after_missile_phase`, `IjfsDailyState.taiwan_ad_health_after_sead`; _+8 more_ | — | — |
 | 26 | `IjfsLedgers.build_ledgers` at `scripts/interleaved/IjfsEngine.gd:184` | `IjfsDailyState.air_classes`, `IjfsDailyState.contest_log`, `IjfsDailyState.detection_log`, `IjfsDailyState.engagement_log`, `IjfsDailyState.free_shot_log`, `IjfsDailyState.manpads_intercept_log`, `IjfsDailyState.munitions`, `IjfsDailyState.seed`, `IjfsDailyState.source_files`, `IjfsDailyState.squadron_force`; _+38 more_ | — | — |
 
 ## Analysis limits found here

@@ -82,7 +82,7 @@ func _profile(state: IjfsDailyState) -> IjfsAttritionProfile:
 	return IjfsAttritionProfile.build(state.scenario, AIR_CLASSES)
 
 
-func test_ready_systems_excludes_dead_and_suppressed_bins_and_seeds_stock() -> void:
+func test_ready_systems_excludes_dead_and_suppressed_bins_without_seeding_stock() -> void:
 	var targets: Array[IjfsTarget] = [
 		_bin("m1", 2, 50),
 		_bin("m2", 2, 50, true),         # destroyed -> 0
@@ -92,7 +92,12 @@ func test_ready_systems_excludes_dead_and_suppressed_bins_and_seeds_stock() -> v
 	assert_int(by_to["total"]).is_equal(50)
 	assert_int(by_to["2"]).is_equal(50)
 	assert_bool(by_to.has("3")).is_false()
-	assert_int(int(targets[0].metadata["systems_remaining"])).is_equal(50)
+	assert_int(targets[0].manpads_remaining).override_failure_message(
+		"ledger queries must not seed the typed field"
+	).is_equal(-1)
+	assert_bool(targets[0].metadata.has("systems_remaining")).override_failure_message(
+		"ledger queries must not update the serialization mirror"
+	).is_false()
 
 
 # --- the trigger: exactly one strike shape, and nothing else ------------------------------------

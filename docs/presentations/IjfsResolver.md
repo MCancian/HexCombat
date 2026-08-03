@@ -6,8 +6,8 @@
 > instances or conditional branches.
 
 Generator format v1; scan scope `scripts/**/*.gd` plus `project.godot` autoload aliases.
-Generated from commit `8829181ae4b6`; input SHA-256 `1c5ff5483615f0cca5b2767540c56e9a13e1387c4c1a3c66db909a97ad2e94fb`;
-tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T09:03:12-04:00`.
+Generated from commit `7bbf08693b44`; input SHA-256 `c879af92cf7693c7df1119a11083764377c92a9410144e7b95f361f509613378`;
+tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T17:09:31-04:00`.
 Unresolved-analysis diagnostics on this page: **116**.
 
 ## Source summary
@@ -24,12 +24,12 @@ Source: `scripts/interleaved/IjfsResolver.gd`
 | [`FiresPhases.sync_maneuver_targets_to_oob`](ordering_FiresPhases_sync_maneuver_targets_to_oob.md) | `IjfsResolver.sync_maneuver_targets_to_oob` at `70` |
 | [`FiresPhases.update_maneuver_posture`](ordering_FiresPhases_update_maneuver_posture.md) | `IjfsResolver.update_maneuver_posture` at `66` |
 | [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsResolver.sync_maneuver_targets_to_oob` at `22` |
-| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsResolver.sync_manpads_to_oob` at `25` |
-| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsResolver.update_maneuver_posture` at `27` |
-| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsResolver._derive_day_dice` at `50` |
-| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsResolver.build_warmup_context` at `53` |
-| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsResolver._derive_day_dice` at `59` |
-| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsResolver.compute_writeback` at `61` |
+| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsResolver.sync_manpads_to_oob` at `29` |
+| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsResolver.update_maneuver_posture` at `31` |
+| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsResolver._derive_day_dice` at `54` |
+| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsResolver.build_warmup_context` at `57` |
+| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsResolver._derive_day_dice` at `63` |
+| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsResolver.compute_writeback` at `65` |
 | [`ReinforcementPhases.resolve_mobilization_turn`](ordering_ReinforcementPhases_resolve_mobilization_turn.md) | `IjfsResolver.add_maneuver_targets` at `262` |
 
 ## Dependency diagram
@@ -47,6 +47,7 @@ flowchart LR
   n_3c08cdd5c3ee --> n_49c1716f229a["IjfsEngine.carry_to_next_day"]
   n_3c08cdd5c3ee --> n_03fb0827f305["IjfsEngine.run_daily"]
   n_3c08cdd5c3ee --> n_494e19f06621["IjfsLoaders.build_maneuver_targets"]
+  n_3c08cdd5c3ee --> n_27e72c9e493c["IjfsManpads.seed_manpads"]
   n_3c08cdd5c3ee --> n_cfd003a22d11["IjfsManpads.systems_remaining"]
   n_3c08cdd5c3ee --> n_d2cd7bfa06ca["IjfsResolver._derive_day_dice"]
   n_3c08cdd5c3ee --> n_584ebfd14a06["IjfsResolver.build_warmup_context"]
@@ -185,7 +186,7 @@ flowchart LR
 | `add_maneuver_targets` | `IjfsLoaders.build_maneuver_targets`, `IjfsTransitions.add_targets` |
 | `build_warmup_context` | `IjfsWarmup.profile_multiplier`, `IjfsWarmup.scale_firing_capacity` |
 | `compute_writeback` | `AntishipCalculator.encode_key`, `IjfsWriteback.new` |
-| `resolve` | `IjfsEngine.carry_to_next_day`, `IjfsEngine.run_daily`, `IjfsResolver._derive_day_dice`, `IjfsResolver.build_warmup_context`, `IjfsResolver.compute_writeback`, `IjfsResolver.sync_maneuver_targets_to_oob`, `IjfsResolver.sync_manpads_to_oob`, `IjfsResolver.update_maneuver_posture` |
+| `resolve` | `IjfsEngine.carry_to_next_day`, `IjfsEngine.run_daily`, `IjfsManpads.seed_manpads`, `IjfsResolver._derive_day_dice`, `IjfsResolver.build_warmup_context`, `IjfsResolver.compute_writeback`, `IjfsResolver.sync_maneuver_targets_to_oob`, `IjfsResolver.sync_manpads_to_oob`, `IjfsResolver.update_maneuver_posture` |
 | `sync_maneuver_targets_to_oob` | `IjfsTransitions.retire_target` |
 | `sync_manpads_to_oob` | `IjfsManpads.systems_remaining`, `IjfsTransitions.set_manpads_remaining` |
 | `update_maneuver_posture` | `IjfsTransitions.apply_activity_posture` |

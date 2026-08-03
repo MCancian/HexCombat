@@ -6,8 +6,8 @@
 > instances or conditional branches.
 
 Generator format v1; scan scope `scripts/**/*.gd` plus `project.godot` autoload aliases.
-Generated from commit `8829181ae4b6`; input SHA-256 `1c5ff5483615f0cca5b2767540c56e9a13e1387c4c1a3c66db909a97ad2e94fb`;
-tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T09:03:12-04:00`.
+Generated from commit `7bbf08693b44`; input SHA-256 `c879af92cf7693c7df1119a11083764377c92a9410144e7b95f361f509613378`;
+tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T17:09:31-04:00`.
 Unresolved-analysis diagnostics on this page: **98**.
 
 ## Source summary
@@ -22,10 +22,10 @@ Source: `scripts/interleaved/IjfsEngine.gd`
 |---|---|
 | [`IjfsEngine.run_daily`](ordering_IjfsEngine_run_daily.md) | `IjfsEngine.make_run_context` at `91` |
 | [`IjfsEngine.run_daily`](ordering_IjfsEngine_run_daily.md) | `IjfsEngine.unknown_warmup_keys` at `111` |
-| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsEngine.carry_to_next_day` at `49` |
-| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsEngine.run_daily` at `54` |
-| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsEngine.carry_to_next_day` at `58` |
-| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsEngine.run_daily` at `59` |
+| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsEngine.carry_to_next_day` at `53` |
+| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsEngine.run_daily` at `58` |
+| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsEngine.carry_to_next_day` at `62` |
+| [`IjfsResolver.resolve`](IjfsResolver.md) | `IjfsEngine.run_daily` at `63` |
 
 ## Dependency diagram
 

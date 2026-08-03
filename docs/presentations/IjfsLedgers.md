@@ -6,15 +6,9 @@
 > instances or conditional branches.
 
 Generator format v1; scan scope `scripts/**/*.gd` plus `project.godot` autoload aliases.
-Generated from commit `8829181ae4b6`; input SHA-256 `1c5ff5483615f0cca5b2767540c56e9a13e1387c4c1a3c66db909a97ad2e94fb`;
-tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T09:03:12-04:00`.
-Unresolved-analysis diagnostics on this page: **11**.
-
-## Computed effect warning
-
-The source summary claims this class is pure, but the generated call closure reaches
-protected writes: `IjfsTarget.manpads_remaining`, `IjfsTarget.metadata[systems_remaining]`. Treat the computed evidence and
-visible uncertainty as the safer reading; the source claim needs a separate fix.
+Generated from commit `7bbf08693b44`; input SHA-256 `c879af92cf7693c7df1119a11083764377c92a9410144e7b95f361f509613378`;
+tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T17:09:31-04:00`.
+Unresolved-analysis diagnostics on this page: **10**.
 
 ## Source summary
 
@@ -119,9 +113,8 @@ flowchart LR
 | `IjfsTarget.intel_locked` | yes |  |
 | `IjfsTarget.known_to_red` | yes |  |
 | `IjfsTarget.last_detected_day` | yes |  |
-| `IjfsTarget.manpads_remaining` | yes | yes |
+| `IjfsTarget.manpads_remaining` | yes |  |
 | `IjfsTarget.metadata` | yes |  |
-| `IjfsTarget.metadata[systems_remaining]` |  | yes |
 | `IjfsTarget.mobility` | yes |  |
 | `IjfsTarget.posture` | yes |  |
 | `IjfsTarget.quantity` | yes |  |
@@ -150,11 +143,10 @@ flowchart LR
 
 ## Analysis limits found here
 
-Showing 11 of 11 diagnostics; class pages provide the narrower context.
+Showing 10 of 10 diagnostics; class pages provide the narrower context.
 
 | Kind | Source | Why it matters |
 |---|---|---|
-| `source_effect_contradiction` | `scripts/calc/IjfsLedgers.gd:0` `source says 'Pure —' but analysis found IjfsTarget.manpads_remaining, IjfsTarget.metadata[systems_remaining]` | Source prose claims purity while the resolved call closure reaches protected writes. |
 | `untyped_iteration` | `scripts/calc/IjfsLedgers.gd:30` `for entry in state.detection_log:` | The collection element type could not be proven. |
 | `untyped_iteration` | `scripts/calc/IjfsLedgers.gd:37` `for entry in state.strike_log:` | The collection element type could not be proven. |
 | `untyped_iteration` | `scripts/calc/IjfsLedgers.gd:42` `for entry in state.engagement_log:` | The collection element type could not be proven. |

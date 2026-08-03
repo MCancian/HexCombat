@@ -46,31 +46,14 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   prints `path count authority,...` and exits 0, letting the skill call it instead of restating it.
   Not done here because the validator's own commit was already the plan's last step and adding an output
   mode is a separate, testable change.
-- [ ] **`IjfsLedgers` applies MANPADS initialization transitively while living in `scripts/calc/`.**
-  Found by plan 0061's generated effect map. `IjfsLedgers._manpads_totals` calls
-  `IjfsManpads.ready_systems_by_to`; that reaches `systems_remaining`, whose lazy first read calls
-  `set_remaining` and then `IjfsTransitions.set_manpads_remaining`. The direct-call placement gate
-  cannot see this transitive authority path, so the `scripts/calc/` claim (“applies no campaign state
-  by any route”) is false whenever a MANPADS bin has not yet been seeded. Hoist seeding to the IJFS
-  build/day boundary or make the query non-mutating; then pin that a ledger-only call leaves state
-  byte-identical. Do not move the reporter to `interleaved/`: reporting has no draw-point reason to
-  apply state.
-- [ ] **The authority-call detector is blind to an ALIASED receiver.**
-  So a FORBIDS file could call an authority under another name (found 2026-07-31 by the Sol diff-review role on plan 0057; a standing
-  limit of the detector, NOT a regression). `tools/validate_authority_call_placement.gd` matches the
-  literal manifest class name as the receiver:
-  `regex.compile("(?<![A-Za-z0-9_])%s\\.[a-z_][a-z0-9_]*\\s*\\(" % authority)`. A file that does
-  `const FT = preload("res://scripts/transitions/ForceTransitions.gd")` and then calls `FT.apply_x()`
-  matches nothing — the path string is removed by `_strip`, and the local receiver name is not the
-  manifest class name. The detector's self-test has cases for comments, strings, longer identifiers
-  and constant reads, but **none for a preload alias**, so the hole is not even pinned as known-open.
-  **Not fixed in 0057** because it is new detector capability rather than the placement layout that
-  plan was about, and because it needs a design call first: the cheap version tracks
-  `const X = preload("<authority_path>")` and treats `X` as an authority receiver, which is bounded
-  and testable; the general version is local alias analysis, which is not. Do the cheap version, and
-  add the self-test case for it in the same commit. Weigh against how the codebase actually calls
-  authorities today — every current call site uses the bare class name, so this is prophylactic, which
-  is also why it is worth doing while it is still cheap and not a migration.
+- [x] **`IjfsLedgers` no longer applies MANPADS initialization transitively while living in
+  `scripts/calc/`.** `IjfsResolver` now seeds unseeded bins at the IJFS day boundary through
+  `IjfsTransitions`; `IjfsManpads.systems_remaining` is a pure read, and its tests pin that a
+  ledger query leaves both the typed field and serialization mirror unchanged.
+- [x] **The authority-call detector recognizes an ALIASED receiver.** The bounded implementation
+  maps `const X = preload("<authority_path>")` to the manifest authority and reports calls through
+  `X` under the canonical class name. Its self-test covers the supported preload forms, direct calls,
+  comments, and unrelated preloads; general local-alias analysis remains deliberately out of scope.
 - [ ] **`E_STALE_ALLOWANCE` is the one mutation-manifest check with no proof surface.**
   Found 2026-07-30 by the DeepSeek enumeration role; pre-existing, not a regression. Every other manifest-check code
   is either declared by a `bad_manifest_*.json` fixture or perturbed by a `_capture_failures`
@@ -169,47 +152,9 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   type-name heuristics. Plan 0032 anchored two new airborne strengths on entries that were dead until
   then. Instrument `_fallback_category_for_type` over both OOBs, list the keys actually hit, and delete
   or document the rest. Do NOT delete on inspection alone; the matching is indirect.
-- [ ] **`OffloadCalculator` applies campaign state through a handed dict, so it cannot go to `scripts/calc/`.**
-  Scoped as plan 0058, PLAN FILE NOT YET OPENED (found 2026-07-31 preflighting 0057; PRE-EXISTING, not a regression). This entry is currently the only home of 0058's preflight
-  measurement — `docs/plans/0058-*.md` does not exist. Do not delete it until that file does.
-  `scripts/OffloadCalculator.gd:259` banks leftover tonnage into
-  `bn["offload_progress_tons"]`, `:244` erases it on landing, `:241` reads it back a turn later. The
-  dicts are live campaign state the whole way down with no `duplicate()`:
-  `ReinforcementPhases.gd:165` passes `state.ship_reserve` → `OffloadResolver.gd:63` appends the same
-  entries into `troop_reserve` → `:68` hands them to `resolve_offload_day`. The field is cross-turn
-  persistent **by design** — it is the plan 0006 C8 fractional-flow carry-over, not an accident — so
-  the fix is to hoist the write, not to delete it. This fails the `calc/` test on its "**or through
-  arrays/dicts it was handed**" clause, and `tools/validate_authority_call_placement.gd` **cannot see
-  it**: that validator detects direct authority calls, and this is a bare dictionary write. Note
-  `OffloadResolver` already sits in `calc/` and applies transitively through this helper.
-  **This is the bounded instance of the aliased-container blind spot** logged under Standing limits —
-  and a data point toward the measurement that note says would make the general case actionable. Unlike
-  the general case it IS bounded: one field, one writer, one owning aggregate (`ship_reserve`, owned by
-  `ForceTransitions`). Shape of the fix: `OffloadCalculator` returns banked-progress deltas in its
-  manifest and `ForceTransitions.apply_offload` — which already receives both the reserve and the
-  force request at `ReinforcementPhases.gd:169` — performs the write.
-  **The deferrability question is half answered, and the answer is the awkward one.** `ordered_ids` CAN
-  repeat a brigade id: `OffloadCalculator.gd:104-107` appends every id in `priority_order` that is in
-  `brigade_map` with **no dedup check**, and only the second loop (`:108-111`) tests
-  `bid not in ordered_ids`. Upstream, `OffloadResolver.priority_order` (`:22-27`) emits one id per
-  reserve ENTRY, not per brigade. So if two `ship_reserve` entries ever carry the same `brigade_id`,
-  that brigade is processed twice in one `_resolve_day_n`, its BNs' banked value is read back within
-  the call, and the write is **not** freely deferrable — which would make this an `interleaved/`
-  candidate rather than a hoist. (Independently reached by the Sol plan-review role, 2026-07-31.)
-  Note `brigade_map[bid] = brigade` at `:100` also keeps only the LAST entry per id, so a duplicate
-  would additionally drop a reserve entry's own BN list — **if duplicates are reachable, that is a latent double-processing bug independent of any file move, and 0058 should open there.**
-  **Measured, and it resolves the other way — the hoist IS the right shape.** `ship_reserve` holds at
-  most one entry per `brigade_id` by construction: `ForceTransitions._merge_reserve_entry` (`:857-862`)
-  searches for an existing entry with the same `brigade_id` and **merges the BNs into it**, appending a
-  new entry only when none matches. So the duplicate path above is unreachable on the embark route, no
-  banked value is read back within a `_resolve_day_n` call, the write is freely deferrable, and 0058
-  should hoist into `ForceTransitions.apply_offload` rather than re-home the file to `interleaved/`.
-  Two residual notes for whoever opens it: the dedup is an invariant of the *authority*, not of
-  `OffloadCalculator`, which still has the un-deduped loop and would double-process if ever handed one
-  — worth an assert rather than a rewrite; and `ShipReserveBuilder.gd:33` appends one entry per
-  scenario row without a dedup check, so malformed scenario content is the one way in.
-  Golden exposure is still real (offload sequencing), so this needs its own gate run and must not ride
-  on a path move.
+- [x] **`OffloadCalculator` no longer applies campaign state through a handed dict.** Plan 0058 moves
+  it to `scripts/calc/`: it returns replay-safe banked-progress outcomes, and `ForceTransitions`
+  validates and applies them in the force transaction. The public offload manifest is unchanged.
 - [x] **DeepSeek's strength is narrower than "bounded enumeration" — it needs the material HANDED to it.**
   It times out on multi-module call-chain tracing (measured 2026-08-01, two flakes). The roster
   records 3/3 as a bounded enumerator, which is true but under-specified. Measured across four

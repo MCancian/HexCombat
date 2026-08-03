@@ -6,13 +6,13 @@
 > instances or conditional branches.
 
 Generator format v1; scan scope `scripts/**/*.gd` plus `project.godot` autoload aliases.
-Generated from commit `8829181ae4b6`; input SHA-256 `1c5ff5483615f0cca5b2767540c56e9a13e1387c4c1a3c66db909a97ad2e94fb`;
-tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T09:03:12-04:00`.
+Generated from commit `7bbf08693b44`; input SHA-256 `c879af92cf7693c7df1119a11083764377c92a9410144e7b95f361f509613378`;
+tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T17:09:31-04:00`.
 Unresolved-analysis diagnostics on this page: **7**.
 
 ## Source summary
 
-Pure resolver for the D1 amphibious offload phase: runs the OffloadCalculator day and reports exact troop/cargo landing plans without changing reserve or cohort membership. Consumes NO dice. ReinforcementPhases passes the typed request to ForceTransitions, then owns infrastructure, ownership, pending_lost_at_sea, fleet projection, and the EventBus emit.  CAVEAT, and it is the reason this file is named in plan 0058. "Without changing reserve or cohort MEMBERSHIP" is accurate and is not the whole story: this file appends the caller's live `ship_reserve` entries into `troop_reserve` (:63) and hands them to `OffloadCalculator` (:68), which writes `offload_progress_tons` into their BN dicts. So campaign state IS changed on this call path, transitively, through a helper. That makes this file a live instance of the blind spot `tools/validate_authority_call_placement.gd` documents — it sees direct authority calls, so this reads as clean and `scripts/calc/`'s claim is not actually true here today. Plan 0058 hoists the write into `ForceTransitions.apply_offload`; do not treat a green placement run as proof that this path applies nothing.
+Pure resolver for the D1 amphibious offload phase: runs the OffloadCalculator day and reports exact troop/cargo landing plans without changing reserve or cohort membership. Consumes NO dice. It extracts calculator progress outcomes into the typed ForceOffloadRequest before returning the existing public manifest. ReinforcementPhases applies that request through ForceTransitions.
 
 Source: `scripts/calc/OffloadResolver.gd`
 
@@ -20,12 +20,12 @@ Source: `scripts/calc/OffloadResolver.gd`
 
 | Caller | Call-site instance |
 |---|---|
-| [`OffloadResolver._plan_landings`](OffloadResolver.md) | `OffloadResolver._landing_maps` at `150` |
-| [`OffloadResolver._plan_landings`](OffloadResolver.md) | `OffloadResolver._plan_reserve_entry` at `161` |
-| [`OffloadResolver.resolve`](OffloadResolver.md) | `OffloadResolver._active_beach_ids` at `75` |
-| [`OffloadResolver.resolve`](OffloadResolver.md) | `OffloadResolver._occupancy_valve_inputs` at `76` |
-| [`OffloadResolver.resolve`](OffloadResolver.md) | `OffloadResolver.priority_order` at `78` |
-| [`OffloadResolver.resolve`](OffloadResolver.md) | `OffloadResolver._plan_landings` at `82` |
+| [`OffloadResolver._plan_landings`](OffloadResolver.md) | `OffloadResolver._landing_maps` at `144` |
+| [`OffloadResolver._plan_landings`](OffloadResolver.md) | `OffloadResolver._plan_reserve_entry` at `155` |
+| [`OffloadResolver.resolve`](OffloadResolver.md) | `OffloadResolver._active_beach_ids` at `65` |
+| [`OffloadResolver.resolve`](OffloadResolver.md) | `OffloadResolver._occupancy_valve_inputs` at `66` |
+| [`OffloadResolver.resolve`](OffloadResolver.md) | `OffloadResolver.priority_order` at `68` |
+| [`OffloadResolver.resolve`](OffloadResolver.md) | `OffloadResolver._plan_landings` at `75` |
 | [`ReinforcementPhases.resolve_offload_turn`](ordering_ReinforcementPhases_resolve_offload_turn.md) | `OffloadResolver.empty_manifest` at `156` |
 | [`ReinforcementPhases.resolve_offload_turn`](ordering_ReinforcementPhases_resolve_offload_turn.md) | `OffloadResolver.resolve` at `164` |
 | [`ReinforcementPhases.ship_reserve_priority_order`](ordering_ReinforcementPhases_ship_reserve_priority_order.md) | `OffloadResolver.priority_order` at `198` |
@@ -65,6 +65,7 @@ flowchart LR
 | `Brigade.team` | yes |  |
 | `ForceOffloadRequest.cargo_arrivals` |  | yes |
 | `ForceOffloadRequest.landings` |  | yes |
+| `ForceOffloadRequest.progress_updates` |  | yes |
 
 ## Method dependencies
 
@@ -85,10 +86,10 @@ Showing 7 of 7 diagnostics; class pages provide the narrower context.
 
 | Kind | Source | Why it matters |
 |---|---|---|
-| `untyped_alias` | `scripts/OffloadCalculator.gd:113` `var bid := String(brigade.get("brigade_id", ""))` | The receiver type could not be proven. |
-| `untyped_alias` | `scripts/OffloadCalculator.gd:124` `var bid := String(brigade.get("brigade_id", ""))` | The receiver type could not be proven. |
-| `untyped_alias` | `scripts/OffloadCalculator.gd:170` `var locked := int(brigade.get("locked_beach", 0))` | The receiver type could not be proven. |
-| `untyped_alias` | `scripts/OffloadCalculator.gd:180` `var locked := int(brigade.get("locked_beach", 0))` | The receiver type could not be proven. |
-| `untyped_iteration` | `scripts/OffloadCalculator.gd:248` `for bn in brigade.get("bns", []):` | The collection element type could not be proven. |
-| `multi_call_statement` | `scripts/calc/OffloadResolver.gd:78` `var manifest := OffloadCalculator.resolve_offload_day( turn_number, beach_capacity, troop_reserve, priority_order(troop_reserve), infra_nodes, cost_config, valve["occupancy"], v…` | Multiple calls share one statement; the map preserves lexical sites, not nested evaluation order. |
-| `nested_index_unanalysed` | `scripts/calc/OffloadResolver.gd:191` `ids[brigade_id][String(landed["bn_id"])] = true` | Nested collection indexes exceed the balanced-chain subset; this statement contributes no field effects. |
+| `untyped_alias` | `scripts/calc/OffloadCalculator.gd:103` `var bid := String(brigade.get("brigade_id", ""))` | The receiver type could not be proven. |
+| `untyped_alias` | `scripts/calc/OffloadCalculator.gd:120` `var bid := String(brigade.get("brigade_id", ""))` | The receiver type could not be proven. |
+| `untyped_alias` | `scripts/calc/OffloadCalculator.gd:172` `var locked := int(brigade.get("locked_beach", 0))` | The receiver type could not be proven. |
+| `untyped_alias` | `scripts/calc/OffloadCalculator.gd:182` `var locked := int(brigade.get("locked_beach", 0))` | The receiver type could not be proven. |
+| `untyped_iteration` | `scripts/calc/OffloadCalculator.gd:252` `for bn in brigade.get("bns", []):` | The collection element type could not be proven. |
+| `multi_call_statement` | `scripts/calc/OffloadResolver.gd:68` `var calculation := OffloadCalculator.resolve_offload_day( turn_number, beach_capacity, troop_reserve, priority_order(troop_reserve), infra_nodes, cost_config, valve["occupancy"]…` | Multiple calls share one statement; the map preserves lexical sites, not nested evaluation order. |
+| `nested_index_unanalysed` | `scripts/calc/OffloadResolver.gd:185` `ids[brigade_id][String(landed["bn_id"])] = true` | Nested collection indexes exceed the balanced-chain subset; this statement contributes no field effects. |

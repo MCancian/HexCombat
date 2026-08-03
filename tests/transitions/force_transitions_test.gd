@@ -724,6 +724,58 @@ func test_apply_offload_missing_bn_in_reserve_refuses() -> void:
 	store.free()
 
 
+func test_apply_offload_banks_validated_progress_without_landing() -> void:
+	var store := GameDataStore.new()
+	var state := SealiftState.new()
+	state.cohorts = [SealiftCohort.offloading({"LST": 1}, ["bn-1", "bn-2"])]
+	var reserve := _offload_reserve()
+	var updates := [{
+		"brigade_id": "BDE-SEA",
+		"bn_id": "bn-1",
+		"previous_progress_tons": 0.0,
+		"offload_progress_tons": 4400.0,
+	}]
+	var request := ForceOffloadRequest.from_resolution([], [], updates)
+
+	var receipt := ForceTransitions.apply_offload(store, reserve, state, request)
+
+	assert_bool(receipt.success).is_true()
+	var bns: Array = (reserve[0] as Dictionary)["bns"]
+	assert_float(float((bns[0] as Dictionary)["offload_progress_tons"])).is_equal(4400.0)
+	assert_int(state.cohorts[0].bn_ids.size()).is_equal(2)
+	store.free()
+
+
+func test_apply_offload_rejects_stale_progress_atomically() -> void:
+	var store := GameDataStore.new()
+	var state := SealiftState.new()
+	state.cohorts = [SealiftCohort.offloading({"LST": 1}, ["bn-1", "bn-2"])]
+	var reserve := _offload_reserve()
+	var updates := [
+		{
+			"brigade_id": "BDE-SEA",
+			"bn_id": "bn-1",
+			"previous_progress_tons": 0.0,
+			"offload_progress_tons": 4400.0,
+		},
+		{
+			"brigade_id": "BDE-SEA",
+			"bn_id": "bn-2",
+			"previous_progress_tons": 1.0,
+			"offload_progress_tons": 4400.0,
+		},
+	]
+	var request := ForceOffloadRequest.from_resolution([], [], updates)
+
+	var receipt := ForceTransitions.apply_offload(store, reserve, state, request)
+
+	assert_bool(receipt.success).is_false()
+	var bns: Array = (reserve[0] as Dictionary)["bns"]
+	assert_bool((bns[0] as Dictionary).has("offload_progress_tons")).is_false()
+	assert_bool((bns[1] as Dictionary).has("offload_progress_tons")).is_false()
+	store.free()
+
+
 func test_apply_offload_jlsf_cargo_drains_without_force_receipt() -> void:
 	var store := _sea_store()
 	var state := SealiftState.new()

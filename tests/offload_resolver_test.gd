@@ -107,6 +107,28 @@ func test_day_n_lands_by_throughput_and_ashore_brigade_reports_no_landing() -> v
 	assert_int((result["remaining_ship_reserve"][0] as Dictionary)["bns"].size()).is_equal(1)
 
 
+func test_day_n_progress_plan_stays_out_of_public_manifest() -> void:
+	var beaches := {1: _beach(1, "hex_b1", 4400.0)}
+	var brigades := {"BdeA": _brigade("BdeA", "hex_inland")}
+	var reserve := [_entry("BdeA", [{
+		"id": "h1",
+		"type": "Mechanized Artillery Battalion",
+		"ship_category": "Civilian_Amphibious",
+	}])]
+	var cost_config: Dictionary = JSON.parse_string(
+		FileAccess.get_file_as_string("res://data/offload_weights.json"))
+
+	var result := OffloadResolver.resolve(2, reserve, beaches, brigades, [], cost_config)
+
+	var manifest: Dictionary = result["manifest"]
+	assert_bool(manifest.has("progress_updates")).is_false()
+	var request: ForceOffloadRequest = result["force_request"]
+	assert_int(request.progress_updates.size()).is_equal(1)
+	assert_float(float(request.progress_updates[0]["offload_progress_tons"])).is_equal(4400.0)
+	assert_bool(((reserve[0] as Dictionary)["bns"][0] as Dictionary).has(
+		"offload_progress_tons")).is_false()
+
+
 # --- occupancy valve derivation --------------------------------------------------------------------
 
 func test_occupancy_valve_derived_from_landed_brigades_closes_beach() -> void:

@@ -30,4 +30,6 @@ order / `auto_jlsf` policy); day-N offload costs vary by BN type × ship categor
 loads); a per-beach occupancy valve (`BeachDef.depth`) closes a beach until landed brigades
 move inland. All default-off; `scenario_default` enables the matrix + auto-JLSF. Empty-orders
 self-play hard-plateaus instead of overrunning; seizing a port visibly raises the landing
-rate. Facts: `docs/systems/amphibious-offload/amphibious-offload.md` §9.
+rate. `OffloadCalculator` is a pure `scripts/calc/` calculator: it returns banked-progress targets,
+and `ForceTransitions` validates and applies them to `ship_reserve` in the offload transaction.
+Facts: `docs/systems/amphibious-offload/amphibious-offload.md` §9.

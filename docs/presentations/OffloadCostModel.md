@@ -6,8 +6,8 @@
 > instances or conditional branches.
 
 Generator format v1; scan scope `scripts/**/*.gd` plus `project.godot` autoload aliases.
-Generated from commit `8829181ae4b6`; input SHA-256 `1c5ff5483615f0cca5b2767540c56e9a13e1387c4c1a3c66db909a97ad2e94fb`;
-tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T09:03:12-04:00`.
+Generated from commit `7bbf08693b44`; input SHA-256 `c879af92cf7693c7df1119a11083764377c92a9410144e7b95f361f509613378`;
+tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T17:09:31-04:00`.
 Unresolved-analysis diagnostics on this page: **0**.
 
 ## Source summary
@@ -20,9 +20,9 @@ Source: `scripts/calc/OffloadCostModel.gd`
 
 | Caller | Call-site instance |
 |---|---|
-| `OffloadCalculator._resolve_day_n` | `OffloadCostModel.bn_cost_tons` at `251` |
-| `OffloadCalculator._route_infra` | `OffloadCostModel.bn_cost_tons` at `319` |
-| `OffloadCalculator._route_infra` | `OffloadCostModel.bn_cost_tons` at `320` |
+| [`OffloadCalculator._resolve_day_n`](OffloadCalculator.md) | `OffloadCostModel.bn_cost_tons` at `255` |
+| [`OffloadCalculator._route_infra`](OffloadCalculator.md) | `OffloadCostModel.bn_cost_tons` at `328` |
+| [`OffloadCalculator._route_infra`](OffloadCalculator.md) | `OffloadCostModel.bn_cost_tons` at `329` |
 | [`OffloadCostModel.bn_cost_tons`](OffloadCostModel.md) | `OffloadCostModel._resolve_multiplier` at `22` |
 
 ## Dependency diagram

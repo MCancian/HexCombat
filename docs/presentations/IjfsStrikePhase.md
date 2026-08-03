@@ -6,8 +6,8 @@
 > instances or conditional branches.
 
 Generator format v1; scan scope `scripts/**/*.gd` plus `project.godot` autoload aliases.
-Generated from commit `8829181ae4b6`; input SHA-256 `1c5ff5483615f0cca5b2767540c56e9a13e1387c4c1a3c66db909a97ad2e94fb`;
-tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T09:03:12-04:00`.
+Generated from commit `7bbf08693b44`; input SHA-256 `c879af92cf7693c7df1119a11083764377c92a9410144e7b95f361f509613378`;
+tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T17:09:31-04:00`.
 Unresolved-analysis diagnostics on this page: **55**.
 
 ## Computed effect warning
@@ -179,14 +179,14 @@ Showing 30 of 55 diagnostics; class pages provide the narrower context.
 | `multi_call_statement` | `scripts/interleaved/IjfsEngagement.gd:122` `IjfsTransitions.apply_package_member_loss( package.remove_member(candidate), package.kind == IjfsAirPackage.SEAD)` | Multiple calls share one statement; the map preserves lexical sites, not nested evaluation order. |
 | `callable_or_lambda` | `scripts/interleaved/IjfsEngagement.gd:155` `engaging.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id < b.target_id)` | Callable/lambda dataflow is outside this analyser. |
 | `unresolved_receiver` | `scripts/interleaved/IjfsEngagement.gd:155` `engaging.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id < b.target_id)` | A protected field name appeared on an unresolved receiver. |
-| `untyped_alias` | `scripts/interleaved/IjfsManpads.gd:109` `var to_number := int(strike_target.metadata["to_number"])` | The receiver type could not be proven. |
-| `untyped_alias` | `scripts/interleaved/IjfsManpads.gd:115` `var kill_factor := float(state.scenario.get(IjfsLoaders.MANPADS_KILL_FACTOR_KNOB, 0.0))` | The receiver type could not be proven. |
-| `untyped_alias` | `scripts/interleaved/IjfsManpads.gd:116` `var members_before := package.size()` | The receiver type could not be proven. |
-| `untyped_alias` | `scripts/interleaved/IjfsManpads.gd:125` `var p_kill := profile.p_loss( threat * kill_factor * munition.manpads_vulnerability, victim.aircraft_class, victim.role)` | The receiver type could not be proven. |
-| `untyped_alias` | `scripts/interleaved/IjfsManpads.gd:127` `var p_abort := clampf(threat * ABORT_FACTOR * munition.manpads_vulnerability, 0.0, 1.0)` | The receiver type could not be proven. |
-| `multi_call_statement` | `scripts/interleaved/IjfsManpads.gd:142` `IjfsTransitions.apply_package_member_loss(package.remove_member(candidate), false)` | Multiple calls share one statement; the map preserves lexical sites, not nested evaluation order. |
-| `multi_call_statement` | `scripts/interleaved/IjfsManpads.gd:150` `return { "target_id": strike_target.target_id, "to_number": to_number, "munition_id": munition.munition_id, "package_id": package.package_id, "members_before": members_before, "…` | Multiple calls share one statement; the map preserves lexical sites, not nested evaluation order. |
-| `callable_or_lambda` | `scripts/interleaved/IjfsManpads.gd:206` `bins.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id < b.target_id)` | Callable/lambda dataflow is outside this analyser. |
-| `unresolved_receiver` | `scripts/interleaved/IjfsManpads.gd:206` `bins.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id < b.target_id)` | A protected field name appeared on an unresolved receiver. |
+| `untyped_alias` | `scripts/interleaved/IjfsManpads.gd:122` `var to_number := int(strike_target.metadata["to_number"])` | The receiver type could not be proven. |
+| `untyped_alias` | `scripts/interleaved/IjfsManpads.gd:128` `var kill_factor := float(state.scenario.get(IjfsLoaders.MANPADS_KILL_FACTOR_KNOB, 0.0))` | The receiver type could not be proven. |
+| `untyped_alias` | `scripts/interleaved/IjfsManpads.gd:129` `var members_before := package.size()` | The receiver type could not be proven. |
+| `untyped_alias` | `scripts/interleaved/IjfsManpads.gd:138` `var p_kill := profile.p_loss( threat * kill_factor * munition.manpads_vulnerability, victim.aircraft_class, victim.role)` | The receiver type could not be proven. |
+| `untyped_alias` | `scripts/interleaved/IjfsManpads.gd:140` `var p_abort := clampf(threat * ABORT_FACTOR * munition.manpads_vulnerability, 0.0, 1.0)` | The receiver type could not be proven. |
+| `multi_call_statement` | `scripts/interleaved/IjfsManpads.gd:155` `IjfsTransitions.apply_package_member_loss(package.remove_member(candidate), false)` | Multiple calls share one statement; the map preserves lexical sites, not nested evaluation order. |
+| `multi_call_statement` | `scripts/interleaved/IjfsManpads.gd:163` `return { "target_id": strike_target.target_id, "to_number": to_number, "munition_id": munition.munition_id, "package_id": package.package_id, "members_before": members_before, "…` | Multiple calls share one statement; the map preserves lexical sites, not nested evaluation order. |
+| `callable_or_lambda` | `scripts/interleaved/IjfsManpads.gd:219` `bins.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id < b.target_id)` | Callable/lambda dataflow is outside this analyser. |
+| `unresolved_receiver` | `scripts/interleaved/IjfsManpads.gd:219` `bins.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id < b.target_id)` | A protected field name appeared on an unresolved receiver. |
 | `untyped_alias` | `scripts/interleaved/IjfsStrike.gd:21` `var match_value: Variant = modifier.get("match", {})` | The receiver type could not be proven. |
 | _…_ | _25 additional diagnostics omitted from this page_ | See the called class pages. |

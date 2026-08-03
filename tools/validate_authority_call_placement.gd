@@ -16,10 +16,10 @@
 # is a directory nothing can be wrong in. Adding rows for the new families and leaving the default
 # open would have recreated it on the next family. So: classify or fail.
 #
-# WHY ROOT IS A FILE ALLOWLIST AND NOT A ROW. Of the four files left at root, `GameState.gd` and
-# `GameData.gd` legitimately call authorities as the façade layer; `EventBus.gd` and
-# `OffloadCalculator.gd` must not. A row saying "root may call authorities" would license any future
-# root file to do so, which is exactly how the unpoliced root came about.
+# WHY ROOT IS A FILE ALLOWLIST AND NOT A ROW. Of the three files left at root, `GameState.gd` and
+# `GameData.gd` legitimately call authorities as the façade layer; `EventBus.gd` must not. A row
+# saying "root may call authorities" would license any future root file to do so, which is exactly
+# how the unpoliced root came about.
 #
 # SCOPED TO GDSCRIPT, DELIBERATELY (review finding, 2026-07-31). Rule 1 applies only to directories
 # that actually contain a `.gd` file, directly or nested. A `scripts/shaders/` or a scratch directory
@@ -38,10 +38,10 @@
 #     Closing that needs call-graph analysis over a dynamically-typed language and is deliberately
 #     not attempted. This is the single biggest blind spot and it is not small.
 #   * It cannot see an application made by writing into a Dictionary or Array the file was HANDED.
-#     That is not hypothetical: `scripts/OffloadCalculator.gd` writes `offload_progress_tons` into BN
-#     dicts owned by `state.ship_reserve` and reads as clean here. It is why that file is FORBIDS at
-#     root rather than living in `scripts/calc/`, and why plan 0058 exists. A green run does NOT mean
-#     the FORBIDS directories apply nothing — only that they call no authority to do it.
+#     Plan 0058 removed the one known production instance by moving the application to
+#     ForceTransitions, but the detector still cannot prove a future helper avoids that blind spot.
+#     A green run does NOT mean the FORBIDS directories apply nothing — only that they call no
+#     authority to do it.
 #   * It cannot answer "does this apply at its own DRAW POINT?" — the actual test for
 #     `scripts/interleaved/` membership. A file with one authority call passes rule 3 either way.
 #   * It says nothing about whether a pure file is in the RIGHT non-applying directory.
@@ -102,9 +102,6 @@ const ROOT_FILE_POLICY := {
 	"GameState.gd": PERMITS,
 	"GameData.gd": PERMITS,
 	"EventBus.gd": FORBIDS,
-	# Applies campaign state, but by writing a handed dict — invisible to this validator. Kept at
-	# root and FORBIDS so it cannot additionally acquire an authority call. Leaves under plan 0058.
-	"OffloadCalculator.gd": FORBIDS,
 }
 
 var _failures: Array[String] = []
@@ -121,6 +118,7 @@ func _initialize() -> void:
 		print("FAIL: no authority_path entries found in %s — cannot check placement" % MANIFEST)
 		quit(1)
 		return
+	var auth_paths := _authority_paths()
 
 	var dirs_with_gd := _top_level_dirs_with_gd()
 	var root_files := _root_gd_files()
@@ -134,7 +132,8 @@ func _initialize() -> void:
 		var policy := String(DIR_POLICY[dir_name])
 		var dir_path := "%s/%s" % [SCRIPTS_ROOT, dir_name]
 		for file_path in _gd_files(dir_path):
-			var hits := _authority_calls(_strip(_read(file_path)), authorities)
+			var raw_source := _read(file_path)
+			var hits := _authority_calls_with_aliases(raw_source, authorities, auth_paths)
 			var violation := _policy_violation(policy, file_path, "scripts/%s/" % dir_name, hits)
 			if violation != "":
 				_failures.append(violation)
@@ -143,7 +142,8 @@ func _initialize() -> void:
 		if not ROOT_FILE_POLICY.has(file_name):
 			continue
 		var root_path := "%s/%s" % [SCRIPTS_ROOT, file_name]
-		var root_hits := _authority_calls(_strip(_read(root_path)), authorities)
+		var raw_source := _read(root_path)
+		var root_hits := _authority_calls_with_aliases(raw_source, authorities, auth_paths)
 		var root_violation := _policy_violation(
 			String(ROOT_FILE_POLICY[file_name]), root_path, "scripts/ root", root_hits)
 		if root_violation != "":
@@ -186,7 +186,7 @@ func _classification_failures(dirs_with_gd: Array[String], root_files: Array[Str
 			failures.append("scripts/%s/ holds GDScript but is NOT classified in DIR_POLICY. Every directory under scripts/ must declare FORBIDS / REQUIRES / PERMITS — an unclassified directory is one nothing can be wrong in, which is the defect plan 0057 closed. Add it, and add its row to docs/STATUS.md -> 'Where a file goes'." % dir_name)
 	for file_name in root_files:
 		if not ROOT_FILE_POLICY.has(file_name):
-			failures.append("scripts/%s is not in ROOT_FILE_POLICY. scripts/ root is an exact allowlist: the three autoload singletons plus OffloadCalculator (until plan 0058). A new file belongs in a role directory, not at root." % file_name)
+			failures.append("scripts/%s is not in ROOT_FILE_POLICY. scripts/ root is an exact allowlist of the three autoload singletons. A new file belongs in a role directory, not at root." % file_name)
 	for dir_name_value in DIR_POLICY.keys():
 		var dir_name := String(dir_name_value)
 		if not dirs_with_gd.has(dir_name):
@@ -255,6 +255,49 @@ func _authority_class_names() -> Array[String]:
 	return names
 
 
+## Authority res:// paths -> class names, for matching preload aliases.
+func _authority_paths() -> Dictionary:
+	var text := _read(MANIFEST)
+	if text == "":
+		return {}
+	var parsed: Variant = JSON.parse_string(text)
+	if not (parsed is Dictionary):
+		return {}
+	var paths: Dictionary = {}
+	for aggregate in (parsed as Dictionary).get("aggregates", []):
+		if not (aggregate is Dictionary):
+			continue
+		var path := String((aggregate as Dictionary).get("authority_path", ""))
+		if path == "":
+			continue
+		var class_id := path.get_file().trim_suffix(".gd")
+		if class_id != "":
+			paths[path] = class_id
+	return paths
+
+
+## Strip, detect aliases, then scan for authority calls through both class names and aliases.
+## Reports hits by the CANONICAL authority class name, not the alias — the failure message names
+## the authority the file is calling, however it spells the receiver.
+func _authority_calls_with_aliases(
+		raw_source: String, authorities: Array[String],
+		authority_paths: Dictionary) -> Array[String]:
+	var alias_map := _preload_alias_map(raw_source, authority_paths)
+	var receivers := authorities.duplicate()
+	for alias_name in alias_map:
+		if not receivers.has(alias_name):
+			receivers.append(String(alias_name))
+	var stripped := _strip(raw_source)
+	var raw_hits := _authority_calls(stripped, receivers)
+	# Map alias hits back to canonical class names.
+	var canonical: Array[String] = []
+	for hit in raw_hits:
+		var mapped := String(alias_map[hit]) if alias_map.has(hit) else hit
+		if not canonical.has(mapped):
+			canonical.append(mapped)
+	return canonical
+
+
 ## Every `<Authority>.<method>(` named in already-stripped source, de-duplicated.
 func _authority_calls(stripped: String, authorities: Array[String]) -> Array[String]:
 	var found: Array[String] = []
@@ -265,6 +308,35 @@ func _authority_calls(stripped: String, authorities: Array[String]) -> Array[Str
 		if regex.search(stripped) != null and not found.has(authority):
 			found.append(authority)
 	return found
+
+
+## Preload-alias names in raw (unstripped) source whose path matches a manifest authority_path.
+## Scans for `const X = preload("<authority_path>")` — the cheap, bounded version. Does NOT attempt
+## general local-alias analysis (`var x = SomeAuthority`); that is unbounded and deliberately not
+## done. Returns Array[String] of alias names.
+func _preload_aliases(raw_source: String, authority_paths: Dictionary) -> Array[String]:
+	var map := _preload_alias_map(raw_source, authority_paths)
+	var names: Array[String] = []
+	for alias_name in map:
+		names.append(String(alias_name))
+	return names
+
+
+## The full alias -> canonical class name mapping for a file.
+func _preload_alias_map(raw_source: String, authority_paths: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	if authority_paths.is_empty():
+		return result
+	var regex := RegEx.new()
+	# Match: const <Name> = preload("<path>") or const <Name> = preload('<path>')
+	# The Name is a PascalCase or UPPER_CASE identifier (GDScript const names).
+	regex.compile("const\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*[:=].*?preload\\s*\\(\\s*[\"']([^\"']+)[\"']\\s*\\)")
+	for match in regex.search_all(raw_source):
+		var alias_name := match.get_string(1)
+		var path := match.get_string(2)
+		if authority_paths.has(path):
+			result[alias_name] = String(authority_paths[path])
+	return result
 
 
 ## Remove `#` comments and string literals so that header prose and error messages naming an
@@ -337,7 +409,7 @@ func _read(path: String) -> String:
 ## has already shipped here and passed for weeks. Each case asserts the exact confusion that would
 ## otherwise make a green run meaningless.
 func _self_test() -> bool:
-	return _self_test_detector() and _self_test_classification()
+	return _self_test_detector() and _self_test_classification() and _self_test_preload_aliases()
 
 
 func _self_test_detector() -> bool:
@@ -362,6 +434,78 @@ func _self_test_detector() -> bool:
 			push_error("self-test: %s — expected detected=%s, got %s for source %s" % [
 				String(case[2]), case[1], detected, JSON.stringify(case[0])])
 			return false
+	return true
+
+
+## Preload-alias detection: the hole this closes and both directions of correctness.
+func _self_test_preload_aliases() -> bool:
+	var auth_paths: Dictionary = {
+		"res://scripts/transitions/ForceTransitions.gd": "ForceTransitions",
+		"res://scripts/transitions/IjfsTransitions.gd": "IjfsTransitions",
+	}
+	var authorities: Array[String] = ["ForceTransitions", "IjfsTransitions"]
+
+	# _preload_alias_map: verify it extracts aliases from const-preload patterns.
+	var alias_cases := [
+		# [source, expected_aliases_dict, why]
+		["const FT = preload(\"res://scripts/transitions/ForceTransitions.gd\")",
+			{"FT": "ForceTransitions"}, "double-quoted const preload"],
+		["const FT = preload('res://scripts/transitions/ForceTransitions.gd')",
+			{"FT": "ForceTransitions"}, "single-quoted const preload"],
+		["const FT := preload(\"res://scripts/transitions/ForceTransitions.gd\")",
+			{"FT": "ForceTransitions"}, "const preload with := assignment"],
+		["const FT: GDScript = preload(\"res://scripts/transitions/ForceTransitions.gd\")",
+			{"FT": "ForceTransitions"}, "const preload with type annotation"],
+		["const FT = preload(\"res://scripts/calc/SomeOtherFile.gd\")",
+			{}, "preload of a non-authority path"],
+	]
+	for case_value in alias_cases:
+		var case: Array = case_value
+		var aliases := _preload_alias_map(String(case[0]), auth_paths)
+		var expected: Dictionary = case[1]
+		if aliases.size() != expected.size():
+			push_error("self-test: preload alias map — %s — expected %d alias(es), got %d" % [
+				String(case[2]), expected.size(), aliases.size()])
+			return false
+		for key in expected:
+			if not aliases.has(key) or String(aliases[key]) != String(expected[key]):
+				push_error("self-test: preload alias map — %s — expected alias %s->%s" % [
+					String(case[2]), key, expected[key]])
+				return false
+
+	# End-to-end: a preload alias in a FORBIDS file IS detected, reported by canonical name.
+	var aliased_source := "const FT = preload(\"res://scripts/transitions/ForceTransitions.gd\")\nFT.apply_activity(b)"
+	var hits := _authority_calls_with_aliases(aliased_source, authorities, auth_paths)
+	if hits.is_empty():
+		push_error("self-test: preload alias — a FORBIDS file calling ForceTransitions through alias FT must be detected")
+		return false
+	if not hits.has("ForceTransitions"):
+		push_error("self-test: preload alias — hit should be reported as canonical name ForceTransitions, got %s" % ", ".join(hits))
+		return false
+
+	# A bare class-name call still works through the combined path.
+	var direct_source := "ForceTransitions.apply_activity(b)"
+	var direct_hits := _authority_calls_with_aliases(direct_source, authorities, auth_paths)
+	if not direct_hits.has("ForceTransitions"):
+		push_error("self-test: preload alias — direct class-name call must still be detected through the combined path")
+		return false
+
+	# A preload alias that is only in a comment, with the call also in a comment, is NOT detected.
+	# The alias_map WILL find "FT" (it scans raw text), but _strip removes the commented call, so
+	# end-to-end it produces no hit — which is correct and proven here.
+	var commented_source := "# const FT = preload(\"res://scripts/transitions/ForceTransitions.gd\")\n# FT.apply_activity(b)"
+	var commented_hits := _authority_calls_with_aliases(commented_source, authorities, auth_paths)
+	if not commented_hits.is_empty():
+		push_error("self-test: preload alias — a fully-commented alias and call must not be detected")
+		return false
+
+	# No false positive: a preload of a non-authority path must not produce a hit.
+	var non_auth_source := "const X = preload(\"res://scripts/calc/SomeFile.gd\")\nX.apply_activity(b)"
+	var non_auth_hits := _authority_calls_with_aliases(non_auth_source, authorities, auth_paths)
+	if not non_auth_hits.is_empty():
+		push_error("self-test: preload alias — a preload of a non-authority path must not produce a hit")
+		return false
+
 	return true
 
 

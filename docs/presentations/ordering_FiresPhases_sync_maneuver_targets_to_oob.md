@@ -6,8 +6,8 @@
 > instances or conditional branches.
 
 Generator format v1; scan scope `scripts/**/*.gd` plus `project.godot` autoload aliases.
-Generated from commit `8829181ae4b6`; input SHA-256 `1c5ff5483615f0cca5b2767540c56e9a13e1387c4c1a3c66db909a97ad2e94fb`;
-tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T09:03:12-04:00`.
+Generated from commit `7bbf08693b44`; input SHA-256 `c879af92cf7693c7df1119a11083764377c92a9410144e7b95f361f509613378`;
+tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T17:09:31-04:00`.
 Unresolved-analysis diagnostics on this page: **4**.
 
 Source: `scripts/phases/FiresPhases.gd:69`
@@ -52,7 +52,7 @@ Showing 4 of 4 diagnostics; class pages provide the narrower context.
 
 | Kind | Source | Why it matters |
 |---|---|---|
-| `untyped_alias` | `scripts/interleaved/IjfsResolver.gd:169` `var key := "%s|%s" % [String(target.metadata.get("brigade_id", "")), String(target.metadata.get("unit_type", ""))]` | The receiver type could not be proven. |
-| `unresolved_receiver` | `scripts/interleaved/IjfsResolver.gd:182` `current_qty += battalion.qty` | A protected field name appeared on an unresolved receiver. |
-| `callable_or_lambda` | `scripts/interleaved/IjfsResolver.gd:186` `live_targets.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id > b.target_id)` | Callable/lambda dataflow is outside this analyser. |
-| `unresolved_receiver` | `scripts/interleaved/IjfsResolver.gd:186` `live_targets.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id > b.target_id)` | A protected field name appeared on an unresolved receiver. |
+| `untyped_alias` | `scripts/interleaved/IjfsResolver.gd:173` `var key := "%s|%s" % [String(target.metadata.get("brigade_id", "")), String(target.metadata.get("unit_type", ""))]` | The receiver type could not be proven. |
+| `unresolved_receiver` | `scripts/interleaved/IjfsResolver.gd:186` `current_qty += battalion.qty` | A protected field name appeared on an unresolved receiver. |
+| `callable_or_lambda` | `scripts/interleaved/IjfsResolver.gd:190` `live_targets.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id > b.target_id)` | Callable/lambda dataflow is outside this analyser. |
+| `unresolved_receiver` | `scripts/interleaved/IjfsResolver.gd:190` `live_targets.sort_custom(func(a: IjfsTarget, b: IjfsTarget) -> bool: return a.target_id > b.target_id)` | A protected field name appeared on an unresolved receiver. |

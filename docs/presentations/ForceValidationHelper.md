@@ -6,8 +6,8 @@
 > instances or conditional branches.
 
 Generator format v1; scan scope `scripts/**/*.gd` plus `project.godot` autoload aliases.
-Generated from commit `8829181ae4b6`; input SHA-256 `1c5ff5483615f0cca5b2767540c56e9a13e1387c4c1a3c66db909a97ad2e94fb`;
-tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T09:03:12-04:00`.
+Generated from commit `7bbf08693b44`; input SHA-256 `c879af92cf7693c7df1119a11083764377c92a9410144e7b95f361f509613378`;
+tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T17:09:31-04:00`.
 Unresolved-analysis diagnostics on this page: **13**.
 
 ## Source summary
@@ -23,7 +23,7 @@ Source: `scripts/calc/ForceValidationHelper.gd`
 | `ForceTransitions.apply_air_insertion_outcome` | `ForceValidationHelper.preflight_air_insertion` at `148` |
 | `ForceTransitions.apply_embark` | `ForceValidationHelper.preflight_embark` at `271` |
 | `ForceTransitions.apply_offload` | `ForceValidationHelper.preflight_offload` at `432` |
-| [`ForceValidationHelper._unique_ids`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `201` |
+| [`ForceValidationHelper._unique_ids`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `255` |
 | [`ForceValidationHelper._validate_air_landing`](ForceValidationHelper.md) | `ForceValidationHelper._pool_entry_count` at `91` |
 | [`ForceValidationHelper._validate_air_landing`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `92` |
 | [`ForceValidationHelper._validate_air_landing`](ForceValidationHelper.md) | `ForceValidationHelper._air_pool_prefix_matches` at `93` |
@@ -32,7 +32,7 @@ Source: `scripts/calc/ForceValidationHelper.gd`
 | [`ForceValidationHelper._validate_air_landing`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `101` |
 | [`ForceValidationHelper._validate_air_landing`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `104` |
 | [`ForceValidationHelper._validate_air_landing`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `106` |
-| [`ForceValidationHelper._validate_cargo_offload`](ForceValidationHelper.md) | `ForceValidationHelper._validate_offload_id` at `167` |
+| [`ForceValidationHelper._validate_cargo_offload`](ForceValidationHelper.md) | `ForceValidationHelper._validate_offload_id` at `171` |
 | [`ForceValidationHelper._validate_embark_destinations`](ForceValidationHelper.md) | `ForceValidationHelper._transport_id_count` at `58` |
 | [`ForceValidationHelper._validate_embark_destinations`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `59` |
 | [`ForceValidationHelper._validate_embark_sources`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `38` |
@@ -40,17 +40,26 @@ Source: `scripts/calc/ForceValidationHelper.gd`
 | [`ForceValidationHelper._validate_embark_sources`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `43` |
 | [`ForceValidationHelper._validate_embark_sources`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `45` |
 | [`ForceValidationHelper._validate_embark_sources`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `50` |
-| [`ForceValidationHelper._validate_offload_id`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `179` |
-| [`ForceValidationHelper._validate_offload_id`](ForceValidationHelper.md) | `ForceValidationHelper._cohort_id_count` at `191` |
-| [`ForceValidationHelper._validate_offload_id`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `192` |
-| [`ForceValidationHelper._validate_roster_losses`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `304` |
-| [`ForceValidationHelper._validate_troop_offload`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `141` |
-| [`ForceValidationHelper._validate_troop_offload`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `144` |
-| [`ForceValidationHelper._validate_troop_offload`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `147` |
-| [`ForceValidationHelper._validate_troop_offload`](ForceValidationHelper.md) | `ForceValidationHelper._validate_offload_id` at `150` |
-| [`ForceValidationHelper._validate_troop_offload`](ForceValidationHelper.md) | `ForceValidationHelper._reserve_bn_type` at `154` |
-| [`ForceValidationHelper._validate_troop_offload`](ForceValidationHelper.md) | `ForceValidationHelper._brigade_has_type` at `155` |
-| [`ForceValidationHelper._validate_troop_offload`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `156` |
+| [`ForceValidationHelper._validate_offload_id`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `233` |
+| [`ForceValidationHelper._validate_offload_id`](ForceValidationHelper.md) | `ForceValidationHelper._cohort_id_count` at `245` |
+| [`ForceValidationHelper._validate_offload_id`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `246` |
+| [`ForceValidationHelper._validate_offload_progress_updates`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `185` |
+| [`ForceValidationHelper._validate_offload_progress_updates`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `189` |
+| [`ForceValidationHelper._validate_offload_progress_updates`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `195` |
+| [`ForceValidationHelper._validate_offload_progress_updates`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `197` |
+| [`ForceValidationHelper._validate_offload_progress_updates`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `199` |
+| [`ForceValidationHelper._validate_offload_progress_updates`](ForceValidationHelper.md) | `ForceValidationHelper._offload_progress_source` at `200` |
+| [`ForceValidationHelper._validate_offload_progress_updates`](ForceValidationHelper.md) | `ForceValidationHelper._cohort_id_count` at `201` |
+| [`ForceValidationHelper._validate_offload_progress_updates`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `203` |
+| [`ForceValidationHelper._validate_offload_progress_updates`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `206` |
+| [`ForceValidationHelper._validate_roster_losses`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `358` |
+| [`ForceValidationHelper._validate_troop_offload`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `145` |
+| [`ForceValidationHelper._validate_troop_offload`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `148` |
+| [`ForceValidationHelper._validate_troop_offload`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `151` |
+| [`ForceValidationHelper._validate_troop_offload`](ForceValidationHelper.md) | `ForceValidationHelper._validate_offload_id` at `154` |
+| [`ForceValidationHelper._validate_troop_offload`](ForceValidationHelper.md) | `ForceValidationHelper._reserve_bn_type` at `158` |
+| [`ForceValidationHelper._validate_troop_offload`](ForceValidationHelper.md) | `ForceValidationHelper._brigade_has_type` at `159` |
+| [`ForceValidationHelper._validate_troop_offload`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `160` |
 | [`ForceValidationHelper.preflight_air_insertion`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `68` |
 | [`ForceValidationHelper.preflight_air_insertion`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `77` |
 | [`ForceValidationHelper.preflight_air_insertion`](ForceValidationHelper.md) | `ForceValidationHelper._validate_air_landing` at `79` |
@@ -66,6 +75,7 @@ Source: `scripts/calc/ForceValidationHelper.gd`
 | [`ForceValidationHelper.preflight_offload`](ForceValidationHelper.md) | `ForceValidationHelper._refused` at `120` |
 | [`ForceValidationHelper.preflight_offload`](ForceValidationHelper.md) | `ForceValidationHelper._validate_troop_offload` at `123` |
 | [`ForceValidationHelper.preflight_offload`](ForceValidationHelper.md) | `ForceValidationHelper._validate_cargo_offload` at `128` |
+| [`ForceValidationHelper.preflight_offload`](ForceValidationHelper.md) | `ForceValidationHelper._validate_offload_progress_updates` at `132` |
 
 ## Dependency diagram
 
@@ -81,6 +91,7 @@ flowchart LR
   n_58538de16d4d["ForceValidationHelper._validate_embark_destinations"] --> n_5da3c8aa7a84
   n_a34f30780b3e["ForceValidationHelper._validate_embark_sources"] --> n_5da3c8aa7a84
   n_a51ff7ebde49["ForceValidationHelper._validate_offload_id"] --> n_5da3c8aa7a84
+  n_fcc5f859c5f8["ForceValidationHelper._validate_offload_progress_updates"] --> n_5da3c8aa7a84
   n_2306e0118117["ForceValidationHelper._validate_roster_losses"] --> n_5da3c8aa7a84
   n_8aaca4b98952["ForceValidationHelper._validate_troop_offload"] --> n_5da3c8aa7a84
   n_b4a85fc98f7f["ForceValidationHelper.preflight_air_insertion"] --> n_5da3c8aa7a84
@@ -89,6 +100,7 @@ flowchart LR
   n_5da3c8aa7a84 --> n_3ed49b6da878["ForceValidationHelper._air_pool_prefix_matches"]
   n_5da3c8aa7a84 --> n_d5b315164e16["ForceValidationHelper._brigade_has_type"]
   n_5da3c8aa7a84 --> n_270646a6b2e1["ForceValidationHelper._cohort_id_count"]
+  n_5da3c8aa7a84 --> n_590b99501fe3["ForceValidationHelper._offload_progress_source"]
   n_5da3c8aa7a84 --> n_b3cdfc2fc82e["ForceValidationHelper._pool_entry_count"]
   n_5da3c8aa7a84 --> n_ad16e1c31717["ForceValidationHelper._refused"]
   n_5da3c8aa7a84 --> n_7a86e3d0bd86["ForceValidationHelper._reserve_bn_type"]
@@ -100,6 +112,7 @@ flowchart LR
   n_5da3c8aa7a84 --> n_23306c6bcb8a["ForceValidationHelper._validate_embark_destinations"]
   n_5da3c8aa7a84 --> n_ccfa56f777d3["ForceValidationHelper._validate_embark_sources"]
   n_5da3c8aa7a84 --> n_4ef332054d69["ForceValidationHelper._validate_offload_id"]
+  n_5da3c8aa7a84 --> n_0c424ffaa3a1["ForceValidationHelper._validate_offload_progress_updates"]
   n_5da3c8aa7a84 --> n_30f827bab273["ForceValidationHelper._validate_roster_losses"]
   n_5da3c8aa7a84 --> n_9e3232aa9786["ForceValidationHelper._validate_troop_offload"]
   n_5da3c8aa7a84 --> n_4408843710df["ForceValidationResult.refused"]
@@ -126,6 +139,7 @@ flowchart LR
 | `ForceOffloadRequest.cargo_arrivals` | yes |  |
 | `ForceOffloadRequest.destination` | yes |  |
 | `ForceOffloadRequest.landings` | yes |  |
+| `ForceOffloadRequest.progress_updates` | yes |  |
 | `ForceOffloadRequest.source` | yes |  |
 | `ForceValidationResult.error` |  | yes |
 | `GameDataStore.brigades` | yes |  |
@@ -140,6 +154,7 @@ flowchart LR
 | `_air_pool_prefix_matches` | — |
 | `_brigade_has_type` | — |
 | `_cohort_id_count` | — |
+| `_offload_progress_source` | `JlsfCargo.is_jlsf_entry` |
 | `_pool_entry_count` | — |
 | `_refused` | `ForceValidationResult.refused` |
 | `_reserve_bn_type` | — |
@@ -151,11 +166,12 @@ flowchart LR
 | `_validate_embark_destinations` | `ForceValidationHelper._refused`, `ForceValidationHelper._transport_id_count` |
 | `_validate_embark_sources` | `ForceValidationHelper._refused`, `ForceValidationHelper._rows_for_brigade` |
 | `_validate_offload_id` | `ForceValidationHelper._cohort_id_count`, `ForceValidationHelper._refused`, `JlsfCargo.is_jlsf_entry` |
+| `_validate_offload_progress_updates` | `ForceValidationHelper._cohort_id_count`, `ForceValidationHelper._offload_progress_source`, `ForceValidationHelper._refused` |
 | `_validate_roster_losses` | `ForceValidationHelper._refused`, `GameDataStore.get_brigade` |
 | `_validate_troop_offload` | `ForceValidationHelper._brigade_has_type`, `ForceValidationHelper._refused`, `ForceValidationHelper._reserve_bn_type`, `ForceValidationHelper._validate_offload_id`, `GameDataStore.get_brigade` |
 | `preflight_air_insertion` | `ForceValidationHelper._refused`, `ForceValidationHelper._validate_air_landing`, `ForceValidationHelper._validate_roster_losses` |
 | `preflight_embark` | `ForceValidationHelper._refused`, `ForceValidationHelper._unique_ids`, `ForceValidationHelper._validate_embark_destinations`, `ForceValidationHelper._validate_embark_sources` |
-| `preflight_offload` | `ForceValidationHelper._refused`, `ForceValidationHelper._validate_cargo_offload`, `ForceValidationHelper._validate_troop_offload` |
+| `preflight_offload` | `ForceValidationHelper._refused`, `ForceValidationHelper._validate_cargo_offload`, `ForceValidationHelper._validate_offload_progress_updates`, `ForceValidationHelper._validate_troop_offload` |
 
 ## Analysis limits found here
 
@@ -169,10 +185,10 @@ Showing 13 of 13 diagnostics; class pages provide the narrower context.
 | `untyped_alias` | `scripts/calc/ForceValidationHelper.gd:99` `var expected_first := not landed_bns.is_empty() and not air_state.landed.has(brigade_id)` | The receiver type could not be proven. |
 | `untyped_iteration` | `scripts/calc/ForceValidationHelper.gd:122` `for landing_value in request.landings:` | The collection element type could not be proven. |
 | `untyped_iteration` | `scripts/calc/ForceValidationHelper.gd:127` `for arrival_value in request.cargo_arrivals:` | The collection element type could not be proven. |
-| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:232` `if String(battalion_value.type) == battalion_type and int(battalion_value.qty) > 0:` | A protected field name appeared on an unresolved receiver. |
-| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:244` `for id_value in cohort.bn_ids:` | A protected field name appeared on an unresolved receiver. |
-| `untyped_iteration` | `scripts/calc/ForceValidationHelper.gd:244` `for id_value in cohort.bn_ids:` | The collection element type could not be proven. |
-| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:253` `if cohort.cohort_state != state_label:` | A protected field name appeared on an unresolved receiver. |
-| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:255` `for id_value in cohort.bn_ids:` | A protected field name appeared on an unresolved receiver. |
-| `untyped_iteration` | `scripts/calc/ForceValidationHelper.gd:255` `for id_value in cohort.bn_ids:` | The collection element type could not be proven. |
-| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:302` `available += int(battalion_value.qty)` | A protected field name appeared on an unresolved receiver. |
+| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:286` `if String(battalion_value.type) == battalion_type and int(battalion_value.qty) > 0:` | A protected field name appeared on an unresolved receiver. |
+| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:298` `for id_value in cohort.bn_ids:` | A protected field name appeared on an unresolved receiver. |
+| `untyped_iteration` | `scripts/calc/ForceValidationHelper.gd:298` `for id_value in cohort.bn_ids:` | The collection element type could not be proven. |
+| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:307` `if cohort.cohort_state != state_label:` | A protected field name appeared on an unresolved receiver. |
+| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:309` `for id_value in cohort.bn_ids:` | A protected field name appeared on an unresolved receiver. |
+| `untyped_iteration` | `scripts/calc/ForceValidationHelper.gd:309` `for id_value in cohort.bn_ids:` | The collection element type could not be proven. |
+| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:356` `available += int(battalion_value.qty)` | A protected field name appeared on an unresolved receiver. |

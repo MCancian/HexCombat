@@ -6,8 +6,8 @@
 > instances or conditional branches.
 
 Generator format v1; scan scope `scripts/**/*.gd` plus `project.godot` autoload aliases.
-Generated from commit `8829181ae4b6`; input SHA-256 `1c5ff5483615f0cca5b2767540c56e9a13e1387c4c1a3c66db909a97ad2e94fb`;
-tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T09:03:12-04:00`.
+Generated from commit `7bbf08693b44`; input SHA-256 `c879af92cf7693c7df1119a11083764377c92a9410144e7b95f361f509613378`;
+tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T17:09:31-04:00`.
 Unresolved-analysis diagnostics on this page: **23**.
 
 Source: `scripts/phases/ReinforcementPhases.gd:299`
@@ -124,7 +124,7 @@ Showing 23 of 23 diagnostics; class pages provide the narrower context.
 | `untyped_iteration` | `scripts/calc/AirInsertionResolver.gd:237` `for entry_value in state.pool:` | The collection element type could not be proven. |
 | `untyped_iteration` | `scripts/calc/ForceValidationHelper.gd:73` `for landing_value in request.landings:` | The collection element type could not be proven. |
 | `untyped_alias` | `scripts/calc/ForceValidationHelper.gd:99` `var expected_first := not landed_bns.is_empty() and not air_state.landed.has(brigade_id)` | The receiver type could not be proven. |
-| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:302` `available += int(battalion_value.qty)` | A protected field name appeared on an unresolved receiver. |
+| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:356` `available += int(battalion_value.qty)` | A protected field name appeared on an unresolved receiver. |
 | `untyped_iteration` | `scripts/calc/HexOwnershipCalculator.gd:27` `for brigade_id_value in data_store.get_brigades_in_hex(hex_id):` | The collection element type could not be proven. |
 | `unresolved_receiver` | `scripts/model/Brigade.gd:60` `total += battalion.qty` | A protected field name appeared on an unresolved receiver. |
 | `callable_or_lambda` | `scripts/phases/ReinforcementPhases.gd:300` `var outcome := AirInsertionResolver.resolve( state.air_insertion_state, state.air_insert_orders, state.turn_number, AirInsertionResolver.threat_from_ijfs_summary(state.last_ijfs…` | Callable/lambda dataflow is outside this analyser. |
@@ -132,10 +132,10 @@ Showing 23 of 23 diagnostics; class pages provide the narrower context.
 | `untyped_iteration` | `scripts/transitions/AirInsertionTransitions.gd:88` `for drop_value in request.drops:` | The collection element type could not be proven. |
 | `untyped_iteration` | `scripts/transitions/ForceTransitions.gd:165` `for landing_value in request.landings:` | The collection element type could not be proven. |
 | `multi_call_statement` | `scripts/transitions/ForceTransitions.gd:188` `var place_receipt := place_brigade( data_store, ForcePlacementRequest.ashore(brigade_id, hex_id, "air_insertion"))` | Multiple calls share one statement; the map preserves lexical sites, not nested evaluation order. |
-| `callable_or_lambda` | `scripts/transitions/ForceTransitions.gd:587` `data_store.brigades_by_hex[old_hex] = (data_store.brigades_by_hex[old_hex] as Array).filter( func(id: String) -> bool: return id != brigade.id)` | Callable/lambda dataflow is outside this analyser. |
-| `untyped_alias` | `scripts/transitions/ForceTransitions.gd:601` `var violations := data_store.validate_runtime_indexes()` | The receiver type could not be proven. |
-| `untyped_iteration` | `scripts/transitions/ForceTransitions.gd:618` `for index in range(brigade.composition.size() - 1, -1, -1):` | The collection element type could not be proven. |
-| `untyped_alias` | `scripts/transitions/ForceTransitions.gd:622` `var take := mini(battalion.qty, remaining)` | The receiver type could not be proven. |
-| `untyped_iteration` | `scripts/transitions/ForceTransitions.gd:788` `for entry_value in air_state.pool:` | The collection element type could not be proven. |
-| `untyped_iteration` | `scripts/transitions/ForceTransitions.gd:848` `for entry_value in air_state.pool:` | The collection element type could not be proven. |
+| `callable_or_lambda` | `scripts/transitions/ForceTransitions.gd:605` `data_store.brigades_by_hex[old_hex] = (data_store.brigades_by_hex[old_hex] as Array).filter( func(id: String) -> bool: return id != brigade.id)` | Callable/lambda dataflow is outside this analyser. |
+| `untyped_alias` | `scripts/transitions/ForceTransitions.gd:619` `var violations := data_store.validate_runtime_indexes()` | The receiver type could not be proven. |
+| `untyped_iteration` | `scripts/transitions/ForceTransitions.gd:636` `for index in range(brigade.composition.size() - 1, -1, -1):` | The collection element type could not be proven. |
+| `untyped_alias` | `scripts/transitions/ForceTransitions.gd:640` `var take := mini(battalion.qty, remaining)` | The receiver type could not be proven. |
+| `untyped_iteration` | `scripts/transitions/ForceTransitions.gd:806` `for entry_value in air_state.pool:` | The collection element type could not be proven. |
+| `untyped_iteration` | `scripts/transitions/ForceTransitions.gd:866` `for entry_value in air_state.pool:` | The collection element type could not be proven. |
 | `untyped_alias` | `scripts/transitions/MapTransitions.gd:98` `var state_value: Variant = data_store.hex_states.get(hex_id)` | The receiver type could not be proven. |

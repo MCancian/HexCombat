@@ -263,7 +263,9 @@ and of the `ijfs_state` / `_ijfs_day` handles on `GameStateData`.
   committed twice in one day.
 - MANPADS stock lives on the typed `IjfsTarget.manpads_remaining`;
   `metadata["systems_remaining"]` is a serialization mirror the authority keeps in step, because
-  `metadata` is aliased live into the ledger rows.
+  `metadata` is aliased live into the ledger rows. `IjfsResolver` eagerly seeds unseeded bins once
+  at the IJFS day boundary through `IjfsTransitions`; `IjfsManpads.systems_remaining` is then a
+  pure read, so `IjfsLedgers` remains in `scripts/calc/` without applying campaign state.
 
 **Why this authority is called from inside the stages.** Every other aggregate applies once, at the
 end, from a coordinator. IJFS cannot: its stages consume dice CONDITIONALLY on state an earlier stage

@@ -6,8 +6,8 @@
 > instances or conditional branches.
 
 Generator format v1; scan scope `scripts/**/*.gd` plus `project.godot` autoload aliases.
-Generated from commit `8829181ae4b6`; input SHA-256 `1c5ff5483615f0cca5b2767540c56e9a13e1387c4c1a3c66db909a97ad2e94fb`;
-tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T09:03:12-04:00`.
+Generated from commit `7bbf08693b44`; input SHA-256 `c879af92cf7693c7df1119a11083764377c92a9410144e7b95f361f509613378`;
+tool/manifest/fixture SHA-256 `ea366ecafdb8f5cc7ecae22bb7554cd8802d1ed3433c5a903ecc07bbb7230f6c`; stable generation time `2026-08-02T17:09:31-04:00`.
 Unresolved-analysis diagnostics on this page: **38**.
 
 Source: `scripts/phases/ReinforcementPhases.gd:65`
@@ -133,8 +133,8 @@ Showing 30 of 38 diagnostics; class pages provide the narrower context.
 |---|---|---|
 | `untyped_alias` | `scripts/calc/ForceValidationHelper.gd:20` `var batch_ids: Variant = _unique_ids(request.batch_bn_ids, "embark batch")` | The receiver type could not be proven. |
 | `untyped_iteration` | `scripts/calc/ForceValidationHelper.gd:33` `for spec_value in request.brigade_specs:` | The collection element type could not be proven. |
-| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:244` `for id_value in cohort.bn_ids:` | A protected field name appeared on an unresolved receiver. |
-| `untyped_iteration` | `scripts/calc/ForceValidationHelper.gd:244` `for id_value in cohort.bn_ids:` | The collection element type could not be proven. |
+| `unresolved_receiver` | `scripts/calc/ForceValidationHelper.gd:298` `for id_value in cohort.bn_ids:` | A protected field name appeared on an unresolved receiver. |
+| `untyped_iteration` | `scripts/calc/ForceValidationHelper.gd:298` `for id_value in cohort.bn_ids:` | The collection element type could not be proven. |
 | `multi_call_statement` | `scripts/calc/SealiftResolver.gd:111` `return { "bn_ids": _bn_ids(orphan_bns), "hulls_by_type": adopted_hulls, "ship_categories": _ship_category_stamps( orphan_bns, snapshot["bn_equiv_assigned"], ship_defs), }` | Multiple calls share one statement; the map preserves lexical sites, not nested evaluation order. |
 | `untyped_alias` | `scripts/calc/SealiftResolver.gd:220` `var n := int(ready.get(ship_def.name, 0))` | The receiver type could not be proven. |
 | `nested_index_unanalysed` | `scripts/calc/SealiftResolver.gd:251` `stamps[String((bns[idx] as Dictionary).get("id", ""))] = category` | Nested collection indexes exceed the balanced-chain subset; this statement contributes no field effects. |
