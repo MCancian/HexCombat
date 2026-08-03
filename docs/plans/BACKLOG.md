@@ -42,6 +42,11 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   summary's payload legitimately changes). **USER call 2026-07-29: re-baselining is acceptable — build
   the real drift comparison.** So the trade is settled; what remains is implementation, and the fixture
   regenerator (`tools/LLMFixtures.gd`) is the intended way to move it rather than hand-editing. Closeout: true drift comparison implemented.
+  **Correction 2026-08-03 (diff review):** the validator's pre-existing `parse_string(stringify(result))`
+  round-trip is LOAD-BEARING, not redundant — `JSON.parse_string` returns every number as float, so the
+  round-trip normalizes the live result's ints to the same representation the parsed fixture holds. A
+  reviewer-requested removal regressed the gate (int/float byte drift) and was reverted with an inline
+  comment so it is not "simplified" away again.
 - [x] **Seven summary headers promise byte-stability the gate does not check.**
   Found 2026-07-29, witness sweep. `CleanupSummary`, `CombatSummary`, `FrontlineSummary`, `AntishipSummary`,
   `MobilizationSummary`, `AirInsertionSummary` and `IjfsWriteback` each say `to_dict()` is "the
@@ -54,6 +59,10 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   each header per `hexcombat-docs-and-writing` ("pinned by: …, which checks key presence only").
   **Do the drift-check item above FIRST** — if the gate gains a real value comparison, these headers
   become true as written and this item reduces to naming the real witness instead of documenting a hole. Closeout: updated all 7 headers to use pinned by convention.
+  **Correction 2026-08-03 (diff review):** `FrontlineSummary.gd`'s header was further reworded — the fixture
+  never resolves the frontline phase, so its model fields are not exercised by the fixture and a null
+  summary serializes as `{}`. The header now says so instead of claiming the fixture pins the summary's
+  shape.
 - [ ] **`docs/plans/` is excluded from the doc-anchor gate, so an ACTIVE plan's code references rot silently.**
   Found 2026-07-31 while widening the gate; accepted trade-off, not an oversight. Plans are
   excluded because a proposal legitimately names classes it intends to CREATE — failing a plan for
@@ -93,6 +102,13 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   would not register as a contract violation. Worth doing when the turn record is next treated as a
   durable research contract rather than a convenience payload — and note the same
   presence-not-shape weakness is what the LLM fixture drift-check item above is about. Closeout: nested shapes fully verified bi-directionally in serialization test against fixture.
+  **Correction 2026-08-03 (diff review):** the serialization test's recursion was hardened while closing
+  this out — it now also TYPE-checks every element of scalar-typed arrays, every `additionalProperties`
+  map value, and enum-typed fields. Finding A of that review (`air_insertion_summary.attrition_by_class`
+  declared `integer` where the payload ships a rate) forced widening `_assert_scalar` to accept integral
+  floats under `"integer"` (JSON Schema semantics; `parse_string` returns floats) and the schema to
+  `"number"`. Two regression tests pin both directions: an integral float and an enum pass; a fractional
+  value in an `"integer"` field fails.
 - [ ] **Nothing enforces `sweepable`, so the flag records intent and no more.**
   Measured 2026-08-01 while marking the combat advantage ratios `false`. `tools/run_sweep.py` never consults the knob registry;
   the only code that touches the field is `tools/validate_knob_registry.gd`, which checks it is a bool

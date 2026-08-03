@@ -8,6 +8,8 @@ extends GdUnitTestSuite
 ## five fields were live on the model and absent from `schemas/llm_action_result.schema.json`, and
 ## nothing could see it — the result object allows additional properties, the nested properties are
 ## not `required`, and `validate_llm_api` inspects only top-level keys. Found while adding a sixth.
+## Nested arrays are sampled at element [0] only (a typed array shares one schema); cross-element
+## VALUE divergence is already caught by the full-payload drift compare in tools/validate_llm_api.gd.
 
 const SCHEMA_PATH := "res://schemas/llm_action_result.schema.json"
 
@@ -76,12 +78,85 @@ func _check_two_way_schema(dict_val: Dictionary, schema_props: Dictionary, path:
 		"Schema properties absent from model fixture at %s: %s" % [path, missing_in_model]
 	).is_empty()
 
-	# Recurse into nested objects
+	# Recurse into nested objects, scalar-array items, and additionalProperties maps
 	for key in dict_val.keys():
 		var val = dict_val[key]
 		var prop_def = schema_props[key]
-		
-		if val is Dictionary and prop_def.has("properties"):
-			_check_two_way_schema(val, prop_def["properties"], path + "." + String(key))
-		elif val is Array and not val.is_empty() and val[0] is Dictionary and prop_def.has("items") and (prop_def["items"] as Dictionary).has("properties"):
-			_check_two_way_schema(val[0], prop_def["items"]["properties"], path + "." + String(key) + "[0]")
+		var child_path := path + "." + String(key)
+		if val is Dictionary:
+			_check_object(val, prop_def, child_path)
+		elif val is Array:
+			_check_array(val, prop_def, child_path)
+		else:
+			_assert_scalar(child_path, val, prop_def)
+
+
+func _check_object(val: Dictionary, prop_def, child_path: String) -> void:
+	if prop_def.has("properties") and prop_def["properties"] is Dictionary:
+		_check_two_way_schema(val, prop_def["properties"], child_path)
+	elif prop_def.has("additionalProperties") and prop_def["additionalProperties"] is Dictionary:
+		var ap: Dictionary = prop_def["additionalProperties"]
+		for k in val.keys():
+			_assert_scalar(child_path + "." + String(k), val[k], ap)
+
+
+func _check_array(val: Array, prop_def, child_path: String) -> void:
+	if not (prop_def.has("items") and prop_def["items"] is Dictionary):
+		return
+	var items: Dictionary = prop_def["items"]
+	var items_type := String(items.get("type", ""))
+	if items_type in ["integer", "number", "boolean", "string"]:
+		for i in val.size():
+			_assert_scalar(child_path + "[%d]" % i, val[i], items)
+	elif val.size() > 0 and val[0] is Dictionary and items.has("properties"):
+		_check_two_way_schema(val[0], items["properties"], child_path + "[0]")
+
+
+func _assert_scalar(path: String, val, prop_def) -> void:
+	# JSON.parse_string returns every number as float, so an integral float satisfies "integer"
+	# (JSON Schema semantics: integer = number with zero fractional part).
+	var expected_type := String(prop_def.get("type", ""))
+	var ok := false
+	match expected_type:
+		"integer":
+			ok = val is int or (val is float and floor(val) == val)
+		"number":
+			ok = val is int or val is float
+		"boolean":
+			ok = val is bool
+		"string":
+			ok = val is String
+		"":
+			if prop_def.has("enum") and prop_def["enum"] is Array:
+				ok = (val is String) and (val in prop_def["enum"])
+	assert_bool(ok).override_failure_message(
+		"Schema type mismatch at %s: expected %s, got %s" % [
+			path,
+			expected_type if expected_type != "" else str(prop_def.get("enum", "any")),
+			type_string(typeof(val))
+		]
+	).is_true()
+
+
+func test_type_checker_accepts_integral_floats_and_enums() -> void:
+	# JSON.parse_string turns every number into a float, so an integral float MUST satisfy
+	# "integer" and an enum-typed field MUST accept one of its members — or the fixture check
+	# would fail on values that validate fine under JSON Schema.
+	var schema := {
+		"n": {"type": "integer"},
+		"rate": {"type": "number"},
+		"kind": {"enum": ["ijfs", "move"]},
+	}
+	var data := {"n": 1.0, "rate": 0.35, "kind": "move"}
+	_check_two_way_schema(data, schema, "turn_result")
+
+
+func test_type_checker_rejects_a_fractional_value_in_an_integer_field() -> void:
+	# Regression guard for the air_insertion_summary.attrition_by_class schema bug: an "integer"
+	# field carrying a fractional float must be caught here, not shipped in a schema that would
+	# reject every real payload at runtime.
+	var schema := {"attrition_by_class": {"additionalProperties": {"type": "integer"}}}
+	var data := {"attrition_by_class": {"IJFS": 0.35}}
+	assert_failure(func() -> void:
+		_check_two_way_schema(data, schema, "turn_result")
+	).contains_message("Schema type mismatch")

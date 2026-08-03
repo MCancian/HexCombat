@@ -370,16 +370,13 @@ func _validate_result_schema_conformance() -> void:
 			if String(schema_sorted[i]) != String(expected_sorted[i]):
 				_fail("result schema required[%d]: expected %s, got %s" % [i, String(expected_sorted[i]), String(schema_sorted[i])])
 
-	_game_data().load_all()
-	_game_state().reset_to_scenario()
-	_provision_red_mover_for_validation()
-	var result := LLMGameAPI.apply_agent_response(_sample_action_response())
-	for key in REQUIRED_RESULT_KEYS:
-		if not result.has(key):
-			_fail("fresh result missing required key: %s" % key)
+	var result := LLMFixtures.build_result()
 
 	var fixture = _read_json("res://docs/examples/llm_result_after_turn.json")
 	if fixture is Dictionary:
+		# JSON.parse_string returns every number as float, so a bare JSON.stringify of the live
+		# result (ints) would emit "1" where the parsed fixture emits "1.0". Round-tripping the live
+		# result through parse puts BOTH sides through the same float normalization — do not "simplify".
 		var normalized_result = JSON.parse_string(JSON.stringify(result))
 		var expected_json = JSON.stringify(fixture, "\t", true, false)
 		var actual_json = JSON.stringify(normalized_result, "\t", true, false)

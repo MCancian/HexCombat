@@ -25,6 +25,19 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-08-03 — Second-reviewer findings on the LLM fixture closeout applied (agent; gate green).**
+  Finding A: `air_insertion_summary.attrition_by_class` was declared `integer` in
+  `schemas/llm_action_result.schema.json` where the payload ships a rate; corrected to `number`.
+  Finding B (arrays sampled at `[0]`) accepted as a documented trade-off — cross-element VALUE
+  divergence is already caught by the drift compare. The serialization test's recursion was hardened
+  to type-check scalar-array elements, `additionalProperties` maps and enums, with `_assert_scalar`
+  accepting integral floats under `"integer"` (JSON Schema semantics; this build's `JSON.parse_string`
+  returns every number as float). A reviewer-requested removal of the validator's
+  `parse_string(stringify())` round-trip REGRESSED the gate and was reverted: the round-trip
+  normalizes the live result's ints to the fixture's float representation and is load-bearing.
+  Facts: `schemas/llm_action_result.schema.json`, `tests/turn_result_serialization_test.gd`,
+  `tools/validate_llm_api.gd`, `scripts/model/FrontlineSummary.gd`, `docs/plans/BACKLOG.md`.
+
 - **2026-08-03 — LLM / turn-result fixture contract drift and schema verification closed out (agent; USER-approved re-baseline).**
   The `docs/examples/llm_result_after_turn.json` fixture is now deep-drift-checked by `validate_llm_api.gd` via exact JSON value string-matching instead of key presence, fulfilling the USER call from 2026-07-29. Seven model summary headers were updated to cite the real drift witness. The turn_result serialization check was extended to enforce two-way schema correspondence against nested objects by recursively traversing the fixture. Facts: `tools/validate_llm_api.gd`, `tests/turn_result_serialization_test.gd`, `schemas/llm_action_result.schema.json`, `docs/plans/BACKLOG.md`.
 

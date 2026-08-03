@@ -1238,7 +1238,7 @@
             "attrition_by_class": {
               "type": "object",
               "additionalProperties": {
-                "type": "integer"
+                "type": "number"
               }
             },
             "battalions_landed": {
