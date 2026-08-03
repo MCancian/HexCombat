@@ -4,8 +4,8 @@ class_name CombatSummary
 ## Per-contested-hex result of one resolved combat, produced by GameState._resolve_combat_at and
 ## carried in GameState.last_combat_summaries / TurnResult / the event log / the LLM observation.
 ## Replaces the former plain dict (refactor_audit item 3 — typed drift-safety). to_dict() is the
-## JSON-serialization boundary; its key order and value types mirror the former dict exactly so the
-## golden/observation fixtures stay byte-stable.
+## JSON-serialization boundary; its key order and value types mirror the former dict exactly.
+## pinned by: tools/validate_llm_api.gd (deep drift check).
 
 @export var hex_id: String = ""
 @export var attacker_losses: int = 0

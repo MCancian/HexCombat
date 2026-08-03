@@ -7,6 +7,7 @@ class_name MobilizationSummary
 ## mobilization_resolved signal. All-zero/empty when the scenario holds nobody back (the default),
 ## which is what keeps the mechanic byte-invisible until a scenario opts in.
 ## to_dict() is the JSON-serialization boundary; its key order and value types are the contract.
+## pinned by: tools/validate_llm_api.gd (deep drift check).
 
 ## Brigades that arrived this turn, in release order. Each entry:
 ##   {brigade_id: String, hex_id: String, battalions: int, displaced: bool}

@@ -78,17 +78,17 @@
 		},
 		"brigades": [
 			{
-				"battalions": 4,
+				"battalions": 3,
 				"battalions_not_ashore": 2,
 				"destroyed": false,
 				"fought_this_turn": false,
-				"hex_id": "hex_43_16",
+				"hex_id": "hex_44_16",
 				"id": "PLA-71-2-Amphibious",
 				"moved_admin_this_turn": false,
 				"moved_this_turn": false,
 				"name": "2nd Amphibious Brigade (71st Group Army)",
 				"nato_type": "amphibious",
-				"organization": 75.0,
+				"organization": 100.0,
 				"team": "Red"
 			},
 			{
@@ -96,13 +96,13 @@
 				"battalions_not_ashore": 5,
 				"destroyed": false,
 				"fought_this_turn": false,
-				"hex_id": "hex_44_15",
+				"hex_id": "hex_44_16",
 				"id": "PLA-72-5-Amphibious",
 				"moved_admin_this_turn": false,
 				"moved_this_turn": false,
 				"name": "5th Amphibious Combined Arms Brigade (72nd Group Army)",
 				"nato_type": "amphibious",
-				"organization": 100.0,
+				"organization": 75.0,
 				"team": "Red"
 			},
 			{
@@ -540,7 +540,7 @@
 				"team": "Green"
 			},
 			{
-				"battalions": 5,
+				"battalions": 4,
 				"battalions_not_ashore": 0,
 				"destroyed": false,
 				"fought_this_turn": false,
@@ -965,20 +965,99 @@
 				"feba_movement_km": -2.74521739130435,
 				"hex_id": "hex_43_14",
 				"owner_after": "contested"
+			},
+			{
+				"attacker_brigade_ids": [
+					"PLA-71-2-Amphibious",
+					"PLA-72-5-Amphibious"
+				],
+				"attacker_losses": 1,
+				"combat_detail": {
+					"attacker": {
+						"maneuver_combat_power": 9.6,
+						"maneuver_unit_count": 8,
+						"support_breakdown": {
+							"artillery": 0.0,
+							"cas": 0.0,
+							"crbm": 0.0,
+							"rocket_artillery": 0.0,
+							"rotary_wing": 0.0
+						},
+						"support_combat_power": 0.0,
+						"support_counts": {
+							"artillery": 0,
+							"cas": 0,
+							"crbm": 0,
+							"rocket_artillery": 0,
+							"rotary_wing": 0
+						},
+						"support_unit_count": 0,
+						"total_combat_power_unmodified": 9.6,
+						"unscreened": false
+					},
+					"defender": {
+						"maneuver_combat_power": 6.0,
+						"maneuver_unit_count": 4,
+						"support_breakdown": {
+							"artillery": 0.8,
+							"cas": 0.0,
+							"crbm": 0.0,
+							"rocket_artillery": 0.0,
+							"rotary_wing": 0.0
+						},
+						"support_combat_power": 0.8,
+						"support_counts": {
+							"artillery": 1,
+							"cas": 0,
+							"crbm": 0,
+							"rocket_artillery": 0,
+							"rotary_wing": 0
+						},
+						"support_unit_count": 1,
+						"terrain_modifier": 1.0,
+						"total_combat_power_terrain_modified": 6.8,
+						"total_combat_power_unmodified": 6.8,
+						"unscreened": false
+					},
+					"feba": {
+						"base_km": 3.5,
+						"movement_km": 1.34451219512195,
+						"roll_factor": 1.125
+					},
+					"losses": {
+						"attacker": 1,
+						"attacker_loss_rate": 0.156058823529412,
+						"defender": 1,
+						"defender_loss_rate": 0.215176470588235
+					},
+					"ratios": {
+						"terrain_modified": 1.41176470588235,
+						"unmodified": 1.41176470588235
+					},
+					"result": "Attacker Advantage",
+					"rolls": {
+						"attacker_loss_roll": 39,
+						"defender_loss_roll": 24,
+						"feba_movement_roll": 75
+					}
+				},
+				"defender_brigade_ids": [
+					"BDE-GDU"
+				],
+				"defender_losses": 1,
+				"feba_movement_km": 1.34451219512195,
+				"hex_id": "hex_44_16",
+				"owner_after": "contested"
 			}
 		],
 		"last_contested_hexes": [
-			"hex_43_14"
+			"hex_43_14",
+			"hex_44_16"
 		],
 		"legal_commits": {
 			"hex_42_15": {
 				"Red": [
 					"PLA-73-14-Amphibious"
-				]
-			},
-			"hex_42_17": {
-				"Red": [
-					"PLA-71-2-Amphibious"
 				]
 			},
 			"hex_43_13": {
@@ -988,209 +1067,205 @@
 			},
 			"hex_43_14": {
 				"Red": [
-					"PLA-72-5-Amphibious",
 					"PLA-74-1-Amphibious"
-				]
-			},
-			"hex_43_17": {
-				"Red": [
-					"PLA-71-2-Amphibious"
 				]
 			},
 			"hex_44_15": {
 				"Red": [
-					"PLA-73-14-Amphibious"
-				]
-			},
-			"hex_44_16": {
-				"Red": [
 					"PLA-71-2-Amphibious",
-					"PLA-72-5-Amphibious"
+					"PLA-72-5-Amphibious",
+					"PLA-73-14-Amphibious"
 				]
 			},
 			"hex_44_17": {
 				"Red": [
-					"PLA-71-2-Amphibious"
+					"PLA-71-2-Amphibious",
+					"PLA-72-5-Amphibious"
 				]
 			}
 		},
 		"legal_moves": {
 			"PLA-71-2-Amphibious": {
 				"administrative": [
-					"hex_43_16",
-					"hex_42_16",
-					"hex_42_17",
-					"hex_43_15",
-					"hex_43_17",
 					"hex_44_16",
+					"hex_43_15",
+					"hex_43_16",
+					"hex_44_15",
 					"hex_44_17",
+					"hex_45_16",
+					"hex_42_15",
+					"hex_42_16",
+					"hex_43_14",
+					"hex_42_17",
+					"hex_43_17",
+					"hex_45_17",
+					"hex_46_17",
+					"hex_44_18",
 					"hex_41_15",
 					"hex_41_16",
-					"hex_42_15",
-					"hex_43_14",
-					"hex_44_15",
-					"hex_45_16",
+					"hex_42_14",
+					"hex_43_13",
+					"hex_46_18",
+					"hex_41_14",
 					"hex_41_17",
 					"hex_42_18",
 					"hex_43_18",
-					"hex_44_18",
-					"hex_45_17",
+					"hex_45_18",
 					"hex_40_15",
 					"hex_40_16",
-					"hex_41_14",
-					"hex_42_14",
-					"hex_43_13",
-					"hex_46_17",
+					"hex_41_13",
+					"hex_42_13",
+					"hex_44_19",
 					"hex_40_17",
+					"hex_40_14",
 					"hex_41_18",
 					"hex_42_19",
 					"hex_43_19",
-					"hex_44_19",
-					"hex_40_14",
-					"hex_41_13",
-					"hex_42_13",
-					"hex_46_18",
-					"hex_40_18",
-					"hex_45_18",
-					"hex_39_14",
-					"hex_39_15",
-					"hex_44_20",
 					"hex_40_13",
 					"hex_41_12",
 					"hex_42_12",
+					"hex_40_18",
+					"hex_39_14",
+					"hex_39_15",
+					"hex_44_20",
+					"hex_39_12",
+					"hex_39_13",
+					"hex_40_12",
+					"hex_41_11",
 					"hex_39_17",
 					"hex_40_19",
 					"hex_41_19",
 					"hex_42_20",
 					"hex_43_20",
-					"hex_39_13",
 					"hex_44_21",
-					"hex_39_12",
-					"hex_40_12",
-					"hex_41_11",
-					"hex_39_18",
-					"hex_38_14",
-					"hex_43_21",
 					"hex_38_12",
 					"hex_38_13",
 					"hex_39_11",
 					"hex_40_11",
+					"hex_39_18",
+					"hex_38_14",
+					"hex_43_21",
+					"hex_37_11",
+					"hex_37_12",
+					"hex_38_11",
 					"hex_38_18",
 					"hex_39_19",
 					"hex_40_20",
 					"hex_41_20",
 					"hex_42_21",
-					"hex_42_22",
-					"hex_37_11",
-					"hex_37_12",
-					"hex_38_11",
-					"hex_38_19",
 					"hex_37_13",
-					"hex_38_20",
-					"hex_39_20",
-					"hex_41_21",
+					"hex_42_22",
 					"hex_36_11",
 					"hex_36_12",
 					"hex_37_10",
 					"hex_38_10",
-					"hex_37_20",
+					"hex_38_19",
+					"hex_38_20",
+					"hex_39_20",
+					"hex_41_21",
 					"hex_36_10",
 					"hex_37_9"
 				],
-				"from_hex": "hex_43_16",
+				"from_hex": "hex_44_16",
 				"tactical": [
-					"hex_43_16",
-					"hex_42_16",
-					"hex_43_15",
 					"hex_44_16",
-					"hex_42_17",
-					"hex_43_17",
+					"hex_43_15",
+					"hex_43_16",
+					"hex_44_15",
+					"hex_45_16",
 					"hex_44_17"
 				],
 				"team": "Red"
 			},
 			"PLA-72-5-Amphibious": {
 				"administrative": [
-					"hex_44_15",
-					"hex_43_14",
-					"hex_43_15",
 					"hex_44_16",
-					"hex_42_14",
-					"hex_42_15",
-					"hex_43_13",
-					"hex_42_16",
+					"hex_43_15",
 					"hex_43_16",
+					"hex_44_15",
 					"hex_44_17",
 					"hex_45_16",
-					"hex_41_13",
-					"hex_41_14",
-					"hex_42_13",
-					"hex_41_15",
-					"hex_41_16",
+					"hex_42_15",
+					"hex_42_16",
+					"hex_43_14",
 					"hex_42_17",
 					"hex_43_17",
 					"hex_45_17",
 					"hex_46_17",
 					"hex_44_18",
-					"hex_40_13",
-					"hex_40_14",
-					"hex_41_12",
-					"hex_40_15",
-					"hex_42_12",
-					"hex_40_16",
+					"hex_41_15",
+					"hex_41_16",
+					"hex_42_14",
+					"hex_43_13",
 					"hex_46_18",
-					"hex_40_17",
+					"hex_41_14",
 					"hex_41_17",
 					"hex_42_18",
 					"hex_43_18",
 					"hex_45_18",
+					"hex_40_15",
+					"hex_40_16",
+					"hex_41_13",
+					"hex_42_13",
+					"hex_44_19",
+					"hex_40_17",
+					"hex_40_14",
+					"hex_41_18",
+					"hex_42_19",
+					"hex_43_19",
+					"hex_40_13",
+					"hex_41_12",
+					"hex_42_12",
+					"hex_40_18",
+					"hex_39_14",
+					"hex_39_15",
+					"hex_44_20",
 					"hex_39_12",
 					"hex_39_13",
 					"hex_40_12",
 					"hex_41_11",
-					"hex_44_19",
-					"hex_39_14",
-					"hex_39_15",
-					"hex_41_18",
-					"hex_42_19",
-					"hex_43_19",
-					"hex_38_12",
-					"hex_38_13",
-					"hex_39_11",
-					"hex_40_11",
 					"hex_39_17",
-					"hex_40_18",
-					"hex_38_14",
-					"hex_44_20",
-					"hex_37_11",
-					"hex_37_12",
-					"hex_38_11",
 					"hex_40_19",
 					"hex_41_19",
 					"hex_42_20",
 					"hex_43_20",
-					"hex_37_13",
 					"hex_44_21",
+					"hex_38_12",
+					"hex_38_13",
+					"hex_39_11",
+					"hex_40_11",
+					"hex_39_18",
+					"hex_38_14",
+					"hex_43_21",
+					"hex_37_11",
+					"hex_37_12",
+					"hex_38_11",
+					"hex_38_18",
+					"hex_39_19",
+					"hex_40_20",
+					"hex_41_20",
+					"hex_42_21",
+					"hex_37_13",
+					"hex_42_22",
 					"hex_36_11",
 					"hex_36_12",
 					"hex_37_10",
 					"hex_38_10",
-					"hex_38_18",
-					"hex_39_18",
-					"hex_43_21",
+					"hex_38_19",
+					"hex_38_20",
+					"hex_39_20",
+					"hex_41_21",
 					"hex_36_10",
-					"hex_37_9",
-					"hex_39_19",
-					"hex_42_22",
-					"hex_35_9",
-					"hex_36_9"
+					"hex_37_9"
 				],
-				"from_hex": "hex_44_15",
+				"from_hex": "hex_44_16",
 				"tactical": [
-					"hex_44_15",
-					"hex_43_14",
+					"hex_44_16",
 					"hex_43_15",
-					"hex_44_16"
+					"hex_43_16",
+					"hex_44_15",
+					"hex_45_16",
+					"hex_44_17"
 				],
 				"team": "Red"
 			},
@@ -1884,9 +1959,11 @@
 			},
 			{
 				"brigades": [
-					"BDE-GDU"
+					"BDE-GDU",
+					"PLA-71-2-Amphibious",
+					"PLA-72-5-Amphibious"
 				],
-				"feba_km": 0.0,
+				"feba_km": 1.34451219512195,
 				"hex_id": "hex_44_16",
 				"neighbors": [
 					"hex_43_15",
@@ -1895,7 +1972,7 @@
 					"hex_44_17",
 					"hex_45_16"
 				],
-				"owner": "green",
+				"owner": "contested",
 				"terrain": "plains"
 			},
 			{
@@ -1931,20 +2008,6 @@
 			},
 			{
 				"brigades": [
-					"PLA-72-5-Amphibious"
-				],
-				"feba_km": 0.0,
-				"hex_id": "hex_44_15",
-				"neighbors": [
-					"hex_43_14",
-					"hex_43_15",
-					"hex_44_16"
-				],
-				"owner": "red",
-				"terrain": "plains"
-			},
-			{
-				"brigades": [
 					"PLA-74-1-Amphibious"
 				],
 				"feba_km": 0.0,
@@ -1956,23 +2019,6 @@
 				],
 				"owner": "red",
 				"terrain": "plains"
-			},
-			{
-				"brigades": [
-					"PLA-71-2-Amphibious"
-				],
-				"feba_km": 0.0,
-				"hex_id": "hex_43_16",
-				"neighbors": [
-					"hex_42_16",
-					"hex_42_17",
-					"hex_43_15",
-					"hex_43_17",
-					"hex_44_16",
-					"hex_44_17"
-				],
-				"owner": "red",
-				"terrain": "urban"
 			}
 		],
 		"pending_commitments": {
@@ -2026,8 +2072,8 @@
 			}
 		],
 		"supply_state": {
-			"current_dos_equivalent": 85.3333333333333,
-			"current_dos_tons": 12800.0,
+			"current_dos_equivalent": 81.3333333333333,
+			"current_dos_tons": 12200.0,
 			"day_count": 1
 		},
 		"turn": 2,
@@ -2399,9 +2445,9 @@
 		},
 		"cleanup_summary": {
 			"antiship_systems_reset": 50,
-			"china_battalions_on_taiwan": 15,
+			"china_battalions_on_taiwan": 14,
 			"game_over": false,
-			"taiwan_battalions_on_taiwan": 111,
+			"taiwan_battalions_on_taiwan": 110,
 			"victory_reason": "",
 			"winner": ""
 		},
@@ -2487,10 +2533,94 @@
 				"feba_movement_km": -2.74521739130435,
 				"hex_id": "hex_43_14",
 				"owner_after": "contested"
+			},
+			{
+				"attacker_brigade_ids": [
+					"PLA-71-2-Amphibious",
+					"PLA-72-5-Amphibious"
+				],
+				"attacker_losses": 1,
+				"combat_detail": {
+					"attacker": {
+						"maneuver_combat_power": 9.6,
+						"maneuver_unit_count": 8,
+						"support_breakdown": {
+							"artillery": 0.0,
+							"cas": 0.0,
+							"crbm": 0.0,
+							"rocket_artillery": 0.0,
+							"rotary_wing": 0.0
+						},
+						"support_combat_power": 0.0,
+						"support_counts": {
+							"artillery": 0,
+							"cas": 0,
+							"crbm": 0,
+							"rocket_artillery": 0,
+							"rotary_wing": 0
+						},
+						"support_unit_count": 0,
+						"total_combat_power_unmodified": 9.6,
+						"unscreened": false
+					},
+					"defender": {
+						"maneuver_combat_power": 6.0,
+						"maneuver_unit_count": 4,
+						"support_breakdown": {
+							"artillery": 0.8,
+							"cas": 0.0,
+							"crbm": 0.0,
+							"rocket_artillery": 0.0,
+							"rotary_wing": 0.0
+						},
+						"support_combat_power": 0.8,
+						"support_counts": {
+							"artillery": 1,
+							"cas": 0,
+							"crbm": 0,
+							"rocket_artillery": 0,
+							"rotary_wing": 0
+						},
+						"support_unit_count": 1,
+						"terrain_modifier": 1.0,
+						"total_combat_power_terrain_modified": 6.8,
+						"total_combat_power_unmodified": 6.8,
+						"unscreened": false
+					},
+					"feba": {
+						"base_km": 3.5,
+						"movement_km": 1.34451219512195,
+						"roll_factor": 1.125
+					},
+					"losses": {
+						"attacker": 1,
+						"attacker_loss_rate": 0.156058823529412,
+						"defender": 1,
+						"defender_loss_rate": 0.215176470588235
+					},
+					"ratios": {
+						"terrain_modified": 1.41176470588235,
+						"unmodified": 1.41176470588235
+					},
+					"result": "Attacker Advantage",
+					"rolls": {
+						"attacker_loss_roll": 39,
+						"defender_loss_roll": 24,
+						"feba_movement_roll": 75
+					}
+				},
+				"defender_brigade_ids": [
+					"BDE-GDU"
+				],
+				"defender_losses": 1,
+				"feba_movement_km": 1.34451219512195,
+				"hex_id": "hex_44_16",
+				"owner_after": "contested"
 			}
 		],
 		"contested_hexes": [
-			"hex_43_14"
+			"hex_43_14",
+			"hex_44_16"
 		],
 		"events": [
 			{
@@ -2834,11 +2964,11 @@
 			},
 			{
 				"data": {
-					"brigade_id": "PLA-71-2-Amphibious",
+					"brigade_id": "PLA-72-5-Amphibious",
 					"mode": "tactical",
-					"target_hex": "hex_43_16"
+					"target_hex": "hex_44_16"
 				},
-				"hex_id": "hex_43_16",
+				"hex_id": "hex_44_16",
 				"kind": "move",
 				"seq": 2,
 				"team": "Red"
@@ -2933,16 +3063,105 @@
 			},
 			{
 				"data": {
+					"attacker_brigade_ids": [
+						"PLA-71-2-Amphibious",
+						"PLA-72-5-Amphibious"
+					],
+					"attacker_losses": 1,
+					"combat_detail": {
+						"attacker": {
+							"maneuver_combat_power": 9.6,
+							"maneuver_unit_count": 8,
+							"support_breakdown": {
+								"artillery": 0.0,
+								"cas": 0.0,
+								"crbm": 0.0,
+								"rocket_artillery": 0.0,
+								"rotary_wing": 0.0
+							},
+							"support_combat_power": 0.0,
+							"support_counts": {
+								"artillery": 0,
+								"cas": 0,
+								"crbm": 0,
+								"rocket_artillery": 0,
+								"rotary_wing": 0
+							},
+							"support_unit_count": 0,
+							"total_combat_power_unmodified": 9.6,
+							"unscreened": false
+						},
+						"defender": {
+							"maneuver_combat_power": 6.0,
+							"maneuver_unit_count": 4,
+							"support_breakdown": {
+								"artillery": 0.8,
+								"cas": 0.0,
+								"crbm": 0.0,
+								"rocket_artillery": 0.0,
+								"rotary_wing": 0.0
+							},
+							"support_combat_power": 0.8,
+							"support_counts": {
+								"artillery": 1,
+								"cas": 0,
+								"crbm": 0,
+								"rocket_artillery": 0,
+								"rotary_wing": 0
+							},
+							"support_unit_count": 1,
+							"terrain_modifier": 1.0,
+							"total_combat_power_terrain_modified": 6.8,
+							"total_combat_power_unmodified": 6.8,
+							"unscreened": false
+						},
+						"feba": {
+							"base_km": 3.5,
+							"movement_km": 1.34451219512195,
+							"roll_factor": 1.125
+						},
+						"losses": {
+							"attacker": 1,
+							"attacker_loss_rate": 0.156058823529412,
+							"defender": 1,
+							"defender_loss_rate": 0.215176470588235
+						},
+						"ratios": {
+							"terrain_modified": 1.41176470588235,
+							"unmodified": 1.41176470588235
+						},
+						"result": "Attacker Advantage",
+						"rolls": {
+							"attacker_loss_roll": 39,
+							"defender_loss_roll": 24,
+							"feba_movement_roll": 75
+						}
+					},
+					"defender_brigade_ids": [
+						"BDE-GDU"
+					],
+					"defender_losses": 1,
+					"feba_movement_km": 1.34451219512195,
+					"hex_id": "hex_44_16",
+					"owner_after": "contested"
+				},
+				"hex_id": "hex_44_16",
+				"kind": "combat",
+				"seq": 4,
+				"team": ""
+			},
+			{
+				"data": {
 					"antiship_systems_reset": 50,
-					"china_battalions_on_taiwan": 15,
+					"china_battalions_on_taiwan": 14,
 					"game_over": false,
-					"taiwan_battalions_on_taiwan": 111,
+					"taiwan_battalions_on_taiwan": 110,
 					"victory_reason": "",
 					"winner": ""
 				},
 				"hex_id": "",
 				"kind": "cleanup",
-				"seq": 4,
+				"seq": 5,
 				"team": ""
 			}
 		],

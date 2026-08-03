@@ -9,8 +9,9 @@ class_name IjfsWriteback
 ## reads antiship_destroyed_by_type / antiship_suppressed_by_type to attrit/suppress the Green firing
 ## systems — so a key typo here would silently break the IJFS→casualty/antiship coupling, not just a
 ## display field (refactor_audit item 9, the riskiest summary). to_dict() is the JSON-serialization
-## boundary; its key order and value types mirror the former dict exactly so the golden/observation
-## fixtures stay byte-stable. A null last_ijfs_writeback means the IJFS phase has not resolved.
+## boundary; its key order and value types mirror the former dict exactly. pinned by:
+## tools/validate_llm_api.gd (deep drift check). A null last_ijfs_writeback means the IJFS phase
+## has not resolved.
 
 @export var antiship_destroyed_by_type: Dictionary = {}
 @export var antiship_suppressed_by_type: Dictionary = {}

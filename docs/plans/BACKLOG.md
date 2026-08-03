@@ -34,38 +34,15 @@ means writing prose you then have to un-write.
 budget above depends on it. If the observation is a standing rule or is blocked on something absent,
 put it in the section below WITHOUT a checkbox and say what would unblock it.)*
 
-- [x] **The applies/pure CENSUS scan is still prose in two homes.**
-  Only the pass/fail half became a tool (plan 0055, 2026-07-31). `.claude/skills/hexcombat-structure-map` asked whoever implemented 0055 to
-  promote its `grep`-based census to a real script under `tools/`, because the comment-stripping detail
-  is load-bearing and was being kept in two copies. **Half of that happened and half did not.**
-  `tools/validate_authority_call_placement.gd` now owns the *verdict* — is any file in a forbidding
-  directory calling an authority, and has any `interleaved/` file gone inert — and derives its authority
-  list from the manifest. What it does NOT emit is the census: per-file counts, which is what the skill
-  needs to regenerate the structure map and what a future plan needs to re-derive a table. So the `grep`
-  still lives as prose in the skill. The cheap fix is a `--census` flag on the existing validator that
-  prints `path count authority,...` and exits 0, letting the skill call it instead of restating it.
-  Not done here because the validator's own commit was already the plan's last step and adding an output
-  mode is a separate, testable change. (Closed 2026-08-03: `--census` flag added to `validate_authority_call_placement.gd` and SKILL updated to use it.)
-- [x] **`E_STALE_ALLOWANCE` is the one mutation-manifest check with no proof surface.**
-  Found 2026-07-30 by the DeepSeek enumeration role; pre-existing, not a regression. Every other manifest-check code
-  is either declared by a `bad_manifest_*.json` fixture or perturbed by a `_capture_failures`
-  self-test. `tools/validate_mutation_authority.gd`'s `_report_stale_allowances` is not: it is the
-  only emission site, and nothing exercises it. So if a construction or legacy writer outlives its
-  last write, nothing proves the gate would say so. It cannot use the existing broken-manifest harness
-  — `_check_manifest_error_fixtures` runs only `_check_manifest` + `_build_ownership`, never `_scan`,
-  and a stale allowance is only visible after a scan produces a Verdict. It needs the same treatment
-  `_check_inert_authority_fixture` got: re-judge the fixture findings against a doctored usage record.
-  (Closed 2026-08-03: Added a fabricated stale allowance to `fixture_manifest.json` and a `_check_stale_allowance_fixture` self-test to prove it fires.)
-
-- [ ] **The LLM result fixture is key-presence-checked, not drift-checked (found 2026-07-29).**
+- [x] **The LLM result fixture is key-presence-checked, not drift-checked (found 2026-07-29).**
   `tools/LLMFixtures.gd:7` records "the rot that left `llm_result_after_turn.json` stale" as the reason
   that generator exists — but the current check (`validate_llm_api.gd:271-277`) cannot catch that rot
   returning: a fixture with all the right keys and stale VALUES passes. Adding a real drift comparison
   is a gate change with a re-baseline decision attached (the fixture would then move whenever any
   summary's payload legitimately changes). **USER call 2026-07-29: re-baselining is acceptable — build
   the real drift comparison.** So the trade is settled; what remains is implementation, and the fixture
-  regenerator (`tools/LLMFixtures.gd`) is the intended way to move it rather than hand-editing.
-- [ ] **Seven summary headers promise byte-stability the gate does not check.**
+  regenerator (`tools/LLMFixtures.gd`) is the intended way to move it rather than hand-editing. Closeout: true drift comparison implemented.
+- [x] **Seven summary headers promise byte-stability the gate does not check.**
   Found 2026-07-29, witness sweep. `CleanupSummary`, `CombatSummary`, `FrontlineSummary`, `AntishipSummary`,
   `MobilizationSummary`, `AirInsertionSummary` and `IjfsWriteback` each say `to_dict()` is "the
   JSON-serialization boundary … so golden/observation fixtures stay byte-stable". The boundary half is
@@ -76,7 +53,7 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   fixture HAS the required top-level keys — no value or key-order comparison. Fix: name the witness in
   each header per `hexcombat-docs-and-writing` ("pinned by: …, which checks key presence only").
   **Do the drift-check item above FIRST** — if the gate gains a real value comparison, these headers
-  become true as written and this item reduces to naming the real witness instead of documenting a hole.
+  become true as written and this item reduces to naming the real witness instead of documenting a hole. Closeout: updated all 7 headers to use pinned by convention.
 - [ ] **`docs/plans/` is excluded from the doc-anchor gate, so an ACTIVE plan's code references rot silently.**
   Found 2026-07-31 while widening the gate; accepted trade-off, not an oversight. Plans are
   excluded because a proposal legitimately names classes it intends to CREATE — failing a plan for
@@ -105,19 +82,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   (caught by agy-explore; two other models wrongly agreed it would). That hole is closed separately by
   `--quit-after` in `run_all_tests.py`. So this is deduplication only, worth doing when validators are
   being touched anyway, in slices of 5-6 with the gate green between. Good `opencode` delegation.
-- [x] **`data/ijfs/grouped_targets.json` is orphaned AND now factually wrong.**
-  Found 2026-08-01 by the plan-0060 diff review, and confirmed by measurement: a scan of `scripts/`,
-  `tools/` and `tests/` finds ZERO readers, so `docs/systems/ijfs/ijfs.md`'s old "used by validation
-  scripts" claim was false (that line is now corrected). Worse, its `groups[].replaces_target_ids`
-  still names `sam_mobile_antelope_to2`..`_to5` — the four TO-split source rows plan 0060 R10
-  consolidated into one 50-instance row with a `to_distribution`. So the file describes a target
-  topology that no longer exists and nothing would notice.
-  **Not deleted as part of 0060**, deliberately: removing a content file is a USER call about what
-  the project keeps as design record, not an implementation detail of an air-attrition plan. Either
-  delete it, or re-point it at the new source ids and give it a reader that the gate exercises — a
-  data file with no reader is a data file that cannot be wrong out loud.
 
-- [ ] **The `turn_result` schema is now gated on KEY PRESENCE only — the nested shapes are still unchecked.**
+- [x] **The `turn_result` schema is now gated on KEY PRESENCE only — the nested shapes are still unchecked.**
   Opened 2026-08-01, replacing the five-field drift item, which is FIXED. The drift
   itself is closed: `air_insertion_summary`, `mobilization_summary`, `offload_summary`, `game_over` and
   `winner` are declared, and `tests/turn_result_serialization_test.gd` now fails if any `TurnResult`
@@ -126,7 +92,7 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   `{"type": "object"}`, so a future loss of `model_version`, `squadrons`, `kind` or a counter's type
   would not register as a contract violation. Worth doing when the turn record is next treated as a
   durable research contract rather than a convenience payload — and note the same
-  presence-not-shape weakness is what the LLM fixture drift-check item above is about.
+  presence-not-shape weakness is what the LLM fixture drift-check item above is about. Closeout: nested shapes fully verified bi-directionally in serialization test against fixture.
 - [ ] **Nothing enforces `sweepable`, so the flag records intent and no more.**
   Measured 2026-08-01 while marking the combat advantage ratios `false`. `tools/run_sweep.py` never consults the knob registry;
   the only code that touches the field is `tools/validate_knob_registry.gd`, which checks it is a bool
@@ -145,49 +111,6 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   type-name heuristics. Plan 0032 anchored two new airborne strengths on entries that were dead until
   then. Instrument `_fallback_category_for_type` over both OOBs, list the keys actually hit, and delete
   or document the rest. Do NOT delete on inspection alone; the matching is indirect.
-- [x] **`OffloadCalculator` no longer applies campaign state through a handed dict.** Plan 0058 moves
-  it to `scripts/calc/`: it returns replay-safe banked-progress outcomes, and `ForceTransitions`
-  validates and applies them in the force transaction. The public offload manifest is unchanged.
-- [x] **DeepSeek's strength is narrower than "bounded enumeration" — it needs the material HANDED to it.**
-  It times out on multi-module call-chain tracing (measured 2026-08-01, two flakes). The roster
-  records 3/3 as a bounded enumerator, which is true but under-specified. Measured across four
-  invocations in one session: **succeeded twice** when given material to read — a committed plan file
-  (16.3 KB return) and a frozen diff (23.9 KB, and it caught a second `model_version` pin nobody else
-  did. **Failed twice**, `exit 124` with ZERO bytes at both 15 and 25 minutes, when asked to trace
-  reads/writes through five modules (`IjfsEngagement`, `IjfsManpads`, `IjfsDetection`, `IjfsStrike`,
-  `IjfsTransitions`) — open-ended exploration needing many tool calls. Narrowing the brief between the
-  two attempts changed nothing, so it is the task SHAPE, not the wording. A trivial probe returned `OK`
-  in seconds immediately afterwards, so the route was alive throughout.
-  **So: give DeepSeek a document and ask it to enumerate what is IN it; give `agy-explore` anything
-  that requires finding the material first** — its own contract lists "mapping deps; tracing a flow" as
-  what it is for, and its measured record is 4/4 substantive. Fold this into `.claude/REVIEWERS.md`'s
-  "Use it for" column next time that file is edited; it is a sharpening of an existing row, not a new
-  fact needing its own home.
-  **And note how the failure presents:** `opencode` buffers until exit, so a timeout leaves an empty
-  file and a wrapper that can still report success. The only signal is exit code 124. An empty return
-  read as "reviewed, nothing found" is the exact flake-is-not-a-pass trap.
-- [x] **Reviewer read-only is still a prompt, not a sandbox — opencode can enforce it.**
-  Found 2026-07-30, plan 0054; USER raised the config route. `opencode` supports per-agent permissions
-  (`opencode.json` → `agent.plan.permission`), so `"edit": "deny"` would make read-only ENFORCED for the
-  DeepSeek route instead of merely requested in prose — the hole `.claude/REVIEWERS.md` § Safety
-  currently just warns about. Measured context: `external_directory` defaults to `ask`, and an "ask" in
-  a non-interactive opencode invocation is auto-rejected, which is why that reviewer read no artifact for
-  four rounds. **Do NOT use opencode's `--auto` flag** as the fix: it approves everything not explicitly denied,
-  including `edit`, and these models have been measured announcing a fallback from the read-only agent to
-  the writing `build` agent. Verify any change by having the `plan` agent attempt an edit and watching it
-  be denied. Before this fix, global `~/.config/opencode/opencode.json` had no `permission` block at all.
-- [x] **A reviewer brief should demand NUMBERED findings from every role, including nil returns.**
-  Found 2026-07-30, plan 0047 steps 4-7 round. `tools/review_fanout.sh --report` scores a return
-  `FLAKE` on "no numbered findings", which is right as a default — a died-early route is
-  indistinguishable from approval. But that round produced two genuine returns it could not count: the
-  tier-1 reviewer's 342-byte "no actionable findings" (a real read: it named a non-equivalence and two
-  ABSENT determinations) and the enumerator's 34 KB of correct verbatim lists (an enumeration role
-  produces lists, not findings). Auto-count said 1 of 2 and "hold uncommitted"; the quorum was in fact
-  met, on content. **The cheap fix is in the BRIEF, not the launcher:** require every role to answer as
-  a numbered list, with "1. No defect found — here is what I checked and what I concluded" as a legal
-  entry, and require an enumeration role to number its lists. Then the mechanical count matches reality
-  and no agent has to reason its way past a `QUORUM NOT MET` line. Pairs with the `--format json` item
-  below; do them together if either is touched.
 - [ ] **DeepSeek's return is unparseable by the byte band because its stdout contains noise.**
   Its stdout is prompt echo + tool traces + report (found 2026-07-30, plan 0047; USER raised it). Both plan-0047 rounds were
   substantive enumerations (23.6 KB and 14.7 KB) and both were labelled `SUSPECT` on size alone, so a
@@ -201,14 +124,12 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   (one reviewer's artifact read off disk and returned verbatim by another as fake corroboration).
   Note an enumeration return is legitimately long even once the noise is stripped, so the 1–10 KB band
   needs a role-aware exception either way.
-- **A typed turn-resolution outcome carrying all phase reports — proposed by the tier-1 reviewer during
-  plan 0059's review, and MEASURED DOWN rather than adopted (2026-08-01).** The idea: instead of each
-  phase writing a report onto `GameStateData` and `GameState.play_turn` reading eleven fields back out,
+- **A typed turn-resolution outcome carrying all phase reports — proposed by the tier-1 reviewer during plan 0059's review, and MEASURED DOWN rather than adopted (2026-08-01).**
+  The idea: instead of each phase writing a report onto `GameStateData` and `GameState.play_turn` reading eleven fields back out,
   `TurnConductor` returns one typed outcome carrying them all. It is a genuinely better shape in the
   abstract, and it is **not worth doing here** for a reason that only shows up when you count the
   fields. Of the eleven `phase_output` fields on `GameStateData`:
-  - **Five are read by `LLMGameAPI` at PLANNING time, between turns** — `last_ijfs_summary`,
-    `last_antiship_summary`, `last_combat_summaries`, `last_contested_hexes`, `last_ijfs_writeback`.
+  - **Five are read by `LLMGameAPI` at PLANNING time, between turns** — `last_ijfs_summary`, `last_antiship_summary`, `last_combat_summaries`, `last_contested_hexes`, `last_ijfs_writeback`.
     A resolution outcome exists only from resolve until `play_turn` returns; these are read long after
     that, when a seat builds its next observation. **They must stay on the state whatever happens**, so
     a typed outcome cannot replace them — it runs in parallel with them.
@@ -252,14 +173,14 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   usages the check would match almost nothing, and this repo's standard is that a detector is proven by
   fixtures or it is a false negative waiting to happen (see `validate_mutation_authority.gd`'s
   E_VACUOUS family). **Unblocks when:** ~10 usages exist. Then add fixtures proving each direction fails.
-- **Doc-anchor validator checks links, not bare symbols (found 2026-07-25).**
+- [ ] **Doc-anchor validator checks links, not bare symbols (found 2026-07-25).**
   `tools/validate_doc_anchors.gd` matches `ClassName.member` in backticks, so a doc naming a bare
   `CONSTANT` that no longer exists passes — `docs/systems/ground-combat.md` described
   `CombatCalculator.TERRAIN_MODIFIERS` as "dead code, left untouched" long after the symbol was deleted
   (fixed 2026-07-25). Extending the check to bare backticked ALL_CAPS identifiers was considered and
   **deferred deliberately**: `PI`, `INFINITY` and ordinary prose constants would false-positive.
   **Unblocks when:** someone has a scoping rule that survives scrutiny. Neither reviewer had one.
-- **Combat-loop caches live as mutable fields on `GameStateData` (found 2026-07-25).**
+- [ ] **Combat-loop caches live as mutable fields on `GameStateData` (found 2026-07-25).**
   `isolated_air_landed_brigades` (`:43`) and `not_ashore_by_type` (`:49`) are both computed once per
   turn at `TurnConductor:65`/`:70` and read by every contested hex; nothing enforces that a third such
   cache follows the rule or that either is cleared between turns. A `begin_combat_loop(state)`
@@ -267,7 +188,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   reviewers split on risk/reward — the caches are correct today and the change touches
   `CombatResolver.resolve_at`'s signature for no behavioural gain. **Unblocks when:** that seam is open
   for another reason, or a third such cache appears.
-- **`CombatResolver` assumes attacker=Red / defender=Green.** `resolve_at` hardcodes it — the two
+- **`CombatResolver` assumes attacker=Red / defender=Green.**
+  `resolve_at` hardcodes it — the two
   defender-side `inject_supply_effectiveness` calls were no-ops for exactly this reason and were removed
   2026-07-24, leaving a comment. Supply injection and anything else keyed on side must be driven by each
   side's actual team, not its role. Ported combat semantics, so a USER-aware change, not a refactor.

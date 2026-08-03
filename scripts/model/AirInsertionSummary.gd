@@ -8,6 +8,7 @@ class_name AirInsertionSummary
 ## All-zero/empty when nothing was ordered (the default), which is what keeps the phase invisible
 ## until a scenario and a player opt in.
 ## to_dict() is the JSON-serialization boundary; its key order and value types are the contract.
+## pinned by: tools/validate_llm_api.gd (deep drift check).
 
 ## Insertions resolved this turn, in order. Each entry:
 ##   {brigade_id: String, lift_class: String, hex_id: String, sent: int, landed: int, lost: int,

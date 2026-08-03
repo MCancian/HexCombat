@@ -5,7 +5,7 @@ class_name CleanupSummary
 ## census/verdict. Carried in GameState.last_cleanup_summary / TurnResult / the event log / the
 ## EventBus.cleanup_resolved signal. Replaces the former plain dict (refactor_audit item 9 — typed
 ## drift-safety). to_dict() is the JSON-serialization boundary; its key order and value types mirror
-## the former dict exactly so the golden/observation fixtures stay byte-stable. A null
+## former dict exactly. pinned by: tools/validate_llm_api.gd (deep drift check). A null
 ## last_cleanup_summary means the phase has not resolved this turn.
 
 @export var antiship_systems_reset: int = 0

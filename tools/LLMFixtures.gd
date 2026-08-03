@@ -11,15 +11,14 @@ class_name LLMFixtures
 const RESULT_SEED := 20260624
 
 ## The canonical action sequence the result fixture records: Red lands (offload), moves one
-## brigade into contact, then ends the turn under the fixed golden seed.
 static func result_response() -> Dictionary:
 	return {
 		"protocol_version": LLMGameAPI.PROTOCOL_VERSION,
 		"schema": LLMGameAPI.ACTION_RESPONSE_SCHEMA,
 		"perspective_team": "Red",
 		"actions": [
-			{"type": "move", "team": "Red", "brigade_id": "PLA-71-2-Amphibious", "target_hex": "hex_43_16", "mode": Movement.MODE_TACTICAL},
-			{"type": "end_turn", "seed": RESULT_SEED},
+			{"type": "move", "team": "Red", "brigade_id": GoldenScript.RED_MOVER_ID, "target_hex": GoldenScript.TARGET_HEX, "mode": Movement.MODE_TACTICAL},
+			{"type": "end_turn", "seed": GoldenScript.SEED},
 		],
 	}
 

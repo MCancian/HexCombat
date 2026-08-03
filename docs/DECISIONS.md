@@ -25,6 +25,9 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-08-03 — LLM / turn-result fixture contract drift and schema verification closed out (agent; USER-approved re-baseline).**
+  The `docs/examples/llm_result_after_turn.json` fixture is now deep-drift-checked by `validate_llm_api.gd` via exact JSON value string-matching instead of key presence, fulfilling the USER call from 2026-07-29. Seven model summary headers were updated to cite the real drift witness. The turn_result serialization check was extended to enforce two-way schema correspondence against nested objects by recursively traversing the fixture. Facts: `tools/validate_llm_api.gd`, `tests/turn_result_serialization_test.gd`, `schemas/llm_action_result.schema.json`, `docs/plans/BACKLOG.md`.
+
 - **2026-08-03 — Validator proof surfaces bundle completed (agent; unreviewed).**
   Added `--census` flag to `tools/validate_authority_call_placement.gd` to replace grep-based census in `.claude/skills/hexcombat-structure-map/SKILL.md`. Added `E_STALE_ALLOWANCE` proof surface self-test to `tools/validate_mutation_authority.gd` with a fabricated allowance in the fixture manifest. Both hygiene items from BACKLOG.md are closed.
 

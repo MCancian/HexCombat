@@ -45,13 +45,43 @@ func test_every_serialized_key_is_declared_in_the_action_result_schema() -> void
 	file.close()
 	var declared: Dictionary = ((schema["properties"] as Dictionary)["turn_result"] as Dictionary)["properties"]
 
-	var missing: Array[String] = []
-	for key in TurnResult.new().to_dict().keys():
-		if not declared.has(key):
-			missing.append(String(key))
-	missing.sort()
+	var fixture_file := FileAccess.open("res://docs/examples/llm_result_after_turn.json", FileAccess.READ)
+	assert_object(fixture_file).is_not_null()
+	var fixture: Dictionary = JSON.parse_string(fixture_file.get_as_text())
+	fixture_file.close()
+	var tr_fixture: Dictionary = fixture["turn_result"]
 
-	assert_array(missing).override_failure_message(
-		"TurnResult keys absent from llm_action_result.schema.json: %s — the published contract for "
-		% [missing] + "the turn record understates it, and nothing else in the gate would say so"
+	# Ensure the fixture is not empty so the recursive check actually traverses everything
+	assert_bool(tr_fixture.has("cleanup_summary")).is_true()
+
+	_check_two_way_schema(tr_fixture, declared, "turn_result")
+
+func _check_two_way_schema(dict_val: Dictionary, schema_props: Dictionary, path: String) -> void:
+	var missing_in_schema: Array[String] = []
+	for key in dict_val.keys():
+		if not schema_props.has(key):
+			missing_in_schema.append(String(key))
+	missing_in_schema.sort()
+	assert_array(missing_in_schema).override_failure_message(
+		"Model keys absent from schema at %s: %s" % [path, missing_in_schema]
 	).is_empty()
+
+	var missing_in_model: Array[String] = []
+	if not dict_val.is_empty():
+		for key in schema_props.keys():
+			if not dict_val.has(key):
+				missing_in_model.append(String(key))
+	missing_in_model.sort()
+	assert_array(missing_in_model).override_failure_message(
+		"Schema properties absent from model fixture at %s: %s" % [path, missing_in_model]
+	).is_empty()
+
+	# Recurse into nested objects
+	for key in dict_val.keys():
+		var val = dict_val[key]
+		var prop_def = schema_props[key]
+		
+		if val is Dictionary and prop_def.has("properties"):
+			_check_two_way_schema(val, prop_def["properties"], path + "." + String(key))
+		elif val is Array and not val.is_empty() and val[0] is Dictionary and prop_def.has("items") and (prop_def["items"] as Dictionary).has("properties"):
+			_check_two_way_schema(val[0], prop_def["items"]["properties"], path + "." + String(key) + "[0]")

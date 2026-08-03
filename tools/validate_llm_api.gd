@@ -380,11 +380,17 @@ func _validate_result_schema_conformance() -> void:
 
 	var fixture = _read_json("res://docs/examples/llm_result_after_turn.json")
 	if fixture is Dictionary:
-		var f: Dictionary = fixture
-		for key in REQUIRED_RESULT_KEYS:
-			if not f.has(key):
-				_fail("result fixture missing required key: %s" % key)
-
+		var normalized_result = JSON.parse_string(JSON.stringify(result))
+		var expected_json = JSON.stringify(fixture, "\t", true, false)
+		var actual_json = JSON.stringify(normalized_result, "\t", true, false)
+		if expected_json != actual_json:
+			var ef = FileAccess.open("res://debug_expected.json", FileAccess.WRITE)
+			ef.store_string(expected_json)
+			ef.close()
+			var af = FileAccess.open("res://debug_actual.json", FileAccess.WRITE)
+			af.store_string(actual_json)
+			af.close()
+			_fail("result fixture drifted. Compare JSON to see differences, or regenerate via LLMFixtures.gd")
 
 func _finish() -> void:
 	if _failures.is_empty():

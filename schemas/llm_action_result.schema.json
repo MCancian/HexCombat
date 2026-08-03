@@ -14,45 +14,1349 @@
     "observation"
   ],
   "properties": {
-    "protocol_version": {"type": "string"},
-    "schema": {"const": "hexcombat.llm_action_result"},
-    "ok": {"type": "boolean"},
-    "errors": {"type": "array"},
-    "resolved": {"type": "boolean"},
-    "seed": {"type": "integer"},
-    "observation": {"type": "object"},
+    "protocol_version": {
+      "type": "string"
+    },
+    "schema": {
+      "const": "hexcombat.llm_action_result"
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "errors": {
+      "type": "array"
+    },
+    "resolved": {
+      "type": "boolean"
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "observation": {
+      "type": "object"
+    },
     "turn_result": {
       "type": "object",
       "description": "Structured record of the turn just resolved; {} when resolved=false. Sub-keys are NOT required so the empty (unresolved) form also validates.",
       "properties": {
-        "turn_number": {"type": "integer"},
-        "contested_hexes": {"type": "array"},
-        "combat_summaries": {"type": "array"},
-        "ijfs_summary": {"type": "object"},
-        "ijfs_writeback": {"type": "object"},
-        "air_oob": {"type": "object"},
-        "antiship_summary": {"type": "object"},
-        "offload_summary": {"type": "object"},
-        "mobilization_summary": {"type": "object"},
-        "air_insertion_summary": {"type": "object"},
-        "frontline_summary": {"type": "object"},
-        "cleanup_summary": {"type": "object"},
+        "turn_number": {
+          "type": "integer"
+        },
+        "contested_hexes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "combat_summaries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "attacker_brigade_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "attacker_losses": {
+                "type": "integer"
+              },
+              "combat_detail": {
+                "type": "object",
+                "properties": {
+                  "attacker": {
+                    "type": "object",
+                    "properties": {
+                      "maneuver_combat_power": {
+                        "type": "number"
+                      },
+                      "maneuver_unit_count": {
+                        "type": "integer"
+                      },
+                      "support_breakdown": {
+                        "type": "object",
+                        "properties": {
+                          "artillery": {
+                            "type": "number"
+                          },
+                          "cas": {
+                            "type": "number"
+                          },
+                          "crbm": {
+                            "type": "number"
+                          },
+                          "rocket_artillery": {
+                            "type": "number"
+                          },
+                          "rotary_wing": {
+                            "type": "number"
+                          }
+                        }
+                      },
+                      "support_combat_power": {
+                        "type": "number"
+                      },
+                      "support_counts": {
+                        "type": "object",
+                        "properties": {
+                          "artillery": {
+                            "type": "integer"
+                          },
+                          "cas": {
+                            "type": "integer"
+                          },
+                          "crbm": {
+                            "type": "integer"
+                          },
+                          "rocket_artillery": {
+                            "type": "integer"
+                          },
+                          "rotary_wing": {
+                            "type": "integer"
+                          }
+                        }
+                      },
+                      "support_unit_count": {
+                        "type": "integer"
+                      },
+                      "total_combat_power_unmodified": {
+                        "type": "number"
+                      },
+                      "unscreened": {
+                        "type": "boolean"
+                      }
+                    }
+                  },
+                  "defender": {
+                    "type": "object",
+                    "properties": {
+                      "maneuver_combat_power": {
+                        "type": "number"
+                      },
+                      "maneuver_unit_count": {
+                        "type": "integer"
+                      },
+                      "support_breakdown": {
+                        "type": "object",
+                        "properties": {
+                          "artillery": {
+                            "type": "number"
+                          },
+                          "cas": {
+                            "type": "number"
+                          },
+                          "crbm": {
+                            "type": "number"
+                          },
+                          "rocket_artillery": {
+                            "type": "number"
+                          },
+                          "rotary_wing": {
+                            "type": "number"
+                          }
+                        }
+                      },
+                      "support_combat_power": {
+                        "type": "number"
+                      },
+                      "support_counts": {
+                        "type": "object",
+                        "properties": {
+                          "artillery": {
+                            "type": "integer"
+                          },
+                          "cas": {
+                            "type": "integer"
+                          },
+                          "crbm": {
+                            "type": "integer"
+                          },
+                          "rocket_artillery": {
+                            "type": "integer"
+                          },
+                          "rotary_wing": {
+                            "type": "integer"
+                          }
+                        }
+                      },
+                      "support_unit_count": {
+                        "type": "integer"
+                      },
+                      "terrain_modifier": {
+                        "type": "number"
+                      },
+                      "total_combat_power_terrain_modified": {
+                        "type": "number"
+                      },
+                      "total_combat_power_unmodified": {
+                        "type": "number"
+                      },
+                      "unscreened": {
+                        "type": "boolean"
+                      }
+                    }
+                  },
+                  "feba": {
+                    "type": "object",
+                    "properties": {
+                      "base_km": {
+                        "type": "number"
+                      },
+                      "movement_km": {
+                        "type": "number"
+                      },
+                      "roll_factor": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "losses": {
+                    "type": "object",
+                    "properties": {
+                      "attacker": {
+                        "type": "integer"
+                      },
+                      "attacker_loss_rate": {
+                        "type": "number"
+                      },
+                      "defender": {
+                        "type": "integer"
+                      },
+                      "defender_loss_rate": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "ratios": {
+                    "type": "object",
+                    "properties": {
+                      "terrain_modified": {
+                        "type": "number"
+                      },
+                      "unmodified": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "result": {
+                    "type": "string"
+                  },
+                  "rolls": {
+                    "type": "object",
+                    "properties": {
+                      "attacker_loss_roll": {
+                        "type": "integer"
+                      },
+                      "defender_loss_roll": {
+                        "type": "integer"
+                      },
+                      "feba_movement_roll": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              },
+              "defender_brigade_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "defender_losses": {
+                "type": "integer"
+              },
+              "feba_movement_km": {
+                "type": "number"
+              },
+              "hex_id": {
+                "type": "string"
+              },
+              "owner_after": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "ijfs_summary": {
+          "type": "object",
+          "properties": {
+            "attacks": {
+              "type": "object",
+              "properties": {
+                "executed": {
+                  "type": "integer"
+                },
+                "skipped": {
+                  "type": "integer"
+                },
+                "skipped_by_reason": {
+                  "type": "object",
+                  "properties": {
+                    "insufficient_inventory": {
+                      "type": "integer"
+                    },
+                    "no_compatible_pairing": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            },
+            "contest_losses": {
+              "type": "integer"
+            },
+            "destroyed_targets_by_category": {
+              "type": "object",
+              "properties": {
+                "Anti-Ship Systems": {
+                  "type": "integer"
+                },
+                "Government Buildings": {
+                  "type": "integer"
+                },
+                "Military Headquarters": {
+                  "type": "integer"
+                },
+                "Mobile SAMs": {
+                  "type": "integer"
+                },
+                "ROCN Bases": {
+                  "type": "integer"
+                },
+                "Static Radars": {
+                  "type": "integer"
+                }
+              }
+            },
+            "detections_by_category": {
+              "type": "object",
+              "properties": {
+                "Anti-Ship Systems": {
+                  "type": "integer"
+                },
+                "Government Buildings": {
+                  "type": "integer"
+                },
+                "MANPADS": {
+                  "type": "integer"
+                },
+                "Maneuver Units": {
+                  "type": "integer"
+                },
+                "Military Headquarters": {
+                  "type": "integer"
+                },
+                "Mobile Radars": {
+                  "type": "integer"
+                },
+                "Mobile SAMs": {
+                  "type": "integer"
+                },
+                "Moveable SAMs": {
+                  "type": "integer"
+                },
+                "ROCAF Airbases": {
+                  "type": "integer"
+                },
+                "ROCN Bases": {
+                  "type": "integer"
+                },
+                "Static Radars": {
+                  "type": "integer"
+                },
+                "Static SAMs": {
+                  "type": "integer"
+                }
+              }
+            },
+            "detections_by_mobility": {
+              "type": "object",
+              "properties": {
+                "mobile": {
+                  "type": "integer"
+                },
+                "moveable": {
+                  "type": "integer"
+                },
+                "static": {
+                  "type": "integer"
+                }
+              }
+            },
+            "exquisite_intel_overrides": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "firing_capacity_utilization": {
+              "type": "object",
+              "properties": {
+                "cj10_lacm_glcm": {
+                  "type": "object",
+                  "properties": {
+                    "budget": {
+                      "type": "integer"
+                    },
+                    "remaining": {
+                      "type": "integer"
+                    },
+                    "used": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "cm401_asbm": {
+                  "type": "object",
+                  "properties": {
+                    "budget": {
+                      "type": "integer"
+                    },
+                    "remaining": {
+                      "type": "integer"
+                    },
+                    "used": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "df15c_penetrator_srbm": {
+                  "type": "object",
+                  "properties": {
+                    "budget": {
+                      "type": "integer"
+                    },
+                    "remaining": {
+                      "type": "integer"
+                    },
+                    "used": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "owa_drone_small": {
+                  "type": "object",
+                  "properties": {
+                    "budget": {
+                      "type": "integer"
+                    },
+                    "remaining": {
+                      "type": "integer"
+                    },
+                    "used": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "pch191_bre6_crbm": {
+                  "type": "object",
+                  "properties": {
+                    "budget": {
+                      "type": "integer"
+                    },
+                    "remaining": {
+                      "type": "integer"
+                    },
+                    "used": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "pch191_bre8_crbm": {
+                  "type": "object",
+                  "properties": {
+                    "budget": {
+                      "type": "integer"
+                    },
+                    "remaining": {
+                      "type": "integer"
+                    },
+                    "used": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "pla_srbm_large_generic": {
+                  "type": "object",
+                  "properties": {
+                    "budget": {
+                      "type": "integer"
+                    },
+                    "remaining": {
+                      "type": "integer"
+                    },
+                    "used": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "yj_12_ascm": {
+                  "type": "object",
+                  "properties": {
+                    "budget": {
+                      "type": "integer"
+                    },
+                    "remaining": {
+                      "type": "integer"
+                    },
+                    "used": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "yj_62_ascm": {
+                  "type": "object",
+                  "properties": {
+                    "budget": {
+                      "type": "integer"
+                    },
+                    "remaining": {
+                      "type": "integer"
+                    },
+                    "used": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            },
+            "free_shot_losses": {
+              "type": "integer"
+            },
+            "manpads": {
+              "type": "object",
+              "properties": {
+                "aborts": {
+                  "type": "integer"
+                },
+                "attempts": {
+                  "type": "integer"
+                },
+                "interceptions": {
+                  "type": "integer"
+                },
+                "kills": {
+                  "type": "integer"
+                },
+                "ready_systems_by_to": {
+                  "type": "object",
+                  "properties": {
+                    "2": {
+                      "type": "integer"
+                    },
+                    "3": {
+                      "type": "integer"
+                    },
+                    "4": {
+                      "type": "integer"
+                    },
+                    "5": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "rtb": {
+                  "type": "integer"
+                },
+                "unaffected": {
+                  "type": "integer"
+                }
+              }
+            },
+            "red_air_losses": {
+              "type": "integer"
+            },
+            "rounds_expended_by_munition": {
+              "type": "object",
+              "properties": {
+                "cj10_lacm_glcm": {
+                  "type": "integer"
+                },
+                "owa_drone_small": {
+                  "type": "integer"
+                },
+                "pla_srbm_large_generic": {
+                  "type": "integer"
+                },
+                "yj_62_ascm": {
+                  "type": "integer"
+                }
+              }
+            },
+            "sead_destroyed": {
+              "type": "integer"
+            },
+            "sead_engagements": {
+              "type": "integer"
+            },
+            "sead_pressure": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            },
+            "sead_suppressed": {
+              "type": "integer"
+            },
+            "suppressed_targets_by_category": {
+              "type": "object",
+              "properties": {
+                "Anti-Ship Systems": {
+                  "type": "integer"
+                },
+                "MANPADS": {
+                  "type": "integer"
+                },
+                "Military Headquarters": {
+                  "type": "integer"
+                },
+                "Mobile Radars": {
+                  "type": "integer"
+                },
+                "Mobile SAMs": {
+                  "type": "integer"
+                },
+                "Moveable SAMs": {
+                  "type": "integer"
+                },
+                "ROCAF Airbases": {
+                  "type": "integer"
+                },
+                "ROCN Bases": {
+                  "type": "integer"
+                },
+                "Static Radars": {
+                  "type": "integer"
+                },
+                "Static SAMs": {
+                  "type": "integer"
+                }
+              }
+            },
+            "taiwan_ad_health_after": {
+              "type": "object",
+              "properties": {
+                "category_health": {
+                  "type": "object",
+                  "properties": {
+                    "Mobile Radars": {
+                      "type": "number"
+                    },
+                    "Moveable SAMs": {
+                      "type": "number"
+                    },
+                    "Static Radars": {
+                      "type": "number"
+                    },
+                    "Static SAMs": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "effective_ad_health": {
+                  "type": "number"
+                },
+                "effective_sam_health": {
+                  "type": "number"
+                },
+                "radar_health": {
+                  "type": "number"
+                },
+                "radar_weight_total": {
+                  "type": "number"
+                },
+                "raw_sam_health": {
+                  "type": "number"
+                },
+                "sam_weight_total": {
+                  "type": "number"
+                }
+              }
+            },
+            "taiwan_ad_health_after_missile_phase": {
+              "type": "object",
+              "properties": {
+                "category_health": {
+                  "type": "object",
+                  "properties": {
+                    "Mobile Radars": {
+                      "type": "number"
+                    },
+                    "Moveable SAMs": {
+                      "type": "number"
+                    },
+                    "Static Radars": {
+                      "type": "number"
+                    },
+                    "Static SAMs": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "effective_ad_health": {
+                  "type": "number"
+                },
+                "effective_sam_health": {
+                  "type": "number"
+                },
+                "radar_health": {
+                  "type": "number"
+                },
+                "radar_weight_total": {
+                  "type": "number"
+                },
+                "raw_sam_health": {
+                  "type": "number"
+                },
+                "sam_weight_total": {
+                  "type": "number"
+                }
+              }
+            },
+            "taiwan_ad_health_after_sead": {
+              "type": "object",
+              "properties": {
+                "category_health": {
+                  "type": "object",
+                  "properties": {
+                    "Mobile Radars": {
+                      "type": "number"
+                    },
+                    "Moveable SAMs": {
+                      "type": "number"
+                    },
+                    "Static Radars": {
+                      "type": "number"
+                    },
+                    "Static SAMs": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "effective_ad_health": {
+                  "type": "number"
+                },
+                "effective_sam_health": {
+                  "type": "number"
+                },
+                "radar_health": {
+                  "type": "number"
+                },
+                "radar_weight_total": {
+                  "type": "number"
+                },
+                "raw_sam_health": {
+                  "type": "number"
+                },
+                "sam_weight_total": {
+                  "type": "number"
+                }
+              }
+            },
+            "taiwan_ad_health_before": {
+              "type": "object",
+              "properties": {
+                "category_health": {
+                  "type": "object",
+                  "properties": {
+                    "Mobile Radars": {
+                      "type": "number"
+                    },
+                    "Moveable SAMs": {
+                      "type": "number"
+                    },
+                    "Static Radars": {
+                      "type": "number"
+                    },
+                    "Static SAMs": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "effective_ad_health": {
+                  "type": "number"
+                },
+                "effective_sam_health": {
+                  "type": "number"
+                },
+                "radar_health": {
+                  "type": "number"
+                },
+                "radar_weight_total": {
+                  "type": "number"
+                },
+                "raw_sam_health": {
+                  "type": "number"
+                },
+                "sam_weight_total": {
+                  "type": "number"
+                }
+              }
+            },
+            "target_counts_by_category_status": {
+              "type": "object",
+              "properties": {
+                "Anti-Ship Systems": {
+                  "type": "object",
+                  "properties": {
+                    "destroyed": {
+                      "type": "integer"
+                    },
+                    "surviving": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "Government Buildings": {
+                  "type": "object",
+                  "properties": {
+                    "destroyed": {
+                      "type": "integer"
+                    },
+                    "surviving": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "MANPADS": {
+                  "type": "object",
+                  "properties": {
+                    "destroyed": {
+                      "type": "integer"
+                    },
+                    "surviving": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "Maneuver Units": {
+                  "type": "object",
+                  "properties": {
+                    "destroyed": {
+                      "type": "integer"
+                    },
+                    "surviving": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "Military Headquarters": {
+                  "type": "object",
+                  "properties": {
+                    "destroyed": {
+                      "type": "integer"
+                    },
+                    "surviving": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "Mobile Radars": {
+                  "type": "object",
+                  "properties": {
+                    "destroyed": {
+                      "type": "integer"
+                    },
+                    "surviving": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "Mobile SAMs": {
+                  "type": "object",
+                  "properties": {
+                    "destroyed": {
+                      "type": "integer"
+                    },
+                    "surviving": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "Moveable SAMs": {
+                  "type": "object",
+                  "properties": {
+                    "destroyed": {
+                      "type": "integer"
+                    },
+                    "surviving": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "ROCAF Airbases": {
+                  "type": "object",
+                  "properties": {
+                    "destroyed": {
+                      "type": "integer"
+                    },
+                    "surviving": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "ROCN Bases": {
+                  "type": "object",
+                  "properties": {
+                    "destroyed": {
+                      "type": "integer"
+                    },
+                    "surviving": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "Static Radars": {
+                  "type": "object",
+                  "properties": {
+                    "destroyed": {
+                      "type": "integer"
+                    },
+                    "surviving": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "Static SAMs": {
+                  "type": "object",
+                  "properties": {
+                    "destroyed": {
+                      "type": "integer"
+                    },
+                    "surviving": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            },
+            "warnings": {
+              "type": "array"
+            }
+          }
+        },
+        "ijfs_writeback": {
+          "type": "object",
+          "properties": {
+            "antiship_destroyed_by_type": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            },
+            "antiship_suppressed_by_type": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            },
+            "maneuver_casualties": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "battalion_id": {
+                    "type": "string"
+                  },
+                  "brigade_id": {
+                    "type": "string"
+                  },
+                  "subcategory": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "integer"
+                  },
+                  "unit_type": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "sam_destroyed": {
+              "type": "integer"
+            },
+            "sam_suppressed": {
+              "type": "integer"
+            }
+          }
+        },
+        "air_oob": {
+          "type": "object",
+          "properties": {
+            "model_version": {
+              "type": "integer"
+            },
+            "provenance": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "squadrons": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "alive": {
+                    "type": "integer"
+                  },
+                  "class": {
+                    "type": "string"
+                  },
+                  "initial": {
+                    "type": "integer"
+                  },
+                  "kind": {
+                    "type": "string"
+                  },
+                  "losses_campaign": {
+                    "type": "integer"
+                  },
+                  "losses_today": {
+                    "type": "integer"
+                  },
+                  "role": {
+                    "type": "string"
+                  },
+                  "rtb_today": {
+                    "type": "integer"
+                  },
+                  "sead_assigned_today": {
+                    "type": "integer"
+                  },
+                  "squadron_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "antiship_summary": {
+          "type": "object",
+          "properties": {
+            "bns_lost_at_sea": {
+              "type": "integer"
+            },
+            "crossing_casualties": {
+              "type": "object",
+              "properties": {
+                "damaged": {
+                  "type": "integer"
+                },
+                "destroyed": {
+                  "type": "integer"
+                }
+              }
+            },
+            "destroyed_by_ship_type": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            },
+            "mine_status": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "beach_id": {
+                    "type": "integer"
+                  },
+                  "lane_cleared": {
+                    "type": "boolean"
+                  },
+                  "ships_destroyed": {
+                    "type": "integer"
+                  },
+                  "status_color": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "resolved_turn": {
+              "type": "integer"
+            },
+            "sent_by_type": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            },
+            "systems_fired_count": {
+              "type": "integer"
+            },
+            "target_beaches": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "target_tos": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "unliftable_bn": {
+              "type": "integer"
+            },
+            "wave_bns": {
+              "type": "integer"
+            }
+          }
+        },
+        "offload_summary": {
+          "type": "object",
+          "properties": {
+            "bns_landed": {
+              "type": "integer"
+            },
+            "bns_sent": {
+              "type": "integer"
+            },
+            "bns_waiting": {
+              "type": "integer"
+            },
+            "landed_brigade_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "lost_at_sea": {
+              "type": "integer"
+            },
+            "manifest_deferred": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "bn_id": {
+                    "type": "string"
+                  },
+                  "bn_type": {
+                    "type": "string"
+                  },
+                  "brigade_id": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "manifest_landed": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "beach_id": {
+                    "type": "integer"
+                  },
+                  "bn_id": {
+                    "type": "string"
+                  },
+                  "bn_type": {
+                    "type": "string"
+                  },
+                  "brigade_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "mobilization_summary": {
+          "type": "object",
+          "properties": {
+            "arrivals": {
+              "type": "array"
+            },
+            "battalions_arrived": {
+              "type": "integer"
+            },
+            "deferred": {
+              "type": "array"
+            },
+            "pending_battalions": {
+              "type": "integer"
+            },
+            "pending_brigades": {
+              "type": "integer"
+            }
+          }
+        },
+        "air_insertion_summary": {
+          "type": "object",
+          "properties": {
+            "attrition_by_class": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            },
+            "battalions_landed": {
+              "type": "integer"
+            },
+            "battalions_lost": {
+              "type": "integer"
+            },
+            "caps_after": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            },
+            "caps_before": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            },
+            "drops": {
+              "type": "array"
+            },
+            "pending_battalions": {
+              "type": "integer"
+            },
+            "pending_brigades": {
+              "type": "integer"
+            },
+            "rejected": {
+              "type": "array"
+            }
+          }
+        },
+        "frontline_summary": {
+          "type": "object",
+          "properties": {
+            "hex_sequence": {
+              "type": "array"
+            },
+            "affected_brigades": {
+              "type": "array"
+            },
+            "moves": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "cleanup_summary": {
+          "type": "object",
+          "properties": {
+            "antiship_systems_reset": {
+              "type": "integer"
+            },
+            "china_battalions_on_taiwan": {
+              "type": "integer"
+            },
+            "game_over": {
+              "type": "boolean"
+            },
+            "taiwan_battalions_on_taiwan": {
+              "type": "integer"
+            },
+            "victory_reason": {
+              "type": "string"
+            },
+            "winner": {
+              "type": "string"
+            }
+          }
+        },
         "events": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["seq", "kind", "hex_id", "team", "data"],
+            "required": [
+              "seq",
+              "kind",
+              "hex_id",
+              "team",
+              "data"
+            ],
             "properties": {
-              "seq": {"type": "integer"},
-              "kind": {"enum": ["ijfs", "antiship", "move", "commit", "combat", "frontline", "cleanup"]},
-              "hex_id": {"type": "string"},
-              "team": {"type": "string"},
-              "data": {"type": "object"}
+              "seq": {
+                "type": "integer"
+              },
+              "kind": {
+                "enum": [
+                  "ijfs",
+                  "antiship",
+                  "move",
+                  "commit",
+                  "combat",
+                  "frontline",
+                  "cleanup"
+                ]
+              },
+              "hex_id": {
+                "type": "string"
+              },
+              "team": {
+                "type": "string"
+              },
+              "data": {
+                "type": "object"
+              }
             }
           }
         },
-        "game_over": {"type": "boolean"},
-        "winner": {"type": "string"}
+        "game_over": {
+          "type": "boolean"
+        },
+        "winner": {
+          "type": "string"
+        }
       }
     }
   },
