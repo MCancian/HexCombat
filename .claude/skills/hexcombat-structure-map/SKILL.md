@@ -55,18 +55,12 @@ if an aggregate is added, it appears here first.
 **The applies/pure census** — which files change campaign state, and which only calculate:
 
 ```bash
-for f in scripts/*/*.gd; do
-  n=$(grep -vE '^\s*#' "$f" | grep -cE '\b[A-Za-z]+Transitions\.[a-z_]+\(')
-  [ "$n" -gt 0 ] && printf '%-48s %s\n' "$f" "$n"
-done
+godot --headless -s res://tools/validate_authority_call_placement.gd --quit-after 300 -- --census
 ```
 
-Three traps, all of which have already produced a wrong answer in this repo:
+Two traps, both of which have already produced a wrong answer in this repo:
 
-**1. Strip comment lines — not optional.** Without `grep -vE '^\s*#'` the scan reports ten false hits in
-`scripts/calc/` alone, because header prose legitimately names the authority a file used to call.
-
-**2. A hit is not a finding. Ask whether the file's DIRECTORY permits it.** Calling an authority is how
+**1. A hit is not a finding. Ask whether the file's DIRECTORY permits it.** Calling an authority is how
 campaign state is *supposed* to change, so most hits are correct code. Compare each against the claim in
 `docs/STATUS.md` → "Where a file goes":
 
@@ -81,7 +75,7 @@ campaign state is *supposed* to change, so most hits are correct code. Compare e
 So the number worth reporting is never the raw total — it is the count in directories whose claim
 forbids it. Reporting the raw total as "N files change state illegally" is a fabricated finding.
 
-**3. Ask which question your instrument answers.** After the 0042–0050 campaign, the only remaining way
+**2. Ask which question your instrument answers.** After the 0042–0050 campaign, the only remaining way
 to change campaign state is to *call* an authority — a function call, not an assignment. A scan built to
 hunt illegal direct writes (the alias-taint scan from plan 0050) cannot see legitimate application, and
 reports a busy file as inert. Plan 0055 was written on exactly that error — it declared six files
@@ -123,15 +117,3 @@ the next reader tell a stale page from a wrong one.
 - A structural claim in `docs/STATUS.md` is being questioned. Run the commands rather than arguing
   from the doc; the doc has been wrong twice.
 
-## Worth promoting
-
-**Half done as of plan 0055 (2026-07-31).** The *verdict* half is now a real tool —
-`tools/validate_authority_call_placement.gd` runs in the gate, derives its authority list from
-`tools/mutation_authority_manifest.json`, and fails the build if a forbidding directory calls an
-authority or an `scripts/interleaved/` file stops calling one. Run it before trusting the table above;
-it is the enforcement, and this skill is not.
-
-The *census* half — per-file counts, which is what the plates actually need — is still the inline
-`grep` above, so the comment-stripping detail still lives in two places. The cheap fix is a `--census`
-flag on that validator that prints `path count authority,...`, letting this skill call it rather than
-restate it. Logged in `docs/plans/BACKLOG.md`.

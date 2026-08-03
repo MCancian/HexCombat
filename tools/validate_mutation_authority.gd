@@ -1430,6 +1430,7 @@ func _run_self_test() -> void:
 	_check_manifest_error_fixtures(corpus)
 	_check_authority_dir_fixture(manifest, ownership)
 	_check_inert_authority_fixture(manifest, verdict)
+	_check_stale_allowance_fixture(ownership, verdict)
 	_check_real_contract_duplicate_self_test()
 	_check_promise_classification_self_test()
 	_check_empty_hosted_self_test(corpus)
@@ -1492,6 +1493,15 @@ func _check_inert_authority_fixture(manifest: Dictionary, verdict: Verdict) -> v
 	var produced := _capture_failures(func() -> void:
 		_report_inert_authorities(manifest, test_verdict))
 	_expect_single_error(produced, "E_INERT_AUTHORITY", "inert-authority fixture")
+
+
+## The fixture manifest carries a fabricated legacy allowance that writes nothing in the fixture
+## corpus. Re-judging the manifest against the normal usage record (where the allowance is absent)
+## proves the stale-allowance check fires.
+func _check_stale_allowance_fixture(ownership: Ownership, verdict: Verdict) -> void:
+	var produced := _capture_failures(func() -> void:
+		_report_stale_allowances(ownership, verdict))
+	_expect_single_error(produced, "E_STALE_ALLOWANCE", "stale allowance fixture")
 
 
 func _compare_self_test(expected: Dictionary, actual: Dictionary) -> void:

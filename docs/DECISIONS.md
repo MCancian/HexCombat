@@ -25,6 +25,9 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-08-03 — Validator proof surfaces bundle completed (agent; unreviewed).**
+  Added `--census` flag to `tools/validate_authority_call_placement.gd` to replace grep-based census in `.claude/skills/hexcombat-structure-map/SKILL.md`. Added `E_STALE_ALLOWANCE` proof surface self-test to `tools/validate_mutation_authority.gd` with a fabricated allowance in the fixture manifest. Both hygiene items from BACKLOG.md are closed.
+
 - **2026-08-02 — Plan 0058 makes OffloadCalculator genuinely pure (agent; reviewed).**
   Banked beach throughput is now a replay-safe outcome plan, applied only by `ForceTransitions` in
   the validated offload transaction; the calculator moves to `scripts/calc/` and public offload

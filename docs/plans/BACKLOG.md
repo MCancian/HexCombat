@@ -34,7 +34,7 @@ means writing prose you then have to un-write.
 budget above depends on it. If the observation is a standing rule or is blocked on something absent,
 put it in the section below WITHOUT a checkbox and say what would unblock it.)*
 
-- [ ] **The applies/pure CENSUS scan is still prose in two homes.**
+- [x] **The applies/pure CENSUS scan is still prose in two homes.**
   Only the pass/fail half became a tool (plan 0055, 2026-07-31). `.claude/skills/hexcombat-structure-map` asked whoever implemented 0055 to
   promote its `grep`-based census to a real script under `tools/`, because the comment-stripping detail
   is load-bearing and was being kept in two copies. **Half of that happened and half did not.**
@@ -45,8 +45,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   still lives as prose in the skill. The cheap fix is a `--census` flag on the existing validator that
   prints `path count authority,...` and exits 0, letting the skill call it instead of restating it.
   Not done here because the validator's own commit was already the plan's last step and adding an output
-  mode is a separate, testable change.
-- [ ] **`E_STALE_ALLOWANCE` is the one mutation-manifest check with no proof surface.**
+  mode is a separate, testable change. (Closed 2026-08-03: `--census` flag added to `validate_authority_call_placement.gd` and SKILL updated to use it.)
+- [x] **`E_STALE_ALLOWANCE` is the one mutation-manifest check with no proof surface.**
   Found 2026-07-30 by the DeepSeek enumeration role; pre-existing, not a regression. Every other manifest-check code
   is either declared by a `bad_manifest_*.json` fixture or perturbed by a `_capture_failures`
   self-test. `tools/validate_mutation_authority.gd`'s `_report_stale_allowances` is not: it is the
@@ -55,6 +55,7 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   — `_check_manifest_error_fixtures` runs only `_check_manifest` + `_build_ownership`, never `_scan`,
   and a stale allowance is only visible after a scan produces a Verdict. It needs the same treatment
   `_check_inert_authority_fixture` got: re-judge the fixture findings against a doctored usage record.
+  (Closed 2026-08-03: Added a fabricated stale allowance to `fixture_manifest.json` and a `_check_stale_allowance_fixture` self-test to prove it fires.)
 
 - [ ] **The LLM result fixture is key-presence-checked, not drift-checked (found 2026-07-29).**
   `tools/LLMFixtures.gd:7` records "the rot that left `llm_result_after_turn.json` stale" as the reason

@@ -88,6 +88,14 @@
           "fields": [
             "FixtureRow.tags_by_turn"
           ]
+        },
+        {
+          "path": "res://tools/fixtures/mutation_authority/legacy.gdfixture",
+          "why": "Fabricated stale allowance for self-test.",
+          "removal_plan": "never",
+          "fields": [
+            "FixtureRow.destroyed_units"
+          ]
         }
       ]
     },

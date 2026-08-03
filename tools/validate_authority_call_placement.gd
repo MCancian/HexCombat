@@ -125,6 +125,7 @@ func _initialize() -> void:
 	_failures.append_array(_classification_failures(dirs_with_gd, root_files))
 
 	var checked_dirs := 0
+	var census_lines: Array[String] = []
 	for dir_name in dirs_with_gd:
 		if not DIR_POLICY.has(dir_name):
 			continue
@@ -134,6 +135,9 @@ func _initialize() -> void:
 		for file_path in _gd_files(dir_path):
 			var raw_source := _read(file_path)
 			var hits := _authority_calls_with_aliases(raw_source, authorities, auth_paths)
+			hits.sort()
+			var hits_str := ",".join(hits) if not hits.is_empty() else ""
+			census_lines.append("%s\t%d\t%s\t%s" % [file_path, hits.size(), hits_str, policy])
 			var violation := _policy_violation(policy, file_path, "scripts/%s/" % dir_name, hits)
 			if violation != "":
 				_failures.append(violation)
@@ -144,10 +148,20 @@ func _initialize() -> void:
 		var root_path := "%s/%s" % [SCRIPTS_ROOT, file_name]
 		var raw_source := _read(root_path)
 		var root_hits := _authority_calls_with_aliases(raw_source, authorities, auth_paths)
+		root_hits.sort()
+		var policy := String(ROOT_FILE_POLICY[file_name])
+		var hits_str := ",".join(root_hits) if not root_hits.is_empty() else ""
+		census_lines.append("%s\t%d\t%s\t%s" % [root_path, root_hits.size(), hits_str, policy])
 		var root_violation := _policy_violation(
-			String(ROOT_FILE_POLICY[file_name]), root_path, "scripts/ root", root_hits)
+			policy, root_path, "scripts/ root", root_hits)
 		if root_violation != "":
 			_failures.append(root_violation)
+
+	var is_census := "--census" in OS.get_cmdline_args() or "--census" in OS.get_cmdline_user_args()
+	if is_census:
+		census_lines.sort()
+		for line in census_lines:
+			print(line)
 
 	if _failures.is_empty():
 		print("PASS: authority-call placement — %d authorities; %d GDScript directory(ies) all classified and clean; %d root file(s) allowlisted" % [
