@@ -15,7 +15,7 @@ re-deriving it from brigade-id conventions.
 ## The seam today
 
 Attacker = Red is a game rule baked into the engine, not a per-combat determination:
-`CombatResolver.resolve_hex_combat` hardcodes `inject_supply_effectiveness(attacker_units,
+`CombatResolver.resolve_at` hardcodes `inject_supply_effectiveness(attacker_units,
 Brigade.Team.RED, …)` / defender GREEN, and `BatchReport` states the doctrine ("combat
 (amphibious assault), so attacker_losses accrue to Red"). Because the summary never records the
 team, every consumer re-derives it independently:
@@ -23,7 +23,7 @@ team, every consumer re-derives it independently:
 - viewer `tools/viewer/game_viewer.html` — `buildTeamIndex()` (brigade→team map from
   observations, `PLA-`/`BDE-` prefix fallback) for the casualty chart;
 - bundler `tools/make_game_bundle.py` — `_digest_highlights` assumes side==Red ⇒ attacker;
-- `scripts/BatchReport.gd` — accrues attacker_losses to Red by comment-documented convention.
+- `scripts/api/BatchReport.gd` — accrues attacker_losses to Red by comment-documented convention.
 
 All three are correct under current doctrine and stay correct as long as Green never attacks.
 
@@ -39,7 +39,7 @@ Is a Green counterattack / counterlanding mechanic ever wanted? Two outcomes:
 ## Approach (only if the design call says yes)
 
 1. **Stamp the summary**: `CombatSummary` gains `attacker_team` / `defender_team`;
-   `CombatResolver.resolve_hex_combat` fills them at build time. Digest shape changes →
+   `CombatResolver.resolve_at` fills them at build time. Digest shape changes →
    golden re-baseline per `hexcombat-change-control` (allowed: additive field, engine math
    untouched).
 2. **Migrate consumers**: viewer `computeCasualtySeries` reads the stamped team (keep

@@ -27,12 +27,25 @@
 # valid prose) stays a human/agent problem; this only catches dead anchors, which the audit
 # showed is the dominant failure mode.
 #
-# SCOPE (widened 2026-07-31): checks 2-4 run over docs/** AND .claude/skills/**, minus four kinds of
-# doc where a dead anchor is CORRECT — docs/archive (history), docs/plans (proposals, which name what
-# they intend to build), docs/reports (dated snapshots), and the append-only history docs listed in
-# HISTORY_DOCS. Check 1 stays scoped to docs/systems, where the "class names only" rule applies.
-# Before this, the scope was docs/systems alone: docs/STATUS.md — the file every agent reads first —
-# got no anchor checking at all, and carried a dead `RosterMutations` claim for six plans.
+# SCOPE (widened 2026-07-31): checks 2-4 run over docs/** AND .claude/skills/**, minus the kinds of
+# doc where a dead anchor is CORRECT — docs/archive (history), docs/reports (dated snapshots), and
+# the append-only history docs listed in HISTORY_DOCS. Check 1 stays scoped to docs/systems, where
+# the "class names only" rule applies. Before this, the scope was docs/systems alone:
+# docs/STATUS.md — the file every agent reads first — got no anchor checking at all, and carried a
+# dead `RosterMutations` claim for six plans.
+#
+# SCOPE (widened 2026-08-03, docs/plans — BACKLOG item docs/plans/BACKLOG.md:35): docs/plans is now
+# scanned too; an ACTIVE plan's code references were rotting silently (the 0003/0029 seam citations
+# named CombatResolver.resolve_hex_combat six plans after the decomposition campaign renamed it to
+# resolve_at). Proposals still legitimately name things not in the tree yet, so a line containing
+# the marker `(planned)` suppresses ONLY "this does not exist here" — check 2's dead path, check 3's
+# no-such-script, and check 4's class/member-does-not-resolve — for tokens naming what the plan
+# proposes to build. Same per-token scoping as `(upstream)`, never a whole-line skip, so real
+# anchors on a `(planned)` line stay fully checked. Two carve-outs from the carve-out: docs/plans/ARCHIVE.md
+# (a closed-plan index — every row a shipped record, so its seven dead anchors are correct) is in
+# HISTORY_DOCS; docs/plans/BACKLOG.md is a live queue, kept scanned, with its two historical
+# references marked individually (a teaching placeholder added to PLACEHOLDER_CLASSES and a deleted
+# symbol's record marked `(historical)`).
 #
 # The detector proves itself on every run (`_self_test`): four references that MUST fail and nine that
 # MUST pass, asserted before any doc is read. Deleting the check-4 failure branch, or dropping the
@@ -53,12 +66,12 @@ extends SceneTree
 ## no anchor checking at all — `docs/STATUS.md` carried a `RosterMutations` claim for six plans.
 const DOC_ROOTS := ["res://docs", "res://.claude/skills"]
 ## Excluded from checks 2-4 (not from check 5, which always resolves). `docs/archive` is history by
-## definition and `docs/plans` holds PROPOSALS, which legitimately name classes that do not exist yet —
-## failing a plan for describing what it intends to build would make the gate an obstacle to planning.
-## `docs/reports/` holds dated audit snapshots — a point-in-time record, like an archive entry. One of
-## them documents a REJECTED hallucinated claim about a symbol that never existed; flagging that symbol
-## as a dead anchor is the gate arguing with a doc that already agrees with it.
-const DOC_ROOT_EXCLUDES := ["res://docs/archive/", "res://docs/plans/", "res://docs/reports/"]
+## definition and `docs/reports/` holds dated audit snapshots — a point-in-time record, like an archive
+## entry. One of them documents a REJECTED hallucinated claim about a symbol that never existed; flagging
+## that symbol as a dead anchor is the gate arguing with a doc that already agrees with it. `docs/plans/`
+## was excluded here until 2026-08-03 — see the SCOPE header: it is scanned now, with the `(planned)`
+## escape hatch for proposals, and ARCHIVE.md/BACKLOG.md are handled via HISTORY_DOCS and line markers.
+const DOC_ROOT_EXCLUDES := ["res://docs/archive/", "res://docs/reports/"]
 ## Check 1 (no `file.gd:123` citations) stays scoped to module docs. Everywhere else — DECISIONS
 ## entries, STATUS, the skills — a file:line is often the whole point of the sentence, and the
 ## docs-and-writing rule that motivated check 1 only ever applied to `docs/systems/<module>.md`.
@@ -86,13 +99,18 @@ const NON_SCRIPT_SUFFIXES := [
 	".csv", ".html", ".xml", ".txt", ".cfg", ".godot", ".import", ".exe", ".yml", ".yaml",
 ]
 ## Generic stand-ins used when documenting the RULE rather than a call — `Class.field` is the phrase
-## the mutation manifest and STATUS both use for the shape of a claim. Kept deliberately short: every
-## addition here is a name the gate stops protecting repo-wide.
-const PLACEHOLDER_CLASSES := ["Class", "Domain", "Type", "Model", "Aggregate", "Foo", "Bar", "Some"]
+## the mutation manifest and STATUS both use for the shape of a claim, and `ClassName.member` is the
+## same shape spelled out in BACKLOG.md:145. Kept deliberately short: every addition here is a name
+## the gate stops protecting repo-wide.
+const PLACEHOLDER_CLASSES := ["Class", "ClassName", "Domain", "Type", "Model", "Aggregate", "Foo", "Bar", "Some"]
 ## Script names used to TEACH the citation format (this validator's own header cites `file.gd:123`),
 ## not to point at a file.
 const PLACEHOLDER_SCRIPTS := ["file.gd", "script.gd", ".gd"]
 ## Docs whose every line is a record of the PAST, so a dead anchor in them is correct rather than rotten.
+## `docs/plans/ARCHIVE.md` (added 2026-08-03) is a closed-plan index: each row records a SHIPPED plan,
+## so a row naming a directory the plan later deleted is a true record, not a defect. Its seven dead
+## anchors measured 2026-08-03 are all of that kind. BACKLOG.md is deliberately NOT here — it is a live
+## queue, and its two historical references are marked inline instead.
 ##
 ## `docs/DECISIONS.md` is deliberately NOT here, though it is append-only. Review finding, 2026-07-31:
 ## AGENTS.md mandates a DECISIONS entry at the closeout of every plan, so it is the highest-churn doc in
@@ -103,6 +121,7 @@ const PLACEHOLDER_SCRIPTS := ["file.gd", "script.gd", ".gd"]
 ## changelog is a true annotation rather than a silencer.
 const HISTORY_DOCS := [
 	"res://docs/RETROSPECTIVES.md",
+	"res://docs/plans/ARCHIVE.md",
 	"res://.claude/skills/hexcombat-failure-archaeology/SKILL.md",
 	"res://.claude/skills/hexcombat-gamestate-decomposition-campaign/SKILL.md",
 ]
@@ -114,6 +133,12 @@ var _class_name_re := RegEx.create_from_string("(?m)^class_name\\s+([A-Za-z_][A-
 ## Top-level `enum X` / `const X` / inner `class X` — all three are referenced bare in docs (`Phase.END`)
 ## because that is how code references them, and none resolves to a FILE named X.gd.
 var _type_alias_re := RegEx.create_from_string("(?m)^(?:enum|const|class)\\s+([A-Z][A-Za-z0-9]*)\\b")
+## Line-marker flags passed to _check_token as one bitmask (the gate's param ceiling is 5).
+## `upstream`: citing the TaiwanInvasionViewer source — forgives "no such thing here" but NOT a bad
+## member on a class that resolves here. `planned`: naming what a docs/plans/*.md PROPOSES to build —
+## forgives "no such thing here" including a proposed member on an existing class.
+const FLAG_UPSTREAM := 1
+const FLAG_PLANNED := 2
 
 
 func _initialize() -> void:
@@ -200,15 +225,44 @@ func _self_test() -> void:
 	# `(upstream)` is NOT a line skip: it forgives "no such thing here" and nothing else, so a line
 	# citing an upstream name and one of ours keeps checking ours. Both halves pinned.
 	var before_up := _failures.size()
-	_check_token("<self-test>", 0, "TotallyMadeUpClass.field", member_ref, true)
+	_check_token("<self-test>", 0, "TotallyMadeUpClass.field", member_ref, FLAG_UPSTREAM)
 	if _failures.size() != before_up:
 		_failures.resize(before_up)
 		_failures.append("SELF-TEST: `(upstream)` should forgive an unresolved class and does not")
-	_check_token("<self-test>", 0, "GameData.no_such_member_xyz", member_ref, true)
+	_check_token("<self-test>", 0, "GameData.no_such_member_xyz", member_ref, FLAG_UPSTREAM)
 	if _failures.size() == before_up:
 		_failures.append("SELF-TEST: `(upstream)` wrongly forgives a bad member on a class that DOES resolve here")
 	else:
 		_failures.resize(before_up)
+	# `(planned)` forgives "no such thing here" for a line naming what a plan proposes to build — and
+	# for MEMBERS too, since the common plan pattern is a new member on an existing class
+	# (`AirInsertionSummary.REASON_ON_COOLDOWN` in plan 0036). It is NOT a line skip and it is NOT a
+	# global opt-out: a real class/member stays checked, a placeholder stays a placeholder, and a dead
+	# name is forgiven only when the marker is present. Four passes and one fail, pinned in both
+	# directions like the `(upstream)` block above.
+	var before_pl := _failures.size()
+	_check_token("<self-test>", 0, "TotallyMadeUpClass.field", member_ref, FLAG_PLANNED)
+	if _failures.size() != before_pl:
+		_failures.resize(before_pl)
+		_failures.append("SELF-TEST: `(planned)` should forgive an unresolved class (a proposal name) and does not")
+	_check_token("<self-test>", 0, "AirInsertionSummary.REASON_ON_COOLDOWN", member_ref, FLAG_PLANNED)
+	if _failures.size() != before_pl:
+		_failures.resize(before_pl)
+		_failures.append("SELF-TEST: `(planned)` should forgive a proposed member on a real class and does not")
+	_check_token("<self-test>", 0, "GameData.load_all", member_ref, FLAG_PLANNED)
+	if _failures.size() != before_pl:
+		_failures.resize(before_pl)
+		_failures.append("SELF-TEST: `(planned)` should leave a real class/member checked and does not")
+	_check_token("<self-test>", 0, "Class.field", member_ref, FLAG_PLANNED)
+	if _failures.size() != before_pl:
+		_failures.resize(before_pl)
+		_failures.append("SELF-TEST: `(planned)` should not change how a placeholder reference resolves")
+	# A dead name is forgiven ONLY when the marker is on the line — the flag must not be sticky.
+	_check_token("<self-test>", 0, "TotallyMadeUpClass.field", member_ref, 0)
+	if _failures.size() == before_pl:
+		_failures.append("SELF-TEST: a dead name with no `(planned)` marker should still fail")
+	else:
+		_failures.resize(before_pl)
 
 
 func _check_doc(path: String) -> void:
@@ -229,16 +283,29 @@ func _check_doc(path: String) -> void:
 		# name and one of OURS in the same breath (`GameView.IJFS` -> our `resolve_ijfs_turn`), and
 		# skipping the line would stop checking our half too. Review finding, 2026-07-31.
 		var upstream := line.contains("(upstream)")
+		# `(planned)` (added 2026-08-03, see SCOPE) marks a plan line naming what the plan PROPOSES to
+		# build. Same per-token scoping as `(upstream)`: it forgives only "this does not exist here" —
+		# but for members too, since the common plan pattern is a NEW member on an EXISTING class
+		# (`AirInsertionSummary.REASON_ON_COOLDOWN` in plan 0036). Never a line skip: real anchors on
+		# the same line stay checked.
+		var planned := line.contains("(planned)")
 		if cite_scoped and line_cite.search(line) != null:
 			_failures.append("%s:%d: file:line citation (line numbers rot — cite the class name): %s" % [doc, i + 1, line.strip_edges().left(90)])
 		for m in backtick.search_all(line):
 			var token := m.get_string(1).strip_edges()
-			_check_token(doc, i + 1, token, member_ref, upstream)
+			var flags := (FLAG_UPSTREAM if upstream else 0) | (FLAG_PLANNED if planned else 0)
+			_check_token(doc, i + 1, token, member_ref, flags)
 
 
-## `upstream`: the citing line is marked `(upstream)`, so "no such thing here" is expected and
-## suppressed — but a member on a class that DOES resolve here is still checked.
-func _check_token(doc: String, line_no: int, token: String, member_ref: RegEx, upstream: bool = false) -> void:
+## `upstream` (FLAG_UPSTREAM): the citing line is marked `(upstream)`, so "no such thing here" is
+## expected and suppressed — but a member on a class that DOES resolve here is still checked.
+## `planned` (FLAG_PLANNED): the citing line is marked `(planned)`, so "no such thing here" is
+## expected too. Unlike `upstream`, a proposed MEMBER on a class that resolves here is also forgiven
+## (a plan proposes new members on existing classes) — but a real member that resolves is still
+## checked, and a placeholder is still a placeholder.
+func _check_token(doc: String, line_no: int, token: String, member_ref: RegEx, flags: int = 0) -> void:
+	var upstream := flags & FLAG_UPSTREAM != 0
+	var planned := flags & FLAG_PLANNED != 0
 	# A template (`validate_<thing>.gd`, `<Phase>Resolver.gd`) illustrates a NAMING SHAPE, the same way
 	# a glob does. Neither is an anchor, and neither can resolve.
 	if token.contains("*") or token.contains("<") or token.contains(">"):
@@ -255,7 +322,7 @@ func _check_token(doc: String, line_no: int, token: String, member_ref: RegEx, u
 			if clean.ends_with("/"):
 				clean = clean.trim_suffix("/")
 			if not (FileAccess.file_exists("res://" + clean) or DirAccess.dir_exists_absolute("res://" + clean)):
-				if not upstream:
+				if not upstream and not planned:
 					_failures.append("%s:%d: dead path `%s`" % [doc, line_no, token])
 			return
 	# 3) bare .gd basename (strip :line suffix — the file:line check reports the citation itself)
@@ -264,7 +331,7 @@ func _check_token(doc: String, line_no: int, token: String, member_ref: RegEx, u
 		if base in PLACEHOLDER_SCRIPTS:
 			return
 		if not base.contains("/") and base.ends_with(".gd") and not _gd_index.has(base):
-			if not upstream:
+			if not upstream and not planned:
 				_failures.append("%s:%d: no such script `%s` under scripts/tools/tests" % [doc, line_no, token])
 		return
 	# 4) UpperCamel.member — the class must resolve, and then the member must exist in it.
@@ -291,7 +358,7 @@ func _check_token(doc: String, line_no: int, token: String, member_ref: RegEx, u
 		for candidate in _alias_index.get(class_token, []):
 			if FileAccess.get_file_as_string(candidate).contains(member):
 				return
-		if upstream:
+		if upstream or planned:
 			return
 		# The inverted case (see header): a class that resolves to NOTHING used to pass silently,
 		# which made every reference to a DELETED class invisible to this gate.
@@ -301,7 +368,8 @@ func _check_token(doc: String, line_no: int, token: String, member_ref: RegEx, u
 	if member == "new":
 		return  # Godot constructor, always valid
 	if not FileAccess.get_file_as_string(script_path).contains(member):
-		_failures.append("%s:%d: `%s` — no '%s' in %s (renamed/moved?)" % [doc, line_no, token, member, script_path.get_file()])
+		if not planned:
+			_failures.append("%s:%d: `%s` — no '%s' in %s (renamed/moved?)" % [doc, line_no, token, member, script_path.get_file()])
 
 
 ## `data/ijfs/ijfs_scenario.json.some_knob` -> `data/ijfs/ijfs_scenario.json`. Docs address a key inside

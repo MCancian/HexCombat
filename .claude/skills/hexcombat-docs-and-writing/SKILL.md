@@ -56,7 +56,11 @@ code headers were correct.
    systems doc cites a dead path/script/member or uses a `file.gd:123` line citation — so a
    rename/move that orphans a doc anchor cannot pass the gate. It cannot catch semantically
    wrong prose over valid anchors; that's what this checklist is for. Historical passages that
-   cite dead names on purpose: mark the line `(historical)`.
+   cite dead names on purpose: mark the line `(historical)`. A `docs/plans/*.md` line naming what
+   the plan PROPOSES to build (a class/member/spec file not in the tree yet): mark the line
+   `(planned)` — it forgives only "does not exist here", per-token like `(upstream)`, so real
+   anchors on the line stay checked. The gate also scans `docs/plans/` since 2026-08-03, so a plan
+   citing a real file that was renamed/moved is a RED GATE — fix the reference, don't mark it.
 3. Append 3–5 lines to `docs/DECISIONS.md` — what + who decided + POINTERS to where the facts
    landed. **A DECISIONS entry is a changelog, never a reference**: if a future agent would need
    the entry to act, the fact is filed in the wrong place — move it, then point. **3–5 lines is a

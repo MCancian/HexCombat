@@ -39,7 +39,7 @@ enough to make the census race two-sided.
 ### Tier B — ROC counterattack / counterlanding (deep — engine change)
 
 Green actually *attacks* to retake hexes. This is a fundamental change: **attacker = Red is
-hard-coded** in `CombatResolver.resolve_hex_combat` (`inject_supply_effectiveness(attacker_units,
+hard-coded** in `CombatResolver.resolve_at` (`inject_supply_effectiveness(attacker_units,
 Brigade.Team.RED, …)`), and the Red-only supply-pool asymmetry (`red_supply_pool` applies to the
 attacker) assumes it. Un-hardcoding it is exactly **step 1 of [[0003-combat-summary-team-attribution]]**
 (stamp `attacker_team`/`defender_team` on `CombatSummary`), followed by generalizing the supply
@@ -56,9 +56,9 @@ USER counterattack design call that 0003 already flags.**
 ## Tier A progress (2026-07-23)
 
 **Repositioning shipped + measured — necessary but NOT sufficient.** Built `roc_defense`
-(`scripts/RocDefensePolicy.gd`, registered in `PolicyCatalog`): every Green brigade steps toward the
+(`scripts/policies/RocDefensePolicy.gd`, registered in `PolicyCatalog`): every Green brigade steps toward the
 nearest red/contested threat instead of the `selfplay_default` wander; holds pre-landing. Extracted
-the shared id-geometry into `scripts/PolicyGeometry.gd` (repointed `GarrisonDrawPolicy` off its private
+the shared id-geometry into `scripts/policies/PolicyGeometry.gd` (repointed `GarrisonDrawPolicy` off its private
 copies).
 
 Result — `selfplay_default`(Red) vs `roc_defense`(Green), N=30, `scenario_default`: **Red still wins

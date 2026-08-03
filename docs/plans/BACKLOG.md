@@ -32,26 +32,6 @@ means writing prose you then have to un-write.
 budget above depends on it. If the observation is a standing rule or is blocked on something absent,
 put it in the section below WITHOUT a checkbox and say what would unblock it.)*
 
-- [ ] **`docs/plans/` is excluded from the doc-anchor gate, so an ACTIVE plan's code references rot silently.**
-  Found 2026-07-31 while widening the gate; accepted trade-off, not an oversight. Plans are
-  excluded because a proposal legitimately names classes it intends to CREATE — failing a plan for
-  describing its own work would make the gate an obstacle to planning. The cost is the other half: a
-  Sketch that cites six real files (0055 does) rots the moment one is renamed, and the agent who picks
-  it up follows a dead reference. The symmetric fix is a `(planned)` line marker beside `(historical)`
-  and `(upstream)`, then removing the exclusion — but turning it on means triaging every active Sketch
-  at once, several of which predate two refactor campaigns. Do it as its own unit of work, not as a
-  rider on something else.
-  **Scope narrowed 2026-08-01 by measurement — a second item claiming "`docs/*.md` has no anchor gate"
-  was merged in here and was already mostly stale.** `tools/validate_doc_anchors.gd` was widened on
-  2026-07-31: `DOC_ROOTS` is now `["res://docs", "res://.claude/skills"]`, so `docs/STATUS.md` and
-  `docs/DECISIONS.md` ARE anchor-checked today, and the `(historical)` marker work that item said had
-  to come first was done as part of that widening. What remains excluded is `DOC_ROOT_EXCLUDES`
-  (`docs/archive/`, `docs/plans/`, `docs/reports/`) plus `HISTORY_DOCS` (`docs/RETROSPECTIVES.md` and
-  two skills). Of those, only **`docs/plans/`** is the accidental gap this item is about; archive,
-  reports and RETROSPECTIVES are deliberate — each is a point-in-time record where a dead anchor is
-  correct. Note check 5 (doc-to-doc `docs/plans/<name>.md` pointers must resolve) already applies
-  everywhere with no escape hatch, so plan *filenames* are gated; only the code references inside a
-  plan are not.
 - [ ] **Validator harness: `_fail` / `_finish` / asserts are copy-pasted across the validators.**
   Found 2026-07-25, refactor review. Measured: `func _fail` in **30 of 36** `tools/validate_*.gd`,
   `_finish` in 31, `_assert_equal_int` in 12, `_assert_true` in 11. A `tools/ValidatorHarness.gd`
@@ -144,7 +124,7 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
 - [ ] **Doc-anchor validator checks links, not bare symbols (found 2026-07-25).**
   `tools/validate_doc_anchors.gd` matches `ClassName.member` in backticks, so a doc naming a bare
   `CONSTANT` that no longer exists passes — `docs/systems/ground-combat.md` described
-  `CombatCalculator.TERRAIN_MODIFIERS` as "dead code, left untouched" long after the symbol was deleted
+  `CombatCalculator.TERRAIN_MODIFIERS` as "dead code, left untouched" long after the symbol was deleted (historical)
   (fixed 2026-07-25). Extending the check to bare backticked ALL_CAPS identifiers was considered and
   **deferred deliberately**: `PI`, `INFINITY` and ordinary prose constants would false-positive.
   **Unblocks when:** someone has a scoping rule that survives scrutiny. Neither reviewer had one.

@@ -144,7 +144,7 @@ Game records carry `TurnResult.air_insertion_summary` (the `AirInsertionSummary`
 observation builds its own block at `LLMGameAPI.gd:342` gated on a non-empty pool. Serialize the new
 field plainly; do not add an omit-when-empty special case.
 
-**Rejection.** A new `AirInsertionSummary.REASON_ON_COOLDOWN`, reported in `summary.rejected` the
+**Rejection.** A new `AirInsertionSummary.REASON_ON_COOLDOWN`, reported in `summary.rejected` the (planned)
 same way `REASON_CAP_EXHAUSTED` is. Consistent with the existing design: the cadence is spent at
 resolution, not enforced at order time, because the resolver is the one place that knows what
 actually flew.
@@ -175,7 +175,7 @@ possible outcome and the sweep must be able to report it.
 A 2×2 over the same instrument the 0032 report used, so the numbers are directly comparable to the
 83% / 97% table:
 
-- **Spec:** new `tools/sweeps/airborne_cost_cadence.json`, modelled on `tools/sweeps/airborne_lift.json`.
+- **Spec:** new `tools/sweeps/airborne_cost_cadence.json`, modelled on `tools/sweeps/airborne_lift.json`. (planned)
   Knob paths are raw `file:dot.path`, not registry ids — `run_sweep.py` derives human-readable cell
   names from the last `:`-segment:
   `data/scenarios/red_airborne.json:red_air_insertion.max_attrition_at_full_ad` and

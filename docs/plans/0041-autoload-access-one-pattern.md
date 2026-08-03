@@ -21,10 +21,10 @@ The workaround is a node-path accessor, and it is currently **copy-pasted per fi
 
 | File | Accessor |
 |---|---|
-| `scripts/LLMGameAPI.gd:30,34` | `_game_data()` / `_game_state()` |
-| `scripts/SelfPlayRunner.gd:26,29` | `_gd()` / `_gs()` |
-| `scripts/InlandClearPolicy.gd:26` | inline `var game_data: Node = Engine.get_main_loop()…` |
-| `scripts/GarrisonDrawPolicy.gd:16` | inline, same shape |
+| `scripts/api/LLMGameAPI.gd:30,34` | `_game_data()` / `_game_state()` |
+| `scripts/api/SelfPlayRunner.gd:26,29` | `_gd()` / `_gs()` |
+| `scripts/policies/InlandClearPolicy.gd:26` | inline `var game_data: Node = Engine.get_main_loop()…` |
+| `scripts/policies/GarrisonDrawPolicy.gd:16` | inline, same shape |
 
 Four files, six sites, three different naming conventions, one of them inline inside a function. The
 correct pattern is discoverable only by already knowing the rule.
@@ -55,7 +55,7 @@ static func game_state() -> Node
 static func event_bus() -> Node
 ```
 
-Then the four files call `ScriptRuntime.game_data()`. One home, one convention, and the class carries
+Then the four files call `ScriptRuntime.game_data()`. One home, one convention, and the class carries (planned)
 the explanation of *why* it exists — which is currently duplicated in prose across several file
 headers.
 
@@ -73,7 +73,7 @@ make, and the current per-call `get_node` has never shown up as a cost. Measure 
 - **Prove the gate still catches a regression** after the change: reintroduce a direct `GameState.`
   reference in `SelfPlayRunner`, confirm the purity validator names the `file:line`, revert. A guard
   not seen to fire is not a guard (`hexcombat-diff-review`).
-- `tools/validate_llm_api_purity.gd` no longer exists — the validator is
+- `tools/validate_llm_api_purity.gd` no longer exists — the validator is (historical)
   `validate_tool_script_purity.gd`. Do not resurrect the old name.
 
 ## Optional second half — worth doing, worth judging separately

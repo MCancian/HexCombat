@@ -25,6 +25,13 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-08-03 — docs/plans now anchor-gated; `(planned)` marker added (agent; gate green).**
+  Backlog item closed: `docs/plans/` removed from DOC_ROOT_EXCLUDES; `(planned)` suppresses only
+  "does not exist here" per-token like `(upstream)`, so real anchors stay checked. ARCHIVE.md (closed-plan
+  index) joined HISTORY_DOCS; BACKLOG.md stays scanned, its two historical refs marked. 16 plan refs:
+  11 fixed (renamed/moved), 3 `(planned)`, 2 `(historical)`. Facts: `tools/validate_doc_anchors.gd`
+  SCOPE header + self-test pins; triage in plans 0003/0028/0029/0036/0041.
+
 - **2026-08-03 — Second-reviewer findings on the LLM fixture closeout applied (agent; gate green).**
   Finding A: `air_insertion_summary.attrition_by_class` was declared `integer` in
   `schemas/llm_action_result.schema.json` where the payload ships a rate; corrected to `number`.

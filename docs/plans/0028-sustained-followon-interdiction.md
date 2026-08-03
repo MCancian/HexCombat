@@ -103,7 +103,7 @@ Investigating "how many off-island strikes flip the scenario" (extended sub-stri
 0→2048/turn) surfaced a **correctness bug**: drowned crossing BNs were removed from `ship_reserve`
 but left in `Brigade.composition`, so the victory census (`get_battalion_count - at_sea`) ghost-landed
 a partially-landed brigade's drowned BNs (and combat over-counted its strength). Fixed
-(`RosterMutations.apply_crossing_casualties`) — see `docs/DECISIONS.md` 2026-07-24 and
+(`RosterMutations.apply_crossing_casualties`) — see `docs/DECISIONS.md` 2026-07-24 and (historical)
 `docs/systems/amphibious-offload/amphibious-offload.md` §7 "Crossing losses are casualties". **Consequence: the flip
 finding above (margin +9.1→+3.1, 93% PLA at 64/turn) and every prior census-based number over-stated
 PLA strength and are being re-run against the fixed engine.**
@@ -121,7 +121,7 @@ position (drowned BNs counted as present AND fighting):
 Knife-edge **~12–14/turn**, ≥85% ROC by ~24, reliable flip (0% PLA) by ~48–64 — vs the buggy 512
 knife-edge / 1024 reliable. Within a plausible combined ROC-sub + allied-air + external-ASM
 interdiction; the "structural inevitability" finding was partly a bug artifact. Specs:
-`tools/sweeps/off_island_flip{,_fine}.json`. Deck-ready overlay chart:
+`tools/sweeps/off_island_flip.json` / `off_island_flip_fine.json`. Deck-ready overlay chart:
 `docs/reports/assets/off_island_flip_curve.svg` (from `tools/mc_chart.py --flip
 docs/reports/assets/off_island_flip_curve.flip.json`, a new general multi-series flip mode).
 
