@@ -21,10 +21,6 @@ Bundled 2026-08-01. These are not dependencies — each item stands alone — bu
 members separately means editing the same file, schema or gate two and three times, and in one case
 means writing prose you then have to un-write.
 
-| Bundle | Items | Why together |
-|---|---|---|
-| **Review tooling** | opencode read-only, numbered findings, `--format json` | All touch `tools/review_fanout.sh` / `.claude/REVIEWERS.md` / opencode config, and `tools/validate_reviewer_facts.gd` gates roster edits — one commit is cheaper than three. The last two already say "do them together". |
-
 
 ## Deferred Debt & Hygiene Items
 
@@ -59,20 +55,10 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   type-name heuristics. Plan 0032 anchored two new airborne strengths on entries that were dead until
   then. Instrument `_fallback_category_for_type` over both OOBs, list the keys actually hit, and delete
   or document the rest. Do NOT delete on inspection alone; the matching is indirect.
-- [ ] **DeepSeek's return is unparseable by the byte band because its stdout contains noise.**
-  Its stdout is prompt echo + tool traces + report (found 2026-07-30, plan 0047; USER raised it). Both plan-0047 rounds were
-  substantive enumerations (23.6 KB and 14.7 KB) and both were labelled `SUSPECT` on size alone, so a
-  future agent may discard a good return — one of them held the only catch of its round. **The fix is
-  `--format json`** on the opencode route (it emits raw JSON events), plus a `tools/review_fanout.sh`
-  change to extract the final assistant message, plus the gated invocation row in `.claude/REVIEWERS.md`
-  updated in the same commit or `tools/validate_reviewer_facts.gd` goes red. **Do NOT instead ask the
-  reviewer to write its report to a file:** it contradicts the `REVIEW ONLY` line the launcher prepends,
-  `--agent plan` has been measured not honoured by some opencode models, and the only writable location
-  is inside the worktree — which is the measured cross-contamination incident in `~/.claude/AGY.md`
-  (one reviewer's artifact read off disk and returned verbatim by another as fake corroboration).
-  Note an enumeration return is legitimately long even once the noise is stripped, so the 1–10 KB band
-  needs a role-aware exception either way.
-- **A typed turn-resolution outcome carrying all phase reports — proposed by the tier-1 reviewer during plan 0059's review, and MEASURED DOWN rather than adopted (2026-08-01).**
+- **Closed 2026-08-03 — review tooling bundle (opencode read-only, numbered findings, `--format json`).**
+  Facts: `.claude/REVIEWERS.md`, `tools/review_opencode.sh`, `opencode.json`, `tools/review_fanout.sh`, `docs/DECISIONS.md`.
+- [ ] **A typed turn-resolution outcome carrying all phase reports — MEASURED DOWN rather than adopted (2026-08-01).**
+  Proposed by the tier-1 reviewer during plan 0059's review.
   The idea: instead of each phase writing a report onto `GameStateData` and `GameState.play_turn` reading eleven fields back out,
   `TurnConductor` returns one typed outcome carrying them all. It is a genuinely better shape in the
   abstract, and it is **not worth doing here** for a reason that only shows up when you count the
@@ -91,8 +77,8 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   stops reading phase reports off the state between turns. Plan 0059's `last_ijfs_air_oob` is a twelfth
   field in the transport-only group; it does not make this refactor harder, and folds into it if it is
   ever built.
-- **Mutation-authority protection reaches only TYPED receivers, so state passed through an untyped
-  `Dictionary`/`Array` is unprotected and the gate cannot say so (standing limit, restated 2026-07-31;
+- [ ] **Mutation-authority protection reaches only TYPED receivers.**
+  State passed through an untyped `Dictionary`/`Array` is unprotected and the gate cannot say so (standing limit, restated 2026-07-31;
   NOT a defect to fix, a rule to follow).** The enforcement gate judges a write by resolving the
   receiver's type; a value reached through an untyped container has no type to resolve, so the write is
   neither permitted nor refused — it is invisible. The manifest's `_schema_rules` documents this as the
@@ -104,15 +90,15 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   **Unblocks when:** someone produces the measurement nobody has — how much live campaign state still
   travels through untyped containers. If that number is large, this becomes a plan. The `OffloadCalculator`
   item above is the one bounded instance, and a data point toward that measurement.
-- **`tools/review_fanout.sh` residual hardening, all deliberately declined during plan 0054's review
-  rounds.** (a) A snapshot made with `git diff --binary` is rejected by the structural check; a stateful
+- [ ] **`tools/review_fanout.sh` residual hardening, all deliberately declined during plan 0054's review rounds.**
+  (a) A snapshot made with `git diff --binary` is rejected by the structural check; a stateful
   binary-patch parser was declined, and `--freeze` never passes `--binary`. (b) `--report`'s auto-count
   is a labelled lower bound rather than an explicit per-reviewer acceptance protocol; exit 3 covers the
   failure mode instead. (c) `_dirty_paths` does not handle paths containing a literal newline. (d) The
   gate cannot watch `~/.claude/*`, so the global agy contract and slash command are kept roster-free by
   convention only. **Unblocks when:** one of these produces an actual failure to point at. Re-raising
   without one re-opens a decision already made twice.
-- **Gate the `consumer:` / `pinned by:` witness convention (opened 2026-07-29).**
+- [ ] **Gate the `consumer:` / `pinned by:` witness convention (opened 2026-07-29).**
   `hexcombat-docs-and-writing` now requires a greppable witness for any claim that something is or is
   not consumed, serialized, pinned, or expensive, and the convention is seeded in
   `scripts/model/SealiftState.gd` and `SealiftHullLossReceipt.gd`. Extending
@@ -136,7 +122,7 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   reviewers split on risk/reward — the caches are correct today and the change touches
   `CombatResolver.resolve_at`'s signature for no behavioural gain. **Unblocks when:** that seam is open
   for another reason, or a third such cache appears.
-- **`CombatResolver` assumes attacker=Red / defender=Green.**
+- [ ] **`CombatResolver` assumes attacker=Red / defender=Green.**
   `resolve_at` hardcodes it — the two
   defender-side `inject_supply_effectiveness` calls were no-ops for exactly this reason and were removed
   2026-07-24, leaving a comment. Supply injection and anything else keyed on side must be driven by each

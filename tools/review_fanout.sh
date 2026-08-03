@@ -337,10 +337,12 @@ done
 manifest=()
 manifest+=("sol	quorum	pi -p --no-session --tools read,grep,find,ls --model openai-codex/gpt-5.6-sol")
 manifest+=("agy	quorum	agy-explore")
-manifest+=("deepseek	quorum	opencode run --agent plan --model opencode/deepseek-v4-flash-free")
+manifest+=("deepseek	quorum	tools/review_opencode.sh")
 if [[ "$want_tier3" -eq 1 ]]; then
 	manifest+=("minimax	extra	pi -p --no-session --tools read,grep,find,ls --model nvidia/minimaxai/minimax-m3")
 	manifest+=("nemotron	extra	pi -p --no-session --tools read,grep,find,ls --model nvidia/nvidia/nemotron-3-ultra-550b-a55b")
+	manifest+=("glm	extra	pi -p --no-session --tools read,grep,find,ls --model openrouter/z-ai/glm-5.2")
+	manifest+=("kimi	extra	pi -p --no-session --tools read,grep,find,ls --model openrouter/moonshotai/kimi-k3")
 fi
 
 # A --role naming a reviewer that is not in this round would be silently dropped, and a dropped role

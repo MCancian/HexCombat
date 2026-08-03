@@ -59,7 +59,7 @@ const LAUNCHER_ROW_PATTERN := "^[ \\t]*manifest\\+=\\(\"([a-z0-9]+)\\t(quorum|ex
 # the quorum while the 3/2 totals stayed put — which is precisely the rule the USER was most explicit
 # about ("tier 3 never counts toward the quorum"). Reviewer finding, round 5.
 const EXPECTED_QUORUM := ["sol", "agy", "deepseek"]
-const EXPECTED_EXTRA := ["minimax", "nemotron"]
+const EXPECTED_EXTRA := ["minimax", "nemotron", "glm", "kimi"]
 # Every markdown file in the repo is scanned except the exclusions below. A reviewer's objection to the
 # original four-root scan was correct: `.claude/*.md` outside skills, `docs/*.md`, `docs/systems/*.md`
 # and any future live doc were all blind spots, and "one home" that only holds inside four directories
@@ -88,6 +88,8 @@ const FORBIDDEN := [
 	"minimax-m3",
 	"nemotron-3-ultra",
 	"deepseek-v4-flash",
+	"z-ai/glm-5.2",
+	"moonshotai/kimi-k3",
 ]
 
 # A line recording what a reviewer once did is not an instruction to invoke it. `(llm-player)` is the

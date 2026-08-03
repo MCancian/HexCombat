@@ -71,7 +71,10 @@ summary of the plan, which is worthless. Required elements beyond the invariants
 5. **"Name anything IMPORTANT I MISSED."** This reliably returns the best finding.
 6. **Output format:** numbered findings, each with a verdict
    (`CONFIRMED` / `WRONG` / `PARTIALLY-WRONG` / `RESHAPE`), severity (blocker / should-fix / nit),
-   `file:line` evidence, and a concrete fix.
+   `file:line` evidence, and a concrete fix. **Number every finding, nil included** — a clean read is
+   the numbered entry *"1. No defect found — here is what I checked and what I concluded"*. A return
+   without numbered findings is scored FLAKE and does not count toward the quorum; a nil return with
+   that one numbered entry is read and judged like any SHORT (settled rule 2026-08-03).
 7. **"Be blunt where I am wrong. Do not restate my plan back to me."**
 
 If the plan is justified by a **measurement**, add the method pass (`agy-verify` — see the roles section

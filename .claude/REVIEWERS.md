@@ -107,15 +107,20 @@ route is exactly why the quorum is 2-of-3 rather than 3-of-3.
 | **DeepSeek V4 Flash** | 2 — mid | yes | **0/3 as a reviewer, 3/3 as a bounded enumerator**; returned zero bytes twice on 2026-07-29, then two substantive enumerations on 2026-07-30 (plan 0047, both rounds) | Quorum slot; strongest at bounded mechanical enumeration ("every read/write of these 8 fields, with file:line"). Requires the material to be handed to it (bounded enumeration of a document) rather than being asked to explore or trace flows. |
 | **MiniMax M3** | 3 — sometimes helpful, occasionally dangerous | **no** | unmeasured — record the first result here | Bonus roles only: breadth sweeps, "what did I miss" |
 | **Nemotron Ultra** | 3 — sometimes helpful, occasionally dangerous | **no** | 1/3, then 1/1 (0045); counts and line numbers frequently wrong | Bonus roles only |
+| **GLM 5.2** (OpenRouter) | 3 — sometimes helpful, occasionally dangerous | **no** | unmeasured — record the first result here | Bonus roles: reasoning-heavy reviews, long-horizon agentic tasks, complex coding |
+| **Kimi K3** (OpenRouter) | 3 — sometimes helpful, occasionally dangerous | **no** | unmeasured — record the first result here | Bonus roles: multimodal reasoning, knowledge work, complex coding, large-context sweeps |
 
-**Give DeepSeek an enumeration role, and expect its return to blow the byte band.** Measured across
-both plan-0047 rounds: given "produce four exhaustive verbatim lists", it returned usable work twice
+**Give DeepSeek an enumeration role, and expect its return to be long.** Measured across both
+plan-0047 rounds: given "produce four exhaustive verbatim lists", it returned usable work twice
 (23.6 KB and 14.7 KB), and one of those findings — an unregistered container writer — was found by
-nothing else. Both were labelled `SUSPECT` purely on size, because its stdout is prompt echo + tool
-traces + the real report, and an exhaustive inventory is legitimately long anyway. **For an
-enumeration role, judge the return by whether the lists are verbatim and scoped, not by its size.**
-The mechanical fix, not yet made, is `--format json` on the opencode route plus a launcher change to
-extract the final assistant message; that also needs the gated invocation row updated in step.
+nothing else. Both were labelled `SUSPECT` purely on size because its stdout was prompt echo + tool
+traces + the real report. **That noise is now stripped at the route:** the deepseek row runs `tools/review_opencode.sh`, which
+drives opencode with `--format json` and emits the assistant's message text (all assistant messages,
+in order — a review interleaves tool calls with its findings), so the byte band sees the report and
+nothing else. A clean enumeration is still
+legitimately long, so it can still land over the 10 KB band — **judge an enumeration by whether the
+lists are verbatim and scoped, not by its size**, and count it yourself once read. That is the
+SUSPECT verdict's normal contract: the band flags what to READ, not what to believe.
 
 **A known property of this roster, not a bug:** DeepSeek's route record is 0/3 as a *reviewer*, so in
 practice the quorum is usually carried by Sol and agy, and the third slot is redundancy that frequently
@@ -150,13 +155,18 @@ AGY_TIMEOUT=15m agy-explore -d ~/Projects/TaiwanInvasionViewer "PROMPT"   # TIV 
 # Tier 2 — agy-verify (MAY RUN COMMANDS; throwaway worktree of HEAD, deleted on exit)
 AGY_TIMEOUT=15m agy-verify "PROMPT"
 
-# Tier 2 — DeepSeek V4 Flash, via OpenCode
-opencode run --agent plan --model opencode/deepseek-v4-flash-free "PROMPT"
+# Tier 2 — DeepSeek V4 Flash, via OpenCode. The launcher route is the wrapper, which drives the
+# opencode line with `--format json` and emits the assistant's message text, so the byte band
+# sees the report and not the prompt echo / tool traces (BACKLOG "unparseable by the byte band",
+# closed 2026-08-03). The raw line below is the NVIDIA-hosted route.
+tools/review_opencode.sh "PROMPT"
 opencode run --agent plan --model nvidia/deepseek-ai/deepseek-v4-flash "PROMPT"   # NVIDIA-hosted route
 
 # Tier 3 — bonus roles only, never quorum
 pi -p --no-session --tools read,grep,find,ls --model nvidia/minimaxai/minimax-m3 "PROMPT"
 pi -p --no-session --tools read,grep,find,ls --model nvidia/nvidia/nemotron-3-ultra-550b-a55b "PROMPT"
+pi -p --no-session --tools read,grep,find,ls --model openrouter/z-ai/glm-5.2 "PROMPT"
+pi -p --no-session --tools read,grep,find,ls --model openrouter/moonshotai/kimi-k3 "PROMPT"
 ```
 
 ### The round, machine-readable — this block is gated
@@ -170,15 +180,22 @@ or the gate goes red.
 ```text
 sol       quorum  pi -p --no-session --tools read,grep,find,ls --model openai-codex/gpt-5.6-sol
 agy       quorum  agy-explore
-deepseek  quorum  opencode run --agent plan --model opencode/deepseek-v4-flash-free
+deepseek  quorum  tools/review_opencode.sh
 minimax   extra   pi -p --no-session --tools read,grep,find,ls --model nvidia/minimaxai/minimax-m3
 nemotron  extra   pi -p --no-session --tools read,grep,find,ls --model nvidia/nvidia/nemotron-3-ultra-550b-a55b
+glm       extra   pi -p --no-session --tools read,grep,find,ls --model openrouter/z-ai/glm-5.2
+kimi      extra   pi -p --no-session --tools read,grep,find,ls --model openrouter/moonshotai/kimi-k3
 ```
 
-**Read-only flags:** `--tools read,grep,find,ls` for `pi`, `--agent plan` for `opencode`. Use them **in
-addition to** the REVIEW ONLY line in the prompt, never instead of it — `--agent explore` was measured
-NOT honoured by some opencode models (they announce a fallback to the *writing* `build` agent and carry
-on), so the prompt text is the only guarantee that survives.
+**Read-only flags:** `--tools read,grep,find,ls` for `pi`, `--agent plan` for `opencode`. The opencode
+route is additionally enforced by config: the version-controlled repo-root `opencode.json` carries
+`agent.plan.permission` edit+`bash:deny`, deep-merged with the machine-local global config (verified
+empirically via `opencode debug config`, 2026-08-03), so the deny survives a fresh clone. Do NOT rely
+on it to stop a fallback — `--agent explore` was measured NOT honoured by some opencode models (they
+announce a fallback to the *writing* `build` agent and carry on), and the config deny is scoped to the
+`plan` agent only. Use the flags **in addition to** the REVIEW ONLY line in the prompt; the actual net
+is the report's contamination check (`tree_before`/`tree_hashes`), which catches an escaped writing
+model by the file it writes. Prompt text plus that check, never config alone, is the guarantee.
 
 **Budget minutes, not seconds.** These CLIs buffer output until exit — there is no interim progress to
 poll, so a run that looks hung may simply be working. Start at **900 s** before deciding a route is
@@ -230,7 +247,12 @@ failure mode in the whole procedure: it silently converts "nobody looked" into "
 - Flakes were **under 1 KB** (died before answering) or **over 10 KB** (dumped tool output — one was
   123 KB of pasted diff, another was pages of `Grep` traces).
 - **No numbered findings ⇒ not a review ⇒ it does not count toward the quorum.** Re-run it. Never
-  record a flake as a clean pass.
+  record a flake as a clean pass. The launcher's prepended REQUIREMENT demands a numbered list and
+  makes *"1. No defect found — here is what I checked and what I concluded"* a legal nil return
+  (settled rule, 2026-08-03: a real 342-byte clean review and an enumerator were both scored FLAKE on
+  2026-07-30 for lacking numbers, so every role must number its findings, nil included). A nil return
+  carrying that one numbered entry is counted as a finding, lands `SHORT` if under 1 KB, and — per the
+  823-byte precedent below — is READ and judged, never dismissed.
 - **`--report` auto-counts only the unambiguous case:** a quorum reviewer that exited 0, produced
   numbered findings, and landed in the healthy band (verdict `REVIEW`). A `SHORT` or `SUSPECT` return is
   **excluded from that count and printed for you to judge** — and **you may count it yourself** once you

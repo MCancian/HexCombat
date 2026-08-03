@@ -57,7 +57,11 @@ Write it to a file; pass it with `--brief`. Beyond the invariants in `.claude/RE
 4. **Focus areas in priority order**, phrased as questions: correctness; timing/freshness; the
    load-bearing invariant; missed consumers ("name the `file:line`"); test gaps.
 5. **Output format:** numbered findings, severity (blocker / should-fix / nit), `file:line` evidence,
-   concrete fix; "say explicitly if a category is clean; do not restate the diff."
+   concrete fix; "say explicitly if a category is clean; do not restate the diff." **Number every
+   finding, nil included** — a clean category or a clean whole diff is the numbered entry *"1. No
+   defect found — here is what I checked and what I concluded"*. A return without numbered findings
+   is scored FLAKE and does not count toward the quorum; a nil return with that one numbered entry is
+   read and judged like any SHORT (settled rule 2026-08-03).
 
 Give the three quorum reviewers **different roles** (the list is in `.claude/REVIEWERS.md`). Two matter
 most on a diff:

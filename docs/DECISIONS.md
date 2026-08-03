@@ -25,6 +25,13 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-08-03 — Review tooling bundle: opencode read-only, numbered findings, `--format json` (agent judgment).**
+  The DeepSeek reviewer route is now `tools/review_opencode.sh` (opencode `--format json`; emits the
+  assistant's message text, all messages in order), so the byte band sees the report, not prompt echo /
+  tool traces. Repo-root `opencode.json` enforces `agent.plan.permission` edit+`bash:deny` (deep-merged with global, measured).
+  Settled rule: every role numbers findings, nil included; SUSPECT stays "read it and judge". Facts:
+  `.claude/REVIEWERS.md`, `tools/review_opencode.sh`, `opencode.json`, `tools/review_fanout.sh:313`, skills.
+
 - **2026-08-03 — docs/plans now anchor-gated; `(planned)` marker added (agent; gate green).**
   Backlog item closed: `docs/plans/` removed from DOC_ROOT_EXCLUDES; `(planned)` suppresses only
   "does not exist here" per-token like `(upstream)`, so real anchors stay checked. ARCHIVE.md (closed-plan
