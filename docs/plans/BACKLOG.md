@@ -51,19 +51,6 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
     stops reading phase reports off the state between turns. Plan 0059's `last_ijfs_air_oob` is a twelfth
     field in the transport-only group; it does not make this refactor harder, and folds into it if it is
     ever built.
-- [ ] **Mutation-authority protection reaches only TYPED receivers.**
-  State passed through an untyped `Dictionary`/`Array` is unprotected and the gate cannot say so (standing limit, restated 2026-07-31;
-  NOT a defect to fix, a rule to follow).** The enforcement gate judges a write by resolving the
-  receiver's type; a value reached through an untyped container has no type to resolve, so the write is
-  neither permitted nor refused — it is invisible. The manifest's `_schema_rules` documents this as the
-  "aliased-container blind spot", and it is not theoretical: `SealiftResolver`'s last illegal write was a
-  `ship_category` stamp put into force-owned reserve rows through exactly such an alias, found by hand in
-  plan 0045, not by the gate. **Deliberately not opened as a plan.** The fix is "make shared state a typed
-  `Resource` before registering its fields", which is what plans 0042–0050 already did aggregate by
-  aggregate — there is no bounded remaining unit of work, only a standing rule for new code.
-  **Unblocks when:** someone produces the measurement nobody has — how much live campaign state still
-  travels through untyped containers. If that number is large, this becomes a plan. The `OffloadCalculator`
-  item above is the one bounded instance, and a data point toward that measurement.
 - [ ] **`tools/review_fanout.sh` residual hardening, all deliberately declined during plan 0054's review rounds.**
   (a) A snapshot made with `git diff --binary` is rejected by the structural check; a stateful
   binary-patch parser was declined, and `--freeze` never passes `--binary`. (b) `--report`'s auto-count
@@ -72,22 +59,6 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
   gate cannot watch `~/.claude/*`, so the global agy contract and slash command are kept roster-free by
   convention only. **Unblocks when:** one of these produces an actual failure to point at. Re-raising
   without one re-opens a decision already made twice.
-- [ ] **Gate the `consumer:` / `pinned by:` witness convention (opened 2026-07-29).**
-  `hexcombat-docs-and-writing` now requires a greppable witness for any claim that something is or is
-  not consumed, serialized, pinned, or expensive, and the convention is seeded in
-  `scripts/model/SealiftState.gd` and `SealiftHullLossReceipt.gd`. Extending
-  `tools/validate_doc_anchors.gd` to resolve those witnesses (a named symbol must exist; a "none
-  (checked `<date>`)" must not sit next to a live reference) was deliberately NOT done yet: with two
-  usages the check would match almost nothing, and this repo's standard is that a detector is proven by
-  fixtures or it is a false negative waiting to happen (see `validate_mutation_authority.gd`'s
-  E_VACUOUS family). **Unblocks when:** ~10 usages exist. Then add fixtures proving each direction fails.
-- [ ] **Doc-anchor validator checks links, not bare symbols (found 2026-07-25).**
-  `tools/validate_doc_anchors.gd` matches `ClassName.member` in backticks, so a doc naming a bare
-  `CONSTANT` that no longer exists passes — `docs/systems/ground-combat.md` described
-  `CombatCalculator.TERRAIN_MODIFIERS` as "dead code, left untouched" long after the symbol was deleted (historical)
-  (fixed 2026-07-25). Extending the check to bare backticked ALL_CAPS identifiers was considered and
-  **deferred deliberately**: `PI`, `INFINITY` and ordinary prose constants would false-positive.
-  **Unblocks when:** someone has a scoping rule that survives scrutiny. Neither reviewer had one.
 - [ ] **Combat-loop caches live as mutable fields on `GameStateData` (found 2026-07-25).**
   `isolated_air_landed_brigades` (`:43`) and `not_ashore_by_type` (`:49`) are both computed once per
   turn at `TurnConductor:65`/`:70` and read by every contested hex; nothing enforces that a third such

@@ -76,6 +76,8 @@ license to forget goldens).
 | 0046 | [IJFS mutation authority](../archive/0046-ijfs-mutation-authority.md) | High — targets, munitions, squadrons | **✅ Shipped 2026-07-30** |
 | 0047 | [Map/infrastructure mutation authority](../archive/0047-map-infrastructure-mutation-authority.md) | High — ownership, FEBA, seizure, repair | **✅ Shipped 2026-07-30** |
 | 0051 | [Destroyed coastal launchers get a last salvo away](0051-destroyed-systems-still-fire.md) | Medium (balance) | Sketch |
+| 0062 | [Type the off-map battalion pools](0062-typed-offmap-pools.md) | Medium (hygiene; closes the aliased-container blind spot) | Exploring |
+| 0063 | [Gate the consumer:/pinned by: witness convention](0063-gate-witness-convention.md) | Low (hygiene; new validator check) | Exploring |
 | 0061 | [Generate readable resolution dependency maps](../archive/0061-resolution-dag.md) | Medium (**SPLIT by USER ruling 2026-08-01**) | **✅ Part 1 shipped 2026-08-02; Part 2 deferred** |
 | 0060 | [Localize air attrition to engagements](../archive/0060-air-attrition-before-the-strike.md) | Medium-Large | **SHIPPED 2026-08-01** — R10's checkpoint is UNREACHABLE; closure in the plan |
 | 0059 | [Readable air inventory; RTB folded into 0060](../archive/0059-sam-interception-and-rtb.md) | Medium | **SHIPPED 2026-08-01** — step 2 shipped inside plan 0060 stage 3 |
