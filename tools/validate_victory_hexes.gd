@@ -10,7 +10,7 @@ const HEX_GRID_PATH := "res://data/taiwan_hex_grid.json"
 # after the 2026-07-09 coastline reconciliation (>=5% land rule).
 const OFFSHORE_IDS: Array[String] = ["hex_12_17", "hex_4_17", "hex_4_18", "hex_5_17"]
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("Victory hexes validation")
 
 
 func _initialize() -> void:
@@ -18,8 +18,8 @@ func _initialize() -> void:
 
 	var hex_grid := _read_hex_grid()
 	if hex_grid.is_empty():
-		_fail("Could not load hex grid")
-		_finish()
+		_h.fail("Could not load hex grid")
+		_h.finish(self)
 		return
 
 	var hex_ids_by_coord := _build_coord_lookup(hex_grid)
@@ -34,7 +34,7 @@ func _initialize() -> void:
 		_validate_scenario_victory_hexes(label, scenario_data, main_island_set)
 
 	print("Scenarios checked: %d" % scenario_paths.size())
-	_finish()
+	_h.finish(self)
 
 
 func _validate_scenario_victory_hexes(label: String, scenario_data: Dictionary, main_island_set: Dictionary) -> void:
@@ -50,7 +50,7 @@ func _validate_scenario_victory_hexes(label: String, scenario_data: Dictionary, 
 		print("SKIP: %s victory.taiwan_hexes is null (census unrestricted)" % label)
 		return
 	if not (taiwan_hexes_value is Array):
-		_fail("%s: victory.taiwan_hexes must be an Array" % label)
+		_h.fail("%s: victory.taiwan_hexes must be an Array" % label)
 		return
 	var taiwan_hexes: Array = taiwan_hexes_value
 
@@ -61,7 +61,7 @@ func _validate_scenario_victory_hexes(label: String, scenario_data: Dictionary, 
 	var expected_count: int = main_island_set.size()
 
 	if declared_set != main_island_set:
-		_fail("%s: victory.taiwan_hexes mismatch — declared=%d, expected=%d" % [label, taiwan_hexes.size(), expected_count])
+		_h.fail("%s: victory.taiwan_hexes mismatch — declared=%d, expected=%d" % [label, taiwan_hexes.size(), expected_count])
 		var extra: Array[String] = []
 		var missing: Array[String] = []
 		for key in declared_set:
@@ -73,9 +73,9 @@ func _validate_scenario_victory_hexes(label: String, scenario_data: Dictionary, 
 		extra.sort()
 		missing.sort()
 		if not extra.is_empty():
-			_fail("  extra ids (%d): %s" % [extra.size(), str(extra.slice(0, mini(5, extra.size())))])
+			_h.fail("  extra ids (%d): %s" % [extra.size(), str(extra.slice(0, mini(5, extra.size())))])
 		if not missing.is_empty():
-			_fail("  missing ids (%d): %s" % [missing.size(), str(missing.slice(0, mini(5, missing.size())))])
+			_h.fail("  missing ids (%d): %s" % [missing.size(), str(missing.slice(0, mini(5, missing.size())))])
 		return
 
 	var found_offshore: Array[String] = []
@@ -83,7 +83,7 @@ func _validate_scenario_victory_hexes(label: String, scenario_data: Dictionary, 
 		if declared_set.has(oid):
 			found_offshore.append(oid)
 	if not found_offshore.is_empty():
-		_fail("%s: victory.taiwan_hexes includes offshore ids: %s" % [label, str(found_offshore)])
+		_h.fail("%s: victory.taiwan_hexes includes offshore ids: %s" % [label, str(found_offshore)])
 		return
 
 	print("PASS: %s victory taiwan_hexes matches main island (%d hexes)" % [label, expected_count])
@@ -140,12 +140,12 @@ func _compute_largest_component_set(coord_to_id: Dictionary) -> Dictionary:
 func _read_dictionary(path: String) -> Dictionary:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
-		_fail("Could not open %s" % path)
+		_h.fail("Could not open %s" % path)
 		return {}
 
 	var parsed = JSON.parse_string(file.get_as_text())
 	if not (parsed is Dictionary):
-		_fail("%s did not parse to a Dictionary" % path)
+		_h.fail("%s did not parse to a Dictionary" % path)
 		return {}
 	return parsed
 
@@ -153,7 +153,7 @@ func _read_dictionary(path: String) -> Dictionary:
 func _read_hex_grid() -> Array:
 	var file := FileAccess.open(HEX_GRID_PATH, FileAccess.READ)
 	if file == null:
-		_fail("Could not open %s" % HEX_GRID_PATH)
+		_h.fail("Could not open %s" % HEX_GRID_PATH)
 		return []
 
 	var parsed = JSON.parse_string(file.get_as_text())
@@ -162,22 +162,7 @@ func _read_hex_grid() -> Array:
 	if parsed is Dictionary and parsed.has("hexes") and parsed["hexes"] is Array:
 		return parsed["hexes"]
 
-	_fail("%s did not parse to a hex Array or Dictionary with hexes array" % HEX_GRID_PATH)
+	_h.fail("%s did not parse to a hex Array or Dictionary with hexes array" % HEX_GRID_PATH)
 	return []
 
 
-func _fail(message: String) -> void:
-	_failures.append(message)
-	push_error(message)
-
-
-func _finish() -> void:
-	if _failures.is_empty():
-		print("PASS: Victory hexes validation succeeded")
-		quit(0)
-		return
-
-	print("FAIL: Victory hexes validation found %d issue(s):" % _failures.size())
-	for failure in _failures:
-		print("  - %s" % failure)
-	quit(1)

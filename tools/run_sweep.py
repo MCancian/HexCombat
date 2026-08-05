@@ -97,6 +97,25 @@ def validate_metrics(metrics):
         die(f"Unknown metric(s) {unknown}; registry has {sorted(REGISTRY)}")
 
 
+def require_sweepable(cells):
+    """Refuse a sweep that overrides a knob the registry marks `sweepable: false` — that flag is a
+    USER decision the knob must not be a study variable (e.g. combat_*_advantage_ratio, a
+    result-label-only knob; see docs/plans/BACKLOG.md 'Nothing enforces sweepable'). Checks every
+    generated cell's override keys, not just the declared --knob/spec knobs list, so a spec's
+    extra_cells cannot bypass the check by carrying an ad-hoc override outside the swept grid."""
+    with (REPO_ROOT / "data" / "knobs" / "registry.json").open("r", encoding="utf-8") as f:
+        registry = json.load(f)
+    blocked = {entry["path"]: entry["id"] for entry in registry.get("knobs", [])
+               if "path" in entry and entry.get("sweepable") is False}
+    if not blocked:
+        return
+    swept_paths = {path for cell in cells for path in cell.get("overrides", {})}
+    hits = sorted(swept_paths & blocked.keys())
+    if hits:
+        named = ", ".join(f"{blocked[p]} ({p})" for p in hits)
+        die(f"Refusing to sweep sweepable:false knob(s): {named}")
+
+
 def grid_cells(knobs, grid):
     if not (knobs and grid):
         return [{"id": "baseline", "overrides": {}}]
@@ -237,6 +256,7 @@ def run_spec_sweep(args):
     cells = grid_cells(knobs, grid) + spec.get("extra_cells", [])
     for cell in cells:
         cell["overrides"] = cell.get("overrides", {})
+    require_sweepable(cells)
 
     sweep_dir = SWEEPS_ROOT / name
     write_manifest(sweep_dir, name, scenario, knobs, grid, seeds, "batch", metrics)
@@ -257,9 +277,12 @@ def run_cli_sweep(args):
              else [args.base_seed + i for i in range(args.n)])
     require_scenario_file(args.scenario)
 
+    cells = grid_cells(args.knob, grid)
+    require_sweepable(cells)
+
     sweep_dir = SWEEPS_ROOT / args.name
     clear_stale_cells(sweep_dir / "cells")
-    run_cells(grid_cells(args.knob, grid), args.name, args.scenario, seeds, args.turns,
+    run_cells(cells, args.name, args.scenario, seeds, args.turns,
               args.matchup, args.run_past_game_over, args)
     write_manifest(sweep_dir, args.name, args.scenario, args.knob, grid, seeds,
                    "batch", metrics)

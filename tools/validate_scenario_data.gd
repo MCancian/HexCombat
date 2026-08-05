@@ -16,7 +16,7 @@ const EXPECTED_DEFAULT_PLACEMENTS := 32
 const EXPECTED_DEFAULT_RED_SHIP_RESERVE := 4
 const VALID_LOSS_CHECK_ARMS := ["unconditional", "after_first_landing"]  # + "after_turn:<N>"
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("Scenario data validation")
 var _coord_set: Dictionary = {}  # Vector2i -> true, for land-neighbor counts
 var _brigade_nato_types: Dictionary = {}  # brigade_id -> nato_type (green_mobilization eligibility)
 
@@ -41,7 +41,7 @@ func _initialize() -> void:
 	print("Scenarios checked: %d" % scenario_paths.size())
 
 	_validate_default_pins(_read_dictionary(ScenarioCatalog.DEFAULT_SCENARIO_PATH), hex_coords)
-	_finish()
+	_h.finish(self)
 
 
 # --- generic checks (every scenario) ---
@@ -50,22 +50,22 @@ func _initialize() -> void:
 func _validate_scenario(path: String, scenario_data: Dictionary, brigade_teams: Dictionary, hex_coords: Dictionary, beach_ids: Dictionary) -> void:
 	var label := ScenarioCatalog.scenario_id(path)
 	if String(scenario_data.get("name", "")).strip_edges().is_empty():
-		_fail("%s: scenario name is missing/empty" % label)
+		_h.fail("%s: scenario name is missing/empty" % label)
 	if int(scenario_data.get("turn_length_days", 0)) < 1:
-		_fail("%s: turn_length_days must be >= 1" % label)
+		_h.fail("%s: turn_length_days must be >= 1" % label)
 	if int(scenario_data.get("red_dos_start", 0)) <= 0:
-		_fail("%s: red_dos_start must be > 0 (an empty Red DOS pool is almost certainly an authoring error)" % label)
+		_h.fail("%s: red_dos_start must be > 0 (an empty Red DOS pool is almost certainly an authoring error)" % label)
 
 	var disable_phases_value: Variant = scenario_data.get("disable_phases", [])
 	if not (disable_phases_value is Array):
-		_fail("%s: disable_phases must be an array of phase names" % label)
+		_h.fail("%s: disable_phases must be an array of phase names" % label)
 	else:
 		for phase_value in disable_phases_value:
 			if String(phase_value) not in GameDataStore.DISABLEABLE_PHASES:
-				_fail("%s: unknown disable_phases entry '%s' (allowed: %s)" % [label, String(phase_value), ", ".join(GameDataStore.DISABLEABLE_PHASES)])
+				_h.fail("%s: unknown disable_phases entry '%s' (allowed: %s)" % [label, String(phase_value), ", ".join(GameDataStore.DISABLEABLE_PHASES)])
 
 	if not (scenario_data.get("support_multipliers", {}) is Dictionary):
-		_fail("%s: support_multipliers must be a Dictionary" % label)
+		_h.fail("%s: support_multipliers must be a Dictionary" % label)
 	
 	var numeric_keys := ["combat_base_loss_rate", "combat_attacker_ratio_slope", "combat_defender_ratio_slope",
 		"combat_loss_roll_midpoint", "combat_loss_roll_scale", "combat_min_loss_rate",
@@ -77,7 +77,7 @@ func _validate_scenario(path: String, scenario_data: Dictionary, brigade_teams: 
 		if scenario_data.has(k):
 			var val = scenario_data.get(k)
 			if not (val is float or val is int):
-				_fail("%s: %s must be a number" % [label, k])
+				_h.fail("%s: %s must be a number" % [label, k])
 
 	var placements := _placements(label, scenario_data)
 	var reserve := _red_ship_reserve(label, scenario_data)
@@ -89,16 +89,16 @@ func _validate_scenario(path: String, scenario_data: Dictionary, brigade_teams: 
 		var team := String(placement.get("team", ""))
 		var hex_id := String(placement.get("hex", ""))
 		if not brigade_teams.has(brigade_id):
-			_fail("%s: placement references unknown brigade_id: %s" % [label, brigade_id])
+			_h.fail("%s: placement references unknown brigade_id: %s" % [label, brigade_id])
 		elif team != String(brigade_teams[brigade_id]):
-			_fail("%s: placement team mismatch for %s: OOB says %s, scenario says %s" % [label, brigade_id, String(brigade_teams[brigade_id]), team])
+			_h.fail("%s: placement team mismatch for %s: OOB says %s, scenario says %s" % [label, brigade_id, String(brigade_teams[brigade_id]), team])
 		if not hex_coords.has(hex_id):
-			_fail("%s: placement references unknown hex: %s" % [label, hex_id])
+			_h.fail("%s: placement references unknown hex: %s" % [label, hex_id])
 		if seen_hexes.has(hex_id):
-			_fail("%s: placement hex is not unique: %s" % [label, hex_id])
+			_h.fail("%s: placement hex is not unique: %s" % [label, hex_id])
 		seen_hexes[hex_id] = true
 		if used_brigades.has(brigade_id):
-			_fail("%s: brigade appears twice: %s" % [label, brigade_id])
+			_h.fail("%s: brigade appears twice: %s" % [label, brigade_id])
 		used_brigades[brigade_id] = true
 
 	for entry_value in reserve:
@@ -107,17 +107,17 @@ func _validate_scenario(path: String, scenario_data: Dictionary, brigade_teams: 
 		var locked_beach := int(entry.get("locked_beach", 0))
 		var beach_hex := String(entry.get("beach_hex", ""))
 		if not brigade_teams.has(brigade_id):
-			_fail("%s: red_ship_reserve references unknown brigade_id: %s" % [label, brigade_id])
+			_h.fail("%s: red_ship_reserve references unknown brigade_id: %s" % [label, brigade_id])
 		elif String(brigade_teams[brigade_id]) != "Red":
-			_fail("%s: red_ship_reserve references non-Red brigade_id: %s" % [label, brigade_id])
+			_h.fail("%s: red_ship_reserve references non-Red brigade_id: %s" % [label, brigade_id])
 		if not beach_ids.has(locked_beach):
-			_fail("%s: red_ship_reserve locked_beach %d is not a beach in %s (for %s)" % [label, locked_beach, BEACHES_PATH, brigade_id])
+			_h.fail("%s: red_ship_reserve locked_beach %d is not a beach in %s (for %s)" % [label, locked_beach, BEACHES_PATH, brigade_id])
 		if not hex_coords.has(beach_hex):
-			_fail("%s: red_ship_reserve references unknown beach_hex: %s" % [label, beach_hex])
+			_h.fail("%s: red_ship_reserve references unknown beach_hex: %s" % [label, beach_hex])
 		elif _land_neighbor_count(hex_coords[beach_hex], _coord_set) == 6:
-			_fail("%s: red_ship_reserve beach_hex %s is fully inland (6 land neighbors) — an amphibious landing must target a coastal hex (for %s)" % [label, beach_hex, brigade_id])
+			_h.fail("%s: red_ship_reserve beach_hex %s is fully inland (6 land neighbors) — an amphibious landing must target a coastal hex (for %s)" % [label, beach_hex, brigade_id])
 		if used_brigades.has(brigade_id):
-			_fail("%s: brigade is both placed and in red_ship_reserve (it would never land): %s" % [label, brigade_id])
+			_h.fail("%s: brigade is both placed and in red_ship_reserve (it would never land): %s" % [label, brigade_id])
 		used_brigades[brigade_id] = true
 
 	_validate_victory(label, scenario_data, hex_coords)
@@ -135,16 +135,16 @@ func _validate_green_mobilization(
 	if block_value == null:
 		return
 	if not (block_value is Dictionary):
-		_fail("%s: green_mobilization block must be a Dictionary" % label)
+		_h.fail("%s: green_mobilization block must be a Dictionary" % label)
 		return
 	var block: Dictionary = block_value
 	for key_value in block.keys():
 		var key := String(key_value)
 		if not key.begins_with("_") and not MobilizationStateBuilder.KNOWN_KEYS.has(key):
-			_fail("%s: unknown green_mobilization key: %s" % [label, key])
+			_h.fail("%s: unknown green_mobilization key: %s" % [label, key])
 	for positive_key in ["first_release_turn", "release_interval_turns", "brigades_per_release"]:
 		if block.has(positive_key) and int(block[positive_key]) < 1:
-			_fail("%s: green_mobilization %s must be >= 1" % [label, positive_key])
+			_h.fail("%s: green_mobilization %s must be >= 1" % [label, positive_key])
 
 	var types: Dictionary = {}
 	for type_value in block.get("brigade_types", MobilizationStateBuilder.DEFAULT_BRIGADE_TYPES):
@@ -159,9 +159,9 @@ func _validate_green_mobilization(
 			eligible += 1
 	var held_back := int(block.get(MobilizationStateBuilder.HELD_BACK_KEY, 0))
 	if held_back < 0:
-		_fail("%s: green_mobilization %s must be >= 0" % [label, MobilizationStateBuilder.HELD_BACK_KEY])
+		_h.fail("%s: green_mobilization %s must be >= 0" % [label, MobilizationStateBuilder.HELD_BACK_KEY])
 	elif held_back > eligible:
-		_fail("%s: green_mobilization %s=%d exceeds the %d eligible placed brigades (types: %s)" % [
+		_h.fail("%s: green_mobilization %s=%d exceeds the %d eligible placed brigades (types: %s)" % [
 			label, MobilizationStateBuilder.HELD_BACK_KEY, held_back, eligible, ", ".join(types.keys())])
 
 
@@ -170,21 +170,21 @@ func _validate_victory(label: String, scenario_data: Dictionary, hex_coords: Dic
 	if victory_value == null:
 		return
 	if not (victory_value is Dictionary):
-		_fail("%s: victory block must be a Dictionary" % label)
+		_h.fail("%s: victory block must be a Dictionary" % label)
 		return
 	var victory: Dictionary = victory_value
 	var arm := String(victory.get("loss_check_arm", "unconditional"))
 	if arm not in VALID_LOSS_CHECK_ARMS and not arm.begins_with("after_turn:"):
-		_fail("%s: unknown victory loss_check_arm: %s" % [label, arm])
+		_h.fail("%s: unknown victory loss_check_arm: %s" % [label, arm])
 	var taiwan_hexes: Variant = victory.get("taiwan_hexes", null)
 	if taiwan_hexes == null:
 		return
 	if not (taiwan_hexes is Array):
-		_fail("%s: victory taiwan_hexes must be null or an Array of hex ids" % label)
+		_h.fail("%s: victory taiwan_hexes must be null or an Array of hex ids" % label)
 		return
 	for hex_value in taiwan_hexes:
 		if not hex_coords.has(String(hex_value)):
-			_fail("%s: victory taiwan_hexes references unknown hex: %s" % [label, String(hex_value)])
+			_h.fail("%s: victory taiwan_hexes references unknown hex: %s" % [label, String(hex_value)])
 
 
 # --- pinned checks (default scenario only) ---
@@ -195,16 +195,16 @@ func _validate_default_pins(scenario_data: Dictionary, hex_coords: Dictionary) -
 	var reserve := _red_ship_reserve("scenario_default", scenario_data)
 
 	if placements.size() != EXPECTED_DEFAULT_PLACEMENTS:
-		_fail("Default scenario placement count changed: expected %d, got %d" % [EXPECTED_DEFAULT_PLACEMENTS, placements.size()])
+		_h.fail("Default scenario placement count changed: expected %d, got %d" % [EXPECTED_DEFAULT_PLACEMENTS, placements.size()])
 	if reserve.size() != EXPECTED_DEFAULT_RED_SHIP_RESERVE:
-		_fail("Default red_ship_reserve count changed: expected %d, got %d" % [EXPECTED_DEFAULT_RED_SHIP_RESERVE, reserve.size()])
+		_h.fail("Default red_ship_reserve count changed: expected %d, got %d" % [EXPECTED_DEFAULT_RED_SHIP_RESERVE, reserve.size()])
 
 	var green_count := 0
 	for placement in placements:
 		if String(placement.get("team", "")) == "Green":
 			green_count += 1
 	if green_count != EXPECTED_DEFAULT_PLACEMENTS:
-		_fail("Default scenario expected %d Green placements, got %d" % [EXPECTED_DEFAULT_PLACEMENTS, green_count])
+		_h.fail("Default scenario expected %d Green placements, got %d" % [EXPECTED_DEFAULT_PLACEMENTS, green_count])
 
 	# Every reserve entry's beach_hex must be defended: a Green placement ON the hex or on an
 	# odd-r neighbor (the full-defense geometry — beaches garrisoned on-hex or covered from
@@ -226,7 +226,7 @@ func _validate_default_pins(scenario_data: Dictionary, hex_coords: Dictionary) -
 					defended = true
 					break
 		if not defended:
-			_fail("Default red_ship_reserve entry %d beach_hex %s has no Green placement on it or adjacent to it" % [index, beach_hex])
+			_h.fail("Default red_ship_reserve entry %d beach_hex %s has no Green placement on it or adjacent to it" % [index, beach_hex])
 	print("Default pins checked: %d placements (all Green), %d reserve entries, beach adjacency" % [EXPECTED_DEFAULT_PLACEMENTS, EXPECTED_DEFAULT_RED_SHIP_RESERVE])
 
 
@@ -244,10 +244,10 @@ func _land_neighbor_count(coord: Vector2i, coord_set: Dictionary) -> int:
 func _placements(label: String, scenario_data: Dictionary) -> Array:
 	var placements = scenario_data.get("placements", null)
 	if not (placements is Array):
-		_fail("%s: missing placements array" % label)
+		_h.fail("%s: missing placements array" % label)
 		return []
 	if placements.is_empty():
-		_fail("%s: placements array is empty" % label)
+		_h.fail("%s: placements array is empty" % label)
 		return []
 	return placements
 
@@ -255,7 +255,7 @@ func _placements(label: String, scenario_data: Dictionary) -> Array:
 func _red_ship_reserve(label: String, scenario_data: Dictionary) -> Array:
 	var reserve = scenario_data.get("red_ship_reserve", null)
 	if not (reserve is Array):
-		_fail("%s: missing red_ship_reserve array" % label)
+		_h.fail("%s: missing red_ship_reserve array" % label)
 		return []
 	return reserve
 
@@ -263,12 +263,12 @@ func _red_ship_reserve(label: String, scenario_data: Dictionary) -> Array:
 func _read_dictionary(path: String) -> Dictionary:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
-		_fail("Could not open %s" % path)
+		_h.fail("Could not open %s" % path)
 		return {}
 
 	var parsed = JSON.parse_string(file.get_as_text())
 	if not (parsed is Dictionary):
-		_fail("%s did not parse to a Dictionary" % path)
+		_h.fail("%s did not parse to a Dictionary" % path)
 		return {}
 	return parsed
 
@@ -276,7 +276,7 @@ func _read_dictionary(path: String) -> Dictionary:
 func _read_hex_grid() -> Array:
 	var file := FileAccess.open(HEX_GRID_PATH, FileAccess.READ)
 	if file == null:
-		_fail("Could not open %s" % HEX_GRID_PATH)
+		_h.fail("Could not open %s" % HEX_GRID_PATH)
 		return []
 
 	var parsed = JSON.parse_string(file.get_as_text())
@@ -285,7 +285,7 @@ func _read_hex_grid() -> Array:
 	if parsed is Dictionary and parsed.has("hexes") and parsed["hexes"] is Array:
 		return parsed["hexes"]
 
-	_fail("%s did not parse to a hex Array or Dictionary with hexes array" % HEX_GRID_PATH)
+	_h.fail("%s did not parse to a hex Array or Dictionary with hexes array" % HEX_GRID_PATH)
 	return []
 
 
@@ -295,7 +295,7 @@ func _read_beach_ids() -> Dictionary:
 	for beach in data.get("beaches", []):
 		ids[int((beach as Dictionary).get("id", 0))] = true
 	if ids.is_empty():
-		_fail("%s yielded no beach ids" % BEACHES_PATH)
+		_h.fail("%s yielded no beach ids" % BEACHES_PATH)
 	return ids
 
 
@@ -322,18 +322,3 @@ func _build_hex_coord_lookup(hexes: Array) -> Dictionary:
 	return lookup
 
 
-func _fail(message: String) -> void:
-	_failures.append(message)
-	push_error(message)
-
-
-func _finish() -> void:
-	if _failures.is_empty():
-		print("PASS: Scenario data validation succeeded")
-		quit(0)
-		return
-
-	print("FAIL: Scenario data validation found %d issue(s):" % _failures.size())
-	for failure in _failures:
-		print("  - %s" % failure)
-	quit(1)
