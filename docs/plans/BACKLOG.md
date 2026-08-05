@@ -29,11 +29,7 @@ put it in the section below WITHOUT a checkbox and say what would unblock it.)*
 
 
 
-- [ ] **`UnitStats.FALLBACK_CATEGORY_DEFS` reachability is unknown.**
-  90 entries, and NO composition entry in either OOB declares a `category` — the table is reachable only through `_fallback_category_for_type`'s
-  type-name heuristics. Plan 0032 anchored two new airborne strengths on entries that were dead until
-  then. Instrument `_fallback_category_for_type` over both OOBs, list the keys actually hit, and delete
-  or document the rest. Do NOT delete on inspection alone; the matching is indirect.
+
 - [ ] **A typed turn-resolution outcome carrying all phase reports — MEASURED DOWN rather than adopted (2026-08-01).**
   Proposed by the tier-1 reviewer during plan 0059's review.
   The idea: instead of each phase writing a report onto `GameStateData` and `GameState.play_turn` reading eleven fields back out,

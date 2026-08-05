@@ -25,6 +25,12 @@ code/doc references to "PLAN.md → Decisions <date>" resolve there.
 
 ---
 
+- **2026-08-05 — `UnitStats` fallback deleted; unknown type = hard error; `TYPE_DEFS` is the single source (agent + USER; gate green).**
+  Instrumented both OOBs and found every composition type already in `TYPE_DEFS` (0 fallback hits), so `FALLBACK_CATEGORY_DEFS`
+  and `_fallback_category_for_type` were deleted entirely (USER call): an unknown type now `push_error`s and callers drop to their
+  explicit `default_strength` — no silent heuristic assignment, matching "fail loud / no silent default". Exhaustiveness is enforced
+  mechanically by `tools/validate_oob_data.gd` + `tools/validate_combat_data.gd`. Facts: `scripts/model/UnitStats.gd` (TYPE_DEFS + header).
+
 - **2026-08-03 — Review tooling bundle: opencode read-only, numbered findings, `--format json` (agent judgment).**
   The DeepSeek reviewer route is now `tools/review_opencode.sh` (opencode `--format json`; emits the
   assistant's message text, all messages in order), so the byte band sees the report, not prompt echo /

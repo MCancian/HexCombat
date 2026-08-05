@@ -10,7 +10,7 @@ Resolve ground combat when Red and Green brigades occupy the same hex after move
 |---|---|
 | `scripts/calc/CombatCalculator.gd` | Core attack resolver — `resolve_map_attack()`: formula, rolls, loss rates, FEBA, casualty selection. Pure `static func` in `RefCounted`. |
 | `scripts/model/CombatForces.gd` | Force aggregation — flattens brigades into maneuver-unit arrays and support-count dicts, filtering by tags. |
-| `scripts/model/UnitStats.gd` | `TYPE_DEFS` strength/tags table + `FALLBACK_CATEGORY_DEFS`. Lookups: `strength_for_type()`, `has_tag()`. |
+| `scripts/model/UnitStats.gd` | `TYPE_DEFS` strength/tags table (single source of truth; no fallback). Lookups: `strength_for_type()`, `category_for_type()`, `has_tag()`. |
 | `scripts/model/CombatResult.gd` | `Resource` holding strength, ratio, losses, casualties, `feba_movement_km`, and full `combat_detail` dict. |
 | `scripts/model/Brigade.gd` | Brigade resource: composition of `Battalion[]`, plus `landed_qty()` / `landed_battalion_count()` — the single home of the "which battalions are actually ashore" rule (plan 0037). Unit expansion for combat lives in `CombatForces`, which delegates here. |
 | `scripts/model/Battalion.gd` | Single battalion type + qty; `combat_strength` getter delegates to `UnitStats`. |
@@ -106,7 +106,7 @@ This exposes all support units (Field Artillery, Mechanized Artillery, Rocket Ar
 | Tank Battalion | 2.0 | armor |
 | Utility Helicopter Battalion | 0.5 | aviation, rotary_wing, utility |
 
-Fallback categories (`FALLBACK_CATEGORY_DEFS`) provide strength/tag values for unknown types via substring matching; a warning is emitted.
+There is NO fallback category table (removed 2026-08-05): every OOB battalion type must resolve in `TYPE_DEFS` (exhaustiveness enforced by `tools/validate_oob_data.gd` / `tools/validate_combat_data.gd`). An unknown type fails loud via `push_error` and the caller drops to its explicit `default_strength` — no silent substring heuristic.
 
 ## 6. Force aggregation (`CombatForces`)
 

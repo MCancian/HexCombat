@@ -6,10 +6,20 @@ class_name UnitStats
 # NOT used as maneuver combat strength — helicopters (rotary_wing) contribute at the rotary_wing support
 # multiplier (1.3) in both HexCombat and TIV, so the helicopter strength value is intentionally low/dead.
 #
-# NOTE: the two PLAAF Airborne Corps types (plan 0032) are anchored on the pre-existing fallback
-# category defs rather than invented: light airborne takes the "Airborne" category's 1.3, and the
-# ZBD-03-equipped mechanized airborne sits at 1.4 — above light airborne, below the 1.5 of a fully
-# mechanized Combined Arms Battalion, matching where the "Air Assault" category already sits.
+# NOTE (2026-08-05): TYPE_DEFS is the SINGLE authoritative mapping from battalion type ->
+# {category, strength, tags}. Every battalion type in BOTH ground-force OOBs must resolve here; that
+# is enforced mechanically by tools/validate_oob_data.gd and tools/validate_combat_data.gd, so an
+# unknown type is a DATA BUG, not a lookup miss. There is deliberately NO fallback table and NO
+# substring heuristic: an unknown type fails loud via push_error below, and the caller falls back to
+# its explicit default_strength. The old FALLBACK_CATEGORY_DEFS heuristic was removed
+# (docs/DECISIONS.md 2026-08-05) because every real type already resolved via TYPE_DEFS (0 fallback
+# hits) and the heuristic silently assigned arbitrary strengths/categories to typo'd or new types — a
+# "silent default fallback" the project convention forbids.
+#
+# NOTE: the two PLAAF Airborne Corps types (plan 0032) carry their category ("Airborne") and strengths
+# (1.3 light, 1.4 mechanized) directly in TYPE_DEFS — light airborne is well above a plain infantry
+# 1.0, the ZBD-03-equipped mechanized airborne sits below the 1.5 of a fully mechanized Combined Arms
+# Battalion, matching where the "Air Assault" category already sits.
 const TYPE_DEFS := {
 	"Air Assault Infantry Battalion": {"category": "Air Assault", "strength": 1.4, "tags": ["infantry", "air_assault"]},
 	"Air Defense Battalion": {"category": "Air Defense", "strength": 0.9, "tags": ["air_defense"]},
@@ -32,58 +42,25 @@ const TYPE_DEFS := {
 	"Utility Helicopter Battalion": {"category": "Helicopter", "strength": 0.5, "tags": ["aviation", "rotary_wing", "utility"]}
 }
 
-const FALLBACK_CATEGORY_DEFS := {
-	"Light": {"strength": 1.0, "tags": []},
-	"Light Infantry": {"strength": 1.0, "tags": ["infantry"]},
-	"Medium": {"strength": 1.5, "tags": []},
-	"Heavy": {"strength": 2.0, "tags": []},
-	"Mechanized": {"strength": 1.5, "tags": ["mechanized"]},
-	"Mechanized Infantry": {"strength": 1.5, "tags": ["infantry", "mechanized"]},
-	"Armor": {"strength": 2.0, "tags": ["armor"]},
-	"Tank": {"strength": 2.0, "tags": ["armor"]},
-	"Amphib": {"strength": 1.2, "tags": ["amphibious"]},
-	"Amphibious": {"strength": 1.2, "tags": ["amphibious"]},
-	"SOF": {"strength": 1.8, "tags": ["special_forces"]},
-	"Recon": {"strength": 0.7, "tags": ["recon"]},
-	"Towed": {"strength": 0.8, "tags": []},
-	"Towed Artillery": {"strength": 0.8, "tags": ["artillery"]},
-	"SP": {"strength": 1.3, "tags": []},
-	"SP Artillery": {"strength": 1.3, "tags": ["artillery"]},
-	"Mechanized Artillery": {"strength": 1.3, "tags": ["artillery", "mechanized"]},
-	"C2": {"strength": 0.5, "tags": ["command"]},
-	"HQ": {"strength": 0.5, "tags": ["command"]},
-	"SHORAD": {"strength": 0.9, "tags": ["air_defense"]},
-	"Air Defense": {"strength": 0.9, "tags": ["air_defense"]},
-	"Cargo": {"strength": 0.3, "tags": ["support"]},
-	"Support": {"strength": 0.3, "tags": ["support"]},
-	"Engineer": {"strength": 1.1, "tags": ["engineer"]},
-	"Airborne": {"strength": 1.3, "tags": ["airborne"]},
-	"Air Assault": {"strength": 1.4, "tags": ["air_assault"]},
-	"Rotary Wing": {"strength": 0.5, "tags": ["aviation", "rotary_wing"]},
-	"Helicopter": {"strength": 0.5, "tags": ["aviation", "rotary_wing"]},
-	"DOS": {"strength": 0.2, "tags": ["logistics"]},
-	"Logistics": {"strength": 0.2, "tags": ["logistics"]}
-}
-
 
 static func has_known_type(unit_type: String) -> bool:
 	return TYPE_DEFS.has(unit_type)
 
 
 static func strength_for_type(unit_type: String, default_strength: float = 1.0) -> float:
-	var definition := _definition_for_type(unit_type, true, default_strength)
+	var definition := _definition_for_type(unit_type)
 	if definition.is_empty():
 		return default_strength
 	return float(definition.get("strength", default_strength))
 
 
 static func category_for_type(unit_type: String) -> String:
-	var definition := _definition_for_type(unit_type, true, 1.0)
+	var definition := _definition_for_type(unit_type)
 	return String(definition.get("category", ""))
 
 
 static func tags_for_type(unit_type: String) -> Array[String]:
-	var definition := _definition_for_type(unit_type, true, 1.0)
+	var definition := _definition_for_type(unit_type)
 	var tags: Array[String] = []
 	for tag in definition.get("tags", []):
 		tags.append(String(tag))
@@ -98,31 +75,8 @@ static func is_artillery_type(unit_type: String) -> bool:
 	return has_tag(unit_type, "artillery")
 
 
-static func _definition_for_type(unit_type: String, warn_on_fallback: bool, default_strength: float) -> Dictionary:
+static func _definition_for_type(unit_type: String) -> Dictionary:
 	if TYPE_DEFS.has(unit_type):
 		return TYPE_DEFS[unit_type]
-
-	var fallback_category := _fallback_category_for_type(unit_type)
-	if not fallback_category.is_empty():
-		if warn_on_fallback:
-			push_warning("Unknown battalion type '%s'; using fallback category '%s'" % [unit_type, fallback_category])
-		var fallback_definition: Dictionary = FALLBACK_CATEGORY_DEFS[fallback_category].duplicate()
-		fallback_definition["category"] = fallback_category
-		return fallback_definition
-
-	if warn_on_fallback:
-		push_warning("Unknown battalion type '%s'; using default combat strength %.1f" % [unit_type, default_strength])
+	push_error("Unknown battalion type '%s' has no UnitStats.TYPE_DEFS definition" % unit_type)
 	return {}
-
-
-static func _fallback_category_for_type(unit_type: String) -> String:
-	if FALLBACK_CATEGORY_DEFS.has(unit_type):
-		return unit_type
-
-	var normalized_type := unit_type.to_lower()
-	var best_key := ""
-	for key in FALLBACK_CATEGORY_DEFS:
-		var normalized_key := String(key).to_lower()
-		if normalized_key in normalized_type and String(key).length() > best_key.length():
-			best_key = key
-	return best_key
