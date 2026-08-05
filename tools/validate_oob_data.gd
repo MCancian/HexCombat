@@ -9,7 +9,7 @@ const EXPECTED_PLA_BRIGADES := 117
 const EXPECTED_ROC_BRIGADES := 32
 const EXPECTED_COMBINED_BRIGADES := 149
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("OOB data validation")
 
 
 func _initialize() -> void:
@@ -23,27 +23,27 @@ func _initialize() -> void:
 	_validate_brigade_contracts(pla_data, "PLA")
 	_validate_brigade_contracts(roc_data, "ROC")
 	_validate_known_battalion_types([pla_data, roc_data])
-	_finish()
+	_h.finish(self)
 
 
 func _read_oob(path: String) -> Dictionary:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
-		_fail("Could not open %s" % path)
+		_h.fail("Could not open %s" % path)
 		return {}
 
 	var parsed = JSON.parse_string(file.get_as_text())
 	if not (parsed is Dictionary):
-		_fail("%s did not parse to a Dictionary" % path)
+		_h.fail("%s did not parse to a Dictionary" % path)
 		return {}
 
 	var data: Dictionary = parsed
 	var brigades = data.get("brigades", null)
 	if not (brigades is Array):
-		_fail("%s missing brigades array" % path)
+		_h.fail("%s missing brigades array" % path)
 		return {}
 	if brigades.is_empty():
-		_fail("%s brigades array is empty" % path)
+		_h.fail("%s brigades array is empty" % path)
 
 	return data
 
@@ -54,11 +54,11 @@ func _validate_counts(pla_data: Dictionary, roc_data: Dictionary) -> void:
 	var combined_count := pla_count + roc_count
 
 	if pla_count != EXPECTED_PLA_BRIGADES:
-		_fail("PLA brigade count changed: expected %d, got %d" % [EXPECTED_PLA_BRIGADES, pla_count])
+		_h.fail("PLA brigade count changed: expected %d, got %d" % [EXPECTED_PLA_BRIGADES, pla_count])
 	if roc_count != EXPECTED_ROC_BRIGADES:
-		_fail("ROC brigade count changed: expected %d, got %d" % [EXPECTED_ROC_BRIGADES, roc_count])
+		_h.fail("ROC brigade count changed: expected %d, got %d" % [EXPECTED_ROC_BRIGADES, roc_count])
 	if combined_count != EXPECTED_COMBINED_BRIGADES:
-		_fail("Combined brigade count changed: expected %d, got %d" % [EXPECTED_COMBINED_BRIGADES, combined_count])
+		_h.fail("Combined brigade count changed: expected %d, got %d" % [EXPECTED_COMBINED_BRIGADES, combined_count])
 
 	print("Brigade counts: PLA=%d ROC=%d combined=%d" % [pla_count, roc_count, combined_count])
 
@@ -68,18 +68,18 @@ func _validate_team(data: Dictionary, expected_team: String, label: String) -> v
 		var brigade_id := String(brigade.get("brigade_id", ""))
 		var actual_team := String(brigade.get("team", ""))
 		if actual_team != expected_team:
-			_fail("%s brigade %s team changed: expected %s, got %s" % [label, brigade_id, expected_team, actual_team])
+			_h.fail("%s brigade %s team changed: expected %s, got %s" % [label, brigade_id, expected_team, actual_team])
 
 
 func _validate_brigade_contracts(data: Dictionary, label: String) -> void:
 	for brigade in _brigades(data):
 		var brigade_id := String(brigade.get("brigade_id", ""))
 		if brigade_id.is_empty():
-			_fail("%s brigade has empty brigade_id" % label)
+			_h.fail("%s brigade has empty brigade_id" % label)
 
 		var composition = brigade.get("composition", null)
 		if not (composition is Array) or composition.is_empty():
-			_fail("%s brigade %s has empty composition" % [label, brigade_id])
+			_h.fail("%s brigade %s has empty composition" % [label, brigade_id])
 
 
 func _validate_known_battalion_types(oobs: Array[Dictionary]) -> void:
@@ -94,26 +94,9 @@ func _validate_known_battalion_types(oobs: Array[Dictionary]) -> void:
 
 	offending_types.sort()
 	for unit_type in offending_types:
-		_fail("Unknown battalion type: %s" % unit_type)
+		_h.fail("Unknown battalion type: %s" % unit_type)
 	print("Known battalion type check: %d offending type(s)" % offending_types.size())
 
 
 func _brigades(data: Dictionary) -> Array:
 	return data.get("brigades", [])
-
-
-func _fail(message: String) -> void:
-	_failures.append(message)
-	push_error(message)
-
-
-func _finish() -> void:
-	if _failures.is_empty():
-		print("PASS: OOB data validation succeeded")
-		quit(0)
-		return
-
-	print("FAIL: OOB data validation found %d issue(s):" % _failures.size())
-	for failure in _failures:
-		print("  - %s" % failure)
-	quit(1)

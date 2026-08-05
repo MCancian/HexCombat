@@ -15,7 +15,7 @@ const MAX_DRAIN_DAYS := 200
 const IDLE_CONSUMPTION_TONS := 1600
 const MOVED_CONSUMPTION_TONS := 3200
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("DOS consumption validation")
 var GameData: Node = null
 var GameState: Node = null
 
@@ -25,11 +25,11 @@ func _initialize() -> void:
 	GameData = get_root().get_node("GameData")
 	GameState = get_root().get_node("GameState")
 	if GameData == null:
-		_fail("Autoload GameData was not found on the SceneTree root")
+		_h.fail("Autoload GameData was not found on the SceneTree root")
 	if GameState == null:
-		_fail("Autoload GameState was not found on the SceneTree root")
-	if not _failures.is_empty():
-		_finish()
+		_h.fail("Autoload GameState was not found on the SceneTree root")
+	if not _h.failures.is_empty():
+		_h.finish(self)
 		return
 
 	_validate_idle_consumption()
@@ -37,7 +37,7 @@ func _initialize() -> void:
 	_validate_multi_turn_drain()
 	_validate_clamp_at_zero()
 	_validate_full_resolve_turn_hook()
-	_finish()
+	_h.finish(self)
 
 
 func _validate_idle_consumption() -> void:
@@ -45,31 +45,31 @@ func _validate_idle_consumption() -> void:
 	GameState.reset_to_scenario()
 	_assert_equal_float("initial supply pool", GameState.supply_state.current_dos_tons, INITIAL_POOL_TONS)
 	GameState.resolve_offload_turn(SeededDice.new(DICE_SEED))
-	_assert_equal_int("Red brigades on-map after landing", _red_brigades_on_map(), 4)
+	_h.equal_int("Red brigades on-map after landing", _red_brigades_on_map(), 4)
 
 	var summary: Dictionary = GameState.resolve_supply_turn()
-	_assert_equal_int("idle unit_count", int(summary["unit_count"]), 16)
-	_assert_equal_int("idle mechanized_unit_count", int(summary["mechanized_unit_count"]), 16)
-	_assert_equal_int("idle non_mechanized_unit_count", int(summary["non_mechanized_unit_count"]), 0)
-	_assert_equal_int("idle red_dos_consumed_tons", int(summary["red_dos_consumed_tons"]), IDLE_CONSUMPTION_TONS)
+	_h.equal_int("idle unit_count", int(summary["unit_count"]), 16)
+	_h.equal_int("idle mechanized_unit_count", int(summary["mechanized_unit_count"]), 16)
+	_h.equal_int("idle non_mechanized_unit_count", int(summary["non_mechanized_unit_count"]), 0)
+	_h.equal_int("idle red_dos_consumed_tons", int(summary["red_dos_consumed_tons"]), IDLE_CONSUMPTION_TONS)
 	_assert_equal_float("idle pool_after", float(summary["pool_after"]), 13400.0)
-	_assert_true("idle summary applied", bool(summary["applied"]))
-	_assert_equal_int("idle day_history size", GameState.supply_state.day_history.size(), 1)
+	_h.is_true("idle summary applied", bool(summary["applied"]))
+	_h.equal_int("idle day_history size", GameState.supply_state.day_history.size(), 1)
 
 
 func _validate_activity_consumption() -> void:
 	GameData.load_all()
 	GameState.reset_to_scenario()
 	GameState.resolve_offload_turn(SeededDice.new(DICE_SEED))
-	_assert_equal_int("activity Red brigades on-map after landing", _red_brigades_on_map(), 4)
+	_h.equal_int("activity Red brigades on-map after landing", _red_brigades_on_map(), 4)
 	for brigade_value in GameData.brigades.values():
 		var brigade: Brigade = brigade_value
 		if brigade.team == Brigade.Team.RED and not brigade.destroyed and not brigade.hex_id.is_empty():
 			GameData.mark_brigade_moved(brigade, false)
 
 	var summary: Dictionary = GameState.resolve_supply_turn()
-	_assert_true("activity consumption greater than idle", int(summary["red_dos_consumed_tons"]) > IDLE_CONSUMPTION_TONS)
-	_assert_equal_int("activity red_dos_consumed_tons", int(summary["red_dos_consumed_tons"]), MOVED_CONSUMPTION_TONS)
+	_h.is_true("activity consumption greater than idle", int(summary["red_dos_consumed_tons"]) > IDLE_CONSUMPTION_TONS)
+	_h.equal_int("activity red_dos_consumed_tons", int(summary["red_dos_consumed_tons"]), MOVED_CONSUMPTION_TONS)
 
 
 # Multi-turn drain: the pool strictly decreases each supply turn and day_history grows.
@@ -91,9 +91,9 @@ func _validate_multi_turn_drain() -> void:
 	TurnLifecycleTransitions.begin_next_turn(GameState.data)
 	GameState.resolve_supply_turn()
 	var after_second: float = GameState.supply_state.current_dos_tons
-	_assert_true("multi-turn first drain below start", after_first < start_pool)
-	_assert_true("multi-turn second drain below first", after_second < after_first)
-	_assert_equal_int("multi-turn day_history size", GameState.supply_state.day_history.size(), 2)
+	_h.is_true("multi-turn first drain below start", after_first < start_pool)
+	_h.is_true("multi-turn second drain below first", after_second < after_first)
+	_h.equal_int("multi-turn day_history size", GameState.supply_state.day_history.size(), 2)
 
 
 # The pool clamps at zero (never negative) when consumption exceeds the remaining supply.
@@ -115,14 +115,14 @@ func _validate_clamp_at_zero() -> void:
 	while GameState.supply_state.current_dos_tons > 0.0 and guard < MAX_DRAIN_DAYS:
 		crossing = GameState.resolve_supply_turn()
 		guard += 1
-	_assert_true("pool drained within %d billed days" % MAX_DRAIN_DAYS, guard < MAX_DRAIN_DAYS)
+	_h.is_true("pool drained within %d billed days" % MAX_DRAIN_DAYS, guard < MAX_DRAIN_DAYS)
 	_assert_equal_float("pool clamps at zero", GameState.supply_state.current_dos_tons, 0.0)
 
-	_assert_true("crossing day was billed", not crossing.is_empty())
+	_h.is_true("crossing day was billed", not crossing.is_empty())
 	var pool_before := float(crossing["pool_before"])
 	var consumed := float(crossing["red_dos_consumed_tons"])
-	_assert_true("crossing day started with supply left", pool_before > 0.0)
-	_assert_true(
+	_h.is_true("crossing day started with supply left", pool_before > 0.0)
+	_h.is_true(
 		"crossing day's bill (%.1f) exceeded the remainder (%.1f) — the clamp really fired"
 			% [consumed, pool_before],
 		consumed > pool_before)
@@ -142,8 +142,8 @@ func _validate_full_resolve_turn_hook() -> void:
 	GameData.load_all()
 	GameState.reset_to_scenario()
 	GameState.resolve_turn(SeededDice.new(DICE_SEED))
-	_assert_true("full resolve_turn did not increase pool", GameState.supply_state.current_dos_tons <= INITIAL_POOL_TONS)
-	_assert_equal_int("full resolve_turn day_history size", GameState.supply_state.day_history.size(), 1)
+	_h.is_true("full resolve_turn did not increase pool", GameState.supply_state.current_dos_tons <= INITIAL_POOL_TONS)
+	_h.equal_int("full resolve_turn day_history size", GameState.supply_state.day_history.size(), 1)
 
 
 func _red_brigades_on_map() -> int:
@@ -155,33 +155,6 @@ func _red_brigades_on_map() -> int:
 	return count
 
 
-func _assert_true(label: String, value: bool) -> void:
-	if not value:
-		_fail("%s: expected true" % label)
-
-
-func _assert_equal_int(label: String, actual: int, expected: int) -> void:
-	if actual != expected:
-		_fail("%s: expected %d, got %d" % [label, expected, actual])
-
-
 func _assert_equal_float(label: String, actual: float, expected: float) -> void:
 	if not is_equal_approx(actual, expected):
-		_fail("%s: expected %.2f, got %.2f" % [label, expected, actual])
-
-
-func _fail(message: String) -> void:
-	_failures.append(message)
-	push_error(message)
-
-
-func _finish() -> void:
-	if _failures.is_empty():
-		print("PASS: DOS consumption validation succeeded")
-		quit(0)
-		return
-
-	print("FAIL: DOS consumption validation found %d issue(s):" % _failures.size())
-	for failure in _failures:
-		print("  - %s" % failure)
-	quit(1)
+		_h.fail("%s: expected %.2f, got %.2f" % [label, expected, actual])

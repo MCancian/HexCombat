@@ -55,7 +55,7 @@ const TARGET_HEX := GoldenScript.TARGET_HEX
 # meets a much less damaged ROC. Was "casualties=4, feba=-3.00".
 const EXPECTED_COMBAT_FINGERPRINT := "casualties=3, feba=-2.27"
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("headless cleanup validation", " (seed=%d)" % SEED)
 var GameData: Node = null
 var GameState: Node = null
 
@@ -65,8 +65,8 @@ func _initialize() -> void:
 	GameData = get_root().get_node("GameData")
 	GameState = get_root().get_node("GameState")
 	if GameData == null or GameState == null:
-		_fail("Autoloads GameData/GameState not found")
-		_finish()
+		_h.fail("Autoloads GameData/GameState not found")
+		_h.finish(self)
 		return
 
 	GameData.load_all()
@@ -74,7 +74,7 @@ func _initialize() -> void:
 	_validate_cleanup_determinism()
 	_validate_cleanup_produces_summary()
 	_validate_turn_golden_invariant_preserved()
-	_finish()
+	_h.finish(self)
 
 
 func _validate_cleanup_resets_antiship_flags() -> void:
@@ -90,25 +90,25 @@ func _validate_cleanup_resets_antiship_flags() -> void:
 		if system.fired > 0 or system.destroyed_this_turn > 0 or system.active:
 			exercised = true
 			break
-	_assert_true("anti-ship phase exercised at least one system before cleanup", exercised)
+	_h.is_true("anti-ship phase exercised at least one system before cleanup", exercised)
 
 	GameState.resolve_cleanup_phase()
 
 	# AFTER cleanup all per-turn flags must be zero/false.
 	for system_value in GameState.antiship_systems:
 		var system: AntishipSystem = system_value
-		_assert_true("fired reset to 0 for %s" % system.type_name, system.fired == 0)
-		_assert_true("destroyed_this_turn reset to 0 for %s" % system.type_name, system.destroyed_this_turn == 0)
-		_assert_true("suppressed_now reset to 0 for %s" % system.type_name, system.suppressed_now == 0)
-		_assert_true("active reset to false for %s" % system.type_name, not system.active)
+		_h.is_true("fired reset to 0 for %s" % system.type_name, system.fired == 0)
+		_h.is_true("destroyed_this_turn reset to 0 for %s" % system.type_name, system.destroyed_this_turn == 0)
+		_h.is_true("suppressed_now reset to 0 for %s" % system.type_name, system.suppressed_now == 0)
+		_h.is_true("active reset to false for %s" % system.type_name, not system.active)
 		# Cumulative fields must NOT be touched.
-		_assert_true("destroyed (cumulative) untouched for %s" % system.type_name, system.destroyed >= 0)
-		_assert_true("quantity untouched for %s" % system.type_name, system.quantity >= 0)
-		_assert_true("original_quantity untouched for %s" % system.type_name, system.original_quantity >= 0)
+		_h.is_true("destroyed (cumulative) untouched for %s" % system.type_name, system.destroyed >= 0)
+		_h.is_true("quantity untouched for %s" % system.type_name, system.quantity >= 0)
+		_h.is_true("original_quantity untouched for %s" % system.type_name, system.original_quantity >= 0)
 
 	var summary: CleanupSummary = GameState.last_cleanup_summary
-	_assert_true("last_cleanup_summary produced", summary != null)
-	_assert_true("antiship_systems_reset > 0", summary != null and summary.antiship_systems_reset > 0)
+	_h.is_true("last_cleanup_summary produced", summary != null)
+	_h.is_true("antiship_systems_reset > 0", summary != null and summary.antiship_systems_reset > 0)
 
 
 func _validate_cleanup_determinism() -> void:
@@ -133,15 +133,15 @@ func _validate_cleanup_determinism() -> void:
 		second_flags.append(system.fired + system.destroyed_this_turn + system.suppressed_now)
 
 	# Compare as JSON strings for deep equality.
-	_assert_true("deterministic cleanup: same flag state", JSON.stringify(first_flags) == JSON.stringify(second_flags))
+	_h.is_true("deterministic cleanup: same flag state", JSON.stringify(first_flags) == JSON.stringify(second_flags))
 
 
 func _validate_cleanup_produces_summary() -> void:
 	GameState.reset_to_scenario()
 	GameState.resolve_cleanup_phase()
 	var summary: CleanupSummary = GameState.last_cleanup_summary
-	_assert_true("cleanup produces summary when no anti-ship systems", summary != null)
-	_assert_true("summary antiship_systems_reset is zero with no systems", summary != null and summary.antiship_systems_reset == 0)
+	_h.is_true("cleanup produces summary when no anti-ship systems", summary != null)
+	_h.is_true("summary antiship_systems_reset is zero with no systems", summary != null and summary.antiship_systems_reset == 0)
 
 
 # Golden invariant: run the scripted move (no commit) with seed 20260624; must still yield
@@ -151,15 +151,15 @@ func _validate_turn_golden_invariant_preserved() -> void:
 	GameState.reset_to_scenario()
 	GameState.resolve_offload_turn(SeededDice.new(SEED))
 
-	_assert_equal_int("golden invariant turn_number", GameState.turn_number, 1)
+	_h.equal_int("golden invariant turn_number", GameState.turn_number, 1)
 
 	var red_brigade: Brigade = GameData.get_brigade(RED_MOVER_ID)
 	var green_defender: Brigade = GameData.get_brigade(GREEN_DEFENDER_ID)
 	if red_brigade == null:
-		_fail("golden invariant missing Red mover: %s" % RED_MOVER_ID)
+		_h.fail("golden invariant missing Red mover: %s" % RED_MOVER_ID)
 		return
 	if green_defender == null:
-		_fail("golden invariant missing Green defender: %s" % GREEN_DEFENDER_ID)
+		_h.fail("golden invariant missing Green defender: %s" % GREEN_DEFENDER_ID)
 		return
 
 	GameState.add_move_order(Brigade.Team.RED, RED_MOVER_ID, TARGET_HEX, Movement.MODE_TACTICAL)
@@ -181,32 +181,6 @@ func _validate_turn_golden_invariant_preserved() -> void:
 	_assert_equal_string("turn golden invariant preserved (%s)" % EXPECTED_COMBAT_FINGERPRINT, fingerprint, EXPECTED_COMBAT_FINGERPRINT)
 
 
-func _assert_true(label: String, value: bool) -> void:
-	if not value:
-		_fail("%s: expected true" % label)
-
-
 func _assert_equal_string(label: String, actual: String, expected: String) -> void:
 	if actual != expected:
-		_fail("%s: expected \"%s\", got \"%s\"" % [label, expected, actual])
-
-
-func _assert_equal_int(label: String, actual: int, expected: int) -> void:
-	if actual != expected:
-		_fail("%s: expected %d, got %d" % [label, expected, actual])
-
-
-func _fail(message: String) -> void:
-	_failures.append(message)
-	push_error(message)
-
-
-func _finish() -> void:
-	if _failures.is_empty():
-		print("PASS: headless cleanup validation succeeded (seed=%d)" % SEED)
-		quit(0)
-		return
-	print("FAIL: headless cleanup validation found %d issue(s):" % _failures.size())
-	for failure in _failures:
-		print("  - %s" % failure)
-	quit(1)
+		_h.fail("%s: expected \"%s\", got \"%s\"" % [label, expected, actual])

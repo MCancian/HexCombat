@@ -28,10 +28,12 @@ class_name ValidatorHarness
 var failures: Array[String] = []
 
 var _label: String = ""
+var _pass_suffix: String = ""
 
 
-func _init(label: String) -> void:
+func _init(label: String, pass_suffix: String = "") -> void:
 	_label = label
+	_pass_suffix = pass_suffix
 
 
 func fail(message: String) -> void:
@@ -65,9 +67,11 @@ func is_true(label: String, value: bool) -> void:
 
 
 ## Prints the verdict line the gate parses, then quits the tree: 0 on pass, 1 on failure.
-func finish(tree: SceneTree) -> void:
+## Optional pass_suffix appends to the PASS line only (e.g. " (seed=20260624)")
+## to reproduce byte-identical output for validators that carry seed/turn metadata.
+func finish(tree: SceneTree, pass_suffix: String = "") -> void:
 	if failures.is_empty():
-		print("PASS: %s succeeded" % _label)
+		print("PASS: %s succeeded%s" % [_label, pass_suffix if pass_suffix != "" else _pass_suffix])
 		tree.quit(0)
 		return
 	print("FAIL: %s found %d issue(s):" % [_label, failures.size()])
