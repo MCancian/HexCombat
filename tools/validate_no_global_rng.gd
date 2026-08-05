@@ -11,7 +11,7 @@ const SCAN_ROOT := "res://scripts"
 # Global RNG calls not preceded by a '.' (so `_rng.randi_range(` on an instance is fine).
 const FORBIDDEN := "(^|[^.\\w])(randi|randf|randi_range|randf_range|randomize)\\s*\\("
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("no-global-RNG validation")
 
 
 func _initialize() -> void:
@@ -19,22 +19,22 @@ func _initialize() -> void:
 	var regex := RegEx.new()
 	var err := regex.compile(FORBIDDEN)
 	if err != OK:
-		_fail("Could not compile forbidden-RNG regex")
-		_finish()
+		_h.fail("Could not compile forbidden-RNG regex")
+		_h.finish(self)
 		return
 
 	var scripts := _gd_files(SCAN_ROOT)
 	print("Scanning %d .gd file(s) under %s" % [scripts.size(), SCAN_ROOT])
 	for path in scripts:
 		_scan_file(path, regex)
-	_finish()
+	_h.finish(self)
 
 
 func _gd_files(root: String) -> Array[String]:
 	var found: Array[String] = []
 	var dir := DirAccess.open(root)
 	if dir == null:
-		_fail("Cannot open dir: %s" % root)
+		_h.fail("Cannot open dir: %s" % root)
 		return found
 	dir.list_dir_begin()
 	var name := dir.get_next()
@@ -55,7 +55,7 @@ func _gd_files(root: String) -> Array[String]:
 func _scan_file(path: String, regex: RegEx) -> void:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
-		_fail("Cannot read: %s" % path)
+		_h.fail("Cannot read: %s" % path)
 		return
 	var line_no := 0
 	while not file.eof_reached():
@@ -72,20 +72,8 @@ func _scan_file(path: String, regex: RegEx) -> void:
 		if code.strip_edges().begins_with("func "):
 			continue
 		if regex.search(code) != null:
-			_fail("%s:%d global RNG call: %s" % [path, line_no, line.strip_edges()])
+			_h.fail("%s:%d global RNG call: %s" % [path, line_no, line.strip_edges()])
 
 
-func _fail(message: String) -> void:
-	_failures.append(message)
-	push_error(message)
-
-
-func _finish() -> void:
-	if _failures.is_empty():
-		print("PASS: no global RNG in pure logic")
-		quit(0)
-		return
-	print("FAIL: no-global-RNG validation found %d issue(s):" % _failures.size())
-	for failure in _failures:
-		print("  - %s" % failure)
-	quit(1)
+	_h.pass_body = func() -> String: return "no global RNG in pure logic"
+	_h.finish(self)

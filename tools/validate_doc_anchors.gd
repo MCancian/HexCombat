@@ -126,7 +126,7 @@ const HISTORY_DOCS := [
 	"res://.claude/skills/hexcombat-gamestate-decomposition-campaign/SKILL.md",
 ]
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("doc-anchor validation")
 var _gd_index: Dictionary = {}  # basename -> full res:// path (also keyed by `class_name` + ".gd")
 var _alias_index: Dictionary = {}  # enum/const/inner-class name -> Array of declaring res:// paths
 var _class_name_re := RegEx.create_from_string("(?m)^class_name\\s+([A-Za-z_][A-Za-z0-9_]*)")
@@ -172,14 +172,9 @@ func _initialize() -> void:
 
 	var link_files_checked := _check_doc_links()
 
-	if _failures.is_empty():
-		print("PASS: doc anchors fresh (%d docs, %d indexed .gd files, %d files checked for dead doc-links)" % [checked, _gd_index.size(), link_files_checked])
-		quit(0)
-	else:
-		for failure in _failures:
-			push_error(failure)
-		print("FAIL: doc-anchor validation found %d issue(s) — a code move/rename left dead anchors; update the doc (or mark the line '(historical)')" % _failures.size())
-		quit(1)
+	_h.pass_body = func() -> String: return "doc anchors fresh (%d docs, %d indexed .gd files, %d links, %d queries)" % [doc_files.size(), _gd_index.size(), link_files_checked, 0]
+	_h.fail_header = func() -> String: return "doc-anchor validation found %d issue(s) — a code move/rename left dead anchors" % _h.failures.size()
+	_h.finish(self)
 
 
 ## Prove the detector FIRES before trusting it to stay silent. A doc-anchor gate that cannot fail is
@@ -207,62 +202,62 @@ func _self_test() -> void:
 		"data/ijfs/ijfs_scenario.json.crbm_maneuver_rounds_override": "a key addressed inside a real file",
 	}
 	for token in must_fail:
-		var before := _failures.size()
+		var before := _h.failures.size()
 		_check_token("<self-test>", 0, token, member_ref)
-		if _failures.size() == before:
-			_failures.append("SELF-TEST: `%s` should have failed (%s) — the detector is not firing" % [
+		if _h.failures.size() == before:
+			_h.collect("SELF-TEST: `%s` should have failed (%s) — the detector is not firing" % [
 				token, must_fail[token]])
 		else:
-			_failures.resize(before)  # expected failure; discard it
+			_h.failures.resize(before)  # expected failure; discard it
 	for token in must_pass:
-		var before := _failures.size()
+		var before := _h.failures.size()
 		_check_token("<self-test>", 0, token, member_ref)
-		if _failures.size() != before:
-			var got: String = _failures[before]
-			_failures.resize(before)
-			_failures.append("SELF-TEST: `%s` should have passed (%s) but reported: %s" % [
+		if _h.failures.size() != before:
+			var got: String = _h.failures[before]
+			_h.failures.resize(before)
+			_h.collect("SELF-TEST: `%s` should have passed (%s) but reported: %s" % [
 				token, must_pass[token], got])
 	# `(upstream)` is NOT a line skip: it forgives "no such thing here" and nothing else, so a line
 	# citing an upstream name and one of ours keeps checking ours. Both halves pinned.
-	var before_up := _failures.size()
+	var before_up := _h.failures.size()
 	_check_token("<self-test>", 0, "TotallyMadeUpClass.field", member_ref, FLAG_UPSTREAM)
-	if _failures.size() != before_up:
-		_failures.resize(before_up)
-		_failures.append("SELF-TEST: `(upstream)` should forgive an unresolved class and does not")
+	if _h.failures.size() != before_up:
+		_h.failures.resize(before_up)
+		_h.collect("SELF-TEST: `(upstream)` should forgive an unresolved class and does not")
 	_check_token("<self-test>", 0, "GameData.no_such_member_xyz", member_ref, FLAG_UPSTREAM)
-	if _failures.size() == before_up:
-		_failures.append("SELF-TEST: `(upstream)` wrongly forgives a bad member on a class that DOES resolve here")
+	if _h.failures.size() == before_up:
+		_h.collect("SELF-TEST: `(upstream)` wrongly forgives a bad member on a class that DOES resolve here")
 	else:
-		_failures.resize(before_up)
+		_h.failures.resize(before_up)
 	# `(planned)` forgives "no such thing here" for a line naming what a plan proposes to build — and
 	# for MEMBERS too, since the common plan pattern is a new member on an existing class
 	# (`AirInsertionSummary.REASON_ON_COOLDOWN` in plan 0036). It is NOT a line skip and it is NOT a
 	# global opt-out: a real class/member stays checked, a placeholder stays a placeholder, and a dead
 	# name is forgiven only when the marker is present. Four passes and one fail, pinned in both
 	# directions like the `(upstream)` block above.
-	var before_pl := _failures.size()
+	var before_pl := _h.failures.size()
 	_check_token("<self-test>", 0, "TotallyMadeUpClass.field", member_ref, FLAG_PLANNED)
-	if _failures.size() != before_pl:
-		_failures.resize(before_pl)
-		_failures.append("SELF-TEST: `(planned)` should forgive an unresolved class (a proposal name) and does not")
+	if _h.failures.size() != before_pl:
+		_h.failures.resize(before_pl)
+		_h.collect("SELF-TEST: `(planned)` should forgive an unresolved class (a proposal name) and does not")
 	_check_token("<self-test>", 0, "AirInsertionSummary.REASON_ON_COOLDOWN", member_ref, FLAG_PLANNED)
-	if _failures.size() != before_pl:
-		_failures.resize(before_pl)
-		_failures.append("SELF-TEST: `(planned)` should forgive a proposed member on a real class and does not")
+	if _h.failures.size() != before_pl:
+		_h.failures.resize(before_pl)
+		_h.collect("SELF-TEST: `(planned)` should forgive a proposed member on a real class and does not")
 	_check_token("<self-test>", 0, "GameData.load_all", member_ref, FLAG_PLANNED)
-	if _failures.size() != before_pl:
-		_failures.resize(before_pl)
-		_failures.append("SELF-TEST: `(planned)` should leave a real class/member checked and does not")
+	if _h.failures.size() != before_pl:
+		_h.failures.resize(before_pl)
+		_h.collect("SELF-TEST: `(planned)` should leave a real class/member checked and does not")
 	_check_token("<self-test>", 0, "Class.field", member_ref, FLAG_PLANNED)
-	if _failures.size() != before_pl:
-		_failures.resize(before_pl)
-		_failures.append("SELF-TEST: `(planned)` should not change how a placeholder reference resolves")
+	if _h.failures.size() != before_pl:
+		_h.failures.resize(before_pl)
+		_h.collect("SELF-TEST: `(planned)` should not change how a placeholder reference resolves")
 	# A dead name is forgiven ONLY when the marker is on the line — the flag must not be sticky.
 	_check_token("<self-test>", 0, "TotallyMadeUpClass.field", member_ref, 0)
-	if _failures.size() == before_pl:
-		_failures.append("SELF-TEST: a dead name with no `(planned)` marker should still fail")
+	if _h.failures.size() == before_pl:
+		_h.collect("SELF-TEST: a dead name with no `(planned)` marker should still fail")
 	else:
-		_failures.resize(before_pl)
+		_h.failures.resize(before_pl)
 
 
 func _check_doc(path: String) -> void:
@@ -290,7 +285,7 @@ func _check_doc(path: String) -> void:
 		# the same line stay checked.
 		var planned := line.contains("(planned)")
 		if cite_scoped and line_cite.search(line) != null:
-			_failures.append("%s:%d: file:line citation (line numbers rot — cite the class name): %s" % [doc, i + 1, line.strip_edges().left(90)])
+			_h.collect("%s:%d: file:line citation (line numbers rot — cite the class name): %s" % [doc, i + 1, line.strip_edges().left(90)])
 		for m in backtick.search_all(line):
 			var token := m.get_string(1).strip_edges()
 			var flags := (FLAG_UPSTREAM if upstream else 0) | (FLAG_PLANNED if planned else 0)
@@ -323,7 +318,7 @@ func _check_token(doc: String, line_no: int, token: String, member_ref: RegEx, f
 				clean = clean.trim_suffix("/")
 			if not (FileAccess.file_exists("res://" + clean) or DirAccess.dir_exists_absolute("res://" + clean)):
 				if not upstream and not planned:
-					_failures.append("%s:%d: dead path `%s`" % [doc, line_no, token])
+					_h.collect("%s:%d: dead path `%s`" % [doc, line_no, token])
 			return
 	# 3) bare .gd basename (strip :line suffix — the file:line check reports the citation itself)
 	if token.contains(".gd"):
@@ -332,7 +327,7 @@ func _check_token(doc: String, line_no: int, token: String, member_ref: RegEx, f
 			return
 		if not base.contains("/") and base.ends_with(".gd") and not _gd_index.has(base):
 			if not upstream and not planned:
-				_failures.append("%s:%d: no such script `%s` under scripts/tools/tests" % [doc, line_no, token])
+				_h.collect("%s:%d: no such script `%s` under scripts/tools/tests" % [doc, line_no, token])
 		return
 	# 4) UpperCamel.member — the class must resolve, and then the member must exist in it.
 	for suffix in NON_SCRIPT_SUFFIXES:
@@ -362,14 +357,14 @@ func _check_token(doc: String, line_no: int, token: String, member_ref: RegEx, f
 			return
 		# The inverted case (see header): a class that resolves to NOTHING used to pass silently,
 		# which made every reference to a DELETED class invisible to this gate.
-		_failures.append("%s:%d: `%s` — no class or script named '%s' anywhere under scripts/tools/tests (deleted? mark the line '(historical)' if it is describing the past)" % [
+		_h.collect("%s:%d: `%s` — no class or script named '%s' anywhere under scripts/tools/tests (deleted? mark the line '(historical)' if it is describing the past)" % [
 			doc, line_no, token, class_token])
 		return
 	if member == "new":
 		return  # Godot constructor, always valid
 	if not FileAccess.get_file_as_string(script_path).contains(member):
 		if not planned:
-			_failures.append("%s:%d: `%s` — no '%s' in %s (renamed/moved?)" % [doc, line_no, token, member, script_path.get_file()])
+			_h.collect("%s:%d: `%s` — no '%s' in %s (renamed/moved?)" % [doc, line_no, token, member, script_path.get_file()])
 
 
 ## `data/ijfs/ijfs_scenario.json.some_knob` -> `data/ijfs/ijfs_scenario.json`. Docs address a key inside
@@ -399,7 +394,7 @@ func _check_doc_links() -> int:
 				if token.contains("*"):
 					continue  # glob illustration, not an anchor
 				if not FileAccess.file_exists("res://" + token):
-					_failures.append("%s:%d: dead doc-link `%s`" % [path.trim_prefix("res://"), i + 1, token])
+					_h.collect("%s:%d: dead doc-link `%s`" % [path.trim_prefix("res://"), i + 1, token])
 	return files.size()
 
 

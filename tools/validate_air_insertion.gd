@@ -28,7 +28,7 @@ const CORPS_BATTALIONS := 50
 
 var GameData: Node = null
 var GameState: Node = null
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("air insertion coverage")
 
 
 func _initialize() -> void:
@@ -83,13 +83,11 @@ func _initialize() -> void:
 		flown["red_final"], flown["green_final"], repeat["red_final"], repeat["green_final"]],
 		flown["red_final"] == repeat["red_final"] and flown["green_final"] == repeat["green_final"])
 
-	if _failures.is_empty():
+	if _h.failures.is_empty():
 		print("PASS: the air path flies, is capped, bleeds lift, and conserves the force.")
 		quit(0)
 	else:
-		for f in _failures:
-			push_error(f)
-		print("FAIL: air insertion coverage found %d issue(s)." % _failures.size())
+		print("FAIL: air insertion coverage found %d issue(s)." % _h.failures.size())
 		quit(1)
 
 
@@ -189,5 +187,5 @@ func _check(label: String, ok: bool) -> void:
 	if ok:
 		print("  ok: %s" % label)
 	else:
-		_failures.append(label)
+		_h.fail(label)
 		print("  FAIL: %s" % label)

@@ -30,7 +30,7 @@ const MAX_README_ROW := 200
 const MAX_DECISIONS_ENTRY_LINES := 5
 const DECISIONS_GRANDFATHER_DATE := "2026-08-03"
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("plan doc validation")
 
 func _initialize() -> void:
 	_self_test()
@@ -39,61 +39,56 @@ func _initialize() -> void:
 	_check_decisions()
 	_check_plans()
 	
-	if _failures.is_empty():
-		print("PASS: plan docs validated")
-		quit(0)
-	else:
-		for failure in _failures:
-			push_error(failure)
-		print("FAIL: plan doc validation found %d issue(s)" % _failures.size())
-		quit(1)
+	_h.pass_body = func() -> String: return "plan docs validated"
+	_h.fail_header = func() -> String: return "plan doc validation found %d issue(s)" % _h.failures.size()
+	_h.finish(self)
 
 
 func _check_backlog_line(line: String, line_no: int, is_standing_limits: bool) -> void:
 	if not line.begins_with("- [ ]"):
 		return
 	if is_standing_limits:
-		_failures.append("BACKLOG.md:%d: checkbox in 'Standing limits & blocked' section" % line_no)
+		_h.collect("BACKLOG.md:%d: checkbox in 'Standing limits & blocked' section" % line_no)
 	if line.length() > MAX_BACKLOG_LINE:
-		_failures.append("BACKLOG.md:%d: checkbox line too long (%d > %d)" % [line_no, line.length(), MAX_BACKLOG_LINE])
+		_h.collect("BACKLOG.md:%d: checkbox line too long (%d > %d)" % [line_no, line.length(), MAX_BACKLOG_LINE])
 	if not (line.ends_with(".") or line.ends_with(".**")):
-		_failures.append("BACKLOG.md:%d: checkbox line does not end in '.' or '.**' — was '%s'" % [line_no, line])
+		_h.collect("BACKLOG.md:%d: checkbox line does not end in '.' or '.**' — was '%s'" % [line_no, line])
 
 
 func _check_readme_line(line: String, line_no: int) -> void:
 	if line.begins_with("| 00"):
 		if line.length() > MAX_README_ROW:
-			_failures.append("README.md:%d: plan row too long (%d > %d)" % [line_no, line.length(), MAX_README_ROW])
+			_h.collect("README.md:%d: plan row too long (%d > %d)" % [line_no, line.length(), MAX_README_ROW])
 
 
-## Runs one check in isolation and returns only what IT produced, leaving _failures untouched.
-## The previous version mutated _failures and rewound with resize(), which made every assertion a
+## Runs one check in isolation and returns only what IT produced, leaving _h.failures untouched.
+## The previous version mutated _h.failures and rewound with resize(), which made every assertion a
 ## count comparison — so a case could pass by tripping a DIFFERENT check than the one under test.
 func _capture(case: Callable) -> Array[String]:
-	var saved: Array[String] = _failures.duplicate()
-	_failures.clear()
+	var saved: Array[String] = _h.failures.duplicate()
+	_h.failures.clear()
 	case.call()
-	var produced: Array[String] = _failures.duplicate()
-	_failures.clear()
-	_failures.append_array(saved)
+	var produced: Array[String] = _h.failures.duplicate()
+	_h.failures.clear()
+	_h.failures.append_array(saved)
 	return produced
 
 
 func _expect_clean(label: String, produced: Array[String]) -> void:
 	if not produced.is_empty():
-		_failures.append("SELF-TEST %s: expected no failure, got '%s'" % [label, produced[0]])
+		_h.collect("SELF-TEST %s: expected no failure, got '%s'" % [label, produced[0]])
 
 
 ## Asserts a failure was produced AND that it is the expected one. Matching the message is the
 ## point: counting alone lets a case pass for the wrong reason.
 func _expect_failure(label: String, produced: Array[String], expected: String) -> void:
 	if produced.is_empty():
-		_failures.append("SELF-TEST %s: expected a failure containing '%s', got none" % [label, expected])
+		_h.collect("SELF-TEST %s: expected a failure containing '%s', got none" % [label, expected])
 		return
 	for failure in produced:
 		if failure.contains(expected):
 			return
-	_failures.append("SELF-TEST %s: expected a failure containing '%s', got '%s'" % [label, expected, produced[0]])
+	_h.collect("SELF-TEST %s: expected a failure containing '%s', got '%s'" % [label, expected, produced[0]])
 
 
 ## Exactly `n` characters, ending in '.' so only the length rule can trip.
@@ -119,7 +114,7 @@ func _self_test() -> void:
 	# The budget itself must be allowed — the old test never checked the passing side of the boundary.
 	var at_limit := _backlog_line_of_length(120)
 	if at_limit.length() != 120:
-		_failures.append("SELF-TEST backlog/at-limit: fixture is %d chars, expected 120" % at_limit.length())
+		_h.collect("SELF-TEST backlog/at-limit: fixture is %d chars, expected 120" % at_limit.length())
 	_expect_clean("backlog/at-limit", _capture(
 		func() -> void: _check_backlog_line(at_limit, 4, false)))
 
@@ -128,7 +123,7 @@ func _self_test() -> void:
 	# validator whose limit had drifted, and would prove nothing about 120.
 	var over_limit := _backlog_line_of_length(121)
 	if over_limit.length() != 121:
-		_failures.append("SELF-TEST backlog/over-limit: fixture is %d chars, expected 121" % over_limit.length())
+		_h.collect("SELF-TEST backlog/over-limit: fixture is %d chars, expected 121" % over_limit.length())
 	_expect_failure("backlog/over-limit", _capture(
 		func() -> void: _check_backlog_line(over_limit, 5, false)), "too long")
 	_expect_failure("backlog/no-period", _capture(
@@ -141,12 +136,12 @@ func _self_test() -> void:
 		func() -> void: _check_readme_line("| Bundle | Items | Why together |", 8)))
 	var row_at_limit := _readme_row_of_length(200)
 	if row_at_limit.length() != 200:
-		_failures.append("SELF-TEST readme/at-limit: fixture is %d chars, expected 200" % row_at_limit.length())
+		_h.collect("SELF-TEST readme/at-limit: fixture is %d chars, expected 200" % row_at_limit.length())
 	_expect_clean("readme/at-limit", _capture(
 		func() -> void: _check_readme_line(row_at_limit, 9)))
 	var row_over_limit := _readme_row_of_length(201)
 	if row_over_limit.length() != 201:
-		_failures.append("SELF-TEST readme/over-limit: fixture is %d chars, expected 201" % row_over_limit.length())
+		_h.collect("SELF-TEST readme/over-limit: fixture is %d chars, expected 201" % row_over_limit.length())
 	_expect_failure("readme/over-limit", _capture(
 		func() -> void: _check_readme_line(row_over_limit, 10)), "too long")
 
@@ -207,7 +202,7 @@ func _self_test() -> void:
 func _check_backlog() -> void:
 	var path := "res://docs/plans/BACKLOG.md"
 	if not FileAccess.file_exists(path):
-		_failures.append("BACKLOG.md not found")
+		_h.collect("BACKLOG.md not found")
 		return
 	var text := FileAccess.get_file_as_string(path)
 	var lines := text.split("\n")
@@ -224,7 +219,7 @@ func _check_backlog() -> void:
 func _check_readme() -> void:
 	var path := "res://docs/plans/README.md"
 	if not FileAccess.file_exists(path):
-		_failures.append("README.md not found")
+		_h.collect("README.md not found")
 		return
 	var text := FileAccess.get_file_as_string(path)
 	var lines := text.split("\n")
@@ -239,7 +234,7 @@ func _check_readme() -> void:
 func _check_decisions() -> void:
 	var path := "res://docs/DECISIONS.md"
 	if not FileAccess.file_exists(path):
-		_failures.append("DECISIONS.md not found")
+		_h.collect("DECISIONS.md not found")
 		return
 	_check_decisions_text(FileAccess.get_file_as_string(path))
 
@@ -252,7 +247,7 @@ func _check_decisions_text(text: String) -> void:
 			body_start = i + 1
 			break
 	if body_start == -1:
-		_failures.append("DECISIONS.md: no '---' preamble separator found")
+		_h.collect("DECISIONS.md: no '---' preamble separator found")
 		return
 	var first_entry := -1
 	for i in range(body_start, lines.size()):
@@ -260,7 +255,7 @@ func _check_decisions_text(text: String) -> void:
 			first_entry = i
 			break
 	if first_entry == -1:
-		_failures.append("DECISIONS.md: no entries found after the preamble separator")
+		_h.collect("DECISIONS.md: no entries found after the preamble separator")
 		return
 	var i := first_entry
 	while i < lines.size():
@@ -273,7 +268,7 @@ func _check_decisions_text(text: String) -> void:
 			if not lines[j].strip_edges().is_empty():
 				count += 1
 		if not date.is_empty() and date > DECISIONS_GRANDFATHER_DATE and count > MAX_DECISIONS_ENTRY_LINES:
-			_failures.append("DECISIONS.md:%d: %s entry is %d lines (> %d)" % [
+			_h.collect("DECISIONS.md:%d: %s entry is %d lines (> %d)" % [
 				i + 1, date, count, MAX_DECISIONS_ENTRY_LINES])
 		i = block_end
 
@@ -295,7 +290,7 @@ var GOLDEN_BUDGET_HEADING := "## Golden-pin budget"
 func _check_plans() -> void:
 	var dir := DirAccess.open("res://docs/plans/")
 	if dir == null:
-		_failures.append("docs/plans/ not openable")
+		_h.collect("docs/plans/ not openable")
 		return
 	var seen_any := false
 	for file in dir.get_files():
@@ -306,7 +301,7 @@ func _check_plans() -> void:
 		seen_any = true
 		_check_plan_golden_budget("res://docs/plans/" + file, file)
 	if not seen_any:
-		_failures.append("docs/plans/: no active plan docs found to check")
+		_h.collect("docs/plans/: no active plan docs found to check")
 
 
 ## A plan doc fails if the `## Golden-pin budget` heading is missing, is bare (no line beneath it
@@ -325,7 +320,7 @@ func _check_plan_golden_budget_content(text: String, label: String) -> void:
 			heading_no = i
 			break
 	if heading_no == -1:
-		_failures.append("%s: missing '## Golden-pin budget' heading (name the validators it re-baselines, or 'none')" % label)
+		_h.collect("%s: missing '## Golden-pin budget' heading (name the validators it re-baselines, or 'none')" % label)
 		return
 	var decl := ""
 	for i in range(heading_no + 1, lines.size()):
@@ -334,10 +329,10 @@ func _check_plan_golden_budget_content(text: String, label: String) -> void:
 			decl = candidate
 			break
 	if decl.is_empty():
-		_failures.append("%s: '## Golden-pin budget' heading has no declaration line beneath it" % label)
+		_h.collect("%s: '## Golden-pin budget' heading has no declaration line beneath it" % label)
 		return
 	if decl == GOLDEN_BUDGET_PLACEHOLDER:
-		_failures.append("%s: '## Golden-pin budget' still uses the placeholder '%s'" % [label, GOLDEN_BUDGET_PLACEHOLDER])
+		_h.collect("%s: '## Golden-pin budget' still uses the placeholder '%s'" % [label, GOLDEN_BUDGET_PLACEHOLDER])
 
 
 const GOLDEN_BUDGET_PLACEHOLDER := "<none — name the validators you will re-baseline>"

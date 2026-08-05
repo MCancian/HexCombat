@@ -26,7 +26,7 @@ const LATE_LANDING_AFTER_TURN := 10
 
 var GameData: Node = null
 var GameState: Node = null
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("deep-pool coverage")
 var _late_landed := 0
 
 
@@ -54,13 +54,11 @@ func _initialize() -> void:
 		% [a["red_final"], a["grn_final"], b["red_final"], b["grn_final"]],
 		a["red_final"] == b["red_final"] and a["grn_final"] == b["grn_final"])
 
-	if _failures.is_empty():
+	if _h.failures.is_empty():
 		print("PASS: deep-pool default auto-seeds, sustains crossing, and is deterministic.")
 		quit(0)
 	else:
-		for f in _failures:
-			push_error(f)
-		print("FAIL: deep-pool coverage found %d issue(s)." % _failures.size())
+		print("FAIL: deep-pool coverage found %d issue(s)." % _h.failures.size())
 		quit(1)
 
 
@@ -125,5 +123,5 @@ func _check(label: String, ok: bool) -> void:
 	if ok:
 		print("  ok: %s" % label)
 	else:
-		_failures.append(label)
+		_h.fail(label)
 		print("  FAIL: %s" % label)

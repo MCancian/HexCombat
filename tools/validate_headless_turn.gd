@@ -11,7 +11,7 @@ const DICE_SEED := GoldenScript.SEED
 const PHASE_PLANNING := 0
 const PHASE_END := 2
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("headless WeGo turn validation")
 var GameData: Node = null
 var GameState: Node = null
 
@@ -21,17 +21,17 @@ func _initialize() -> void:
 	GameData = get_root().get_node("GameData")
 	GameState = get_root().get_node("GameState")
 	if GameData == null:
-		_fail("Autoload GameData was not found on the SceneTree root")
+		_h.fail("Autoload GameData was not found on the SceneTree root")
 	if GameState == null:
-		_fail("Autoload GameState was not found on the SceneTree root")
-	if not _failures.is_empty():
-		_finish({})
+		_h.fail("Autoload GameState was not found on the SceneTree root")
+	if not _h.failures.is_empty():
+		_h.finish(self)
 		return
 
 	var first_run := _run_scripted_turn("first")
 	var second_run := _run_scripted_turn("second")
 	_validate_determinism(first_run, second_run)
-	_finish(first_run)
+	_h.finish(self, " (seed=%d, casualties=%d, feba=%.2f)" % [DICE_SEED, int(first_run["all_battalion_losses"]), float(first_run["feba_km"])])
 
 
 func _run_scripted_turn(label: String) -> Dictionary:
@@ -40,26 +40,26 @@ func _run_scripted_turn(label: String) -> Dictionary:
 	GameState.reset_to_scenario()
 	GameState.resolve_offload_turn(SeededDice.new(DICE_SEED))
 
-	_assert_equal_int("%s initial turn_number" % label, GameState.turn_number, 1)
-	_assert_equal_int("%s initial phase" % label, int(GameState.phase), PHASE_PLANNING)
+	_h.equal_int("%s initial turn_number" % label, GameState.turn_number, 1)
+	_h.equal_int("%s initial phase" % label, int(GameState.phase), PHASE_PLANNING)
 
 	var red_brigade: Brigade = GameData.get_brigade(RED_MOVER_ID)
 	var green_defender: Brigade = GameData.get_brigade(GREEN_DEFENDER_ID)
 	if red_brigade == null:
-		_fail("%s missing Red mover: %s" % [label, RED_MOVER_ID])
+		_h.fail("%s missing Red mover: %s" % [label, RED_MOVER_ID])
 		return {}
 	if green_defender == null:
-		_fail("%s missing Green defender: %s" % [label, GREEN_DEFENDER_ID])
+		_h.fail("%s missing Green defender: %s" % [label, GREEN_DEFENDER_ID])
 		return {}
 
-	_assert_equal_string("%s Red mover start hex" % label, red_brigade.hex_id, START_HEX)
-	_assert_equal_string("%s Green defender start hex" % label, green_defender.hex_id, TARGET_HEX)
+	_h.equal_string("%s Red mover start hex" % label, red_brigade.hex_id, START_HEX)
+	_h.equal_string("%s Green defender start hex" % label, green_defender.hex_id, TARGET_HEX)
 	if TARGET_HEX not in GameData.get_neighbors(START_HEX):
-		_fail("%s expected %s adjacent to %s" % [label, TARGET_HEX, START_HEX])
+		_h.fail("%s expected %s adjacent to %s" % [label, TARGET_HEX, START_HEX])
 
 	var red_orders_before: int = GameState.orders_for(Brigade.Team.RED).size()
 	GameState.add_move_order(Brigade.Team.RED, RED_MOVER_ID, TARGET_HEX, Movement.MODE_TACTICAL)
-	_assert_equal_int("%s Red move order buffered" % label, GameState.orders_for(Brigade.Team.RED).size(), red_orders_before + 1)
+	_h.equal_int("%s Red move order buffered" % label, GameState.orders_for(Brigade.Team.RED).size(), red_orders_before + 1)
 
 	var committed_brigade_id := ""
 	var green_commitments_before: int = GameState.commitments_for(Brigade.Team.GREEN).size()
@@ -69,7 +69,7 @@ func _run_scripted_turn(label: String) -> Dictionary:
 	else:
 		committed_brigade_id = String(eligible_committers[0])
 		GameState.add_commit_order(Brigade.Team.GREEN, committed_brigade_id, TARGET_HEX)
-		_assert_equal_int("%s Green commit order buffered" % label, GameState.commitments_for(Brigade.Team.GREEN).size(), green_commitments_before + 1)
+		_h.equal_int("%s Green commit order buffered" % label, GameState.commitments_for(Brigade.Team.GREEN).size(), green_commitments_before + 1)
 		print("%s: committed Green brigade %s to %s" % [label, committed_brigade_id, TARGET_HEX])
 
 	var contributor_ids: Array[String] = [RED_MOVER_ID, GREEN_DEFENDER_ID]
@@ -85,21 +85,21 @@ func _run_scripted_turn(label: String) -> Dictionary:
 	var feba_km: float = GameData.hex_states[TARGET_HEX].feba_km
 	var owner: String = GameData.hex_states[TARGET_HEX].hex_owner
 
-	_assert_equal_int("%s phase after resolve" % label, int(GameState.phase), PHASE_END)
-	_assert_equal_string("%s Red mover after movement/combat" % label, GameData.get_brigade(RED_MOVER_ID).hex_id, TARGET_HEX)
+	_h.equal_int("%s phase after resolve" % label, int(GameState.phase), PHASE_END)
+	_h.equal_string("%s Red mover after movement/combat" % label, GameData.get_brigade(RED_MOVER_ID).hex_id, TARGET_HEX)
 	if TARGET_HEX not in GameState.last_contested_hexes:
-		_fail("%s %s not recorded in last_contested_hexes: %s" % [label, TARGET_HEX, str(GameState.last_contested_hexes)])
+		_h.fail("%s %s not recorded in last_contested_hexes: %s" % [label, TARGET_HEX, str(GameState.last_contested_hexes)])
 
-	_assert_true("%s Red mover fought" % label, GameData.get_brigade(RED_MOVER_ID).fought_this_turn)
-	_assert_true("%s Green defender fought" % label, GameData.get_brigade(GREEN_DEFENDER_ID).fought_this_turn)
+	_h.is_true("%s Red mover fought" % label, GameData.get_brigade(RED_MOVER_ID).fought_this_turn)
+	_h.is_true("%s Green defender fought" % label, GameData.get_brigade(GREEN_DEFENDER_ID).fought_this_turn)
 	if not committed_brigade_id.is_empty():
-		_assert_true("%s committed brigade fought" % label, GameData.get_brigade(committed_brigade_id).fought_this_turn)
+		_h.is_true("%s committed brigade fought" % label, GameData.get_brigade(committed_brigade_id).fought_this_turn)
 
 	var casualties: int = before_contributor_battalions - after_contributor_battalions
 	if is_zero_approx(feba_km) and casualties <= 0:
-		_fail("%s combat had no measurable effect: feba=%.2f casualties=%d" % [label, feba_km, casualties])
+		_h.fail("%s combat had no measurable effect: feba=%.2f casualties=%d" % [label, feba_km, casualties])
 	if owner not in [HexOwner.RED, HexOwner.GREEN, HexOwner.CONTESTED, HexOwner.NONE]:
-		_fail("%s invalid owner for %s: %s" % [label, TARGET_HEX, owner])
+		_h.fail("%s invalid owner for %s: %s" % [label, TARGET_HEX, owner])
 
 	var positions_after_resolve: Dictionary = _positions_for(contributor_ids)
 	var contested_hexes: Array[String] = []
@@ -108,12 +108,12 @@ func _run_scripted_turn(label: String) -> Dictionary:
 	contested_hexes.sort()
 
 	GameState.begin_next_turn()
-	_assert_equal_int("%s next turn_number" % label, GameState.turn_number, 2)
-	_assert_equal_int("%s next phase" % label, int(GameState.phase), PHASE_PLANNING)
-	_assert_equal_int("%s Red order buffer cleared" % label, GameState.orders_for(Brigade.Team.RED).size(), 0)
-	_assert_equal_int("%s Green order buffer cleared" % label, GameState.orders_for(Brigade.Team.GREEN).size(), 0)
-	_assert_equal_int("%s Red commitment buffer cleared" % label, GameState.commitments_for(Brigade.Team.RED).size(), 0)
-	_assert_equal_int("%s Green commitment buffer cleared" % label, GameState.commitments_for(Brigade.Team.GREEN).size(), 0)
+	_h.equal_int("%s next turn_number" % label, GameState.turn_number, 2)
+	_h.equal_int("%s next phase" % label, int(GameState.phase), PHASE_PLANNING)
+	_h.equal_int("%s Red order buffer cleared" % label, GameState.orders_for(Brigade.Team.RED).size(), 0)
+	_h.equal_int("%s Green order buffer cleared" % label, GameState.orders_for(Brigade.Team.GREEN).size(), 0)
+	_h.equal_int("%s Red commitment buffer cleared" % label, GameState.commitments_for(Brigade.Team.RED).size(), 0)
+	_h.equal_int("%s Green commitment buffer cleared" % label, GameState.commitments_for(Brigade.Team.GREEN).size(), 0)
 	_validate_all_turn_flags_reset(label)
 
 	print("%s summary: casualties=%d feba=%.2f owner=%s contested=%s committed=%s" % [label, casualties, feba_km, owner, str(contested_hexes), committed_brigade_id if not committed_brigade_id.is_empty() else "none"])
@@ -131,20 +131,20 @@ func _run_scripted_turn(label: String) -> Dictionary:
 
 func _validate_determinism(first_run: Dictionary, second_run: Dictionary) -> void:
 	if first_run.is_empty() or second_run.is_empty():
-		_fail("Determinism check skipped because a run did not complete")
+		_h.fail("Determinism check skipped because a run did not complete")
 		return
 
-	_assert_equal_string("determinism committed brigade", String(second_run["committed_brigade_id"]), String(first_run["committed_brigade_id"]))
-	_assert_equal_int("determinism contributor battalions", int(second_run["contributor_battalions_after"]), int(first_run["contributor_battalions_after"]))
-	_assert_equal_int("determinism all battalions", int(second_run["all_battalions_after"]), int(first_run["all_battalions_after"]))
-	_assert_equal_int("determinism all battalion losses", int(second_run["all_battalion_losses"]), int(first_run["all_battalion_losses"]))
+	_h.equal_string("determinism committed brigade", String(second_run["committed_brigade_id"]), String(first_run["committed_brigade_id"]))
+	_h.equal_int("determinism contributor battalions", int(second_run["contributor_battalions_after"]), int(first_run["contributor_battalions_after"]))
+	_h.equal_int("determinism all battalions", int(second_run["all_battalions_after"]), int(first_run["all_battalions_after"]))
+	_h.equal_int("determinism all battalion losses", int(second_run["all_battalion_losses"]), int(first_run["all_battalion_losses"]))
 	if not is_equal_approx(float(second_run["feba_km"]), float(first_run["feba_km"])):
-		_fail("determinism feba_km: expected %.4f, got %.4f" % [float(first_run["feba_km"]), float(second_run["feba_km"])])
-	_assert_equal_string("determinism owner", String(second_run["owner"]), String(first_run["owner"]))
+		_h.fail("determinism feba_km: expected %.4f, got %.4f" % [float(first_run["feba_km"]), float(second_run["feba_km"])])
+	_h.equal_string("determinism owner", String(second_run["owner"]), String(first_run["owner"]))
 	if second_run["positions_after_resolve"] != first_run["positions_after_resolve"]:
-		_fail("determinism positions: expected %s, got %s" % [str(first_run["positions_after_resolve"]), str(second_run["positions_after_resolve"])])
+		_h.fail("determinism positions: expected %s, got %s" % [str(first_run["positions_after_resolve"]), str(second_run["positions_after_resolve"])])
 	if second_run["contested_hexes"] != first_run["contested_hexes"]:
-		_fail("determinism contested hexes: expected %s, got %s" % [str(first_run["contested_hexes"]), str(second_run["contested_hexes"])])
+		_h.fail("determinism contested hexes: expected %s, got %s" % [str(first_run["contested_hexes"]), str(second_run["contested_hexes"])])
 
 
 func _positions_for(brigade_ids: Array[String]) -> Dictionary:
@@ -176,40 +176,10 @@ func _validate_all_turn_flags_reset(label: String) -> void:
 	for brigade_value in GameData.brigades.values():
 		var brigade: Brigade = brigade_value
 		if brigade.moved_this_turn:
-			_fail("%s moved_this_turn not reset for %s" % [label, brigade.id])
+			_h.fail("%s moved_this_turn not reset for %s" % [label, brigade.id])
 		if brigade.moved_admin_this_turn:
-			_fail("%s moved_admin_this_turn not reset for %s" % [label, brigade.id])
+			_h.fail("%s moved_admin_this_turn not reset for %s" % [label, brigade.id])
 		if brigade.fought_this_turn:
-			_fail("%s fought_this_turn not reset for %s" % [label, brigade.id])
+			_h.fail("%s fought_this_turn not reset for %s" % [label, brigade.id])
 
 
-func _assert_true(label: String, value: bool) -> void:
-	if not value:
-		_fail("%s: expected true" % label)
-
-
-func _assert_equal_int(label: String, actual: int, expected: int) -> void:
-	if actual != expected:
-		_fail("%s: expected %d, got %d" % [label, expected, actual])
-
-
-func _assert_equal_string(label: String, actual: String, expected: String) -> void:
-	if actual != expected:
-		_fail("%s: expected %s, got %s" % [label, expected, actual])
-
-
-func _fail(message: String) -> void:
-	_failures.append(message)
-	push_error(message)
-
-
-func _finish(first_run: Dictionary) -> void:
-	if _failures.is_empty():
-		print("PASS: headless WeGo turn validation succeeded (seed=%d, casualties=%d, feba=%.2f)" % [DICE_SEED, int(first_run["all_battalion_losses"]), float(first_run["feba_km"])])
-		quit(0)
-		return
-
-	print("FAIL: headless WeGo turn validation found %d issue(s):" % _failures.size())
-	for failure in _failures:
-		print("  - %s" % failure)
-	quit(1)

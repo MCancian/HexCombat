@@ -55,7 +55,7 @@ const TARGET_HEX := GoldenScript.TARGET_HEX
 # meets a much less damaged ROC. Was "casualties=4, feba=-3.00".
 const EXPECTED_COMBAT_FINGERPRINT := "casualties=3, feba=-2.27"
 
-var _h := ValidatorHarness.new("headless cleanup validation", " (seed=%d)" % SEED)
+var _h := ValidatorHarness.new("headless cleanup validation")
 var GameData: Node = null
 var GameState: Node = null
 
@@ -66,7 +66,7 @@ func _initialize() -> void:
 	GameState = get_root().get_node("GameState")
 	if GameData == null or GameState == null:
 		_h.fail("Autoloads GameData/GameState not found")
-		_h.finish(self)
+		_h.finish(self, " (seed=%d)" % SEED)
 		return
 
 	GameData.load_all()
@@ -74,7 +74,7 @@ func _initialize() -> void:
 	_validate_cleanup_determinism()
 	_validate_cleanup_produces_summary()
 	_validate_turn_golden_invariant_preserved()
-	_h.finish(self)
+	_h.finish(self, " (seed=%d)" % SEED)
 
 
 func _validate_cleanup_resets_antiship_flags() -> void:

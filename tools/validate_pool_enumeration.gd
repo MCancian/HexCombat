@@ -38,7 +38,7 @@ const AIRBORNE_SCENARIO := "res://data/scenarios/red_airborne.json"
 const TURNS := 3
 const SEED := 20260624
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("off-map pool enumeration")
 var _pools_seen := 0
 
 
@@ -53,9 +53,10 @@ func _initialize() -> void:
 	_probe(game_data, game_state, AIRBORNE_SCENARIO, "red_airborne")
 
 	if _pools_seen == 0:
-		_fail("no off-map pool was populated in either scenario — this validator proved nothing")
+		_h.fail("no off-map pool was populated in either scenario — this validator proved nothing")
 
-	_finish()
+	_h.pass_body = func() -> String: return "every off-map battalion pool (%d observation(s)) is enumerated by pending_battalion_pools()." % _pools_seen
+	_h.finish(self)
 
 
 ## Play a few turns, then check the enumeration at each of several points: pools appear and drain at
@@ -77,7 +78,7 @@ func _check_state(state: GameStateData, where: String) -> void:
 		var origin := String(found["origin"])
 		_pools_seen += 1
 		if not _contains_same(enumerated, array):
-			_fail(
+			_h.fail(
 				"%s: %s holds %d battalion-pool entr(ies) but is NOT returned by pending_battalion_pools() — the victory census, combat and supply will all count those battalions as ashore. Add it to GameStateData.pending_battalion_pools()."
 				% [where, origin, array.size()]
 			)
@@ -149,18 +150,5 @@ func _contains_same(haystack: Array, needle: Array) -> bool:
 	return false
 
 
-func _fail(message: String) -> void:
-	if not _failures.has(message):
-		_failures.append(message)
-	push_error(message)
-
-
-func _finish() -> void:
-	if _failures.is_empty():
-		print("PASS: every off-map battalion pool (%d observation(s)) is enumerated by pending_battalion_pools()." % _pools_seen)
-		quit(0)
-		return
-	print("FAIL: off-map pool enumeration found %d issue(s):" % _failures.size())
-	for failure in _failures:
-		print("  - %s" % failure)
-	quit(1)
+	_h.pass_body = func() -> String: return "every off-map battalion pool (%d observation(s)) is enumerated by pending_battalion_pools()." % _pools_seen
+	_h.finish(self)

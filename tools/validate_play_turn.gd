@@ -11,7 +11,7 @@ const DICE_SEED := GoldenScript.SEED
 const PHASE_PLANNING := 0
 const PHASE_END := 2
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("headless play_turn validation")
 var GameData: Node = null
 var GameState: Node = null
 
@@ -21,11 +21,11 @@ func _initialize() -> void:
 	GameData = get_root().get_node("GameData")
 	GameState = get_root().get_node("GameState")
 	if GameData == null:
-		_fail("Autoload GameData was not found on the SceneTree root")
+		_h.fail("Autoload GameData was not found on the SceneTree root")
 	if GameState == null:
-		_fail("Autoload GameState was not found on the SceneTree root")
-	if not _failures.is_empty():
-		_finish()
+		_h.fail("Autoload GameState was not found on the SceneTree root")
+	if not _h.failures.is_empty():
+		_h.finish(self, " (seed=%d)" % DICE_SEED)
 		return
 
 	# Path A — hand-rolled sequence (behavioral oracle).
@@ -39,8 +39,8 @@ func _initialize() -> void:
 		[{"kind": "move", "brigade_id": RED_MOVER_ID, "target_hex": TARGET_HEX, "mode": Movement.MODE_TACTICAL}],
 		[], SeededDice.new(DICE_SEED))
 	if result == null:
-		_fail("play_turn returned null")
-		_finish()
+		_h.fail("play_turn returned null")
+		_h.finish(self, " (seed=%d)" % DICE_SEED)
 		return
 	var snap_facade: Dictionary = GameData.snapshot_state(GameState.data.pending_battalion_pools())
 
@@ -48,17 +48,17 @@ func _initialize() -> void:
 	_assert_dicts_equal("snapshot equality", snap_manual, snap_facade)
 
 	# Assert result fields.
-	_assert_equal_int("result.turn_number", result.turn_number, 1)
+	_h.equal_int("result.turn_number", result.turn_number, 1)
 	if TARGET_HEX not in result.contested_hexes:
-		_fail("result.contested_hexes missing %s: %s" % [TARGET_HEX, str(result.contested_hexes)])
+		_h.fail("result.contested_hexes missing %s: %s" % [TARGET_HEX, str(result.contested_hexes)])
 
 	# Air OOB reaches the turn record (plan 0059). This is the end-to-end proof: the ledger is built
 	# deep inside IjfsEngine, retained by FiresPhases and read back out by play_turn, and before 0059
 	# it was discarded at every one of those hops. A real resolved turn must carry a populated force.
 	if result.air_oob.is_empty():
-		_fail("result.air_oob is empty after a resolved turn — the air OOB is not reaching TurnResult")
+		_h.fail("result.air_oob is empty after a resolved turn — the air OOB is not reaching TurnResult")
 	elif not (result.air_oob as Dictionary).has("squadrons"):
-		_fail("result.air_oob has no squadrons key")
+		_h.fail("result.air_oob has no squadrons key")
 	else:
 		# Row SHAPE is checked, not row COUNT. A scenario with no Red air is legitimate and would
 		# carry `squadrons: []`; asserting non-empty here would make this validator quietly
@@ -68,17 +68,17 @@ func _initialize() -> void:
 			var row: Dictionary = row_value
 			for field in ["squadron_id", "class", "kind", "initial", "alive", "losses_today", "losses_campaign"]:
 				if not row.has(field):
-					_fail("air_oob squadron row missing '%s'" % field)
+					_h.fail("air_oob squadron row missing '%s'" % field)
 			if String(row["kind"]) not in ["manned", "unmanned"]:
-				_fail("air_oob squadron kind is '%s'; expected manned/unmanned" % row["kind"])
+				_h.fail("air_oob squadron kind is '%s'; expected manned/unmanned" % row["kind"])
 
 	# Event-log assertions.
 	if result.events.is_empty():
-		_fail("result.events is empty")
+		_h.fail("result.events is empty")
 	elif not _has_event(result.events, "move", func(e): return e.data["brigade_id"] == RED_MOVER_ID and e.data["target_hex"] == TARGET_HEX):
-		_fail("result.events missing move for %s -> %s" % [RED_MOVER_ID, TARGET_HEX])
+		_h.fail("result.events missing move for %s -> %s" % [RED_MOVER_ID, TARGET_HEX])
 	elif not _has_event(result.events, "combat", func(e): return e.hex_id == TARGET_HEX):
-		_fail("result.events missing combat at %s" % TARGET_HEX)
+		_h.fail("result.events missing combat at %s" % TARGET_HEX)
 
 	# Determinism: run Path B a second time.
 	GameData.load_all()
@@ -96,9 +96,9 @@ func _initialize() -> void:
 	# expected and harmless — the gate only fails validators on "SCRIPT ERROR".
 	var bad: TurnResult = GameState.play_turn([], [], SeededDice.new(DICE_SEED))
 	if bad != null:
-		_fail("play_turn outside PLANNING must return null")
+		_h.fail("play_turn outside PLANNING must return null")
 
-	_finish()
+	_h.finish(self, " (seed=%d)" % DICE_SEED)
 
 
 func _run_path_a() -> Dictionary:
@@ -112,12 +112,10 @@ func _run_path_a() -> Dictionary:
 
 func _assert_dicts_equal(label: String, a: Dictionary, b: Dictionary) -> void:
 	if a != b:
-		_fail("%s: expected %s, got %s" % [label, str(a), str(b)])
+		_h.fail("%s: expected %s, got %s" % [label, str(a), str(b)])
 
 
-func _assert_equal_int(label: String, actual: int, expected: int) -> void:
-	if actual != expected:
-		_fail("%s: expected %d, got %d" % [label, expected, actual])
+
 
 func _has_event(events: Array, kind: String, pred: Callable) -> bool:
 	for e in events:
@@ -127,18 +125,3 @@ func _has_event(events: Array, kind: String, pred: Callable) -> bool:
 	return false
 
 
-func _fail(message: String) -> void:
-	_failures.append(message)
-	push_error(message)
-
-
-func _finish() -> void:
-	if _failures.is_empty():
-		print("PASS: headless play_turn validation succeeded (seed=%d)" % DICE_SEED)
-		quit(0)
-		return
-
-	print("FAIL: headless play_turn validation found %d issue(s):" % _failures.size())
-	for failure in _failures:
-		print("  - %s" % failure)
-	quit(1)

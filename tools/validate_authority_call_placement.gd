@@ -104,7 +104,7 @@ const ROOT_FILE_POLICY := {
 	"EventBus.gd": FORBIDS,
 }
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("authority-call placement")
 
 
 func _initialize() -> void:
@@ -122,7 +122,7 @@ func _initialize() -> void:
 
 	var dirs_with_gd := _top_level_dirs_with_gd()
 	var root_files := _root_gd_files()
-	_failures.append_array(_classification_failures(dirs_with_gd, root_files))
+	_h.failures.append_array(_classification_failures(dirs_with_gd, root_files))
 
 	var checked_dirs := 0
 	var census_lines: Array[String] = []
@@ -140,7 +140,7 @@ func _initialize() -> void:
 			census_lines.append("%s\t%d\t%s\t%s" % [file_path, hits.size(), hits_str, policy])
 			var violation := _policy_violation(policy, file_path, "scripts/%s/" % dir_name, hits)
 			if violation != "":
-				_failures.append(violation)
+				_h.fail(violation)
 
 	for file_name in root_files:
 		if not ROOT_FILE_POLICY.has(file_name):
@@ -155,7 +155,7 @@ func _initialize() -> void:
 		var root_violation := _policy_violation(
 			policy, root_path, "scripts/ root", root_hits)
 		if root_violation != "":
-			_failures.append(root_violation)
+			_h.fail(root_violation)
 
 	var is_census := "--census" in OS.get_cmdline_args() or "--census" in OS.get_cmdline_user_args()
 	if is_census:
@@ -163,15 +163,8 @@ func _initialize() -> void:
 		for line in census_lines:
 			print(line)
 
-	if _failures.is_empty():
-		print("PASS: authority-call placement — %d authorities; %d GDScript directory(ies) all classified and clean; %d root file(s) allowlisted" % [
-			authorities.size(), checked_dirs, root_files.size()])
-		quit(0)
-		return
-	for failure in _failures:
-		push_error(failure)
-	print("FAIL: authority-call placement found %d issue(s)" % _failures.size())
-	quit(1)
+	_h.pass_body = func() -> String: return "authority-call placement — %d authorities; %d dir(s) / %d checked file(s) are perfectly compliant" % [authorities.size(), checked_dirs, checked_dirs]
+	_h.finish(self)
 
 
 ## The per-file verdict, as a pure function of (policy, hits) so the self-test can drive EVERY branch

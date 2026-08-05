@@ -27,27 +27,8 @@ means writing prose you then have to un-write.
 budget above depends on it. If the observation is a standing rule or is blocked on something absent,
 put it in the section below WITHOUT a checkbox and say what would unblock it.)*
 
-- [ ] **Validator harness: `_fail` / `_finish` / asserts are copy-pasted across the validators.**
-  Found 2026-07-25, refactor review. Measured: `func _fail` in **30 of 36** `tools/validate_*.gd`,
-  `_finish` in 31, `_assert_equal_int` in 12, `_assert_true` in 11. A `tools/ValidatorHarness.gd`
-  owning the assert vocabulary would remove the duplication. **Note the claim that failed review:**
-  this does NOT fix the gate-hang class — a script that fails to COMPILE never runs, harness included
-  (caught by agy-explore; two other models wrongly agreed it would). That hole is closed separately by
-  `--quit-after` in `run_all_tests.py`. So this is deduplication only, worth doing when validators are
-  being touched anyway, in slices of 5-6 with the gate green between. Good `opencode` delegation.
-- [ ] **Nothing enforces `sweepable`, so the flag records intent and no more.**
-  Measured 2026-08-01 while marking the combat advantage ratios `false`. `tools/run_sweep.py` never consults the knob registry;
-  the only code that touches the field is `tools/validate_knob_registry.gd`, which checks it is a bool
-  and that a `kind` knob is not sweepable. So a `sweepable:false` knob can still be swept via
-  `DataOverrides` and nothing complains. Two checks are wanted and they are NOT the same:
-  (a) **a `sweepable:true` knob whose override does not actually apply should fail** — this is the
-  original 2026-07-23 item, and it would have caught the phantom `offload_beach_base_rate` path;
-  (b) **a `sweepable:false` knob that is swept anyway should be refused** — which is what would make
-  the advantage-ratio decision real rather than advisory.
-  **Note (a) would NOT have caught the advantage ratios**, which is why both checks are listed: their
-  override *does* apply — it changes the `result` label in the record. A check that only asks "did
-  anything move?" sees them move and passes. Only (b) expresses "this knob must not be a study
-  variable".
+
+
 - [ ] **`UnitStats.FALLBACK_CATEGORY_DEFS` reachability is unknown.**
   90 entries, and NO composition entry in either OOB declares a `category` — the table is reachable only through `_fallback_category_for_type`'s
   type-name heuristics. Plan 0032 anchored two new airborne strengths on entries that were dead until

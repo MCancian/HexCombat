@@ -9,7 +9,7 @@ extends SceneTree
 
 const SEED := 20260624
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("frontline (D5-A) validation")
 var GameData: Node = null
 var GameState: Node = null
 
@@ -19,8 +19,8 @@ func _initialize() -> void:
 	GameData = get_root().get_node("GameData")
 	GameState = get_root().get_node("GameState")
 	if GameData == null or GameState == null:
-		_fail("Autoloads GameData/GameState not found")
-		_finish()
+		_h.fail("Autoloads GameData/GameState not found")
+		_h.finish(self, " (seed=%d)" % SEED)
 		return
 
 	GameData.load_all()
@@ -28,7 +28,7 @@ func _initialize() -> void:
 	_validate_empty_polyline()
 	_validate_no_relevant_brigades()
 	_validate_determinism()
-	_finish()
+	_h.finish(self, " (seed=%d)" % SEED)
 
 
 func _reload() -> void:
@@ -60,7 +60,7 @@ func _validate_basic_distribution() -> void:
 
 	var selected := _pick_test_hexes(3)
 	if selected.size() < 3:
-		_fail("Need at least 3 hexes in GameData.hexes")
+		_h.fail("Need at least 3 hexes in GameData.hexes")
 		return
 
 	var polyline: Array = []
@@ -69,7 +69,7 @@ func _validate_basic_distribution() -> void:
 
 	var placed := _move_red_brigades(selected[0].id, 2)
 	if placed.size() < 2:
-		_fail("Need at least 2 non-destroyed Red brigades")
+		_h.fail("Need at least 2 non-destroyed Red brigades")
 		return
 
 	var summary: Dictionary = GameState.resolve_frontline_phase(polyline)
@@ -77,26 +77,26 @@ func _validate_basic_distribution() -> void:
 	var affected: Array = summary.get("affected_brigades", [])
 	var moves: Dictionary = summary.get("moves", {})
 
-	_assert_true("hex_sequence is non-empty", not hex_sequence.is_empty())
-	_assert_equal_int("affected_brigades count matches placed", affected.size(), placed.size())
-	_assert_true("moves has one entry per affected brigade", moves.size() == affected.size())
+	_h.is_true("hex_sequence is non-empty", not hex_sequence.is_empty())
+	_h.equal_int("affected_brigades count matches placed", affected.size(), placed.size())
+	_h.is_true("moves has one entry per affected brigade", moves.size() == affected.size())
 
 	for brigade_id in affected:
 		var brigade: Brigade = GameData.get_brigade(String(brigade_id))
-		_assert_true(
+		_h.is_true(
 			"affected brigade %s hex (%s) is in hex_sequence" % [brigade_id, brigade.hex_id],
 			String(brigade.hex_id) in hex_sequence)
 
 	for pid in placed:
-		_assert_true("placed brigade %s is in affected list" % pid, pid in affected)
+		_h.is_true("placed brigade %s is in affected list" % pid, pid in affected)
 
 
 func _validate_empty_polyline() -> void:
 	_reload()
 	var summary: Dictionary = GameState.resolve_frontline_phase([])
-	_assert_true("empty polyline -> empty hex_sequence", (summary.get("hex_sequence", []) as Array).is_empty())
-	_assert_true("empty polyline -> empty affected_brigades", (summary.get("affected_brigades", []) as Array).is_empty())
-	_assert_true("empty polyline -> empty moves", (summary.get("moves", {}) as Dictionary).is_empty())
+	_h.is_true("empty polyline -> empty hex_sequence", (summary.get("hex_sequence", []) as Array).is_empty())
+	_h.is_true("empty polyline -> empty affected_brigades", (summary.get("affected_brigades", []) as Array).is_empty())
+	_h.is_true("empty polyline -> empty moves", (summary.get("moves", {}) as Dictionary).is_empty())
 
 
 func _validate_no_relevant_brigades() -> void:
@@ -123,9 +123,9 @@ func _validate_no_relevant_brigades() -> void:
 	var polyline: Array = [hex_entry.center]
 	var summary: Dictionary = GameState.resolve_frontline_phase(polyline)
 	var hex_sequence: Array = summary.get("hex_sequence", [])
-	_assert_true("hex_sequence non-empty even with no relevant brigades", not hex_sequence.is_empty())
-	_assert_true("affected_brigades empty when no Red brigades on hexes", (summary.get("affected_brigades", []) as Array).is_empty())
-	_assert_true("moves empty when no relevant brigades", (summary.get("moves", {}) as Dictionary).is_empty())
+	_h.is_true("hex_sequence non-empty even with no relevant brigades", not hex_sequence.is_empty())
+	_h.is_true("affected_brigades empty when no Red brigades on hexes", (summary.get("affected_brigades", []) as Array).is_empty())
+	_h.is_true("moves empty when no relevant brigades", (summary.get("moves", {}) as Dictionary).is_empty())
 
 
 func _validate_determinism() -> void:
@@ -146,30 +146,6 @@ func _validate_determinism() -> void:
 	_move_red_brigades(selected[0].id, 2)
 	var second := JSON.stringify(GameState.resolve_frontline_phase(polyline))
 
-	_assert_true("same input -> identical frontline summary", first == second)
+	_h.is_true("same input -> identical frontline summary", first == second)
 
 
-func _assert_true(label: String, value: bool) -> void:
-	if not value:
-		_fail("%s: expected true" % label)
-
-
-func _assert_equal_int(label: String, actual: int, expected: int) -> void:
-	if actual != expected:
-		_fail("%s: expected %d, got %d" % [label, expected, actual])
-
-
-func _fail(message: String) -> void:
-	_failures.append(message)
-	push_error(message)
-
-
-func _finish() -> void:
-	if _failures.is_empty():
-		print("PASS: frontline (D5-A) validation succeeded (seed=%d)" % SEED)
-		quit(0)
-		return
-	print("FAIL: frontline (D5-A) validation found %d issue(s):" % _failures.size())
-	for failure in _failures:
-		print("  - %s" % failure)
-	quit(1)

@@ -11,10 +11,16 @@ class_name ValidatorHarness
 ## that fails to COMPILE never runs at all, this harness included; that hole is closed separately
 ## by `--quit-after` in tools/run_all_tests.py. This class is deduplication, nothing more.
 ##
-## OUTPUT IS A CONTRACT. tools/run_all_tests.py decides pass/fail by scanning validator stdout for
-## `^PASS` / `^FAIL` (and "SCRIPT ERROR"), so `finish()` reproduces the historical wording byte for
-## byte. Do not reword it, and do not convert a validator whose own output deviates from it —
-## preserving output beats converting everything.
+## OUTPUT IS A CONTRACT (But With Measured Latitude). tools/run_all_tests.py decides pass/fail by
+## scanning validator stdout for `(?m)^PASS\b|^PASS:` and `(?m)^FAIL\b|^FAIL:`. Thus, the hard
+## constraint is the column-0 marker prefix. You can safely add custom metrics or wording to the
+## body of the PASS string using `pass_body`/`fail_header`. However, you MUST preserve the exact
+## wording of any strings cited in the archives (e.g. docs/archive/0045 mutation-authority PASS,
+## 0056 metric-ceilings prefix).
+##
+## MANGING GUARD: If you ever bulk-rename this class's properties (e.g. `failures`), use word
+## boundaries (`\bfailures\b`) and run `grep -rn '_failh\|_capture_h\.' tools/` afterward to
+## prove you didn't accidentally mangle a local variable or function name like `_capture_failures`.
 ##
 ## Names no autoload (GameData / GameState / EventBus) so it stays loadable from a bare
 ## `-s res://tools/...` SceneTree script.
@@ -28,16 +34,20 @@ class_name ValidatorHarness
 var failures: Array[String] = []
 
 var _label: String = ""
-var _pass_suffix: String = ""
+var pass_body: Callable
+var fail_header: Callable
 
 
-func _init(label: String, pass_suffix: String = "") -> void:
+func _init(label: String) -> void:
 	_label = label
-	_pass_suffix = pass_suffix
+
+
+func collect(message: String) -> void:
+	failures.append(message)
 
 
 func fail(message: String) -> void:
-	failures.append(message)
+	collect(message)
 	push_error(message)
 
 
@@ -71,10 +81,14 @@ func is_true(label: String, value: bool) -> void:
 ## to reproduce byte-identical output for validators that carry seed/turn metadata.
 func finish(tree: SceneTree, pass_suffix: String = "") -> void:
 	if failures.is_empty():
-		print("PASS: %s succeeded%s" % [_label, pass_suffix if pass_suffix != "" else _pass_suffix])
+		var msg: String = pass_body.call() as String if pass_body.is_valid() else ("%s succeeded%s" % [_label, pass_suffix])
+		print("PASS: %s" % msg)
 		tree.quit(0)
 		return
-	print("FAIL: %s found %d issue(s):" % [_label, failures.size()])
+	if fail_header.is_valid():
+		print("FAIL: %s" % (fail_header.call() as String))
+	else:
+		print("FAIL: %s found %d issue(s):" % [_label, failures.size()])
 	for failure in failures:
 		print("  - %s" % failure)
 	tree.quit(1)

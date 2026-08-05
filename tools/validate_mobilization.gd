@@ -30,7 +30,7 @@ const ALL_ARRIVED_BY_TURN := 14
 
 var GameData: Node = null
 var GameState: Node = null
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("mobilization coverage")
 
 
 func _initialize() -> void:
@@ -72,13 +72,11 @@ func _initialize() -> void:
 		held["red_final"], held["green_final"], held["red_final_b"], held["green_final_b"]],
 		held["red_final"] == held["red_final_b"] and held["green_final"] == held["green_final_b"])
 
-	if _failures.is_empty():
+	if _h.failures.is_empty():
 		print("PASS: ROC mobilization holds back, phases in, and conserves the force.")
 		quit(0)
 	else:
-		for f in _failures:
-			push_error(f)
-		print("FAIL: mobilization coverage found %d issue(s)." % _failures.size())
+		print("FAIL: mobilization coverage found %d issue(s)." % _h.failures.size())
 		quit(1)
 
 
@@ -180,5 +178,5 @@ func _check(label: String, ok: bool) -> void:
 	if ok:
 		print("  ok: %s" % label)
 	else:
-		_failures.append(label)
+		_h.fail(label)
 		print("  FAIL: %s" % label)

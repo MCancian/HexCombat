@@ -34,7 +34,7 @@ extends SceneTree
 
 const SCENES_DIR := "res://scenes"
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("scene script bindings")
 
 
 func _initialize() -> void:
@@ -53,7 +53,7 @@ func _initialize() -> void:
 	for scene_path in scenes:
 		var text := _read(scene_path)
 		if text == "":
-			_failures.append("%s could not be read" % scene_path)
+			_h.fail("%s could not be read" % scene_path)
 			continue
 		for script_path in _script_paths(text):
 			checked += 1
@@ -62,21 +62,15 @@ func _initialize() -> void:
 				# right beside it, so a binding mistyped as `…/HexMap.gd.uid` names a file that DOES
 				# exist and cannot load as a Script. Checking the extension first turns that into a
 				# failure instead of a pass. (Review finding, 2026-07-31.)
-				_failures.append("%s binds a script at %s, which is not a .gd file — it cannot load as a GDScript, so the node would end up with a null script even though the path resolves." % [
+				_h.fail("%s binds a script at %s, which is not a .gd file — it cannot load as a GDScript, so the node would end up with a null script even though the path resolves." % [
 					scene_path, script_path])
 				continue
 			if not FileAccess.file_exists(script_path):
-				_failures.append("%s binds a script at %s, which does not exist — a file was moved without updating the scene. The engine will NOT fail to compile; the node just loads with a null script." % [
+				_h.fail("%s binds a script at %s, which does not exist — a file was moved without updating the scene. The engine will NOT fail to compile; the node just loads with a null script." % [
 					scene_path, script_path])
 
-	if _failures.is_empty():
-		print("PASS: scene script bindings — %d scene(s), %d binding(s) all resolve" % [scenes.size(), checked])
-		quit(0)
-		return
-	for failure in _failures:
-		push_error(failure)
-	print("FAIL: scene script bindings found %d issue(s)" % _failures.size())
-	quit(1)
+	_h.pass_body = func() -> String: return "scene script bindings — %d scene(s), %d binding(s) all resolve" % [scenes.size(), checked]
+	_h.finish(self)
 
 
 ## Every `res://`-rooted path bound as a Script ext_resource in one .tscn's text.
@@ -94,7 +88,7 @@ func _script_paths(text: String) -> Array[String]:
 			continue
 		var path_match := path_regex.search(line)
 		if path_match == null:
-			_failures.append('an ext_resource declares type="Script" with no path= attribute: %s' % line)
+			_h.fail('an ext_resource declares type="Script" with no path= attribute: %s' % line)
 			continue
 		paths.append(path_match.get_string(1))
 	return paths
@@ -161,9 +155,9 @@ func _self_test() -> bool:
 	for case_value in cases:
 		var case: Array = case_value
 		var expected: Array = case[1]
-		var before := _failures.size()
+		var before := _h.failures.size()
 		var got := _script_paths(String(case[0]))
-		_failures.resize(before)
+		_h.failures.resize(before)
 		if got.size() != expected.size():
 			push_error("self-test: %s — expected %d path(s), got %s" % [String(case[2]), expected.size(), str(got)])
 			return false

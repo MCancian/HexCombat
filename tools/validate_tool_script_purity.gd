@@ -40,7 +40,7 @@ const TOOL_DIR := "res://tools"
 const SCRIPT_DIRS := ["res://scripts"]
 const AUTOLOADS := ["GameData", "EventBus", "GameState"]
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("tool-script purity")
 
 
 func _initialize() -> void:
@@ -57,14 +57,9 @@ func _initialize() -> void:
 		_check_identifiers(path, _class_name_of(path, sources))
 		_check_loads(path)
 
-	if _failures.is_empty():
-		print("PASS: %d tool-reachable script(s) name no autoload." % guarded.size())
-		quit(0)
-	else:
-		for failure in _failures:
-			push_error(failure)
-		print("FAIL: tool-script purity found %d issue(s) — reach the autoload through a get_node() accessor instead (see LLMGameAPI._game_state / SelfPlayRunner._gs), or move the logic to a home that takes its inputs as arguments (see AirInsertionState.eligible_orders)." % _failures.size())
-		quit(1)
+	_h.pass_body = func() -> String: return "%d tool-reachable script(s) name no autoload." % guarded.size()
+	_h.fail_header = func() -> String: return "tool-script purity found %d issue(s) — reach the autoload through a get_node() accessor instead (see LLMGameAPI._game_state / SelfPlayRunner._gs), or move the logic to a home that takes its inputs as arguments (see AirInsertionState.eligible_orders)." % _h.failures.size()
+	_h.finish(self)
 
 
 ## path -> stripped source, for every .gd under the given roots.
@@ -178,14 +173,14 @@ func _check_identifiers(path: String, class_id: String) -> void:
 			if name == class_id:
 				continue
 			if _names_identifier(line, String(name)):
-				_failures.append("%s:%d names '%s'" % [path.trim_prefix("res://"), index + 1, name])
+				_h.fail("%s:%d names '%s'" % [path.trim_prefix("res://"), index + 1, name])
 
 
 ## The invariant's real-world consequence: the script must resolve when loaded the way a `-s` tool
 ## script loads it. A compile failure here is the exact 0032 / 0037 symptom.
 func _check_loads(path: String) -> void:
 	if load(path) == null:
-		_failures.append("%s failed to load (compile error — check for autoload references)" % path)
+		_h.fail("%s failed to load (compile error — check for autoload references)" % path)
 
 
 func _class_name_of(path: String, sources: Dictionary) -> String:

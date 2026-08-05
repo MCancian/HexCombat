@@ -150,7 +150,7 @@ const POLICY_CLASSIFICATIONS := {
 	"planned_transitional": true,
 }
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("mutation-authority validation")
 var _regex_cache: Dictionary = {}
 var _real_contract_ran: bool = false
 
@@ -1564,11 +1564,11 @@ func _check_manifest_error_fixtures(corpus: Corpus) -> void:
 
 ## Runs a check with the failure list quarantined, and returns what that check alone produced.
 func _capture_failures(body: Callable) -> Array[String]:
-	var quarantined: Array[String] = _failures
-	_failures = []
+	var quarantined: Array[String] = _h.failures
+	_h.failures = []
 	body.call()
-	var produced: Array[String] = _failures.duplicate()
-	_failures = quarantined
+	var produced: Array[String] = _h.failures.duplicate()
+	_h.failures = quarantined
 	return produced
 
 
@@ -1668,19 +1668,19 @@ func _strip(body: String) -> String:
 
 
 func _fail(message: String) -> void:
-	_failures.append(message)
+	_h.failures.append(message)
 
 
 func _finish() -> void:
 	if not _real_contract_ran:
 		_fail("E_VACUOUS: generated real-contract pass did not complete.")
-	if _failures.is_empty():
+	if _h.failures.is_empty():
 		print("PASS: mutation authority — no unauthorised writes to any registered aggregate.")
 		quit(0)
 		return
-	for failure in _failures:
+	for failure in _h.failures:
 		push_error(failure)
-	print("FAIL: mutation-authority validation found %d issue(s):" % _failures.size())
-	for failure in _failures:
+	print("FAIL: mutation-authority validation found %d issue(s):" % _h.failures.size())
+	for failure in _h.failures:
 		print("  - %s" % failure)
 	quit(1)

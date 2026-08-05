@@ -57,7 +57,7 @@ const EXPECTED_GAME_OVER := false
 const EXPECTED_CHINA := 16
 const EXPECTED_TAIWAN := 101
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("golden end-to-end victory validation")
 var GameData: Node = null
 var GameState: Node = null
 
@@ -71,29 +71,29 @@ func _initialize() -> void:
 	var first := _play_to_terminal()
 	var second := _play_to_terminal()
 
-	_assert_true("game_over matches golden pin (expected %s, got %s)" % [EXPECTED_GAME_OVER, first["game_over"]],
+	_h.is_true("game_over matches golden pin (expected %s, got %s)" % [EXPECTED_GAME_OVER, first["game_over"]],
 		first["game_over"] == EXPECTED_GAME_OVER)
-	_assert_true("census matches golden pin (expected %d/%d, got %d/%d)" % [EXPECTED_CHINA, EXPECTED_TAIWAN, first["china"], first["taiwan"]],
+	_h.is_true("census matches golden pin (expected %d/%d, got %d/%d)" % [EXPECTED_CHINA, EXPECTED_TAIWAN, first["china"], first["taiwan"]],
 		first["china"] == EXPECTED_CHINA and first["taiwan"] == EXPECTED_TAIWAN)
 	# Winner must be consistent with the final on-Taiwan census (armed only if a rebalance ever
 	# makes the run terminal — that also trips the game_over pin above and forces a re-baseline).
 	if first["winner"] == "red":
-		_assert_true("red win => china (%d) > taiwan (%d)" % [first["china"], first["taiwan"]],
+		_h.is_true("red win => china (%d) > taiwan (%d)" % [first["china"], first["taiwan"]],
 			first["china"] > first["taiwan"])
 	elif first["winner"] == "green":
-		_assert_true("green win => china battalions == 0 (got %d)" % first["china"], first["china"] == 0)
-	_assert_true("census counts are non-negative", first["china"] >= 0 and first["taiwan"] >= 0)
+		_h.is_true("green win => china battalions == 0 (got %d)" % first["china"], first["china"] == 0)
+	_h.is_true("census counts are non-negative", first["china"] >= 0 and first["taiwan"] >= 0)
 
 	# Determinism: same seed -> identical terminal turn, winner, and census.
-	_assert_true("same seed -> same terminal turn (%d == %d)" % [first["turn"], second["turn"]],
+	_h.is_true("same seed -> same terminal turn (%d == %d)" % [first["turn"], second["turn"]],
 		first["turn"] == second["turn"])
-	_assert_true("same seed -> same winner (%s == %s)" % [first["winner"], second["winner"]],
+	_h.is_true("same seed -> same winner (%s == %s)" % [first["winner"], second["winner"]],
 		first["winner"] == second["winner"])
-	_assert_true("same seed -> same census (%d/%d == %d/%d)" % [first["china"], first["taiwan"], second["china"], second["taiwan"]],
+	_h.is_true("same seed -> same census (%d/%d == %d/%d)" % [first["china"], first["taiwan"], second["china"], second["taiwan"]],
 		first["china"] == second["china"] and first["taiwan"] == second["taiwan"])
 
 	print("Terminal: turn=%d winner=%s china=%d taiwan=%d" % [first["turn"], first["winner"], first["china"], first["taiwan"]])
-	_finish()
+	_h.finish(self, " (seed=%d)" % SEED)
 
 
 func _play_to_terminal() -> Dictionary:
@@ -116,18 +116,3 @@ func _play_to_terminal() -> Dictionary:
 	return last
 
 
-func _assert_true(label: String, value: bool) -> void:
-	if not value:
-		_failures.append(label)
-		push_error(label)
-
-
-func _finish() -> void:
-	if _failures.is_empty():
-		print("PASS: golden end-to-end victory validation succeeded (seed=%d)" % SEED)
-		quit(0)
-		return
-	print("FAIL: golden end-to-end victory validation found %d issue(s):" % _failures.size())
-	for f in _failures:
-		print("  - %s" % f)
-	quit(1)

@@ -11,7 +11,7 @@ extends SceneTree
 
 const STUB := "res://tools/llm_sidecar_stub.py"
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("LLM policy plumbing validation")
 
 
 func _initialize() -> void:
@@ -23,7 +23,7 @@ func _initialize() -> void:
 	_check_helpers()
 	_check_stub_modes()
 
-	_finish()
+	_h.finish(self, " (stub sidecar, no network)")
 
 
 ## Direct unit checks of LLMPolicy's parse/strip helpers (underscore = convention, still callable).
@@ -36,18 +36,18 @@ func _check_helpers() -> void:
 		{"type": "end_turn", "seed": 1},
 	])
 	if stripped.size() != 1 or String((stripped[0] as Dictionary).get("type", "")) != "move":
-		_fail("_strip_end_turn did not drop the end_turn action: %s" % str(stripped))
+		_h.fail("_strip_end_turn did not drop the end_turn action: %s" % str(stripped))
 
 	# Parse: bare array, {"actions": [...]}, empty, and unparseable -> null.
 	if not (p._parse_actions("[]") is Array and (p._parse_actions("[]") as Array).is_empty()):
-		_fail("_parse_actions('[]') should be an empty array")
+		_h.fail("_parse_actions('[]') should be an empty array")
 	var wrapped = p._parse_actions('{"actions": [{"type": "move"}]}')
 	if not (wrapped is Array and (wrapped as Array).size() == 1):
-		_fail("_parse_actions did not unwrap {actions:[...]}: %s" % str(wrapped))
+		_h.fail("_parse_actions did not unwrap {actions:[...]}: %s" % str(wrapped))
 	if p._parse_actions("not json at all") != null:
-		_fail("_parse_actions of garbage should be null")
+		_h.fail("_parse_actions of garbage should be null")
 	if not (p._parse_actions("   ") is Array):
-		_fail("_parse_actions of whitespace should be an empty array")
+		_h.fail("_parse_actions of whitespace should be an empty array")
 
 
 ## End-to-end through the stub sidecar for each HEXCOMBAT_STUB_MODE. Uses the Green (ROC) seat:
@@ -63,21 +63,21 @@ func _check_stub_modes() -> void:
 	var obs: Dictionary = LLMGameAPI.observation(seat)
 	var actions := _run_seat(seat, log_path)
 	if actions.size() != 1:
-		_fail("first_move: expected 1 action, got %d" % actions.size())
+		_h.fail("first_move: expected 1 action, got %d" % actions.size())
 	elif not _is_legal_move(actions[0], obs):
-		_fail("first_move: action is not a legal move: %s" % str(actions[0]))
+		_h.fail("first_move: action is not a legal move: %s" % str(actions[0]))
 	if _count_lines(log_path) != 1:
-		_fail("first_move: expected exactly 1 JSONL log line, got %d" % _count_lines(log_path))
+		_h.fail("first_move: expected exactly 1 JSONL log line, got %d" % _count_lines(log_path))
 
 	# empty: sidecar returns [] -> policy returns [].
 	_set_mode("empty")
 	if not _run_seat(seat, "").is_empty():
-		_fail("empty mode should yield no actions")
+		_h.fail("empty mode should yield no actions")
 
 	# garbage: unparseable stdout -> policy falls back to [].
 	_set_mode("garbage")
 	if not _run_seat(seat, "").is_empty():
-		_fail("garbage mode should fall back to no actions")
+		_h.fail("garbage mode should fall back to no actions")
 
 	_delete_file(log_path)
 
@@ -121,17 +121,3 @@ func _count_lines(path: String) -> int:
 	return text.split("\n").size()
 
 
-func _fail(message: String) -> void:
-	_failures.append(message)
-	push_error(message)
-
-
-func _finish() -> void:
-	if _failures.is_empty():
-		print("PASS: LLM policy plumbing validation succeeded (stub sidecar, no network)")
-		quit(0)
-		return
-	print("FAIL: LLM policy plumbing validation found %d issue(s):" % _failures.size())
-	for failure in _failures:
-		print("  - %s" % failure)
-	quit(1)

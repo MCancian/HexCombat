@@ -9,7 +9,7 @@ extends SceneTree
 const TURNS := 4
 const BASE_SEED := 20260624
 
-var _failures: Array[String] = []
+var _h := ValidatorHarness.new("headless AI-vs-AI self-play validation")
 
 
 func _initialize() -> void:
@@ -27,29 +27,29 @@ func _initialize() -> void:
 	_print_game_summary("Seated game", seated_game)
 
 	if not bool(game1["all_resolved"]):
-		_fail("game1: a turn failed to resolve")
+		_h.fail("game1: a turn failed to resolve")
 	if not bool(game2["all_resolved"]):
-		_fail("game2: a turn failed to resolve")
+		_h.fail("game2: a turn failed to resolve")
 
 	var snap1: Dictionary = game1["final_snapshot"] as Dictionary
 	var snap2: Dictionary = game2["final_snapshot"] as Dictionary
 	if snap1 != snap2:
-		_fail("self-play not deterministic: final snapshots differ")
+		_h.fail("self-play not deterministic: final snapshots differ")
 	if game1["turn_digests"] != game2["turn_digests"]:
-		_fail("self-play not deterministic: turn digests differ")
+		_h.fail("self-play not deterministic: turn digests differ")
 	if game1["final_snapshot"] != seated_game["final_snapshot"]:
-		_fail("single-policy and seated self-play final snapshots differ")
+		_h.fail("single-policy and seated self-play final snapshots differ")
 	if game1["turn_digests"] != seated_game["turn_digests"]:
-		_fail("single-policy and seated self-play turn digests differ")
+		_h.fail("single-policy and seated self-play turn digests differ")
 
 	var violations: Array = game1["index_violations"]
 	if not violations.is_empty():
-		_fail("indexes inconsistent after self-play: %s" % "; ".join(violations))
+		_h.fail("indexes inconsistent after self-play: %s" % "; ".join(violations))
 
 	if game1["final_turn"] != TURNS + 1:
-		_fail("expected turn_number %d after %d turns, got %d" % [TURNS + 1, TURNS, game1["final_turn"]])
+		_h.fail("expected turn_number %d after %d turns, got %d" % [TURNS + 1, TURNS, game1["final_turn"]])
 
-	_finish()
+	_h.finish(self, " (%d turns, seed=%d)" % [TURNS, BASE_SEED])
 
 
 func _print_game_summary(label: String, game_result: Dictionary) -> void:
@@ -67,18 +67,3 @@ func _print_game_summary(label: String, game_result: Dictionary) -> void:
 	])
 
 
-func _fail(message: String) -> void:
-	_failures.append(message)
-	push_error(message)
-
-
-func _finish() -> void:
-	if _failures.is_empty():
-		print("PASS: headless AI-vs-AI self-play validation succeeded (%d turns, seed=%d)" % [TURNS, BASE_SEED])
-		quit(0)
-		return
-
-	print("FAIL: headless AI-vs-AI self-play validation found %d issue(s):" % _failures.size())
-	for failure in _failures:
-		print("  - %s" % failure)
-	quit(1)
